@@ -7,6 +7,7 @@
     "lint": "eslint . --max-warnings 0",
     "typecheck": "tsgo -p . --noEmit",
     "test": "vitest run --coverage",
+    "test:watch": "vitest watch",
     "gen:keys": "node scripts/gen-keys.js"
   },
   "dependencies": {
