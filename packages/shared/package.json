@@ -3,28 +3,46 @@
   "version": "0.0.0",
   "private": true,
   "type": "module",
-  "sideEffects": false,
+  "sideEffects": [
+    "*.css"
+  ],
   "files": [
-    "dist"
+    "dist",
+    "tokens/generated"
   ],
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js"
     },
-    "./enums.json": "./dist/enums.json"
+    "./enums.json": "./dist/enums.json",
+    "./tokens.css": "./tokens/generated/tokens.css",
+    "./theme.css": "./tokens/generated/theme.css",
+    "./chart-theme": {
+      "types": "./dist/chart-theme.d.ts",
+      "import": "./dist/chart-theme.js"
+    },
+    "./rn-theme": {
+      "types": "./dist/rn-theme.d.ts",
+      "import": "./dist/rn-theme.js"
+    }
   },
   "scripts": {
+    "prebuild": "node scripts/build-tokens.js",
     "build": "tsup && node scripts/export-enums.js",
     "lint": "eslint . --max-warnings 0",
     "typecheck": "tsgo -p . --noEmit",
     "test": "vitest run --coverage",
-    "test:watch": "vitest watch"
+    "test:watch": "vitest watch",
+    "tokens:build": "node scripts/build-tokens.js",
+    "tokens:check": "node scripts/build-tokens.js --check"
   },
   "tsup": {
-    "entry": [
-      "src/index.ts"
-    ],
+    "entry": {
+      "index": "src/index.ts",
+      "chart-theme": "tokens/generated/chart-theme.ts",
+      "rn-theme": "tokens/generated/rn-theme.ts"
+    },
     "format": [
       "esm"
     ],

@@ -3,7 +3,15 @@
 The design handoff package in this folder is the reference for every UI card.
 Fidelity is final: colours, type, spacing, radii, shadows, states and motion are
 reproduced as drawn. The `.dc.html` files are references to look at, not code to
-copy. `tokens.json` is the input for the token pipeline (DES-02).
+copy. `tokens.json` moved to `packages/shared/tokens/tokens.json` and is the input
+for the token pipeline (DES-02). `pnpm tokens:build` writes `tokens.css`,
+`theme.css`, `chart-theme.ts` and `rn-theme.ts` into
+`packages/shared/tokens/generated/`. The generated files are committed;
+`prebuild` of `@jobflow/shared` regenerates them, and `pnpm contracts` (the CI
+contracts job and `pnpm ci:local`) runs the package's `tokens:check`, which
+writes nothing and fails, naming each file, when they are stale.
+The web imports `@jobflow/shared/tokens.css` and `@jobflow/shared/theme.css`
+after `@import "tailwindcss"` (FE-01); charts import `@jobflow/shared/chart-theme`.
 
 ## How to open
 
@@ -49,8 +57,10 @@ What the references do not draw:
 - Web screens are drawn at 1440 px in the light theme. That pair is a pixel
   comparison.
 - The dark theme has no per-screen drawing. The reference is #s4 and the `dark`
-  section of `tokens.json` (14 tokens on a warm base). A dark check means every
-  surface, text and line uses its dark token and contrast holds.
+  section of `packages/shared/tokens/tokens.json` (17 tokens on a warm base:
+  the 14 drawn plus the three DES-02 filled from them, see Dark gaps below). A
+  dark check means every surface, text and line uses its dark token and
+  contrast holds.
 - 390 px has no web drawing; the phone design is the RN companion. A 390 check
   is by rule, not by pixels: no horizontal scroll, nothing clipped, touch zones
   of 44 px, navigation reachable (FE-02, FIN-02).
@@ -163,7 +173,8 @@ NativeWind 4 with the same `tokens.json` (MOB-01).
 | Select library | #s7 names react-select | DOC-05 and DOC-06 fix shadcn/ui and cmdk | Decision: shadcn Select, plus Popover with Command (cmdk) for searchable, multi and grouped variants, restyled to the drawn states (38 px, a divider before the indicators, 3 px focus halo). No react-select. Owner FE-05 |
 | Calendar version | The references load fullcalendar 6.1.11, `tokens.json` says `fullcalendar@6` | DES-01, DOC-05, DOC-06 and FE-22 say FullCalendar 7 | Decision: FullCalendar 7. FE-22 pins `@fullcalendar/core` 7.1.3 and confirms the `--fc-*` variables used in #s20 exist on v7 |
 | Sankey plugin version | The references load chartjs-chart-sankey 0.12.1 | No version in the plan | Decision: FE-32 uses chartjs-chart-sankey 0.19.1 with Chart.js 4 |
-| Tailwind config | The handoff README says `tokens.json` generates `tailwind.config.ts` and `theme.ts` | Tailwind 4 is CSS first | Resolved by DES-02: `tokens.css`, a `@theme inline` `theme.css`, `chart-theme.ts` and `rn-theme.ts`; no `tailwind.config` |
+| Tailwind config | The handoff README says `tokens.json` generates `tailwind.config.ts` and `theme.ts` | Tailwind 4 is CSS first | Done in DES-02: `tokens.css`, a `@theme inline` `theme.css`, `chart-theme.ts` and `rn-theme.ts` in `packages/shared/tokens/generated/`, built by `pnpm tokens:build`; no `tailwind.config` |
+| Dark gaps | The `dark` section has no `surface-3`, `line-soft` or `accent-ink`, and no dark stage or data colours | A light recess or light accent text on a dark page fails contrast | Resolved by DES-02 with existing dark values only: `surface-3` = dark `paper`, `line-soft` = dark `line`, `accent-ink` = dark `accent`. Stage and data colours keep their one value in both themes; a lifted dark ramp is for the chart cards (FE-32, FE-33) to define. In dark, `e1` to `e3` shadows are the empty shadow `0 0 #0000`; `flat`, `focus` and `accent` stay |
 | Skipping the rejection reason | The #s22 example has «Пропустити», the kanban modal has «Не хочу зараз вказувати» | DOC-03 defines `unspecified` (side `system`) | Decision: both record `unspecified`. With `ask_rejection_reason` off no modal shows and `unspecified` is recorded. Owners FE-14, BE-17 |
 | Salary block | The dashboard draws salary analytics | AN-12 is P2, FE-37 is P1, FE-33 is P0 | Decision: FE-33 renders only blocks whose endpoint exists. The salary block appears with AN-12 and FE-37; until then it is absent, not a fake «мало даних» state |
 | OAuth buttons | Login draws «Продовжити з Google» and «Продовжити з GitHub» | Email and password in BE-06 | Covered by FE-09 (behind a feature flag) and BE-13 |
