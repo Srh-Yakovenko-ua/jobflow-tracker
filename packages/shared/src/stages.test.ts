@@ -85,7 +85,7 @@ describe('canTransition', () => {
     expect(new Set(EXPECTED.map(([from, to]) => `${from}->${to}`)).size).toBe(64);
   });
 
-  it.each(EXPECTED)('answers %s -> %s with %o', (from, to, expected) => {
+  it.for(EXPECTED)('answers %s -> %s with %o', ([from, to, expected]) => {
     expect(canTransition(from, to)).toEqual(expected);
   });
 
