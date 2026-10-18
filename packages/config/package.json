@@ -1,5 +1,38 @@
 {
   "name": "@jobflow/config",
   "version": "0.0.0",
-  "private": true
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./tsconfig.base.json": "./tsconfig.base.json",
+    "./eslint": "./eslint.js",
+    "./prettier": "./prettier.config.js"
+  },
+  "bin": {
+    "tsgo": "./bin/tsgo.js"
+  },
+  "scripts": {
+    "lint": "eslint . --max-warnings 0",
+    "typecheck": "node bin/tsgo.js -p test/fixtures/api --noEmit",
+    "test": "node --test test/*.test.js"
+  },
+  "dependencies": {
+    "@eslint-react/eslint-plugin": "^5.28.0",
+    "@eslint/js": "^10.0.1",
+    "@next/eslint-plugin-next": "^16.4.2",
+    "eslint-import-resolver-typescript": "^4.4.5",
+    "eslint-plugin-boundaries": "^7.2.0",
+    "eslint-plugin-react-hooks": "^7.1.1",
+    "eslint-plugin-simple-import-sort": "^14.0.0",
+    "globals": "^17.13.0",
+    "typescript": "~6.0.3",
+    "typescript-7": "npm:typescript@^7.0.2",
+    "typescript-eslint": "^8.71.2"
+  },
+  "peerDependencies": {
+    "eslint": "^10.13.0"
+  },
+  "devDependencies": {
+    "eslint": "^10.13.0"
+  }
 }
