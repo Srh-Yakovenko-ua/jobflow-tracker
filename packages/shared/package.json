@@ -18,7 +18,8 @@
     "build": "tsup && node scripts/export-enums.js",
     "lint": "eslint . --max-warnings 0",
     "typecheck": "tsgo -p . --noEmit",
-    "test": "vitest run --coverage"
+    "test": "vitest run --coverage",
+    "test:watch": "vitest watch"
   },
   "tsup": {
     "entry": [
