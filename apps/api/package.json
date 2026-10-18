@@ -2,7 +2,22 @@
   "name": "@jobflow/api",
   "version": "0.0.0",
   "private": true,
+  "type": "module",
+  "scripts": {
+    "lint": "eslint . --max-warnings 0",
+    "typecheck": "tsgo -p . --noEmit",
+    "test": "vitest run",
+    "gen:keys": "node scripts/gen-keys.js"
+  },
   "dependencies": {
-    "@jobflow/shared": "workspace:*"
+    "@jobflow/shared": "workspace:*",
+    "zod": "^4.6.7"
+  },
+  "devDependencies": {
+    "@jobflow/config": "workspace:*",
+    "@types/node": "^26.6.4",
+    "eslint": "^10.13.0",
+    "typescript": "~6.0.3",
+    "vitest": "^4.1.12"
   }
 }
