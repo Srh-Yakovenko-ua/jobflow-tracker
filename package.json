@@ -14,12 +14,48 @@
     "test:int": "turbo run test:int",
     "contracts": "docker compose -f infra/docker/compose.yml config -q && docker compose -f infra/docker/compose.yml -f infra/docker/compose.override.yml config -q && docker compose -f infra/docker/compose.yml -f infra/docker/compose.ci.yml config -q",
     "ci:local": "pnpm format:check && pnpm dup && turbo run lint typecheck && turbo run test && pnpm test:int && pnpm contracts && pnpm audit --prod --audit-level high",
-    "dup": "jscpd apps packages services bookmarklet"
+    "dup": "jscpd apps packages services bookmarklet",
+    "prepare": "husky"
   },
   "prettier": "@jobflow/config/prettier",
+  "lint-staged": {
+    "*.{js,mjs,cjs,ts,tsx}": [
+      "eslint --fix --max-warnings 0 --no-warn-ignored",
+      "prettier --write"
+    ],
+    "*.{json,jsonc,md,yml,yaml,css,html}": "prettier --write"
+  },
+  "commitlint": {
+    "extends": [
+      "@commitlint/config-conventional"
+    ],
+    "rules": {
+      "scope-enum": [
+        2,
+        "always",
+        [
+          "web",
+          "api",
+          "worker",
+          "analytics",
+          "ai",
+          "shared",
+          "infra",
+          "bookmarklet",
+          "mobile",
+          "docs"
+        ]
+      ]
+    }
+  },
   "devDependencies": {
+    "@commitlint/cli": "^21.2.3",
+    "@commitlint/config-conventional": "^21.2.3",
     "@jobflow/config": "workspace:*",
+    "eslint": "^10.13.0",
+    "husky": "^9.1.7",
     "jscpd": "5.4.1",
+    "lint-staged": "^17.6.0",
     "prettier": "^3.9.10",
     "turbo": "^2.11.9"
   }
