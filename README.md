@@ -37,3 +37,23 @@ pnpm lint
 pnpm typecheck
 pnpm format
 ```
+
+## Локальна інфраструктура
+
+Postgres, Redis, MinIO і Mailpit запускаються однією командою з кореня репозиторію:
+
+```bash
+cp .env.example .env
+docker compose up -d
+```
+
+`COMPOSE_FILE` у `.env` вказує на `infra/docker/compose.yml` і `infra/docker/compose.override.yml`, тому `-f` не потрібен.
+
+| Сервіс   | Порт                      |
+| -------- | ------------------------- |
+| Postgres | 127.0.0.1:5432            |
+| Redis    | 127.0.0.1:6379            |
+| MinIO    | 127.0.0.1:9000, 9001 (UI) |
+| Mailpit  | 127.0.0.1:1025, 8025 (UI) |
+
+Якщо бакета `resumes` немає, виконайте `docker compose up minio-init`.
