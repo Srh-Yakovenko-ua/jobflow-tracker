@@ -18,7 +18,10 @@ Then open `http://127.0.0.1:3999/JobFlow%20-%20%D0%A1%D0%B8%D1%81%D1%82%D0%B5%D0
 (`JobFlow - Система.dc.html`). File names are Cyrillic, so URLs are
 percent-encoded. The references load Chart.js 4.4.1, chartjs-chart-sankey
 0.12.1, FullCalendar 6.1.11, lucide and Google Fonts from CDNs, so they need
-network. On a clean load the only console error is the `favicon.ico` 404.
+network. On a clean load the only console error is the `favicon.ico` 404, with
+one exception: the analytics dashboard can throw an uncaught Chart.js
+`TypeError: this._fn is not a function` from the animation tick. It is
+intermittent, and every chart still renders (see the gaps table).
 
 The index links to 8 files. `Календар.dc.html` is not linked from it and is
 opened directly.
@@ -165,7 +168,7 @@ NativeWind 4 with the same `tokens.json` (MOB-01).
 | Offline panel | «Працюєш офлайн»: moves and notes are saved locally and sync by themselves | FE-07 draws the panel, offline sync is FIN-08 (P3) | Decision: until FIN-08 lands, the FE-07 offline panel keeps the title, the «дані на HH:MM» line and retry, and leaves out the sentence that changes are saved locally. FIN-08 adds it back |
 | Market benchmarks | Ghost rate «ринок 38%», screening «бенчмарк 22%» | AN-09 keeps sourced benchmark constants for the ghost rate only (cites 18 to 22% ghost jobs) | Decision: every benchmark comes from the AN-09 config with its source. A KPI without a sourced benchmark shows none; the drawn 38% and 22% are demo numbers. Owners AN-09, FE-33 |
 | Missing count on a CV version | CV v3 with 3 applications shows «потрібно ще 7», which counts to 10 | Checklist item 8: percent from 5 (`MIN_N_PERCENT`) | Decision: a version row shows its percent from 5 applications and below that no percent, only «потрібно ще N» counted to 5 (so «потрібно ще 2» for 3). A version joins the A/B verdict at 10 (`MIN_N_INSIGHT`). Owners FE-30, AN-10 |
-| Low data dashboard | On 4 applications the conversion KPI says «буде на 10 відгуках», «4 / 10» | Percent rule is 5 | FE-33: below `MIN_N_INSIGHT` the whole dashboard is in its low data state; percents inside blocks follow `MIN_N_PERCENT` |
+| Low data dashboard | On 4 applications the conversion KPI says «буде на 10 відгуках», «4 / 10» | Percent rule is 5 | Decision: FE-33 renders the whole dashboard in its low data state below `MIN_N_INSIGHT`; percents inside blocks follow `MIN_N_PERCENT` |
 | Undo after rejection | The toast has «Скасувати перенос» | `stage_events` is append-only and `rejected` is terminal | Confirmed by BE-17: `undo-last` within 10 s inserts a compensating event, AN-04 drops both. FE-14 calls it |
 | Notes and the model | The login screen promises that vacancy texts go to the model and notes never do, yet the follow-up draft mentions the interview task | AI-04 allow lists payload fields | Confirmed by AI-07: an optional user hint field carries such details, notes are never sent; AI-04 guards it |
 | Silence on «фінал» | Settings: the threshold doubles on «фінал»; dashboard: it rises to 14 days | `effectiveSilenceDays(settings, stage)` | Confirmed by BE-33 (7 becomes 14 on final); FE-06 `SilenceIndicator` uses the same shared function |
@@ -186,3 +189,4 @@ NativeWind 4 with the same `tokens.json` (MOB-01).
 | Icon lint | #s22 marks lucide-only and stroke 1.9 as a lint check | DES-04 lints raw colours only | Decision: `lucide-react` is the only icon package in `apps/web`, pinned in FE-05 with `strokeWidth` 1.9 as the default; FIN-02 reviews icons. No extra lint rule |
 | Counts on the index | The index tags the design system «21 розділ» and says «вісім екранів»; DES-01 says 7 web screens | The package has #s1 to #s22; the index numbers screens 01 to 07, the companion is 07 | Decision: 22 sections, 6 web screens plus the mobile companion, plus the design system page. The «21 розділ» tag is stale |
 | Calendar file | `Календар.dc.html` is not linked from the index | | Decision: it is the shared Calendar component, not a screen. It is opened directly and ported in FE-21 |
+| Dashboard animation error | The dashboard reference replaces `Chart.defaults.animation` with a new object on each build pass until every chart exists, and Chart.js 4.4.1 sometimes throws `this._fn is not a function` in its animation tick; all 7 charts still draw | FE-33 builds the charts with react-chartjs-2 | Decision: a defect in the reference script only, not part of the design. FE-33 sets animation per chart in its options (duration 320, `easeOutQuart`, off under `prefers-reduced-motion`) and never replaces `Chart.defaults.animation` as a whole. Owner FE-33 |
