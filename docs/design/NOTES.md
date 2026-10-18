@@ -125,9 +125,12 @@ pull request template.
 
 Also fixed by the handoff: `tabular-nums` on every number; controls 28, 32, 36
 and 42 high with radii 8, 8, 9 and 10; layers flat, e1, e2, e3, accent and focus
-instead of borders; motion 140, 180, 200, 260 (spring) and 820 (data, 45 ms
-stagger) with easing `cubic-bezier(.2,.8,.3,1)`; Unbounded for headings and big
-numbers, Onest for the interface.
+instead of borders; motion 140, 180, 200 and 260 (spring, its own
+`cubic-bezier(.34,1.56,.64,1)`) for the interface and 820 for chart data (45 ms
+stagger); Unbounded for headings and big numbers, Onest for the interface.
+Chart data animates with `easeOutQuart` (`motion.data.easing`), and
+`cubic-bezier(.2,.8,.3,1)` (`motion.easing`) is the UI transition easing, so
+the two cover different things and do not conflict.
 
 ## Libraries fixed by the design
 
@@ -189,4 +192,5 @@ NativeWind 4 with the same `tokens.json` (MOB-01).
 | Icon lint | #s22 marks lucide-only and stroke 1.9 as a lint check | DES-04 lints raw colours only | Decision: `lucide-react` is the only icon package in `apps/web`, pinned in FE-05 with `strokeWidth` 1.9 as the default; FIN-02 reviews icons. No extra lint rule |
 | Counts on the index | The index tags the design system «21 розділ» and says «вісім екранів»; DES-01 says 7 web screens | The package has #s1 to #s22; the index numbers screens 01 to 07, the companion is 07 | Decision: 22 sections, 6 web screens plus the mobile companion, plus the design system page. The «21 розділ» tag is stale |
 | Calendar file | `Календар.dc.html` is not linked from the index | | Decision: it is the shared Calendar component, not a screen. It is opened directly and ported in FE-21 |
-| Dashboard animation error | The dashboard reference replaces `Chart.defaults.animation` with a new object on each build pass until every chart exists, and Chart.js 4.4.1 sometimes throws `this._fn is not a function` in its animation tick; all 7 charts still draw | FE-33 builds the charts with react-chartjs-2 | Decision: a defect in the reference script only, not part of the design. FE-33 sets animation per chart in its options (duration 320, `easeOutQuart`, off under `prefers-reduced-motion`) and never replaces `Chart.defaults.animation` as a whole. Owner FE-33 |
+| Dashboard animation error | The dashboard reference replaces `Chart.defaults.animation` with a new object on each build pass until every chart exists, and Chart.js 4.4.1 sometimes throws `this._fn is not a function` in its animation tick; all 7 charts still draw | FE-33 builds the charts with react-chartjs-2 | Decision: a defect in the reference script only, not part of the design. FE-33 reads `motion.data` from the DES-02 chart theme (820 ms, `easeOutQuart`, 45 ms stagger, off under `prefers-reduced-motion`), sets it per chart in its options and never replaces `Chart.defaults.animation`. Owner FE-33 |
+| Chart animation duration | The dashboard script sets 320 ms; `tokens.json` `motion.data` and the #s14 chart kit use 820 ms with a 45 ms stagger (900 for doughnut and radar in #s14) | DES-02 emits `chart-theme.ts` from `tokens.json` | Decision: `tokens.json` wins, 820 ms, `easeOutQuart`, 45 ms stagger. 320 is a value in the reference script, not the design. Owners DES-02, FE-33 |
