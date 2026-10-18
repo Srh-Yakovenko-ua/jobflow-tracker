@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="design_doc_mode" content="canvas">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@400;500;600;700&family=Onest:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  body { margin: 0; background: oklch(97.4% 0.007 78); }
+  a { color: oklch(50% 0.12 252); text-underline-offset: 3px; }
+  a:hover { color: oklch(44% 0.12 252); }
+</style>
+</helmet>
+
+<div style="background: oklch(97.4% 0.007 78); color: oklch(25% 0.013 62); font-family: 'Onest', system-ui, sans-serif; -webkit-font-smoothing: antialiased; padding: 56px 28px 120px">
+<div style="max-width: 1100px; margin: 0 auto; display: flex; flex-direction: column; gap: 48px">
+
+  <header style="display: flex; flex-direction: column; gap: 18px">
+    <div style="display: flex; flex-wrap: wrap; gap: 8px; align-items: center">
+      <span style="display: flex; align-items: center; gap: 7px; background: oklch(97.5% 0.014 252); color: oklch(44% 0.12 252); border-radius: 999px; padding: 5px 12px; font-size: 12px; font-weight: 600; box-shadow: inset 0 0 0 1px oklch(89% 0.025 252)"><span style="width: 6px; height: 6px; border-radius: 50%; background: oklch(52% 0.12 252)"></span>JobFlow</span>
+      <span style="font-size: 13px; color: oklch(50% 0.012 68)">керування пошуком роботи · веб + RN</span>
+    </div>
+    <h1 style="margin: 0; font-family: 'Unbounded', sans-serif; font-weight: 500; font-size: clamp(30px, 5vw, 54px); line-height: 1.0; letter-spacing: -.042em; max-width: 22ch">Зміст проєкту</h1>
+    <p style="margin: 0; max-width: 66ch; font-size: 16px; line-height: 1.62; color: oklch(42% 0.012 62)">Одна система, вісім екранів. Палітра, шрифти й усі компоненти живуть в одному файлі — екрани збираються з нього, а не описують стилі заново.</p>
+  </header>
+
+  <a href="JobFlow%20-%20Дизайн-система.dc.html" style="text-decoration: none; color: inherit; background: oklch(99.4% 0.004 85); border-radius: 18px; padding: 26px; display: flex; flex-direction: column; gap: 16px; box-shadow: 0 2px 5px oklch(25% 0.013 62 / .06), 0 18px 40px -16px oklch(25% 0.013 62 / .22); transition: transform 200ms cubic-bezier(.2,.8,.3,1), box-shadow 200ms" style-hover="transform: translateY(-3px); box-shadow: 0 4px 10px oklch(25% 0.013 62 / .07), 0 28px 56px -18px oklch(25% 0.013 62 / .3)">
+    <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; flex-wrap: wrap">
+      <div style="display: flex; flex-direction: column; gap: 7px; min-width: 0">
+        <span style="font-size: 11px; font-weight: 600; letter-spacing: .14em; text-transform: uppercase; color: oklch(50% 0.012 68)">джерело правди</span>
+        <span style="font-family: 'Unbounded', sans-serif; font-weight: 500; font-size: 28px; letter-spacing: -.035em; line-height: 1.1">Дизайн-система</span>
+      </div>
+      <span style="display: flex; align-items: center; gap: 8px; background: oklch(96.5% 0.014 252); color: oklch(38% 0.12 252); border-radius: 999px; padding: 6px 13px; font-size: 12.5px; font-weight: 600; flex: none">21 розділ</span>
+    </div>
+    <p style="margin: 0; max-width: 74ch; font-size: 14.5px; line-height: 1.6; color: oklch(42% 0.012 62)">22 розділи. Палітра й темна тема, Unbounded + Onest, шкала 28/32/36/42 і шари замість обведень. Кнопки, поля, вибір, аплоад із живим прогресом, навігація, тости й модалки, селекти з пошуком, календар з роками, Match Score, реєстр іконок lucide. Три бібліотечні розділи: чарти на Chart.js, таблиця на TanStack, сітка на FullCalendar. І два для розробки — RN-шар із hex-токенами та замінами тіней, і хендоф зі списком компонентів та чек-листом перед мерджем.</p>
+    <div style="display: flex; flex-wrap: wrap; gap: 6px">
+      <span style="background: oklch(97.2% 0.006 80); border-radius: 8px; padding: 5px 10px; font-size: 12px; box-shadow: inset 0 0 0 1px oklch(92% 0.008 78)">токени</span>
+      <span style="background: oklch(97.2% 0.006 80); border-radius: 8px; padding: 5px 10px; font-size: 12px; box-shadow: inset 0 0 0 1px oklch(92% 0.008 78)">компоненти</span>
+      <span style="background: oklch(97.2% 0.006 80); border-radius: 8px; padding: 5px 10px; font-size: 12px; box-shadow: inset 0 0 0 1px oklch(92% 0.008 78)">календар</span>
+      <span style="background: oklch(97.2% 0.006 80); border-radius: 8px; padding: 5px 10px; font-size: 12px; box-shadow: inset 0 0 0 1px oklch(92% 0.008 78)">селекти</span>
+      <span style="background: oklch(97.2% 0.006 80); border-radius: 8px; padding: 5px 10px; font-size: 12px; box-shadow: inset 0 0 0 1px oklch(92% 0.008 78)">Chart.js</span>
+      <span style="background: oklch(97.2% 0.006 80); border-radius: 8px; padding: 5px 10px; font-size: 12px; box-shadow: inset 0 0 0 1px oklch(92% 0.008 78)">TanStack</span>
+      <span style="background: oklch(97.2% 0.006 80); border-radius: 8px; padding: 5px 10px; font-size: 12px; box-shadow: inset 0 0 0 1px oklch(92% 0.008 78)">FullCalendar</span>
+      <span style="background: oklch(96.5% 0.014 252); color: oklch(38% 0.12 252); border-radius: 8px; padding: 5px 10px; font-size: 12px; font-weight: 600; box-shadow: inset 0 0 0 1px oklch(89% 0.025 252)">RN-шар</span>
+      <span style="background: oklch(97.2% 0.006 80); border-radius: 8px; padding: 5px 10px; font-size: 12px; box-shadow: inset 0 0 0 1px oklch(92% 0.008 78)">темна тема</span>
+    </div>
+  </a>
+
+  <section style="display: flex; flex-direction: column; gap: 14px">
+    <div style="display: flex; align-items: baseline; gap: 14px; flex-wrap: wrap">
+      <h2 style="margin: 0; font-family: 'Unbounded', sans-serif; font-weight: 500; font-size: 21px; letter-spacing: -.028em">Екрани</h2>
+      <span style="flex: 1; min-width: 30px; height: 1px; background: oklch(91% 0.008 78)"></span>
+      <span style="font-size: 12.5px; color: oklch(50% 0.012 68)">порядок = план розробки</span>
+    </div>
+
+    <a href="JobFlow%20-%20Дашборд%20аналітики.dc.html" style="text-decoration: none; color: inherit; background: oklch(99.4% 0.004 85); border-radius: 14px; padding: 18px 20px; display: grid; grid-template-columns: 40px minmax(0, 1fr) auto; gap: 0 18px; align-items: center; box-shadow: 0 1px 2px oklch(25% 0.013 62 / .05), 0 8px 20px -12px oklch(25% 0.013 62 / .16); transition: transform 180ms cubic-bezier(.2,.8,.3,1), box-shadow 180ms" style-hover="transform: translateY(-2px); box-shadow: 0 2px 6px oklch(25% 0.013 62 / .06), 0 18px 36px -14px oklch(25% 0.013 62 / .24)">
+      <span style="font-size: 12px; color: oklch(50% 0.012 68); font-variant-numeric: tabular-nums">01</span>
+      <span style="display: flex; flex-direction: column; gap: 4px; min-width: 0">
+        <span style="font-size: 16.5px; font-weight: 600; letter-spacing: -.015em">Дашборд аналітики</span>
+        <span style="font-size: 13.5px; line-height: 1.5; color: oklch(45% 0.012 65)">Sankey і всі чарти — на Chart.js. Причини за етапами, джерела, A/B резюме, прогноз офера, місячне AI-саммарі.</span>
+      </span>
+      <span style="background: oklch(96% 0.03 158); color: oklch(36% 0.09 158); border-radius: 999px; padding: 5px 11px; font-size: 11.5px; font-weight: 600; flex: none; box-shadow: inset 0 0 0 1px oklch(88% 0.05 158)">перебрано з нуля</span>
+    </a>
+
+    <a href="JobFlow%20-%20Канбан.dc.html" style="text-decoration: none; color: inherit; background: oklch(99.4% 0.004 85); border-radius: 14px; padding: 18px 20px; display: grid; grid-template-columns: 40px minmax(0, 1fr) auto; gap: 0 18px; align-items: center; box-shadow: 0 1px 2px oklch(25% 0.013 62 / .05), 0 8px 20px -12px oklch(25% 0.013 62 / .16); transition: transform 180ms cubic-bezier(.2,.8,.3,1), box-shadow 180ms" style-hover="transform: translateY(-2px); box-shadow: 0 2px 6px oklch(25% 0.013 62 / .06), 0 18px 36px -14px oklch(25% 0.013 62 / .24)">
+      <span style="font-size: 12px; color: oklch(50% 0.012 68); font-variant-numeric: tabular-nums">02</span>
+      <span style="display: flex; flex-direction: column; gap: 4px; min-width: 0">
+        <span style="font-size: 16.5px; font-weight: 600; letter-spacing: -.015em">Канбан і модалка причини</span>
+        <span style="font-size: 13.5px; line-height: 1.5; color: oklch(45% 0.012 65)">П'ять етапів, схлопнуті виходи, клавіатурне перетягування, вибір причини за два кліки, режим «Щільні».</span>
+      </span>
+      <span style="background: oklch(96% 0.03 158); color: oklch(36% 0.09 158); border-radius: 999px; padding: 5px 11px; font-size: 11.5px; font-weight: 600; flex: none; box-shadow: inset 0 0 0 1px oklch(88% 0.05 158)">перебрано з нуля</span>
+    </a>
+
+    <a href="JobFlow%20-%20Карточка%20вакансії.dc.html" style="text-decoration: none; color: inherit; background: oklch(99.4% 0.004 85); border-radius: 14px; padding: 18px 20px; display: grid; grid-template-columns: 40px minmax(0, 1fr) auto; gap: 0 18px; align-items: center; box-shadow: 0 1px 2px oklch(25% 0.013 62 / .05), 0 8px 20px -12px oklch(25% 0.013 62 / .16); transition: transform 180ms cubic-bezier(.2,.8,.3,1), box-shadow 180ms" style-hover="transform: translateY(-2px); box-shadow: 0 2px 6px oklch(25% 0.013 62 / .06), 0 18px 36px -14px oklch(25% 0.013 62 / .24)">
+      <span style="font-size: 12px; color: oklch(50% 0.012 68); font-variant-numeric: tabular-nums">03</span>
+      <span style="display: flex; flex-direction: column; gap: 4px; min-width: 0">
+        <span style="font-size: 16.5px; font-weight: 600; letter-spacing: -.015em">Карточка вакансії</span>
+        <span style="font-size: 13.5px; line-height: 1.5; color: oklch(45% 0.012 65)">Таймлайн подій, розбір збігу, заметки, рекрутер, привязане CV, генерація фоллоу-апу.</span>
+      </span>
+      <span style="background: oklch(96% 0.03 158); color: oklch(36% 0.09 158); border-radius: 999px; padding: 5px 11px; font-size: 11.5px; font-weight: 600; flex: none; box-shadow: inset 0 0 0 1px oklch(88% 0.05 158)">перебрано з нуля</span>
+    </a>
+
+    <a href="JobFlow%20-%20Додавання%20вакансії.dc.html" style="text-decoration: none; color: inherit; background: oklch(99.4% 0.004 85); border-radius: 14px; padding: 18px 20px; display: grid; grid-template-columns: 40px minmax(0, 1fr) auto; gap: 0 18px; align-items: center; box-shadow: 0 1px 2px oklch(25% 0.013 62 / .05), 0 8px 20px -12px oklch(25% 0.013 62 / .16); transition: transform 180ms cubic-bezier(.2,.8,.3,1), box-shadow 180ms" style-hover="transform: translateY(-2px); box-shadow: 0 2px 6px oklch(25% 0.013 62 / .06), 0 18px 36px -14px oklch(25% 0.013 62 / .24)">
+      <span style="font-size: 12px; color: oklch(50% 0.012 68); font-variant-numeric: tabular-nums">04</span>
+      <span style="display: flex; flex-direction: column; gap: 4px; min-width: 0">
+        <span style="font-size: 16.5px; font-weight: 600; letter-spacing: -.015em">Додавання вакансії · F1</span>
+        <span style="font-size: 13.5px; line-height: 1.5; color: oklch(45% 0.012 65)">Букмарклет, вставка тексту, ручний ввід — і весь асинхронний шлях AI-розбору.</span>
+      </span>
+      <span style="background: oklch(96% 0.03 158); color: oklch(36% 0.09 158); border-radius: 999px; padding: 5px 11px; font-size: 11.5px; font-weight: 600; flex: none; box-shadow: inset 0 0 0 1px oklch(88% 0.05 158)">перебрано з нуля</span>
+    </a>
+
+    <a href="JobFlow%20-%20Резюме,%20налаштування,%20вхід.dc.html" style="text-decoration: none; color: inherit; background: oklch(99.4% 0.004 85); border-radius: 14px; padding: 18px 20px; display: grid; grid-template-columns: 40px minmax(0, 1fr) auto; gap: 0 18px; align-items: center; box-shadow: 0 1px 2px oklch(25% 0.013 62 / .05), 0 8px 20px -12px oklch(25% 0.013 62 / .16); transition: transform 180ms cubic-bezier(.2,.8,.3,1), box-shadow 180ms" style-hover="transform: translateY(-2px); box-shadow: 0 2px 6px oklch(25% 0.013 62 / .06), 0 18px 36px -14px oklch(25% 0.013 62 / .24)">
+      <span style="font-size: 12px; color: oklch(50% 0.012 68); font-variant-numeric: tabular-nums">05</span>
+      <span style="display: flex; flex-direction: column; gap: 4px; min-width: 0">
+        <span style="font-size: 16.5px; font-weight: 600; letter-spacing: -.015em">Резюме, налаштування, вхід</span>
+        <span style="font-size: 13.5px; line-height: 1.5; color: oklch(45% 0.012 65)">Версії CV з конверсією кожної, поріг ghost-детекції, вибір теми, екран входу.</span>
+      </span>
+      <span style="background: oklch(96% 0.03 158); color: oklch(36% 0.09 158); border-radius: 999px; padding: 5px 11px; font-size: 11.5px; font-weight: 600; flex: none; box-shadow: inset 0 0 0 1px oklch(88% 0.05 158)">перебрано з нуля</span>
+    </a>
+
+    <a href="JobFlow%20-%20Порожні%20стани.dc.html" style="text-decoration: none; color: inherit; background: oklch(99.4% 0.004 85); border-radius: 14px; padding: 18px 20px; display: grid; grid-template-columns: 40px minmax(0, 1fr) auto; gap: 0 18px; align-items: center; box-shadow: 0 1px 2px oklch(25% 0.013 62 / .05), 0 8px 20px -12px oklch(25% 0.013 62 / .16); transition: transform 180ms cubic-bezier(.2,.8,.3,1), box-shadow 180ms" style-hover="transform: translateY(-2px); box-shadow: 0 2px 6px oklch(25% 0.013 62 / .06), 0 18px 36px -14px oklch(25% 0.013 62 / .24)">
+      <span style="font-size: 12px; color: oklch(50% 0.012 68); font-variant-numeric: tabular-nums">06</span>
+      <span style="display: flex; flex-direction: column; gap: 4px; min-width: 0">
+        <span style="font-size: 16.5px; font-weight: 600; letter-spacing: -.015em">Порожні стани, скелетони, помилки</span>
+        <span style="font-size: 13.5px; line-height: 1.5; color: oklch(45% 0.012 65)">Перший вхід, аналітика на нулі, ghosted, завершений пошук, три скелетони, чотири помилки.</span>
+      </span>
+      <span style="background: oklch(96% 0.03 158); color: oklch(36% 0.09 158); border-radius: 999px; padding: 5px 11px; font-size: 11.5px; font-weight: 600; flex: none; box-shadow: inset 0 0 0 1px oklch(88% 0.05 158)">перебрано з нуля</span>
+    </a>
+
+    <a href="JobFlow%20-%20Мобільний%20компаньон.dc.html" style="text-decoration: none; color: inherit; background: oklch(99.4% 0.004 85); border-radius: 14px; padding: 18px 20px; display: grid; grid-template-columns: 40px minmax(0, 1fr) auto; gap: 0 18px; align-items: center; box-shadow: 0 1px 2px oklch(25% 0.013 62 / .05), 0 8px 20px -12px oklch(25% 0.013 62 / .16); transition: transform 180ms cubic-bezier(.2,.8,.3,1), box-shadow 180ms" style-hover="transform: translateY(-2px); box-shadow: 0 2px 6px oklch(25% 0.013 62 / .06), 0 18px 36px -14px oklch(25% 0.013 62 / .24)">
+      <span style="font-size: 12px; color: oklch(50% 0.012 68); font-variant-numeric: tabular-nums">07</span>
+      <span style="display: flex; flex-direction: column; gap: 4px; min-width: 0">
+        <span style="font-size: 16.5px; font-weight: 600; letter-spacing: -.015em">Мобільний компаньон · RN</span>
+        <span style="font-size: 13.5px; line-height: 1.5; color: oklch(45% 0.012 65)">Рейка етапів замість канбану, нагадування з пушем, компактна аналітика.</span>
+      </span>
+      <span style="background: oklch(96% 0.03 158); color: oklch(36% 0.09 158); border-radius: 999px; padding: 5px 11px; font-size: 11.5px; font-weight: 600; flex: none; box-shadow: inset 0 0 0 1px oklch(88% 0.05 158)">перебрано з нуля</span>
+    </a>
+  </section>
+
+  <section style="background: oklch(99.4% 0.004 85); border-radius: 14px; padding: 20px; box-shadow: 0 1px 2px oklch(25% 0.013 62 / .05), 0 8px 20px -12px oklch(25% 0.013 62 / .14); display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 22px">
+    <div style="display: flex; flex-direction: column; gap: 7px">
+      <span style="font-size: 11px; font-weight: 600; letter-spacing: .14em; text-transform: uppercase; color: oklch(50% 0.012 68)">що змінилось</span>
+      <span style="font-size: 13.5px; line-height: 1.6; color: oklch(42% 0.012 62)">Три окремі кіт-файли й перша редакція токенів злиті в одну «Дизайн-систему»; старі версії видалені, щоб не було двох джерел правди. Усі сім екранів переведені на неї, включно з мобілкою.</span>
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 7px">
+      <span style="font-size: 11px; font-weight: 600; letter-spacing: .14em; text-transform: uppercase; color: oklch(50% 0.012 68)">стан макета</span>
+      <span style="font-size: 13.5px; line-height: 1.6; color: oklch(42% 0.012 62)">Усі сім екранів на одній системі: палітра, Unbounded + Onest, шкала 28/32/36/42, шари e1–e3 замість обведень, радіуси 9–16, іконки lucide. Перевірено програмно: контраст тексту WCAG AA — 0 порушень, тач-таргети в мобілці — 0 менших за 44pt, усі 7 чартів дашборда відмальовані, іконок-плейсхолдерів немає, консоль чиста.</span>
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 7px">
+      <span style="font-size: 11px; font-weight: 600; letter-spacing: .14em; text-transform: uppercase; color: oklch(50% 0.012 68)">технічна рамка</span>
+      <span style="font-size: 13.5px; line-height: 1.6; color: oklch(42% 0.012 62)">Next.js + Tailwind на вебі, Expo + NativeWind на мобілці, один <span style="font-weight: 600">tokens.json</span> як джерело обох тем. Бібліотеки: dnd-kit — дошка, Chart.js — графіка, TanStack Table — таблиці, FullCalendar — сітка календаря, lucide — іконки. Розділ <span style="font-weight: 600">21 · RN-шар</span> у системі описує, що з цього переноситься в мобілку, а що підмінюється: hex-токени, тіні через elevation, pressed замість hover, victory-native і FlashList замість веб-бібліотек.</span>
+    </div>
+  </section>
+
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1160}}"></script>
+</body>
+</html>

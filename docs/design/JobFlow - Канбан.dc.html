@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="design_doc_mode" content="canvas">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@400;500;600;700&family=Onest:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/lucide@latest/dist/umd/lucide.min.js"></script>
+<style>
+  body { margin: 0; background: oklch(97.4% 0.007 78); }
+  a { color: oklch(50% 0.12 252); text-underline-offset: 3px; }
+  a:hover { color: oklch(44% 0.12 252); }
+  @keyframes kb-breathe { 0%, 100% { opacity: .9; transform: scale(1) } 50% { opacity: .3; transform: scale(.62) } }
+  @keyframes kb-shim { 0% { background-position: -260px 0 } 100% { background-position: 460px 0 } }
+  @keyframes kb-spring { from { transform: translateY(14px) scale(.96) } to { transform: none } }
+  @keyframes kb-in { from { transform: translateY(6px) } to { transform: none } }
+  @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important } }
+</style>
+</helmet>
+
+<div style="background: oklch(97.4% 0.007 78); color: oklch(25% 0.013 62); font-family: 'Onest', system-ui, sans-serif; -webkit-font-smoothing: antialiased; position: relative">
+
+<header style="box-shadow: 0 1px 0 oklch(93% 0.008 78)">
+  <div style="max-width: 1440px; margin: 0 auto; padding: 12px 26px; display: flex; align-items: center; gap: 20px; flex-wrap: wrap">
+    <span style="font-family: 'Unbounded', sans-serif; font-size: 17px; font-weight: 600; letter-spacing: -.035em">JobFlow</span>
+    <nav style="display: flex; gap: 2px; flex: 1; flex-wrap: wrap">
+      <span style="color: oklch(25% 0.013 62); font-size: 13.5px; font-weight: 600; padding: 0 12px; height: 34px; border-radius: 9px; background: oklch(99.4% 0.004 85); display: flex; align-items: center; box-shadow: 0 1px 2px oklch(25% 0.013 62 / .07)">Дошка</span>
+      <a href="JobFlow%20-%20Дашборд%20аналітики.dc.html" style="text-decoration: none; color: oklch(45% 0.012 65); font-size: 13.5px; padding: 0 12px; height: 34px; border-radius: 9px; display: flex; align-items: center; transition: all 160ms" style-hover="background: oklch(99.4% 0.004 85); color: oklch(25% 0.013 62)">Аналітика</a>
+      <a href="JobFlow%20-%20Резюме,%20налаштування,%20вхід.dc.html" style="text-decoration: none; color: oklch(45% 0.012 65); font-size: 13.5px; padding: 0 12px; height: 34px; border-radius: 9px; display: flex; align-items: center; transition: all 160ms" style-hover="background: oklch(99.4% 0.004 85); color: oklch(25% 0.013 62)">Резюме</a>
+    </nav>
+    <a href="JobFlow%20-%20Додавання%20вакансії.dc.html" style="text-decoration: none; border: none; background: oklch(52% 0.12 252); color: oklch(99% 0.005 252); border-radius: 10px; padding: 0 16px; height: 36px; font-size: 13.5px; font-weight: 600; display: flex; align-items: center; gap: 8px; box-shadow: 0 1px 2px oklch(40% 0.09 252 / .2), 0 8px 18px -7px oklch(40% 0.09 252 / .45); transition: all 160ms" style-hover="background: oklch(46% 0.125 252); transform: translateY(-1px)"><span style="width: 16px; height: 16px; display: block; flex: none"><i data-lucide="plus"></i></span>Додати вакансію</a>
+  </div>
+</header>
+
+<div style="max-width: 1440px; margin: 0 auto; padding: 26px 26px 12px; display: flex; align-items: flex-end; justify-content: space-between; gap: 18px; flex-wrap: wrap">
+  <div style="display: flex; flex-direction: column; gap: 7px">
+    <span style="font-size: 11px; font-weight: 600; letter-spacing: .14em; text-transform: uppercase; color: oklch(50% 0.012 68)">активний пошук · 21 карточка в роботі</span>
+    <h1 style="margin: 0; font-family: 'Unbounded', sans-serif; font-weight: 500; font-size: 30px; line-height: 1.05; letter-spacing: -.042em">Дошка</h1>
+  </div>
+  <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap">
+    <span style="display: flex; align-items: center; gap: 8px; background: oklch(99.4% 0.004 85); border-radius: 9px; padding: 0 12px; height: 34px; font-size: 12.5px; color: oklch(42% 0.012 62); box-shadow: inset 0 0 0 1px oklch(92% 0.008 78); cursor: pointer">Джерело: усі<span style="width: 15px; height: 15px; display: block; flex: none; color: oklch(52% 0.012 68)"><i data-lucide="chevron-down"></i></span></span>
+    <span style="display: flex; align-items: center; gap: 8px; background: oklch(96.5% 0.014 252); border-radius: 9px; padding: 0 12px; height: 34px; font-size: 12.5px; font-weight: 600; color: oklch(38% 0.12 252); cursor: pointer">CV v2<span style="width: 15px; height: 15px; display: block; flex: none; opacity: .75"><i data-lucide="chevron-down"></i></span></span>
+    <div style="display: inline-flex; background: oklch(96% 0.006 80); border-radius: 9px; padding: 3px; gap: 2px; box-shadow: inset 0 0 0 1px oklch(92% 0.008 78)">
+      <button onClick="{{ setFull }}" style="border: none; background: {{ fullBg }}; color: {{ fullFg }}; box-shadow: {{ fullSh }}; border-radius: 7px; padding: 0 12px; height: 28px; font-family: 'Onest', sans-serif; font-size: 12px; font-weight: 600; cursor: pointer; transition: all 180ms">Повні</button>
+      <button onClick="{{ setDense }}" style="border: none; background: {{ denseBg }}; color: {{ denseFg }}; box-shadow: {{ denseSh }}; border-radius: 7px; padding: 0 12px; height: 28px; font-family: 'Onest', sans-serif; font-size: 12px; font-weight: 600; cursor: pointer; transition: all 180ms">Щільні</button>
+    </div>
+  </div>
+</div>
+
+<div style="max-width: 1440px; margin: 0 auto; padding: 12px 26px 26px; overflow-x: auto">
+  <div style="display: flex; gap: 12px; align-items: stretch; min-width: 1200px">
+
+    <div style="flex: 1; min-width: 250px; display: flex; flex-direction: column; gap: 10px; background: oklch(96.4% 0.006 80); border-radius: 16px; padding: 12px">
+      <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 0 2px">
+        <span style="display: flex; align-items: center; gap: 9px"><span style="width: 9px; height: 9px; border-radius: 3px; background: oklch(38% 0.07 258)"></span><span style="font-size: 13px; font-weight: 600">відгук</span></span>
+        <span style="font-size: 12px; color: oklch(50% 0.012 68); font-variant-numeric: tabular-nums; background: oklch(99.4% 0.004 85); border-radius: 999px; padding: 2px 8px">8</span>
+      </div>
+
+      <div style="background: oklch(99.4% 0.004 85); border-radius: 14px; padding: 13px 15px; display: flex; flex-direction: column; gap: 11px; cursor: grab; box-shadow: 0 1px 2px oklch(25% 0.013 62 / .05), 0 8px 20px -12px oklch(25% 0.013 62 / .16); transition: transform 200ms cubic-bezier(.2,.8,.3,1), box-shadow 200ms" style-hover="transform: translateY(-3px); box-shadow: 0 3px 6px oklch(25% 0.013 62 / .06), 0 20px 40px -16px oklch(25% 0.013 62 / .26)">
+        <div style="display: flex; justify-content: space-between; gap: 10px; align-items: flex-start">
+          <span style="display: flex; flex-direction: column; gap: 3px; min-width: 0"><span style="font-size: 14.5px; font-weight: 600; line-height: 1.32; letter-spacing: -.01em">Senior Frontend Engineer</span><span style="font-size: 12.5px; color: oklch(50% 0.012 68); overflow: hidden; text-overflow: ellipsis; white-space: nowrap">Trident Systems</span></span>
+          <span style="flex: none; background: oklch(96.5% 0.014 252); color: oklch(38% 0.12 252); border-radius: 999px; padding: 3px 9px; font-size: 12.5px; font-weight: 600; font-variant-numeric: tabular-nums">84</span>
+        </div>
+        <sc-if value="{{ isFull }}" hint-placeholder-val="{{ true }}">
+        <div style="display: flex; flex-wrap: wrap; gap: 5px"><span style="background: oklch(97.2% 0.006 80); color: oklch(42% 0.012 62); border-radius: 7px; padding: 2px 8px; font-size: 11.5px; box-shadow: inset 0 0 0 1px oklch(93.5% 0.008 78)">React</span><span style="background: oklch(97.2% 0.006 80); color: oklch(42% 0.012 62); border-radius: 7px; padding: 2px 8px; font-size: 11.5px; box-shadow: inset 0 0 0 1px oklch(93.5% 0.008 78)">TS</span><span style="color: oklch(50% 0.012 68); font-size: 11.5px; padding: 2px 3px">+2</span></div>
+        </sc-if>
+        <div style="display: flex; justify-content: space-between; align-items: center; gap: 8px; font-size: 12px; color: oklch(50% 0.012 68)"><span style="font-variant-numeric: tabular-nums; font-weight: 500">$5 000–6 500</span><span style="letter-spacing: .06em; font-weight: 600; font-size: 10.5px">DJINNI</span></div>
+      </div>
+
+      <div style="background: oklch(99.4% 0.004 85); border-radius: 14px; padding: 13px 15px; display: flex; flex-direction: column; gap: 11px; box-shadow: 0 1px 2px oklch(25% 0.013 62 / .05), 0 8px 20px -12px oklch(25% 0.013 62 / .16)">
+        <span style="display: flex; align-items: center; gap: 9px; font-size: 11px; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; color: oklch(44% 0.12 252)"><span style="width: 8px; height: 8px; border-radius: 50%; background: oklch(52% 0.12 252); animation: kb-breathe 1500ms ease-in-out infinite"></span>AI обробляє</span>
+        <span style="height: 14px; width: 80%; border-radius: 7px; background: linear-gradient(90deg, oklch(95.5% 0.008 80) 0%, oklch(98.8% 0.004 84) 50%, oklch(95.5% 0.008 80) 100%); background-size: 340px 100%; animation: kb-shim 1600ms linear infinite; display: block"></span>
+        <span style="height: 11px; width: 54%; border-radius: 7px; background: linear-gradient(90deg, oklch(95.5% 0.008 80) 0%, oklch(98.8% 0.004 84) 50%, oklch(95.5% 0.008 80) 100%); background-size: 340px 100%; animation: kb-shim 1600ms linear infinite; display: block"></span>
+      </div>
+
+      <div style="background: oklch(97.6% 0.005 80); border-radius: 14px; padding: 13px 15px; display: flex; flex-direction: column; gap: 10px; box-shadow: inset 0 0 0 1px oklch(93.5% 0.008 78)">
+        <div style="display: flex; justify-content: space-between; gap: 10px; align-items: flex-start">
+          <span style="display: flex; flex-direction: column; gap: 3px; min-width: 0"><span style="font-size: 14.5px; font-weight: 600; line-height: 1.32; color: oklch(40% 0.012 62)">Middle QA Engineer</span><span style="font-size: 12.5px; color: oklch(52% 0.012 68)">Vela Interactive</span></span>
+          <span style="flex: none; color: oklch(52% 0.012 68); border-radius: 999px; padding: 3px 9px; font-size: 12.5px; font-weight: 600; font-variant-numeric: tabular-nums; box-shadow: inset 0 0 0 1px oklch(91% 0.008 78)">58</span>
+        </div>
+        <div style="display: flex; justify-content: space-between; align-items: center; gap: 8px; font-size: 12px; color: oklch(52% 0.012 68)"><span style="font-variant-numeric: tabular-nums">$2 800–3 600</span><span style="display: flex; align-items: center; gap: 6px"><span style="width: 14px; height: 14px; display: block; flex: none; color: oklch(64% 0.014 78)"><i data-lucide="circle-dashed"></i></span>9 днів тиші</span></div>
+      </div>
+
+      <div style="background: oklch(99.4% 0.004 85); border-radius: 14px; padding: 13px 15px; display: flex; flex-direction: column; gap: 10px; box-shadow: 0 1px 2px oklch(25% 0.013 62 / .05), 0 8px 20px -12px oklch(25% 0.013 62 / .16)">
+        <div style="display: flex; justify-content: space-between; gap: 10px; align-items: flex-start">
+          <span style="display: flex; flex-direction: column; gap: 3px; min-width: 0"><span style="font-size: 14.5px; font-weight: 600; line-height: 1.32">Product Designer</span><span style="font-size: 12.5px; color: oklch(50% 0.012 68); overflow: hidden; text-overflow: ellipsis; white-space: nowrap">Науково-виробниче об'єднання «Соняшник»</span></span>
+          <span style="flex: none; color: oklch(50% 0.012 68); border: 1.5px dashed oklch(82% 0.010 78); border-radius: 999px; padding: 1.5px 9px; font-size: 12.5px; font-weight: 600">—</span>
+        </div>
+        <div style="display: flex; justify-content: space-between; align-items: center; gap: 8px; font-size: 12px; color: oklch(50% 0.012 68)"><span>вилка не вказана</span><span style="letter-spacing: .06em; font-weight: 600; font-size: 10.5px">ВРУЧНУ</span></div>
+      </div>
+
+      <button onClick="{{ noop }}" style="border: 1.5px dashed oklch(89% 0.008 78); background: transparent; color: oklch(50% 0.012 68); border-radius: 12px; padding: 0; height: 42px; font-family: 'Onest', sans-serif; font-size: 12.5px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; transition: all 160ms" style-hover="border-color: oklch(62% 0.10 252); color: oklch(44% 0.12 252); background: oklch(98.6% 0.010 252)"><span style="width: 15px; height: 15px; display: block; flex: none"><i data-lucide="plus"></i></span>вакансія в «відгук»</button>
+      <span style="font-size: 11px; color: oklch(54% 0.012 70); text-align: center">ще 4 карточки нижче</span>
+    </div>
+
+    <div style="flex: 1; min-width: 250px; display: flex; flex-direction: column; gap: 10px; background: oklch(96.4% 0.006 80); border-radius: 16px; padding: 12px">
+      <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 0 2px">
+        <span style="display: flex; align-items: center; gap: 9px"><span style="width: 9px; height: 9px; border-radius: 3px; background: oklch(52% 0.10 235)"></span><span style="font-size: 13px; font-weight: 600">скринінг</span></span>
+        <span style="font-size: 12px; color: oklch(50% 0.012 68); font-variant-numeric: tabular-nums; background: oklch(99.4% 0.004 85); border-radius: 999px; padding: 2px 8px">5</span>
+      </div>
+
+      <div style="background: oklch(99.4% 0.004 85); border-radius: 14px; padding: 13px 15px; display: flex; flex-direction: column; gap: 10px; cursor: grab; box-shadow: 0 1px 2px oklch(25% 0.013 62 / .05), 0 8px 20px -12px oklch(25% 0.013 62 / .16); transition: transform 200ms cubic-bezier(.2,.8,.3,1), box-shadow 200ms" style-hover="transform: translateY(-3px); box-shadow: 0 3px 6px oklch(25% 0.013 62 / .06), 0 20px 40px -16px oklch(25% 0.013 62 / .26)">
+        <div style="display: flex; justify-content: space-between; gap: 10px; align-items: flex-start">
+          <span style="display: flex; flex-direction: column; gap: 3px; min-width: 0"><span style="font-size: 14.5px; font-weight: 600; line-height: 1.32">Go Backend Engineer</span><span style="font-size: 12.5px; color: oklch(50% 0.012 68)">Bitmark</span></span>
+          <span style="flex: none; background: oklch(97.2% 0.006 80); color: oklch(40% 0.012 62); border-radius: 999px; padding: 3px 9px; font-size: 12.5px; font-weight: 600; font-variant-numeric: tabular-nums; box-shadow: inset 0 0 0 1px oklch(93.5% 0.008 78)">71</span>
+        </div>
+        <div style="display: flex; justify-content: space-between; align-items: center; gap: 8px; font-size: 12px; color: oklch(50% 0.012 68)"><span style="font-variant-numeric: tabular-nums; font-weight: 500">$4 800–6 200</span><span style="letter-spacing: .06em; font-weight: 600; font-size: 10.5px">DOU</span></div>
+      </div>
+
+      <div style="background: oklch(99.4% 0.004 85); border-radius: 14px; padding: 13px 15px; display: flex; flex-direction: column; gap: 10px; box-shadow: 0 1px 2px oklch(25% 0.013 62 / .05), 0 8px 20px -12px oklch(25% 0.013 62 / .16)">
+        <div style="display: flex; justify-content: space-between; gap: 10px; align-items: flex-start">
+          <span style="display: flex; flex-direction: column; gap: 3px; min-width: 0"><span style="font-size: 14.5px; font-weight: 600; line-height: 1.32">Full-stack Developer</span><span style="font-size: 12.5px; color: oklch(50% 0.012 68)">Kvit Software</span></span>
+          <span style="flex: none; background: oklch(97.2% 0.006 80); color: oklch(40% 0.012 62); border-radius: 999px; padding: 3px 9px; font-size: 12.5px; font-weight: 600; font-variant-numeric: tabular-nums; box-shadow: inset 0 0 0 1px oklch(93.5% 0.008 78)">66</span>
+        </div>
+        <span style="display: flex; align-items: center; gap: 8px; background: oklch(96.5% 0.014 252); color: oklch(38% 0.12 252); border-radius: 8px; padding: 6px 9px; font-size: 12px; font-weight: 500"><span style="width: 14px; height: 14px; display: block; flex: none"><i data-lucide="phone-call"></i></span>дзвінок сьогодні, 16:00</span>
+        <div style="display: flex; justify-content: space-between; align-items: center; gap: 8px; font-size: 12px; color: oklch(50% 0.012 68)"><span style="font-variant-numeric: tabular-nums; font-weight: 500">$4 200–5 000</span><span style="letter-spacing: .06em; font-weight: 600; font-size: 10.5px">DJINNI</span></div>
+      </div>
+
+      <div style="border: 1.5px dashed oklch(62% 0.10 252); background: oklch(97.5% 0.018 252); border-radius: 14px; min-height: 76px; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; color: oklch(42% 0.12 252); box-shadow: 0 0 0 4px oklch(88% 0.045 252 / .4); box-sizing: border-box">відпустити тут</div>
+
+      <div style="background: oklch(97.6% 0.005 80); border-radius: 14px; padding: 13px 15px; display: flex; flex-direction: column; gap: 10px; box-shadow: inset 0 0 0 1px oklch(93.5% 0.008 78)">
+        <div style="display: flex; justify-content: space-between; gap: 10px; align-items: flex-start">
+          <span style="display: flex; flex-direction: column; gap: 3px; min-width: 0"><span style="font-size: 14.5px; font-weight: 600; line-height: 1.32; color: oklch(40% 0.012 62)">React Native Developer</span><span style="font-size: 12.5px; color: oklch(52% 0.012 68)">Zoria Tech</span></span>
+          <span style="flex: none; color: oklch(52% 0.012 68); border-radius: 999px; padding: 3px 9px; font-size: 12.5px; font-weight: 600; font-variant-numeric: tabular-nums; box-shadow: inset 0 0 0 1px oklch(91% 0.008 78)">62</span>
+        </div>
+        <div style="display: flex; justify-content: space-between; align-items: center; gap: 8px; font-size: 12px; color: oklch(52% 0.012 68)"><span style="font-variant-numeric: tabular-nums">$3 800–4 600</span><span style="display: flex; align-items: center; gap: 6px"><span style="width: 14px; height: 14px; display: block; flex: none; color: oklch(64% 0.014 78)"><i data-lucide="circle-dashed"></i></span>14 днів тиші</span></div>
+      </div>
+    </div>
+
+    <div style="flex: 1; min-width: 250px; display: flex; flex-direction: column; gap: 10px; background: oklch(96.4% 0.006 80); border-radius: 16px; padding: 12px">
+      <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 0 2px">
+        <span style="display: flex; align-items: center; gap: 9px"><span style="width: 9px; height: 9px; border-radius: 3px; background: oklch(64% 0.08 195)"></span><span style="font-size: 13px; font-weight: 600">техінтерв'ю</span></span>
+        <span style="font-size: 12px; color: oklch(50% 0.012 68); font-variant-numeric: tabular-nums; background: oklch(99.4% 0.004 85); border-radius: 999px; padding: 2px 8px">3</span>
+      </div>
+
+      <div style="background: oklch(99.6% 0.003 85); border-radius: 14px; padding: 13px 15px; display: flex; flex-direction: column; gap: 11px; box-shadow: 0 0 0 3px oklch(88% 0.045 252 / .55), 0 12px 28px -14px oklch(40% 0.09 252 / .3)">
+        <div style="display: flex; justify-content: space-between; gap: 10px; align-items: flex-start">
+          <span style="display: flex; flex-direction: column; gap: 3px; min-width: 0"><span style="font-size: 14.5px; font-weight: 600; line-height: 1.32">Senior React Developer</span><span style="font-size: 12.5px; color: oklch(50% 0.012 68)">Acme Technologies</span></span>
+          <span style="flex: none; background: oklch(96.5% 0.014 252); color: oklch(38% 0.12 252); border-radius: 999px; padding: 3px 9px; font-size: 12.5px; font-weight: 600; font-variant-numeric: tabular-nums">78</span>
+        </div>
+        <div style="display: flex; justify-content: space-between; align-items: center; gap: 8px; font-size: 12px; color: oklch(50% 0.012 68)"><span style="font-variant-numeric: tabular-nums; font-weight: 500">$4 500–6 000</span><span style="letter-spacing: .06em; font-weight: 600; font-size: 10.5px">DJINNI</span></div>
+        <div style="display: flex; gap: 7px; flex-wrap: wrap">
+          <a href="JobFlow%20-%20Карточка%20вакансії.dc.html" style="text-decoration: none; background: oklch(97.2% 0.006 80); color: oklch(30% 0.013 62); border-radius: 9px; padding: 0 11px; height: 32px; font-size: 12px; font-weight: 600; display: flex; align-items: center; box-shadow: inset 0 0 0 1px oklch(92% 0.008 78); transition: background 160ms" style-hover="background: oklch(94.6% 0.010 78)">Відкрити</a>
+          <button onClick="{{ openReject }}" style="border: none; background: oklch(98% 0.010 34); color: oklch(46% 0.10 34); border-radius: 9px; padding: 0 11px; height: 32px; font-family: 'Onest', sans-serif; font-size: 12px; font-weight: 600; cursor: pointer; box-shadow: inset 0 0 0 1px oklch(91% 0.018 34); transition: background 160ms" style-hover="background: oklch(96% 0.022 34)">У «відмову»</button>
+        </div>
+      </div>
+
+      <div style="display: flex; align-items: flex-start; gap: 10px; background: oklch(96.5% 0.014 252); border-radius: 12px; padding: 11px 12px; font-size: 12px; line-height: 1.5; color: oklch(34% 0.10 252)">
+        <span style="font-size: 10px; font-weight: 700; letter-spacing: .06em; background: oklch(99.4% 0.004 85); border-radius: 6px; padding: 3px 6px; flex: none; box-shadow: inset 0 0 0 1px oklch(88% 0.03 252)">SPACE</span>
+        <span>Карточку взято з клавіатури. <span style="font-weight: 600">←/→</span> — етап, <span style="font-weight: 600">↑/↓</span> — позиція, <span style="font-weight: 600">SPACE</span> — відпустити, <span style="font-weight: 600">ESC</span> — скасувати.</span>
+      </div>
+
+      <div style="background: oklch(99.4% 0.004 85); border-radius: 14px; padding: 13px 15px; display: flex; flex-direction: column; gap: 10px; box-shadow: 0 1px 2px oklch(25% 0.013 62 / .05), 0 8px 20px -12px oklch(25% 0.013 62 / .16)">
+        <div style="display: flex; justify-content: space-between; gap: 10px; align-items: flex-start">
+          <span style="display: flex; flex-direction: column; gap: 3px; min-width: 0"><span style="font-size: 14.5px; font-weight: 600; line-height: 1.32">Platform Engineer</span><span style="font-size: 12.5px; color: oklch(50% 0.012 68)">Bereza Labs</span></span>
+          <span style="flex: none; background: oklch(97.2% 0.006 80); color: oklch(40% 0.012 62); border-radius: 999px; padding: 3px 9px; font-size: 12.5px; font-weight: 600; font-variant-numeric: tabular-nums; box-shadow: inset 0 0 0 1px oklch(93.5% 0.008 78)">69</span>
+        </div>
+        <div style="display: flex; justify-content: space-between; align-items: center; gap: 8px; font-size: 12px; color: oklch(50% 0.012 68)"><span style="font-variant-numeric: tabular-nums; font-weight: 500">$5 200–6 800</span><span style="letter-spacing: .06em; font-weight: 600; font-size: 10.5px">РЕФЕРАЛКА</span></div>
+      </div>
+    </div>
+
+    <div style="flex: 1; min-width: 250px; display: flex; flex-direction: column; gap: 10px; background: oklch(96.4% 0.006 80); border-radius: 16px; padding: 12px">
+      <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 0 2px">
+        <span style="display: flex; align-items: center; gap: 9px"><span style="width: 9px; height: 9px; border-radius: 3px; background: oklch(80% 0.08 80)"></span><span style="font-size: 13px; font-weight: 600">фінал</span></span>
+        <span style="font-size: 12px; color: oklch(50% 0.012 68); font-variant-numeric: tabular-nums; background: oklch(99.4% 0.004 85); border-radius: 999px; padding: 2px 8px">1</span>
+      </div>
+      <div style="background: oklch(99.4% 0.004 85); border-radius: 14px; padding: 13px 15px; display: flex; flex-direction: column; gap: 10px; box-shadow: 0 1px 2px oklch(25% 0.013 62 / .05), 0 8px 20px -12px oklch(25% 0.013 62 / .16); transition: transform 200ms cubic-bezier(.2,.8,.3,1)" style-hover="transform: translateY(-3px)">
+        <div style="display: flex; justify-content: space-between; gap: 10px; align-items: flex-start">
+          <span style="display: flex; flex-direction: column; gap: 3px; min-width: 0"><span style="font-size: 14.5px; font-weight: 600; line-height: 1.32">Lead Frontend Engineer</span><span style="font-size: 12.5px; color: oklch(50% 0.012 68)">Northwind Digital</span></span>
+          <span style="flex: none; background: linear-gradient(140deg, oklch(96.5% 0.026 252), oklch(93.5% 0.038 252)); color: oklch(38% 0.12 252); border-radius: 999px; padding: 3px 9px; font-size: 12.5px; font-weight: 600; font-variant-numeric: tabular-nums">91</span>
+        </div>
+        <span style="display: flex; align-items: center; gap: 8px; font-size: 12px; color: oklch(45% 0.012 65)"><span style="width: 7px; height: 7px; border-radius: 2px; background: oklch(80% 0.08 80); flex: none"></span>13 днів на етапі · норма 17</span>
+        <div style="display: flex; justify-content: space-between; align-items: center; gap: 8px; font-size: 12px; color: oklch(50% 0.012 68)"><span style="font-variant-numeric: tabular-nums; font-weight: 500">$6 000–7 500</span><span style="letter-spacing: .06em; font-weight: 600; font-size: 10.5px">РЕФЕРАЛКА</span></div>
+      </div>
+      <div style="border: 1.5px dashed oklch(90% 0.008 78); border-radius: 12px; min-height: 66px; display: flex; align-items: center; justify-content: center; padding: 12px; font-size: 12px; text-align: center; line-height: 1.5; color: oklch(54% 0.012 70); box-sizing: border-box">Тут буває тісно рідко.<br>Це нормально.</div>
+    </div>
+
+    <div style="flex: 1; min-width: 250px; display: flex; flex-direction: column; gap: 10px; background: linear-gradient(180deg, oklch(97% 0.020 158) 0%, oklch(96.4% 0.006 80) 60%); border-radius: 16px; padding: 12px">
+      <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 0 2px">
+        <span style="display: flex; align-items: center; gap: 9px"><span style="width: 10px; height: 10px; border-radius: 50%; background: oklch(49% 0.10 158)"></span><span style="font-size: 13px; font-weight: 600">офер</span></span>
+        <span style="font-size: 12px; color: oklch(38% 0.09 158); font-variant-numeric: tabular-nums; background: oklch(99.4% 0.004 85); border-radius: 999px; padding: 2px 8px; font-weight: 600">1</span>
+      </div>
+      <div style="background: linear-gradient(160deg, oklch(98.6% 0.014 158) 0%, oklch(99.4% 0.004 85) 55%); border-radius: 14px; padding: 13px 15px; display: flex; flex-direction: column; gap: 10px; box-shadow: 0 1px 2px oklch(25% 0.013 62 / .05), 0 12px 28px -14px oklch(45% 0.08 158 / .4), inset 0 0 0 1px oklch(90% 0.04 158)">
+        <div style="display: flex; justify-content: space-between; gap: 10px; align-items: flex-start">
+          <span style="display: flex; flex-direction: column; gap: 3px; min-width: 0"><span style="font-size: 14.5px; font-weight: 600; line-height: 1.32">Frontend Engineer</span><span style="font-size: 12.5px; color: oklch(50% 0.012 68)">Lumen Labs</span></span>
+          <span style="flex: none; background: oklch(49% 0.10 158); color: oklch(99% 0.008 158); border-radius: 999px; padding: 3px 10px; font-size: 12px; font-weight: 600">офер</span>
+        </div>
+        <div style="display: flex; justify-content: space-between; align-items: center; gap: 8px; font-size: 12px; color: oklch(50% 0.012 68)"><span style="font-variant-numeric: tabular-nums; font-weight: 600; color: oklch(38% 0.09 158)">$5 800</span><span style="font-variant-numeric: tabular-nums">41 день у воронці</span></div>
+      </div>
+    </div>
+
+    <div style="width: 58px; flex: none; display: flex; flex-direction: column; align-items: center; gap: 14px; background: oklch(96.4% 0.006 80); border-radius: 16px; padding: 12px 0">
+      <button onClick="{{ noop }}" style="border: none; background: oklch(99.4% 0.004 85); border-radius: 9px; width: 30px; height: 30px; cursor: pointer; color: oklch(42% 0.012 65); box-shadow: 0 1px 2px oklch(25% 0.013 62 / .08); display: flex; align-items: center; justify-content: center; transition: all 160ms" style-hover="color: oklch(44% 0.12 252)"><span style="width: 16px; height: 16px; display: block"><i data-lucide="chevron-right"></i></span></button>
+      <span style="writing-mode: vertical-rl; transform: rotate(180deg); display: flex; align-items: center; gap: 10px; font-size: 13px; font-weight: 600; color: oklch(45% 0.012 65)">відмова<span style="font-size: 12px; font-variant-numeric: tabular-nums; font-weight: 400; color: oklch(50% 0.012 68)">32</span></span>
+      <span style="width: 10px; height: 10px; border-radius: 50%; box-shadow: inset 0 0 0 2px oklch(58% 0.09 34); display: flex; align-items: center; justify-content: center; margin-top: auto"><span style="width: 5px; height: 2px; border-radius: 1px; background: oklch(58% 0.09 34)"></span></span>
+    </div>
+
+    <div style="width: 58px; flex: none; display: flex; flex-direction: column; align-items: center; gap: 14px; background: oklch(97.4% 0.005 80); border-radius: 16px; padding: 12px 0; box-shadow: inset 0 0 0 1px oklch(94% 0.008 78)">
+      <button onClick="{{ noop }}" style="border: none; background: oklch(99.4% 0.004 85); border-radius: 9px; width: 30px; height: 30px; cursor: pointer; color: oklch(54% 0.012 70); box-shadow: inset 0 0 0 1px oklch(93% 0.008 78); display: flex; align-items: center; justify-content: center; transition: all 160ms" style-hover="color: oklch(44% 0.12 252)"><span style="width: 16px; height: 16px; display: block"><i data-lucide="chevron-right"></i></span></button>
+      <span style="writing-mode: vertical-rl; transform: rotate(180deg); display: flex; align-items: center; gap: 10px; font-size: 13px; font-weight: 600; color: oklch(52% 0.012 68)">ghosted<span style="font-size: 12px; font-variant-numeric: tabular-nums; font-weight: 400">17</span></span>
+      <span style="width: 10px; height: 10px; border-radius: 50%; border: 2px dashed oklch(74% 0.014 78); margin-top: auto; box-sizing: border-box"></span>
+    </div>
+
+  </div>
+</div>
+
+<div style="max-width: 1440px; margin: 0 auto; padding: 8px 26px 60px; display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 22px">
+  <div style="display: flex; flex-direction: column; gap: 7px">
+    <span style="font-size: 11px; font-weight: 600; letter-spacing: .14em; text-transform: uppercase; color: oklch(50% 0.012 68)">записка · чому так</span>
+    <span style="font-size: 13.5px; line-height: 1.65; color: oklch(42% 0.012 62)">Завершені стани — «відмова» і «ghosted» — за замовчуванням схлопнуті у вертикальні смуги. Там 49 карточок із 54, і відкрита колонка відмов перетворює дошку на список поразок.</span>
+  </div>
+  <div style="display: flex; flex-direction: column; gap: 7px">
+    <span style="font-size: 11px; font-weight: 600; letter-spacing: .14em; text-transform: uppercase; color: oklch(50% 0.012 68)">50+ карточок</span>
+    <span style="font-size: 13.5px; line-height: 1.65; color: oklch(42% 0.012 62)">Режим «Щільні» знімає стек — спробуй перемикач у тулбарі. Колонка віртуалізується після 30 карточок; лічильник у шапці показує повну кількість, а не видиму.</span>
+  </div>
+  <div style="display: flex; flex-direction: column; gap: 7px">
+    <span style="font-size: 11px; font-weight: 600; letter-spacing: .14em; text-transform: uppercase; color: oklch(50% 0.012 68)">що зламається</span>
+    <span style="font-size: 13.5px; line-height: 1.65; color: oklch(42% 0.012 62)">Довга назва компанії обрізається елипсисом у другому рядку — позиція завжди повна. На 0 карточок дошка показує лише колонку «відгук» із порожнім станом.</span>
+  </div>
+</div>
+
+<sc-if value="{{ rejectOpen }}" hint-placeholder-val="{{ false }}">
+<div style="position: fixed; inset: 0; background: oklch(25% 0.013 62 / .34); backdrop-filter: blur(2px); display: flex; align-items: center; justify-content: center; padding: 24px; z-index: 40">
+  <div style="width: 100%; max-width: 560px; background: oklch(99.6% 0.003 85); border-radius: 20px; box-shadow: 0 8px 20px oklch(25% 0.013 62 / .16), 0 40px 80px -24px oklch(25% 0.013 62 / .44); animation: kb-spring 260ms cubic-bezier(.34,1.56,.64,1); overflow: hidden">
+
+    <sc-if value="{{ choosing }}" hint-placeholder-val="{{ true }}">
+    <div style="display: flex; flex-direction: column">
+      <div style="padding: 22px 24px 18px; display: flex; flex-direction: column; gap: 10px">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 16px">
+          <div style="display: flex; flex-direction: column; gap: 6px">
+            <span style="font-size: 11px; font-weight: 600; letter-spacing: .12em; text-transform: uppercase; color: oklch(50% 0.012 68)">Acme Technologies · техінтерв'ю → відмова</span>
+            <span style="font-family: 'Unbounded', sans-serif; font-weight: 500; font-size: 24px; line-height: 1.16; letter-spacing: -.034em">Що сталося?</span>
+          </div>
+          <button onClick="{{ closeReject }}" style="border: none; background: oklch(97.2% 0.006 80); border-radius: 10px; width: 32px; height: 32px; cursor: pointer; flex: none; display: flex; align-items: center; justify-content: center; color: oklch(45% 0.012 65); transition: background 160ms" style-hover="background: oklch(94.6% 0.010 78)"><span style="width: 17px; height: 17px; display: block"><i data-lucide="x"></i></span></button>
+        </div>
+        <span style="font-size: 13.5px; line-height: 1.55; color: oklch(45% 0.012 65)">Один клік — і карточка переїде. Причина потрібна не для звітності, а щоб аналітика знала, де саме ти застряг.</span>
+      </div>
+
+      <div style="padding: 0 24px 20px; display: flex; flex-direction: column; gap: 18px">
+        <div style="display: flex; flex-direction: column; gap: 10px">
+          <span style="display: flex; align-items: center; gap: 9px; font-size: 12.5px; font-weight: 600"><span style="width: 16px; height: 16px; display: block; flex: none; color: oklch(58% 0.09 34)"><i data-lucide="circle-minus"></i></span>Відмовила компанія</span>
+          <div style="display: flex; flex-wrap: wrap; gap: 7px">
+            <button onClick="{{ pickSkills }}" style="border: none; background: oklch(97.6% 0.010 34); color: oklch(42% 0.07 34); border-radius: 10px; padding: 0 14px; height: 42px; font-family: 'Onest', sans-serif; font-size: 13.5px; cursor: pointer; box-shadow: inset 0 0 0 1px oklch(91% 0.018 34); transition: all 160ms" style-hover="background: oklch(95.5% 0.022 34); transform: translateY(-1px)">не вистачає скілів</button>
+            <button onClick="{{ pickEnglish }}" style="border: none; background: oklch(97.6% 0.010 34); color: oklch(42% 0.07 34); border-radius: 10px; padding: 0 14px; height: 42px; font-family: 'Onest', sans-serif; font-size: 13.5px; cursor: pointer; box-shadow: inset 0 0 0 1px oklch(91% 0.018 34); transition: all 160ms" style-hover="background: oklch(95.5% 0.022 34); transform: translateY(-1px)">рівень англійської</button>
+            <button onClick="{{ pickSalary }}" style="border: none; background: oklch(97.6% 0.010 34); color: oklch(42% 0.07 34); border-radius: 10px; padding: 0 14px; height: 42px; font-family: 'Onest', sans-serif; font-size: 13.5px; cursor: pointer; box-shadow: inset 0 0 0 1px oklch(91% 0.018 34); transition: all 160ms" style-hover="background: oklch(95.5% 0.022 34); transform: translateY(-1px)">зарплатні очікування</button>
+            <button onClick="{{ pickOther }}" style="border: none; background: oklch(97.6% 0.010 34); color: oklch(42% 0.07 34); border-radius: 10px; padding: 0 14px; height: 42px; font-family: 'Onest', sans-serif; font-size: 13.5px; cursor: pointer; box-shadow: inset 0 0 0 1px oklch(91% 0.018 34); transition: all 160ms" style-hover="background: oklch(95.5% 0.022 34); transform: translateY(-1px)">обрали іншого</button>
+            <button onClick="{{ pickClosed }}" style="border: none; background: oklch(97.6% 0.010 34); color: oklch(42% 0.07 34); border-radius: 10px; padding: 0 14px; height: 42px; font-family: 'Onest', sans-serif; font-size: 13.5px; cursor: pointer; box-shadow: inset 0 0 0 1px oklch(91% 0.018 34); transition: all 160ms" style-hover="background: oklch(95.5% 0.022 34); transform: translateY(-1px)">вакансію закрили</button>
+            <button onClick="{{ pickNoReason }}" style="border: none; background: oklch(97.6% 0.010 34); color: oklch(42% 0.07 34); border-radius: 10px; padding: 0 14px; height: 42px; font-family: 'Onest', sans-serif; font-size: 13.5px; cursor: pointer; box-shadow: inset 0 0 0 1px oklch(91% 0.018 34); transition: all 160ms" style-hover="background: oklch(95.5% 0.022 34); transform: translateY(-1px)">без пояснення</button>
+          </div>
+        </div>
+
+        <div style="display: flex; flex-direction: column; gap: 10px">
+          <span style="display: flex; align-items: center; gap: 9px; font-size: 12.5px; font-weight: 600"><span style="width: 16px; height: 16px; display: block; flex: none; color: oklch(58% 0.035 275)"><i data-lucide="circle-slash-2"></i></span>Відмовився я</span>
+          <div style="display: flex; flex-wrap: wrap; gap: 7px">
+            <button onClick="{{ pickLowRange }}" style="border: none; background: oklch(97.4% 0.008 275); color: oklch(44% 0.045 275); border-radius: 10px; padding: 0 14px; height: 42px; font-family: 'Onest', sans-serif; font-size: 13.5px; cursor: pointer; box-shadow: inset 0 0 0 1px oklch(91% 0.014 275); transition: all 160ms" style-hover="background: oklch(95% 0.014 275); transform: translateY(-1px)">низька вилка</button>
+            <button onClick="{{ pickOffice }}" style="border: none; background: oklch(97.4% 0.008 275); color: oklch(44% 0.045 275); border-radius: 10px; padding: 0 14px; height: 42px; font-family: 'Onest', sans-serif; font-size: 13.5px; cursor: pointer; box-shadow: inset 0 0 0 1px oklch(91% 0.014 275); transition: all 160ms" style-hover="background: oklch(95% 0.014 275); transform: translateY(-1px)">офіс/графік</button>
+            <button onClick="{{ pickRedFlags }}" style="border: none; background: oklch(97.4% 0.008 275); color: oklch(44% 0.045 275); border-radius: 10px; padding: 0 14px; height: 42px; font-family: 'Onest', sans-serif; font-size: 13.5px; cursor: pointer; box-shadow: inset 0 0 0 1px oklch(91% 0.014 275); transition: all 160ms" style-hover="background: oklch(95% 0.014 275); transform: translateY(-1px)">ред флаги</button>
+            <button onClick="{{ pickAccepted }}" style="border: none; background: oklch(97.4% 0.008 275); color: oklch(44% 0.045 275); border-radius: 10px; padding: 0 14px; height: 42px; font-family: 'Onest', sans-serif; font-size: 13.5px; cursor: pointer; box-shadow: inset 0 0 0 1px oklch(91% 0.014 275); transition: all 160ms" style-hover="background: oklch(95% 0.014 275); transform: translateY(-1px)">прийняв інший офер</button>
+          </div>
+        </div>
+      </div>
+
+      <div style="padding: 15px 24px 18px; background: oklch(97.4% 0.006 80); display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap">
+        <button onClick="{{ pickNoReason }}" style="border: none; background: none; color: oklch(45% 0.012 65); font-family: 'Onest', sans-serif; font-size: 13px; cursor: pointer; padding: 8px 0; min-height: 38px; text-decoration: underline; text-underline-offset: 3px">Не хочу зараз вказувати</button>
+        <span style="font-size: 11px; color: oklch(52% 0.012 68)">ENTER — остання причина · ESC — скасувати</span>
+      </div>
+    </div>
+    </sc-if>
+
+    <sc-if value="{{ saved }}" hint-placeholder-val="{{ false }}">
+    <div style="display: flex; flex-direction: column">
+      <div style="padding: 24px 24px 18px; display: flex; flex-direction: column; gap: 12px">
+        <span style="display: flex; align-items: center; gap: 9px; font-size: 11px; font-weight: 600; letter-spacing: .12em; text-transform: uppercase; color: oklch(38% 0.09 158)"><span style="width: 22px; height: 22px; border-radius: 8px; background: oklch(96% 0.03 158); display: flex; align-items: center; justify-content: center; flex: none"><span style="width: 14px; height: 14px; display: block; color: oklch(42% 0.10 158)"><i data-lucide="check"></i></span></span>записано в аналітику</span>
+        <span style="font-family: 'Unbounded', sans-serif; font-weight: 500; font-size: 22px; line-height: 1.24; letter-spacing: -.032em">Acme → відмова: {{ chosen }}</span>
+        <span style="font-size: 13.5px; line-height: 1.6; color: oklch(42% 0.012 62)">Це четверта відмова на техінтерв'ю. Причина «не вистачає скілів» стала найчастішою на цьому етапі — дашборд уже це показує.</span>
+      </div>
+
+      <div style="padding: 0 24px 20px; display: flex; flex-direction: column; gap: 11px">
+        <span style="font-size: 11px; font-weight: 600; letter-spacing: .12em; text-transform: uppercase; color: oklch(50% 0.012 68)">причини відмов на техінтерв'ю</span>
+        <div style="display: grid; grid-template-columns: 150px 1fr 28px; gap: 9px 12px; align-items: center; font-size: 13px">
+          <span>не вистачає скілів</span><span style="height: 16px; border-radius: 5px; background: oklch(94.6% 0.010 78); display: block; overflow: hidden"><span style="display: block; height: 16px; width: 75%; border-radius: 5px; background: oklch(52% 0.10 235); animation: kb-in 320ms cubic-bezier(.2,.8,.3,1)"></span></span><span style="text-align: right; font-weight: 600; font-variant-numeric: tabular-nums">3</span>
+          <span style="color: oklch(45% 0.012 65)">обрали іншого</span><span style="height: 16px; border-radius: 5px; background: oklch(94.6% 0.010 78); display: block; overflow: hidden"><span style="display: block; height: 16px; width: 25%; border-radius: 5px; background: oklch(88% 0.04 45)"></span></span><span style="text-align: right; font-variant-numeric: tabular-nums; color: oklch(45% 0.012 65)">1</span>
+        </div>
+      </div>
+
+      <div style="padding: 15px 24px 18px; background: oklch(97.4% 0.006 80); display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap">
+        <button onClick="{{ closeReject }}" style="border: none; background: none; color: oklch(44% 0.12 252); font-family: 'Onest', sans-serif; font-size: 13px; font-weight: 600; cursor: pointer; padding: 8px 0; min-height: 38px">Скасувати перенос</button>
+        <div style="display: flex; gap: 9px; flex-wrap: wrap">
+          <button onClick="{{ closeReject }}" style="border: none; background: oklch(99.4% 0.004 85); color: oklch(25% 0.013 62); border-radius: 10px; padding: 0 15px; height: 38px; font-family: 'Onest', sans-serif; font-size: 13px; font-weight: 600; cursor: pointer; box-shadow: inset 0 0 0 1px oklch(91% 0.008 78)">Додати заметку</button>
+          <button onClick="{{ closeReject }}" style="border: none; background: oklch(52% 0.12 252); color: oklch(99% 0.005 252); border-radius: 10px; padding: 0 15px; height: 38px; font-family: 'Onest', sans-serif; font-size: 13px; font-weight: 600; cursor: pointer; box-shadow: 0 1px 2px oklch(40% 0.09 252 / .2), 0 8px 18px -7px oklch(40% 0.09 252 / .45)">Готово</button>
+        </div>
+      </div>
+    </div>
+    </sc-if>
+
+  </div>
+</div>
+</sc-if>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1500}}">
+class Component extends DCLogic {
+  state = { open: true, chosen: null, density: 'full' };
+
+  componentDidMount() { this.icons(); this._iv = setInterval(() => this.icons(), 300); }
+  componentDidUpdate() { this.icons(); }
+  componentWillUnmount() { clearInterval(this._iv); }
+
+  icons() {
+    if (!window.lucide || !window.lucide.createIcons) return;
+    clearInterval(this._iv); this._iv = null;
+    window.lucide.createIcons({ attrs: { width: '100%', height: '100%', 'stroke-width': 1.9 } });
+  }
+
+  renderVals() {
+    const s = this.state;
+    const on = 'oklch(99.6% 0.003 85)';
+    const sh = '0 1px 2px oklch(25% 0.013 62 / .07), 0 4px 12px -6px oklch(25% 0.013 62 / .24)';
+    const d = k => ({ bg: s.density === k ? on : 'transparent', fg: s.density === k ? 'oklch(25% 0.013 62)' : 'oklch(50% 0.012 68)', sh: s.density === k ? sh : 'none' });
+    const a = d('full'), b = d('dense');
+    const p = l => () => this.setState({ chosen: l });
+    return {
+      noop: () => {},
+      isFull: s.density === 'full',
+      fullBg: a.bg, fullFg: a.fg, fullSh: a.sh,
+      denseBg: b.bg, denseFg: b.fg, denseSh: b.sh,
+      setFull: () => this.setState({ density: 'full' }),
+      setDense: () => this.setState({ density: 'dense' }),
+      rejectOpen: s.open,
+      choosing: s.open && !s.chosen,
+      saved: s.open && !!s.chosen,
+      chosen: s.chosen,
+      openReject: () => this.setState({ open: true, chosen: null }),
+      closeReject: () => this.setState({ open: false, chosen: null }),
+      pickSkills: p('не вистачає скілів'),
+      pickEnglish: p('рівень англійської'),
+      pickSalary: p('зарплатні очікування'),
+      pickOther: p('обрали іншого'),
+      pickClosed: p('вакансію закрили'),
+      pickNoReason: p('без пояснення'),
+      pickLowRange: p('низька вилка'),
+      pickOffice: p('офіс/графік'),
+      pickRedFlags: p('ред флаги'),
+      pickAccepted: p('прийняв інший офер')
+    };
+  }
+}
+</script>
+</body>
+</html>

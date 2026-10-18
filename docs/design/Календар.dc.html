@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Onest:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/lucide@latest/dist/umd/lucide.min.js"></script>
+<style>
+  @keyframes cal-in { from { opacity: 0; transform: translateY(-6px) scale(.99) } to { opacity: 1; transform: none } }
+  @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important } }
+</style>
+</helmet>
+
+<div style="display: flex; flex-direction: column; gap: 12px; font-family: 'Onest', system-ui, sans-serif; color: oklch(25% 0.013 62)">
+  <div style="display: flex; align-items: center; gap: 6px">
+    <button onClick="{{ cal.prevMonth }}" style="border: none; background: oklch(97.2% 0.006 80); border-radius: 8px; width: 32px; height: 32px; cursor: pointer; color: oklch(35% 0.013 62); box-shadow: inset 0 0 0 1px oklch(92% 0.008 78); transition: background 140ms; display: flex; align-items: center; justify-content: center; flex: none" style-hover="background: oklch(94.6% 0.010 78)"><span style="width: 16px; height: 16px; display: block; color: currentColor"><i data-lucide="chevron-left"></i></span></button>
+    <button onClick="{{ cal.openMonths }}" style="border: none; background: {{ cal.monthBtnBg }}; border-radius: 8px; padding: 0 11px; height: 30px; cursor: pointer; font-family: 'Onest', sans-serif; font-size: 13.5px; font-weight: 600; color: {{ cal.monthBtnFg }}; display: flex; align-items: center; gap: 6px; transition: all 140ms">{{ cal.monthName }}<span style="width: 14px; height: 14px; display: block; color: currentColor; opacity: .5; flex: none"><i data-lucide="chevron-down"></i></span></button>
+    <button onClick="{{ cal.openYears }}" style="border: none; background: {{ cal.yearBtnBg }}; border-radius: 8px; padding: 0 11px; height: 30px; cursor: pointer; font-family: 'Onest', sans-serif; font-size: 13.5px; font-weight: 600; color: {{ cal.yearBtnFg }}; display: flex; align-items: center; gap: 6px; font-variant-numeric: tabular-nums; transition: all 140ms">{{ cal.year }}<span style="width: 14px; height: 14px; display: block; color: currentColor; opacity: .5; flex: none"><i data-lucide="chevron-down"></i></span></button>
+    <span style="flex: 1"></span>
+    <button onClick="{{ cal.nextMonth }}" style="border: none; background: oklch(97.2% 0.006 80); border-radius: 8px; width: 32px; height: 32px; cursor: pointer; color: oklch(35% 0.013 62); box-shadow: inset 0 0 0 1px oklch(92% 0.008 78); transition: background 140ms; display: flex; align-items: center; justify-content: center; flex: none" style-hover="background: oklch(94.6% 0.010 78)"><span style="width: 16px; height: 16px; display: block; color: currentColor"><i data-lucide="chevron-right"></i></span></button>
+  </div>
+
+  <sc-if value="{{ cal.panelDays }}" hint-placeholder-val="{{ true }}">
+  <div style="display: flex; flex-direction: column; gap: 6px; animation: cal-in 180ms cubic-bezier(.2,.8,.3,1)">
+    <div style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px">
+      <span style="text-align: center; font-size: 10.5px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: oklch(50% 0.012 68); padding: 2px 0">пн</span>
+      <span style="text-align: center; font-size: 10.5px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: oklch(50% 0.012 68); padding: 2px 0">вт</span>
+      <span style="text-align: center; font-size: 10.5px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: oklch(50% 0.012 68); padding: 2px 0">ср</span>
+      <span style="text-align: center; font-size: 10.5px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: oklch(50% 0.012 68); padding: 2px 0">чт</span>
+      <span style="text-align: center; font-size: 10.5px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: oklch(50% 0.012 68); padding: 2px 0">пт</span>
+      <span style="text-align: center; font-size: 10.5px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: oklch(56% 0.03 34); padding: 2px 0">сб</span>
+      <span style="text-align: center; font-size: 10.5px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: oklch(56% 0.03 34); padding: 2px 0">нд</span>
+    </div>
+    <div style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px">
+      <sc-for list="{{ cal.days }}" as="d" hint-placeholder-count="35">
+        <span onClick="{{ d.pick }}" aria-disabled="{{ d.disabled }}" style="height: 34px; border-radius: {{ d.radius }}; background: {{ d.bg }}; color: {{ d.fg }}; box-shadow: {{ d.ring }}; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: {{ d.weight }}; cursor: {{ d.cursor }}; position: relative; font-variant-numeric: tabular-nums; transition: background 140ms, color 140ms">{{ d.label }}<span style="position: absolute; bottom: 4.5px; left: 50%; margin-left: -2px; width: 4px; height: 4px; border-radius: 50%; background: {{ d.dot }}"></span></span>
+      </sc-for>
+    </div>
+  </div>
+  </sc-if>
+
+  <sc-if value="{{ cal.panelMonths }}" hint-placeholder-val="{{ false }}">
+  <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 5px; animation: cal-in 180ms cubic-bezier(.2,.8,.3,1)">
+    <sc-for list="{{ cal.months }}" as="m" hint-placeholder-count="12">
+      <span onClick="{{ m.pick }}" style="height: 42px; border-radius: 9px; background: {{ m.bg }}; color: {{ m.fg }}; box-shadow: {{ m.ring }}; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: {{ m.weight }}; cursor: pointer; transition: all 140ms">{{ m.label }}</span>
+    </sc-for>
+  </div>
+  </sc-if>
+
+  <sc-if value="{{ cal.panelYears }}" hint-placeholder-val="{{ false }}">
+  <div style="display: flex; flex-direction: column; gap: 8px; animation: cal-in 180ms cubic-bezier(.2,.8,.3,1)">
+    <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px">
+      <button onClick="{{ cal.prevDecade }}" style="border: none; background: oklch(97.2% 0.006 80); border-radius: 8px; width: 32px; height: 30px; cursor: pointer; color: oklch(35% 0.013 62); box-shadow: inset 0 0 0 1px oklch(92% 0.008 78); display: flex; align-items: center; justify-content: center"><span style="width: 14px; height: 14px; display: block; color: currentColor"><i data-lucide="chevron-left"></i></span></button>
+      <span style="font-size: 12.5px; font-weight: 600; font-variant-numeric: tabular-nums; color: oklch(45% 0.012 65)">{{ cal.decadeLabel }}</span>
+      <button onClick="{{ cal.nextDecade }}" style="border: none; background: oklch(97.2% 0.006 80); border-radius: 8px; width: 32px; height: 30px; cursor: pointer; color: oklch(35% 0.013 62); box-shadow: inset 0 0 0 1px oklch(92% 0.008 78); display: flex; align-items: center; justify-content: center"><span style="width: 14px; height: 14px; display: block; color: currentColor"><i data-lucide="chevron-right"></i></span></button>
+    </div>
+    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 5px">
+      <sc-for list="{{ cal.years }}" as="y" hint-placeholder-count="12">
+        <span onClick="{{ y.pick }}" style="height: 42px; border-radius: 9px; background: {{ y.bg }}; color: {{ y.fg }}; box-shadow: {{ y.ring }}; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: {{ y.weight }}; cursor: pointer; font-variant-numeric: tabular-nums; transition: all 140ms">{{ y.label }}</span>
+      </sc-for>
+    </div>
+  </div>
+  </sc-if>
+
+  <div style="height: 1px; background: oklch(94% 0.008 78)"></div>
+
+  <div style="display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap">
+    <span style="display: flex; align-items: center; gap: 8px; font-size: 11.5px; color: oklch(45% 0.012 65)"><span style="width: 5px; height: 5px; border-radius: 50%; background: oklch(52% 0.12 252)"></span>дні з подіями</span>
+    <span style="display: flex; align-items: center; gap: 6px">
+      <button onClick="{{ cal.pickToday }}" style="border: none; background: transparent; color: oklch(44% 0.12 252); font-family: 'Onest', sans-serif; font-size: 12.5px; font-weight: 600; cursor: pointer; padding: 0 10px; height: 30px; border-radius: 8px; display: flex; align-items: center; gap: 7px; transition: background 140ms" style-hover="background: oklch(96.5% 0.02 252)"><span style="width: 6px; height: 6px; border-radius: 50%; background: oklch(52% 0.12 252); display: block"></span>Сьогодні</button>
+      <sc-if value="{{ showDone }}" hint-placeholder-val="{{ false }}">
+        <button onClick="{{ onDone }}" style="border: none; background: oklch(52% 0.12 252); color: oklch(99% 0.005 252); border-radius: 8px; padding: 0 13px; height: 30px; font-family: 'Onest', sans-serif; font-size: 12px; font-weight: 600; cursor: pointer; box-shadow: 0 1px 2px oklch(40% 0.09 252 / .2)">Готово</button>
+      </sc-if>
+    </span>
+  </div>
+
+  <span style="font-size: 11.5px; color: oklch(50% 0.012 68)">обрано: <span style="font-weight: 600; color: oklch(30% 0.013 62); font-variant-numeric: tabular-nums">{{ cal.selectedLabel }}</span></span>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:300},&quot;cal&quot;:{&quot;editor&quot;:null,&quot;tsType&quot;:&quot;CalendarModel&quot;},&quot;showDone&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;},&quot;onDone&quot;:{&quot;editor&quot;:null,&quot;tsType&quot;:&quot;() =&gt; void&quot;}}">
+class Component extends DCLogic {
+  state = { vm: 8, vy: 2026, sel: '2026-09-03', panel: 'days', decade: 2020 };
+
+  MONTHS = ['січень','лютий','березень','квітень','травень','червень','липень','серпень','вересень','жовтень','листопад','грудень'];
+  SHORT = ['січ','лют','бер','кві','тра','чер','лип','сер','вер','жов','лис','гру'];
+  EVENTS = ['2026-09-03','2026-09-01','2026-08-28','2026-09-11','2026-09-16'];
+  TODAY = '2026-09-07';
+
+  componentDidMount() { this.icons(); this._iv = setInterval(() => this.icons(), 250); }
+  componentDidUpdate() { this.icons(); }
+  componentWillUnmount() { clearInterval(this._iv); }
+
+  icons() {
+    if (!window.lucide || !window.lucide.createIcons) return;
+    clearInterval(this._iv); this._iv = null;
+    try { window.lucide.createIcons({ attrs: { width: "100%", height: "100%", "stroke-width": 1.9 } }); } catch (e) {}
+  }
+
+  key(y, m, d) { return y + '-' + String(m + 1).padStart(2, '0') + '-' + String(d).padStart(2, '0'); }
+  fmt(k) { const p = String(k).split('-'); return p.length === 3 ? p[2] + '.' + p[1] + '.' + p[0] : '—'; }
+
+  grid(vy, vm) {
+    const shift = (new Date(vy, vm, 1).getDay() + 6) % 7;
+    const dim = new Date(vy, vm + 1, 0).getDate();
+    const prev = new Date(vy, vm, 0).getDate();
+    const out = [];
+    for (let i = 0; i < 42; i++) {
+      const n = i - shift + 1;
+      if (n < 1) out.push({ d: prev + n, out: true, m: vm - 1 });
+      else if (n > dim) out.push({ d: n - dim, out: true, m: vm + 1 });
+      else out.push({ d: n, out: false, m: vm });
+    }
+    return out[35] && out[35].out && out[36] && out[36].out ? out.slice(0, 35) : out;
+  }
+
+  // Самодостатня модель: працює й без пропа cal (standalone-прев'ю, сторібук, тести).
+  ownModel() {
+    const s = this.state, T = this.TODAY;
+    const days = this.grid(s.vy, s.vm).map(c => {
+      const m = ((c.m % 12) + 12) % 12;
+      const y = s.vy + (c.m < 0 ? -1 : c.m > 11 ? 1 : 0);
+      const k = this.key(y, m, c.d);
+      const isSel = k === s.sel, isToday = k === T;
+      return {
+        label: String(c.d), radius: '9px',
+        bg: isSel ? 'oklch(52% 0.12 252)' : 'transparent',
+        fg: isSel ? 'oklch(99% 0.005 252)' : (c.out ? 'oklch(54% 0.010 74)' : 'oklch(28% 0.013 62)'),
+        ring: isToday && !isSel ? 'inset 0 0 0 1.5px oklch(52% 0.12 252)' : 'none',
+        weight: isSel || isToday ? '600' : '400',
+        dot: this.EVENTS.indexOf(k) > -1 && !isSel ? 'oklch(52% 0.12 252)' : 'transparent',
+        cursor: 'pointer', disabled: 'false',
+        pick: () => this.setState({ sel: k })
+      };
+    });
+    const months = this.MONTHS.map((n, i) => ({
+      label: this.SHORT[i],
+      bg: i === s.vm ? 'oklch(52% 0.12 252)' : 'oklch(97.2% 0.006 80)',
+      fg: i === s.vm ? 'oklch(99% 0.005 252)' : 'oklch(30% 0.013 62)',
+      ring: i === s.vm ? 'none' : 'inset 0 0 0 1px oklch(93% 0.008 78)',
+      weight: i === s.vm ? '600' : '400',
+      pick: () => this.setState({ vm: i, panel: 'days' })
+    }));
+    const years = Array.from({ length: 12 }, (_, i) => {
+      const y = s.decade - 1 + i;
+      return {
+        label: String(y),
+        bg: y === s.vy ? 'oklch(52% 0.12 252)' : 'oklch(97.2% 0.006 80)',
+        fg: y === s.vy ? 'oklch(99% 0.005 252)' : (y < s.decade || y > s.decade + 9 ? 'oklch(72% 0.010 74)' : 'oklch(30% 0.013 62)'),
+        ring: y === s.vy ? 'none' : 'inset 0 0 0 1px oklch(93% 0.008 78)',
+        weight: y === s.vy ? '600' : '400',
+        pick: () => this.setState({ vy: y, panel: 'months' })
+      };
+    });
+    return {
+      panelDays: s.panel === 'days', panelMonths: s.panel === 'months', panelYears: s.panel === 'years',
+      monthName: this.MONTHS[s.vm], year: String(s.vy),
+      monthBtnBg: s.panel === 'months' ? 'oklch(96.5% 0.014 252)' : 'oklch(97.2% 0.006 80)',
+      monthBtnFg: s.panel === 'months' ? 'oklch(38% 0.12 252)' : 'oklch(28% 0.013 62)',
+      yearBtnBg: s.panel === 'years' ? 'oklch(96.5% 0.014 252)' : 'oklch(97.2% 0.006 80)',
+      yearBtnFg: s.panel === 'years' ? 'oklch(38% 0.12 252)' : 'oklch(28% 0.013 62)',
+      days, months, years,
+      decadeLabel: s.decade + ' – ' + (s.decade + 9),
+      selectedLabel: this.fmt(s.sel),
+      prevMonth: () => this.setState(p => p.vm === 0 ? { vm: 11, vy: p.vy - 1 } : { vm: p.vm - 1 }),
+      nextMonth: () => this.setState(p => p.vm === 11 ? { vm: 0, vy: p.vy + 1 } : { vm: p.vm + 1 }),
+      openMonths: () => this.setState(p => ({ panel: p.panel === 'months' ? 'days' : 'months' })),
+      openYears: () => this.setState(p => ({ panel: p.panel === 'years' ? 'days' : 'years', decade: Math.floor(p.vy / 10) * 10 })),
+      prevDecade: () => this.setState(p => ({ decade: p.decade - 10 })),
+      nextDecade: () => this.setState(p => ({ decade: p.decade + 10 })),
+      pickToday: () => this.setState({ sel: T, vm: 8, vy: 2026, panel: 'days' })
+    };
+  }
+
+  renderVals() {
+    const p = this.props;
+    const cal = (p.cal && p.cal.days) ? p.cal : this.ownModel();
+    return { cal, showDone: p.showDone === true, onDone: p.onDone || (() => {}) };
+  }
+}
+</script>
+</body>
+</html>
