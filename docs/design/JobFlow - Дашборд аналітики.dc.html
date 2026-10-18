@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="design_doc_mode" content="canvas">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@400;500;600;700&family=Onest:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-chart-sankey@0.12.1/dist/chartjs-chart-sankey.min.js"></script>
+<style>
+  body { margin: 0; background: oklch(97.4% 0.007 78); }
+  a { color: oklch(50% 0.12 252); text-underline-offset: 3px; }
+  a:hover { color: oklch(44% 0.12 252); }
+  @keyframes db-breathe { 0%, 100% { opacity: .9; transform: scale(1) } 50% { opacity: .3; transform: scale(.62) } }
+  @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important } }
+</style>
+</helmet>
+
+<div style="background: oklch(97.4% 0.007 78); color: oklch(25% 0.013 62); font-family: 'Onest', system-ui, sans-serif; -webkit-font-smoothing: antialiased">
+
+<header style="background: oklch(97.4% 0.007 78); position: sticky; top: 0; z-index: 5; box-shadow: 0 1px 0 oklch(93% 0.008 78)">
+  <div style="max-width: 1280px; margin: 0 auto; padding: 12px 28px; display: flex; align-items: center; gap: 22px; flex-wrap: wrap">
+    <span style="font-family: 'Unbounded', sans-serif; font-size: 17px; font-weight: 600; letter-spacing: -.035em">JobFlow</span>
+    <nav style="display: flex; gap: 2px; flex: 1; flex-wrap: wrap">
+      <a href="JobFlow%20-%20Канбан.dc.html" style="text-decoration: none; color: oklch(45% 0.012 65); font-size: 13.5px; padding: 0 12px; height: 34px; border-radius: 9px; display: flex; align-items: center; transition: all 160ms" style-hover="background: oklch(99.4% 0.004 85); color: oklch(25% 0.013 62)">Дошка</a>
+      <span style="color: oklch(25% 0.013 62); font-size: 13.5px; font-weight: 600; padding: 0 12px; height: 34px; border-radius: 9px; background: oklch(99.4% 0.004 85); display: flex; align-items: center; box-shadow: 0 1px 2px oklch(25% 0.013 62 / .07)">Аналітика</span>
+      <a href="JobFlow%20-%20Резюме,%20налаштування,%20вхід.dc.html" style="text-decoration: none; color: oklch(45% 0.012 65); font-size: 13.5px; padding: 0 12px; height: 34px; border-radius: 9px; display: flex; align-items: center; transition: all 160ms" style-hover="background: oklch(99.4% 0.004 85); color: oklch(25% 0.013 62)">Резюме</a>
+    </nav>
+    <div style="display: inline-flex; background: oklch(96% 0.006 80); border-radius: 9px; padding: 3px; gap: 2px; box-shadow: inset 0 0 0 1px oklch(92% 0.008 78)">
+      <button onClick="{{ per30 }}" style="border: none; background: {{ p30Bg }}; color: {{ p30Fg }}; box-shadow: {{ p30Sh }}; border-radius: 7px; padding: 0 12px; height: 28px; font-family: 'Onest', sans-serif; font-size: 12px; font-weight: 600; cursor: pointer; transition: all 180ms">30 дн</button>
+      <button onClick="{{ per90 }}" style="border: none; background: {{ p90Bg }}; color: {{ p90Fg }}; box-shadow: {{ p90Sh }}; border-radius: 7px; padding: 0 12px; height: 28px; font-family: 'Onest', sans-serif; font-size: 12px; font-weight: 600; cursor: pointer; transition: all 180ms">90 дн</button>
+      <button onClick="{{ perAll }}" style="border: none; background: {{ pAllBg }}; color: {{ pAllFg }}; box-shadow: {{ pAllSh }}; border-radius: 7px; padding: 0 12px; height: 28px; font-family: 'Onest', sans-serif; font-size: 12px; font-weight: 600; cursor: pointer; transition: all 180ms">увесь пошук</button>
+    </div>
+  </div>
+</header>
+
+<div style="max-width: 1280px; margin: 0 auto; padding: 36px 28px 110px; display: flex; flex-direction: column; gap: 40px">
+
+  <section style="display: flex; flex-direction: column; gap: 20px">
+    <div style="display: flex; justify-content: space-between; align-items: flex-end; gap: 20px; flex-wrap: wrap">
+      <div style="display: flex; flex-direction: column; gap: 8px">
+        <span style="font-size: 11px; font-weight: 600; letter-spacing: .14em; text-transform: uppercase; color: oklch(50% 0.012 68)">аналітика воронки · 12 тижнів</span>
+        <h1 style="margin: 0; font-family: 'Unbounded', sans-serif; font-weight: 500; font-size: clamp(26px, 3.8vw, 42px); line-height: 1.04; letter-spacing: -.042em; max-width: 22ch">Де ти втрачаєш можливості</h1>
+      </div>
+      <span style="display: flex; align-items: center; gap: 8px; font-size: 12.5px; color: oklch(45% 0.012 65)"><span style="width: 7px; height: 7px; border-radius: 50%; background: oklch(49% 0.10 158)"></span>оновлено щойно</span>
+    </div>
+
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(224px, 1fr)); gap: 14px">
+      <div style="background: oklch(99.4% 0.004 85); border-radius: 14px; padding: 18px; box-shadow: 0 1px 2px oklch(25% 0.013 62 / .05), 0 10px 26px -14px oklch(25% 0.013 62 / .18); display: flex; flex-direction: column; gap: 8px">
+        <span style="font-size: 11px; font-weight: 600; letter-spacing: .12em; text-transform: uppercase; color: oklch(50% 0.012 68)">Відгуків надіслано</span>
+        <div style="display: flex; align-items: baseline; gap: 9px"><span style="font-family: 'Unbounded', sans-serif; font-weight: 600; font-size: 38px; line-height: 1; letter-spacing: -.045em; font-variant-numeric: tabular-nums">54</span><span style="display: flex; align-items: center; gap: 4px; background: oklch(96% 0.03 158); color: oklch(38% 0.09 158); border-radius: 999px; padding: 2px 8px; font-size: 11.5px; font-weight: 600">+4</span></div>
+        <div style="height: 30px; position: relative"><canvas id="db-spark"></canvas></div>
+        <span style="font-size: 12.5px; color: oklch(45% 0.012 65)">4,5 на тиждень</span>
+      </div>
+      <div style="background: oklch(99.4% 0.004 85); border-radius: 14px; padding: 18px; box-shadow: 0 1px 2px oklch(25% 0.013 62 / .05), 0 10px 26px -14px oklch(25% 0.013 62 / .18); display: flex; flex-direction: column; gap: 8px">
+        <span style="font-size: 11px; font-weight: 600; letter-spacing: .12em; text-transform: uppercase; color: oklch(50% 0.012 68)">Дійшли до скринінгу</span>
+        <span style="font-family: 'Unbounded', sans-serif; font-weight: 600; font-size: 38px; line-height: 1; letter-spacing: -.045em; font-variant-numeric: tabular-nums">31%</span>
+        <span style="height: 6px; border-radius: 3px; background: oklch(94.6% 0.010 78); display: block; overflow: hidden"><span style="display: block; height: 6px; width: 31%; border-radius: 3px; background: oklch(52% 0.10 235)"></span></span>
+        <span style="font-size: 12.5px; color: oklch(45% 0.012 65)">17 із 54 · бенчмарк 22%</span>
+      </div>
+      <div style="background: oklch(99.4% 0.004 85); border-radius: 14px; padding: 18px; box-shadow: 0 1px 2px oklch(25% 0.013 62 / .05), 0 10px 26px -14px oklch(25% 0.013 62 / .18); display: flex; flex-direction: column; gap: 8px">
+        <span style="font-size: 11px; font-weight: 600; letter-spacing: .12em; text-transform: uppercase; color: oklch(50% 0.012 68)">Медіана відповіді</span>
+        <div style="display: flex; align-items: baseline; gap: 6px"><span style="font-family: 'Unbounded', sans-serif; font-weight: 600; font-size: 38px; line-height: 1; letter-spacing: -.045em; font-variant-numeric: tabular-nums">6</span><span style="font-size: 15px; color: oklch(45% 0.012 65)">днів</span></div>
+        <span style="height: 6px; border-radius: 3px; background: oklch(94.6% 0.010 78); display: block; position: relative"><span style="position: absolute; left: 0; top: 0; height: 6px; width: 43%; border-radius: 3px; background: oklch(64% 0.08 195); display: block"></span><span style="position: absolute; left: 50%; top: -3px; width: 2px; height: 12px; border-radius: 1px; background: oklch(58% 0.035 275); display: block"></span></span>
+        <span style="font-size: 12.5px; color: oklch(45% 0.012 65)">поріг тиші — 7 днів</span>
+      </div>
+      <div style="background: oklch(99.4% 0.004 85); border-radius: 14px; padding: 18px; box-shadow: 0 1px 2px oklch(25% 0.013 62 / .05), 0 10px 26px -14px oklch(25% 0.013 62 / .18); display: flex; flex-direction: column; gap: 8px">
+        <span style="font-size: 11px; font-weight: 600; letter-spacing: .12em; text-transform: uppercase; color: oklch(50% 0.012 68)">Ghost rate</span>
+        <div style="display: flex; align-items: baseline; gap: 9px"><span style="font-family: 'Unbounded', sans-serif; font-weight: 600; font-size: 38px; line-height: 1; letter-spacing: -.045em; font-variant-numeric: tabular-nums; color: oklch(40% 0.012 62)">31%</span><span style="display: flex; align-items: center; gap: 4px; background: oklch(96% 0.03 158); color: oklch(38% 0.09 158); border-radius: 999px; padding: 2px 8px; font-size: 11.5px; font-weight: 600">−7 п.п.</span></div>
+        <span style="height: 6px; border-radius: 3px; background: oklch(94.6% 0.010 78); display: block; overflow: hidden"><span style="display: block; height: 6px; width: 31%; border-radius: 3px; background: repeating-linear-gradient(90deg, oklch(72% 0.014 78) 0 3px, oklch(90% 0.008 78) 3px 6px)"></span></span>
+        <span style="font-size: 12.5px; color: oklch(45% 0.012 65)">ринок — 38%. Це не про тебе</span>
+      </div>
+    </div>
+  </section>
+
+  <section style="display: flex; flex-direction: column; gap: 16px">
+    <div style="display: flex; justify-content: space-between; align-items: flex-end; gap: 18px; flex-wrap: wrap">
+      <div style="display: flex; flex-direction: column; gap: 6px">
+        <span style="font-size: 11px; font-weight: 600; letter-spacing: .14em; text-transform: uppercase; color: oklch(50% 0.012 68)">головне · воронка цілком</span>
+        <h2 style="margin: 0; font-family: 'Unbounded', sans-serif; font-weight: 500; font-size: 24px; letter-spacing: -.032em; line-height: 1.14">Куди пішли всі 54 відгуки</h2>
+      </div>
+      <div style="display: flex; gap: 14px; flex-wrap: wrap; font-size: 12.5px; color: oklch(42% 0.012 62)">
+        <span style="display: flex; align-items: center; gap: 7px"><span style="width: 12px; height: 9px; border-radius: 3px; background: oklch(58% 0.09 34)"></span>відмова</span>
+        <span style="display: flex; align-items: center; gap: 7px"><span style="width: 12px; height: 9px; border-radius: 3px; background: oklch(78% 0.014 78)"></span>ghosted</span>
+        <span style="display: flex; align-items: center; gap: 7px"><span style="width: 12px; height: 9px; border-radius: 3px; background: oklch(66% 0.035 275)"></span>відкликав</span>
+        <span style="display: flex; align-items: center; gap: 7px"><span style="width: 12px; height: 9px; border-radius: 3px; background: oklch(49% 0.10 158)"></span>офер</span>
+      </div>
+    </div>
+
+    <div style="background: oklch(99.4% 0.004 85); border-radius: 18px; padding: 20px; box-shadow: 0 2px 5px oklch(25% 0.013 62 / .06), 0 18px 40px -16px oklch(25% 0.013 62 / .22); display: flex; flex-direction: column; gap: 14px">
+      <div style="height: 380px; position: relative"><canvas id="db-sankey"></canvas></div>
+      <sc-if value="{{ sankeyFail }}" hint-placeholder-val="{{ false }}">
+        <span style="font-size: 12.5px; color: oklch(48% 0.08 70); display: block">Плагін <span style="font-weight: 600">chartjs-chart-sankey</span> не завантажився — показано резервну воронку зі стековими виходами.</span>
+      </sc-if>
+      <div style="display: flex; justify-content: space-between; gap: 16px; flex-wrap: wrap; font-size: 11.5px; color: oklch(52% 0.012 68)">
+        <span style="letter-spacing: .1em; text-transform: uppercase; font-weight: 600">товщина = кількість відгуків</span>
+        <span>наведи на потік — покаже точні числа</span>
+      </div>
+    </div>
+
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 18px">
+      <p style="margin: 0; font-size: 14px; line-height: 1.65; color: oklch(42% 0.012 62); text-wrap: pretty"><span style="color: oklch(25% 0.013 62); font-weight: 600">Найширша втеча — на першому кроці.</span> 21 відмова і 14 тиш із 54: дві третини воронки закінчується там, де ти ще ні з ким не говорив.</p>
+      <p style="margin: 0; font-size: 14px; line-height: 1.65; color: oklch(42% 0.012 62); text-wrap: pretty"><span style="color: oklch(25% 0.013 62); font-weight: 600">Техінтерв'ю — найдорожчий етап.</span> Дійшло 9, пройшло 4. Кожна втрата тут — це 2–3 тижні вже витраченого часу.</p>
+      <p style="margin: 0; font-size: 14px; line-height: 1.65; color: oklch(42% 0.012 62); text-wrap: pretty"><span style="color: oklch(25% 0.013 62); font-weight: 600">Сіра гілка — не твоя провина.</span> 17 компаній не відповіли. Вони не входять у розрахунок конверсій.</p>
+    </div>
+  </section>
+
+  <section style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 18px; align-items: start">
+    <div style="background: oklch(99.4% 0.004 85); border-radius: 16px; padding: 20px; box-shadow: 0 1px 2px oklch(25% 0.013 62 / .05), 0 12px 30px -16px oklch(25% 0.013 62 / .2); display: flex; flex-direction: column; gap: 14px; min-width: 0">
+      <div style="display: flex; flex-direction: column; gap: 6px">
+        <span style="font-size: 11px; font-weight: 600; letter-spacing: .14em; text-transform: uppercase; color: oklch(50% 0.012 68)">причини відмов за етапами</span>
+        <h3 style="margin: 0; font-family: 'Unbounded', sans-serif; font-weight: 500; font-size: 19px; letter-spacing: -.03em; line-height: 1.2">На техінтерв'ю тебе валять алгоритми</h3>
+        <span style="font-size: 13px; line-height: 1.55; color: oklch(45% 0.012 65)">3 із 4 відмов на цьому етапі — «не вистачає скілів», і в заметках усі три згадують live-coding.</span>
+      </div>
+      <div style="height: 220px; position: relative"><canvas id="db-reasons"></canvas></div>
+    </div>
+
+    <div style="background: oklch(99.4% 0.004 85); border-radius: 16px; padding: 20px; box-shadow: 0 1px 2px oklch(25% 0.013 62 / .05), 0 12px 30px -16px oklch(25% 0.013 62 / .2); display: flex; flex-direction: column; gap: 14px; min-width: 0">
+      <div style="display: flex; flex-direction: column; gap: 6px">
+        <span style="font-size: 11px; font-weight: 600; letter-spacing: .14em; text-transform: uppercase; color: oklch(50% 0.012 68)">конверсія за джерелами</span>
+        <h3 style="margin: 0; font-family: 'Unbounded', sans-serif; font-weight: 500; font-size: 19px; letter-spacing: -.03em; line-height: 1.2">LinkedIn з'їдає час, рефералки — ні</h3>
+        <span style="font-size: 13px; line-height: 1.55; color: oklch(45% 0.012 65)">16 відгуків через LinkedIn дали 2 скринінги. Djinni при 24 — дев'ять.</span>
+      </div>
+      <div style="height: 220px; position: relative"><canvas id="db-sources"></canvas></div>
+      <div style="display: flex; align-items: flex-start; gap: 10px; background: oklch(97.2% 0.006 80); border-radius: 10px; padding: 11px 13px; font-size: 12.5px; line-height: 1.5; color: oklch(42% 0.012 62)"><span style="font-size: 11px; font-weight: 600; color: oklch(52% 0.012 68); flex: none; padding-top: 1px">n&lt;5</span><span>«Сайт компанії» (2 відгуки) у чарт не потрапив: на такій вибірці відсоток — це шум.</span></div>
+    </div>
+  </section>
+
+  <section style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 18px; align-items: start">
+    <div style="background: oklch(99.4% 0.004 85); border-radius: 16px; padding: 20px; box-shadow: 0 1px 2px oklch(25% 0.013 62 / .05), 0 12px 30px -16px oklch(25% 0.013 62 / .2); display: flex; flex-direction: column; gap: 14px; min-width: 0">
+      <div style="display: flex; flex-direction: column; gap: 6px">
+        <span style="font-size: 11px; font-weight: 600; letter-spacing: .14em; text-transform: uppercase; color: oklch(50% 0.012 68)">A/B версій резюме</span>
+        <h3 style="margin: 0; font-family: 'Unbounded', sans-serif; font-weight: 500; font-size: 19px; letter-spacing: -.03em; line-height: 1.2">CV v2 працює краще</h3>
+      </div>
+      <div style="height: 168px; position: relative"><canvas id="db-cv"></canvas></div>
+      <div style="display: flex; align-items: flex-start; gap: 11px; padding: 2px 0 2px 13px; box-shadow: inset 2px 0 0 oklch(52% 0.12 252); font-size: 13px; line-height: 1.6; color: oklch(40% 0.012 62)">Різниця 17 п.п. на 48 відгуках — вже не шум. Нові відгуки система привязує до v2; v1 можна архівувати. CV v3 має лише 3 відгуки — у чарті його немає.</div>
+    </div>
+
+    <div style="background: oklch(99.4% 0.004 85); border-radius: 16px; padding: 20px; box-shadow: 0 1px 2px oklch(25% 0.013 62 / .05), 0 12px 30px -16px oklch(25% 0.013 62 / .2); display: flex; flex-direction: column; gap: 16px; min-width: 0">
+      <div style="display: flex; flex-direction: column; gap: 6px">
+        <span style="font-size: 11px; font-weight: 600; letter-spacing: .14em; text-transform: uppercase; color: oklch(50% 0.012 68)">прогноз офера</span>
+        <span style="font-family: 'Unbounded', sans-serif; font-weight: 600; font-size: 34px; line-height: 1; letter-spacing: -.045em; font-variant-numeric: tabular-nums">6–9 тижнів</span>
+        <span style="font-size: 13px; line-height: 1.55; color: oklch(45% 0.012 65)">80% довірчий інтервал за темпом 4,5 відгуки/тиждень і поточними конверсіями.</span>
+      </div>
+      <span style="position: relative; height: 34px; display: block; box-shadow: inset 0 -1px 0 oklch(91% 0.008 78)">
+        <span style="position: absolute; top: 10px; left: 8%; right: 52%; height: 14px; border-radius: 7px; background: repeating-linear-gradient(90deg, oklch(84% 0.05 252) 0 4px, oklch(93% 0.02 252) 4px 8px); display: block"></span>
+        <span style="position: absolute; top: 4px; left: 22%; right: 62%; height: 26px; border-radius: 7px; background: oklch(52% 0.12 252); display: block"></span>
+        <span style="position: absolute; top: 0; left: 30%; width: 2px; height: 34px; border-radius: 1px; background: oklch(25% 0.013 62); display: block"></span>
+      </span>
+      <div style="display: flex; justify-content: space-between; font-size: 11px; color: oklch(52% 0.012 68)"><span>0</span><span>4 тиж</span><span>8 тиж</span><span>12 тиж</span><span>16+</span></div>
+      <div style="display: flex; flex-direction: column; gap: 6px; font-size: 12.5px; color: oklch(45% 0.012 65)">
+        <span style="display: flex; align-items: center; gap: 9px"><span style="width: 14px; height: 8px; border-radius: 3px; background: oklch(52% 0.12 252); flex: none"></span>ймовірний коридор 6–9 тижнів</span>
+        <span style="display: flex; align-items: center; gap: 9px"><span style="width: 14px; height: 8px; border-radius: 3px; background: repeating-linear-gradient(90deg, oklch(84% 0.05 252) 0 4px, oklch(93% 0.02 252) 4px 8px); flex: none"></span>увесь 80% інтервал: 3–14 тижнів</span>
+        <span style="display: flex; align-items: center; gap: 9px"><span style="width: 2px; height: 12px; background: oklch(25% 0.013 62); flex: none; margin: 0 6px"></span>медіана — 7,5 тижня</span>
+      </div>
+      <span style="font-size: 12.5px; line-height: 1.6; color: oklch(45% 0.012 65)">Це не обіцянка. Модель бачила 54 відгуки й один офер — інтервал широкий саме тому. Він звузиться після 3–4 доходжень до фіналу.</span>
+    </div>
+  </section>
+
+  <section style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 18px; align-items: start">
+    <div style="background: oklch(99.4% 0.004 85); border-radius: 16px; padding: 20px; box-shadow: 0 1px 2px oklch(25% 0.013 62 / .05), 0 12px 30px -16px oklch(25% 0.013 62 / .2); display: flex; flex-direction: column; gap: 14px; min-width: 0">
+      <span style="font-size: 11px; font-weight: 600; letter-spacing: .14em; text-transform: uppercase; color: oklch(50% 0.012 68)">час на етапах · медіана</span>
+      <div style="height: 176px; position: relative"><canvas id="db-timing"></canvas></div>
+      <span style="font-size: 12.5px; line-height: 1.6; color: oklch(45% 0.012 65)">Фінал тягнеться 17 днів — це не тиша, а нормальний темп узгоджень. Тому поріг ghost-детекції на фіналі автоматично підіймається до 14 днів.</span>
+    </div>
+
+    <div style="background: oklch(99.4% 0.004 85); border-radius: 16px; padding: 20px; box-shadow: 0 1px 2px oklch(25% 0.013 62 / .05), 0 12px 30px -16px oklch(25% 0.013 62 / .2); display: flex; flex-direction: column; gap: 14px; min-width: 0">
+      <span style="font-size: 11px; font-weight: 600; letter-spacing: .14em; text-transform: uppercase; color: oklch(50% 0.012 68)">зарплатна аналітика · твої карточки</span>
+      <div style="display: flex; align-items: baseline; gap: 10px"><span style="font-family: 'Unbounded', sans-serif; font-weight: 600; font-size: 30px; line-height: 1; letter-spacing: -.045em; font-variant-numeric: tabular-nums">$4 900</span><span style="font-size: 13px; color: oklch(45% 0.012 65)">медіана вилки</span></div>
+      <div style="height: 176px; position: relative"><canvas id="db-salary"></canvas></div>
+      <span style="font-size: 12.5px; line-height: 1.6; color: oklch(45% 0.012 65)">Дві відмови зі «зарплатних очікувань» — обидві по вакансіях із вилкою нижче $4 200. Нижню межу фільтра варто підняти.</span>
+    </div>
+  </section>
+
+  <section style="display: flex; flex-direction: column; gap: 16px">
+    <div style="display: flex; align-items: baseline; gap: 14px; flex-wrap: wrap">
+      <span style="font-size: 11px; font-weight: 600; letter-spacing: .14em; text-transform: uppercase; color: oklch(50% 0.012 68)">місячне AI-саммарі · серпень</span>
+      <span style="flex: 1; min-width: 30px; height: 1px; background: oklch(93% 0.008 78)"></span>
+      <span style="display: flex; align-items: center; gap: 8px; font-size: 11.5px; color: oklch(52% 0.012 68)"><span style="width: 7px; height: 7px; border-radius: 50%; background: oklch(49% 0.10 158)"></span>готово · 01.09, 07:14</span>
+    </div>
+
+    <div style="background: oklch(25% 0.013 62); border-radius: 18px; padding: 28px; display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 30px; box-shadow: 0 6px 16px oklch(25% 0.013 62 / .2), 0 32px 64px -24px oklch(25% 0.013 62 / .42)">
+      <div style="display: flex; flex-direction: column; gap: 14px; min-width: 0">
+        <h3 style="margin: 0; font-family: 'Unbounded', sans-serif; font-weight: 500; font-size: 23px; line-height: 1.2; letter-spacing: -.034em; color: oklch(97% 0.006 85); text-wrap: pretty">Вузьке місце — техінтерв'ю, і воно коштує дорожче за все інше</h3>
+        <p style="margin: 0; font-size: 14px; line-height: 1.68; color: oklch(84% 0.010 80); text-wrap: pretty">За серпень ти надіслав 19 відгуків — на 4 більше, ніж у липні. Конверсія у скринінг виросла з 24% до 41% після переходу на CV v2, і це найкраща зміна за весь пошук. Але з 5 техінтерв'ю ти пройшов 2, і у трьох відмовах згадані алгоритмічні задачі. Далі об'єм відгуків уже не допоможе: воронка звужується не на вході.</p>
+        <p style="margin: 0; font-size: 14px; line-height: 1.68; color: oklch(84% 0.010 80); text-wrap: pretty">Окремо: 6 карточок пішли в ghosted без жодної відповіді, 4 з них — LinkedIn Easy Apply. Це найдешевший спосіб надіслати відгук і найдорожчий спосіб втратити тиждень очікування.</p>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 16px; min-width: 0">
+        <span style="font-size: 11px; font-weight: 600; letter-spacing: .14em; text-transform: uppercase; color: oklch(72% 0.012 78)">що зробити у вересні</span>
+        <div style="display: flex; flex-direction: column; gap: 13px">
+          <div style="display: flex; gap: 12px; align-items: flex-start"><span style="width: 22px; height: 22px; border-radius: 7px; background: oklch(32% 0.012 62); color: oklch(84% 0.09 252); font-size: 11px; font-weight: 600; display: flex; align-items: center; justify-content: center; flex: none">1</span><span style="display: flex; flex-direction: column; gap: 3px"><span style="font-size: 13.5px; font-weight: 600; line-height: 1.4; color: oklch(96% 0.006 85)">Два тижні на алгоритми перед наступним техінтерв'ю</span><span style="font-size: 12.5px; color: oklch(76% 0.012 78); line-height: 1.5">Прогноз офера звузиться до 4–6 тижнів, якщо конверсія дійде до 60%.</span></span></div>
+          <div style="display: flex; gap: 12px; align-items: flex-start"><span style="width: 22px; height: 22px; border-radius: 7px; background: oklch(32% 0.012 62); color: oklch(84% 0.09 252); font-size: 11px; font-weight: 600; display: flex; align-items: center; justify-content: center; flex: none">2</span><span style="display: flex; flex-direction: column; gap: 3px"><span style="font-size: 13.5px; font-weight: 600; line-height: 1.4; color: oklch(96% 0.006 85)">Прибрати LinkedIn Easy Apply з рутини</span><span style="font-size: 12.5px; color: oklch(76% 0.012 78); line-height: 1.5">13% проти 38% на Djinni. Той самий час дасть утричі більше скринінгів.</span></span></div>
+          <div style="display: flex; gap: 12px; align-items: flex-start"><span style="width: 22px; height: 22px; border-radius: 7px; background: oklch(32% 0.012 62); color: oklch(84% 0.09 252); font-size: 11px; font-weight: 600; display: flex; align-items: center; justify-content: center; flex: none">3</span><span style="display: flex; flex-direction: column; gap: 3px"><span style="font-size: 13.5px; font-weight: 600; line-height: 1.4; color: oklch(96% 0.006 85)">Підняти нижню межу вилки до $4 500</span><span style="font-size: 12.5px; color: oklch(76% 0.012 78); line-height: 1.5">Дві відмови вже були через очікування — фільтр зекономить 3–4 відгуки на місяць.</span></span></div>
+          <div style="display: flex; gap: 12px; align-items: flex-start"><span style="width: 22px; height: 22px; border-radius: 7px; background: oklch(32% 0.012 62); color: oklch(84% 0.09 252); font-size: 11px; font-weight: 600; display: flex; align-items: center; justify-content: center; flex: none">4</span><span style="display: flex; flex-direction: column; gap: 3px"><span style="font-size: 13.5px; font-weight: 600; line-height: 1.4; color: oklch(96% 0.006 85)">Попросити 2 рефералки</span><span style="font-size: 12.5px; color: oklch(76% 0.012 78); line-height: 1.5">3 із 3 рефералок дали скринінг. Вибірка мала, але напрям однозначний.</span></span></div>
+        </div>
+        <div style="display: flex; gap: 9px; flex-wrap: wrap; padding-top: 2px">
+          <button onClick="{{ noop }}" style="border: none; background: oklch(72% 0.12 252); color: oklch(20% 0.03 252); border-radius: 10px; padding: 0 16px; height: 38px; font-family: 'Onest', sans-serif; font-size: 13.5px; font-weight: 600; cursor: pointer; transition: all 160ms" style-hover="background: oklch(78% 0.11 252)">Зберегти як план</button>
+          <button onClick="{{ noop }}" style="border: none; background: oklch(32% 0.012 62); color: oklch(94% 0.008 85); border-radius: 10px; padding: 0 16px; height: 38px; font-family: 'Onest', sans-serif; font-size: 13.5px; font-weight: 600; cursor: pointer; transition: all 160ms" style-hover="background: oklch(38% 0.012 62)">Перегенерувати</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section style="display: flex; flex-direction: column; gap: 16px">
+    <div style="display: flex; align-items: baseline; gap: 14px; flex-wrap: wrap">
+      <span style="font-size: 11px; font-weight: 600; letter-spacing: .14em; text-transform: uppercase; color: oklch(50% 0.012 68)">той самий дашборд на 4 відгуках</span>
+      <span style="flex: 1; min-width: 30px; height: 1px; background: oklch(93% 0.008 78)"></span>
+    </div>
+    <div style="background: oklch(97.2% 0.006 80); border-radius: 16px; padding: 24px; box-shadow: inset 0 0 0 1px oklch(93% 0.008 78); display: grid; grid-template-columns: repeat(auto-fit, minmax(232px, 1fr)); gap: 20px; align-items: start">
+      <div style="display: flex; flex-direction: column; gap: 7px">
+        <span style="font-size: 11px; font-weight: 600; letter-spacing: .12em; text-transform: uppercase; color: oklch(50% 0.012 68)">Відгуків надіслано</span>
+        <span style="font-family: 'Unbounded', sans-serif; font-weight: 600; font-size: 34px; line-height: 1; letter-spacing: -.045em; font-variant-numeric: tabular-nums">4</span>
+        <span style="font-size: 12.5px; color: oklch(45% 0.012 65)">перший тиждень</span>
+      </div>
+      <div style="background: oklch(99.4% 0.004 85); border: 1.5px dashed oklch(89% 0.008 78); border-radius: 12px; padding: 14px; display: flex; flex-direction: column; gap: 9px; box-sizing: border-box">
+        <span style="font-size: 11px; font-weight: 600; letter-spacing: .12em; text-transform: uppercase; color: oklch(50% 0.012 68)">Конверсія у скринінг</span>
+        <div style="display: flex; align-items: baseline; gap: 8px"><span style="font-family: 'Unbounded', sans-serif; font-weight: 600; font-size: 26px; line-height: 1; color: oklch(60% 0.012 72)">—</span><span style="font-size: 12.5px; color: oklch(45% 0.012 65)">буде на 10 відгуках</span></div>
+        <div style="display: flex; gap: 3px">
+          <span style="height: 7px; flex: 1; border-radius: 2px; background: oklch(52% 0.10 235)"></span><span style="height: 7px; flex: 1; border-radius: 2px; background: oklch(52% 0.10 235)"></span><span style="height: 7px; flex: 1; border-radius: 2px; background: oklch(52% 0.10 235)"></span><span style="height: 7px; flex: 1; border-radius: 2px; background: oklch(52% 0.10 235)"></span><span style="height: 7px; flex: 1; border-radius: 2px; background: oklch(93% 0.008 78)"></span><span style="height: 7px; flex: 1; border-radius: 2px; background: oklch(93% 0.008 78)"></span><span style="height: 7px; flex: 1; border-radius: 2px; background: oklch(93% 0.008 78)"></span><span style="height: 7px; flex: 1; border-radius: 2px; background: oklch(93% 0.008 78)"></span><span style="height: 7px; flex: 1; border-radius: 2px; background: oklch(93% 0.008 78)"></span><span style="height: 7px; flex: 1; border-radius: 2px; background: oklch(93% 0.008 78)"></span>
+        </div>
+        <span style="font-size: 11px; color: oklch(52% 0.012 68); font-variant-numeric: tabular-nums">4 / 10</span>
+      </div>
+      <div style="background: oklch(99.4% 0.004 85); border: 1.5px dashed oklch(89% 0.008 78); border-radius: 12px; padding: 14px; display: flex; flex-direction: column; gap: 7px; box-sizing: border-box">
+        <span style="font-size: 11px; font-weight: 600; letter-spacing: .12em; text-transform: uppercase; color: oklch(50% 0.012 68)">Прогноз офера</span>
+        <span style="font-size: 14px; font-weight: 600; line-height: 1.4">З'явиться після 15 відгуків</span>
+        <span style="font-size: 12.5px; line-height: 1.55; color: oklch(45% 0.012 65)">Раніше він показував би «2–30 тижнів» — це не інформація, а тривога. Краще нічого.</span>
+      </div>
+      <div style="background: oklch(99.4% 0.004 85); border-radius: 12px; padding: 14px; display: flex; flex-direction: column; gap: 9px; box-shadow: 0 1px 2px oklch(25% 0.013 62 / .05), 0 8px 20px -12px oklch(25% 0.013 62 / .14)">
+        <span style="font-size: 13.5px; font-weight: 600">Що зараз корисніше за аналітику</span>
+        <span style="font-size: 12.5px; line-height: 1.55; color: oklch(45% 0.012 65)">Додати ще 6 відгуків цього тижня. Аналітика вмикається сама — повідомимо, коли з'явиться перший висновок.</span>
+        <button onClick="{{ noop }}" style="border: none; background: oklch(52% 0.12 252); color: oklch(99% 0.005 252); border-radius: 10px; padding: 0 15px; height: 38px; font-family: 'Onest', sans-serif; font-size: 13.5px; font-weight: 600; cursor: pointer; align-self: flex-start; box-shadow: 0 1px 2px oklch(40% 0.09 252 / .2), 0 8px 18px -7px oklch(40% 0.09 252 / .45); transition: all 160ms" style-hover="background: oklch(46% 0.125 252); transform: translateY(-1px)">Додати вакансію</button>
+      </div>
+    </div>
+  </section>
+
+  <section style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 22px; padding-top: 4px">
+    <div style="display: flex; flex-direction: column; gap: 7px">
+      <span style="font-size: 11px; font-weight: 600; letter-spacing: .14em; text-transform: uppercase; color: oklch(50% 0.012 68)">записка · рішення</span>
+      <span style="font-size: 13.5px; line-height: 1.65; color: oklch(42% 0.012 62)">Заголовок кожного блока — це висновок, а не назва метрики: «На техінтерв'ю тебе валять алгоритми» замість «Причини відмов». Назва метрики живе в надрядку.</span>
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 7px">
+      <span style="font-size: 11px; font-weight: 600; letter-spacing: .14em; text-transform: uppercase; color: oklch(50% 0.012 68)">бібліотека</span>
+      <span style="font-size: 13.5px; line-height: 1.65; color: oklch(42% 0.012 62)">Уся графіка — Chart.js 4: Sankey через <span style="font-weight: 600">chartjs-chart-sankey</span>, решта — штатні типи. Жодного намальованого руками чарта; тултіпи, ховер і легенди — бібліотечні.</span>
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 7px">
+      <span style="font-size: 11px; font-weight: 600; letter-spacing: .14em; text-transform: uppercase; color: oklch(50% 0.012 68)">що зламається</span>
+      <span style="font-size: 13.5px; line-height: 1.65; color: oklch(42% 0.012 62)">На 500 відгуках дрібні гілки Sankey стають вужчими за 3px — тоді причини згортаються в «інші» з розкриттям по кліку. Жоден чарт не показує відсоток на вибірці менше 5.</span>
+    </div>
+  </section>
+
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1340}}">
+class Component extends DCLogic {
+  state = { period: '90', sankeyFail: false };
+
+  componentDidMount() { this.start(); }
+  componentWillUnmount() {
+    clearInterval(this._iv); this._iv = null;
+    if (this._vis) { document.removeEventListener('visibilitychange', this._vis); this._vis = null; }
+    (this._charts || []).forEach(c => c && c.destroy());
+  }
+
+  start() {
+    if (this._iv) return;
+    this._iv = setInterval(() => this.build(), 180);
+    this.build();
+  }
+
+  build() {
+    const C = window.Chart;
+    if (!C) return;
+    const ids = ['db-spark', 'db-sankey', 'db-reasons', 'db-sources', 'db-cv', 'db-timing', 'db-salary'];
+    const nodes = ids.map(i => document.getElementById(i));
+    if (nodes.some(n => !n)) return;
+    if (nodes.every(n => C.getChart(n))) {
+      if (!this._slow) { this._slow = true; clearInterval(this._iv); this._iv = setInterval(() => this.build(), 1500); }
+      return;
+    }
+    this._slow = false;
+
+    const ink = '#322d28', muted = '#7a7369', line = '#ebe7e1', paper = '#fdfcfa';
+    const d1 = '#2f4468', d2 = '#3c7fa5', d3 = '#62a8b0', d4 = '#93bb84', d5 = '#d9bc85', d6 = '#f0c9b4';
+    const cobalt = '#4d6fc4', clay = '#b5715e', sage = '#2e7d5e', stone = '#c7c2b9', slate = '#8f8aa8';
+
+    C.defaults.font.family = 'Onest, system-ui, sans-serif';
+    C.defaults.font.size = 11;
+    C.defaults.color = muted;
+    C.defaults.animation = document.hidden ? false : { duration: 320, easing: 'easeOutQuart' };
+    C.defaults.plugins.tooltip.backgroundColor = ink;
+    C.defaults.plugins.tooltip.cornerRadius = 10;
+    C.defaults.plugins.tooltip.padding = 10;
+    C.defaults.plugins.tooltip.titleFont = { family: 'Onest', size: 12, weight: '600' };
+    C.defaults.plugins.tooltip.bodyFont = { family: 'Onest', size: 12 };
+    C.defaults.plugins.tooltip.boxWidth = 9;
+    C.defaults.plugins.tooltip.boxHeight = 9;
+    C.defaults.plugins.legend.labels.boxWidth = 9;
+    C.defaults.plugins.legend.labels.boxHeight = 9;
+    C.defaults.plugins.legend.labels.usePointStyle = false;
+    C.defaults.plugins.legend.labels.padding = 14;
+    C.defaults.plugins.legend.labels.font = { family: 'Onest', size: 11.5 };
+
+    if (!this._vis) {
+      this._vis = () => (this._charts || []).forEach(c => { if (c) { c.options.animation = false; c.update('none'); } });
+      document.addEventListener('visibilitychange', this._vis);
+    }
+
+    const grid = { color: line, drawTicks: false, tickColor: 'transparent' };
+    const noGrid = { display: false, drawTicks: false, tickColor: 'transparent' };
+    const border = { display: false };
+    this._charts = this._charts || [];
+    const mk = (id, cfg) => { const c = document.getElementById(id); if (c && !C.getChart(c)) { const inst = new C(c, cfg); this._charts.push(inst); return inst; } return C.getChart(c); };
+
+    this._sparkData = {
+      '30': [5, 7, 4, 3],
+      '90': [3, 4, 2, 5, 6, 4, 5, 6, 5, 7, 4, 3],
+      'all': [6, 9, 11, 13, 19, 8]
+    };
+    const sd = this._sparkData[this.state.period];
+    this._spark = mk('db-spark', {
+      type: 'line',
+      data: { labels: sd.map((_, i) => i + 1), datasets: [{ data: sd, borderColor: cobalt, backgroundColor: 'rgba(77,111,196,.14)', borderWidth: 2, tension: .38, fill: true, pointRadius: 0, pointHoverRadius: 4 }] },
+      options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, tooltip: { enabled: false } }, scales: { x: { display: false }, y: { display: false, beginAtZero: true } } }
+    });
+
+    const sankeyReady = (() => { try { return !!C.registry.getController('sankey'); } catch (e) { return false; } })();
+    if (sankeyReady) {
+      const flows = [
+        { from: 'відгук', to: 'скринінг', flow: 17 }, { from: 'відгук', to: 'відмова', flow: 21 },
+        { from: 'відгук', to: 'ghosted', flow: 14 }, { from: 'відгук', to: 'відкликав', flow: 2 },
+        { from: 'скринінг', to: "техінтерв'ю", flow: 9 }, { from: 'скринінг', to: 'відмова', flow: 5 },
+        { from: 'скринінг', to: 'ghosted', flow: 2 }, { from: 'скринінг', to: 'відкликав', flow: 1 },
+        { from: "техінтерв'ю", to: 'фінал', flow: 4 }, { from: "техінтерв'ю", to: 'відмова', flow: 4 },
+        { from: "техінтерв'ю", to: 'ghosted', flow: 1 },
+        { from: 'фінал', to: 'офер', flow: 1 }, { from: 'фінал', to: 'відмова', flow: 2 }, { from: 'фінал', to: 'відкликав', flow: 1 }
+      ];
+      const colors = { 'відгук': d1, 'скринінг': d2, "техінтерв'ю": d3, 'фінал': d5, 'офер': sage, 'відмова': clay, 'ghosted': stone, 'відкликав': slate };
+      mk('db-sankey', {
+        type: 'sankey',
+        data: { datasets: [{
+          data: flows,
+          colorFrom: c => colors[c.dataset.data[c.dataIndex].from] || stone,
+          colorTo: c => colors[c.dataset.data[c.dataIndex].to] || stone,
+          colorMode: 'gradient',
+          alpha: .62,
+          borderWidth: 0,
+          nodeWidth: 14,
+          nodePadding: 18,
+          font: { family: 'Onest', size: 12, weight: '600' },
+          color: ink,
+          column: { 'відгук': 0, 'скринінг': 1, "техінтерв'ю": 2, 'фінал': 3, 'офер': 4 }
+        }] },
+        options: {
+          responsive: true, maintainAspectRatio: false,
+          layout: { padding: { top: 6, bottom: 6, left: 4, right: 4 } },
+          plugins: { tooltip: { callbacks: { label: c => c.raw.from + ' → ' + c.raw.to + ': ' + c.raw.flow } } }
+        }
+      });
+    } else {
+      if (!this.state.sankeyFail) this.setState({ sankeyFail: true });
+      mk('db-sankey', {
+        type: 'bar',
+        data: {
+          labels: ['відгук', 'скринінг', "техінтерв'ю", 'фінал'],
+          datasets: [
+            { label: 'далі', data: [17, 9, 4, 1], backgroundColor: d2, borderRadius: 6, borderSkipped: false, stack: 's', maxBarThickness: 34 },
+            { label: 'відмова', data: [21, 5, 4, 2], backgroundColor: clay, borderRadius: 6, borderSkipped: false, stack: 's', maxBarThickness: 34 },
+            { label: 'ghosted', data: [14, 2, 1, 0], backgroundColor: stone, borderRadius: 6, borderSkipped: false, stack: 's', maxBarThickness: 34 },
+            { label: 'відкликав', data: [2, 1, 0, 1], backgroundColor: slate, borderRadius: 6, borderSkipped: false, stack: 's', maxBarThickness: 34 }
+          ]
+        },
+        options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', align: 'start' } }, scales: { x: { stacked: true, grid: grid, border: border, ticks: { padding: 6 } }, y: { stacked: true, grid: noGrid, border: border, ticks: { padding: 6 } } } }
+      });
+    }
+
+    mk('db-reasons', {
+      type: 'bar',
+      data: {
+        labels: ['відгук', 'скринінг', "техінтерв'ю", 'фінал'],
+        datasets: [
+          { label: 'обрали іншого', data: [9, 0, 1, 1], backgroundColor: d1, borderRadius: 5, borderSkipped: false, stack: 'r', maxBarThickness: 26 },
+          { label: 'без пояснення', data: [6, 0, 0, 0], backgroundColor: d3, borderRadius: 5, borderSkipped: false, stack: 'r', maxBarThickness: 26 },
+          { label: 'вакансію закрили', data: [4, 0, 0, 0], backgroundColor: d5, borderRadius: 5, borderSkipped: false, stack: 'r', maxBarThickness: 26 },
+          { label: 'зарплатні очікування', data: [2, 2, 0, 0], backgroundColor: d6, borderRadius: 5, borderSkipped: false, stack: 'r', maxBarThickness: 26 },
+          { label: 'рівень англійської', data: [0, 3, 0, 0], backgroundColor: d4, borderRadius: 5, borderSkipped: false, stack: 'r', maxBarThickness: 26 },
+          { label: 'не вистачає скілів', data: [0, 0, 3, 1], backgroundColor: clay, borderRadius: 5, borderSkipped: false, stack: 'r', maxBarThickness: 26 }
+        ]
+      },
+      options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', align: 'start' } }, scales: { x: { stacked: true, grid: grid, border: border, ticks: { padding: 6, stepSize: 5 } }, y: { stacked: true, grid: noGrid, border: border, ticks: { padding: 6 } } } }
+    });
+
+    mk('db-sources', {
+      type: 'bar',
+      data: {
+        labels: ['Djinni', 'LinkedIn', 'DOU', 'рефералка'],
+        datasets: [
+          { label: 'у скринінг', data: [9, 2, 2, 3], backgroundColor: d2, borderRadius: 5, borderSkipped: false, stack: 's', maxBarThickness: 26 },
+          { label: 'відмова', data: [11, 8, 6, 0], backgroundColor: clay, borderRadius: 5, borderSkipped: false, stack: 's', maxBarThickness: 26 },
+          { label: 'ghost', data: [4, 6, 3, 0], backgroundColor: stone, borderRadius: 5, borderSkipped: false, stack: 's', maxBarThickness: 26 }
+        ]
+      },
+      options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', align: 'start' } }, scales: { x: { stacked: true, grid: grid, border: border, ticks: { padding: 6 } }, y: { stacked: true, grid: noGrid, border: border, ticks: { padding: 6 } } } }
+    });
+
+    mk('db-cv', {
+      type: 'bar',
+      data: {
+        labels: ['CV v2 · продукт', 'CV v1 · хронологія'],
+        datasets: [{ label: 'конверсія у скринінг, %', data: [41, 24], backgroundColor: [d2, d5], borderRadius: 8, borderSkipped: false, maxBarThickness: 40 }]
+      },
+      options: {
+        indexAxis: 'y', responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { display: false }, tooltip: { callbacks: { label: c => c.parsed.x + '% · ' + (c.dataIndex === 0 ? '11 із 27' : '5 із 21') } } },
+        scales: { x: { max: 60, grid: grid, border: border, ticks: { padding: 6, callback: v => v + '%' } }, y: { grid: noGrid, border: border, ticks: { padding: 6 } } }
+      }
+    });
+
+    mk('db-timing', {
+      type: 'bar',
+      data: {
+        labels: ['відгук', 'скринінг', "техінтерв'ю", 'фінал'],
+        datasets: [{ label: 'днів на етапі', data: [4, 7, 9, 17], backgroundColor: [d1, d2, d3, d5], borderRadius: 8, borderSkipped: false, maxBarThickness: 26 }]
+      },
+      options: {
+        indexAxis: 'y', responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { display: false }, tooltip: { callbacks: { label: c => c.parsed.x + ' днів · медіана' } } },
+        scales: { x: { grid: grid, border: border, ticks: { padding: 6, stepSize: 5 } }, y: { grid: noGrid, border: border, ticks: { padding: 6 } } }
+      }
+    });
+
+    mk('db-salary', {
+      type: 'scatter',
+      data: {
+        datasets: [
+          { label: 'відмова', data: [{ x: 3800, y: 1 }, { x: 4100, y: 1 }], backgroundColor: clay, pointRadius: 6, pointHoverRadius: 8 },
+          { label: 'у процесі', data: [{ x: 4500, y: 2 }, { x: 4900, y: 2 }, { x: 5200, y: 2 }, { x: 6000, y: 2 }], backgroundColor: d2, pointRadius: 6, pointHoverRadius: 8 },
+          { label: 'офер', data: [{ x: 5800, y: 3 }], backgroundColor: sage, pointRadius: 8, pointHoverRadius: 10 }
+        ]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { position: 'bottom', align: 'start' }, tooltip: { callbacks: { label: c => '$' + c.parsed.x.toLocaleString('uk-UA') } } },
+        scales: {
+          x: { min: 3000, max: 7000, grid: grid, border: border, ticks: { padding: 6, stepSize: 1000, callback: v => '$' + v / 1000 + 'k' } },
+          y: { min: .4, max: 3.6, grid: grid, border: border, ticks: { padding: 6, stepSize: 1, callback: v => ['', 'відмова', 'у процесі', 'офер'][v] || '' } }
+        }
+      }
+    });
+  }
+
+  setPeriod(p) {
+    this.setState({ period: p });
+    const d = this._sparkData && this._sparkData[p];
+    if (!this._spark || !d) return;
+    this._spark.data.labels = d.map((_, i) => i + 1);
+    this._spark.data.datasets[0].data = d;
+    this._spark.update();
+  }
+
+  renderVals() {
+    if (!this._kick) { this._kick = true; setTimeout(() => this.start(), 0); }
+    const s = this.state;
+    const on = 'oklch(99.6% 0.003 85)';
+    const sh = '0 1px 2px oklch(25% 0.013 62 / .07), 0 4px 12px -6px oklch(25% 0.013 62 / .24)';
+    const p = k => ({ bg: s.period === k ? on : 'transparent', fg: s.period === k ? 'oklch(25% 0.013 62)' : 'oklch(50% 0.012 68)', sh: s.period === k ? sh : 'none' });
+    const a = p('30'), b = p('90'), c = p('all');
+    return {
+      noop: () => {},
+      sankeyFail: s.sankeyFail,
+      p30Bg: a.bg, p30Fg: a.fg, p30Sh: a.sh,
+      p90Bg: b.bg, p90Fg: b.fg, p90Sh: b.sh,
+      pAllBg: c.bg, pAllFg: c.fg, pAllSh: c.sh,
+      per30: () => this.setPeriod('30'), per90: () => this.setPeriod('90'), perAll: () => this.setPeriod('all')
+    };
+  }
+}
+</script>
+</body>
+</html>

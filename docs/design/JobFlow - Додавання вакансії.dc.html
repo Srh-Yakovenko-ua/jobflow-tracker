@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="design_doc_mode" content="canvas">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@400;500;600;700&family=Onest:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/lucide@latest/dist/umd/lucide.min.js"></script>
+<style>
+  body { margin: 0; background: oklch(97.4% 0.007 78); }
+  a { color: oklch(52% 0.12 252); text-underline-offset: 2px; }
+  a:hover { color: oklch(44% 0.12 252); }
+  @keyframes jf-pulse { 0%, 100% { opacity: 1 } 50% { opacity: 0.4 } }
+  @keyframes jf-shimmer { 0% { background-position: -180px 0 } 100% { background-position: 340px 0 } }
+  @keyframes jf-in { from { transform: translateY(6px) } to { transform: none } }
+  @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important } }
+</style>
+</helmet>
+
+<div style="background: oklch(97.4% 0.007 78); color: oklch(25% 0.013 62); font-family: 'Onest', system-ui, sans-serif; -webkit-font-smoothing: antialiased">
+
+<header style="box-shadow: inset 0 -1px 0 oklch(91% 0.008 78)">
+  <div style="max-width: 1180px; margin: 0 auto; padding: 14px 28px; display: flex; align-items: center; gap: 16px">
+    <a href="#" style="text-decoration: none; color: oklch(50% 0.012 68); font-size: 13.5px; min-height: 40px; display: flex; align-items: center; gap: 8px"><span style="width: 15px; height: 15px; display: block; flex: none"><i data-lucide="chevron-left"></i></span>Дошка</a>
+    <span style="flex: 1"></span>
+    <span style="font-family: 'Onest', sans-serif; font-weight: 600; font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; color: oklch(52% 0.012 68)">черга AI · 2 задачі</span>
+  </div>
+</header>
+
+<div style="max-width: 1180px; margin: 0 auto; padding: 36px 28px 88px; display: flex; flex-direction: column; gap: 40px">
+
+  <section style="display: flex; flex-direction: column; gap: 10px">
+    <div style="font-family: 'Onest', sans-serif; font-weight: 600; font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; color: oklch(50% 0.012 68)">Нова вакансія</div>
+    <h1 style="margin: 0; font-family: 'Unbounded', sans-serif; font-weight: 500; font-size: clamp(28px, 4.0vw, 40px); line-height: 1.03; letter-spacing: -0.036em">Три способи<br>додати відгук</h1>
+    <p style="margin: 0; max-width: 60ch; font-size: 16px; line-height: 1.55; color: oklch(42% 0.012 62)">Букмарклет — для щоденної рутини, вставка тексту — коли вакансія прийшла в месенджері, ручний ввід — коли її взагалі ніде немає.</p>
+  </section>
+
+  <section style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; align-items: start">
+
+    <div style="background: oklch(99.4% 0.004 85); border-radius: 12px; padding: 22px; display: flex; flex-direction: column; gap: 16px; box-shadow: inset 0 0 0 1px oklch(88% 0.03 252), 0 1px 2px oklch(25% 0.013 62 / .05), 0 8px 20px -12px oklch(25% 0.013 62 / .14)">
+      <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px">
+        <span style="font-family: 'Onest', sans-serif; font-weight: 600; font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; color: oklch(50% 0.012 68)">01 · букмарклет</span>
+        <span style="color: oklch(44% 0.12 252); border-radius: 9px; padding: 2px 7px; font-size: 11.5px; font-weight: 600; box-shadow: inset 0 0 0 1px oklch(52% 0.12 252)">швидко</span>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 6px">
+        <h2 style="margin: 0; font-family: 'Unbounded', sans-serif; font-weight: 500; font-size: 22px; line-height: 1.2">Один клік зі сторінки вакансії</h2>
+        <p style="margin: 0; font-size: 14px; line-height: 1.55; color: oklch(42% 0.012 62)">Працює на Djinni, DOU, robota.ua, LinkedIn і будь-якому сайті компанії. Карточка створюється одразу, розбір іде у фоні.</p>
+      </div>
+      <div style="border: 1.5px dashed oklch(91% 0.008 78); background: oklch(96.8% 0.006 80); border-radius: 9px; padding: 14px; display: flex; flex-direction: column; gap: 12px">
+        <span style="font-family: 'Onest', sans-serif; font-weight: 600; font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: oklch(50% 0.012 68)">встановлення · 20 секунд</span>
+        <div style="display: flex; gap: 10px; align-items: flex-start"><span style="font-family: 'Onest', sans-serif; font-weight: 600; font-size: 11px; color: oklch(44% 0.12 252); flex: none; padding-top: 3px">1</span><span style="font-size: 13.5px; line-height: 1.5">Покажи панель закладок: <span style="font-family: 'Onest', sans-serif; font-weight: 600; font-size: 12px; box-shadow: inset 0 0 0 1px oklch(93% 0.008 78); border-radius: 7px; padding: 1px 5px; background: oklch(99.4% 0.004 85)">⌘ ⇧ B</span></span></div>
+        <div style="display: flex; gap: 10px; align-items: flex-start"><span style="font-family: 'Onest', sans-serif; font-weight: 600; font-size: 11px; color: oklch(44% 0.12 252); flex: none; padding-top: 3px">2</span><span style="font-size: 13.5px; line-height: 1.5">Перетягни цю кнопку на панель</span></div>
+        <div draggable="true" style="background: oklch(52% 0.12 252); color: oklch(99% 0.005 252); border-radius: 9px; padding: 10px 14px; font-size: 14px; font-weight: 600; text-align: center; cursor: grab; align-self: flex-start; box-shadow: 0 1px 2px oklch(40% 0.09 252 / .2), 0 8px 18px -7px oklch(40% 0.09 252 / .45)">＋ JobFlow</div>
+        <div style="display: flex; gap: 10px; align-items: flex-start"><span style="font-family: 'Onest', sans-serif; font-weight: 600; font-size: 11px; color: oklch(44% 0.12 252); flex: none; padding-top: 3px">3</span><span style="font-size: 13.5px; line-height: 1.5">На сторінці вакансії тисни її — і повертайся до роботи</span></div>
+      </div>
+      <div style="display: flex; align-items: center; gap: 8px; font-family: 'Onest', sans-serif; font-weight: 600; font-size: 10.5px; color: oklch(52% 0.012 68)">не читає нічого, крім відкритої вкладки</div>
+    </div>
+
+    <div style="background: oklch(99.4% 0.004 85); box-shadow: 0 1px 2px oklch(25% 0.013 62 / .05), 0 8px 20px -12px oklch(25% 0.013 62 / .14); border-radius: 12px; padding: 22px; display: flex; flex-direction: column; gap: 16px">
+      <span style="font-family: 'Onest', sans-serif; font-weight: 600; font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; color: oklch(50% 0.012 68)">02 · вставка тексту</span>
+      <div style="display: flex; flex-direction: column; gap: 6px">
+        <h2 style="margin: 0; font-family: 'Unbounded', sans-serif; font-weight: 500; font-size: 22px; line-height: 1.2">Вставити опис вакансії</h2>
+        <p style="margin: 0; font-size: 14px; line-height: 1.55; color: oklch(42% 0.012 62)">З телеграму, листа, скріншота тексту. AI витягне компанію, позицію, вилку, стек і порахує Match Score.</p>
+      </div>
+      <textarea rows="7" placeholder="Встав сюди весь текст вакансії — разом із зайвим, розберемось…" style="border: none; box-shadow: inset 0 0 0 1px oklch(91% 0.008 78); background: oklch(97.6% 0.006 80); border-radius: 9px; padding: 12px; font-family: 'Onest', sans-serif; font-size: 14px; line-height: 1.55; color: oklch(25% 0.013 62); resize: vertical"></textarea>
+      <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap">
+        <button onClick="{{ startParse }}" style="border: none; background: oklch(52% 0.12 252); color: oklch(99% 0.005 252); border-radius: 9px; padding: 0 16px; font-family: 'Onest', sans-serif; font-size: 14.5px; font-weight: 600; height: 42px; cursor: pointer; box-shadow: 0 1px 2px oklch(40% 0.09 252 / .2), 0 8px 18px -7px oklch(40% 0.09 252 / .45); display: flex; align-items: center; justify-content: center" style-hover="background: oklch(44% 0.12 252)">Розібрати текст</button>
+        <span style="font-family: 'Onest', sans-serif; font-weight: 600; font-size: 10.5px; color: oklch(52% 0.012 68)">⌘ ENTER</span>
+      </div>
+    </div>
+
+    <div style="box-shadow: inset 0 0 0 1px oklch(93% 0.008 78), 0 1px 2px oklch(25% 0.013 62 / .05), 0 8px 20px -12px oklch(25% 0.013 62 / .14); background: oklch(97.2% 0.006 80); border-radius: 12px; padding: 22px; display: flex; flex-direction: column; gap: 16px">
+      <span style="font-family: 'Onest', sans-serif; font-weight: 600; font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; color: oklch(50% 0.012 68)">03 · вручну</span>
+      <div style="display: flex; flex-direction: column; gap: 6px">
+        <h2 style="margin: 0; font-family: 'Unbounded', sans-serif; font-weight: 500; font-size: 22px; line-height: 1.2">Заповнити самому</h2>
+        <p style="margin: 0; font-size: 14px; line-height: 1.55; color: oklch(42% 0.012 62)">Обов'язкові тільки компанія і позиція. Match Score у такої карточки не буде — і це нормально.</p>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 12px">
+        <label style="display: flex; flex-direction: column; gap: 5px"><span style="font-size: 12.5px; font-weight: 500">Компанія</span><input placeholder="Назва компанії" style="border: none; background: oklch(97.2% 0.006 80); box-shadow: inset 0 0 0 1px oklch(91% 0.008 78); border-radius: 9px; padding: 0 11px; font-family: 'Onest', sans-serif; font-size: 14px; height: 36px; color: oklch(25% 0.013 62)"></label>
+        <label style="display: flex; flex-direction: column; gap: 5px"><span style="font-size: 12.5px; font-weight: 500">Позиція</span><input placeholder="Наприклад, Middle QA Engineer" style="border: none; background: oklch(97.2% 0.006 80); box-shadow: inset 0 0 0 1px oklch(91% 0.008 78); border-radius: 9px; padding: 0 11px; font-family: 'Onest', sans-serif; font-size: 14px; height: 36px; color: oklch(25% 0.013 62)"></label>
+        <label style="display: flex; flex-direction: column; gap: 5px"><span style="font-size: 12.5px; font-weight: 500">Джерело</span><select style="border: none; background: oklch(97.2% 0.006 80); box-shadow: inset 0 0 0 1px oklch(91% 0.008 78); border-radius: 9px; padding: 0 11px; font-family: 'Onest', sans-serif; font-size: 14px; height: 36px; color: oklch(25% 0.013 62)"><option>Djinni</option><option>DOU</option><option>robota.ua</option><option>LinkedIn</option><option>рефералка</option><option>сайт компанії</option><option>інше</option></select></label>
+      </div>
+      <button onClick="{{ noop }}" style="border: none; box-shadow: inset 0 0 0 1px oklch(91% 0.008 78); background: transparent; color: oklch(25% 0.013 62); border-radius: 9px; padding: 0 16px; font-family: 'Onest', sans-serif; font-size: 14.5px; font-weight: 600; height: 42px; cursor: pointer; align-self: flex-start; display: flex; align-items: center; justify-content: center" style-hover="background: oklch(94.6% 0.010 78)">Створити карточку</button>
+    </div>
+  </section>
+
+  <section style="display: flex; flex-direction: column; gap: 18px; padding-top: 22px; box-shadow: inset 0 1px 0 oklch(93% 0.008 78)">
+    <div style="display: flex; justify-content: space-between; align-items: baseline; gap: 16px; flex-wrap: wrap">
+      <div style="display: flex; flex-direction: column; gap: 4px">
+        <span style="font-family: 'Onest', sans-serif; font-weight: 600; font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; color: oklch(50% 0.012 68)">Що відбувається після кліку</span>
+        <h2 style="margin: 0; font-family: 'Unbounded', sans-serif; font-weight: 500; font-size: 26px; line-height: 1.15">Обробка йде у фоні</h2>
+      </div>
+      <div style="display: flex; gap: 8px; flex-wrap: wrap">
+        <button onClick="{{ startParse }}" style="border: none; box-shadow: inset 0 0 0 1px oklch(91% 0.008 78); background: transparent; color: oklch(50% 0.012 68); border-radius: 9px; padding: 7px 12px; font-family: 'Onest', sans-serif; font-size: 12.5px; min-height: 36px; cursor: pointer" style-hover="background: oklch(94.6% 0.010 78); color: oklch(25% 0.013 62)">↻ прогнати стани</button>
+        <button onClick="{{ showFail }}" style="border: none; box-shadow: inset 0 0 0 1px oklch(91% 0.008 78); background: transparent; color: oklch(50% 0.012 68); border-radius: 9px; padding: 7px 12px; font-family: 'Onest', sans-serif; font-size: 12.5px; min-height: 36px; cursor: pointer" style-hover="background: oklch(94.6% 0.010 78); color: oklch(25% 0.013 62)">AI не впорався</button>
+      </div>
+    </div>
+
+    <div style="display: grid; grid-template-columns: minmax(0, 300px) minmax(0, 1fr); gap: 24px; align-items: start">
+
+      <div style="display: flex; flex-direction: column; gap: 10px; background: oklch(94.6% 0.010 78); box-shadow: inset 0 0 0 1px oklch(93% 0.008 78); border-radius: 12px; padding: 10px">
+        <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px">
+          <div style="display: flex; align-items: center; gap: 8px"><span style="width: 8px; height: 8px; background: oklch(38% 0.07 258); flex: none"></span><span style="font-size: 13px; font-weight: 600">відгук</span></div>
+          <span style="font-family: 'Onest', sans-serif; font-weight: 600; font-size: 12px; color: oklch(50% 0.012 68); font-variant-numeric: tabular-nums">9</span>
+        </div>
+
+        <sc-if value="{{ isProcessing }}" hint-placeholder-val="{{ false }}">
+        <div style="background: oklch(99.4% 0.004 85); box-shadow: 0 1px 2px oklch(25% 0.013 62 / .05), 0 8px 20px -12px oklch(25% 0.013 62 / .14); border-radius: 12px; padding: 11px 13px; display: flex; flex-direction: column; gap: 10px; animation: jf-in 180ms cubic-bezier(.2,.8,.3,1)">
+          <div style="display: flex; align-items: center; gap: 8px; font-family: 'Onest', sans-serif; font-weight: 600; font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: oklch(44% 0.12 252)"><span style="width: 7px; height: 7px; border-radius: 50%; background: oklch(52% 0.12 252); animation: jf-pulse 1400ms ease-in-out infinite"></span>AI обробляє</div>
+          <div style="height: 14px; width: 82%; border-radius: 7px; background: linear-gradient(90deg, oklch(94.6% 0.010 78) 0%, oklch(97.6% 0.006 80) 50%, oklch(94.6% 0.010 78) 100%); background-size: 240px 100%; animation: jf-shimmer 1400ms linear infinite"></div>
+          <div style="height: 11px; width: 56%; border-radius: 7px; background: linear-gradient(90deg, oklch(94.6% 0.010 78) 0%, oklch(97.6% 0.006 80) 50%, oklch(94.6% 0.010 78) 100%); background-size: 240px 100%; animation: jf-shimmer 1400ms linear infinite"></div>
+          <div style="height: 1px; background: oklch(94% 0.008 78)"></div>
+          <div style="height: 10px; width: 42%; border-radius: 7px; background: oklch(94.6% 0.010 78)"></div>
+        </div>
+        </sc-if>
+
+        <sc-if value="{{ isRecognized }}" hint-placeholder-val="{{ true }}">
+        <div style="background: oklch(99.4% 0.004 85); border-radius: 12px; padding: 11px 13px; display: flex; flex-direction: column; gap: 9px; animation: jf-in 180ms cubic-bezier(.2,.8,.3,1); box-shadow: inset 0 0 0 1px oklch(52% 0.12 252)">
+          <div style="display: flex; align-items: center; gap: 8px; font-family: 'Onest', sans-serif; font-weight: 600; font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: oklch(44% 0.12 252)"><span style="width: 7px; height: 7px; border-radius: 50%; background: oklch(52% 0.12 252)"></span>перевір поля</div>
+          <div style="display: flex; justify-content: space-between; gap: 10px; align-items: flex-start">
+            <div style="display: flex; flex-direction: column; gap: 2px; min-width: 0"><span style="font-size: 14px; font-weight: 600; line-height: 1.3">Senior Node.js Engineer</span><span style="font-size: 12.5px; color: oklch(50% 0.012 68)">Kvit Software</span></div>
+            <span style="flex: none; color: oklch(44% 0.12 252); border-radius: 9px; padding: 1px 6px; font-family: 'Onest', sans-serif; font-weight: 600; font-size: 12px; font-variant-numeric: tabular-nums; box-shadow: inset 0 0 0 1px oklch(52% 0.12 252)">73</span>
+          </div>
+          <div style="display: flex; justify-content: space-between; align-items: center; gap: 8px; font-family: 'Onest', sans-serif; font-weight: 600; font-size: 10.5px; color: oklch(50% 0.012 68)"><span style="font-variant-numeric: tabular-nums">$4700–5900</span><span>DJINNI</span></div>
+        </div>
+        </sc-if>
+
+        <sc-if value="{{ isFailed }}" hint-placeholder-val="{{ false }}">
+        <div style="background: oklch(99.4% 0.004 85); border-radius: 12px; padding: 11px 13px; display: flex; flex-direction: column; gap: 9px; animation: jf-in 180ms cubic-bezier(.2,.8,.3,1); box-shadow: inset 0 0 0 1px oklch(58% 0.09 34)">
+          <div style="display: flex; align-items: center; gap: 8px; font-family: 'Onest', sans-serif; font-weight: 600; font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: oklch(46% 0.10 34)"><span style="width: 8px; height: 8px; border-radius: 50%; border: 1.5px solid oklch(58% 0.09 34); display: flex; align-items: center; justify-content: center"><span style="width: 4px; height: 1.5px; background: oklch(58% 0.09 34)"></span></span>потрібні поля</div>
+          <div style="display: flex; justify-content: space-between; gap: 10px; align-items: flex-start">
+            <div style="display: flex; flex-direction: column; gap: 2px; min-width: 0"><span style="font-size: 14px; font-weight: 600; line-height: 1.3; color: oklch(50% 0.012 68)">Без назви</span><span style="font-size: 12.5px; color: oklch(52% 0.012 68)">компанію не розпізнано</span></div>
+            <span style="flex: none; border: 1.5px dashed oklch(88% 0.008 78); color: oklch(50% 0.012 68); border-radius: 9px; padding: 1px 7px; font-family: 'Onest', sans-serif; font-weight: 600; font-size: 12px">—</span>
+          </div>
+          <div style="font-family: 'Onest', sans-serif; font-weight: 600; font-size: 10.5px; color: oklch(50% 0.012 68)">текст збережено в заметці</div>
+        </div>
+        </sc-if>
+
+        <div style="background: oklch(99.4% 0.004 85); box-shadow: 0 1px 2px oklch(25% 0.013 62 / .05), 0 8px 20px -12px oklch(25% 0.013 62 / .14); border-radius: 12px; padding: 11px 13px; display: flex; flex-direction: column; gap: 9px; opacity: 0.92">
+          <div style="display: flex; justify-content: space-between; gap: 10px; align-items: flex-start">
+            <div style="display: flex; flex-direction: column; gap: 2px; min-width: 0"><span style="font-size: 14px; font-weight: 600; line-height: 1.3">Senior Frontend Engineer</span><span style="font-size: 12.5px; color: oklch(50% 0.012 68)">Trident Systems</span></div>
+            <span style="flex: none; color: oklch(44% 0.12 252); border-radius: 9px; padding: 1px 6px; font-family: 'Onest', sans-serif; font-weight: 600; font-size: 12px; font-variant-numeric: tabular-nums; box-shadow: inset 0 0 0 1px oklch(52% 0.12 252)">84</span>
+          </div>
+          <div style="display: flex; justify-content: space-between; align-items: center; gap: 8px; font-family: 'Onest', sans-serif; font-weight: 600; font-size: 10.5px; color: oklch(50% 0.012 68)"><span style="font-variant-numeric: tabular-nums">$5000–6500</span><span>DJINNI</span></div>
+        </div>
+      </div>
+
+      <div style="display: flex; flex-direction: column; gap: 16px; min-width: 0">
+
+        <sc-if value="{{ isProcessing }}" hint-placeholder-val="{{ false }}">
+        <div style="background: oklch(99.4% 0.004 85); box-shadow: 0 1px 2px oklch(25% 0.013 62 / .05), 0 8px 20px -12px oklch(25% 0.013 62 / .14); border-radius: 12px; padding: 24px; display: flex; flex-direction: column; gap: 18px">
+          <div style="display: flex; align-items: center; gap: 10px; font-family: 'Onest', sans-serif; font-weight: 600; font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; color: oklch(44% 0.12 252)"><span style="width: 8px; height: 8px; border-radius: 50%; background: oklch(52% 0.12 252); animation: jf-pulse 1400ms ease-in-out infinite"></span>крок 2 з 3 · обробляється</div>
+          <h3 style="margin: 0; font-family: 'Unbounded', sans-serif; font-weight: 500; font-size: 26px; line-height: 1.2">Карточка вже на дошці</h3>
+          <p style="margin: 0; max-width: 56ch; font-size: 15px; line-height: 1.6; color: oklch(42% 0.012 62)">Ти нічого не чекаєш: карточка-скелетон стоїть у колонці «відгук», а розбір іде у черзі. Можна закрити цю сторінку, піти додавати наступну вакансію або зайти в аналітику — на дошці з'явиться готова карточка.</p>
+          <div style="display: flex; flex-direction: column; gap: 10px; max-width: 420px">
+            <div style="display: flex; justify-content: space-between; gap: 12px; font-family: 'Onest', sans-serif; font-weight: 600; font-size: 11px; color: oklch(50% 0.012 68)"><span>розбір полів</span><span>~6 с</span></div>
+            <div style="height: 4px; background: oklch(94.6% 0.010 78)"><div style="height: 4px; width: 62%; background: oklch(52% 0.12 252)"></div></div>
+          </div>
+        </div>
+        </sc-if>
+
+        <sc-if value="{{ isRecognized }}" hint-placeholder-val="{{ true }}">
+        <div style="background: oklch(99.4% 0.004 85); border-radius: 12px; padding: 24px; display: flex; flex-direction: column; gap: 20px; box-shadow: inset 0 0 0 1px oklch(88% 0.03 252), 0 1px 2px oklch(25% 0.013 62 / .05), 0 8px 20px -12px oklch(25% 0.013 62 / .14)">
+          <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; flex-wrap: wrap">
+            <div style="display: flex; flex-direction: column; gap: 6px">
+              <div style="display: flex; align-items: center; gap: 10px; font-family: 'Onest', sans-serif; font-weight: 600; font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; color: oklch(38% 0.09 158)"><span style="width: 8px; height: 8px; border-radius: 50%; background: oklch(49% 0.10 158)"></span>крок 3 з 3 · розпізнано за 6 с</div>
+              <h3 style="margin: 0; font-family: 'Unbounded', sans-serif; font-weight: 500; font-size: 26px; line-height: 1.2">Перевір поля — і готово</h3>
+            </div>
+            <span style="background: oklch(96.5% 0.014 252); color: oklch(38% 0.12 252); border-radius: 9px; padding: 4px 9px; font-family: 'Onest', sans-serif; font-weight: 600; font-size: 13px; font-variant-numeric: tabular-nums; display: flex; align-items: center; gap: 7px; box-shadow: inset 0 0 0 1px oklch(52% 0.12 252)"><span style="width: 22px; height: 3px; background: oklch(93% 0.008 78); position: relative; display: block"><span style="position: absolute; inset: 0 27% 0 0; background: oklch(52% 0.12 252)"></span></span>73</span>
+          </div>
+
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px">
+            <label style="display: flex; flex-direction: column; gap: 5px"><span style="font-size: 12.5px; font-weight: 500; display: flex; align-items: center; gap: 7px">Компанія <span style="font-family: 'Onest', sans-serif; font-weight: 600; font-size: 10px; color: oklch(38% 0.09 158)">точно</span></span><input value="Kvit Software" style="border: none; background: oklch(97.2% 0.006 80); box-shadow: inset 0 0 0 1px oklch(91% 0.008 78); border-radius: 9px; padding: 0 11px; font-family: 'Onest', sans-serif; font-size: 14px; height: 36px; color: oklch(25% 0.013 62)"></label>
+            <label style="display: flex; flex-direction: column; gap: 5px"><span style="font-size: 12.5px; font-weight: 500; display: flex; align-items: center; gap: 7px">Позиція <span style="font-family: 'Onest', sans-serif; font-weight: 600; font-size: 10px; color: oklch(38% 0.09 158)">точно</span></span><input value="Senior Node.js Engineer" style="border: none; background: oklch(97.2% 0.006 80); box-shadow: inset 0 0 0 1px oklch(91% 0.008 78); border-radius: 9px; padding: 0 11px; font-family: 'Onest', sans-serif; font-size: 14px; height: 36px; color: oklch(25% 0.013 62)"></label>
+            <label style="display: flex; flex-direction: column; gap: 5px"><span style="font-size: 12.5px; font-weight: 500; display: flex; align-items: center; gap: 7px">Вилка, $ <span style="font-family: 'Onest', sans-serif; font-weight: 600; font-size: 10px; color: oklch(48% 0.08 70)">перевір</span></span><input value="4700 – 5900" style="border: none; background: oklch(98.6% 0.014 80); border-radius: 9px; padding: 0 11px; font-family: 'Onest', sans-serif; font-size: 14px; height: 36px; color: oklch(25% 0.013 62); font-variant-numeric: tabular-nums; box-shadow: inset 0 0 0 1px oklch(80% 0.06 80)"></label>
+            <label style="display: flex; flex-direction: column; gap: 5px"><span style="font-size: 12.5px; font-weight: 500">Джерело</span><select style="border: none; background: oklch(97.2% 0.006 80); box-shadow: inset 0 0 0 1px oklch(91% 0.008 78); border-radius: 9px; padding: 0 11px; font-family: 'Onest', sans-serif; font-size: 14px; height: 36px; color: oklch(25% 0.013 62)"><option>Djinni</option><option>DOU</option><option>robota.ua</option><option>LinkedIn</option><option>рефералка</option><option>сайт компанії</option><option>інше</option></select></label>
+          </div>
+
+          <div style="display: flex; flex-direction: column; gap: 8px">
+            <span style="font-size: 12.5px; font-weight: 500">Стек · розпізнано 5 із тексту</span>
+            <div style="display: flex; flex-wrap: wrap; gap: 6px">
+              <span style="display: flex; align-items: center; gap: 6px; box-shadow: inset 0 0 0 1px oklch(94% 0.008 78); background: oklch(97.2% 0.006 80); color: oklch(32% 0.012 62); border-radius: 9px; padding: 4px 8px; font-size: 12.5px">Node.js <span style="width: 13px; height: 13px; display: block; flex: none; cursor: pointer; color: oklch(50% 0.012 68)"><i data-lucide="x"></i></span></span>
+              <span style="display: flex; align-items: center; gap: 6px; box-shadow: inset 0 0 0 1px oklch(94% 0.008 78); background: oklch(97.2% 0.006 80); color: oklch(32% 0.012 62); border-radius: 9px; padding: 4px 8px; font-size: 12.5px">TypeScript <span style="width: 13px; height: 13px; display: block; flex: none; cursor: pointer; color: oklch(50% 0.012 68)"><i data-lucide="x"></i></span></span>
+              <span style="display: flex; align-items: center; gap: 6px; box-shadow: inset 0 0 0 1px oklch(94% 0.008 78); background: oklch(97.2% 0.006 80); color: oklch(32% 0.012 62); border-radius: 9px; padding: 4px 8px; font-size: 12.5px">PostgreSQL <span style="width: 13px; height: 13px; display: block; flex: none; cursor: pointer; color: oklch(50% 0.012 68)"><i data-lucide="x"></i></span></span>
+              <span style="display: flex; align-items: center; gap: 6px; box-shadow: inset 0 0 0 1px oklch(94% 0.008 78); background: oklch(97.2% 0.006 80); color: oklch(32% 0.012 62); border-radius: 9px; padding: 4px 8px; font-size: 12.5px">Docker <span style="width: 13px; height: 13px; display: block; flex: none; cursor: pointer; color: oklch(50% 0.012 68)"><i data-lucide="x"></i></span></span>
+              <span style="display: flex; align-items: center; gap: 6px; box-shadow: inset 0 0 0 1px oklch(94% 0.008 78); background: oklch(97.2% 0.006 80); color: oklch(32% 0.012 62); border-radius: 9px; padding: 4px 8px; font-size: 12.5px">Kafka <span style="width: 13px; height: 13px; display: block; flex: none; cursor: pointer; color: oklch(50% 0.012 68)"><i data-lucide="x"></i></span></span>
+              <button onClick="{{ noop }}" style="border: 1.5px dashed oklch(88% 0.008 78); background: transparent; color: oklch(50% 0.012 68); border-radius: 8px; padding: 0 10px; font-family: 'Onest', sans-serif; font-size: 12px; cursor: pointer; height: 28px; box-sizing: border-box; display: flex; align-items: center; gap: 6px">+ додати</button>
+            </div>
+          </div>
+
+          <div style="display: flex; align-items: flex-start; gap: 10px; border-left: 2px solid oklch(52% 0.12 252); padding: 2px 0 2px 14px; font-size: 13.5px; line-height: 1.55; color: oklch(42% 0.012 62)">Підсвічені жовтим поля AI не впевнений — вилка була написана як «від 4700 до 5900 net». Усе інше збіглося з описом дослівно.</div>
+
+          <div style="display: flex; gap: 10px; flex-wrap: wrap; padding-top: 2px">
+            <button onClick="{{ noop }}" style="border: none; background: oklch(52% 0.12 252); color: oklch(99% 0.005 252); border-radius: 9px; padding: 0 16px; font-family: 'Onest', sans-serif; font-size: 14.5px; font-weight: 600; height: 42px; cursor: pointer; box-shadow: 0 1px 2px oklch(40% 0.09 252 / .2), 0 8px 18px -7px oklch(40% 0.09 252 / .45); display: flex; align-items: center; justify-content: center" style-hover="background: oklch(44% 0.12 252)">Підтвердити і на дошку</button>
+            <button onClick="{{ noop }}" style="border: none; box-shadow: inset 0 0 0 1px oklch(91% 0.008 78); background: transparent; color: oklch(25% 0.013 62); border-radius: 9px; padding: 0 16px; font-family: 'Onest', sans-serif; font-size: 14.5px; font-weight: 600; height: 42px; cursor: pointer; display: flex; align-items: center; justify-content: center" style-hover="background: oklch(94.6% 0.010 78)">Відкрити повну карточку</button>
+          </div>
+        </div>
+        </sc-if>
+
+        <sc-if value="{{ isFailed }}" hint-placeholder-val="{{ false }}">
+        <div style="background: oklch(99.4% 0.004 85); border-radius: 12px; padding: 24px; display: flex; flex-direction: column; gap: 18px; box-shadow: inset 0 0 0 1px oklch(58% 0.09 34), 0 1px 2px oklch(25% 0.013 62 / .05), 0 8px 20px -12px oklch(25% 0.013 62 / .14)">
+          <div style="display: flex; align-items: center; gap: 10px; font-family: 'Onest', sans-serif; font-weight: 600; font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; color: oklch(46% 0.10 34)"><span style="width: 15px; height: 15px; display: block; flex: none; color: oklch(58% 0.09 34)"><i data-lucide="circle-minus"></i></span>AI не впорався</div>
+          <h3 style="margin: 0; font-family: 'Unbounded', sans-serif; font-weight: 500; font-size: 26px; line-height: 1.2">Карточка створена, але порожня</h3>
+          <p style="margin: 0; max-width: 58ch; font-size: 15px; line-height: 1.6; color: oklch(42% 0.012 62)">У тексті не було ні назви компанії, ні позиції — схоже, скопіювався тільки блок вимог. Текст цілим лежить у заметці карточки, нічого не втрачено. Заповни два поля, і карточка стане повноцінною; Match Score порахується, коли з'явиться позиція.</p>
+          <div style="box-shadow: inset 0 0 0 1px oklch(93% 0.008 78); background: oklch(97.2% 0.006 80); border-radius: 9px; padding: 14px; font-family: 'Onest', sans-serif; font-weight: 600; font-size: 12px; line-height: 1.6; color: oklch(50% 0.012 68); max-width: 560px">«…досвід від 5 років, знання патернів, англійська Upper-Intermediate, участь у код-ревʼю, готовність до менторства…»</div>
+          <div style="display: flex; gap: 10px; flex-wrap: wrap">
+            <button onClick="{{ noop }}" style="border: none; background: oklch(52% 0.12 252); color: oklch(99% 0.005 252); border-radius: 9px; padding: 0 16px; font-family: 'Onest', sans-serif; font-size: 14.5px; font-weight: 600; height: 42px; cursor: pointer; box-shadow: 0 1px 2px oklch(40% 0.09 252 / .2), 0 8px 18px -7px oklch(40% 0.09 252 / .45); display: flex; align-items: center; justify-content: center" style-hover="background: oklch(44% 0.12 252)">Заповнити вручну</button>
+            <button onClick="{{ startParse }}" style="border: none; box-shadow: inset 0 0 0 1px oklch(91% 0.008 78); background: transparent; color: oklch(25% 0.013 62); border-radius: 9px; padding: 0 16px; font-family: 'Onest', sans-serif; font-size: 14.5px; font-weight: 600; height: 42px; cursor: pointer; display: flex; align-items: center; justify-content: center" style-hover="background: oklch(94.6% 0.010 78)">Спробувати ще раз</button>
+            <button onClick="{{ noop }}" style="border: none; background: none; color: oklch(50% 0.012 68); font-family: 'Onest', sans-serif; font-size: 13.5px; cursor: pointer; padding: 0 4px; height: 42px; display: flex; align-items: center; justify-content: center">Видалити карточку</button>
+          </div>
+        </div>
+        </sc-if>
+
+      </div>
+    </div>
+  </section>
+
+  <section style="padding-top: 22px; display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 24px; box-shadow: inset 0 1px 0 oklch(93% 0.008 78)">
+    <div style="display: flex; flex-direction: column; gap: 8px">
+      <span style="font-family: 'Onest', sans-serif; font-weight: 600; font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; color: oklch(50% 0.012 68)">Записка · рішення</span>
+      <p style="margin: 0; font-size: 14px; line-height: 1.6; color: oklch(42% 0.012 62)">Очікування спроєктоване честно: карточка з'являється на дошці до того, як AI закінчив, а не після. Блокуючого спінера немає ніде — користувач додає вакансії пачками по 5–6 за раз, і кожна секунда очікування множилась би на шість.</p>
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 8px">
+      <span style="font-family: 'Onest', sans-serif; font-weight: 600; font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; color: oklch(50% 0.012 68)">Довіра до AI</span>
+      <p style="margin: 0; font-size: 14px; line-height: 1.6; color: oklch(42% 0.012 62)">Поля маркуються «точно / перевір» — модель повідомляє свою невпевненість замість того, щоб тихо підставити помилку. Це дешевше, ніж потім знайти неправильну вилку в зарплатній аналітиці.</p>
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 8px">
+      <span style="font-family: 'Onest', sans-serif; font-weight: 600; font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; color: oklch(50% 0.012 68)">Що зламається</span>
+      <p style="margin: 0; font-size: 14px; line-height: 1.6; color: oklch(42% 0.012 62)">Якщо черга AI переповнена, статус карточки стає «у черзі · ~2 хв» із чесним ETA замість вічного шимера. При 20 скелетонах одночасно анімація вимикається — залишається статичний плейсхолдер, щоб дошка не мерехтіла.</p>
+    </div>
+  </section>
+
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1240}}">
+class Component extends DCLogic {
+  componentDidMount() { this.icons(); this._ic = setInterval(() => this.icons(), 300); }
+  componentDidUpdate() { this.icons(); }
+
+  icons() {
+    if (!window.lucide || !window.lucide.createIcons) return;
+    clearInterval(this._ic); this._ic = null;
+    window.lucide.createIcons({ attrs: { width: "100%", height: "100%", "stroke-width": 1.9 } });
+  }
+  state = { step: 'recognized' };
+
+  startParse() {
+    clearTimeout(this._t);
+    this.setState({ step: 'processing' });
+    this._t = setTimeout(() => this.setState({ step: 'recognized' }), 2600);
+  }
+
+  componentWillUnmount() { clearTimeout(this._t); }
+
+  renderVals() {
+    const s = this.state.step;
+    return {
+      noop: () => {},
+      isProcessing: s === 'processing',
+      isRecognized: s === 'recognized',
+      isFailed: s === 'failed',
+      startParse: () => this.startParse(),
+      showFail: () => { clearTimeout(this._t); this.setState({ step: 'failed' }); }
+    };
+  }
+}
+</script>
+</body>
+</html>
