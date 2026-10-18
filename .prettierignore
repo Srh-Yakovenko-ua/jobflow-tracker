@@ -1,2 +1,3 @@
 pnpm-lock.yaml
 docs/design/
+packages/shared/tokens/generated/
