@@ -6,7 +6,7 @@
   "scripts": {
     "lint": "eslint . --max-warnings 0",
     "typecheck": "tsgo -p . --noEmit",
-    "test": "vitest run",
+    "test": "vitest run --coverage",
     "gen:keys": "node scripts/gen-keys.js"
   },
   "dependencies": {
@@ -16,6 +16,7 @@
   "devDependencies": {
     "@jobflow/config": "workspace:*",
     "@types/node": "^26.6.4",
+    "@vitest/coverage-v8": "^4.1.12",
     "eslint": "^10.13.0",
     "typescript": "~6.0.3",
     "vitest": "^4.1.12"
