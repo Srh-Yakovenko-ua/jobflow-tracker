@@ -6,9 +6,15 @@
     "build": "turbo run build",
     "dev": "turbo run dev",
     "lint": "turbo run lint",
-    "test": "turbo run test"
+    "typecheck": "turbo run typecheck",
+    "test": "turbo run test",
+    "format": "git ls-files -z --cached --others --exclude-standard | xargs -0 prettier --write --ignore-unknown --no-error-on-unmatched-pattern",
+    "format:check": "git ls-files -z --cached --others --exclude-standard | xargs -0 prettier --check --ignore-unknown --no-error-on-unmatched-pattern"
   },
+  "prettier": "@jobflow/config/prettier",
   "devDependencies": {
+    "@jobflow/config": "workspace:*",
+    "prettier": "^3.9.10",
     "turbo": "^2.11.9"
   }
 }

@@ -1,4 +1,14 @@
 packages:
-  - "apps/*"
-  - "packages/*"
-  - "services/*"
+  - 'apps/*'
+  - 'packages/*'
+  - 'services/*'
+
+allowBuilds:
+  unrs-resolver: false
+
+overrides:
+  handlebars: ^4.7.10
+
+audit:
+  ignore:
+    - GHSA-vfj7-8cjw-p6xm

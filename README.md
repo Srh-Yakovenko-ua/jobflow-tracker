@@ -33,4 +33,7 @@ docs/             ADR, дизайн, діаграми до диплому
 pnpm install
 pnpm build
 pnpm dev
+pnpm lint
+pnpm typecheck
+pnpm format
 ```
