@@ -1,5 +1,8 @@
 {
   "name": "@jobflow/web",
   "version": "0.0.0",
-  "private": true
+  "private": true,
+  "dependencies": {
+    "@jobflow/shared": "workspace:*"
+  }
 }
