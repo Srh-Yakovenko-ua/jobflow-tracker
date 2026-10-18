@@ -1,0 +1,97 @@
+import { readFileSync } from 'node:fs';
+import { parseEnv as parseDotenv } from 'node:util';
+
+import { afterEach, describe, expect, it, vi } from 'vitest';
+
+import { loadEnv, parseEnv } from './env.js';
+
+const exampleEnv = parseDotenv(
+  readFileSync(new URL('../../../../.env.example', import.meta.url), 'utf8'),
+);
+
+class ExitCalled extends Error {
+  constructor(readonly code: string | number | null | undefined) {
+    super(`process.exit(${String(code)})`);
+  }
+}
+
+function captureBootFailure(source: NodeJS.ProcessEnv) {
+  const exit = vi.spyOn(process, 'exit').mockImplementation((code) => {
+    throw new ExitCalled(code);
+  });
+  const stderr = vi.spyOn(process.stderr, 'write').mockImplementation(() => true);
+  expect(() => loadEnv(source)).toThrow(ExitCalled);
+  return { exit, written: stderr.mock.calls.map(([chunk]) => String(chunk)).join('') };
+}
+
+function failedPaths(source: NodeJS.ProcessEnv) {
+  const result = parseEnv(source);
+  return result.success ? [] : result.error.issues.map((issue) => issue.path.join('.'));
+}
+
+afterEach(() => {
+  vi.restoreAllMocks();
+});
+
+describe('loadEnv', () => {
+  it('accepts .env.example with the fake AI provider and an empty AI key', () => {
+    const env = loadEnv(exampleEnv);
+
+    expect(env.AI_PROVIDER).toBe('fake');
+    expect(env.AI_API_KEY).toBeUndefined();
+    expect(env.SENTRY_DSN).toBeUndefined();
+    expect(env.AI_DAILY_LIMIT).toBe(50);
+    expect(Object.isFrozen(env)).toBe(true);
+  });
+
+  it('exits with code 1 and names DATABASE_URL when it is missing', () => {
+    const withoutDatabase = Object.fromEntries(
+      Object.entries(exampleEnv).filter(([key]) => key !== 'DATABASE_URL'),
+    );
+
+    const { exit, written } = captureBootFailure(withoutDatabase);
+
+    expect(exit).toHaveBeenCalledWith(1);
+    expect(written).toContain('Invalid environment');
+    expect(written).toContain('DATABASE_URL');
+  });
+
+  it('keeps secret values out of the error output', () => {
+    const { written } = captureBootFailure({
+      ...exampleEnv,
+      DATABASE_URL: 'mysql://user:hunter2@localhost/jobflow',
+    });
+
+    expect(written).toContain('DATABASE_URL');
+    expect(written).not.toContain('hunter2');
+  });
+});
+
+describe('parseEnv', () => {
+  it('treats an empty DATABASE_URL as missing', () => {
+    expect(failedPaths({ ...exampleEnv, DATABASE_URL: '' })).toEqual(['DATABASE_URL']);
+  });
+
+  it('refuses the anthropic provider without an AI key', () => {
+    expect(
+      failedPaths({
+        ...exampleEnv,
+        AI_PROVIDER: 'anthropic',
+        AI_API_KEY: '',
+        AI_MODEL: 'model-id',
+      }),
+    ).toEqual(['AI_API_KEY']);
+  });
+
+  it('refuses the openai provider without a model id', () => {
+    expect(
+      failedPaths({ ...exampleEnv, AI_PROVIDER: 'openai', AI_API_KEY: 'key', AI_MODEL: '' }),
+    ).toEqual(['AI_MODEL']);
+  });
+
+  it('refuses a REDIS_URL with a scheme other than redis or rediss', () => {
+    expect(failedPaths({ ...exampleEnv, REDIS_URL: 'http://localhost:6379' })).toEqual([
+      'REDIS_URL',
+    ]);
+  });
+});
