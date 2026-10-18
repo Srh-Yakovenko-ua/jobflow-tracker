@@ -1,5 +1,44 @@
 {
   "name": "@jobflow/shared",
   "version": "0.0.0",
-  "private": true
+  "private": true,
+  "type": "module",
+  "sideEffects": false,
+  "files": [
+    "dist"
+  ],
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./enums.json": "./dist/enums.json"
+  },
+  "scripts": {
+    "build": "tsup && node scripts/export-enums.js",
+    "lint": "eslint . --max-warnings 0",
+    "typecheck": "tsgo -p . --noEmit",
+    "test": "vitest run --coverage"
+  },
+  "tsup": {
+    "entry": [
+      "src/index.ts"
+    ],
+    "format": [
+      "esm"
+    ],
+    "dts": true,
+    "clean": true
+  },
+  "dependencies": {
+    "zod": "^4.6.7"
+  },
+  "devDependencies": {
+    "@jobflow/config": "workspace:*",
+    "@vitest/coverage-v8": "^4.1.12",
+    "eslint": "^10.13.0",
+    "tsup": "^9.0.0",
+    "typescript": "~6.0.3",
+    "vitest": "^4.1.12"
+  }
 }

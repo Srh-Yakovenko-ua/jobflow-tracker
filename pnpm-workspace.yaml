@@ -4,6 +4,7 @@ packages:
   - 'services/*'
 
 allowBuilds:
+  esbuild: false
   unrs-resolver: false
 
 overrides:
@@ -12,3 +13,11 @@ overrides:
 audit:
   ignore:
     - GHSA-vfj7-8cjw-p6xm
+
+minimumReleaseAgeExclude:
+  - '@rollup/rollup-darwin-x64@4.64.9'
+  - '@rollup/rollup-linux-ppc64-musl@4.64.9'
+  - '@rollup/rollup-linux-riscv64-gnu@4.64.9'
+  - '@rollup/rollup-linux-x64-musl@4.64.9'
+  - '@rollup/rollup-openbsd-x64@4.64.9'
+  - '@rollup/rollup-openharmony-arm64@4.64.9'
