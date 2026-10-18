@@ -46,6 +46,7 @@ jobs:
           fetch-depth: 0
       - uses: ./.github/actions/setup
       - run: pnpm format:check
+      - run: pnpm dup
       - run: pnpm turbo run lint ${{ env.AFFECTED }}
 
   typecheck:

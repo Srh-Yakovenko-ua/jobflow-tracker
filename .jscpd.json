@@ -1,0 +1,17 @@
+{
+  "threshold": 0,
+  "minTokens": 50,
+  "minLines": 5,
+  "format": ["typescript", "tsx", "javascript", "python"],
+  "ignore": [
+    "**/node_modules/**",
+    "**/dist/**",
+    "**/.next/**",
+    "**/coverage/**",
+    "docs/design/**",
+    "**/migrations/**",
+    "**/generated/**",
+    "**/test/fixtures/**"
+  ],
+  "gitignore": true
+}
