@@ -11,3 +11,7 @@ services:
     command: ['node', 'dist/worker.js']
     environment:
       NODE_ENV: production
+
+  web:
+    build:
+      target: prod

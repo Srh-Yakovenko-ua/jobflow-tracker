@@ -53,13 +53,21 @@ Api живий, якщо http://localhost:4000/api/v1/health відповіда�
 docker compose up -d
 ```
 
-Зараз у compose є інфраструктура, api і worker. Лише api і worker разом з Redis, від якого вони залежать:
+Зараз у compose є інфраструктура, api, worker і web. Лише api і worker разом з Redis, від якого вони залежать:
 
 ```bash
 docker compose up -d --build --wait api worker
 ```
 
-Команда збирає образ api (ціль `dev`, `apps/api/src` змонтовано в контейнер) і повертає керування, коли healthcheck api стане `healthy`, а worker запуститься. Worker використовує той самий образ з іншою командою, порту не має і healthcheck-а теж, тому в `docker compose ps` у колонці `STATUS` у нього лише `Up`, без `(healthy)`. `--build` потрібен, щоб після pull образ підхопив нові залежності. Health відповідає на http://localhost:4000/api/v1/health. Контейнер api займає той самий порт 4000, що й `pnpm dev`, тому одночасно працює щось одне. Контейнери web, analytics, documents і ai додадуть картки з таблиці портів. Моніторинг (Grafana, Jaeger та інші) вмикатиметься профілем: `docker compose --profile observability up -d`, коли з'являться картки OBS.
+Команда збирає образ api (ціль `dev`, `apps/api/src` змонтовано в контейнер) і повертає керування, коли healthcheck api стане `healthy`, а worker запуститься. Worker використовує той самий образ з іншою командою, порту не має і healthcheck-а теж, тому в `docker compose ps` у колонці `STATUS` у нього лише `Up`, без `(healthy)`. `--build` потрібен, щоб після pull образ підхопив нові залежності. Health відповідає на http://localhost:4000/api/v1/health. Контейнер api займає той самий порт 4000, що й `pnpm dev`, тому одночасно працює щось одне. Контейнери analytics, documents і ai додадуть картки з таблиці портів. Моніторинг (Grafana, Jaeger та інші) вмикатиметься профілем: `docker compose --profile observability up -d`, коли з'являться картки OBS.
+
+Лише web:
+
+```bash
+docker compose up -d --build --wait web
+```
+
+Команда збирає образ web (ціль `dev`, `apps/web/src` змонтовано в контейнер, у ньому працює `next dev`) і повертає керування, коли healthcheck web стане `healthy`: http://localhost:3000/login відповідає 200. Від інших контейнерів web не залежить. Зміни в `apps/web/src` підхоплюються без перезбирання, а після змін у `package.json`, `next.config.ts` чи `packages/shared` потрібен `--build`. Контейнер web займає той самий порт 3000, що й `pnpm dev`, тому одночасно працює щось одне.
 
 `docker compose stop worker` чекає, поки worker завершить задачі, що вже виконуються (до 60 секунд). Задача, яку перервало аварійне завершення worker, не губиться: після перезапуску worker бере її знову.
 
@@ -88,7 +96,7 @@ docker compose down
 | Mailpit       | 1025 (SMTP), 8025 (UI)     | працює             |
 | api           | 4000                       | працює             |
 | worker        | без порту                  | працює             |
-| web (Next.js) | 3000                       | з'явиться в FE-01  |
+| web (Next.js) | 3000                       | працює             |
 | analytics     | 8000                       | з'явиться в AN-01  |
 | ai            | 8001                       | з'явиться в AI-01  |
 | documents     | 8002                       | з'явиться в AI-11  |
@@ -146,7 +154,7 @@ AI-провайдера обирає `services/ai`, а не API. Ключі ве
 
 **Контейнери перезапускаються по колу.** `docker compose ps` покаже, який сервіс unhealthy. Зазвичай це залежність, що не піднялась, або відсутня змінна: застосунок при старті друкує її назву.
 
-**Hot reload не працює на Windows.** Тримайте репозиторій у файловій системі WSL2. Контейнери api і worker монтують `apps/api/src` і перезапускаються через `nest start --watch`. `docker compose watch` і змінні `WATCHPACK_POLLING=true` та `CHOKIDAR_USEPOLLING=true` стосуються контейнера web і з'являться з FE-01.
+**Hot reload не працює на Windows.** Тримайте репозиторій у файловій системі WSL2. Контейнери api і worker монтують `apps/api/src` і перезапускаються через `nest start --watch`. Контейнер web монтує `apps/web/src`, і `next dev` у ньому перезавантажує сторінку після змін. Змінних для polling compose не задає.
 
 **Помилки Prisma client після pull.** Клієнт Prisma генерується в `apps/api/src/generated/prisma` і в git не потрапляє. `pnpm install` створює його сам, а після зміни схеми без нового install виконайте `pnpm --filter @jobflow/api exec prisma generate` і перезапустіть api та worker. Якщо api пише про відсутню таблицю, запустіть `pnpm db:migrate`.
 
