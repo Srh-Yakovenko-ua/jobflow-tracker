@@ -16,6 +16,7 @@ export const envSchema = z
     JWT_PRIVATE_KEY_PATH: requiredText,
     JWT_PUBLIC_KEY_PATH: requiredText,
     API_URL: httpUrl,
+    PORT: z.coerce.number().int().min(1).max(65535).default(4000),
     WEB_ORIGIN: httpUrl,
     AI_PROVIDER: z.enum(AI_PROVIDERS).default('fake'),
     AI_API_KEY: z.string().optional(),
@@ -45,9 +46,21 @@ export const envSchema = z
 
 export type Env = z.infer<typeof envSchema>;
 
-export function parseEnv(source: NodeJS.ProcessEnv) {
+export function parseEnv(source: Record<string, unknown>) {
   const present = Object.entries(source).filter(([, value]) => value !== '');
   return envSchema.safeParse(Object.fromEntries(present));
+}
+
+function describeEnvError(error: z.ZodError) {
+  return `Invalid environment:\n${z.prettifyError(error)}`;
+}
+
+export function validateEnv(source: Record<string, unknown>): Env {
+  const result = parseEnv(source);
+  if (result.success) {
+    return result.data;
+  }
+  throw new Error(describeEnvError(result.error));
 }
 
 export function loadEnv(source: NodeJS.ProcessEnv): Readonly<Env> {
@@ -55,6 +68,6 @@ export function loadEnv(source: NodeJS.ProcessEnv): Readonly<Env> {
   if (result.success) {
     return Object.freeze(result.data);
   }
-  process.stderr.write(`Invalid environment:\n${z.prettifyError(result.error)}\n`);
+  process.stderr.write(`${describeEnvError(result.error)}\n`);
   return process.exit(1);
 }

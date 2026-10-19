@@ -1,6 +1,11 @@
 {
   "extends": "@jobflow/config/tsconfig.base.json",
   "compilerOptions": {
+    "module": "nodenext",
+    "moduleResolution": "nodenext",
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
+    "outDir": "dist",
     "types": ["node"]
   },
   "include": ["src"]

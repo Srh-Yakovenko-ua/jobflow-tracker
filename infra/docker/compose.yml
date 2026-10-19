@@ -85,6 +85,39 @@ services:
     networks:
       - jobflow
 
+  api:
+    build:
+      context: ../..
+      dockerfile: apps/api/Dockerfile
+    env_file:
+      - path: ../../.env
+        required: false
+    environment:
+      DATABASE_URL: postgresql://jobflow_app:${POSTGRES_APP_PASSWORD:-jobflow_app}@postgres:5432/jobflow
+      REDIS_URL: redis://redis:6379
+      S3_ENDPOINT: http://minio:9000
+      SMTP_URL: smtp://mailpit:1025
+      JWT_PRIVATE_KEY_PATH: /app/.secrets/jwt-private.pem
+      JWT_PUBLIC_KEY_PATH: /app/.secrets/jwt-public.pem
+    ports:
+      - '127.0.0.1:4000:4000'
+    depends_on:
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test:
+        - CMD
+        - node
+        - -e
+        - "fetch('http://127.0.0.1:4000/api/v1/health').then((res) => process.exit(res.ok ? 0 : 1), () => process.exit(1))"
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 30s
+    mem_limit: 512m
+    networks:
+      - jobflow
+
 networks:
   jobflow:
     name: jobflow

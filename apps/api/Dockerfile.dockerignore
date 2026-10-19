@@ -1,0 +1,15 @@
+*
+!package.json
+!pnpm-lock.yaml
+!pnpm-workspace.yaml
+!turbo.json
+!apps/api
+!packages/config
+!packages/shared
+**/node_modules
+**/dist
+**/coverage
+**/.turbo
+**/*.tsbuildinfo
+**/.env*
+!**/.env.example

@@ -3,23 +3,49 @@
   "version": "0.0.0",
   "private": true,
   "type": "module",
+  "files": [
+    "dist"
+  ],
   "scripts": {
+    "build": "nest build",
+    "dev": "nest start --watch",
+    "start": "node dist/main.js",
     "lint": "eslint . --max-warnings 0",
     "typecheck": "tsgo -p . --noEmit",
-    "test": "vitest run --coverage",
-    "test:watch": "vitest watch",
+    "test": "vitest run --coverage --project unit",
+    "test:int": "vitest run --project int",
+    "test:watch": "vitest watch --project unit",
     "gen:keys": "node scripts/gen-keys.js"
   },
   "dependencies": {
     "@jobflow/shared": "workspace:*",
+    "@nestjs/common": "^12.1.3",
+    "@nestjs/config": "^12.0.1",
+    "@nestjs/core": "^12.1.3",
+    "@nestjs/platform-express": "^12.1.3",
+    "helmet": "^8.3.0",
+    "ioredis": "^6.0.0",
+    "nestjs-pino": "^5.3.1",
+    "pino": "^10.4.0",
+    "pino-http": "^11.0.0",
+    "reflect-metadata": "^0.2.2",
+    "rxjs": "^7.8.2",
     "zod": "^4.6.7"
   },
   "devDependencies": {
     "@jobflow/config": "workspace:*",
+    "@nestjs/cli": "12.0.8",
+    "@nestjs/testing": "^12.1.3",
+    "@swc/cli": "^0.8.1",
+    "@swc/core": "^1.16.18",
+    "@types/express": "^5.0.6",
     "@types/node": "^26.6.4",
+    "@types/supertest": "^7.2.1",
     "@vitest/coverage-v8": "^4.1.12",
     "eslint": "^10.13.0",
+    "supertest": "^7.3.1",
     "typescript": "~6.0.3",
+    "unplugin-swc": "^2.0.0",
     "vitest": "^4.1.12"
   }
 }

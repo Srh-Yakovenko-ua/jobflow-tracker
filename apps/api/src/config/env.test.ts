@@ -3,7 +3,7 @@ import { parseEnv as parseDotenv } from 'node:util';
 
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { loadEnv, parseEnv } from './env.js';
+import { loadEnv, parseEnv, validateEnv } from './env.js';
 
 const exampleEnv = parseDotenv(
   readFileSync(new URL('../../../../.env.example', import.meta.url), 'utf8'),
@@ -64,6 +64,27 @@ describe('loadEnv', () => {
 
     expect(written).toContain('DATABASE_URL');
     expect(written).not.toContain('hunter2');
+  });
+});
+
+describe('validateEnv', () => {
+  it('throws an error naming DATABASE_URL without its secret value', () => {
+    const source = { ...exampleEnv, DATABASE_URL: 'mysql://user:hunter2@localhost/jobflow' };
+
+    expect(() => validateEnv(source)).toThrow(/Invalid environment[\s\S]*DATABASE_URL/);
+    expect(() => validateEnv(source)).not.toThrow(/hunter2/);
+  });
+
+  it('defaults PORT to 4000 when it is empty', () => {
+    expect(validateEnv({ ...exampleEnv, PORT: '' }).PORT).toBe(4000);
+  });
+
+  it('reads PORT as a number', () => {
+    expect(validateEnv({ ...exampleEnv, PORT: '4100' }).PORT).toBe(4100);
+  });
+
+  it('refuses a PORT outside 1 to 65535', () => {
+    expect(() => validateEnv({ ...exampleEnv, PORT: '70000' })).toThrow(/PORT/);
   });
 });
 
