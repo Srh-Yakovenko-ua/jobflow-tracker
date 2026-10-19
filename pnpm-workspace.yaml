@@ -6,6 +6,7 @@ packages:
 allowBuilds:
   '@prisma/engines': true
   '@swc/core': false
+  argon2: false
   esbuild: false
   msgpackr-extract: false
   prisma: false

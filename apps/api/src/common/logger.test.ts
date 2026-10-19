@@ -19,6 +19,12 @@ class ProbeController {
     this.logger.log('probe handled');
     return { handled: true };
   }
+
+  @Get('credentials')
+  credentials(): { handled: true } {
+    this.logger.log({ password: 'marker-password', passwordHash: 'marker-hash' }, 'credentials');
+    return { handled: true };
+  }
 }
 
 const log = memoryLog();
@@ -58,6 +64,14 @@ describe('request logs', () => {
       .set('cookie', 'refresh=secret-refresh-token');
 
     expect(log.lines.join('\n')).not.toContain('secret-');
+  });
+
+  it('redacts a logged password and password hash', async () => {
+    await request(app.getHttpServer()).get('/api/v1/probe/credentials');
+
+    const [credentialsLine] = log.parsed();
+    expect(credentialsLine).toMatchObject({ password: '[Redacted]', passwordHash: '[Redacted]' });
+    expect(log.lines.join('\n')).not.toContain('marker-');
   });
 
   it('writes no request line for the health check', async () => {
