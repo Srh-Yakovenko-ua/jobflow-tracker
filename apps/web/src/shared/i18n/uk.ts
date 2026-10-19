@@ -1,6 +1,7 @@
 export const uk = {
   app: {
     title: 'JobFlow · трекер пошуку роботи',
+    notifications: 'Сповіщення',
   },
   auth: {
     login: { title: 'Увійти' },
