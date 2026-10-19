@@ -20,8 +20,9 @@
     "test:integration": "pnpm run test:int",
     "test:watch": "vitest watch --project unit",
     "db:migrate": "prisma migrate deploy",
+    "db:erd": "prisma generate",
     "gen:keys": "node scripts/gen-keys.js",
-    "postinstall": "prisma generate"
+    "postinstall": "DISABLE_ERD=true prisma generate"
   },
   "dependencies": {
     "@bull-board/api": "^9.10.4",
@@ -59,6 +60,7 @@
     "eslint": "^10.13.0",
     "jose": "^6.2.12",
     "prisma": "7.10.1",
+    "prisma-erd-generator": "3.2.1",
     "supertest": "^7.3.1",
     "typescript": "~6.0.3",
     "unplugin-swc": "^2.0.0",

@@ -1,35 +1,15 @@
 import { describe, expect, it } from 'vitest';
 
 import { useTestDatabase } from '../test/database.js';
-import { createUser } from '../test/factories.js';
-
-type OwnedApplication = { userId: string; searchId: string; applicationId: string };
+import { createOwnedApplication } from '../test/factories.js';
 
 describe('the applications domain tables in Postgres', () => {
   const database = useTestDatabase();
 
-  async function createOwnedApplication(): Promise<OwnedApplication> {
-    const { prisma } = database;
-    const user = await createUser(prisma);
-    const search = await prisma.search.create({
-      data: { title: 'Пошук роботи', userId: user.id },
-    });
-    const application = await prisma.application.create({
-      data: {
-        userId: search.userId,
-        searchId: search.id,
-        company: 'Acme',
-        position: 'Backend developer',
-        source: 'djinni',
-      },
-    });
-    return { userId: search.userId, searchId: search.id, applicationId: application.id };
-  }
-
   describe('the append-only logs', () => {
     it('refuses an update and a direct delete of a stage event', async () => {
       const { prisma } = database;
-      const { applicationId } = await createOwnedApplication();
+      const { applicationId } = await createOwnedApplication(database.prisma);
       const event = await prisma.stageEvent.create({
         data: { applicationId, toStage: 'applied' },
       });
@@ -44,7 +24,7 @@ describe('the applications domain tables in Postgres', () => {
 
     it('refuses an update and a direct delete of a timeline event', async () => {
       const { prisma } = database;
-      const { applicationId } = await createOwnedApplication();
+      const { applicationId } = await createOwnedApplication(database.prisma);
       const event = await prisma.timelineEvent.create({
         data: { applicationId, kind: 'captured' },
       });
@@ -59,7 +39,7 @@ describe('the applications domain tables in Postgres', () => {
 
     it('deleting a user removes the events of their applications, an undone move included', async () => {
       const { prisma } = database;
-      const { userId, applicationId } = await createOwnedApplication();
+      const { userId, applicationId } = await createOwnedApplication(database.prisma);
       const move = await prisma.stageEvent.create({
         data: { applicationId, fromStage: 'applied', toStage: 'screening' },
       });
@@ -103,7 +83,7 @@ describe('the applications domain tables in Postgres', () => {
   describe('applications', () => {
     it('refuses an application without a search', async () => {
       const { prisma } = database;
-      const { userId } = await createOwnedApplication();
+      const { userId } = await createOwnedApplication(database.prisma);
 
       await expect(
         prisma.$executeRaw`INSERT INTO applications (user_id, company, position, source)
@@ -113,7 +93,7 @@ describe('the applications domain tables in Postgres', () => {
 
     it('fills the search vector from the stack of a new application', async () => {
       const { prisma } = database;
-      const { userId, searchId } = await createOwnedApplication();
+      const { userId, searchId } = await createOwnedApplication(database.prisma);
 
       const rows = await prisma.$queryRaw<{ matches: boolean }[]>`
         INSERT INTO applications (user_id, search_id, company, position, source, stack)
@@ -126,7 +106,7 @@ describe('the applications domain tables in Postgres', () => {
 
   describe('searches', () => {
     it('refuses a second active search for the same user', async () => {
-      const { userId } = await createOwnedApplication();
+      const { userId } = await createOwnedApplication(database.prisma);
 
       await expect(
         database.prisma.search.create({ data: { userId, title: 'Другий пошук' } }),
@@ -134,7 +114,7 @@ describe('the applications domain tables in Postgres', () => {
     });
 
     it('accepts an archived search beside the active one', async () => {
-      const { userId } = await createOwnedApplication();
+      const { userId } = await createOwnedApplication(database.prisma);
 
       const archived = await database.prisma.search.create({
         data: { userId, title: 'Минулий пошук', status: 'archived' },

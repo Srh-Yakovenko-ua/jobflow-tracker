@@ -3,6 +3,8 @@ import { fakerUK as faker } from '@faker-js/faker';
 import type { Prisma, User } from '../generated/prisma/client.js';
 import type { PrismaService } from '../prisma/prisma.service.js';
 
+export type OwnedApplication = { userId: string; searchId: string; applicationId: string };
+
 export function createUser(
   prisma: PrismaService,
   overrides: Partial<Prisma.UserCreateInput> = {},
@@ -15,4 +17,21 @@ export function createUser(
       ...overrides,
     },
   });
+}
+
+export async function createOwnedApplication(prisma: PrismaService): Promise<OwnedApplication> {
+  const user = await createUser(prisma);
+  const search = await prisma.search.create({
+    data: { userId: user.id, title: faker.lorem.words(2) },
+  });
+  const application = await prisma.application.create({
+    data: {
+      userId: user.id,
+      searchId: search.id,
+      company: faker.company.name(),
+      position: faker.person.jobTitle(),
+      source: 'djinni',
+    },
+  });
+  return { userId: user.id, searchId: search.id, applicationId: application.id };
 }
