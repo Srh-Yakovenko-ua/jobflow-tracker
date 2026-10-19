@@ -2,7 +2,28 @@
   "name": "@jobflow/web",
   "version": "0.0.0",
   "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "next dev --port 3000",
+    "build": "next build",
+    "start": "next start --port 3000",
+    "lint": "eslint . --max-warnings 0",
+    "typecheck": "tsgo -p . --noEmit"
+  },
   "dependencies": {
-    "@jobflow/shared": "workspace:*"
+    "@jobflow/shared": "workspace:*",
+    "next": "16.4.2",
+    "react": "19.3.1",
+    "react-dom": "19.3.1"
+  },
+  "devDependencies": {
+    "@jobflow/config": "workspace:*",
+    "@tailwindcss/postcss": "4.3.3",
+    "@types/node": "^26.6.4",
+    "@types/react": "19.3.0",
+    "@types/react-dom": "19.3.0",
+    "eslint": "^10.13.0",
+    "tailwindcss": "4.3.3",
+    "typescript": "~6.0.3"
   }
 }
