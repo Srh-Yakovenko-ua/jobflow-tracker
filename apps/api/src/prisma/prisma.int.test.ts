@@ -2,14 +2,15 @@ import { randomUUID } from 'node:crypto';
 
 import { describe, expect, it } from 'vitest';
 
-import { uniqueEmail, usePrismaTestContext } from '../test/prisma-test-context.js';
+import { useTestDatabase } from '../test/database.js';
+import { createUser } from '../test/factories.js';
 
 describe('the users, auth and settings tables in Postgres', () => {
-  const context = usePrismaTestContext();
+  const database = useTestDatabase();
 
   function ownedRowCounts(userId: string): Promise<number[]> {
-    const prisma = context.prisma();
     const where = { userId };
+    const { prisma } = database;
     return Promise.all([
       prisma.userSettings.count({ where }),
       prisma.refreshToken.count({ where }),
@@ -19,12 +20,12 @@ describe('the users, auth and settings tables in Postgres', () => {
   }
 
   it('a user created with nested settings gets every default', async () => {
-    const prisma = context.prisma();
-    const user = await prisma.user.create({
-      data: { email: uniqueEmail(), settings: { create: {} } },
+    const { id } = await createUser(database.prisma);
+
+    const user = await database.prisma.user.findUniqueOrThrow({
+      where: { id },
       include: { settings: true },
     });
-    context.trackUser(user.id);
 
     expect(user.locale).toBe('uk');
     expect(user.settings).toMatchObject({
@@ -44,26 +45,20 @@ describe('the users, auth and settings tables in Postgres', () => {
   });
 
   it('deleting a user removes their settings, refresh tokens, oauth accounts and capture tokens', async () => {
-    const prisma = context.prisma();
-    const user = await prisma.user.create({
-      data: {
-        email: uniqueEmail(),
-        settings: { create: {} },
-        refreshTokens: {
-          create: {
-            tokenHash: randomUUID(),
-            familyId: randomUUID(),
-            expiresAt: new Date('2026-11-19T00:00:00.000Z'),
-          },
+    const user = await createUser(database.prisma, {
+      refreshTokens: {
+        create: {
+          tokenHash: randomUUID(),
+          familyId: randomUUID(),
+          expiresAt: new Date('2026-11-19T00:00:00.000Z'),
         },
-        oauthAccounts: { create: { provider: 'github', providerUserId: randomUUID() } },
-        captureTokens: { create: { tokenHash: randomUUID() } },
       },
+      oauthAccounts: { create: { provider: 'github', providerUserId: randomUUID() } },
+      captureTokens: { create: { tokenHash: randomUUID() } },
     });
-    context.trackUser(user.id);
     const before = await ownedRowCounts(user.id);
 
-    await prisma.user.delete({ where: { id: user.id } });
+    await database.prisma.user.delete({ where: { id: user.id } });
 
     expect(before).toEqual([1, 1, 1, 1]);
     expect(await ownedRowCounts(user.id)).toEqual([0, 0, 0, 0]);
@@ -71,12 +66,10 @@ describe('the users, auth and settings tables in Postgres', () => {
 
   it('an email that differs only in case is refused as a duplicate', async () => {
     const email = `Case-${randomUUID()}@Example.Test`;
-    const prisma = context.prisma();
-    const user = await prisma.user.create({ data: { email, settings: { create: {} } } });
-    context.trackUser(user.id);
+    await createUser(database.prisma, { email });
 
     await expect(
-      prisma.user.create({ data: { email: email.toLowerCase() } }),
+      database.prisma.user.create({ data: { email: email.toLowerCase() } }),
     ).rejects.toMatchObject({ code: 'P2002' });
   });
 });

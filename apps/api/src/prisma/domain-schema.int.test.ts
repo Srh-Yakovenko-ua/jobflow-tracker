@@ -1,18 +1,19 @@
 import { describe, expect, it } from 'vitest';
 
-import { uniqueEmail, usePrismaTestContext } from '../test/prisma-test-context.js';
+import { useTestDatabase } from '../test/database.js';
+import { createUser } from '../test/factories.js';
 
 type OwnedApplication = { userId: string; searchId: string; applicationId: string };
 
 describe('the applications domain tables in Postgres', () => {
-  const context = usePrismaTestContext();
+  const database = useTestDatabase();
 
   async function createOwnedApplication(): Promise<OwnedApplication> {
-    const prisma = context.prisma();
+    const { prisma } = database;
+    const user = await createUser(prisma);
     const search = await prisma.search.create({
-      data: { title: 'Пошук роботи', user: { create: { email: uniqueEmail() } } },
+      data: { title: 'Пошук роботи', userId: user.id },
     });
-    context.trackUser(search.userId);
     const application = await prisma.application.create({
       data: {
         userId: search.userId,
@@ -27,7 +28,7 @@ describe('the applications domain tables in Postgres', () => {
 
   describe('the append-only logs', () => {
     it('refuses an update and a direct delete of a stage event', async () => {
-      const prisma = context.prisma();
+      const { prisma } = database;
       const { applicationId } = await createOwnedApplication();
       const event = await prisma.stageEvent.create({
         data: { applicationId, toStage: 'applied' },
@@ -42,7 +43,7 @@ describe('the applications domain tables in Postgres', () => {
     });
 
     it('refuses an update and a direct delete of a timeline event', async () => {
-      const prisma = context.prisma();
+      const { prisma } = database;
       const { applicationId } = await createOwnedApplication();
       const event = await prisma.timelineEvent.create({
         data: { applicationId, kind: 'captured' },
@@ -57,7 +58,7 @@ describe('the applications domain tables in Postgres', () => {
     });
 
     it('deleting a user removes the events of their applications, an undone move included', async () => {
-      const prisma = context.prisma();
+      const { prisma } = database;
       const { userId, applicationId } = await createOwnedApplication();
       const move = await prisma.stageEvent.create({
         data: { applicationId, fromStage: 'applied', toStage: 'screening' },
@@ -81,7 +82,7 @@ describe('the applications domain tables in Postgres', () => {
   });
 
   it('every foreign key has an index that starts with its columns', async () => {
-    const rows = await context.prisma().$queryRaw<{ foreign_key: string }[]>`
+    const rows = await database.prisma.$queryRaw<{ foreign_key: string }[]>`
       SELECT c.conrelid::regclass::text || '.' || c.conname AS foreign_key
       FROM pg_constraint c
       WHERE c.contype = 'f'
@@ -101,7 +102,7 @@ describe('the applications domain tables in Postgres', () => {
 
   describe('applications', () => {
     it('refuses an application without a search', async () => {
-      const prisma = context.prisma();
+      const { prisma } = database;
       const { userId } = await createOwnedApplication();
 
       await expect(
@@ -111,7 +112,7 @@ describe('the applications domain tables in Postgres', () => {
     });
 
     it('fills the search vector from the stack of a new application', async () => {
-      const prisma = context.prisma();
+      const { prisma } = database;
       const { userId, searchId } = await createOwnedApplication();
 
       const rows = await prisma.$queryRaw<{ matches: boolean }[]>`
@@ -128,16 +129,16 @@ describe('the applications domain tables in Postgres', () => {
       const { userId } = await createOwnedApplication();
 
       await expect(
-        context.prisma().search.create({ data: { userId, title: 'Другий пошук' } }),
+        database.prisma.search.create({ data: { userId, title: 'Другий пошук' } }),
       ).rejects.toMatchObject({ code: 'P2002' });
     });
 
     it('accepts an archived search beside the active one', async () => {
       const { userId } = await createOwnedApplication();
 
-      const archived = await context
-        .prisma()
-        .search.create({ data: { userId, title: 'Минулий пошук', status: 'archived' } });
+      const archived = await database.prisma.search.create({
+        data: { userId, title: 'Минулий пошук', status: 'archived' },
+      });
 
       expect(archived.status).toBe('archived');
     });

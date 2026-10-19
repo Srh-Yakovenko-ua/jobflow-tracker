@@ -23,7 +23,8 @@ export default defineConfig({
       provider: 'v8',
       reporter: ['text', 'html', 'lcov', 'json-summary'],
       include: ['src/**/*.ts'],
-      exclude: ['src/**/*.test.ts', 'src/generated/**'],
+      exclude: ['src/**/*.test.ts', 'src/generated/**', 'src/test/**'],
+      thresholds: { 'src/modules/**/*.service.ts': { lines: 80 } },
     },
     projects: [
       {
@@ -39,6 +40,7 @@ export default defineConfig({
         test: {
           name: 'int',
           include: ['src/**/*.int.test.ts'],
+          fileParallelism: false,
           env: { DATABASE_URL: boundaryEnv.DATABASE_URL ?? testDatabaseUrl.href },
           globalSetup: ['src/test/migrate.global-setup.ts'],
         },
