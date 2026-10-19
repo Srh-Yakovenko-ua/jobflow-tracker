@@ -21,3 +21,9 @@ services:
         '-p',
         'tsconfig.worker.json',
       ]
+
+  web:
+    build:
+      target: dev
+    volumes:
+      - ../../apps/web/src:/app/apps/web/src

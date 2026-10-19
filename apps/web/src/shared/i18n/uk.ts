@@ -2,6 +2,13 @@ export const uk = {
   app: {
     title: 'JobFlow · трекер пошуку роботи',
   },
+  auth: {
+    login: { title: 'Увійти' },
+    register: { title: 'Створити акаунт' },
+  },
+  board: {
+    title: 'Дошка',
+  },
   designSystem: {
     pageTitle: 'Дизайн-система',
     typography: {

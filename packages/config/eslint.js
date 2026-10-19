@@ -122,36 +122,66 @@ export function base(rootDir) {
   );
 }
 
-export function api(rootDir) {
-  return defineConfig(base(rootDir), {
+function boundariesBlock(rootDir, { elements, dependencies }) {
+  return {
     plugins: { boundaries },
     settings: {
       'boundaries/root-path': rootDir,
-      'boundaries/elements': [
-        { type: 'module', pattern: 'src/modules/*', capture: ['name'] },
-        { type: 'app', pattern: 'src' },
-      ],
+      'boundaries/elements': elements,
       'import/resolver': {
         typescript: { project: path.join(rootDir, 'tsconfig.json') },
       },
     },
-    rules: {
-      'boundaries/dependencies': [
-        'error',
-        {
-          default: 'allow',
-          policies: [
-            { disallow: { to: { element: { type: 'module' } } } },
-            { allow: { to: { element: { type: 'module', fileInternalPath: 'index.ts' } } } },
-          ],
-        },
-      ],
-    },
-  });
+    rules: { 'boundaries/dependencies': ['error', dependencies] },
+  };
 }
+
+export function api(rootDir) {
+  return defineConfig(
+    base(rootDir),
+    boundariesBlock(rootDir, {
+      elements: [
+        { type: 'module', pattern: 'src/modules/*', capture: ['name'] },
+        { type: 'app', pattern: 'src' },
+      ],
+      dependencies: {
+        default: 'allow',
+        policies: [
+          { disallow: { to: { element: { type: 'module' } } } },
+          { allow: { to: { element: { type: 'module', fileInternalPath: 'index.ts' } } } },
+        ],
+      },
+    }),
+  );
+}
+
+const FSD_LAYERS = [
+  { type: 'app', pattern: 'src/app' },
+  { type: 'widgets', pattern: 'src/widgets/*', capture: ['slice'] },
+  { type: 'features', pattern: 'src/features/*', capture: ['slice'] },
+  { type: 'entities', pattern: 'src/entities/*', capture: ['slice'] },
+  { type: 'shared', pattern: 'src/shared' },
+];
+
+function publicApiOf(layer) {
+  return layer.capture
+    ? { element: { type: layer.type, fileInternalPath: 'index.ts' } }
+    : { element: { type: layer.type } };
+}
+
+function sameSliceOf(layer) {
+  const captured = { slice: '{{ from.element.captured.slice }}' };
+  return layer.capture ? [{ element: { type: layer.type, captured } }] : [];
+}
+
+const FSD_POLICIES = FSD_LAYERS.map((layer, index) => ({
+  from: { element: { type: layer.type } },
+  allow: { to: [...sameSliceOf(layer), ...FSD_LAYERS.slice(index + 1).map(publicApiOf)] },
+})).filter((policy) => policy.allow.to.length > 0);
 
 export function web(rootDir) {
   return defineConfig(
+    globalIgnores(['next-env.d.ts']),
     base(rootDir),
     {
       files: [tseslint.globs.ts],
@@ -178,5 +208,9 @@ export function web(rootDir) {
       languageOptions: { globals: globals.browser },
       settings: { next: { rootDir } },
     },
+    boundariesBlock(rootDir, {
+      elements: FSD_LAYERS,
+      dependencies: { default: 'disallow', policies: FSD_POLICIES },
+    }),
   );
 }

@@ -127,6 +127,46 @@ describe('web preset', () => {
   });
 });
 
+describe('web FSD boundaries', () => {
+  let messagesByFile;
+
+  before(async () => {
+    messagesByFile = await lintFixture(web, 'web-fsd');
+  });
+
+  it('refuses an entity that imports a widget', () => {
+    assert.deepEqual(ruleIdsOf(messagesByFile['entities/application/board-title.ts']), [
+      'boundaries/dependencies',
+    ]);
+  });
+
+  it('refuses shared code that imports an entity', () => {
+    assert.deepEqual(ruleIdsOf(messagesByFile['shared/i18n/application-stage.ts']), [
+      'boundaries/dependencies',
+    ]);
+  });
+
+  it('refuses a feature that imports another feature', () => {
+    assert.deepEqual(ruleIdsOf(messagesByFile['features/move-application/reject.ts']), [
+      'boundaries/dependencies',
+    ]);
+  });
+
+  it('refuses a feature that imports an entity past its index', () => {
+    assert.deepEqual(ruleIdsOf(messagesByFile['features/move-application/deep.ts']), [
+      'boundaries/dependencies',
+    ]);
+  });
+
+  it('allows a feature to import an entity through its index', () => {
+    assert.deepEqual(messagesByFile['features/move-application/index.ts'], []);
+  });
+
+  it('allows any import inside the same slice', () => {
+    assert.deepEqual(messagesByFile['entities/application/index.ts'], []);
+  });
+});
+
 describe('shape rules', () => {
   let messagesByFile;
 

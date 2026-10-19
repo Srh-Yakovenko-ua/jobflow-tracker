@@ -7,7 +7,14 @@
     "noEmit": true,
     "resolveJsonModule": true,
     "incremental": true,
-    "plugins": [{ "name": "next" }]
+    "plugins": [
+      {
+        "name": "next"
+      }
+    ],
+    "paths": {
+      "@/*": ["./src/*"]
+    }
   },
   "include": ["next-env.d.ts", "next.config.ts", "src", ".next/types/**/*.ts"]
 }

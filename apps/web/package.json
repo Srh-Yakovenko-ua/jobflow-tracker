@@ -8,13 +8,15 @@
     "build": "next build",
     "start": "next start --port 3000",
     "lint": "eslint . --max-warnings 0",
-    "typecheck": "tsgo -p . --noEmit"
+    "typecheck": "next typegen && tsgo -p . --noEmit"
   },
   "dependencies": {
     "@jobflow/shared": "workspace:*",
+    "@tanstack/react-query": "5.104.4",
     "next": "16.4.2",
     "react": "19.3.1",
-    "react-dom": "19.3.1"
+    "react-dom": "19.3.1",
+    "sonner": "2.0.8"
   },
   "devDependencies": {
     "@jobflow/config": "workspace:*",
@@ -22,6 +24,7 @@
     "@types/node": "^26.6.4",
     "@types/react": "19.3.0",
     "@types/react-dom": "19.3.0",
+    "babel-plugin-react-compiler": "1.0.0",
     "eslint": "^10.13.0",
     "tailwindcss": "4.3.3",
     "typescript": "~6.0.3"
