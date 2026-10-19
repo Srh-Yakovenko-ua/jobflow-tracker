@@ -18,7 +18,7 @@ const boundaryEnv = Object.fromEntries(
 export default defineConfig({
   plugins: [swc.vite({ module: { type: 'es6' } })],
   test: {
-    env: { ...exampleEnv, ...boundaryEnv },
+    env: { ...exampleEnv, ...boundaryEnv, NODE_ENV: 'test' },
     coverage: {
       provider: 'v8',
       reporter: ['text', 'html', 'lcov', 'json-summary'],

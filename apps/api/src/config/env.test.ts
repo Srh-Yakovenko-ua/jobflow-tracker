@@ -90,9 +90,33 @@ describe('validateEnv', () => {
   it('refuses a PORT outside 1 to 65535', () => {
     expect(() => validateEnv({ ...exampleEnv, PORT: '70000' })).toThrow(/PORT/);
   });
+
+  it('defaults NODE_ENV to development when it is empty', () => {
+    expect(validateEnv({ ...exampleEnv, NODE_ENV: '' }).NODE_ENV).toBe('development');
+  });
+
+  it('defaults HOST to 127.0.0.1 when it is empty', () => {
+    expect(validateEnv({ ...exampleEnv, HOST: '' }).HOST).toBe('127.0.0.1');
+  });
+
+  it('reads HOST 0.0.0.0 for the container', () => {
+    expect(validateEnv({ ...exampleEnv, HOST: '0.0.0.0' }).HOST).toBe('0.0.0.0');
+  });
+
+  it('reads NODE_ENV production', () => {
+    expect(validateEnv({ ...exampleEnv, NODE_ENV: 'production' }).NODE_ENV).toBe('production');
+  });
 });
 
 describe('parseEnv', () => {
+  it('refuses a NODE_ENV other than development, test or production', () => {
+    expect(failedPaths({ ...exampleEnv, NODE_ENV: 'staging' })).toEqual(['NODE_ENV']);
+  });
+
+  it('refuses a HOST that is not an IP address', () => {
+    expect(failedPaths({ ...exampleEnv, HOST: 'example.com' })).toEqual(['HOST']);
+  });
+
   it('treats an empty DATABASE_URL as missing', () => {
     expect(failedPaths({ ...exampleEnv, DATABASE_URL: '' })).toEqual(['DATABASE_URL']);
   });

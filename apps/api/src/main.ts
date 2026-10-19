@@ -11,5 +11,6 @@ await boot(async () => {
   const app = configureApp(
     await NestFactory.create<NestExpressApplication>(AppModule, APP_OPTIONS),
   );
-  await app.listen(app.get<AppConfig>(ConfigService).get('PORT', { infer: true }));
+  const config = app.get<AppConfig>(ConfigService);
+  await app.listen(config.get('PORT', { infer: true }), config.get('HOST', { infer: true }));
 });

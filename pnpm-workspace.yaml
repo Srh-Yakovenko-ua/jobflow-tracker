@@ -7,6 +7,7 @@ allowBuilds:
   '@prisma/engines': true
   '@swc/core': false
   esbuild: false
+  msgpackr-extract: false
   prisma: false
   unrs-resolver: false
 
@@ -24,3 +25,4 @@ minimumReleaseAgeExclude:
   - '@rollup/rollup-linux-x64-musl@4.64.9'
   - '@rollup/rollup-openbsd-x64@4.64.9'
   - '@rollup/rollup-openharmony-arm64@4.64.9'
+  - bullmq@6.3.17

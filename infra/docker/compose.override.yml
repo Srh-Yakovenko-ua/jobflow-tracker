@@ -4,3 +4,20 @@ services:
       target: dev
     volumes:
       - ../../apps/api/src:/app/apps/api/src
+
+  worker:
+    build:
+      target: dev
+    volumes:
+      - ../../apps/api/src:/app/apps/api/src
+    command:
+      [
+        'node',
+        'node_modules/@nestjs/cli/bin/nest.js',
+        'start',
+        '--watch',
+        '--entryFile',
+        'worker',
+        '-p',
+        'tsconfig.worker.json',
+      ]

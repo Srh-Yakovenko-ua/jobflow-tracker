@@ -41,6 +41,8 @@ pnpm dev
 
 Кожен наступний запуск друкує `No pending migrations to apply.` і нічого не змінює. Нових міграцій ця команда не створює і базу не скидає.
 
+`pnpm dev` worker не запускає. Фонові задачі (черги BullMQ у Redis) виконує окремий процес worker: у другому терміналі поруч із `pnpm dev` виконайте `pnpm --filter @jobflow/api dev:worker`. Він теж перезбирається при змінах в `apps/api/src`, а свою збірку кладе в `apps/api/dist-worker`, тому не заважає api.
+
 Api живий, якщо http://localhost:4000/api/v1/health відповідає `{"status":"ok"}`, і готовий, якщо http://localhost:4000/api/v1/ready відповідає `{"status":"ok","checks":{"redis":"up","postgres":"up"}}`. Стан контейнерів покаже `docker compose ps`: у postgres, redis, minio і mailpit у колонці `STATUS` стоїть `healthy`.
 
 ## Усе в контейнерах
@@ -51,13 +53,17 @@ Api живий, якщо http://localhost:4000/api/v1/health відповіда�
 docker compose up -d
 ```
 
-Зараз у compose є інфраструктура і api. Лише api разом з Redis, від якого він залежить:
+Зараз у compose є інфраструктура, api і worker. Лише api і worker разом з Redis, від якого вони залежать:
 
 ```bash
-docker compose up -d --build --wait api
+docker compose up -d --build --wait api worker
 ```
 
-Команда збирає образ api (ціль `dev`, `apps/api/src` змонтовано в контейнер) і повертає керування, коли healthcheck стане `healthy`. `--build` потрібен, щоб після pull образ підхопив нові залежності. Health відповідає на http://localhost:4000/api/v1/health. Контейнер займає той самий порт 4000, що й `pnpm dev`, тому одночасно працює щось одне. Контейнери worker, web, analytics, documents і ai додадуть картки з таблиці портів. Моніторинг (Grafana, Jaeger та інші) вмикатиметься профілем: `docker compose --profile observability up -d`, коли з'являться картки OBS.
+Команда збирає образ api (ціль `dev`, `apps/api/src` змонтовано в контейнер) і повертає керування, коли healthcheck api стане `healthy`, а worker запуститься. Worker використовує той самий образ з іншою командою, порту не має і healthcheck-а теж, тому в `docker compose ps` у колонці `STATUS` у нього лише `Up`, без `(healthy)`. `--build` потрібен, щоб після pull образ підхопив нові залежності. Health відповідає на http://localhost:4000/api/v1/health. Контейнер api займає той самий порт 4000, що й `pnpm dev`, тому одночасно працює щось одне. Контейнери web, analytics, documents і ai додадуть картки з таблиці портів. Моніторинг (Grafana, Jaeger та інші) вмикатиметься профілем: `docker compose --profile observability up -d`, коли з'являться картки OBS.
+
+`docker compose stop worker` чекає, поки worker завершить задачі, що вже виконуються (до 60 секунд). Задача, яку перервало аварійне завершення worker, не губиться: після перезапуску worker бере її знову.
+
+У режимі розробки (`NODE_ENV=development`, як у `.env.example`) api показує Bull Board на http://localhost:4000/admin/queues: черги `ai`, `notifications`, `push`, `domain-events`, `maintenance` і задачі в них. Панель лише для перегляду, видаляти чи перезапускати задачі з неї не можна. В інших режимах цієї адреси немає.
 
 Зупинити стек:
 
@@ -81,7 +87,7 @@ docker compose down
 | MinIO         | 9000 (API), 9001 (консоль) | працює             |
 | Mailpit       | 1025 (SMTP), 8025 (UI)     | працює             |
 | api           | 4000                       | працює             |
-| worker        | без порту                  | з'явиться в BE-11  |
+| worker        | без порту                  | працює             |
 | web (Next.js) | 3000                       | з'явиться в FE-01  |
 | analytics     | 8000                       | з'явиться в AN-01  |
 | ai            | 8001                       | з'явиться в AI-01  |
@@ -116,7 +122,7 @@ docker compose down
 | `pnpm gen:vapid`                            | ключі VAPID для web push у `.env`                              | з'явиться в BE-36                                  |
 | `pnpm lint`, `pnpm typecheck`, `pnpm build` | ESLint, перевірка типів, збірка всіх пакетів                   | працює                                             |
 | `pnpm format`                               | Prettier по всьому репозиторію                                 | працює                                             |
-| `docker compose logs -f api`                | стежити за логами api (JSON, з `requestId`)                    | працює, логи worker і ai з'являться в BE-11, AI-01 |
+| `docker compose logs -f api worker`         | стежити за логами api і worker (JSON, з `requestId`)           | працює, логи ai з'являться в AI-01                 |
 
 Python-тести запускаються в теці сервісу: `uv run pytest`.
 
@@ -140,7 +146,7 @@ AI-провайдера обирає `services/ai`, а не API. Ключі ве
 
 **Контейнери перезапускаються по колу.** `docker compose ps` покаже, який сервіс unhealthy. Зазвичай це залежність, що не піднялась, або відсутня змінна: застосунок при старті друкує її назву.
 
-**Hot reload не працює на Windows.** Тримайте репозиторій у файловій системі WSL2. Контейнер api монтує `apps/api/src` і перезапускається через `nest start --watch`. `docker compose watch` і змінні `WATCHPACK_POLLING=true` та `CHOKIDAR_USEPOLLING=true` стосуються контейнера web і з'являться з FE-01.
+**Hot reload не працює на Windows.** Тримайте репозиторій у файловій системі WSL2. Контейнери api і worker монтують `apps/api/src` і перезапускаються через `nest start --watch`. `docker compose watch` і змінні `WATCHPACK_POLLING=true` та `CHOKIDAR_USEPOLLING=true` стосуються контейнера web і з'являться з FE-01.
 
 **Помилки Prisma client після pull.** Клієнт Prisma генерується в `apps/api/src/generated/prisma` і в git не потрапляє. `pnpm install` створює його сам, а після зміни схеми без нового install виконайте `pnpm --filter @jobflow/api exec prisma generate` і перезапустіть api та worker. Якщо api пише про відсутню таблицю, запустіть `pnpm db:migrate`.
 
