@@ -14,6 +14,7 @@ export const envSchema = z.object({
   JWT_PRIVATE_KEY_PATH: requiredText,
   JWT_PUBLIC_KEY_PATH: requiredText,
   API_URL: httpUrl,
+  HOST: z.union([z.ipv4(), z.ipv6()]).default('127.0.0.1'),
   PORT: z.coerce.number().int().min(1).max(65535).default(4000),
   WEB_ORIGIN: httpUrl,
   AI_SERVICE_URL: httpUrl.default('http://localhost:8001'),

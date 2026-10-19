@@ -28,6 +28,21 @@ describe('Bull Board in development', () => {
     expect(response.headers['content-type']).toMatch(/^text\/html/);
   });
 
+  it('keeps the board fonts and styles on its own origin', async () => {
+    const response = await request(app.getHttpServer()).get('/admin/queues');
+
+    const directives = new Map(
+      String(response.headers['content-security-policy'])
+        .split(';')
+        .map((directive) => directive.trim().split(/\s+/))
+        .map(([name = '', ...sources]) => [name, sources.join(' ')]),
+    );
+    expect(directives.get('font-src')).toBe("'self'");
+    expect(directives.get('style-src')).toBe("'self' 'unsafe-inline'");
+    expect(directives.get('script-src')).toBe("'self'");
+    expect(directives.has('upgrade-insecure-requests')).toBe(false);
+  });
+
   it('lists the five queues read-only', async () => {
     const response = await request(app.getHttpServer()).get('/admin/queues/api/queues');
 

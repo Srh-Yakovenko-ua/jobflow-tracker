@@ -5,10 +5,21 @@ import { getQueueToken } from '@nestjs/bullmq';
 import type { NestExpressApplication } from '@nestjs/platform-express';
 import type { Queue } from 'bullmq';
 import type { Router } from 'express';
+import helmet from 'helmet';
 
 import { QUEUE_NAMES } from './queues.js';
 
 export const BULL_BOARD_PATH = '/admin/queues';
+
+const boardHeaders = helmet({
+  contentSecurityPolicy: {
+    directives: {
+      fontSrc: ["'self'"],
+      styleSrc: ["'self'", "'unsafe-inline'"],
+      upgradeInsecureRequests: null,
+    },
+  },
+});
 
 export function mountBullBoard(app: NestExpressApplication): void {
   const serverAdapter = new ExpressAdapter().setBasePath(BULL_BOARD_PATH);
@@ -18,5 +29,5 @@ export function mountBullBoard(app: NestExpressApplication): void {
     ),
     serverAdapter,
   });
-  app.use(BULL_BOARD_PATH, serverAdapter.getRouter() as Router);
+  app.use(BULL_BOARD_PATH, boardHeaders, serverAdapter.getRouter() as Router);
 }
