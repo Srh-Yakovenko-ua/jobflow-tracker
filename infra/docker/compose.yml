@@ -92,7 +92,7 @@ services:
     env_file:
       - path: ../../.env
         required: false
-    environment:
+    environment: &api-environment
       DATABASE_URL: postgresql://jobflow_app:${POSTGRES_APP_PASSWORD:-jobflow_app}@postgres:5432/jobflow
       REDIS_URL: redis://redis:6379
       S3_ENDPOINT: http://minio:9000
@@ -114,6 +114,24 @@ services:
       timeout: 3s
       retries: 10
       start_period: 30s
+    mem_limit: 512m
+    networks:
+      - jobflow
+
+  worker:
+    build:
+      context: ../..
+      dockerfile: apps/api/Dockerfile
+    env_file:
+      - path: ../../.env
+        required: false
+    environment: *api-environment
+    depends_on:
+      redis:
+        condition: service_healthy
+    stop_grace_period: 60s
+    healthcheck:
+      disable: true
     mem_limit: 512m
     networks:
       - jobflow

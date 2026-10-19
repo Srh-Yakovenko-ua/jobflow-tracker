@@ -4,6 +4,7 @@ const httpUrl = z.url({ protocol: /^https?$/ });
 const requiredText = z.string().min(1);
 
 export const envSchema = z.object({
+  NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
   DATABASE_URL: z.url({ protocol: /^postgres(ql)?$/ }),
   REDIS_URL: z.url({ protocol: /^rediss?$/ }),
   S3_ENDPOINT: z.url(),

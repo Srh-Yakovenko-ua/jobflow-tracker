@@ -7,7 +7,9 @@ import { loggerParams } from './common/logger.js';
 import { toValidationError } from './common/validation.js';
 import { configModule } from './config/app-config.js';
 import { HealthModule } from './modules/health/index.js';
+import { MaintenanceModule } from './modules/maintenance/index.js';
 import { PrismaModule } from './prisma/prisma.module.js';
+import { QueuesModule } from './queues/queues.module.js';
 import { RedisModule } from './redis/redis.module.js';
 
 @Module({
@@ -17,6 +19,8 @@ import { RedisModule } from './redis/redis.module.js';
     PrismaModule,
     RedisModule,
     HealthModule,
+    QueuesModule,
+    MaintenanceModule,
   ],
   providers: [
     { provide: APP_FILTER, useClass: AppExceptionFilter },

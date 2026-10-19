@@ -90,9 +90,21 @@ describe('validateEnv', () => {
   it('refuses a PORT outside 1 to 65535', () => {
     expect(() => validateEnv({ ...exampleEnv, PORT: '70000' })).toThrow(/PORT/);
   });
+
+  it('defaults NODE_ENV to development when it is empty', () => {
+    expect(validateEnv({ ...exampleEnv, NODE_ENV: '' }).NODE_ENV).toBe('development');
+  });
+
+  it('reads NODE_ENV production', () => {
+    expect(validateEnv({ ...exampleEnv, NODE_ENV: 'production' }).NODE_ENV).toBe('production');
+  });
 });
 
 describe('parseEnv', () => {
+  it('refuses a NODE_ENV other than development, test or production', () => {
+    expect(failedPaths({ ...exampleEnv, NODE_ENV: 'staging' })).toEqual(['NODE_ENV']);
+  });
+
   it('treats an empty DATABASE_URL as missing', () => {
     expect(failedPaths({ ...exampleEnv, DATABASE_URL: '' })).toEqual(['DATABASE_URL']);
   });

@@ -2,3 +2,12 @@ services:
   api:
     build:
       target: prod
+    environment:
+      NODE_ENV: production
+
+  worker:
+    build:
+      target: prod
+    command: ['node', 'dist/worker.js']
+    environment:
+      NODE_ENV: production

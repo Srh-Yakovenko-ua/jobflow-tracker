@@ -1,16 +1,15 @@
 import { errorResponseSchema, type PaginationQuery, paginationQuerySchema } from '@jobflow/shared';
 import { Body, Controller, Get, Post, Query } from '@nestjs/common';
 import type { NestExpressApplication } from '@nestjs/platform-express';
-import { PARAMS_PROVIDER_TOKEN } from 'nestjs-pino';
 import request from 'supertest';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 
-import { loggerParams } from './common/logger.js';
 import { PrismaService } from './prisma/prisma.service.js';
 import { RedisService } from './redis/redis.service.js';
 import { appTestingModule, startTestApp } from './test/app.js';
 import { FakeDependency } from './test/fake-dependency.js';
-import { type LogLine, memoryLog } from './test/memory-log.js';
+import { type LogLine, memoryLog, withLogSink } from './test/memory-log.js';
+import { stubQueues } from './test/stub-queues.js';
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
 
@@ -46,13 +45,11 @@ function fakeDependencies(): Dependencies {
 
 function startApp({ redis, postgres }: Dependencies): Promise<NestExpressApplication> {
   return startTestApp(
-    appTestingModule({ controllers: [ProbeController] })
+    withLogSink(stubQueues(appTestingModule({ controllers: [ProbeController] })), log.sink)
       .overrideProvider(RedisService)
       .useValue(redis)
       .overrideProvider(PrismaService)
-      .useValue(postgres)
-      .overrideProvider(PARAMS_PROVIDER_TOKEN)
-      .useValue(loggerParams(log.sink)),
+      .useValue(postgres),
   );
 }
 
@@ -267,6 +264,46 @@ describe('the API over HTTP', () => {
       expect(body.detail).toBe(detail);
     },
   );
+});
+
+describe('the dev ping endpoint and Bull Board outside development', () => {
+  let app: NestExpressApplication;
+
+  beforeAll(async () => {
+    app = await startApp(fakeDependencies());
+  });
+
+  afterAll(async () => {
+    await app.close();
+  });
+
+  it('answers POST /api/v1/dev/jobs/ping with 202 and the jobId, echoing x-request-id', async () => {
+    const response = await request(app.getHttpServer())
+      .post('/api/v1/dev/jobs/ping')
+      .set('x-request-id', 'ping-check')
+      .send({});
+
+    expect(response.status).toBe(202);
+    expect(response.body).toEqual({ jobId: 'maintenance-1' });
+    expect(response.headers['x-request-id']).toBe('ping-check');
+  });
+
+  it('refuses a holdMs over 60000 with 422 and the failing field', async () => {
+    const response = await request(app.getHttpServer())
+      .post('/api/v1/dev/jobs/ping')
+      .send({ holdMs: 70000 });
+
+    const body = errorResponseSchema.parse(response.body);
+    expect(response.status).toBe(422);
+    expect(body.errors?.map((error) => error.path)).toEqual(['holdMs']);
+  });
+
+  it('answers GET /admin/queues with 404 when NODE_ENV is test', async () => {
+    const response = await request(app.getHttpServer()).get('/admin/queues');
+
+    expect(response.status).toBe(404);
+    expect(errorResponseSchema.parse(response.body).type).toBe('not_found');
+  });
 });
 
 describe('shutdown', () => {
