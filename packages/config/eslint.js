@@ -33,6 +33,17 @@ const RESTRICTED_SYNTAX = [
   },
 ];
 
+const RAW_COLOUR_PATTERN =
+  '/#(?:[0-9a-f]{8}|[0-9a-f]{6}|[0-9a-f]{3,4})(?![0-9a-z])|\\b(?:oklch|oklab|rgba?|hsla?)\\(/i';
+
+const RAW_COLOUR_MESSAGE =
+  'Raw colour in a component: use a design token (token class, CSS variable or CHART_THEME)';
+
+const RAW_COLOUR = [
+  { selector: `Literal[value=${RAW_COLOUR_PATTERN}]`, message: RAW_COLOUR_MESSAGE },
+  { selector: `TemplateElement[value.raw=${RAW_COLOUR_PATTERN}]`, message: RAW_COLOUR_MESSAGE },
+];
+
 const NEST_MAX_PARAMS = {
   selector:
     ":function[params.length>2]:not(MethodDefinition[kind='constructor'] > FunctionExpression, MethodDefinition > FunctionExpression[params.0.decorators.length>0])",
@@ -156,6 +167,10 @@ export function web(rootDir) {
         '@eslint-react/unsupported-syntax': 'off',
         '@eslint-react/use-memo': 'off',
       },
+    },
+    {
+      files: [tseslint.globs.ts],
+      rules: { 'no-restricted-syntax': ['error', ...RESTRICTED_SYNTAX, ...RAW_COLOUR] },
     },
     reactHooks.configs.flat.recommended,
     nextPlugin.configs['core-web-vitals'],
