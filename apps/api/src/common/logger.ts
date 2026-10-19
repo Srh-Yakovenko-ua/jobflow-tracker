@@ -13,6 +13,13 @@ const REDACTED_PATHS = [
   'req.headers.authorization',
   'req.headers.cookie',
   'res.headers["set-cookie"]',
+  'req.body.password',
+  'req.body.currentPassword',
+  'req.body.newPassword',
+  'password',
+  'passwordHash',
+  '*.password',
+  '*.passwordHash',
 ];
 
 const HTTP_LOG_OPTIONS: Options<Request, Response> = {
