@@ -171,6 +171,7 @@ model User {
   searches          Search[]
   applications      Application[]
   resumes           Resume[]
+  resumeVersions    ResumeVersion[]
   aiResults         AiResult[]
   aiJobs            AiJob[]
   reminders         Reminder[]
@@ -200,9 +201,9 @@ model UserSettings {
   createdAt             DateTime       @default(now()) @map("created_at") @db.Timestamptz
   updatedAt             DateTime       @default(now()) @updatedAt @map("updated_at") @db.Timestamptz
   user                  User           @relation(fields: [userId], references: [id], onDelete: Cascade)
-  activeResumeVersion   ResumeVersion? @relation(fields: [activeResumeVersionId], references: [id], onDelete: SetNull)
+  activeResumeVersion   ResumeVersion? @relation(fields: [activeResumeVersionId, userId], references: [id, userId], onDelete: SetNull)
 
-  @@index([activeResumeVersionId])
+  @@index([activeResumeVersionId, userId])
   @@map("user_settings")
 }
 
@@ -265,6 +266,7 @@ model Search {
   user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
   applications Application[]
 
+  @@unique([id, userId])
   @@unique([userId], where: raw("status = 'active'"), map: "searches_user_id_active_key")
   @@index([userId])
   @@map("searches")
@@ -297,8 +299,8 @@ model Application {
   createdAt       DateTime                 @default(now()) @map("created_at") @db.Timestamptz
   updatedAt       DateTime                 @default(now()) @updatedAt @map("updated_at") @db.Timestamptz
   user            User                     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  search          Search                   @relation(fields: [searchId], references: [id], onDelete: Cascade)
-  resumeVersion   ResumeVersion?           @relation(fields: [resumeVersionId], references: [id], onDelete: SetNull)
+  search          Search                   @relation(fields: [searchId, userId], references: [id, userId], onDelete: Cascade)
+  resumeVersion   ResumeVersion?           @relation(fields: [resumeVersionId, userId], references: [id, userId], onDelete: SetNull)
   stageEvents     StageEvent[]
   timelineEvents  TimelineEvent[]
   contacts        Contact[]
@@ -310,8 +312,8 @@ model Application {
   @@unique([id, userId])
   @@index([userId, currentStage])
   @@index([userId, lastEventAt])
-  @@index([searchId])
-  @@index([resumeVersionId])
+  @@index([searchId, userId])
+  @@index([resumeVersionId, userId])
   @@index([searchVector], type: Gin)
   @@map("applications")
 }
@@ -324,13 +326,15 @@ model StageEvent {
   reasonCode         String?          @map("reason_code")
   comment            String?
   occurredAt         DateTime         @default(now()) @map("occurred_at") @db.Timestamptz
-  compensatesEventId String?          @unique @map("compensates_event_id") @db.Uuid
+  compensatesEventId String?          @map("compensates_event_id") @db.Uuid
   createdAt          DateTime         @default(now()) @map("created_at") @db.Timestamptz
   application        Application      @relation(fields: [applicationId], references: [id], onDelete: Cascade)
   reason             RejectionReason? @relation(fields: [reasonCode], references: [code], onDelete: Restrict, onUpdate: Restrict)
-  compensates        StageEvent?      @relation("StageEventCompensation", fields: [compensatesEventId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  compensates        StageEvent?      @relation("StageEventCompensation", fields: [compensatesEventId, applicationId], references: [id, applicationId], onDelete: NoAction, onUpdate: NoAction)
   compensatedBy      StageEvent?      @relation("StageEventCompensation")
 
+  @@unique([id, applicationId])
+  @@unique([compensatesEventId, applicationId])
   @@index([applicationId, occurredAt])
   @@index([reasonCode])
   @@map("stage_events")
@@ -405,6 +409,7 @@ model ScheduledEvent {
   application    Application          @relation(fields: [applicationId], references: [id], onDelete: Cascade)
   reminders      Reminder[]
 
+  @@unique([id, applicationId])
   @@index([applicationId, startsAt])
   @@map("scheduled_events")
 }
@@ -418,12 +423,14 @@ model Resume {
   user      User            @relation(fields: [userId], references: [id], onDelete: Cascade)
   versions  ResumeVersion[]
 
+  @@unique([id, userId])
   @@index([userId])
   @@map("resumes")
 }
 
 model ResumeVersion {
   id             String         @id @default(dbgenerated("uuidv7()")) @db.Uuid
+  userId         String         @map("user_id") @db.Uuid
   resumeId       String         @map("resume_id") @db.Uuid
   storageKey     String         @unique @map("storage_key")
   filename       String
@@ -437,12 +444,14 @@ model ResumeVersion {
   uploadedAt     DateTime       @default(now()) @map("uploaded_at") @db.Timestamptz
   createdAt      DateTime       @default(now()) @map("created_at") @db.Timestamptz
   updatedAt      DateTime       @default(now()) @updatedAt @map("updated_at") @db.Timestamptz
-  resume         Resume         @relation(fields: [resumeId], references: [id], onDelete: Cascade)
+  user           User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  resume         Resume         @relation(fields: [resumeId, userId], references: [id, userId], onDelete: Cascade)
   activeSettings UserSettings[]
   applications   Application[]
   aiJobs         AiJob[]
 
-  @@index([resumeId])
+  @@unique([id, userId])
+  @@index([userId, resumeId])
   @@map("resume_versions")
 }
 
@@ -465,6 +474,7 @@ model AiResult {
   aiJobs        AiJob[]
   plans         Plan[]
 
+  @@unique([id, userId])
   @@unique([userId, kind, inputHash])
   @@map("ai_results")
 }
@@ -484,15 +494,15 @@ model AiJob {
   createdAt       DateTime       @default(now()) @map("created_at") @db.Timestamptz
   updatedAt       DateTime       @default(now()) @updatedAt @map("updated_at") @db.Timestamptz
   user            User           @relation(fields: [userId], references: [id], onDelete: Cascade)
-  aiResult        AiResult?      @relation(fields: [aiResultId], references: [id], onDelete: SetNull)
+  aiResult        AiResult?      @relation(fields: [aiResultId, userId], references: [id, userId], onDelete: SetNull)
   application     Application?   @relation(fields: [applicationId, userId], references: [id, userId], onDelete: Cascade)
-  resumeVersion   ResumeVersion? @relation(fields: [resumeVersionId], references: [id], onDelete: Cascade)
+  resumeVersion   ResumeVersion? @relation(fields: [resumeVersionId, userId], references: [id, userId], onDelete: Cascade)
 
   @@index([userId, createdAt])
   @@index([status, createdAt])
-  @@index([aiResultId])
+  @@index([aiResultId, userId])
   @@index([applicationId, userId])
-  @@index([resumeVersionId])
+  @@index([resumeVersionId, userId])
   @@map("ai_jobs")
 }
 
@@ -509,12 +519,12 @@ model Reminder {
   updatedAt        DateTime        @default(now()) @updatedAt @map("updated_at") @db.Timestamptz
   user             User            @relation(fields: [userId], references: [id], onDelete: Cascade)
   application      Application     @relation(fields: [applicationId, userId], references: [id, userId], onDelete: Cascade)
-  scheduledEvent   ScheduledEvent? @relation(fields: [scheduledEventId], references: [id], onDelete: Cascade)
+  scheduledEvent   ScheduledEvent? @relation(fields: [scheduledEventId, applicationId], references: [id, applicationId], onDelete: Cascade)
 
   @@unique([applicationId, type, scheduledEventId], where: raw("status = ANY (ARRAY['pending'::reminder_status, 'snoozed'::reminder_status])"), map: "reminders_active_key")
   @@index([userId, status, dueAt])
   @@index([applicationId, userId])
-  @@index([scheduledEventId])
+  @@index([scheduledEventId, applicationId])
   @@map("reminders")
 }
 
@@ -588,11 +598,11 @@ model Plan {
   createdAt  DateTime   @default(now()) @map("created_at") @db.Timestamptz
   updatedAt  DateTime   @default(now()) @updatedAt @map("updated_at") @db.Timestamptz
   user       User       @relation(fields: [userId], references: [id], onDelete: Cascade)
-  aiResult   AiResult?  @relation(fields: [aiResultId], references: [id], onDelete: SetNull)
+  aiResult   AiResult?  @relation(fields: [aiResultId, userId], references: [id, userId], onDelete: SetNull)
   items      PlanItem[]
 
   @@index([userId, month])
-  @@index([aiResultId])
+  @@index([aiResultId, userId])
   @@map("plans")
 }
 

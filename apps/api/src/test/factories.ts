@@ -5,6 +5,8 @@ import type { PrismaService } from '../prisma/prisma.service.js';
 
 export type OwnedApplication = { userId: string; searchId: string; applicationId: string };
 
+export type CompensatedEvent = { applicationId: string; compensatesEventId: string };
+
 export function createUser(
   prisma: PrismaService,
   overrides: Partial<Prisma.UserCreateInput> = {},
@@ -34,4 +36,20 @@ export async function createOwnedApplication(prisma: PrismaService): Promise<Own
     },
   });
   return { userId: user.id, searchId: search.id, applicationId: application.id };
+}
+
+export async function createStageEvent(
+  prisma: PrismaService,
+  applicationId: string,
+): Promise<string> {
+  const event = await prisma.stageEvent.create({
+    data: { applicationId, fromStage: 'applied', toStage: 'screening' },
+  });
+  return event.id;
+}
+
+export function compensationOf(
+  compensated: CompensatedEvent,
+): Prisma.StageEventUncheckedCreateInput {
+  return { ...compensated, fromStage: 'screening', toStage: 'applied' };
 }
