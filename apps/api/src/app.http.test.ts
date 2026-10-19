@@ -121,14 +121,9 @@ describe('the API over HTTP', () => {
     expect(linesFor('inside').map((line) => line.msg)).toEqual(['request completed']);
   });
 
-  it('sends the security headers on a 404 outside /api/v1 and logs it once', async () => {
-    const response = await request(app.getHttpServer())
-      .get('/health')
-      .set('x-request-id', 'outside');
+  it('logs a 404 outside /api/v1 once, as a rejected request', async () => {
+    await request(app.getHttpServer()).get('/health').set('x-request-id', 'outside');
 
-    expect(response.headers['x-content-type-options']).toBe('nosniff');
-    expect(response.headers['content-security-policy']).toBeDefined();
-    expect(response.headers).not.toHaveProperty('x-powered-by');
     expect(linesFor('outside')).toEqual([
       expect.objectContaining({
         level: 40,
@@ -228,13 +223,16 @@ describe('the API over HTTP', () => {
     expect(response.text).not.toContain('password');
   });
 
-  it('sends the helmet security headers and hides the framework', async () => {
-    const response = await request(app.getHttpServer()).get('/api/v1/health');
+  it.each(['/api/v1/health', '/health'])(
+    'sends the helmet security headers on %s and hides the framework',
+    async (path) => {
+      const response = await request(app.getHttpServer()).get(path);
 
-    expect(response.headers['x-content-type-options']).toBe('nosniff');
-    expect(response.headers['content-security-policy']).toBeDefined();
-    expect(response.headers).not.toHaveProperty('x-powered-by');
-  });
+      expect(response.headers['x-content-type-options']).toBe('nosniff');
+      expect(response.headers['content-security-policy']).toBeDefined();
+      expect(response.headers).not.toHaveProperty('x-powered-by');
+    },
+  );
 
   it('allows a CORS preflight from WEB_ORIGIN with credentials', async () => {
     const response = await request(app.getHttpServer())

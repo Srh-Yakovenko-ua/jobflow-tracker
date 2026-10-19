@@ -9,10 +9,12 @@
 ```
 apps/
   web/            Next.js 16 (App Router)
-  api/            Express API, точка входу src/server.ts; worker у src/worker.ts
+  api/            NestJS 12: точка входу src/main.ts, AppModule у src/app.module.ts, worker у src/worker.ts
   mobile/         Expo, необов'язковий етап
 services/
   analytics/      FastAPI (Python 3.14, uv)
+  ai/             FastAPI, AI-провайдери, порт 8001
+  documents/      FastAPI, текст і сторінки резюме, порт 8002
 packages/
   shared/         zod-схеми, типи, enum-и, машина стадій, пороги
   config/         спільні пресети tsconfig, eslint, prettier
@@ -71,7 +73,7 @@ pnpm gen:keys
 
 - `pnpm gen:keys` створює пару ключів RS256 для JWT у `.secrets/`. Тека в `.gitignore`, ключі не комітяться. Повторний запуск не перезаписує наявні ключі.
 - Значення в `.env.example` збігаються з локальним стеком compose, тому для розробки їх можна не змінювати.
-- Необов'язкові змінні (`AI_API_KEY`, `AI_MODEL`, `VAPID_*`, `SENTRY_DSN`, `MIXPANEL_TOKEN`, `TELEGRAM_BOT_TOKEN`) можна залишити порожніми: відповідна функція перейде в режим заглушки або вимкнеться.
-- `AI_PROVIDER=fake` працює без ключа і без моделі. Для `anthropic` чи `openai` потрібні `AI_API_KEY` і `AI_MODEL`, інакше API не стартує.
+- Необов'язкові змінні (`VAPID_*`, `SENTRY_DSN`, `MIXPANEL_TOKEN`, `TELEGRAM_BOT_TOKEN`) можна залишити порожніми: відповідна функція перейде в режим заглушки або вимкнеться.
+- Ключі AI-вендорів і `AI_PROVIDER` живуть у `services/ai/.env` (AI-01). API про них не знає: йому потрібна лише адреса сервісу в `AI_SERVICE_URL`.
 - Якщо обов'язкова змінна відсутня або має хибний формат, API виводить її назву і завершується з кодом 1.
 - Змінні з префіксом `NEXT_PUBLIC_` потрапляють у браузер, тож секрети з таким префіксом не задаються.

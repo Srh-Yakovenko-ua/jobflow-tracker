@@ -121,7 +121,7 @@ Python-тести запускаються в теці сервісу: `uv run p
 
 ## AI
 
-За замовчуванням `AI_PROVIDER=fake`: ключ і модель не потрібні.
+AI-провайдера обирає `services/ai`, а не API. Ключі вендорів і `AI_PROVIDER` задаються в `services/ai/.env`, за замовчуванням там провайдер `fake`, якому ключ і модель не потрібні. Сервіс з'явиться в AI-01. API знає лише `AI_SERVICE_URL`, адресу сервісу (локально `http://localhost:8001`).
 
 ## Типові проблеми
 
@@ -135,7 +135,7 @@ Python-тести запускаються в теці сервісу: `uv run p
 
 **Контейнери перезапускаються по колу.** `docker compose ps` покаже, який сервіс unhealthy. Зазвичай це залежність, що не піднялась, або відсутня змінна: застосунок при старті друкує її назву.
 
-**Hot reload не працює на Windows.** Тримайте репозиторій у файловій системі WSL2. `docker compose watch` і змінні `WATCHPACK_POLLING=true` та `CHOKIDAR_USEPOLLING=true` з'являться разом з контейнерами застосунків (BE-01, FE-01).
+**Hot reload не працює на Windows.** Тримайте репозиторій у файловій системі WSL2. Контейнер api монтує `apps/api/src` і перезапускається через `nest start --watch`. `docker compose watch` і змінні `WATCHPACK_POLLING=true` та `CHOKIDAR_USEPOLLING=true` стосуються контейнера web і з'являться з FE-01.
 
 **Помилки Prisma client після pull.** З'явиться в BE-02: тоді виконайте `pnpm --filter @jobflow/api exec prisma generate` і перезапустіть api та worker.
 

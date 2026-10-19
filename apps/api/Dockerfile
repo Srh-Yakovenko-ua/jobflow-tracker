@@ -17,8 +17,9 @@ COPY apps/api apps/api
 
 FROM source AS dev
 RUN pnpm --filter @jobflow/shared build
+WORKDIR /app/apps/api
 EXPOSE 4000
-CMD ["pnpm", "--filter", "@jobflow/api", "dev"]
+CMD ["node", "node_modules/@nestjs/cli/bin/nest.js", "start", "--watch"]
 
 FROM source AS build
 RUN pnpm turbo run build --filter @jobflow/api...
@@ -30,4 +31,5 @@ WORKDIR /app
 COPY --from=build --chown=node:node /prod/api ./
 USER node
 EXPOSE 4000
+HEALTHCHECK --interval=5s --timeout=3s --start-period=30s --retries=10 CMD ["node", "-e", "fetch('http://127.0.0.1:4000/api/v1/health').then((res) => process.exit(res.ok ? 0 : 1), () => process.exit(1))"]
 CMD ["node", "dist/main.js"]
