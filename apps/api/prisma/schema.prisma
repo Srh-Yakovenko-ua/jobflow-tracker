@@ -307,6 +307,7 @@ model Application {
   aiJobs          AiJob[]
   reminders       Reminder[]
 
+  @@unique([id, userId])
   @@index([userId, currentStage])
   @@index([userId, lastEventAt])
   @@index([searchId])
@@ -484,13 +485,13 @@ model AiJob {
   updatedAt       DateTime       @default(now()) @updatedAt @map("updated_at") @db.Timestamptz
   user            User           @relation(fields: [userId], references: [id], onDelete: Cascade)
   aiResult        AiResult?      @relation(fields: [aiResultId], references: [id], onDelete: SetNull)
-  application     Application?   @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  application     Application?   @relation(fields: [applicationId, userId], references: [id, userId], onDelete: Cascade)
   resumeVersion   ResumeVersion? @relation(fields: [resumeVersionId], references: [id], onDelete: Cascade)
 
   @@index([userId, createdAt])
   @@index([status, createdAt])
   @@index([aiResultId])
-  @@index([applicationId])
+  @@index([applicationId, userId])
   @@index([resumeVersionId])
   @@map("ai_jobs")
 }
@@ -507,11 +508,12 @@ model Reminder {
   createdAt        DateTime        @default(now()) @map("created_at") @db.Timestamptz
   updatedAt        DateTime        @default(now()) @updatedAt @map("updated_at") @db.Timestamptz
   user             User            @relation(fields: [userId], references: [id], onDelete: Cascade)
-  application      Application     @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  application      Application     @relation(fields: [applicationId, userId], references: [id, userId], onDelete: Cascade)
   scheduledEvent   ScheduledEvent? @relation(fields: [scheduledEventId], references: [id], onDelete: Cascade)
 
+  @@unique([applicationId, type, scheduledEventId], where: raw("status = ANY (ARRAY['pending'::reminder_status, 'snoozed'::reminder_status])"), map: "reminders_active_key")
   @@index([userId, status, dueAt])
-  @@index([applicationId])
+  @@index([applicationId, userId])
   @@index([scheduledEventId])
   @@map("reminders")
 }
