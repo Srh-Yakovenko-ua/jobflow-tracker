@@ -1,0 +1,69 @@
+@import 'tailwindcss';
+@import '@jobflow/shared/tokens.css';
+@import '@jobflow/shared/theme.css';
+
+@theme inline {
+  --font-display: var(--font-unbounded), sans-serif;
+  --font-ui: var(--font-onest), sans-serif;
+}
+
+@layer base {
+  body {
+    @apply bg-paper font-ui text-body text-ink antialiased;
+  }
+
+  :focus-visible {
+    @apply focus-ring;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0s !important;
+      animation-delay: 0s !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0s !important;
+      transition-delay: 0s !important;
+      scroll-behavior: auto !important;
+    }
+  }
+}
+
+@utility num {
+  @apply font-display text-num tabular-nums;
+}
+
+@utility display {
+  @apply font-display text-display;
+}
+
+@utility title {
+  @apply font-ui text-title;
+}
+
+@utility body-l {
+  @apply font-ui text-body-l;
+}
+
+@utility body {
+  @apply font-ui text-body;
+}
+
+@utility label {
+  @apply font-ui text-label;
+}
+
+@utility caption {
+  @apply font-ui text-caption;
+}
+
+@utility eyebrow {
+  @apply font-ui text-eyebrow uppercase;
+}
+
+@utility focus-ring {
+  outline: 2px solid transparent;
+  outline-offset: 2px;
+  box-shadow: var(--elevation-focus);
+}

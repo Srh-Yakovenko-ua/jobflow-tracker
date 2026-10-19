@@ -111,6 +111,9 @@ describe('web theme', () => {
     expect(theme).toContain('--text-body-l: 14.5px;');
     expect(theme).toContain('--text-num--line-height: 1;');
     expect(theme).toContain('--text-eyebrow--letter-spacing: 0.14em;');
+    expect(theme).toContain('--text-num--letter-spacing: -0.04em;');
+    expect(theme).toContain('--text-display--letter-spacing: -0.028em;');
+    expect(theme).toContain('--text-title--letter-spacing: -0.015em;');
     expect(theme).not.toContain('--text-body--letter-spacing');
     expect(theme).toContain('--color-stage-tech: var(--stage-tech);');
     expect(theme).toContain('--color-data-6: var(--data-6);');
