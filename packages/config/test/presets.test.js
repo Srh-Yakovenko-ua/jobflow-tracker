@@ -72,10 +72,12 @@ describe('api preset', () => {
 });
 
 describe('web preset', () => {
+  let messagesByFile;
   let messages;
 
   before(async () => {
-    messages = (await lintFixture(web, 'web'))['stage-counter.tsx'];
+    messagesByFile = await lintFixture(web, 'web');
+    messages = messagesByFile['stage-counter.tsx'];
   });
 
   it('parses a component without a fatal error', () => {
@@ -97,6 +99,31 @@ describe('web preset', () => {
 
     assert.ok(ruleIds.includes('@eslint-react/no-unnecessary-use-prefix'));
     assert.ok(ruleIds.includes('@next/next/no-img-element'));
+  });
+
+  describe('raw colours', () => {
+    const RAW_COLOUR_MESSAGE =
+      'Raw colour in a component: use a design token (token class, CSS variable or CHART_THEME)';
+
+    function restrictedSyntaxOf(file) {
+      return messagesByFile[file]
+        .filter((message) => message.ruleId === 'no-restricted-syntax')
+        .map((message) => message.message);
+    }
+
+    it('refuses a hex in a class and a style, and an oklch in a template', () => {
+      assert.deepEqual(restrictedSyntaxOf('raw-colour.tsx'), Array(3).fill(RAW_COLOUR_MESSAGE));
+    });
+
+    it('accepts token classes, CSS variables and a fragment link', () => {
+      assert.deepEqual(restrictedSyntaxOf('tokens-only.tsx'), []);
+    });
+
+    it('still refuses an enum under the web preset', () => {
+      assert.deepEqual(restrictedSyntaxOf('stage-kind.ts'), [
+        'Use an as const object with a union type instead of an enum.',
+      ]);
+    });
   });
 });
 
