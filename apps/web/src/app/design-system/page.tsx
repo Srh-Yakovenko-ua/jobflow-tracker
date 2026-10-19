@@ -12,13 +12,30 @@ const CARD = 'rounded-3xl bg-surface p-7 flex flex-col';
 const TILE =
   'rounded-lg bg-surface p-4.5 flex flex-col shadow-e1 transition-shadow duration-(--duration-fast) ease-standard hover:shadow-e2';
 
-type SectionHeaderProps = { header: { index: string; title: string } };
+const HEADER_SIZES = {
+  lead: {
+    row: 'gap-4',
+    index: 'text-[12px]',
+    title: 'font-display text-[27px] font-medium tracking-[-0.02em]',
+  },
+  section: { row: 'gap-3.5', index: 'text-[11px]', title: 'display' },
+};
 
-function SectionHeader({ header }: SectionHeaderProps) {
+type SectionHeaderProps = {
+  header: { index: string; title: string };
+  size: keyof typeof HEADER_SIZES;
+};
+
+function SectionHeader({ header, size }: SectionHeaderProps) {
+  const classes = HEADER_SIZES[size];
   return (
-    <div className="flex flex-wrap items-baseline gap-4">
-      <span className="eyebrow text-ink-3 tabular-nums">{header.index}</span>
-      <h2 className="display">{header.title}</h2>
+    <div className={`flex flex-wrap items-baseline ${classes.row}`}>
+      <span
+        className={`font-display font-medium tracking-[0.16em] text-ink-3 tabular-nums ${classes.index}`}
+      >
+        {header.index}
+      </span>
+      <h2 className={classes.title}>{header.title}</h2>
       <span aria-hidden className="h-px min-w-10 flex-1 bg-line" />
     </div>
   );
@@ -39,7 +56,7 @@ function DisplaySpecimen() {
   const copy = SPECIMEN_COPY.typography.display;
   return (
     <div className="rounded-3xl shadow-e3">
-      <div data-theme="dark" className={`${CARD} gap-5 text-ink`}>
+      <div data-theme="dark" className={`${CARD} h-full gap-5 text-ink`}>
         <CardHead head={copy} />
         <p className="font-display text-[44px] leading-[1.04] font-medium tracking-[-0.038em]">
           {copy.headline[0]}
@@ -49,7 +66,7 @@ function DisplaySpecimen() {
         <p className="font-display text-[56px] leading-none font-semibold tracking-[-0.04em] text-accent tabular-nums">
           {copy.score}
         </p>
-        <p className="body-l text-ink-2">{copy.note}</p>
+        <p className="body-l text-ink-2 tabular-nums">{copy.note}</p>
       </div>
     </div>
   );
@@ -133,17 +150,17 @@ function MotionSample() {
 
 export default function DesignSystemPage() {
   return (
-    <main className="mx-auto flex max-w-[1240px] flex-col gap-15 px-7 pt-13 pb-32.5">
+    <main className="mx-auto flex max-w-[1296px] flex-col gap-15 px-7 pt-13 pb-32.5">
       <h1 className="sr-only">{SPECIMEN_COPY.pageTitle}</h1>
       <section id="typography" className="flex flex-col gap-6.5">
-        <SectionHeader header={SPECIMEN_COPY.typography} />
+        <SectionHeader header={SPECIMEN_COPY.typography} size="lead" />
         <div className="grid grid-cols-[repeat(auto-fit,minmax(min(320px,100%),1fr))] gap-5">
           <DisplaySpecimen />
           <InterfaceSpecimen />
         </div>
       </section>
       <section className="flex flex-col gap-4">
-        <SectionHeader header={SPECIMEN_COPY.scale} />
+        <SectionHeader header={SPECIMEN_COPY.scale} size="section" />
         <div className="grid grid-cols-[repeat(auto-fit,minmax(min(268px,100%),1fr))] gap-3.5">
           <RoleLadder />
           <FocusSample />
