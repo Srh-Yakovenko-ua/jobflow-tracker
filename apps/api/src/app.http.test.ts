@@ -1,16 +1,15 @@
 import { errorResponseSchema, type PaginationQuery, paginationQuerySchema } from '@jobflow/shared';
 import { Body, Controller, Get, Post, Query } from '@nestjs/common';
 import type { NestExpressApplication } from '@nestjs/platform-express';
-import { Test } from '@nestjs/testing';
 import { PARAMS_PROVIDER_TOKEN } from 'nestjs-pino';
 import request from 'supertest';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 
-import { AppModule } from './app.module.js';
 import { loggerParams } from './common/logger.js';
-import { APP_OPTIONS, configureApp } from './configure-app.js';
 import { PrismaService } from './prisma/prisma.service.js';
 import { RedisService } from './redis/redis.service.js';
+import { appTestingModule, startTestApp } from './test/app.js';
+import { FakeDependency } from './test/fake-dependency.js';
 import { type LogLine, memoryLog } from './test/memory-log.js';
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
@@ -39,41 +38,22 @@ function linesFor(requestId: string): LogLine[] {
   return log.parsed().filter((line) => line.requestId === requestId);
 }
 
-class FakeDependency {
-  up = true;
-  closed = false;
-
-  isUp(): Promise<boolean> {
-    return Promise.resolve(this.up);
-  }
-
-  onModuleDestroy(): Promise<void> {
-    this.closed = true;
-    return Promise.resolve();
-  }
-}
-
 type Dependencies = { redis: FakeDependency; postgres: FakeDependency };
 
 function fakeDependencies(): Dependencies {
   return { redis: new FakeDependency(), postgres: new FakeDependency() };
 }
 
-async function startApp({ redis, postgres }: Dependencies): Promise<NestExpressApplication> {
-  const moduleRef = await Test.createTestingModule({
-    imports: [AppModule],
-    controllers: [ProbeController],
-  })
-    .overrideProvider(RedisService)
-    .useValue(redis)
-    .overrideProvider(PrismaService)
-    .useValue(postgres)
-    .overrideProvider(PARAMS_PROVIDER_TOKEN)
-    .useValue(loggerParams(log.sink))
-    .compile();
-  const app = configureApp(moduleRef.createNestApplication<NestExpressApplication>(APP_OPTIONS));
-  await app.init();
-  return app;
+function startApp({ redis, postgres }: Dependencies): Promise<NestExpressApplication> {
+  return startTestApp(
+    appTestingModule({ controllers: [ProbeController] })
+      .overrideProvider(RedisService)
+      .useValue(redis)
+      .overrideProvider(PrismaService)
+      .useValue(postgres)
+      .overrideProvider(PARAMS_PROVIDER_TOKEN)
+      .useValue(loggerParams(log.sink)),
+  );
 }
 
 describe('the API over HTTP', () => {
