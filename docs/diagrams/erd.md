@@ -328,6 +328,7 @@ failed failed
 
   "resume_versions" {
     String id "🗝️"
+    String user_id 
     String resume_id 
     String storage_key 
     String filename 
@@ -496,6 +497,7 @@ failed failed
     "scheduled_events" |o--|| "scheduled_event_status" : "enum:status"
     "scheduled_events" }o--|| "applications" : "application"
     "resumes" }o--|| "users" : "user"
+    "resume_versions" }o--|| "users" : "user"
     "resume_versions" }o--|| "resumes" : "resume"
     "ai_results" |o--|| "ai_result_status" : "enum:status"
     "ai_results" }o--|| "users" : "user"
