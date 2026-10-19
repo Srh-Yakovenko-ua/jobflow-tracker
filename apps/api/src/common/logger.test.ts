@@ -7,6 +7,7 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 
 import { configModule } from '../config/app-config.js';
 import { APP_OPTIONS, configureApp } from '../configure-app.js';
+import { memoryLog } from '../test/memory-log.js';
 import { loggerParams } from './logger.js';
 
 @Controller('probe')
@@ -20,24 +21,14 @@ class ProbeController {
   }
 }
 
-const lines: string[] = [];
-
-const memorySink = {
-  write: (line: string) => {
-    lines.push(line);
-  },
-};
-
-function parsedLines(): Record<string, unknown>[] {
-  return lines.map((line) => JSON.parse(line) as Record<string, unknown>);
-}
+const log = memoryLog();
 
 describe('request logs', () => {
   let app: NestExpressApplication;
 
   beforeAll(async () => {
     const moduleRef = await Test.createTestingModule({
-      imports: [configModule, LoggerModule.forRoot(loggerParams(memorySink))],
+      imports: [configModule, LoggerModule.forRoot(loggerParams(log.sink))],
       controllers: [ProbeController],
     }).compile();
     app = configureApp(moduleRef.createNestApplication<NestExpressApplication>(APP_OPTIONS));
@@ -45,7 +36,7 @@ describe('request logs', () => {
   });
 
   beforeEach(() => {
-    lines.length = 0;
+    log.lines.length = 0;
   });
 
   afterAll(async () => {
@@ -55,7 +46,7 @@ describe('request logs', () => {
   it('writes every line of a request as JSON carrying its requestId', async () => {
     await request(app.getHttpServer()).get('/api/v1/probe').set('x-request-id', 'log-check');
 
-    const requestLines = parsedLines();
+    const requestLines = log.parsed();
     expect(requestLines.map((line) => line.msg)).toEqual(['probe handled', 'request completed']);
     expect(requestLines.every((line) => line.requestId === 'log-check')).toBe(true);
   });
@@ -66,12 +57,18 @@ describe('request logs', () => {
       .set('authorization', 'Bearer secret-access-token')
       .set('cookie', 'refresh=secret-refresh-token');
 
-    expect(lines.join('\n')).not.toContain('secret-');
+    expect(log.lines.join('\n')).not.toContain('secret-');
   });
 
   it('writes no request line for the health check', async () => {
     await request(app.getHttpServer()).get('/api/v1/health');
 
-    expect(lines).toEqual([]);
+    expect(log.lines).toEqual([]);
+  });
+
+  it('logs a request to the health path that is not a GET or HEAD', async () => {
+    await request(app.getHttpServer()).post('/api/v1/health');
+
+    expect(log.parsed()).toHaveLength(1);
   });
 });

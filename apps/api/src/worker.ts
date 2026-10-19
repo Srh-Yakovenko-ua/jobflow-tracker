@@ -1,9 +1,11 @@
 import { NestFactory } from '@nestjs/core';
 import { Logger } from 'nestjs-pino';
 
+import { boot, BOOT_OPTIONS } from './boot.js';
 import { WorkerModule } from './worker.module.js';
 
-const worker = await NestFactory.createApplicationContext(WorkerModule, { bufferLogs: true });
-
-worker.useLogger(worker.get(Logger));
-worker.enableShutdownHooks();
+await boot(async () => {
+  const worker = await NestFactory.createApplicationContext(WorkerModule, BOOT_OPTIONS);
+  worker.useLogger(worker.get(Logger));
+  worker.enableShutdownHooks();
+});
