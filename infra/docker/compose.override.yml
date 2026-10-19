@@ -21,3 +21,10 @@ services:
         '-p',
         'tsconfig.worker.json',
       ]
+
+  web:
+    build:
+      target: dev
+    mem_limit: 1536m
+    volumes:
+      - ../../apps/web/src:/app/apps/web/src

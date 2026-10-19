@@ -140,6 +140,26 @@ services:
     networks:
       - jobflow
 
+  web:
+    build:
+      context: ../..
+      dockerfile: apps/web/Dockerfile
+    ports:
+      - '127.0.0.1:3000:3000'
+    healthcheck:
+      test:
+        - CMD
+        - node
+        - -e
+        - "fetch('http://127.0.0.1:3000/login').then((res) => process.exit(res.ok ? 0 : 1), () => process.exit(1))"
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 30s
+    mem_limit: 512m
+    networks:
+      - jobflow
+
 networks:
   jobflow:
     name: jobflow
