@@ -12,10 +12,6 @@
     @apply bg-paper font-ui text-body text-ink antialiased;
   }
 
-  :focus-visible {
-    @apply focus-ring;
-  }
-
   @media (prefers-reduced-motion: reduce) {
     *,
     *::before,
@@ -28,6 +24,10 @@
       scroll-behavior: auto !important;
     }
   }
+}
+
+:focus-visible {
+  @apply focus-ring;
 }
 
 @utility num {

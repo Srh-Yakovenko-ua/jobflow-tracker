@@ -8,7 +8,7 @@ export const SOURCE_ROWS: readonly { source: Source; count: string; share: strin
 
 export const TYPE_ROLES = [
   { role: 'num', token: 'num · Unbounded 600' },
-  { role: 'display', token: 'display · Unbounded 500' },
+  { role: 'display', token: 'display 19–48' },
   { role: 'title', token: 'title 16/600' },
   { role: 'body-l', token: 'body-l 14.5/1.6' },
   { role: 'body', token: 'body 13.5/1.55' },

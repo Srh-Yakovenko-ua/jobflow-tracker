@@ -16,9 +16,13 @@ const HEADER_SIZES = {
   lead: {
     row: 'gap-4',
     index: 'text-[12px]',
-    title: 'font-display text-[27px] font-medium tracking-[-0.02em]',
+    title: 'font-display text-[27px] leading-[normal] font-medium tracking-[-0.02em]',
   },
-  section: { row: 'gap-3.5', index: 'text-[11px]', title: 'display' },
+  section: {
+    row: 'gap-3.5',
+    index: 'text-[11px]',
+    title: 'font-display text-display leading-[normal]',
+  },
 };
 
 type SectionHeaderProps = {
@@ -29,7 +33,7 @@ type SectionHeaderProps = {
 function SectionHeader({ header, size }: SectionHeaderProps) {
   const classes = HEADER_SIZES[size];
   return (
-    <div className={`flex flex-wrap items-baseline ${classes.row}`}>
+    <div className={`flex flex-wrap items-baseline leading-[normal] ${classes.row}`}>
       <span
         className={`font-display font-medium tracking-[0.16em] text-ink-3 tabular-nums ${classes.index}`}
       >
@@ -46,8 +50,10 @@ type CardHeadProps = { head: { eyebrow: string; family: string } };
 function CardHead({ head }: CardHeadProps) {
   return (
     <div className="flex items-baseline justify-between gap-3 text-ink-3">
-      <span className="eyebrow">{head.eyebrow}</span>
-      <span className="label font-normal">{head.family}</span>
+      <span className="text-label leading-[normal] tracking-[0.14em] uppercase">
+        {head.eyebrow}
+      </span>
+      <span className="text-label leading-[normal] font-normal">{head.family}</span>
     </div>
   );
 }
@@ -66,7 +72,7 @@ function DisplaySpecimen() {
         <p className="font-display text-[56px] leading-none font-semibold tracking-[-0.04em] text-accent tabular-nums">
           {copy.score}
         </p>
-        <p className="body-l text-ink-2 tabular-nums">{copy.note}</p>
+        <p className="text-[14px] leading-[1.6] text-ink-2 tabular-nums">{copy.note}</p>
       </div>
     </div>
   );
@@ -85,7 +91,7 @@ function InterfaceSpecimen() {
         <p className="body-l text-ink-2 tabular-nums">{copy.lead}</p>
       </div>
       <span aria-hidden className="h-px bg-line-soft" />
-      <dl className="grid grid-cols-[1fr_auto_auto] gap-x-5.5 gap-y-1.5 text-[15px] tabular-nums">
+      <dl className="grid grid-cols-[1fr_auto_auto] gap-x-5.5 gap-y-1.5 text-[15px] leading-[normal] tabular-nums">
         {SOURCE_ROWS.map((row) => (
           <div key={row.source} className="contents">
             <dt>{SOURCE_LABELS[row.source].labelUk}</dt>
@@ -94,7 +100,7 @@ function InterfaceSpecimen() {
           </div>
         ))}
       </dl>
-      <p className="body text-ink-3 tabular-nums">{copy.note}</p>
+      <p className="text-body leading-[1.6] text-ink-3 tabular-nums">{copy.note}</p>
     </div>
   );
 }
@@ -150,7 +156,7 @@ function MotionSample() {
 
 export default function DesignSystemPage() {
   return (
-    <main className="mx-auto flex max-w-[1296px] flex-col gap-15 px-7 pt-13 pb-32.5">
+    <main className="mx-auto flex max-w-[1296px] flex-col gap-30 px-7 pt-13 pb-32.5">
       <h1 className="sr-only">{SPECIMEN_COPY.pageTitle}</h1>
       <section id="typography" className="flex flex-col gap-6.5">
         <SectionHeader header={SPECIMEN_COPY.typography} size="lead" />
