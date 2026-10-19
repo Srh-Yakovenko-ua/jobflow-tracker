@@ -2,6 +2,19 @@ import { describe, expect, it } from 'vitest';
 import type { z } from 'zod';
 
 import {
+  AI_JOB_STATUSES,
+  AI_RESULT_STATUSES,
+  aiJobStatusSchema,
+  aiResultStatusSchema,
+} from './ai-statuses.js';
+import { NOTIFICATION_TYPES, notificationTypeSchema } from './notifications.js';
+import {
+  REMINDER_STATUSES,
+  REMINDER_TYPES,
+  reminderStatusSchema,
+  reminderTypeSchema,
+} from './reminders.js';
+import {
   SCHEDULED_EVENT_KINDS,
   SCHEDULED_EVENT_STATUSES,
   scheduledEventKindSchema,
@@ -21,6 +34,11 @@ const DOMAIN_ENUMS: DomainEnumCase[] = [
     schema: scheduledEventStatusSchema,
   },
   { name: 'timeline event kind', values: TIMELINE_EVENT_KINDS, schema: timelineEventKindSchema },
+  { name: 'reminder type', values: REMINDER_TYPES, schema: reminderTypeSchema },
+  { name: 'reminder status', values: REMINDER_STATUSES, schema: reminderStatusSchema },
+  { name: 'notification type', values: NOTIFICATION_TYPES, schema: notificationTypeSchema },
+  { name: 'ai job status', values: AI_JOB_STATUSES, schema: aiJobStatusSchema },
+  { name: 'ai result status', values: AI_RESULT_STATUSES, schema: aiResultStatusSchema },
 ];
 
 describe('domain enum schemas', () => {

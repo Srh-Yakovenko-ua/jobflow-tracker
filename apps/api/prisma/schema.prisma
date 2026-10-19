@@ -7,6 +7,11 @@ generator client {
   previewFeatures        = ["partialIndexes"]
 }
 
+generator erd {
+  provider = "prisma-erd-generator"
+  output   = "../../../docs/diagrams/erd.md"
+}
+
 datasource db {
   provider = "postgresql"
 }
@@ -107,42 +112,97 @@ enum TimelineEventKind {
   @@map("timeline_event_kind")
 }
 
+enum ReminderType {
+  followup
+  interview_soon
+
+  @@map("reminder_type")
+}
+
+enum ReminderStatus {
+  pending
+  done
+  snoozed
+  dismissed
+
+  @@map("reminder_status")
+}
+
+enum NotificationType {
+  silence
+  interview_soon
+  ai_done
+  ai_failed
+  monthly_summary_ready
+  insight_unlocked
+  plan_item_due
+
+  @@map("notification_type")
+}
+
+enum AiJobStatus {
+  queued
+  processing
+  done
+  failed
+
+  @@map("ai_job_status")
+}
+
+enum AiResultStatus {
+  succeeded
+  failed
+
+  @@map("ai_result_status")
+}
+
 model User {
-  id            String         @id @default(dbgenerated("uuidv7()")) @db.Uuid
-  email         String         @unique @db.Citext
-  passwordHash  String?        @map("password_hash")
-  displayName   String?        @map("display_name")
-  locale        String         @default("uk")
-  createdAt     DateTime       @default(now()) @map("created_at") @db.Timestamptz
-  updatedAt     DateTime       @default(now()) @updatedAt @map("updated_at") @db.Timestamptz
-  settings      UserSettings?
-  refreshTokens RefreshToken[]
-  oauthAccounts OAuthAccount[]
-  captureTokens CaptureToken[]
-  searches      Search[]
-  applications  Application[]
+  id                String             @id @default(dbgenerated("uuidv7()")) @db.Uuid
+  email             String             @unique @db.Citext
+  passwordHash      String?            @map("password_hash")
+  displayName       String?            @map("display_name")
+  locale            String             @default("uk")
+  createdAt         DateTime           @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt         DateTime           @default(now()) @updatedAt @map("updated_at") @db.Timestamptz
+  settings          UserSettings?
+  refreshTokens     RefreshToken[]
+  oauthAccounts     OAuthAccount[]
+  captureTokens     CaptureToken[]
+  searches          Search[]
+  applications      Application[]
+  resumes           Resume[]
+  aiResults         AiResult[]
+  aiJobs            AiJob[]
+  reminders         Reminder[]
+  notifications     Notification[]
+  pushSubscriptions PushSubscription[]
+  idempotencyKeys   IdempotencyKey[]
+  plans             Plan[]
 
   @@map("users")
 }
 
 model UserSettings {
-  userId                String   @id @map("user_id") @db.Uuid
-  silenceDays           Int      @default(7) @map("silence_days")
-  autoGhostDays         Int?     @default(30) @map("auto_ghost_days")
-  askRejectionReason    Boolean  @default(true) @map("ask_rejection_reason")
-  monthlySummaryEnabled Boolean  @default(true) @map("monthly_summary_enabled")
-  theme                 Theme    @default(system)
-  timezone              String   @default("Europe/Kyiv")
-  quietHoursStart       DateTime @default(dbgenerated("'22:00:00'::time without time zone")) @map("quiet_hours_start") @db.Time(0)
-  quietHoursEnd         DateTime @default(dbgenerated("'08:00:00'::time without time zone")) @map("quiet_hours_end") @db.Time(0)
-  notifyInApp           Boolean  @default(true) @map("notify_in_app")
-  notifyPush            Boolean  @default(false) @map("notify_push")
-  notifyEmail           Boolean  @default(true) @map("notify_email")
-  analyticsOptOut       Boolean  @default(false) @map("analytics_opt_out")
-  createdAt             DateTime @default(now()) @map("created_at") @db.Timestamptz
-  updatedAt             DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz
-  user                  User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId                String         @id @map("user_id") @db.Uuid
+  silenceDays           Int            @default(7) @map("silence_days")
+  autoGhostDays         Int?           @default(30) @map("auto_ghost_days")
+  askRejectionReason    Boolean        @default(true) @map("ask_rejection_reason")
+  monthlySummaryEnabled Boolean        @default(true) @map("monthly_summary_enabled")
+  theme                 Theme          @default(system)
+  timezone              String         @default("Europe/Kyiv")
+  quietHoursStart       DateTime       @default(dbgenerated("'22:00:00'::time without time zone")) @map("quiet_hours_start") @db.Time(0)
+  quietHoursEnd         DateTime       @default(dbgenerated("'08:00:00'::time without time zone")) @map("quiet_hours_end") @db.Time(0)
+  notifyInApp           Boolean        @default(true) @map("notify_in_app")
+  notifyPush            Boolean        @default(false) @map("notify_push")
+  notifyEmail           Boolean        @default(true) @map("notify_email")
+  analyticsOptOut       Boolean        @default(false) @map("analytics_opt_out")
+  activeResumeVersionId String?        @map("active_resume_version_id") @db.Uuid
+  createdAt             DateTime       @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt             DateTime       @default(now()) @updatedAt @map("updated_at") @db.Timestamptz
+  user                  User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  activeResumeVersion   ResumeVersion? @relation(fields: [activeResumeVersionId], references: [id], onDelete: SetNull)
 
+  @@index([activeResumeVersionId])
   @@map("user_settings")
 }
 
@@ -232,20 +292,25 @@ model Application {
   appliedAt       DateTime?                @map("applied_at") @db.Timestamptz
   lastEventAt     DateTime                 @default(now()) @map("last_event_at") @db.Timestamptz
   deletedAt       DateTime?                @map("deleted_at") @db.Timestamptz
+  resumeVersionId String?                  @map("resume_version_id") @db.Uuid
   searchVector    Unsupported("tsvector")? @map("search_vector")
   createdAt       DateTime                 @default(now()) @map("created_at") @db.Timestamptz
   updatedAt       DateTime                 @default(now()) @updatedAt @map("updated_at") @db.Timestamptz
   user            User                     @relation(fields: [userId], references: [id], onDelete: Cascade)
   search          Search                   @relation(fields: [searchId], references: [id], onDelete: Cascade)
+  resumeVersion   ResumeVersion?           @relation(fields: [resumeVersionId], references: [id], onDelete: SetNull)
   stageEvents     StageEvent[]
   timelineEvents  TimelineEvent[]
   contacts        Contact[]
   notes           Note[]
   scheduledEvents ScheduledEvent[]
+  aiJobs          AiJob[]
+  reminders       Reminder[]
 
   @@index([userId, currentStage])
   @@index([userId, lastEventAt])
   @@index([searchId])
+  @@index([resumeVersionId])
   @@index([searchVector], type: Gin)
   @@map("applications")
 }
@@ -337,7 +402,212 @@ model ScheduledEvent {
   createdAt      DateTime             @default(now()) @map("created_at") @db.Timestamptz
   updatedAt      DateTime             @default(now()) @updatedAt @map("updated_at") @db.Timestamptz
   application    Application          @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  reminders      Reminder[]
 
   @@index([applicationId, startsAt])
   @@map("scheduled_events")
+}
+
+model Resume {
+  id        String          @id @default(dbgenerated("uuidv7()")) @db.Uuid
+  userId    String          @map("user_id") @db.Uuid
+  title     String
+  createdAt DateTime        @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime        @default(now()) @updatedAt @map("updated_at") @db.Timestamptz
+  user      User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  versions  ResumeVersion[]
+
+  @@index([userId])
+  @@map("resumes")
+}
+
+model ResumeVersion {
+  id             String         @id @default(dbgenerated("uuidv7()")) @db.Uuid
+  resumeId       String         @map("resume_id") @db.Uuid
+  storageKey     String         @unique @map("storage_key")
+  filename       String
+  mime           String
+  sizeBytes      Int            @map("size_bytes")
+  title          String
+  note           String?
+  textExtracted  String?        @map("text_extracted")
+  aiProfile      Json?          @map("ai_profile")
+  isArchived     Boolean        @default(false) @map("is_archived")
+  uploadedAt     DateTime       @default(now()) @map("uploaded_at") @db.Timestamptz
+  createdAt      DateTime       @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt      DateTime       @default(now()) @updatedAt @map("updated_at") @db.Timestamptz
+  resume         Resume         @relation(fields: [resumeId], references: [id], onDelete: Cascade)
+  activeSettings UserSettings[]
+  applications   Application[]
+  aiJobs         AiJob[]
+
+  @@index([resumeId])
+  @@map("resume_versions")
+}
+
+model AiResult {
+  id            String         @id @default(dbgenerated("uuidv7()")) @db.Uuid
+  userId        String         @map("user_id") @db.Uuid
+  kind          String
+  inputHash     String         @map("input_hash")
+  promptVersion String         @map("prompt_version")
+  output        Json?
+  model         String
+  tokensIn      Int            @map("tokens_in")
+  tokensOut     Int            @map("tokens_out")
+  latencyMs     Int            @map("latency_ms")
+  status        AiResultStatus
+  error         String?
+  createdAt     DateTime       @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt     DateTime       @default(now()) @updatedAt @map("updated_at") @db.Timestamptz
+  user          User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  aiJobs        AiJob[]
+  plans         Plan[]
+
+  @@unique([userId, kind, inputHash])
+  @@map("ai_results")
+}
+
+model AiJob {
+  id              String         @id @default(dbgenerated("uuidv7()")) @db.Uuid
+  userId          String         @map("user_id") @db.Uuid
+  kind            String
+  status          AiJobStatus    @default(queued)
+  step            Int            @default(0)
+  errorType       String?        @map("error_type")
+  aiResultId      String?        @map("ai_result_id") @db.Uuid
+  applicationId   String?        @map("application_id") @db.Uuid
+  resumeVersionId String?        @map("resume_version_id") @db.Uuid
+  startedAt       DateTime?      @map("started_at") @db.Timestamptz
+  finishedAt      DateTime?      @map("finished_at") @db.Timestamptz
+  createdAt       DateTime       @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt       DateTime       @default(now()) @updatedAt @map("updated_at") @db.Timestamptz
+  user            User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  aiResult        AiResult?      @relation(fields: [aiResultId], references: [id], onDelete: SetNull)
+  application     Application?   @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  resumeVersion   ResumeVersion? @relation(fields: [resumeVersionId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@index([status, createdAt])
+  @@index([aiResultId])
+  @@index([applicationId])
+  @@index([resumeVersionId])
+  @@map("ai_jobs")
+}
+
+model Reminder {
+  id               String          @id @default(dbgenerated("uuidv7()")) @db.Uuid
+  userId           String          @map("user_id") @db.Uuid
+  applicationId    String          @map("application_id") @db.Uuid
+  scheduledEventId String?         @map("scheduled_event_id") @db.Uuid
+  type             ReminderType
+  status           ReminderStatus  @default(pending)
+  dueAt            DateTime        @map("due_at") @db.Timestamptz
+  snoozedUntil     DateTime?       @map("snoozed_until") @db.Timestamptz
+  createdAt        DateTime        @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt        DateTime        @default(now()) @updatedAt @map("updated_at") @db.Timestamptz
+  user             User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  application      Application     @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  scheduledEvent   ScheduledEvent? @relation(fields: [scheduledEventId], references: [id], onDelete: Cascade)
+
+  @@index([userId, status, dueAt])
+  @@index([applicationId])
+  @@index([scheduledEventId])
+  @@map("reminders")
+}
+
+model Notification {
+  id        String           @id @default(dbgenerated("uuidv7()")) @db.Uuid
+  userId    String           @map("user_id") @db.Uuid
+  type      NotificationType
+  payload   Json             @default("{}")
+  readAt    DateTime?        @map("read_at") @db.Timestamptz
+  createdAt DateTime         @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime         @default(now()) @updatedAt @map("updated_at") @db.Timestamptz
+  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@map("notifications")
+}
+
+model PushSubscription {
+  id            String    @id @default(dbgenerated("uuidv7()")) @db.Uuid
+  userId        String    @map("user_id") @db.Uuid
+  endpoint      String    @unique
+  p256dh        String
+  auth          String
+  userAgent     String?   @map("user_agent")
+  lastSuccessAt DateTime? @map("last_success_at") @db.Timestamptz
+  failedCount   Int       @default(0) @map("failed_count")
+  createdAt     DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt     DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("push_subscriptions")
+}
+
+model OutboxEvent {
+  id          String    @id @default(dbgenerated("uuidv7()")) @db.Uuid
+  aggregate   String
+  aggregateId String    @map("aggregate_id") @db.Uuid
+  eventType   String    @map("event_type")
+  payload     Json
+  publishedAt DateTime? @map("published_at") @db.Timestamptz
+  attempts    Int       @default(0)
+  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt   DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz
+
+  @@index([createdAt], where: raw("published_at IS NULL"), map: "outbox_unpublished_idx")
+  @@map("outbox")
+}
+
+model IdempotencyKey {
+  id          String   @id @default(dbgenerated("uuidv7()")) @db.Uuid
+  userId      String   @map("user_id") @db.Uuid
+  key         String
+  requestHash String   @map("request_hash")
+  response    Json?
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt   DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, key])
+  @@index([createdAt])
+  @@map("idempotency_keys")
+}
+
+model Plan {
+  id         String     @id @default(dbgenerated("uuidv7()")) @db.Uuid
+  userId     String     @map("user_id") @db.Uuid
+  aiResultId String?    @map("ai_result_id") @db.Uuid
+  title      String
+  month      DateTime   @db.Date
+  createdAt  DateTime   @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt  DateTime   @default(now()) @updatedAt @map("updated_at") @db.Timestamptz
+  user       User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  aiResult   AiResult?  @relation(fields: [aiResultId], references: [id], onDelete: SetNull)
+  items      PlanItem[]
+
+  @@index([userId, month])
+  @@index([aiResultId])
+  @@map("plans")
+}
+
+model PlanItem {
+  id             String    @id @default(dbgenerated("uuidv7()")) @db.Uuid
+  planId         String    @map("plan_id") @db.Uuid
+  position       Int
+  title          String
+  why            String?
+  expectedEffect String?   @map("expected_effect")
+  metric         String?
+  dueAt          DateTime? @map("due_at") @db.Timestamptz
+  doneAt         DateTime? @map("done_at") @db.Timestamptz
+  createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt      DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz
+  plan           Plan      @relation(fields: [planId], references: [id], onDelete: Cascade)
+
+  @@index([planId, position])
+  @@map("plan_items")
 }

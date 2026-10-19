@@ -18,7 +18,7 @@ export function assertTestDatabase(name: string): void {
 export async function resetDatabase(prisma: PrismaService): Promise<void> {
   const [row] = await prisma.$queryRaw<{ name: string }[]>`SELECT current_database() AS name`;
   assertTestDatabase(row?.name ?? '');
-  await prisma.$executeRaw`TRUNCATE TABLE users CASCADE`;
+  await prisma.$executeRaw`TRUNCATE TABLE users, outbox CASCADE`;
 }
 
 export function useTestDatabase(): TestDatabase {
