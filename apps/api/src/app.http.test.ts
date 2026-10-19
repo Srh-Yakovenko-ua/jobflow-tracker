@@ -9,6 +9,7 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { AppModule } from './app.module.js';
 import { loggerParams } from './common/logger.js';
 import { APP_OPTIONS, configureApp } from './configure-app.js';
+import { PrismaService } from './prisma/prisma.service.js';
 import { RedisService } from './redis/redis.service.js';
 import { type LogLine, memoryLog } from './test/memory-log.js';
 
@@ -38,7 +39,7 @@ function linesFor(requestId: string): LogLine[] {
   return log.parsed().filter((line) => line.requestId === requestId);
 }
 
-class FakeRedis {
+class FakeDependency {
   up = true;
   closed = false;
 
@@ -52,13 +53,21 @@ class FakeRedis {
   }
 }
 
-async function startApp(redis: FakeRedis): Promise<NestExpressApplication> {
+type Dependencies = { redis: FakeDependency; postgres: FakeDependency };
+
+function fakeDependencies(): Dependencies {
+  return { redis: new FakeDependency(), postgres: new FakeDependency() };
+}
+
+async function startApp({ redis, postgres }: Dependencies): Promise<NestExpressApplication> {
   const moduleRef = await Test.createTestingModule({
     imports: [AppModule],
     controllers: [ProbeController],
   })
     .overrideProvider(RedisService)
     .useValue(redis)
+    .overrideProvider(PrismaService)
+    .useValue(postgres)
     .overrideProvider(PARAMS_PROVIDER_TOKEN)
     .useValue(loggerParams(log.sink))
     .compile();
@@ -68,15 +77,16 @@ async function startApp(redis: FakeRedis): Promise<NestExpressApplication> {
 }
 
 describe('the API over HTTP', () => {
-  const redis = new FakeRedis();
+  const dependencies = fakeDependencies();
   let app: NestExpressApplication;
 
   beforeAll(async () => {
-    app = await startApp(redis);
+    app = await startApp(dependencies);
   });
 
   beforeEach(() => {
-    redis.up = true;
+    dependencies.redis.up = true;
+    dependencies.postgres.up = true;
   });
 
   afterAll(async () => {
@@ -254,31 +264,38 @@ describe('the API over HTTP', () => {
     expect(response.headers).not.toHaveProperty('access-control-allow-origin');
   });
 
-  it('answers GET /api/v1/ready with 200 while Redis is up', async () => {
+  it('answers GET /api/v1/ready with 200 while Redis and Postgres are up', async () => {
     const response = await request(app.getHttpServer()).get('/api/v1/ready');
 
     expect(response.status).toBe(200);
-    expect(response.body).toEqual({ status: 'ok', checks: { redis: 'up' } });
+    expect(response.body).toEqual({ status: 'ok', checks: { redis: 'up', postgres: 'up' } });
   });
 
-  it('answers GET /api/v1/ready with 503 not_ready while Redis is down', async () => {
-    redis.up = false;
+  it.each([
+    { down: 'redis', detail: 'Redis is not reachable' },
+    { down: 'postgres', detail: 'Postgres is not reachable' },
+  ] as const)(
+    'answers GET /api/v1/ready with 503 not_ready while $down is down',
+    async ({ down, detail }) => {
+      dependencies[down].up = false;
 
-    const response = await request(app.getHttpServer()).get('/api/v1/ready');
+      const response = await request(app.getHttpServer()).get('/api/v1/ready');
 
-    const body = errorResponseSchema.parse(response.body);
-    expect(response.status).toBe(503);
-    expect(body.type).toBe('not_ready');
-  });
+      const body = errorResponseSchema.parse(response.body);
+      expect(response.status).toBe(503);
+      expect(body.type).toBe('not_ready');
+      expect(body.detail).toBe(detail);
+    },
+  );
 });
 
 describe('shutdown', () => {
-  it('closes the Redis connection when the app closes', async () => {
-    const redis = new FakeRedis();
-    const app = await startApp(redis);
+  it('closes the Redis connection and the Postgres pool when the app closes', async () => {
+    const dependencies = fakeDependencies();
+    const app = await startApp(dependencies);
 
     await app.close();
 
-    expect(redis.closed).toBe(true);
+    expect([dependencies.redis.closed, dependencies.postgres.closed]).toEqual([true, true]);
   });
 });

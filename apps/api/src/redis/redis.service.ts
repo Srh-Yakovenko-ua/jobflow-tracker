@@ -1,12 +1,9 @@
-import { setTimeout as delay } from 'node:timers/promises';
-
 import { Injectable, Logger, type OnModuleDestroy } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Redis } from 'ioredis';
 
+import { DEPENDENCY_LIMITS, isAnswered } from '../common/probe.js';
 import type { Env } from '../config/env.js';
-
-const REDIS_LIMITS = { connectTimeoutMs: 2000, pingTimeoutMs: 1000 } as const;
 
 @Injectable()
 export class RedisService implements OnModuleDestroy {
@@ -18,7 +15,7 @@ export class RedisService implements OnModuleDestroy {
     this.client = new Redis(config.get('REDIS_URL', { infer: true }), {
       enableOfflineQueue: false,
       maxRetriesPerRequest: 1,
-      connectTimeout: REDIS_LIMITS.connectTimeoutMs,
+      connectTimeout: DEPENDENCY_LIMITS.connectTimeoutMs,
     });
     this.client.on('error', (error: Error) => {
       this.logger.warn(`Redis connection error: ${error.message}`);
@@ -26,11 +23,7 @@ export class RedisService implements OnModuleDestroy {
   }
 
   async isUp(): Promise<boolean> {
-    const ping = this.client.ping().then(
-      () => true,
-      () => false,
-    );
-    return Promise.race([ping, delay(REDIS_LIMITS.pingTimeoutMs, false, { ref: false })]);
+    return isAnswered(this.client.ping());
   }
 
   async onModuleDestroy(): Promise<void> {

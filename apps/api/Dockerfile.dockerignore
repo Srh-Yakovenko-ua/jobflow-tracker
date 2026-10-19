@@ -8,6 +8,7 @@
 !packages/shared
 **/node_modules
 **/dist
+**/src/generated
 **/coverage
 **/.turbo
 **/*.tsbuildinfo

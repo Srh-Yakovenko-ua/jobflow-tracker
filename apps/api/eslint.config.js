@@ -1,7 +1,8 @@
 import { api } from '@jobflow/config/eslint';
-import { defineConfig } from 'eslint/config';
+import { defineConfig, globalIgnores } from 'eslint/config';
 
 export default defineConfig(
+  globalIgnores(['src/generated/']),
   api(import.meta.dirname),
   {
     rules: {

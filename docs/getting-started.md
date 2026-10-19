@@ -30,13 +30,18 @@ pnpm dev
 4. `pnpm gen:keys` створює пару ключів RS256 для JWT і друкує `JWT keys written to .secrets/jwt-private.pem and .secrets/jwt-public.pem.` Повторний запуск ключі не перезаписує, а друкує `JWT keys already exist in .secrets/, nothing to do.`
 5. `pnpm dev` піднімає Postgres, Redis, MinIO і Mailpit, чекає до 120 секунд, поки їхні healthcheck-и стануть healthy, і створює бакет `resumes`. Далі йдуть міграції, а за ними api на порту 4000 і web на порту 3000, обидва з hot reload через `turbo dev`. Ctrl+C зупиняє застосунки, контейнери інфраструктури працюють далі.
 
-Міграцій ще немає, тому перед застосунками `pnpm dev` друкує рядок і йде далі:
+Міграції запускає `pnpm db:migrate`, тобто `prisma migrate deploy` у `apps/api`. На порожній базі перший запуск застосовує всі міграції з `apps/api/prisma/migrations` і друкує серед іншого такі рядки:
 
 ```text
-pnpm db:migrate is not available yet: it arrives with BE-02.
+@jobflow/api:db:migrate: Datasource "db": PostgreSQL database "jobflow", schema "public" at "localhost:5432"
+@jobflow/api:db:migrate: 1 migration found in prisma/migrations
+@jobflow/api:db:migrate: Applying migration `20261019040525_add_users_auth_settings`
+@jobflow/api:db:migrate: All migrations have been successfully applied.
 ```
 
-Так і має бути. Api живий, якщо http://localhost:4000/api/v1/health відповідає `{"status":"ok"}`. Стан контейнерів покаже `docker compose ps`: у postgres, redis, minio і mailpit у колонці `STATUS` стоїть `healthy`.
+Кожен наступний запуск друкує `No pending migrations to apply.` і нічого не змінює. Нових міграцій ця команда не створює і базу не скидає.
+
+Api живий, якщо http://localhost:4000/api/v1/health відповідає `{"status":"ok"}`, і готовий, якщо http://localhost:4000/api/v1/ready відповідає `{"status":"ok","checks":{"redis":"up","postgres":"up"}}`. Стан контейнерів покаже `docker compose ps`: у postgres, redis, minio і mailpit у колонці `STATUS` стоїть `healthy`.
 
 ## Усе в контейнерах
 
@@ -93,25 +98,25 @@ docker compose down
 
 ## Команди
 
-| Команда                                     | Що робить                                                      | Стан                                                            |
-| ------------------------------------------- | -------------------------------------------------------------- | --------------------------------------------------------------- |
-| `pnpm dev`                                  | інфраструктура, міграції, усі застосунки з hot reload          | інфраструктура, api і web працюють, міграції з'являться в BE-02 |
-| `pnpm infra:up`                             | лише контейнери інфраструктури і бакет `resumes`               | працює                                                          |
-| `pnpm db:migrate`                           | застосувати міграції Prisma                                    | з'явиться в BE-02                                               |
-| `pnpm db:seed`                              | мінімальний seed: стадії, таксономія причин відмов             | з'явиться в BE-05                                               |
-| `pnpm db:reset`                             | видалити, змігрувати і засіяти dev-базу                        | з'явиться в BE-05                                               |
-| `pnpm demo:seed`                            | демо-користувач з повним набором даних з дизайну               | з'явиться в FIN-01                                              |
-| `pnpm test`                                 | усі unit-тести                                                 | працює                                                          |
-| `pnpm test:int`                             | інтеграційні тести на справжніх Postgres і Redis               | працює, потрібен запущений Redis: `pnpm infra:up`               |
-| `pnpm test:e2e`                             | Playwright на стеку compose                                    | з'явиться в QA-01                                               |
-| `pnpm test:watch`                           | unit-тести в режимі спостереження                              | працює                                                          |
-| `pnpm ci:local`                             | ті самі перевірки, що й CI, у тому ж порядку                   | працює                                                          |
-| `pnpm gen:keys`                             | ключі JWT у `.secrets/`                                        | працює                                                          |
-| `pnpm tokens:build`                         | згенерувати тему (CSS, Tailwind, Chart.js, RN) з `tokens.json` | працює                                                          |
-| `pnpm gen:vapid`                            | ключі VAPID для web push у `.env`                              | з'явиться в BE-36                                               |
-| `pnpm lint`, `pnpm typecheck`, `pnpm build` | ESLint, перевірка типів, збірка всіх пакетів                   | працює                                                          |
-| `pnpm format`                               | Prettier по всьому репозиторію                                 | працює                                                          |
-| `docker compose logs -f api`                | стежити за логами api (JSON, з `requestId`)                    | працює, логи worker і ai з'являться в BE-11, AI-01              |
+| Команда                                     | Що робить                                                      | Стан                                               |
+| ------------------------------------------- | -------------------------------------------------------------- | -------------------------------------------------- |
+| `pnpm dev`                                  | інфраструктура, міграції, усі застосунки з hot reload          | працює                                             |
+| `pnpm infra:up`                             | лише контейнери інфраструктури і бакет `resumes`               | працює                                             |
+| `pnpm db:migrate`                           | застосувати міграції Prisma (`prisma migrate deploy`)          | працює                                             |
+| `pnpm db:seed`                              | мінімальний seed: стадії, таксономія причин відмов             | з'явиться в BE-05                                  |
+| `pnpm db:reset`                             | видалити, змігрувати і засіяти dev-базу                        | з'явиться в BE-05                                  |
+| `pnpm demo:seed`                            | демо-користувач з повним набором даних з дизайну               | з'явиться в FIN-01                                 |
+| `pnpm test`                                 | усі unit-тести                                                 | працює                                             |
+| `pnpm test:int`                             | інтеграційні тести на справжніх Postgres і Redis               | працює, потрібні Postgres і Redis: `pnpm infra:up` |
+| `pnpm test:e2e`                             | Playwright на стеку compose                                    | з'явиться в QA-01                                  |
+| `pnpm test:watch`                           | unit-тести в режимі спостереження                              | працює                                             |
+| `pnpm ci:local`                             | ті самі перевірки, що й CI, у тому ж порядку                   | працює                                             |
+| `pnpm gen:keys`                             | ключі JWT у `.secrets/`                                        | працює                                             |
+| `pnpm tokens:build`                         | згенерувати тему (CSS, Tailwind, Chart.js, RN) з `tokens.json` | працює                                             |
+| `pnpm gen:vapid`                            | ключі VAPID для web push у `.env`                              | з'явиться в BE-36                                  |
+| `pnpm lint`, `pnpm typecheck`, `pnpm build` | ESLint, перевірка типів, збірка всіх пакетів                   | працює                                             |
+| `pnpm format`                               | Prettier по всьому репозиторію                                 | працює                                             |
+| `docker compose logs -f api`                | стежити за логами api (JSON, з `requestId`)                    | працює, логи worker і ai з'являться в BE-11, AI-01 |
 
 Python-тести запускаються в теці сервісу: `uv run pytest`.
 
@@ -137,7 +142,7 @@ AI-провайдера обирає `services/ai`, а не API. Ключі ве
 
 **Hot reload не працює на Windows.** Тримайте репозиторій у файловій системі WSL2. Контейнер api монтує `apps/api/src` і перезапускається через `nest start --watch`. `docker compose watch` і змінні `WATCHPACK_POLLING=true` та `CHOKIDAR_USEPOLLING=true` стосуються контейнера web і з'являться з FE-01.
 
-**Помилки Prisma client після pull.** З'явиться в BE-02: тоді виконайте `pnpm --filter @jobflow/api exec prisma generate` і перезапустіть api та worker.
+**Помилки Prisma client після pull.** Клієнт Prisma генерується в `apps/api/src/generated/prisma` і в git не потрапляє. `pnpm install` створює його сам, а після зміни схеми без нового install виконайте `pnpm --filter @jobflow/api exec prisma generate` і перезапустіть api та worker. Якщо api пише про відсутню таблицю, запустіть `pnpm db:migrate`.
 
 **Немає бакета `resumes`.** Виконайте `docker compose up minio-init`.
 

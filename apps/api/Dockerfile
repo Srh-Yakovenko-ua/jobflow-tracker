@@ -4,7 +4,8 @@ WORKDIR /app
 
 FROM base AS deps
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
-COPY apps/api/package.json apps/api/
+COPY apps/api/package.json apps/api/prisma.config.ts apps/api/
+COPY apps/api/prisma apps/api/prisma
 COPY packages/shared/package.json packages/shared/
 COPY packages/config/package.json packages/config/
 RUN HUSKY=0 pnpm install --frozen-lockfile --filter @jobflow/api...
@@ -23,7 +24,7 @@ CMD ["node", "node_modules/@nestjs/cli/bin/nest.js", "start", "--watch"]
 
 FROM source AS build
 RUN pnpm turbo run build --filter @jobflow/api...
-RUN pnpm --filter @jobflow/api --prod deploy /prod/api
+RUN pnpm --filter @jobflow/api --prod deploy --ignore-scripts /prod/api
 
 FROM node:26.12.0-alpine3.24 AS prod
 ENV NODE_ENV=production
