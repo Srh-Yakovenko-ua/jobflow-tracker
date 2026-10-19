@@ -1,36 +1,14 @@
 import { randomUUID } from 'node:crypto';
 
-import { Test, type TestingModule } from '@nestjs/testing';
-import { afterAll, afterEach, beforeAll, describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vitest';
 
-import { configModule } from '../config/app-config.js';
-import { PrismaModule } from './prisma.module.js';
-import { PrismaService } from './prisma.service.js';
-
-function uniqueEmail(): string {
-  return `user-${randomUUID()}@example.test`;
-}
+import { uniqueEmail, usePrismaTestContext } from '../test/prisma-test-context.js';
 
 describe('the users, auth and settings tables in Postgres', () => {
-  let moduleRef: TestingModule;
-  let prisma: PrismaService;
-  const createdUserIds: string[] = [];
-
-  beforeAll(async () => {
-    moduleRef = await Test.createTestingModule({ imports: [configModule, PrismaModule] }).compile();
-    await moduleRef.init();
-    prisma = moduleRef.get(PrismaService);
-  });
-
-  afterEach(async () => {
-    await prisma.user.deleteMany({ where: { id: { in: createdUserIds.splice(0) } } });
-  });
-
-  afterAll(async () => {
-    await moduleRef.close();
-  });
+  const context = usePrismaTestContext();
 
   function ownedRowCounts(userId: string): Promise<number[]> {
+    const prisma = context.prisma();
     const where = { userId };
     return Promise.all([
       prisma.userSettings.count({ where }),
@@ -41,11 +19,12 @@ describe('the users, auth and settings tables in Postgres', () => {
   }
 
   it('a user created with nested settings gets every default', async () => {
+    const prisma = context.prisma();
     const user = await prisma.user.create({
       data: { email: uniqueEmail(), settings: { create: {} } },
       include: { settings: true },
     });
-    createdUserIds.push(user.id);
+    context.trackUser(user.id);
 
     expect(user.locale).toBe('uk');
     expect(user.settings).toMatchObject({
@@ -65,6 +44,7 @@ describe('the users, auth and settings tables in Postgres', () => {
   });
 
   it('deleting a user removes their settings, refresh tokens, oauth accounts and capture tokens', async () => {
+    const prisma = context.prisma();
     const user = await prisma.user.create({
       data: {
         email: uniqueEmail(),
@@ -80,7 +60,7 @@ describe('the users, auth and settings tables in Postgres', () => {
         captureTokens: { create: { tokenHash: randomUUID() } },
       },
     });
-    createdUserIds.push(user.id);
+    context.trackUser(user.id);
     const before = await ownedRowCounts(user.id);
 
     await prisma.user.delete({ where: { id: user.id } });
@@ -91,8 +71,9 @@ describe('the users, auth and settings tables in Postgres', () => {
 
   it('an email that differs only in case is refused as a duplicate', async () => {
     const email = `Case-${randomUUID()}@Example.Test`;
+    const prisma = context.prisma();
     const user = await prisma.user.create({ data: { email, settings: { create: {} } } });
-    createdUserIds.push(user.id);
+    context.trackUser(user.id);
 
     await expect(
       prisma.user.create({ data: { email: email.toLowerCase() } }),
