@@ -7,10 +7,17 @@ import { loggerParams } from './common/logger.js';
 import { toValidationError } from './common/validation.js';
 import { configModule } from './config/app-config.js';
 import { HealthModule } from './modules/health/index.js';
+import { PrismaModule } from './prisma/prisma.module.js';
 import { RedisModule } from './redis/redis.module.js';
 
 @Module({
-  imports: [configModule, LoggerModule.forRoot(loggerParams()), RedisModule, HealthModule],
+  imports: [
+    configModule,
+    LoggerModule.forRoot(loggerParams()),
+    PrismaModule,
+    RedisModule,
+    HealthModule,
+  ],
   providers: [
     { provide: APP_FILTER, useClass: AppExceptionFilter },
     {
