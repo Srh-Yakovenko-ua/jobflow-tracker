@@ -3,7 +3,7 @@ import { parseEnv as parseDotenv } from 'node:util';
 
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { loadEnv, parseEnv } from './env.js';
+import { loadEnv, parseEnv, validateEnv } from './env.js';
 
 const exampleEnv = parseDotenv(
   readFileSync(new URL('../../../../.env.example', import.meta.url), 'utf8'),
@@ -34,11 +34,9 @@ afterEach(() => {
 });
 
 describe('loadEnv', () => {
-  it('accepts .env.example with the fake AI provider and an empty AI key', () => {
+  it('accepts .env.example with empty optional keys', () => {
     const env = loadEnv(exampleEnv);
 
-    expect(env.AI_PROVIDER).toBe('fake');
-    expect(env.AI_API_KEY).toBeUndefined();
     expect(env.SENTRY_DSN).toBeUndefined();
     expect(env.AI_DAILY_LIMIT).toBe(50);
     expect(Object.isFrozen(env)).toBe(true);
@@ -67,26 +65,36 @@ describe('loadEnv', () => {
   });
 });
 
+describe('validateEnv', () => {
+  it('throws an error naming DATABASE_URL without its secret value', () => {
+    const source = { ...exampleEnv, DATABASE_URL: 'mysql://user:hunter2@localhost/jobflow' };
+
+    expect(() => validateEnv(source)).toThrow(/Invalid environment[\s\S]*DATABASE_URL/);
+    expect(() => validateEnv(source)).not.toThrow(/hunter2/);
+  });
+
+  it('defaults PORT to 4000 when it is empty', () => {
+    expect(validateEnv({ ...exampleEnv, PORT: '' }).PORT).toBe(4000);
+  });
+
+  it('defaults AI_SERVICE_URL to http://localhost:8001 when it is empty', () => {
+    expect(validateEnv({ ...exampleEnv, AI_SERVICE_URL: '' }).AI_SERVICE_URL).toBe(
+      'http://localhost:8001',
+    );
+  });
+
+  it('reads PORT as a number', () => {
+    expect(validateEnv({ ...exampleEnv, PORT: '4100' }).PORT).toBe(4100);
+  });
+
+  it('refuses a PORT outside 1 to 65535', () => {
+    expect(() => validateEnv({ ...exampleEnv, PORT: '70000' })).toThrow(/PORT/);
+  });
+});
+
 describe('parseEnv', () => {
   it('treats an empty DATABASE_URL as missing', () => {
     expect(failedPaths({ ...exampleEnv, DATABASE_URL: '' })).toEqual(['DATABASE_URL']);
-  });
-
-  it('refuses the anthropic provider without an AI key', () => {
-    expect(
-      failedPaths({
-        ...exampleEnv,
-        AI_PROVIDER: 'anthropic',
-        AI_API_KEY: '',
-        AI_MODEL: 'model-id',
-      }),
-    ).toEqual(['AI_API_KEY']);
-  });
-
-  it('refuses the openai provider without a model id', () => {
-    expect(
-      failedPaths({ ...exampleEnv, AI_PROVIDER: 'openai', AI_API_KEY: 'key', AI_MODEL: '' }),
-    ).toEqual(['AI_MODEL']);
   });
 
   it('refuses a REDIS_URL with a scheme other than redis or rediss', () => {

@@ -1,0 +1,10 @@
+import type { NextFunction, Request, Response } from 'express';
+
+import { notFound } from './app-error.js';
+
+export const API_PREFIX = 'api/v1';
+
+export function rejectOutsidePrefix(req: Request, _res: Response, next: NextFunction): void {
+  const inside = req.path === `/${API_PREFIX}` || req.path.startsWith(`/${API_PREFIX}/`);
+  next(inside ? undefined : notFound());
+}
