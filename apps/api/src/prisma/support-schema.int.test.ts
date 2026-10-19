@@ -15,6 +15,26 @@ const AI_RESULT = {
   status: 'succeeded',
 } as const;
 
+const FOLLOWUP = { type: 'followup', dueAt: new Date('2026-10-26T09:00:00Z') } as const;
+
+type OwnerPair = Pick<OwnedApplication, 'userId' | 'applicationId'>;
+
+type OwnerCheckedRow = {
+  row: string;
+  create: (prisma: PrismaService, owner: OwnerPair) => Promise<unknown>;
+};
+
+const OWNER_CHECKED_ROWS: OwnerCheckedRow[] = [
+  {
+    row: 'reminder',
+    create: (prisma, owner) => prisma.reminder.create({ data: { ...owner, ...FOLLOWUP } }),
+  },
+  {
+    row: 'AI job',
+    create: (prisma, owner) => prisma.aiJob.create({ data: { ...owner, kind: AI_RESULT.kind } }),
+  },
+];
+
 async function createResumeVersion(prisma: PrismaService, userId: string): Promise<string> {
   const resume = await prisma.resume.create({ data: { userId, title: 'Backend CV' } });
   const version = await prisma.resumeVersion.create({
@@ -53,9 +73,7 @@ async function fillUserOwnedTables(prisma: PrismaService, owned: OwnedApplicatio
   await prisma.aiJob.create({
     data: { userId, kind: AI_RESULT.kind, aiResultId: aiResult.id, applicationId, resumeVersionId },
   });
-  await prisma.reminder.create({
-    data: { userId, applicationId, type: 'followup', dueAt: new Date('2026-10-26T09:00:00Z') },
-  });
+  await prisma.reminder.create({ data: { userId, applicationId, ...FOLLOWUP } });
   await prisma.notification.create({ data: { userId, type: 'silence' } });
   await prisma.pushSubscription.create({
     data: { userId, endpoint: 'https://push.example.test/1', p256dh: 'key', auth: 'secret' },
@@ -137,5 +155,43 @@ describe('the supporting tables in Postgres', () => {
       where: { userId: owned.userId },
     });
     expect([application.resumeVersionId, settings.activeResumeVersionId]).toEqual([null, null]);
+  });
+});
+
+describe('owner consistent references and the one active reminder', () => {
+  const database = useTestDatabase();
+
+  it.each(OWNER_CHECKED_ROWS)(
+    "refuses a $row that points at another user's application",
+    async ({ create }) => {
+      const { prisma } = database;
+      const mine = await createOwnedApplication(prisma);
+      const theirs = await createOwnedApplication(prisma);
+
+      await expect(
+        create(prisma, { userId: mine.userId, applicationId: theirs.applicationId }),
+      ).rejects.toMatchObject({ code: 'P2003' });
+    },
+  );
+
+  it('refuses a second pending followup for the same application', async () => {
+    const { prisma } = database;
+    const { userId, applicationId } = await createOwnedApplication(prisma);
+    await prisma.reminder.create({ data: { userId, applicationId, ...FOLLOWUP } });
+
+    await expect(
+      prisma.reminder.create({ data: { userId, applicationId, ...FOLLOWUP } }),
+    ).rejects.toMatchObject({ code: 'P2002' });
+  });
+
+  it('accepts a new pending followup once the first one is done', async () => {
+    const { prisma } = database;
+    const { userId, applicationId } = await createOwnedApplication(prisma);
+    const first = await prisma.reminder.create({ data: { userId, applicationId, ...FOLLOWUP } });
+    await prisma.reminder.update({ where: { id: first.id }, data: { status: 'done' } });
+
+    const next = await prisma.reminder.create({ data: { userId, applicationId, ...FOLLOWUP } });
+
+    expect(next.status).toBe('pending');
   });
 });
