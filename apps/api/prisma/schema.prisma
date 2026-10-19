@@ -4,6 +4,7 @@ generator client {
   moduleFormat           = "esm"
   generatedFileExtension = "ts"
   importFileExtension    = "js"
+  previewFeatures        = ["partialIndexes"]
 }
 
 datasource db {
@@ -25,6 +26,87 @@ enum OAuthProvider {
   @@map("oauth_provider")
 }
 
+enum Stage {
+  applied
+  screening
+  tech_interview
+  final
+  offer
+  rejected
+  ghosted
+  withdrawn
+
+  @@map("stage")
+}
+
+enum Source {
+  djinni
+  dou
+  robota
+  workua
+  linkedin
+  referral
+  company_site
+  other
+
+  @@map("source")
+}
+
+enum WorkMode {
+  remote
+  hybrid
+  office
+
+  @@map("work_mode")
+}
+
+enum RejectionSide {
+  company
+  candidate
+  system
+
+  @@map("rejection_side")
+}
+
+enum SearchStatus {
+  active
+  archived
+
+  @@map("search_status")
+}
+
+enum ScheduledEventKind {
+  screening_call
+  tech_interview
+  final_interview
+  offer_call
+  other
+
+  @@map("scheduled_event_kind")
+}
+
+enum ScheduledEventStatus {
+  planned
+  done
+  cancelled
+
+  @@map("scheduled_event_status")
+}
+
+enum TimelineEventKind {
+  captured
+  ai_parsed
+  silence_started
+  followup_generated
+  followup_sent
+  interview_scheduled
+  interview_done
+  note_added
+  resume_attached
+
+  @@map("timeline_event_kind")
+}
+
 model User {
   id            String         @id @default(dbgenerated("uuidv7()")) @db.Uuid
   email         String         @unique @db.Citext
@@ -37,6 +119,8 @@ model User {
   refreshTokens RefreshToken[]
   oauthAccounts OAuthAccount[]
   captureTokens CaptureToken[]
+  searches      Search[]
+  applications  Application[]
 
   @@map("users")
 }
@@ -106,4 +190,154 @@ model CaptureToken {
 
   @@index([userId])
   @@map("capture_tokens")
+}
+
+model Search {
+  id           String        @id @default(dbgenerated("uuidv7()")) @db.Uuid
+  userId       String        @map("user_id") @db.Uuid
+  title        String
+  status       SearchStatus  @default(active)
+  startedAt    DateTime      @default(now()) @map("started_at") @db.Timestamptz
+  finishedAt   DateTime?     @map("finished_at") @db.Timestamptz
+  outcome      String?
+  createdAt    DateTime      @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt    DateTime      @default(now()) @updatedAt @map("updated_at") @db.Timestamptz
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  applications Application[]
+
+  @@unique([userId], where: raw("status = 'active'"), map: "searches_user_id_active_key")
+  @@index([userId])
+  @@map("searches")
+}
+
+model Application {
+  id              String                   @id @default(dbgenerated("uuidv7()")) @db.Uuid
+  userId          String                   @map("user_id") @db.Uuid
+  searchId        String                   @map("search_id") @db.Uuid
+  company         String
+  position        String
+  url             String?
+  source          Source
+  salaryMin       Int?                     @map("salary_min")
+  salaryMax       Int?                     @map("salary_max")
+  currency        String?
+  stack           String[]                 @default([])
+  location        String?
+  workMode        WorkMode?                @map("work_mode")
+  currentStage    Stage                    @default(applied) @map("current_stage")
+  isDraft         Boolean                  @default(false) @map("is_draft")
+  matchScore      Int?                     @map("match_score")
+  aiParsed        Json?                    @map("ai_parsed")
+  rawText         String?                  @map("raw_text")
+  appliedAt       DateTime?                @map("applied_at") @db.Timestamptz
+  lastEventAt     DateTime                 @default(now()) @map("last_event_at") @db.Timestamptz
+  deletedAt       DateTime?                @map("deleted_at") @db.Timestamptz
+  searchVector    Unsupported("tsvector")? @map("search_vector")
+  createdAt       DateTime                 @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt       DateTime                 @default(now()) @updatedAt @map("updated_at") @db.Timestamptz
+  user            User                     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  search          Search                   @relation(fields: [searchId], references: [id], onDelete: Cascade)
+  stageEvents     StageEvent[]
+  timelineEvents  TimelineEvent[]
+  contacts        Contact[]
+  notes           Note[]
+  scheduledEvents ScheduledEvent[]
+
+  @@index([userId, currentStage])
+  @@index([userId, lastEventAt])
+  @@index([searchId])
+  @@index([searchVector], type: Gin)
+  @@map("applications")
+}
+
+model StageEvent {
+  id                 String           @id @default(dbgenerated("uuidv7()")) @db.Uuid
+  applicationId      String           @map("application_id") @db.Uuid
+  fromStage          Stage?           @map("from_stage")
+  toStage            Stage            @map("to_stage")
+  reasonCode         String?          @map("reason_code")
+  comment            String?
+  occurredAt         DateTime         @default(now()) @map("occurred_at") @db.Timestamptz
+  compensatesEventId String?          @unique @map("compensates_event_id") @db.Uuid
+  createdAt          DateTime         @default(now()) @map("created_at") @db.Timestamptz
+  application        Application      @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  reason             RejectionReason? @relation(fields: [reasonCode], references: [code], onDelete: Restrict, onUpdate: Restrict)
+  compensates        StageEvent?      @relation("StageEventCompensation", fields: [compensatesEventId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  compensatedBy      StageEvent?      @relation("StageEventCompensation")
+
+  @@index([applicationId, occurredAt])
+  @@index([reasonCode])
+  @@map("stage_events")
+}
+
+model TimelineEvent {
+  id            String            @id @default(dbgenerated("uuidv7()")) @db.Uuid
+  applicationId String            @map("application_id") @db.Uuid
+  kind          TimelineEventKind
+  payload       Json              @default("{}")
+  occurredAt    DateTime          @default(now()) @map("occurred_at") @db.Timestamptz
+  createdAt     DateTime          @default(now()) @map("created_at") @db.Timestamptz
+  application   Application       @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+
+  @@index([applicationId, occurredAt])
+  @@map("timeline_events")
+}
+
+model RejectionReason {
+  code        String        @id
+  side        RejectionSide
+  labelUk     String        @map("label_uk")
+  labelEn     String        @map("label_en")
+  sortOrder   Int           @map("sort_order")
+  createdAt   DateTime      @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt   DateTime      @default(now()) @updatedAt @map("updated_at") @db.Timestamptz
+  stageEvents StageEvent[]
+
+  @@map("rejection_reasons")
+}
+
+model Contact {
+  id            String      @id @default(dbgenerated("uuidv7()")) @db.Uuid
+  applicationId String      @map("application_id") @db.Uuid
+  name          String
+  role          String?
+  email         String?
+  telegram      String?
+  phone         String?
+  note          String?
+  createdAt     DateTime    @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt     DateTime    @default(now()) @updatedAt @map("updated_at") @db.Timestamptz
+  application   Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+
+  @@index([applicationId])
+  @@map("contacts")
+}
+
+model Note {
+  id            String      @id @default(dbgenerated("uuidv7()")) @db.Uuid
+  applicationId String      @map("application_id") @db.Uuid
+  body          String
+  createdAt     DateTime    @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt     DateTime    @default(now()) @updatedAt @map("updated_at") @db.Timestamptz
+  application   Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+
+  @@index([applicationId])
+  @@map("notes")
+}
+
+model ScheduledEvent {
+  id             String               @id @default(dbgenerated("uuidv7()")) @db.Uuid
+  applicationId  String               @map("application_id") @db.Uuid
+  kind           ScheduledEventKind
+  startsAt       DateTime             @map("starts_at") @db.Timestamptz
+  durationMin    Int                  @default(60) @map("duration_min")
+  locationOrLink String?              @map("location_or_link")
+  status         ScheduledEventStatus @default(planned)
+  outcomeNote    String?              @map("outcome_note")
+  createdAt      DateTime             @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt      DateTime             @default(now()) @updatedAt @map("updated_at") @db.Timestamptz
+  application    Application          @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+
+  @@index([applicationId, startsAt])
+  @@map("scheduled_events")
 }
