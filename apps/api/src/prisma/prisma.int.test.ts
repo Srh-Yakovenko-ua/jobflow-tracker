@@ -3,7 +3,7 @@ import { randomUUID } from 'node:crypto';
 import { describe, expect, it } from 'vitest';
 
 import { useTestDatabase } from '../test/database.js';
-import { createUser } from '../test/factories.js';
+import { createUser, NEW_USER_SETTINGS_ROW } from '../test/factories.js';
 
 describe('the users, auth and settings tables in Postgres', () => {
   const database = useTestDatabase();
@@ -28,20 +28,7 @@ describe('the users, auth and settings tables in Postgres', () => {
     });
 
     expect(user.locale).toBe('uk');
-    expect(user.settings).toMatchObject({
-      silenceDays: 7,
-      autoGhostDays: 30,
-      askRejectionReason: true,
-      monthlySummaryEnabled: true,
-      theme: 'system',
-      timezone: 'Europe/Kyiv',
-      quietHoursStart: new Date('1970-01-01T22:00:00.000Z'),
-      quietHoursEnd: new Date('1970-01-01T08:00:00.000Z'),
-      notifyInApp: true,
-      notifyPush: false,
-      notifyEmail: true,
-      analyticsOptOut: false,
-    });
+    expect(user.settings).toMatchObject(NEW_USER_SETTINGS_ROW);
   });
 
   it('deleting a user removes their settings, refresh tokens, oauth accounts and capture tokens', async () => {

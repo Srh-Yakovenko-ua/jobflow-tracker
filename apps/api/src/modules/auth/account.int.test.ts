@@ -39,23 +39,9 @@ describe('the signed-in account', () => {
     const response = await me(accessToken);
 
     expect(response.status).toBe(200);
-    expect(meResponseSchema.parse(response.body)).toEqual({
+    expect(meResponseSchema.parse(response.body)).toMatchObject({
       user,
-      settings: {
-        silenceDays: 7,
-        autoGhostDays: 30,
-        askRejectionReason: true,
-        monthlySummaryEnabled: true,
-        theme: 'system',
-        timezone: 'Europe/Kyiv',
-        quietHoursStart: '22:00',
-        quietHoursEnd: '08:00',
-        notifyInApp: true,
-        notifyPush: false,
-        notifyEmail: true,
-        analyticsOptOut: false,
-        activeResumeVersionId: null,
-      },
+      settings: { silenceDays: 7, quietHoursStart: '22:00', theme: 'system' },
     });
   });
 

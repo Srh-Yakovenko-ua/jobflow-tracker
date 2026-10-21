@@ -1,11 +1,27 @@
 import { fakerUK as faker } from '@faker-js/faker';
 
-import type { Prisma, User } from '../generated/prisma/client.js';
+import type { Prisma, User, UserSettings } from '../generated/prisma/client.js';
 import type { PrismaService } from '../prisma/prisma.service.js';
 
 export type OwnedApplication = { userId: string; searchId: string; applicationId: string };
 
 export type CompensatedEvent = { applicationId: string; compensatesEventId: string };
+
+export const NEW_USER_SETTINGS_ROW = {
+  silenceDays: 7,
+  autoGhostDays: 30,
+  askRejectionReason: true,
+  monthlySummaryEnabled: true,
+  theme: 'system',
+  timezone: 'Europe/Kyiv',
+  quietHoursStart: new Date('1970-01-01T22:00:00.000Z'),
+  quietHoursEnd: new Date('1970-01-01T08:00:00.000Z'),
+  notifyInApp: true,
+  notifyPush: false,
+  notifyEmail: true,
+  analyticsOptOut: false,
+  activeResumeVersionId: null,
+} satisfies Omit<UserSettings, 'userId' | 'createdAt' | 'updatedAt'>;
 
 export function createUser(
   prisma: PrismaService,

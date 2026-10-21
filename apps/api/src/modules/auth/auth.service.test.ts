@@ -3,18 +3,24 @@ import { Test } from '@nestjs/testing';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { conflict } from '../../common/app-error.js';
+import { PrismaService } from '../../prisma/prisma.service.js';
+import { NEW_USER_SETTINGS_ROW } from '../../test/factories.js';
 import {
   AuthRepository,
   type NewPassword,
   type NewUser,
-  type SettingsRow,
   type UserCredentials,
   type UserProfile,
 } from './auth.repository.js';
 import { AuthService } from './auth.service.js';
 import { PasswordHasher } from './password-hasher.js';
+import { type RevokeAllInput, SessionRepository } from './session.repository.js';
+
+type InTransaction<T> = T & { client: unknown };
 
 const DUMMY_HASH = 'dummy-hash';
+
+const TRANSACTION = { name: 'change-password transaction' };
 
 const NOW = new Date('2026-10-21T10:00:00.000Z');
 
@@ -27,21 +33,20 @@ const ANNA: AuthUser = {
   locale: 'uk',
 };
 
-const DEFAULT_SETTINGS: SettingsRow = {
-  silenceDays: 7,
-  autoGhostDays: 30,
-  askRejectionReason: true,
-  monthlySummaryEnabled: true,
-  theme: 'system',
-  timezone: 'Europe/Kyiv',
-  quietHoursStart: new Date('1970-01-01T22:00:00.000Z'),
-  quietHoursEnd: new Date('1970-01-01T08:00:00.000Z'),
-  notifyInApp: true,
-  notifyPush: false,
-  notifyEmail: true,
-  analyticsOptOut: false,
-  activeResumeVersionId: null,
-};
+class FakePrisma {
+  $transaction<T>(work: (client: typeof TRANSACTION) => Promise<T>): Promise<T> {
+    return work(TRANSACTION);
+  }
+}
+
+class FakeSessionRepository {
+  readonly revokedAll: InTransaction<RevokeAllInput>[] = [];
+
+  revokeAll(input: RevokeAllInput, client: unknown): Promise<void> {
+    this.revokedAll.push({ ...input, client });
+    return Promise.resolve();
+  }
+}
 
 class FakePasswordHasher {
   readonly verified: { digest: string; password: string }[] = [];
@@ -60,7 +65,7 @@ class FakePasswordHasher {
 
 class FakeAuthRepository {
   readonly created: NewUser[] = [];
-  readonly passwords: NewPassword[] = [];
+  readonly passwords: InTransaction<NewPassword>[] = [];
 
   constructor(
     private readonly users: UserCredentials[] = [],
@@ -87,24 +92,29 @@ class FakeAuthRepository {
     return Promise.resolve(this.profiles.find((profile) => profile.id === userId) ?? null);
   }
 
-  replacePassword(password: NewPassword): Promise<void> {
-    this.passwords.push(password);
+  replacePassword(password: NewPassword, client: unknown): Promise<void> {
+    this.passwords.push({ ...password, client });
     return Promise.resolve();
   }
 }
 
 async function authServiceWith(users: UserCredentials[] = [], profiles: UserProfile[] = []) {
   const repository = new FakeAuthRepository(users, profiles);
+  const sessions = new FakeSessionRepository();
   const hasher = new FakePasswordHasher();
   const moduleRef = await Test.createTestingModule({
-    providers: [AuthService, AuthRepository, PasswordHasher],
+    providers: [AuthService, AuthRepository, SessionRepository, PasswordHasher, PrismaService],
   })
     .overrideProvider(AuthRepository)
     .useValue(repository)
+    .overrideProvider(SessionRepository)
+    .useValue(sessions)
     .overrideProvider(PasswordHasher)
     .useValue(hasher)
+    .overrideProvider(PrismaService)
+    .useValue(new FakePrisma())
     .compile();
-  return { repository, hasher, service: moduleRef.get(AuthService) };
+  return { repository, sessions, hasher, service: moduleRef.get(AuthService) };
 }
 
 const INVALID_CREDENTIALS = {
@@ -184,18 +194,16 @@ describe('AuthService.changePassword', () => {
     vi.useRealTimers();
   });
 
-  it('stores the new hash and keeps only the family of the current session', async () => {
-    const { repository, service } = await authServiceWith([annaWithPassword]);
+  it('stores the new hash and revokes every family but the current one in one transaction', async () => {
+    const { repository, sessions, service } = await authServiceWith([annaWithPassword]);
 
     await service.changePassword({ userId: ANNA.id, input, keepFamilyId: FAMILY_ID });
 
     expect(repository.passwords).toEqual([
-      {
-        userId: ANNA.id,
-        passwordHash: 'hashed:a brand new secret',
-        keepFamilyId: FAMILY_ID,
-        now: NOW,
-      },
+      { userId: ANNA.id, passwordHash: 'hashed:a brand new secret', client: TRANSACTION },
+    ]);
+    expect(sessions.revokedAll).toEqual([
+      { userId: ANNA.id, now: NOW, keepFamilyId: FAMILY_ID, client: TRANSACTION },
     ]);
   });
 
@@ -213,7 +221,7 @@ describe('AuthService.changePassword', () => {
   ])(
     'refuses $case with 422 on currentPassword and keeps the old hash',
     async ({ users, currentPassword }) => {
-      const { repository, service } = await authServiceWith(users);
+      const { repository, sessions, service } = await authServiceWith(users);
 
       const failure = service.changePassword({
         userId: ANNA.id,
@@ -228,20 +236,20 @@ describe('AuthService.changePassword', () => {
           errors: [{ path: 'currentPassword', message: 'Current password is wrong' }],
         },
       });
-      expect(repository.passwords).toEqual([]);
+      expect([repository.passwords, sessions.revokedAll]).toEqual([[], []]);
     },
   );
 });
 
 describe('AuthService.me', () => {
   it('answers the user and their settings with quiet hours as HH:MM', async () => {
-    const { service } = await authServiceWith([], [{ ...ANNA, settings: DEFAULT_SETTINGS }]);
+    const { service } = await authServiceWith([], [{ ...ANNA, settings: NEW_USER_SETTINGS_ROW }]);
 
     const me = await service.me(ANNA.id);
 
     expect(me).toEqual({
       user: ANNA,
-      settings: { ...DEFAULT_SETTINGS, quietHoursStart: '22:00', quietHoursEnd: '08:00' },
+      settings: { ...NEW_USER_SETTINGS_ROW, quietHoursStart: '22:00', quietHoursEnd: '08:00' },
     });
   });
 

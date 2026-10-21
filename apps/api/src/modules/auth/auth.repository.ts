@@ -10,12 +10,7 @@ export type NewUser = Omit<RegisterInput, 'password'> & { passwordHash: string }
 
 export type UserCredentials = AuthUser & { passwordHash: string | null };
 
-export type NewPassword = {
-  userId: string;
-  passwordHash: string;
-  keepFamilyId: string | undefined;
-  now: Date;
-};
+export type NewPassword = { userId: string; passwordHash: string };
 
 const AUTH_USER_SELECT = { id: true, email: true, displayName: true, locale: true } as const;
 
@@ -94,18 +89,14 @@ export class AuthRepository {
     });
   }
 
-  async replacePassword({ userId, passwordHash, keepFamilyId, now }: NewPassword): Promise<void> {
-    const otherFamilies = keepFamilyId === undefined ? {} : { familyId: { not: keepFamilyId } };
-    await this.prisma.$transaction([
-      this.prisma.user.update({
-        where: { id: userId },
-        data: { passwordHash },
-        select: { id: true },
-      }),
-      this.prisma.refreshToken.updateMany({
-        where: { userId, revokedAt: null, ...otherFamilies },
-        data: { revokedAt: now },
-      }),
-    ]);
+  async replacePassword(
+    { userId, passwordHash }: NewPassword,
+    client: Prisma.TransactionClient = this.prisma,
+  ): Promise<void> {
+    await client.user.update({
+      where: { id: userId },
+      data: { passwordHash },
+      select: { id: true },
+    });
   }
 }

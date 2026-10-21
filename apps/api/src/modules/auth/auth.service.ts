@@ -9,8 +9,10 @@ import type {
 import { Injectable } from '@nestjs/common';
 
 import { unauthorized, validation } from '../../common/app-error.js';
+import { PrismaService } from '../../prisma/prisma.service.js';
 import { AuthRepository, type SettingsRow, type UserCredentials } from './auth.repository.js';
 import { PasswordHasher } from './password-hasher.js';
+import { SessionRepository } from './session.repository.js';
 
 export type ChangePassword = {
   userId: string;
@@ -40,7 +42,9 @@ function toUserSettings({
 export class AuthService {
   constructor(
     private readonly repository: AuthRepository,
+    private readonly sessions: SessionRepository,
     private readonly hasher: PasswordHasher,
+    private readonly prisma: PrismaService,
   ) {}
 
   async register({ password, ...profile }: RegisterInput): Promise<AuthUser> {
@@ -63,7 +67,11 @@ export class AuthService {
       throw validation([{ path: 'currentPassword', message: 'Current password is wrong' }]);
     }
     const passwordHash = await this.hasher.hash(input.newPassword);
-    await this.repository.replacePassword({ userId, passwordHash, keepFamilyId, now: new Date() });
+    const now = new Date();
+    await this.prisma.$transaction(async (tx) => {
+      await this.repository.replacePassword({ userId, passwordHash }, tx);
+      await this.sessions.revokeAll({ userId, now, keepFamilyId }, tx);
+    });
   }
 
   async me(userId: string): Promise<MeResponse> {
