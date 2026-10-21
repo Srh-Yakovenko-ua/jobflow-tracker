@@ -10,45 +10,12 @@ import simpleImportSort from 'eslint-plugin-simple-import-sort';
 import globals from 'globals';
 import tseslint from 'typescript-eslint';
 
-const BOOLEAN_PARAM_MESSAGE =
-  'Boolean positional parameter: use a named field in an options object';
-
-const RESTRICTED_SYNTAX = [
-  {
-    selector: 'TSEnumDeclaration',
-    message: 'Use an as const object with a union type instead of an enum.',
-  },
-  {
-    selector:
-      ":function > Identifier.params[typeAnnotation.typeAnnotation.type='TSBooleanKeyword']",
-    message: BOOLEAN_PARAM_MESSAGE,
-  },
-  {
-    selector: ':function > Identifier.params > TSTypeAnnotation > TSUnionType > TSBooleanKeyword',
-    message: BOOLEAN_PARAM_MESSAGE,
-  },
-  {
-    selector: ':function > AssignmentPattern.params[right.raw=/^(true|false)$/]',
-    message: BOOLEAN_PARAM_MESSAGE,
-  },
-];
-
-const RAW_COLOUR_PATTERN =
-  '/#(?:[0-9a-f]{8}|[0-9a-f]{6}|[0-9a-f]{3,4})(?![0-9a-z])|\\b(?:oklch|oklab|rgba?|hsla?)\\(/i';
-
-const RAW_COLOUR_MESSAGE =
-  'Raw colour in a component: use a design token (token class, CSS variable or CHART_THEME)';
-
-const RAW_COLOUR = [
-  { selector: `Literal[value=${RAW_COLOUR_PATTERN}]`, message: RAW_COLOUR_MESSAGE },
-  { selector: `TemplateElement[value.raw=${RAW_COLOUR_PATTERN}]`, message: RAW_COLOUR_MESSAGE },
-];
-
-const NEST_MAX_PARAMS = {
-  selector:
-    ":function[params.length>2]:not(MethodDefinition[kind='constructor'] > FunctionExpression, MethodDefinition > FunctionExpression[params.0.decorators.length>0])",
-  message: 'More than two positional parameters: pass one options object',
-};
+import {
+  NEST_MAX_PARAMS,
+  RAW_COLOUR,
+  RESTRICTED_SYNTAX,
+  USER_ID_FIRST,
+} from './restricted-syntax.js';
 
 const LINE_COUNT = { skipBlankLines: true, skipComments: true };
 
@@ -152,6 +119,13 @@ export function api(rootDir) {
         ],
       },
     }),
+    {
+      files: ['src/modules/*/*.repository.ts'],
+      ignores: ['src/modules/auth/**'],
+      rules: {
+        'no-restricted-syntax': ['error', ...RESTRICTED_SYNTAX, NEST_MAX_PARAMS, USER_ID_FIRST],
+      },
+    },
   );
 }
 

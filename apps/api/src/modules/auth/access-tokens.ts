@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto';
 
-import { USER_TOKEN_SCOPES } from '@jobflow/shared';
+import { type TokenScope, USER_TOKEN_SCOPES } from '@jobflow/shared';
 import { Injectable } from '@nestjs/common';
 import { errors, jwtVerify, type JWTVerifyOptions, SignJWT } from 'jose';
 import { z } from 'zod';
@@ -12,7 +12,12 @@ export const ACCESS_TOKEN_TTL_SECONDS = 15 * 60;
 
 export type AccessUser = { id: string; scope: string[] };
 
-export type SignAccessTokenInput = { keys: JwtKeys; userId: string; issuedAt?: Date | undefined };
+export type SignAccessTokenInput = {
+  keys: JwtKeys;
+  userId: string;
+  issuedAt?: Date | undefined;
+  scope?: readonly TokenScope[] | undefined;
+};
 
 const VERIFY_OPTIONS: JWTVerifyOptions = {
   algorithms: ['RS256'],
@@ -29,9 +34,10 @@ export function signAccessToken({
   keys,
   userId,
   issuedAt = new Date(),
+  scope = USER_TOKEN_SCOPES,
 }: SignAccessTokenInput): Promise<string> {
   const issuedAtSeconds = Math.floor(issuedAt.getTime() / 1000);
-  return new SignJWT({ scope: USER_TOKEN_SCOPES.join(' ') })
+  return new SignJWT({ scope: scope.join(' ') })
     .setProtectedHeader({ alg: 'RS256', kid: keys.jwk.kid })
     .setSubject(userId)
     .setJti(randomUUID())

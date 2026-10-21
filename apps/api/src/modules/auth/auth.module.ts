@@ -1,13 +1,14 @@
 import { type FactoryProvider, Module } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { APP_GUARD } from '@nestjs/core';
 
 import type { AppConfig } from '../../config/app-config.js';
-import { AccessTokenGuard } from './access-token.guard.js';
 import { AccessTokens } from './access-tokens.js';
 import { AuthController } from './auth.controller.js';
 import { AuthRepository } from './auth.repository.js';
 import { AuthService } from './auth.service.js';
 import { JwksController } from './jwks.controller.js';
+import { JwtAuthGuard } from './jwt-auth.guard.js';
 import { JwtKeys, loadJwtKeys } from './jwt-keys.js';
 import { PasswordHasher } from './password-hasher.js';
 import { SessionRepository } from './session.repository.js';
@@ -32,7 +33,7 @@ const jwtKeysProvider: FactoryProvider<Promise<JwtKeys>> = {
     SessionService,
     SessionRepository,
     AccessTokens,
-    AccessTokenGuard,
+    { provide: APP_GUARD, useClass: JwtAuthGuard },
     jwtKeysProvider,
   ],
   exports: [AuthService],

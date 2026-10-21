@@ -1,11 +1,13 @@
+import { randomUUID } from 'node:crypto';
+
 import type { INestApplicationContext } from '@nestjs/common';
 import type { NestExpressApplication } from '@nestjs/platform-express';
 import { Test } from '@nestjs/testing';
 import { Logger } from 'nestjs-pino';
-import request from 'supertest';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 import { appTestingModule, startTestApp } from '../../test/app.js';
+import { authAs } from '../../test/auth.js';
 import { overrideBullConfig, testQueuePrefix } from '../../test/bull-config.js';
 import { memoryLog, withLogSink } from '../../test/memory-log.js';
 import { WorkerModule } from '../../worker.module.js';
@@ -41,7 +43,9 @@ describe('a ping job added from the API', () => {
   });
 
   it('is processed by the worker and logged with the same requestId', async () => {
-    const response = await request(app.getHttpServer())
+    const response = await (
+      await authAs(app, { id: randomUUID() })
+    )
       .post('/api/v1/dev/jobs/ping')
       .set('x-request-id', 'it-ping-1')
       .send({});

@@ -12,13 +12,13 @@ import {
   registerInputSchema,
   type SessionTokens,
 } from '@jobflow/shared';
-import { Body, Controller, Get, HttpCode, Post, Req, Res, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, HttpCode, Post, Req, Res } from '@nestjs/common';
 import type { Request, Response } from 'express';
 
-import { AccessTokenGuard } from './access-token.guard.js';
 import type { AccessUser } from './access-tokens.js';
 import { AuthService } from './auth.service.js';
 import { CurrentUser } from './current-user.decorator.js';
+import { Public } from './public.decorator.js';
 import {
   clearRefreshCookie,
   type HttpExchange,
@@ -35,6 +35,7 @@ export class AuthController {
   ) {}
 
   @Post('register')
+  @Public()
   async register(
     @Body({ schema: registerInputSchema }) input: RegisterInput,
     @Req() req: Request,
@@ -45,6 +46,7 @@ export class AuthController {
 
   @Post('login')
   @HttpCode(200)
+  @Public()
   async login(
     @Body({ schema: loginInputSchema }) input: LoginInput,
     @Req() req: Request,
@@ -55,6 +57,7 @@ export class AuthController {
 
   @Post('refresh')
   @HttpCode(200)
+  @Public()
   async refresh(
     @Body({ schema: refreshTokenBodySchema }) body: RefreshTokenBody,
     @Req() req: Request,
@@ -66,6 +69,7 @@ export class AuthController {
 
   @Post('logout')
   @HttpCode(204)
+  @Public()
   async logout(
     @Body({ schema: refreshTokenBodySchema }) body: RefreshTokenBody,
     @Req() req: Request,
@@ -77,7 +81,6 @@ export class AuthController {
 
   @Post('logout-all')
   @HttpCode(204)
-  @UseGuards(AccessTokenGuard)
   async logoutAll(
     @CurrentUser() user: AccessUser,
     @Res({ passthrough: true }) res: Response,
@@ -88,7 +91,6 @@ export class AuthController {
 
   @Post('change-password')
   @HttpCode(204)
-  @UseGuards(AccessTokenGuard)
   async changePassword(
     @CurrentUser() user: AccessUser,
     @Body({ schema: changePasswordInputSchema }) input: ChangePasswordInput,
@@ -100,7 +102,6 @@ export class AuthController {
   }
 
   @Get('me')
-  @UseGuards(AccessTokenGuard)
   me(@CurrentUser() user: AccessUser): Promise<MeResponse> {
     return this.authService.me(user.id);
   }

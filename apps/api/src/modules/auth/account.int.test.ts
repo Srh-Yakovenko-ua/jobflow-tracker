@@ -7,6 +7,7 @@ import { useTestApp } from '../../test/app.js';
 import {
   accessTokenFor,
   BOHDAN,
+  cacheControlOf,
   jwksResponseSchema,
   OLENA,
   refreshCookie,
@@ -43,31 +44,43 @@ describe('the signed-in account', () => {
       user,
       settings: { silenceDays: 7, quietHoursStart: '22:00', theme: 'system' },
     });
+    expect(cacheControlOf(response)).toEqual(['no-store']);
   });
 
   it.each([
-    { case: 'without an access token', header: undefined, detail: 'Missing access token' },
+    {
+      case: 'without an access token',
+      header: undefined,
+      detail: 'Missing access token',
+      challenge: 'Bearer',
+    },
     {
       case: 'with a garbage access token',
       header: 'Bearer garbage',
       detail: 'Invalid access token',
+      challenge: 'Bearer error="invalid_token"',
     },
     {
       case: 'with another scheme',
       header: 'Basic b2xlbmE6c2VjcmV0',
       detail: 'Missing access token',
+      challenge: 'Bearer',
     },
-  ])('refuses GET /auth/me $case with 401 unauthorized', async ({ header, detail }) => {
-    const call = http().get('/api/v1/auth/me');
+  ])(
+    'refuses GET /auth/me $case with 401 unauthorized and the $challenge challenge',
+    async ({ header, detail, challenge }) => {
+      const call = http().get('/api/v1/auth/me');
 
-    const response = await (header === undefined ? call : call.set('authorization', header));
+      const response = await (header === undefined ? call : call.set('authorization', header));
 
-    expect(response.status).toBe(401);
-    expect(errorResponseSchema.parse(response.body)).toMatchObject({
-      type: 'unauthorized',
-      detail,
-    });
-  });
+      expect(response.status).toBe(401);
+      expect(errorResponseSchema.parse(response.body)).toMatchObject({
+        type: 'unauthorized',
+        detail,
+      });
+      expect(response.get('www-authenticate')).toBe(challenge);
+    },
+  );
 
   it('refuses an expired access token with 401 token_expired and the request id', async () => {
     const { user } = await signUp(testApp.app, OLENA);
@@ -78,6 +91,7 @@ describe('the signed-in account', () => {
     const body = errorResponseSchema.parse(response.body);
     expect(body).toMatchObject({ status: 401, type: 'token_expired', title: 'Token expired' });
     expect(body.requestId).toBe(response.headers['x-request-id']);
+    expect(response.get('www-authenticate')).toBe('Bearer error="invalid_token"');
   });
 
   it('refuses a valid token for a user that no longer exists with 401', async () => {

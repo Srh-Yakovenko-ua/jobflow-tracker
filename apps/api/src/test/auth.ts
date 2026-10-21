@@ -4,6 +4,7 @@ import {
   type LoginInput,
   type RefreshToken,
   type RegisterInput,
+  type TokenScope,
 } from '@jobflow/shared';
 import type { NestExpressApplication } from '@nestjs/platform-express';
 import { parseSetCookie, type SetCookie } from 'cookie';
@@ -42,7 +43,7 @@ export const jwksResponseSchema = z.object({
   ]),
 });
 
-export type AccessTokenOptions = { issuedAt?: Date };
+export type AccessTokenOptions = { issuedAt?: Date; scope?: readonly TokenScope[] };
 
 export type ClientChoice = { mobile?: boolean };
 
@@ -58,9 +59,9 @@ type Authentication = { path: 'register' | 'login'; body: object; mobile: boolea
 
 export function accessTokenFor(
   user: Pick<User, 'id'>,
-  { issuedAt }: AccessTokenOptions = {},
+  { issuedAt, scope }: AccessTokenOptions = {},
 ): Promise<string> {
-  return signAccessToken({ keys: testJwtKeys, userId: user.id, issuedAt });
+  return signAccessToken({ keys: testJwtKeys, userId: user.id, issuedAt, scope });
 }
 
 export async function authAs(app: NestExpressApplication, user: Pick<User, 'id'>) {

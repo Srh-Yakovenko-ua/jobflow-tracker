@@ -1,13 +1,16 @@
+import { randomUUID } from 'node:crypto';
+
 import { errorResponseSchema, type PaginationQuery, paginationQuerySchema } from '@jobflow/shared';
 import { Body, Controller, Get, Post, Query } from '@nestjs/common';
 import type { NestExpressApplication } from '@nestjs/platform-express';
 import request from 'supertest';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 
+import { Public } from './modules/auth/index.js';
 import { PrismaService } from './prisma/prisma.service.js';
 import { RedisService } from './redis/redis.service.js';
 import { appTestingModule, startTestApp } from './test/app.js';
-import { jwksResponseSchema, testJwtKeys } from './test/auth.js';
+import { authAs, jwksResponseSchema, testJwtKeys } from './test/auth.js';
 import { FakeDependency } from './test/fake-dependency.js';
 import { type LogLine, memoryLog, withLogSink } from './test/memory-log.js';
 import { stubQueues } from './test/stub-queues.js';
@@ -15,6 +18,7 @@ import { stubQueues } from './test/stub-queues.js';
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
 
 @Controller('probe')
+@Public()
 class ProbeController {
   @Get('page')
   page(@Query({ schema: paginationQuerySchema }) query: PaginationQuery): PaginationQuery {
@@ -292,8 +296,12 @@ describe('the dev ping endpoint and Bull Board outside development', () => {
     await app.close();
   });
 
+  const signedIn = () => authAs(app, { id: randomUUID() });
+
   it('answers POST /api/v1/dev/jobs/ping with 202 and the jobId, echoing x-request-id', async () => {
-    const response = await request(app.getHttpServer())
+    const response = await (
+      await signedIn()
+    )
       .post('/api/v1/dev/jobs/ping')
       .set('x-request-id', 'ping-check')
       .send({});
@@ -303,10 +311,15 @@ describe('the dev ping endpoint and Bull Board outside development', () => {
     expect(response.headers['x-request-id']).toBe('ping-check');
   });
 
+  it('refuses POST /api/v1/dev/jobs/ping without an access token with 401', async () => {
+    const response = await request(app.getHttpServer()).post('/api/v1/dev/jobs/ping').send({});
+
+    expect(response.status).toBe(401);
+    expect(errorResponseSchema.parse(response.body).type).toBe('unauthorized');
+  });
+
   it('refuses a holdMs over 60000 with 422 and the failing field', async () => {
-    const response = await request(app.getHttpServer())
-      .post('/api/v1/dev/jobs/ping')
-      .send({ holdMs: 70000 });
+    const response = await (await signedIn()).post('/api/v1/dev/jobs/ping').send({ holdMs: 70000 });
 
     const body = errorResponseSchema.parse(response.body);
     expect(response.status).toBe(422);

@@ -41,6 +41,14 @@ function shapeMessagesOf(messages) {
   return messages.filter((message) => SHAPE_RULE_IDS.has(message.ruleId));
 }
 
+function shapeRowsOf(messages) {
+  return shapeMessagesOf(messages).map((message) => [
+    message.ruleId,
+    message.line,
+    message.message,
+  ]);
+}
+
 function runTsgo(args) {
   return spawnSync(process.execPath, [tsgoPath, ...args], { encoding: 'utf8' });
 }
@@ -68,6 +76,16 @@ describe('api preset', () => {
 
   it('allows imports inside the same module', () => {
     assert.deepEqual(messagesByFile['modules/auth/index.ts'], []);
+  });
+
+  it('refuses a public repository method whose first parameter is not userId', () => {
+    assert.deepEqual(shapeRowsOf(messagesByFile['modules/notes/notes.repository.ts']), [
+      ['no-restricted-syntax', 10, 'A repository method takes userId as its first parameter'],
+    ]);
+  });
+
+  it('exempts the auth repository, which looks users up before one is known', () => {
+    assert.deepEqual(messagesByFile['modules/auth/auth.repository.ts'], []);
   });
 });
 
@@ -184,10 +202,8 @@ describe('shape rules', () => {
   });
 
   it('refuses a typed, a union and a defaulted boolean positional parameter', () => {
-    const messages = shapeMessagesOf(messagesByFile['boolean-param.ts']);
-
     assert.deepEqual(
-      messages.map((message) => [message.ruleId, message.line, message.message]),
+      shapeRowsOf(messagesByFile['boolean-param.ts']),
       [1, 5, 9].map((line) => [
         'no-restricted-syntax',
         line,
@@ -234,18 +250,9 @@ describe('shape rules', () => {
   });
 
   it('exempts a Nest constructor and still refuses a three-parameter method', () => {
-    const messages = shapeMessagesOf(messagesByFile['notes.service.ts']);
-
-    assert.deepEqual(
-      messages.map((message) => [message.ruleId, message.line, message.message]),
-      [
-        [
-          'no-restricted-syntax',
-          12,
-          'More than two positional parameters: pass one options object',
-        ],
-      ],
-    );
+    assert.deepEqual(shapeRowsOf(messagesByFile['notes.service.ts']), [
+      ['no-restricted-syntax', 12, 'More than two positional parameters: pass one options object'],
+    ]);
   });
 
   it('exempts a controller handler whose parameters are decorated', () => {
