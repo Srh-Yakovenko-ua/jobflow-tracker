@@ -20,6 +20,8 @@
     "test:integration": "pnpm run test:int",
     "test:watch": "vitest watch --project unit",
     "db:migrate": "prisma migrate deploy",
+    "db:seed": "nest build -p tsconfig.seed.json && node dist-seed/seed.js",
+    "db:reset": "prisma migrate reset --force && pnpm run db:seed",
     "db:erd": "prisma generate",
     "gen:keys": "node scripts/gen-keys.js",
     "postinstall": "DISABLE_ERD=true prisma generate"
