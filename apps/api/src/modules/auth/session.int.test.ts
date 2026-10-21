@@ -10,6 +10,7 @@ import { describe, expect, it } from 'vitest';
 import { appTestingModule, useTestApp } from '../../test/app.js';
 import {
   BOHDAN,
+  cacheControlOf,
   OLENA,
   refreshCookie,
   refreshCookieOf,
@@ -172,7 +173,7 @@ describe('refresh token rotation and revocation', () => {
     expect(errorResponseSchema.parse(response.body).type).toBe('unauthorized');
   });
 
-  it('hands a mobile client the refresh token in the body and no cookie, and rotates it from the body', async () => {
+  it('hands a mobile client the refresh token in the body, no cookie and no-store, and rotates it from the body', async () => {
     await signUp(testApp.app, OLENA);
 
     const login = await http()
@@ -188,10 +189,7 @@ describe('refresh token rotation and revocation', () => {
     const rotated = await refreshWith(testApp.app, { refreshToken, mobile: true });
     expect(rotated.status).toBe(200);
     expect(setCookies(rotated)).toEqual([]);
-    expect([login, rotated].map((response) => response.get('cache-control'))).toEqual([
-      'no-store',
-      'no-store',
-    ]);
+    expect(cacheControlOf(login, rotated)).toEqual(['no-store', 'no-store']);
     const next = sessionTokensSchema.parse(rotated.body).refreshToken;
     expect(next).toEqual(expect.schemaMatching(refreshTokenSchema));
     expect(next).not.toBe(refreshToken);

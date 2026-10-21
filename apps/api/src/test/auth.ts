@@ -73,6 +73,10 @@ export function setCookies(response: Response): string[] {
   return Array.isArray(header) ? header.filter((value) => typeof value === 'string') : [];
 }
 
+export function cacheControlOf(...responses: Response[]): (string | undefined)[] {
+  return responses.map((response) => response.get('cache-control'));
+}
+
 export function refreshCookieOf(response: Response): SetCookie | undefined {
   return setCookies(response)
     .map((line) => parseSetCookie(line))

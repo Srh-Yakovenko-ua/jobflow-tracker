@@ -12,6 +12,7 @@ import { describe, expect, it } from 'vitest';
 
 import { appTestingModule, useTestApp } from '../../test/app.js';
 import {
+  cacheControlOf,
   OLENA,
   refreshCookieOf,
   refreshTokenFromCookie,
@@ -74,16 +75,13 @@ describe('register and login with email and password', () => {
     ]);
   });
 
-  it('sets the refresh cookie HttpOnly, Secure, SameSite=Strict on the auth path for 30 days', async () => {
+  it('sets the refresh cookie HttpOnly, Secure, SameSite=Strict on the auth path for 30 days, with no-store', async () => {
     const registered = await register(OLENA);
     const loggedIn = await login({ email: OLENA.email, password: OLENA.password });
 
     const cookies = [refreshCookieOf(registered), refreshCookieOf(loggedIn)];
     expect(cookies).toMatchObject([REFRESH_COOKIE_ATTRIBUTES, REFRESH_COOKIE_ATTRIBUTES]);
-    expect([registered, loggedIn].map((response) => response.get('cache-control'))).toEqual([
-      'no-store',
-      'no-store',
-    ]);
+    expect(cacheControlOf(registered, loggedIn)).toEqual(['no-store', 'no-store']);
     const values = cookies.map((cookie) => refreshTokenSchema.safeParse(cookie?.value).success);
     expect(values).toEqual([true, true]);
   });
