@@ -7,6 +7,7 @@ import { noteSchema } from './note.js';
 import { paginatedSchema, paginationQuerySchema } from './pagination.js';
 import { resumeVersionSchema } from './resume-version.js';
 import { stageEventSchema } from './stage-event.js';
+import { userSettingsSchema } from './user-settings.js';
 
 const application = {
   id: '01920000-0000-7000-8000-000000000001',
@@ -175,5 +176,39 @@ describe('resumeVersionSchema', () => {
       ...timestamps,
     };
     expect(resumeVersionSchema.safeParse(resumeVersion).success).toBe(false);
+  });
+});
+
+describe('userSettingsSchema', () => {
+  const settings = {
+    silenceDays: 7,
+    autoGhostDays: 30,
+    askRejectionReason: true,
+    monthlySummaryEnabled: true,
+    theme: 'system',
+    timezone: 'Europe/Kyiv',
+    quietHoursStart: '22:00',
+    quietHoursEnd: '08:00',
+    notifyInApp: true,
+    notifyPush: false,
+    notifyEmail: true,
+    analyticsOptOut: false,
+    activeResumeVersionId: null,
+  };
+
+  it('accepts the settings a new user starts with', () => {
+    expect(userSettingsSchema.parse(settings)).toEqual(settings);
+  });
+
+  it('refuses quiet hours starting at 24:00', () => {
+    expect(userSettingsSchema.safeParse({ ...settings, quietHoursStart: '24:00' }).success).toBe(
+      false,
+    );
+  });
+
+  it('refuses quiet hours with seconds', () => {
+    expect(userSettingsSchema.safeParse({ ...settings, quietHoursEnd: '08:00:00' }).success).toBe(
+      false,
+    );
   });
 });

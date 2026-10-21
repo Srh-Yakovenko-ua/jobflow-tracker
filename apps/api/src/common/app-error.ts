@@ -49,6 +49,9 @@ export const conflict = (detail?: string) => errorFor(409, detail);
 
 export const unauthorized = (detail?: string) => errorFor(401, detail);
 
+export const tokenExpired = () =>
+  new AppError({ status: 401, type: 'token_expired', title: 'Token expired' });
+
 export const forbidden = (detail?: string) => errorFor(403, detail);
 
 export const validation = (errors: FieldError[]) =>

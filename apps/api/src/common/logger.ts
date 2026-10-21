@@ -16,10 +16,15 @@ const REDACTED_PATHS = [
   'req.body.password',
   'req.body.currentPassword',
   'req.body.newPassword',
+  'req.body.refreshToken',
   'password',
   'passwordHash',
+  'refreshToken',
+  'accessToken',
   '*.password',
   '*.passwordHash',
+  '*.refreshToken',
+  '*.accessToken',
 ];
 
 const HTTP_LOG_OPTIONS: Options<Request, Response> = {

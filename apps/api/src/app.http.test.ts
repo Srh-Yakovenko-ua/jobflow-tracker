@@ -7,6 +7,7 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { PrismaService } from './prisma/prisma.service.js';
 import { RedisService } from './redis/redis.service.js';
 import { appTestingModule, startTestApp } from './test/app.js';
+import { jwksResponseSchema, testJwtKeys } from './test/auth.js';
 import { FakeDependency } from './test/fake-dependency.js';
 import { type LogLine, memoryLog, withLogSink } from './test/memory-log.js';
 import { stubQueues } from './test/stub-queues.js';
@@ -89,7 +90,7 @@ describe('the API over HTTP', () => {
     expect(response.body).not.toHaveProperty('stack');
   });
 
-  it.each(['/', '/health'])(
+  it.each(['/', '/health', '/.well-known/openid-configuration'])(
     'answers %s outside /api/v1 with 404 JSON in the error format',
     async (path) => {
       const response = await request(app.getHttpServer()).get(path);
@@ -101,6 +102,20 @@ describe('the API over HTTP', () => {
       expect(body.requestId).toBe(response.headers['x-request-id']);
     },
   );
+
+  it('serves the JWKS at the root, outside /api/v1, with the one RSA signing key', async () => {
+    const response = await request(app.getHttpServer()).get('/.well-known/jwks.json');
+
+    expect(response.status).toBe(200);
+    const [key] = jwksResponseSchema.parse(response.body).keys;
+    expect(key.kid).toBe(testJwtKeys.jwk.kid);
+  });
+
+  it('answers the JWKS under /api/v1 with 404', async () => {
+    const response = await request(app.getHttpServer()).get('/api/v1/.well-known/jwks.json');
+
+    expect(response.status).toBe(404);
+  });
 
   it('logs an unknown route under /api/v1 once, in the request log', async () => {
     await request(app.getHttpServer()).get('/api/v1/does-not-exist').set('x-request-id', 'inside');

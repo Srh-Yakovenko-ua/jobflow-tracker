@@ -130,7 +130,7 @@ jobs:
       - name: Create roles and the test database
         run: docker exec -i -e POSTGRES_APP_PASSWORD=jobflow_app -e POSTGRES_ANALYTICS_PASSWORD=jobflow_analytics ${{ job.services.postgres.id }} sh -s < infra/docker/postgres/init-databases.sh
       - name: Reset and seed the test database
-        run: cp .env.example .env && pnpm db:reset && pnpm db:seed
+        run: cp .env.example .env && pnpm gen:keys && pnpm db:reset && pnpm db:seed
       - run: pnpm test:int
         env:
           REDIS_URL: redis://localhost:6379

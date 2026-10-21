@@ -117,8 +117,8 @@ docker compose down
 | `pnpm dev`                                  | інфраструктура, міграції, усі застосунки з hot reload                                    | працює                                             |
 | `pnpm infra:up`                             | лише контейнери інфраструктури і бакет `resumes`                                         | працює                                             |
 | `pnpm db:migrate`                           | застосувати міграції Prisma (`prisma migrate deploy`)                                    | працює                                             |
-| `pnpm db:seed`                              | причини відмов і демо-користувач `demo@jobflow.local`; повторний запуск нічого не дублює | працює, потрібен Postgres: `pnpm infra:up`         |
-| `pnpm db:reset`                             | видалити всі дані dev-бази, змігрувати і засіяти                                         | працює, потрібен Postgres: `pnpm infra:up`         |
+| `pnpm db:seed`                              | причини відмов і демо-користувач `demo@jobflow.local`; повторний запуск нічого не дублює | працює, потрібні Postgres і ключі: `pnpm gen:keys` |
+| `pnpm db:reset`                             | видалити всі дані dev-бази, змігрувати і засіяти                                         | працює, потрібні Postgres і ключі: `pnpm gen:keys` |
 | `pnpm demo:seed`                            | демо-користувач з повним набором даних з дизайну                                         | з'явиться в FIN-01                                 |
 | `pnpm test`                                 | усі unit-тести                                                                           | працює                                             |
 | `pnpm test:int`                             | інтеграційні тести на справжніх Postgres і Redis                                         | працює, потрібні Postgres і Redis: `pnpm infra:up` |
