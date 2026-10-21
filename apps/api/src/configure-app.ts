@@ -1,11 +1,11 @@
-import type { NestApplicationOptions } from '@nestjs/common';
+import { type NestApplicationOptions, RequestMethod } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import type { NestExpressApplication } from '@nestjs/platform-express';
 import helmet from 'helmet';
 import { Logger } from 'nestjs-pino';
 
 import { BOOT_OPTIONS } from './boot.js';
-import { API_PREFIX, rejectOutsidePrefix } from './common/api-prefix.middleware.js';
+import { API_PREFIX, JWKS_PATH, rejectOutsidePrefix } from './common/api-prefix.middleware.js';
 import { REQUEST_ID_HEADER, requestId } from './common/request-id.middleware.js';
 import type { AppConfig } from './config/app-config.js';
 import { mountBullBoard } from './queues/bull-board.js';
@@ -27,7 +27,9 @@ export function configureApp(app: NestExpressApplication): NestExpressApplicatio
   });
   app.use(rejectOutsidePrefix);
   app.useBodyParser('json', { limit: '1mb' });
-  app.setGlobalPrefix(API_PREFIX);
+  app.setGlobalPrefix(API_PREFIX, {
+    exclude: [{ path: JWKS_PATH, method: RequestMethod.GET }],
+  });
   app.enableShutdownHooks();
   return app;
 }

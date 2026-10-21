@@ -1,8 +1,15 @@
 import { describe, expect, it } from 'vitest';
 
-import { authResponseSchema, loginInputSchema, registerInputSchema } from './auth.js';
+import {
+  authResponseSchema,
+  changePasswordInputSchema,
+  loginInputSchema,
+  refreshTokenBodySchema,
+  registerInputSchema,
+} from './auth.js';
 
 const email = 'olena@example.com';
+const refreshToken = 'a'.repeat(43);
 
 describe('registerInputSchema', () => {
   it('refuses a 9-character password and accepts a 10-character one', () => {
@@ -38,13 +45,69 @@ describe('loginInputSchema', () => {
 });
 
 describe('authResponseSchema', () => {
-  it('accepts a user without a display name', () => {
-    const user = {
-      id: '01920000-0000-7000-8000-000000000001',
-      email,
-      displayName: null,
-      locale: 'uk',
-    };
-    expect(authResponseSchema.parse({ user })).toEqual({ user });
+  const user = {
+    id: '01920000-0000-7000-8000-000000000001',
+    email,
+    displayName: null,
+    locale: 'uk',
+  };
+  const accessToken = 'eyJhbGciOiJSUzI1NiJ9.e30.c2ln';
+
+  it('refuses a session without an access token', () => {
+    expect(authResponseSchema.safeParse({ user }).success).toBe(false);
+  });
+
+  it('accepts a user without a display name and the access token', () => {
+    expect(authResponseSchema.parse({ user, accessToken })).toEqual({ user, accessToken });
+  });
+
+  it('carries the refresh token in the body for a mobile client', () => {
+    expect(authResponseSchema.parse({ user, accessToken, refreshToken })).toEqual({
+      user,
+      accessToken,
+      refreshToken,
+    });
+  });
+});
+
+describe('refreshTokenBodySchema', () => {
+  it('accepts no body, since the web client sends the cookie', () => {
+    expect(refreshTokenBodySchema.parse(undefined)).toBeUndefined();
+  });
+
+  it('accepts an empty JSON body, which body-parser makes of a bodiless web request', () => {
+    expect(refreshTokenBodySchema.parse({})).toEqual({});
+  });
+
+  it('accepts a 43-character base64url refresh token', () => {
+    const token = 'Ab9_-'.repeat(8) + 'xyz';
+    expect(refreshTokenBodySchema.parse({ refreshToken: token })).toEqual({ refreshToken: token });
+  });
+
+  it.each([
+    ['42 characters', 'a'.repeat(42)],
+    ['44 characters', 'a'.repeat(44)],
+    ['a + outside base64url', '+'.repeat(43)],
+  ])('refuses a refresh token of %s', (_label, token) => {
+    expect(refreshTokenBodySchema.safeParse({ refreshToken: token }).success).toBe(false);
+  });
+});
+
+describe('changePasswordInputSchema', () => {
+  it('refuses a 9-character new password and accepts a 10-character one', () => {
+    const currentPassword = 'short';
+    expect(
+      changePasswordInputSchema.safeParse({ currentPassword, newPassword: 'a'.repeat(9) }).success,
+    ).toBe(false);
+    expect(
+      changePasswordInputSchema.safeParse({ currentPassword, newPassword: 'a'.repeat(10) }).success,
+    ).toBe(true);
+  });
+
+  it('refuses an empty current password', () => {
+    expect(
+      changePasswordInputSchema.safeParse({ currentPassword: '', newPassword: 'a'.repeat(10) })
+        .success,
+    ).toBe(false);
   });
 });

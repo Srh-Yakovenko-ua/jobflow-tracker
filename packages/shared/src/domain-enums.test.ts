@@ -22,6 +22,7 @@ import {
 } from './scheduled-events.js';
 import { SEARCH_STATUSES, searchStatusSchema } from './searches.js';
 import { TIMELINE_EVENT_KINDS, timelineEventKindSchema } from './timeline-events.js';
+import { TOKEN_SCOPES, tokenScopeSchema } from './token-scopes.js';
 
 type DomainEnumCase = { name: string; values: readonly string[]; schema: z.ZodType };
 
@@ -39,6 +40,7 @@ const DOMAIN_ENUMS: DomainEnumCase[] = [
   { name: 'notification type', values: NOTIFICATION_TYPES, schema: notificationTypeSchema },
   { name: 'ai job status', values: AI_JOB_STATUSES, schema: aiJobStatusSchema },
   { name: 'ai result status', values: AI_RESULT_STATUSES, schema: aiResultStatusSchema },
+  { name: 'token scope', values: TOKEN_SCOPES, schema: tokenScopeSchema },
 ];
 
 describe('domain enum schemas', () => {
