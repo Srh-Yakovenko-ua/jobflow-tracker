@@ -25,6 +25,20 @@ const FOLLOWUP = { type: 'followup', dueAt: new Date('2026-10-26T09:00:00Z') } a
 
 const PLAN = { title: 'Жовтень', month: new Date('2026-10-01') };
 
+const ANALYTICS_READABLE_TABLES = [
+  'applications',
+  'plan_items',
+  'plans',
+  'rejection_reasons',
+  'reminders',
+  'resumes',
+  'scheduled_events',
+  'searches',
+  'stage_events',
+  'timeline_events',
+  'user_settings',
+];
+
 type ResumeOwner = { userId: string; resumeId: string };
 
 type OwnerPairs = { mine: OwnedApplication; theirs: OwnedApplication };
@@ -323,6 +337,26 @@ describe('the supporting tables in Postgres', () => {
           AS extracted_text`;
 
     expect(rows).toEqual([{ owner: true, extracted_text: false }]);
+  });
+
+  it('lets the analytics role into the public schema and read exactly the analytics tables', async () => {
+    const { prisma } = database;
+    const usage = await prisma.$queryRaw<{ usage: boolean }[]>`
+      SELECT has_schema_privilege('jobflow_analytics', 'public', 'USAGE') AS usage`;
+    const readable = await prisma.$queryRaw<{ name: string }[]>`
+      SELECT table_name::text AS name
+      FROM information_schema.tables
+      WHERE table_schema = 'public'
+        AND table_name <> '_prisma_migrations'
+        AND has_table_privilege(
+          'jobflow_analytics',
+          format('%I.%I', table_schema, table_name),
+          'SELECT'
+        )
+      ORDER BY table_name`;
+
+    expect(usage).toEqual([{ usage: true }]);
+    expect(readable.map((row) => row.name)).toEqual(ANALYTICS_READABLE_TABLES);
   });
 });
 

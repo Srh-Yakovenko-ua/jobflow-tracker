@@ -2,6 +2,7 @@ node_modules/
 .turbo/
 dist/
 dist-worker/
+dist-seed/
 .next/
 coverage/
 *.tsbuildinfo
