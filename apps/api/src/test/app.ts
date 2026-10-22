@@ -7,18 +7,26 @@ import { AppModule } from '../app.module.js';
 import { APP_OPTIONS, configureApp } from '../configure-app.js';
 import { JwtKeys } from '../modules/auth/index.js';
 import { PrismaService } from '../prisma/prisma.service.js';
+import { RateLimitService } from '../rate-limit/rate-limit.service.js';
 import { testJwtKeys } from './auth.js';
 import { resetDatabase } from './database.js';
+import { NO_RATE_LIMIT } from './rate-limit.js';
 
 export type TestApp = { readonly app: NestExpressApplication; readonly prisma: PrismaService };
 
-export function appTestingModule(metadata: ModuleMetadata = {}): TestingModuleBuilder {
+export function rateLimitedTestingModule(metadata: ModuleMetadata = {}): TestingModuleBuilder {
   return Test.createTestingModule({
     ...metadata,
     imports: [AppModule, ...(metadata.imports ?? [])],
   })
     .overrideProvider(JwtKeys)
     .useValue(testJwtKeys);
+}
+
+export function appTestingModule(metadata: ModuleMetadata = {}): TestingModuleBuilder {
+  return rateLimitedTestingModule(metadata)
+    .overrideProvider(RateLimitService)
+    .useValue(NO_RATE_LIMIT);
 }
 
 export async function startTestApp(

@@ -15,6 +15,7 @@ import {
 import { Body, Controller, Get, HttpCode, Post, Req, Res } from '@nestjs/common';
 import type { Request, Response } from 'express';
 
+import { RateLimit } from '../../rate-limit/rate-limit.decorator.js';
 import type { AccessUser } from './access-tokens.js';
 import { AuthService } from './auth.service.js';
 import { CurrentUser } from './current-user.decorator.js';
@@ -36,6 +37,7 @@ export class AuthController {
 
   @Post('register')
   @Public()
+  @RateLimit('register')
   async register(
     @Body({ schema: registerInputSchema }) input: RegisterInput,
     @Req() req: Request,
@@ -47,6 +49,7 @@ export class AuthController {
   @Post('login')
   @HttpCode(200)
   @Public()
+  @RateLimit('login')
   async login(
     @Body({ schema: loginInputSchema }) input: LoginInput,
     @Req() req: Request,

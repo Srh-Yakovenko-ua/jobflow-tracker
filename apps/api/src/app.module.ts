@@ -11,6 +11,7 @@ import { HealthModule } from './modules/health/index.js';
 import { MaintenanceModule } from './modules/maintenance/index.js';
 import { PrismaModule } from './prisma/prisma.module.js';
 import { QueuesModule } from './queues/queues.module.js';
+import { RateLimitModule } from './rate-limit/rate-limit.module.js';
 import { RedisModule } from './redis/redis.module.js';
 
 @Module({
@@ -19,6 +20,7 @@ import { RedisModule } from './redis/redis.module.js';
     LoggerModule.forRoot(loggerParams()),
     PrismaModule,
     RedisModule,
+    RateLimitModule,
     HealthModule,
     QueuesModule,
     MaintenanceModule,
