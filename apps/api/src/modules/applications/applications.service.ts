@@ -3,9 +3,7 @@ import {
   applicationSchema,
   type CreateApplicationInput,
   DEFAULT_SILENCE_DAYS,
-  silenceLevelOf,
   type Stage,
-  wholeDaysBetween,
 } from '@jobflow/shared';
 import { Injectable } from '@nestjs/common';
 
@@ -13,6 +11,7 @@ import { conflict, notFound } from '../../common/app-error.js';
 import { Clock } from '../../common/clock.js';
 import type { Prisma } from '../../generated/prisma/client.js';
 import { PrismaService } from '../../prisma/prisma.service.js';
+import { withApplicationTiming } from './application-timing.js';
 import { APPLICATION_EVENTS } from './applications.events.js';
 import {
   type ApplicationChanges,
@@ -41,20 +40,20 @@ function owned(row: ApplicationRow | null): ApplicationRow {
 }
 
 function toApplicationResponse(row: ApplicationRow, now: Date): ApplicationResponse {
-  const { stageEvents, user, aiParsed, appliedAt, lastEventAt, createdAt, updatedAt, ...columns } =
-    row;
-  const daysSinceLastEvent = wholeDaysBetween(lastEventAt, now);
+  const { user, ...timed } = row;
   const silenceDays = user.settings?.silenceDays ?? DEFAULT_SILENCE_DAYS;
+  const { aiParsed, appliedAt, lastEventAt, updatedAt, ...columns } = withApplicationTiming({
+    row: timed,
+    silenceDays,
+    now,
+  });
   return {
     ...columns,
     aiParsed: applicationSchema.shape.aiParsed.parse(aiParsed),
     appliedAt: appliedAt?.toISOString() ?? null,
     lastEventAt: lastEventAt.toISOString(),
-    createdAt: createdAt.toISOString(),
+    createdAt: row.createdAt.toISOString(),
     updatedAt: updatedAt.toISOString(),
-    daysInStage: wholeDaysBetween(stageEvents[0]?.occurredAt ?? createdAt, now),
-    daysSinceLastEvent,
-    silenceLevel: silenceLevelOf({ stage: columns.currentStage, silenceDays, daysSinceLastEvent }),
   };
 }
 

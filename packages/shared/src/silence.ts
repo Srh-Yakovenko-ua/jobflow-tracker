@@ -1,7 +1,7 @@
 import { z } from 'zod';
 
 import type { UserSettings } from './schemas/user-settings.js';
-import { ACTIVE_STAGES, type Stage } from './stages.js';
+import { ACTIVE_STAGES, type Stage, STAGES } from './stages.js';
 
 export const SILENCE_LEVELS = ['none', 'warn', 'silent'] as const;
 
@@ -22,6 +22,10 @@ export function effectiveSilenceDays({ silenceDays }: SilenceSettings, stage: St
   return stage === 'final' ? silenceDays * FINAL_STAGE_SILENCE_FACTOR : silenceDays;
 }
 
+function warnDaysOf(threshold: number): number {
+  return Math.ceil(threshold / 2);
+}
+
 export function silenceLevelOf({
   stage,
   silenceDays,
@@ -34,7 +38,60 @@ export function silenceLevelOf({
   if (daysSinceLastEvent >= threshold) {
     return 'silent';
   }
-  return daysSinceLastEvent >= Math.ceil(threshold / 2) ? 'warn' : 'none';
+  return daysSinceLastEvent >= warnDaysOf(threshold) ? 'warn' : 'none';
+}
+
+export type SilenceWindow = {
+  stages: readonly Stage[];
+  lastEventAtOrBefore?: Date;
+  lastEventAfter?: Date;
+};
+
+export type SilenceWindowsInput = SilenceSettings & {
+  levels: readonly SilenceLevel[];
+  now: Date;
+};
+
+type ThresholdGroup = { stages: readonly Stage[]; threshold: number };
+
+const NEVER_SILENT_STAGES = STAGES.filter((stage) => !ACTIVE_STAGES.includes(stage));
+
+const daysBefore = (now: Date, days: number) => new Date(now.getTime() - days * DAY_MS);
+
+const ACTIVE_WINDOW_OF: Record<SilenceLevel, (group: ThresholdGroup, now: Date) => SilenceWindow> =
+  {
+    silent: ({ stages, threshold }, now) => ({
+      stages,
+      lastEventAtOrBefore: daysBefore(now, threshold),
+    }),
+    warn: ({ stages, threshold }, now) => ({
+      stages,
+      lastEventAfter: daysBefore(now, threshold),
+      lastEventAtOrBefore: daysBefore(now, warnDaysOf(threshold)),
+    }),
+    none: ({ stages, threshold }, now) => ({
+      stages,
+      lastEventAfter: daysBefore(now, warnDaysOf(threshold)),
+    }),
+  };
+
+function thresholdGroupsOf(settings: SilenceSettings): ThresholdGroup[] {
+  const stagesByThreshold = new Map<number, Stage[]>();
+  for (const stage of ACTIVE_STAGES) {
+    const threshold = effectiveSilenceDays(settings, stage);
+    stagesByThreshold.set(threshold, [...(stagesByThreshold.get(threshold) ?? []), stage]);
+  }
+  return [...stagesByThreshold].map(([threshold, stages]) => ({ stages, threshold }));
+}
+
+export function silenceWindows({ levels, silenceDays, now }: SilenceWindowsInput): SilenceWindow[] {
+  const groups = thresholdGroupsOf({ silenceDays });
+  const activeWindows = levels.flatMap((level) =>
+    groups.map((group) => ACTIVE_WINDOW_OF[level](group, now)),
+  );
+  return levels.includes('none')
+    ? [...activeWindows, { stages: NEVER_SILENT_STAGES }]
+    : activeWindows;
 }
 
 export function wholeDaysBetween(from: Date, to: Date): number {

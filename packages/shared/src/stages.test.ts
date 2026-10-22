@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { canTransition, type Stage } from './stages.js';
+import { ACTIVE_STAGES, canTransition, OUTCOME_STAGES, type Stage, STAGES } from './stages.js';
 
 const ALLOWED = { ok: true } as const;
 const NOT_ALLOWED = { ok: false, reason: 'not_allowed' } as const;
@@ -108,4 +108,18 @@ describe('canTransition', () => {
   it('revives a ghosted application to a stage that leads into ghosted', () => {
     expect(canTransition('ghosted', 'final')).toEqual({ ok: true });
   });
+});
+
+describe('OUTCOME_STAGES', () => {
+  it('names rejected, ghosted and withdrawn, all of them stages', () => {
+    expect(OUTCOME_STAGES).toEqual(['rejected', 'ghosted', 'withdrawn']);
+    expect(OUTCOME_STAGES.every((outcome) => STAGES.includes(outcome))).toBe(true);
+  });
+
+  it.for(ACTIVE_STAGES.flatMap((from) => OUTCOME_STAGES.map((to) => [from, to] as const)))(
+    'lets %s reach the outcome %s',
+    ([from, to]) => {
+      expect(canTransition(from, to)).toEqual({ ok: true });
+    },
+  );
 });

@@ -5,6 +5,12 @@ import type { Prisma } from '../../generated/prisma/client.js';
 import { PrismaService } from '../../prisma/prisma.service.js';
 import { type ApplicationEvent, applicationEvent } from './applications.events.js';
 
+export const LATEST_STAGE_EVENT_SELECT = {
+  orderBy: [{ occurredAt: 'desc' }, { id: 'desc' }],
+  take: 1,
+  select: { occurredAt: true },
+} satisfies Prisma.Application$stageEventsArgs;
+
 export const APPLICATION_SELECT = {
   id: true,
   searchId: true,
@@ -28,11 +34,7 @@ export const APPLICATION_SELECT = {
   lastEventAt: true,
   createdAt: true,
   updatedAt: true,
-  stageEvents: {
-    orderBy: [{ occurredAt: 'desc' }, { id: 'desc' }],
-    take: 1,
-    select: { occurredAt: true },
-  },
+  stageEvents: LATEST_STAGE_EVENT_SELECT,
   user: { select: { settings: { select: { silenceDays: true } } } },
 } satisfies Prisma.ApplicationSelect;
 

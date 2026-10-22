@@ -1,6 +1,10 @@
 import { setTimeout as delay } from 'node:timers/promises';
 
-export const DEPENDENCY_LIMITS = { connectTimeoutMs: 2000, pingTimeoutMs: 1000 } as const;
+export const DEPENDENCY_LIMITS = {
+  connectTimeoutMs: 2000,
+  pingTimeoutMs: 1000,
+  queryTimeoutMs: 3000,
+} as const;
 
 export async function isAnswered(check: Promise<unknown>): Promise<boolean> {
   const answered = check.then(

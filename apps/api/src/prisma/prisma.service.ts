@@ -15,6 +15,7 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
       adapter: new PrismaPg({
         connectionString: config.get('DATABASE_URL', { infer: true }),
         connectionTimeoutMillis: DEPENDENCY_LIMITS.connectTimeoutMs,
+        query_timeout: DEPENDENCY_LIMITS.queryTimeoutMs,
       }),
     });
   }

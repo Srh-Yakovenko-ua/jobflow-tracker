@@ -1,4 +1,8 @@
 import {
+  type ApplicationBoardResponse,
+  applicationBoardResponseSchema,
+  type ApplicationListResponse,
+  applicationListResponseSchema,
   type ApplicationResponse,
   applicationResponseSchema,
   type createApplicationInputSchema,
@@ -7,13 +11,26 @@ import type { NestExpressApplication } from '@nestjs/platform-express';
 import type { z } from 'zod';
 
 import type { ApplicationEvent } from '../modules/applications/index.js';
+import type { PrismaService } from '../prisma/prisma.service.js';
+import { accessTokenFor } from './auth.js';
+import { createSearch, createUser } from './factories.js';
 import { callRoute } from './http.js';
 
 export const APPLICATIONS_PATH = '/api/v1/applications';
 
+export const APPLICATIONS_BOARD_PATH = `${APPLICATIONS_PATH}/board`;
+
 export type NewApplicationBody = z.input<typeof createApplicationInputSchema>;
 
 export type ApplicationRequest<Body> = { accessToken: string; input: Body };
+
+export type QueryString = Record<string, string>;
+
+export type QueryRequest = { accessToken?: string | undefined; query?: QueryString };
+
+export type PathQueryRequest = QueryRequest & { path: string };
+
+export type SignedInSearcher = { userId: string; searchId: string; accessToken: string };
 
 export const applicationPath = (id: string) => `${APPLICATIONS_PATH}/${id}`;
 
@@ -30,6 +47,40 @@ export async function createApplication(
 ): Promise<ApplicationResponse> {
   const response = await postApplication(app, options);
   return applicationResponseSchema.parse(response.body);
+}
+
+export function getWithQuery(
+  app: NestExpressApplication,
+  { path, accessToken, query = {} }: PathQueryRequest,
+) {
+  const search = new URLSearchParams(query).toString();
+  return callRoute(app, {
+    method: 'get',
+    path: search === '' ? path : `${path}?${search}`,
+    accessToken,
+  });
+}
+
+export async function listApplications(
+  app: NestExpressApplication,
+  request: QueryRequest,
+): Promise<ApplicationListResponse> {
+  const response = await getWithQuery(app, { ...request, path: APPLICATIONS_PATH });
+  return applicationListResponseSchema.parse(response.body);
+}
+
+export async function getApplicationBoard(
+  app: NestExpressApplication,
+  request: QueryRequest,
+): Promise<ApplicationBoardResponse> {
+  const response = await getWithQuery(app, { ...request, path: APPLICATIONS_BOARD_PATH });
+  return applicationBoardResponseSchema.parse(response.body);
+}
+
+export async function signedInWithSearch(prisma: PrismaService): Promise<SignedInSearcher> {
+  const user = await createUser(prisma);
+  const searchId = await createSearch(prisma, { userId: user.id });
+  return { userId: user.id, searchId, accessToken: await accessTokenFor(user) };
 }
 
 export function applicationEventRow({

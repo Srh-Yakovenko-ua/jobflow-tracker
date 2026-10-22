@@ -5,6 +5,7 @@ export * from './rejection-reasons.js';
 export * from './reminders.js';
 export * from './scheduled-events.js';
 export * from './schemas/application.js';
+export * from './schemas/application-list.js';
 export * from './schemas/auth.js';
 export * from './schemas/contact.js';
 export * from './schemas/error-response.js';

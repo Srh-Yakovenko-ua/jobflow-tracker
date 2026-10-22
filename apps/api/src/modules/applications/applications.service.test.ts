@@ -5,6 +5,8 @@ import { describe, expect, it } from 'vitest';
 import { Clock } from '../../common/clock.js';
 import { PrismaService } from '../../prisma/prisma.service.js';
 import { FAKE_TRANSACTION, FakePrisma } from '../../test/fake-prisma.js';
+import { BOHDAN_ID, OLENA_ID, SEARCH_ID } from '../../test/service-fixtures.js';
+import { daysBefore, NOW } from '../../test/time.js';
 import {
   type ApplicationById,
   type ApplicationRow,
@@ -25,15 +27,6 @@ type FakeData = { owned?: OwnedRow[]; defaults?: CreateDefaults };
 
 type Target = { userId: string; id: string };
 
-const NOW = new Date('2026-10-22T09:00:00.000Z');
-
-const DAY_MS = 24 * 60 * 60 * 1000;
-
-const daysBefore = (days: number) => new Date(NOW.getTime() - days * DAY_MS);
-
-const OLENA_ID = '0199f0a0-0000-7000-8000-000000000001';
-const BOHDAN_ID = '0199f0a0-0000-7000-8000-000000000002';
-const SEARCH_ID = '0199f0a0-0000-7000-8000-0000000000a1';
 const RESUME_VERSION_ID = '0199f0a0-0000-7000-8000-0000000000b1';
 const APPLICATION_ID = '0199f0a0-0000-7000-8000-0000000000c1';
 const MISSING_ID = '0199f0a0-0000-7000-8000-0000000000c2';
