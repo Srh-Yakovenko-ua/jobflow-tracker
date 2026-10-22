@@ -1,12 +1,9 @@
+import type { Health, Readiness } from '@jobflow/shared';
 import { Injectable } from '@nestjs/common';
 
 import { errorFor } from '../../common/app-error.js';
 import { PrismaService } from '../../prisma/prisma.service.js';
 import { RedisService } from '../../redis/redis.service.js';
-
-export type Health = { status: 'ok' };
-
-export type Readiness = Health & { checks: { redis: 'up'; postgres: 'up' } };
 
 @Injectable()
 export class HealthService {

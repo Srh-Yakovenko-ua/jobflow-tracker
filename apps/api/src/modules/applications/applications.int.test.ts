@@ -1,4 +1,4 @@
-import { applicationResponseSchema, errorResponseSchema } from '@jobflow/shared';
+import { applicationResponseSchema, errorResponseSchema, STAGE_CHANGE_HINT } from '@jobflow/shared';
 import { beforeEach, describe, expect, it } from 'vitest';
 
 import { Clock } from '../../common/clock.js';
@@ -24,8 +24,6 @@ const DAY_MS = 24 * 60 * 60 * 1000;
 const ROMASHKA = { company: 'Ромашка', position: 'Backend developer' };
 
 const MISSING_ID = '0199f0a0-0000-7000-8000-0000000000c2';
-
-const STAGE_CHANGE_HINT = 'Stage changes go through POST /applications/:id/events';
 
 const ID_ROUTES: Omit<RouteCall, 'path'>[] = [
   { method: 'get' },

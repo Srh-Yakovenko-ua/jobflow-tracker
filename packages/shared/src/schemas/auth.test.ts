@@ -3,7 +3,9 @@ import { describe, expect, it } from 'vitest';
 import {
   authResponseSchema,
   changePasswordInputSchema,
+  jwksResponseSchema,
   loginInputSchema,
+  publicJwkSchema,
   refreshTokenBodySchema,
   registerInputSchema,
 } from './auth.js';
@@ -90,6 +92,23 @@ describe('refreshTokenBodySchema', () => {
     ['a + outside base64url', '+'.repeat(43)],
   ])('refuses a refresh token of %s', (_label, token) => {
     expect(refreshTokenBodySchema.safeParse({ refreshToken: token }).success).toBe(false);
+  });
+});
+
+describe('publicJwkSchema', () => {
+  const jwk = { kty: 'RSA', alg: 'RS256', use: 'sig', kid: 'K'.repeat(43), n: 'sXch', e: 'AQAB' };
+
+  it('accepts a JWKS with one RS256 signing key', () => {
+    expect(jwksResponseSchema.parse({ keys: [jwk] })).toEqual({ keys: [jwk] });
+  });
+
+  it.each([
+    ['the private exponent d', { ...jwk, d: 'c2VjcmV0' }],
+    ['a 42-character kid', { ...jwk, kid: 'K'.repeat(42) }],
+    ['a kid outside base64url', { ...jwk, kid: '+'.repeat(43) }],
+    ['an ES256 algorithm', { ...jwk, alg: 'ES256' }],
+  ])('refuses a key with %s', (_label, key) => {
+    expect(publicJwkSchema.safeParse(key).success).toBe(false);
   });
 });
 

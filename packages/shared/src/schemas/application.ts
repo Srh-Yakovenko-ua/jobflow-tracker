@@ -35,7 +35,7 @@ export const applicationSchema = z.object({
 
 export const STACK_MAX_ITEMS = 20;
 
-const STAGE_CHANGE_HINT = 'Stage changes go through POST /applications/:id/events';
+export const STAGE_CHANGE_HINT = 'Stage changes go through POST /applications/:id/events';
 
 const textSchema = z.string().trim().min(1).max(200);
 const salarySchema = z.int32().nonnegative().nullable();
@@ -64,7 +64,7 @@ const applicationFieldsSchema = z.object({
   workMode: workModeSchema.nullable(),
 });
 
-const applicationPatchSchema = applicationFieldsSchema.partial();
+export const applicationPatchSchema = applicationFieldsSchema.partial();
 
 type ApplicationPatch = z.infer<typeof applicationPatchSchema>;
 

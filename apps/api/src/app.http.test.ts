@@ -7,15 +7,22 @@ import request from 'supertest';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 
 import { Public } from './modules/auth/index.js';
+import { buildOpenApiDocument } from './openapi/document.js';
 import { PrismaService } from './prisma/prisma.service.js';
 import { RedisService } from './redis/redis.service.js';
 import { appTestingModule, startTestApp } from './test/app.js';
 import { authAs, jwksResponseSchema, testJwtKeys } from './test/auth.js';
 import { FakeDependency } from './test/fake-dependency.js';
+import { callRoute } from './test/http.js';
 import { type LogLine, memoryLog, withLogSink } from './test/memory-log.js';
+import { documentedOperations } from './test/openapi.js';
 import { stubQueues } from './test/stub-queues.js';
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
+
+const BEARER_OPERATIONS = documentedOperations(buildOpenApiDocument()).filter(
+  ({ bearer }) => bearer,
+);
 
 @Controller('probe')
 @Public()
@@ -120,6 +127,19 @@ describe('the API over HTTP', () => {
 
     expect(response.status).toBe(404);
   });
+
+  it.each(BEARER_OPERATIONS)(
+    'answers the bearer route $method $path without an access token with 401',
+    async ({ method, path }) => {
+      const response = await callRoute(app, {
+        method,
+        path: path.replaceAll(/:\w+/g, () => randomUUID()),
+      });
+
+      expect(response.status).toBe(401);
+      expect(errorResponseSchema.parse(response.body).type).toBe('unauthorized');
+    },
+  );
 
   it('logs an unknown route under /api/v1 once, in the request log', async () => {
     await request(app.getHttpServer()).get('/api/v1/does-not-exist').set('x-request-id', 'inside');
@@ -285,7 +305,7 @@ describe('the API over HTTP', () => {
   );
 });
 
-describe('the dev ping endpoint and Bull Board outside development', () => {
+describe('the dev ping endpoint, Bull Board and Swagger UI outside development', () => {
   let app: NestExpressApplication;
 
   beforeAll(async () => {
@@ -326,12 +346,15 @@ describe('the dev ping endpoint and Bull Board outside development', () => {
     expect(body.errors?.map((error) => error.path)).toEqual(['holdMs']);
   });
 
-  it('answers GET /admin/queues with 404 when NODE_ENV is test', async () => {
-    const response = await request(app.getHttpServer()).get('/admin/queues');
+  it.each(['/admin/queues', '/api/docs', '/api/docs/openapi.json'])(
+    'answers GET %s with 404 when NODE_ENV is test',
+    async (path) => {
+      const response = await request(app.getHttpServer()).get(path);
 
-    expect(response.status).toBe(404);
-    expect(errorResponseSchema.parse(response.body).type).toBe('not_found');
-  });
+      expect(response.status).toBe(404);
+      expect(errorResponseSchema.parse(response.body).type).toBe('not_found');
+    },
+  );
 });
 
 describe('shutdown', () => {

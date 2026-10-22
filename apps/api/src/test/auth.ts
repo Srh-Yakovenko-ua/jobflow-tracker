@@ -2,6 +2,7 @@ import {
   type AuthResponse,
   authResponseSchema,
   type LoginInput,
+  publicJwkSchema,
   type RefreshToken,
   type RegisterInput,
   type TokenScope,
@@ -31,16 +32,7 @@ export const testKeys = await generateKeyPair('RS256');
 export const testJwtKeys = await jwtKeysFrom(testKeys);
 
 export const jwksResponseSchema = z.object({
-  keys: z.tuple([
-    z.strictObject({
-      kty: z.literal('RSA'),
-      alg: z.literal('RS256'),
-      use: z.literal('sig'),
-      kid: z.string().regex(/^[A-Za-z0-9_-]{43}$/),
-      n: z.string().min(1),
-      e: z.literal('AQAB'),
-    }),
-  ]),
+  keys: z.tuple([publicJwkSchema.extend({ e: z.literal('AQAB') })]),
 });
 
 export type AccessTokenOptions = { issuedAt?: Date; scope?: readonly TokenScope[] };
