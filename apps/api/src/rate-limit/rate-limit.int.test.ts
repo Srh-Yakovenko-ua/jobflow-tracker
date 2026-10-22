@@ -20,7 +20,7 @@ import {
   type PostFromInput,
   randomClientIp,
 } from '../test/rate-limit.js';
-import { type RedisProxy, startRedisProxy } from '../test/redis-proxy.js';
+import { startTcpProxy, type TcpProxy } from '../test/tcp-proxy.js';
 import { type RateLimitOutcome, RateLimitService } from './rate-limit.service.js';
 
 const PATHS = { login: '/api/v1/auth/login', register: '/api/v1/auth/register' } as const;
@@ -128,13 +128,13 @@ describe('RateLimitService while Redis is unreachable', () => {
 });
 
 describe('RateLimitService while Redis keeps the connection and never answers', () => {
-  let proxy: RedisProxy;
+  let proxy: TcpProxy;
   let behind: LimitsBehind;
 
   beforeAll(async () => {
     const moduleRef = await Test.createTestingModule({ imports: [configModule] }).compile();
     const redisUrl = moduleRef.get<AppConfig>(ConfigService).get('REDIS_URL', { infer: true });
-    proxy = await startRedisProxy(redisUrl);
+    proxy = await startTcpProxy(redisUrl);
     behind = limitsBehind(proxy.url);
     await once(behind.redis.client, 'ready');
     proxy.silence();

@@ -2194,6 +2194,442 @@
             }
           }
         }
+      },
+      "get": {
+        "tags": [
+          "applications"
+        ],
+        "summary": "List Applications as cards",
+        "description": "Filters are comma lists (stage, source, silence), q searches company and position, hasScore is true or false. Without searchId only the active search is read. Pages follow nextCursor until it is null; another user's searchId answers 404.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": false,
+            "name": "stage",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": false,
+            "name": "source",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200
+            },
+            "required": false,
+            "name": "q",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "true",
+                "false"
+              ]
+            },
+            "required": false,
+            "name": "hasScore",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": false,
+            "name": "silence",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 50
+            },
+            "required": false,
+            "name": "limit",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "maxLength": 200,
+              "description": "The opaque nextCursor of the previous page, sent back unchanged; any other value answers 422 at cursor"
+            },
+            "required": false,
+            "description": "The opaque nextCursor of the previous page, sent back unchanged; any other value answers 422 at cursor",
+            "name": "cursor",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "-lastEventAt",
+                "lastEventAt"
+              ],
+              "default": "-lastEventAt"
+            },
+            "required": false,
+            "name": "sort",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": false,
+            "name": "searchId",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "One page of cards",
+            "content": {
+              "application/json": {
+                "example": {
+                  "items": [
+                    {
+                      "id": "0199f1a7-3c4d-7e5f-8a6b-9c0d1e2f3a4b",
+                      "company": "Смерека Софт",
+                      "position": "Backend developer",
+                      "source": "linkedin",
+                      "salaryMin": null,
+                      "salaryMax": 5000,
+                      "currency": "EUR",
+                      "matchScore": 78,
+                      "currentStage": "screening",
+                      "isDraft": false,
+                      "lastEventAt": "2026-10-18T14:10:00.000Z",
+                      "daysInStage": 4,
+                      "daysSinceLastEvent": 4,
+                      "silenceLevel": "warn",
+                      "stack": [
+                        "Go",
+                        "Kubernetes",
+                        "gRPC"
+                      ],
+                      "stackCount": 4,
+                      "nextScheduledEvent": {
+                        "kind": "screening_call",
+                        "startsAt": "2026-10-23T13:00:00.000Z"
+                      },
+                      "aiStatus": "processing"
+                    }
+                  ],
+                  "nextCursor": "WyIyMDI2LTEwLTE4VDE0OjEwOjAwLjAwMFoiLCIwMTk5ZjFhNy0zYzRkLTdlNWYtOGE2Yi05YzBkMWUyZjNhNGIiXQ"
+                },
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string",
+                            "format": "uuid"
+                          },
+                          "company": {
+                            "type": "string",
+                            "minLength": 1
+                          },
+                          "position": {
+                            "type": "string",
+                            "minLength": 1
+                          },
+                          "source": {
+                            "type": "string",
+                            "enum": [
+                              "djinni",
+                              "dou",
+                              "robota",
+                              "workua",
+                              "linkedin",
+                              "referral",
+                              "company_site",
+                              "other"
+                            ]
+                          },
+                          "salaryMin": {
+                            "type": [
+                              "integer",
+                              "null"
+                            ],
+                            "minimum": 0
+                          },
+                          "salaryMax": {
+                            "type": [
+                              "integer",
+                              "null"
+                            ],
+                            "minimum": 0
+                          },
+                          "currency": {
+                            "type": [
+                              "string",
+                              "null"
+                            ],
+                            "pattern": "^[A-Z]{3}$"
+                          },
+                          "matchScore": {
+                            "type": [
+                              "integer",
+                              "null"
+                            ],
+                            "minimum": 0,
+                            "maximum": 100
+                          },
+                          "currentStage": {
+                            "type": "string",
+                            "enum": [
+                              "applied",
+                              "screening",
+                              "tech_interview",
+                              "final",
+                              "offer",
+                              "rejected",
+                              "ghosted",
+                              "withdrawn"
+                            ]
+                          },
+                          "isDraft": {
+                            "type": "boolean"
+                          },
+                          "lastEventAt": {
+                            "type": "string",
+                            "format": "date-time"
+                          },
+                          "daysInStage": {
+                            "type": "integer",
+                            "minimum": 0
+                          },
+                          "daysSinceLastEvent": {
+                            "type": "integer",
+                            "minimum": 0
+                          },
+                          "silenceLevel": {
+                            "type": "string",
+                            "enum": [
+                              "none",
+                              "warn",
+                              "silent"
+                            ]
+                          },
+                          "stack": {
+                            "type": "array",
+                            "items": {
+                              "type": "string"
+                            },
+                            "maxItems": 3
+                          },
+                          "stackCount": {
+                            "type": "number",
+                            "minimum": 0
+                          },
+                          "nextScheduledEvent": {
+                            "type": [
+                              "object",
+                              "null"
+                            ],
+                            "properties": {
+                              "kind": {
+                                "type": "string",
+                                "enum": [
+                                  "screening_call",
+                                  "tech_interview",
+                                  "final_interview",
+                                  "offer_call",
+                                  "other"
+                                ]
+                              },
+                              "startsAt": {
+                                "type": "string",
+                                "format": "date-time"
+                              }
+                            },
+                            "required": [
+                              "kind",
+                              "startsAt"
+                            ]
+                          },
+                          "aiStatus": {
+                            "type": [
+                              "string",
+                              "null"
+                            ],
+                            "enum": [
+                              "queued",
+                              "processing",
+                              "done",
+                              "failed",
+                              null
+                            ]
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "company",
+                          "position",
+                          "source",
+                          "salaryMin",
+                          "salaryMax",
+                          "currency",
+                          "matchScore",
+                          "currentStage",
+                          "isDraft",
+                          "lastEventAt",
+                          "daysInStage",
+                          "daysSinceLastEvent",
+                          "silenceLevel",
+                          "stack",
+                          "stackCount",
+                          "nextScheduledEvent",
+                          "aiStatus"
+                        ]
+                      }
+                    },
+                    "nextCursor": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "items",
+                    "nextCursor"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "example": {
+                  "type": "unauthorized",
+                  "title": "Unauthorized",
+                  "status": 401,
+                  "requestId": "0199f0c4-5d2e-7b31-8c4f-6a7b8c9d0e1f"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "example": {
+                  "type": "forbidden",
+                  "title": "Forbidden",
+                  "status": 403,
+                  "requestId": "0199f0c4-5d2e-7b31-8c4f-6a7b8c9d0e1f"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "example": {
+                  "type": "not_found",
+                  "title": "Not found",
+                  "status": 404,
+                  "requestId": "0199f0c4-5d2e-7b31-8c4f-6a7b8c9d0e1f"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Invalid request",
+            "content": {
+              "application/json": {
+                "example": {
+                  "type": "validation_error",
+                  "title": "Invalid request",
+                  "status": 422,
+                  "errors": [
+                    {
+                      "path": "email",
+                      "message": "Invalid input: expected string, received undefined"
+                    }
+                  ],
+                  "requestId": "0199f0c4-5d2e-7b31-8c4f-6a7b8c9d0e1f"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too many requests: 300 per 60 s by default (RATE_LIMIT_API_PER_MINUTE)",
+            "headers": {
+              "Retry-After": {
+                "schema": {
+                  "type": "integer",
+                  "exclusiveMinimum": 0,
+                  "description": "Seconds until the limit window resets"
+                },
+                "required": true,
+                "description": "Seconds until the limit window resets"
+              }
+            },
+            "content": {
+              "application/json": {
+                "example": {
+                  "type": "rate_limited",
+                  "title": "Too many requests",
+                  "status": 429,
+                  "requestId": "0199f0c4-5d2e-7b31-8c4f-6a7b8c9d0e1f"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal error",
+            "content": {
+              "application/json": {
+                "example": {
+                  "type": "internal_error",
+                  "title": "Internal error",
+                  "status": 500,
+                  "requestId": "0199f0c4-5d2e-7b31-8c4f-6a7b8c9d0e1f"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
       }
     },
     "/applications/{id}": {
@@ -3100,6 +3536,1718 @@
                   "type": "not_found",
                   "title": "Not found",
                   "status": 404,
+                  "requestId": "0199f0c4-5d2e-7b31-8c4f-6a7b8c9d0e1f"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Invalid request",
+            "content": {
+              "application/json": {
+                "example": {
+                  "type": "validation_error",
+                  "title": "Invalid request",
+                  "status": 422,
+                  "errors": [
+                    {
+                      "path": "email",
+                      "message": "Invalid input: expected string, received undefined"
+                    }
+                  ],
+                  "requestId": "0199f0c4-5d2e-7b31-8c4f-6a7b8c9d0e1f"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too many requests: 300 per 60 s by default (RATE_LIMIT_API_PER_MINUTE)",
+            "headers": {
+              "Retry-After": {
+                "schema": {
+                  "type": "integer",
+                  "exclusiveMinimum": 0,
+                  "description": "Seconds until the limit window resets"
+                },
+                "required": true,
+                "description": "Seconds until the limit window resets"
+              }
+            },
+            "content": {
+              "application/json": {
+                "example": {
+                  "type": "rate_limited",
+                  "title": "Too many requests",
+                  "status": 429,
+                  "requestId": "0199f0c4-5d2e-7b31-8c4f-6a7b8c9d0e1f"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal error",
+            "content": {
+              "application/json": {
+                "example": {
+                  "type": "internal_error",
+                  "title": "Internal error",
+                  "status": 500,
+                  "requestId": "0199f0c4-5d2e-7b31-8c4f-6a7b8c9d0e1f"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/applications/board": {
+      "get": {
+        "tags": [
+          "applications"
+        ],
+        "summary": "Read the kanban board of the active search",
+        "description": "Filters are comma lists (stage, source, silence), q searches company and position, hasScore is true or false. Without searchId only the active search is read. Every stage has its count; rejected, ghosted and withdrawn carry items only when named in expand.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": false,
+            "name": "source",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200
+            },
+            "required": false,
+            "name": "q",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "true",
+                "false"
+              ]
+            },
+            "required": false,
+            "name": "hasScore",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": false,
+            "name": "silence",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": false,
+            "name": "expand",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The board columns by stage",
+            "content": {
+              "application/json": {
+                "example": {
+                  "columns": {
+                    "applied": {
+                      "count": 0,
+                      "items": []
+                    },
+                    "screening": {
+                      "count": 1,
+                      "items": [
+                        {
+                          "id": "0199f1a7-3c4d-7e5f-8a6b-9c0d1e2f3a4b",
+                          "company": "Смерека Софт",
+                          "position": "Backend developer",
+                          "source": "linkedin",
+                          "salaryMin": null,
+                          "salaryMax": 5000,
+                          "currency": "EUR",
+                          "matchScore": 78,
+                          "currentStage": "screening",
+                          "isDraft": false,
+                          "lastEventAt": "2026-10-18T14:10:00.000Z",
+                          "daysInStage": 4,
+                          "daysSinceLastEvent": 4,
+                          "silenceLevel": "warn",
+                          "stack": [
+                            "Go",
+                            "Kubernetes",
+                            "gRPC"
+                          ],
+                          "stackCount": 4,
+                          "nextScheduledEvent": {
+                            "kind": "screening_call",
+                            "startsAt": "2026-10-23T13:00:00.000Z"
+                          },
+                          "aiStatus": "processing"
+                        }
+                      ]
+                    },
+                    "tech_interview": {
+                      "count": 0,
+                      "items": []
+                    },
+                    "final": {
+                      "count": 0,
+                      "items": []
+                    },
+                    "offer": {
+                      "count": 0,
+                      "items": []
+                    },
+                    "rejected": {
+                      "count": 12,
+                      "items": null
+                    },
+                    "ghosted": {
+                      "count": 5,
+                      "items": null
+                    },
+                    "withdrawn": {
+                      "count": 1,
+                      "items": null
+                    }
+                  }
+                },
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "columns": {
+                      "type": "object",
+                      "properties": {
+                        "applied": {
+                          "type": "object",
+                          "properties": {
+                            "count": {
+                              "type": "number",
+                              "minimum": 0
+                            },
+                            "items": {
+                              "type": [
+                                "array",
+                                "null"
+                              ],
+                              "items": {
+                                "type": "object",
+                                "properties": {
+                                  "id": {
+                                    "type": "string",
+                                    "format": "uuid"
+                                  },
+                                  "company": {
+                                    "type": "string",
+                                    "minLength": 1
+                                  },
+                                  "position": {
+                                    "type": "string",
+                                    "minLength": 1
+                                  },
+                                  "source": {
+                                    "type": "string",
+                                    "enum": [
+                                      "djinni",
+                                      "dou",
+                                      "robota",
+                                      "workua",
+                                      "linkedin",
+                                      "referral",
+                                      "company_site",
+                                      "other"
+                                    ]
+                                  },
+                                  "salaryMin": {
+                                    "type": [
+                                      "integer",
+                                      "null"
+                                    ],
+                                    "minimum": 0
+                                  },
+                                  "salaryMax": {
+                                    "type": [
+                                      "integer",
+                                      "null"
+                                    ],
+                                    "minimum": 0
+                                  },
+                                  "currency": {
+                                    "type": [
+                                      "string",
+                                      "null"
+                                    ],
+                                    "pattern": "^[A-Z]{3}$"
+                                  },
+                                  "matchScore": {
+                                    "type": [
+                                      "integer",
+                                      "null"
+                                    ],
+                                    "minimum": 0,
+                                    "maximum": 100
+                                  },
+                                  "currentStage": {
+                                    "type": "string",
+                                    "enum": [
+                                      "applied",
+                                      "screening",
+                                      "tech_interview",
+                                      "final",
+                                      "offer",
+                                      "rejected",
+                                      "ghosted",
+                                      "withdrawn"
+                                    ]
+                                  },
+                                  "isDraft": {
+                                    "type": "boolean"
+                                  },
+                                  "lastEventAt": {
+                                    "type": "string",
+                                    "format": "date-time"
+                                  },
+                                  "daysInStage": {
+                                    "type": "integer",
+                                    "minimum": 0
+                                  },
+                                  "daysSinceLastEvent": {
+                                    "type": "integer",
+                                    "minimum": 0
+                                  },
+                                  "silenceLevel": {
+                                    "type": "string",
+                                    "enum": [
+                                      "none",
+                                      "warn",
+                                      "silent"
+                                    ]
+                                  },
+                                  "stack": {
+                                    "type": "array",
+                                    "items": {
+                                      "type": "string"
+                                    },
+                                    "maxItems": 3
+                                  },
+                                  "stackCount": {
+                                    "type": "number",
+                                    "minimum": 0
+                                  },
+                                  "nextScheduledEvent": {
+                                    "type": [
+                                      "object",
+                                      "null"
+                                    ],
+                                    "properties": {
+                                      "kind": {
+                                        "type": "string",
+                                        "enum": [
+                                          "screening_call",
+                                          "tech_interview",
+                                          "final_interview",
+                                          "offer_call",
+                                          "other"
+                                        ]
+                                      },
+                                      "startsAt": {
+                                        "type": "string",
+                                        "format": "date-time"
+                                      }
+                                    },
+                                    "required": [
+                                      "kind",
+                                      "startsAt"
+                                    ]
+                                  },
+                                  "aiStatus": {
+                                    "type": [
+                                      "string",
+                                      "null"
+                                    ],
+                                    "enum": [
+                                      "queued",
+                                      "processing",
+                                      "done",
+                                      "failed",
+                                      null
+                                    ]
+                                  }
+                                },
+                                "required": [
+                                  "id",
+                                  "company",
+                                  "position",
+                                  "source",
+                                  "salaryMin",
+                                  "salaryMax",
+                                  "currency",
+                                  "matchScore",
+                                  "currentStage",
+                                  "isDraft",
+                                  "lastEventAt",
+                                  "daysInStage",
+                                  "daysSinceLastEvent",
+                                  "silenceLevel",
+                                  "stack",
+                                  "stackCount",
+                                  "nextScheduledEvent",
+                                  "aiStatus"
+                                ]
+                              }
+                            }
+                          },
+                          "required": [
+                            "count",
+                            "items"
+                          ]
+                        },
+                        "screening": {
+                          "type": "object",
+                          "properties": {
+                            "count": {
+                              "type": "number",
+                              "minimum": 0
+                            },
+                            "items": {
+                              "type": [
+                                "array",
+                                "null"
+                              ],
+                              "items": {
+                                "type": "object",
+                                "properties": {
+                                  "id": {
+                                    "type": "string",
+                                    "format": "uuid"
+                                  },
+                                  "company": {
+                                    "type": "string",
+                                    "minLength": 1
+                                  },
+                                  "position": {
+                                    "type": "string",
+                                    "minLength": 1
+                                  },
+                                  "source": {
+                                    "type": "string",
+                                    "enum": [
+                                      "djinni",
+                                      "dou",
+                                      "robota",
+                                      "workua",
+                                      "linkedin",
+                                      "referral",
+                                      "company_site",
+                                      "other"
+                                    ]
+                                  },
+                                  "salaryMin": {
+                                    "type": [
+                                      "integer",
+                                      "null"
+                                    ],
+                                    "minimum": 0
+                                  },
+                                  "salaryMax": {
+                                    "type": [
+                                      "integer",
+                                      "null"
+                                    ],
+                                    "minimum": 0
+                                  },
+                                  "currency": {
+                                    "type": [
+                                      "string",
+                                      "null"
+                                    ],
+                                    "pattern": "^[A-Z]{3}$"
+                                  },
+                                  "matchScore": {
+                                    "type": [
+                                      "integer",
+                                      "null"
+                                    ],
+                                    "minimum": 0,
+                                    "maximum": 100
+                                  },
+                                  "currentStage": {
+                                    "type": "string",
+                                    "enum": [
+                                      "applied",
+                                      "screening",
+                                      "tech_interview",
+                                      "final",
+                                      "offer",
+                                      "rejected",
+                                      "ghosted",
+                                      "withdrawn"
+                                    ]
+                                  },
+                                  "isDraft": {
+                                    "type": "boolean"
+                                  },
+                                  "lastEventAt": {
+                                    "type": "string",
+                                    "format": "date-time"
+                                  },
+                                  "daysInStage": {
+                                    "type": "integer",
+                                    "minimum": 0
+                                  },
+                                  "daysSinceLastEvent": {
+                                    "type": "integer",
+                                    "minimum": 0
+                                  },
+                                  "silenceLevel": {
+                                    "type": "string",
+                                    "enum": [
+                                      "none",
+                                      "warn",
+                                      "silent"
+                                    ]
+                                  },
+                                  "stack": {
+                                    "type": "array",
+                                    "items": {
+                                      "type": "string"
+                                    },
+                                    "maxItems": 3
+                                  },
+                                  "stackCount": {
+                                    "type": "number",
+                                    "minimum": 0
+                                  },
+                                  "nextScheduledEvent": {
+                                    "type": [
+                                      "object",
+                                      "null"
+                                    ],
+                                    "properties": {
+                                      "kind": {
+                                        "type": "string",
+                                        "enum": [
+                                          "screening_call",
+                                          "tech_interview",
+                                          "final_interview",
+                                          "offer_call",
+                                          "other"
+                                        ]
+                                      },
+                                      "startsAt": {
+                                        "type": "string",
+                                        "format": "date-time"
+                                      }
+                                    },
+                                    "required": [
+                                      "kind",
+                                      "startsAt"
+                                    ]
+                                  },
+                                  "aiStatus": {
+                                    "type": [
+                                      "string",
+                                      "null"
+                                    ],
+                                    "enum": [
+                                      "queued",
+                                      "processing",
+                                      "done",
+                                      "failed",
+                                      null
+                                    ]
+                                  }
+                                },
+                                "required": [
+                                  "id",
+                                  "company",
+                                  "position",
+                                  "source",
+                                  "salaryMin",
+                                  "salaryMax",
+                                  "currency",
+                                  "matchScore",
+                                  "currentStage",
+                                  "isDraft",
+                                  "lastEventAt",
+                                  "daysInStage",
+                                  "daysSinceLastEvent",
+                                  "silenceLevel",
+                                  "stack",
+                                  "stackCount",
+                                  "nextScheduledEvent",
+                                  "aiStatus"
+                                ]
+                              }
+                            }
+                          },
+                          "required": [
+                            "count",
+                            "items"
+                          ]
+                        },
+                        "tech_interview": {
+                          "type": "object",
+                          "properties": {
+                            "count": {
+                              "type": "number",
+                              "minimum": 0
+                            },
+                            "items": {
+                              "type": [
+                                "array",
+                                "null"
+                              ],
+                              "items": {
+                                "type": "object",
+                                "properties": {
+                                  "id": {
+                                    "type": "string",
+                                    "format": "uuid"
+                                  },
+                                  "company": {
+                                    "type": "string",
+                                    "minLength": 1
+                                  },
+                                  "position": {
+                                    "type": "string",
+                                    "minLength": 1
+                                  },
+                                  "source": {
+                                    "type": "string",
+                                    "enum": [
+                                      "djinni",
+                                      "dou",
+                                      "robota",
+                                      "workua",
+                                      "linkedin",
+                                      "referral",
+                                      "company_site",
+                                      "other"
+                                    ]
+                                  },
+                                  "salaryMin": {
+                                    "type": [
+                                      "integer",
+                                      "null"
+                                    ],
+                                    "minimum": 0
+                                  },
+                                  "salaryMax": {
+                                    "type": [
+                                      "integer",
+                                      "null"
+                                    ],
+                                    "minimum": 0
+                                  },
+                                  "currency": {
+                                    "type": [
+                                      "string",
+                                      "null"
+                                    ],
+                                    "pattern": "^[A-Z]{3}$"
+                                  },
+                                  "matchScore": {
+                                    "type": [
+                                      "integer",
+                                      "null"
+                                    ],
+                                    "minimum": 0,
+                                    "maximum": 100
+                                  },
+                                  "currentStage": {
+                                    "type": "string",
+                                    "enum": [
+                                      "applied",
+                                      "screening",
+                                      "tech_interview",
+                                      "final",
+                                      "offer",
+                                      "rejected",
+                                      "ghosted",
+                                      "withdrawn"
+                                    ]
+                                  },
+                                  "isDraft": {
+                                    "type": "boolean"
+                                  },
+                                  "lastEventAt": {
+                                    "type": "string",
+                                    "format": "date-time"
+                                  },
+                                  "daysInStage": {
+                                    "type": "integer",
+                                    "minimum": 0
+                                  },
+                                  "daysSinceLastEvent": {
+                                    "type": "integer",
+                                    "minimum": 0
+                                  },
+                                  "silenceLevel": {
+                                    "type": "string",
+                                    "enum": [
+                                      "none",
+                                      "warn",
+                                      "silent"
+                                    ]
+                                  },
+                                  "stack": {
+                                    "type": "array",
+                                    "items": {
+                                      "type": "string"
+                                    },
+                                    "maxItems": 3
+                                  },
+                                  "stackCount": {
+                                    "type": "number",
+                                    "minimum": 0
+                                  },
+                                  "nextScheduledEvent": {
+                                    "type": [
+                                      "object",
+                                      "null"
+                                    ],
+                                    "properties": {
+                                      "kind": {
+                                        "type": "string",
+                                        "enum": [
+                                          "screening_call",
+                                          "tech_interview",
+                                          "final_interview",
+                                          "offer_call",
+                                          "other"
+                                        ]
+                                      },
+                                      "startsAt": {
+                                        "type": "string",
+                                        "format": "date-time"
+                                      }
+                                    },
+                                    "required": [
+                                      "kind",
+                                      "startsAt"
+                                    ]
+                                  },
+                                  "aiStatus": {
+                                    "type": [
+                                      "string",
+                                      "null"
+                                    ],
+                                    "enum": [
+                                      "queued",
+                                      "processing",
+                                      "done",
+                                      "failed",
+                                      null
+                                    ]
+                                  }
+                                },
+                                "required": [
+                                  "id",
+                                  "company",
+                                  "position",
+                                  "source",
+                                  "salaryMin",
+                                  "salaryMax",
+                                  "currency",
+                                  "matchScore",
+                                  "currentStage",
+                                  "isDraft",
+                                  "lastEventAt",
+                                  "daysInStage",
+                                  "daysSinceLastEvent",
+                                  "silenceLevel",
+                                  "stack",
+                                  "stackCount",
+                                  "nextScheduledEvent",
+                                  "aiStatus"
+                                ]
+                              }
+                            }
+                          },
+                          "required": [
+                            "count",
+                            "items"
+                          ]
+                        },
+                        "final": {
+                          "type": "object",
+                          "properties": {
+                            "count": {
+                              "type": "number",
+                              "minimum": 0
+                            },
+                            "items": {
+                              "type": [
+                                "array",
+                                "null"
+                              ],
+                              "items": {
+                                "type": "object",
+                                "properties": {
+                                  "id": {
+                                    "type": "string",
+                                    "format": "uuid"
+                                  },
+                                  "company": {
+                                    "type": "string",
+                                    "minLength": 1
+                                  },
+                                  "position": {
+                                    "type": "string",
+                                    "minLength": 1
+                                  },
+                                  "source": {
+                                    "type": "string",
+                                    "enum": [
+                                      "djinni",
+                                      "dou",
+                                      "robota",
+                                      "workua",
+                                      "linkedin",
+                                      "referral",
+                                      "company_site",
+                                      "other"
+                                    ]
+                                  },
+                                  "salaryMin": {
+                                    "type": [
+                                      "integer",
+                                      "null"
+                                    ],
+                                    "minimum": 0
+                                  },
+                                  "salaryMax": {
+                                    "type": [
+                                      "integer",
+                                      "null"
+                                    ],
+                                    "minimum": 0
+                                  },
+                                  "currency": {
+                                    "type": [
+                                      "string",
+                                      "null"
+                                    ],
+                                    "pattern": "^[A-Z]{3}$"
+                                  },
+                                  "matchScore": {
+                                    "type": [
+                                      "integer",
+                                      "null"
+                                    ],
+                                    "minimum": 0,
+                                    "maximum": 100
+                                  },
+                                  "currentStage": {
+                                    "type": "string",
+                                    "enum": [
+                                      "applied",
+                                      "screening",
+                                      "tech_interview",
+                                      "final",
+                                      "offer",
+                                      "rejected",
+                                      "ghosted",
+                                      "withdrawn"
+                                    ]
+                                  },
+                                  "isDraft": {
+                                    "type": "boolean"
+                                  },
+                                  "lastEventAt": {
+                                    "type": "string",
+                                    "format": "date-time"
+                                  },
+                                  "daysInStage": {
+                                    "type": "integer",
+                                    "minimum": 0
+                                  },
+                                  "daysSinceLastEvent": {
+                                    "type": "integer",
+                                    "minimum": 0
+                                  },
+                                  "silenceLevel": {
+                                    "type": "string",
+                                    "enum": [
+                                      "none",
+                                      "warn",
+                                      "silent"
+                                    ]
+                                  },
+                                  "stack": {
+                                    "type": "array",
+                                    "items": {
+                                      "type": "string"
+                                    },
+                                    "maxItems": 3
+                                  },
+                                  "stackCount": {
+                                    "type": "number",
+                                    "minimum": 0
+                                  },
+                                  "nextScheduledEvent": {
+                                    "type": [
+                                      "object",
+                                      "null"
+                                    ],
+                                    "properties": {
+                                      "kind": {
+                                        "type": "string",
+                                        "enum": [
+                                          "screening_call",
+                                          "tech_interview",
+                                          "final_interview",
+                                          "offer_call",
+                                          "other"
+                                        ]
+                                      },
+                                      "startsAt": {
+                                        "type": "string",
+                                        "format": "date-time"
+                                      }
+                                    },
+                                    "required": [
+                                      "kind",
+                                      "startsAt"
+                                    ]
+                                  },
+                                  "aiStatus": {
+                                    "type": [
+                                      "string",
+                                      "null"
+                                    ],
+                                    "enum": [
+                                      "queued",
+                                      "processing",
+                                      "done",
+                                      "failed",
+                                      null
+                                    ]
+                                  }
+                                },
+                                "required": [
+                                  "id",
+                                  "company",
+                                  "position",
+                                  "source",
+                                  "salaryMin",
+                                  "salaryMax",
+                                  "currency",
+                                  "matchScore",
+                                  "currentStage",
+                                  "isDraft",
+                                  "lastEventAt",
+                                  "daysInStage",
+                                  "daysSinceLastEvent",
+                                  "silenceLevel",
+                                  "stack",
+                                  "stackCount",
+                                  "nextScheduledEvent",
+                                  "aiStatus"
+                                ]
+                              }
+                            }
+                          },
+                          "required": [
+                            "count",
+                            "items"
+                          ]
+                        },
+                        "offer": {
+                          "type": "object",
+                          "properties": {
+                            "count": {
+                              "type": "number",
+                              "minimum": 0
+                            },
+                            "items": {
+                              "type": [
+                                "array",
+                                "null"
+                              ],
+                              "items": {
+                                "type": "object",
+                                "properties": {
+                                  "id": {
+                                    "type": "string",
+                                    "format": "uuid"
+                                  },
+                                  "company": {
+                                    "type": "string",
+                                    "minLength": 1
+                                  },
+                                  "position": {
+                                    "type": "string",
+                                    "minLength": 1
+                                  },
+                                  "source": {
+                                    "type": "string",
+                                    "enum": [
+                                      "djinni",
+                                      "dou",
+                                      "robota",
+                                      "workua",
+                                      "linkedin",
+                                      "referral",
+                                      "company_site",
+                                      "other"
+                                    ]
+                                  },
+                                  "salaryMin": {
+                                    "type": [
+                                      "integer",
+                                      "null"
+                                    ],
+                                    "minimum": 0
+                                  },
+                                  "salaryMax": {
+                                    "type": [
+                                      "integer",
+                                      "null"
+                                    ],
+                                    "minimum": 0
+                                  },
+                                  "currency": {
+                                    "type": [
+                                      "string",
+                                      "null"
+                                    ],
+                                    "pattern": "^[A-Z]{3}$"
+                                  },
+                                  "matchScore": {
+                                    "type": [
+                                      "integer",
+                                      "null"
+                                    ],
+                                    "minimum": 0,
+                                    "maximum": 100
+                                  },
+                                  "currentStage": {
+                                    "type": "string",
+                                    "enum": [
+                                      "applied",
+                                      "screening",
+                                      "tech_interview",
+                                      "final",
+                                      "offer",
+                                      "rejected",
+                                      "ghosted",
+                                      "withdrawn"
+                                    ]
+                                  },
+                                  "isDraft": {
+                                    "type": "boolean"
+                                  },
+                                  "lastEventAt": {
+                                    "type": "string",
+                                    "format": "date-time"
+                                  },
+                                  "daysInStage": {
+                                    "type": "integer",
+                                    "minimum": 0
+                                  },
+                                  "daysSinceLastEvent": {
+                                    "type": "integer",
+                                    "minimum": 0
+                                  },
+                                  "silenceLevel": {
+                                    "type": "string",
+                                    "enum": [
+                                      "none",
+                                      "warn",
+                                      "silent"
+                                    ]
+                                  },
+                                  "stack": {
+                                    "type": "array",
+                                    "items": {
+                                      "type": "string"
+                                    },
+                                    "maxItems": 3
+                                  },
+                                  "stackCount": {
+                                    "type": "number",
+                                    "minimum": 0
+                                  },
+                                  "nextScheduledEvent": {
+                                    "type": [
+                                      "object",
+                                      "null"
+                                    ],
+                                    "properties": {
+                                      "kind": {
+                                        "type": "string",
+                                        "enum": [
+                                          "screening_call",
+                                          "tech_interview",
+                                          "final_interview",
+                                          "offer_call",
+                                          "other"
+                                        ]
+                                      },
+                                      "startsAt": {
+                                        "type": "string",
+                                        "format": "date-time"
+                                      }
+                                    },
+                                    "required": [
+                                      "kind",
+                                      "startsAt"
+                                    ]
+                                  },
+                                  "aiStatus": {
+                                    "type": [
+                                      "string",
+                                      "null"
+                                    ],
+                                    "enum": [
+                                      "queued",
+                                      "processing",
+                                      "done",
+                                      "failed",
+                                      null
+                                    ]
+                                  }
+                                },
+                                "required": [
+                                  "id",
+                                  "company",
+                                  "position",
+                                  "source",
+                                  "salaryMin",
+                                  "salaryMax",
+                                  "currency",
+                                  "matchScore",
+                                  "currentStage",
+                                  "isDraft",
+                                  "lastEventAt",
+                                  "daysInStage",
+                                  "daysSinceLastEvent",
+                                  "silenceLevel",
+                                  "stack",
+                                  "stackCount",
+                                  "nextScheduledEvent",
+                                  "aiStatus"
+                                ]
+                              }
+                            }
+                          },
+                          "required": [
+                            "count",
+                            "items"
+                          ]
+                        },
+                        "rejected": {
+                          "type": "object",
+                          "properties": {
+                            "count": {
+                              "type": "number",
+                              "minimum": 0
+                            },
+                            "items": {
+                              "type": [
+                                "array",
+                                "null"
+                              ],
+                              "items": {
+                                "type": "object",
+                                "properties": {
+                                  "id": {
+                                    "type": "string",
+                                    "format": "uuid"
+                                  },
+                                  "company": {
+                                    "type": "string",
+                                    "minLength": 1
+                                  },
+                                  "position": {
+                                    "type": "string",
+                                    "minLength": 1
+                                  },
+                                  "source": {
+                                    "type": "string",
+                                    "enum": [
+                                      "djinni",
+                                      "dou",
+                                      "robota",
+                                      "workua",
+                                      "linkedin",
+                                      "referral",
+                                      "company_site",
+                                      "other"
+                                    ]
+                                  },
+                                  "salaryMin": {
+                                    "type": [
+                                      "integer",
+                                      "null"
+                                    ],
+                                    "minimum": 0
+                                  },
+                                  "salaryMax": {
+                                    "type": [
+                                      "integer",
+                                      "null"
+                                    ],
+                                    "minimum": 0
+                                  },
+                                  "currency": {
+                                    "type": [
+                                      "string",
+                                      "null"
+                                    ],
+                                    "pattern": "^[A-Z]{3}$"
+                                  },
+                                  "matchScore": {
+                                    "type": [
+                                      "integer",
+                                      "null"
+                                    ],
+                                    "minimum": 0,
+                                    "maximum": 100
+                                  },
+                                  "currentStage": {
+                                    "type": "string",
+                                    "enum": [
+                                      "applied",
+                                      "screening",
+                                      "tech_interview",
+                                      "final",
+                                      "offer",
+                                      "rejected",
+                                      "ghosted",
+                                      "withdrawn"
+                                    ]
+                                  },
+                                  "isDraft": {
+                                    "type": "boolean"
+                                  },
+                                  "lastEventAt": {
+                                    "type": "string",
+                                    "format": "date-time"
+                                  },
+                                  "daysInStage": {
+                                    "type": "integer",
+                                    "minimum": 0
+                                  },
+                                  "daysSinceLastEvent": {
+                                    "type": "integer",
+                                    "minimum": 0
+                                  },
+                                  "silenceLevel": {
+                                    "type": "string",
+                                    "enum": [
+                                      "none",
+                                      "warn",
+                                      "silent"
+                                    ]
+                                  },
+                                  "stack": {
+                                    "type": "array",
+                                    "items": {
+                                      "type": "string"
+                                    },
+                                    "maxItems": 3
+                                  },
+                                  "stackCount": {
+                                    "type": "number",
+                                    "minimum": 0
+                                  },
+                                  "nextScheduledEvent": {
+                                    "type": [
+                                      "object",
+                                      "null"
+                                    ],
+                                    "properties": {
+                                      "kind": {
+                                        "type": "string",
+                                        "enum": [
+                                          "screening_call",
+                                          "tech_interview",
+                                          "final_interview",
+                                          "offer_call",
+                                          "other"
+                                        ]
+                                      },
+                                      "startsAt": {
+                                        "type": "string",
+                                        "format": "date-time"
+                                      }
+                                    },
+                                    "required": [
+                                      "kind",
+                                      "startsAt"
+                                    ]
+                                  },
+                                  "aiStatus": {
+                                    "type": [
+                                      "string",
+                                      "null"
+                                    ],
+                                    "enum": [
+                                      "queued",
+                                      "processing",
+                                      "done",
+                                      "failed",
+                                      null
+                                    ]
+                                  }
+                                },
+                                "required": [
+                                  "id",
+                                  "company",
+                                  "position",
+                                  "source",
+                                  "salaryMin",
+                                  "salaryMax",
+                                  "currency",
+                                  "matchScore",
+                                  "currentStage",
+                                  "isDraft",
+                                  "lastEventAt",
+                                  "daysInStage",
+                                  "daysSinceLastEvent",
+                                  "silenceLevel",
+                                  "stack",
+                                  "stackCount",
+                                  "nextScheduledEvent",
+                                  "aiStatus"
+                                ]
+                              }
+                            }
+                          },
+                          "required": [
+                            "count",
+                            "items"
+                          ]
+                        },
+                        "ghosted": {
+                          "type": "object",
+                          "properties": {
+                            "count": {
+                              "type": "number",
+                              "minimum": 0
+                            },
+                            "items": {
+                              "type": [
+                                "array",
+                                "null"
+                              ],
+                              "items": {
+                                "type": "object",
+                                "properties": {
+                                  "id": {
+                                    "type": "string",
+                                    "format": "uuid"
+                                  },
+                                  "company": {
+                                    "type": "string",
+                                    "minLength": 1
+                                  },
+                                  "position": {
+                                    "type": "string",
+                                    "minLength": 1
+                                  },
+                                  "source": {
+                                    "type": "string",
+                                    "enum": [
+                                      "djinni",
+                                      "dou",
+                                      "robota",
+                                      "workua",
+                                      "linkedin",
+                                      "referral",
+                                      "company_site",
+                                      "other"
+                                    ]
+                                  },
+                                  "salaryMin": {
+                                    "type": [
+                                      "integer",
+                                      "null"
+                                    ],
+                                    "minimum": 0
+                                  },
+                                  "salaryMax": {
+                                    "type": [
+                                      "integer",
+                                      "null"
+                                    ],
+                                    "minimum": 0
+                                  },
+                                  "currency": {
+                                    "type": [
+                                      "string",
+                                      "null"
+                                    ],
+                                    "pattern": "^[A-Z]{3}$"
+                                  },
+                                  "matchScore": {
+                                    "type": [
+                                      "integer",
+                                      "null"
+                                    ],
+                                    "minimum": 0,
+                                    "maximum": 100
+                                  },
+                                  "currentStage": {
+                                    "type": "string",
+                                    "enum": [
+                                      "applied",
+                                      "screening",
+                                      "tech_interview",
+                                      "final",
+                                      "offer",
+                                      "rejected",
+                                      "ghosted",
+                                      "withdrawn"
+                                    ]
+                                  },
+                                  "isDraft": {
+                                    "type": "boolean"
+                                  },
+                                  "lastEventAt": {
+                                    "type": "string",
+                                    "format": "date-time"
+                                  },
+                                  "daysInStage": {
+                                    "type": "integer",
+                                    "minimum": 0
+                                  },
+                                  "daysSinceLastEvent": {
+                                    "type": "integer",
+                                    "minimum": 0
+                                  },
+                                  "silenceLevel": {
+                                    "type": "string",
+                                    "enum": [
+                                      "none",
+                                      "warn",
+                                      "silent"
+                                    ]
+                                  },
+                                  "stack": {
+                                    "type": "array",
+                                    "items": {
+                                      "type": "string"
+                                    },
+                                    "maxItems": 3
+                                  },
+                                  "stackCount": {
+                                    "type": "number",
+                                    "minimum": 0
+                                  },
+                                  "nextScheduledEvent": {
+                                    "type": [
+                                      "object",
+                                      "null"
+                                    ],
+                                    "properties": {
+                                      "kind": {
+                                        "type": "string",
+                                        "enum": [
+                                          "screening_call",
+                                          "tech_interview",
+                                          "final_interview",
+                                          "offer_call",
+                                          "other"
+                                        ]
+                                      },
+                                      "startsAt": {
+                                        "type": "string",
+                                        "format": "date-time"
+                                      }
+                                    },
+                                    "required": [
+                                      "kind",
+                                      "startsAt"
+                                    ]
+                                  },
+                                  "aiStatus": {
+                                    "type": [
+                                      "string",
+                                      "null"
+                                    ],
+                                    "enum": [
+                                      "queued",
+                                      "processing",
+                                      "done",
+                                      "failed",
+                                      null
+                                    ]
+                                  }
+                                },
+                                "required": [
+                                  "id",
+                                  "company",
+                                  "position",
+                                  "source",
+                                  "salaryMin",
+                                  "salaryMax",
+                                  "currency",
+                                  "matchScore",
+                                  "currentStage",
+                                  "isDraft",
+                                  "lastEventAt",
+                                  "daysInStage",
+                                  "daysSinceLastEvent",
+                                  "silenceLevel",
+                                  "stack",
+                                  "stackCount",
+                                  "nextScheduledEvent",
+                                  "aiStatus"
+                                ]
+                              }
+                            }
+                          },
+                          "required": [
+                            "count",
+                            "items"
+                          ]
+                        },
+                        "withdrawn": {
+                          "type": "object",
+                          "properties": {
+                            "count": {
+                              "type": "number",
+                              "minimum": 0
+                            },
+                            "items": {
+                              "type": [
+                                "array",
+                                "null"
+                              ],
+                              "items": {
+                                "type": "object",
+                                "properties": {
+                                  "id": {
+                                    "type": "string",
+                                    "format": "uuid"
+                                  },
+                                  "company": {
+                                    "type": "string",
+                                    "minLength": 1
+                                  },
+                                  "position": {
+                                    "type": "string",
+                                    "minLength": 1
+                                  },
+                                  "source": {
+                                    "type": "string",
+                                    "enum": [
+                                      "djinni",
+                                      "dou",
+                                      "robota",
+                                      "workua",
+                                      "linkedin",
+                                      "referral",
+                                      "company_site",
+                                      "other"
+                                    ]
+                                  },
+                                  "salaryMin": {
+                                    "type": [
+                                      "integer",
+                                      "null"
+                                    ],
+                                    "minimum": 0
+                                  },
+                                  "salaryMax": {
+                                    "type": [
+                                      "integer",
+                                      "null"
+                                    ],
+                                    "minimum": 0
+                                  },
+                                  "currency": {
+                                    "type": [
+                                      "string",
+                                      "null"
+                                    ],
+                                    "pattern": "^[A-Z]{3}$"
+                                  },
+                                  "matchScore": {
+                                    "type": [
+                                      "integer",
+                                      "null"
+                                    ],
+                                    "minimum": 0,
+                                    "maximum": 100
+                                  },
+                                  "currentStage": {
+                                    "type": "string",
+                                    "enum": [
+                                      "applied",
+                                      "screening",
+                                      "tech_interview",
+                                      "final",
+                                      "offer",
+                                      "rejected",
+                                      "ghosted",
+                                      "withdrawn"
+                                    ]
+                                  },
+                                  "isDraft": {
+                                    "type": "boolean"
+                                  },
+                                  "lastEventAt": {
+                                    "type": "string",
+                                    "format": "date-time"
+                                  },
+                                  "daysInStage": {
+                                    "type": "integer",
+                                    "minimum": 0
+                                  },
+                                  "daysSinceLastEvent": {
+                                    "type": "integer",
+                                    "minimum": 0
+                                  },
+                                  "silenceLevel": {
+                                    "type": "string",
+                                    "enum": [
+                                      "none",
+                                      "warn",
+                                      "silent"
+                                    ]
+                                  },
+                                  "stack": {
+                                    "type": "array",
+                                    "items": {
+                                      "type": "string"
+                                    },
+                                    "maxItems": 3
+                                  },
+                                  "stackCount": {
+                                    "type": "number",
+                                    "minimum": 0
+                                  },
+                                  "nextScheduledEvent": {
+                                    "type": [
+                                      "object",
+                                      "null"
+                                    ],
+                                    "properties": {
+                                      "kind": {
+                                        "type": "string",
+                                        "enum": [
+                                          "screening_call",
+                                          "tech_interview",
+                                          "final_interview",
+                                          "offer_call",
+                                          "other"
+                                        ]
+                                      },
+                                      "startsAt": {
+                                        "type": "string",
+                                        "format": "date-time"
+                                      }
+                                    },
+                                    "required": [
+                                      "kind",
+                                      "startsAt"
+                                    ]
+                                  },
+                                  "aiStatus": {
+                                    "type": [
+                                      "string",
+                                      "null"
+                                    ],
+                                    "enum": [
+                                      "queued",
+                                      "processing",
+                                      "done",
+                                      "failed",
+                                      null
+                                    ]
+                                  }
+                                },
+                                "required": [
+                                  "id",
+                                  "company",
+                                  "position",
+                                  "source",
+                                  "salaryMin",
+                                  "salaryMax",
+                                  "currency",
+                                  "matchScore",
+                                  "currentStage",
+                                  "isDraft",
+                                  "lastEventAt",
+                                  "daysInStage",
+                                  "daysSinceLastEvent",
+                                  "silenceLevel",
+                                  "stack",
+                                  "stackCount",
+                                  "nextScheduledEvent",
+                                  "aiStatus"
+                                ]
+                              }
+                            }
+                          },
+                          "required": [
+                            "count",
+                            "items"
+                          ]
+                        }
+                      }
+                    }
+                  },
+                  "required": [
+                    "columns"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "example": {
+                  "type": "unauthorized",
+                  "title": "Unauthorized",
+                  "status": 401,
+                  "requestId": "0199f0c4-5d2e-7b31-8c4f-6a7b8c9d0e1f"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "example": {
+                  "type": "forbidden",
+                  "title": "Forbidden",
+                  "status": 403,
                   "requestId": "0199f0c4-5d2e-7b31-8c4f-6a7b8c9d0e1f"
                 },
                 "schema": {

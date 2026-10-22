@@ -10,6 +10,7 @@ import {
 import { z } from 'zod';
 
 import { errorResponses, jsonContent } from '../../openapi/route.js';
+import { APPLICATION_LIST_OPENAPI_PATHS } from './application-list.openapi.js';
 
 const NEW_APPLICATION = {
   company: 'Кавун Лабс',
@@ -118,4 +119,5 @@ export const APPLICATIONS_OPENAPI_PATHS: RouteConfig[] = [
     request: { params: idParams },
     responses: { 204: { description: 'The Application is deleted' }, ...ownedErrors },
   },
+  ...APPLICATION_LIST_OPENAPI_PATHS,
 ];

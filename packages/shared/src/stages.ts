@@ -19,11 +19,21 @@ export const TERMINAL_STAGES: readonly Stage[] = ['rejected', 'withdrawn'];
 
 export const ACTIVE_STAGES: readonly Stage[] = ['applied', 'screening', 'tech_interview', 'final'];
 
+export const OUTCOME_STAGES = [
+  'rejected',
+  'ghosted',
+  'withdrawn',
+] as const satisfies readonly Stage[];
+
+export const outcomeStageSchema = z.enum(OUTCOME_STAGES);
+
+export type OutcomeStage = z.infer<typeof outcomeStageSchema>;
+
 export const ALLOWED_TRANSITIONS: Record<Stage, readonly Stage[]> = {
-  applied: ['screening', 'tech_interview', 'rejected', 'ghosted', 'withdrawn'],
-  screening: ['tech_interview', 'final', 'offer', 'rejected', 'ghosted', 'withdrawn'],
-  tech_interview: ['tech_interview', 'final', 'offer', 'rejected', 'ghosted', 'withdrawn'],
-  final: ['offer', 'rejected', 'ghosted', 'withdrawn'],
+  applied: ['screening', 'tech_interview', ...OUTCOME_STAGES],
+  screening: ['tech_interview', 'final', 'offer', ...OUTCOME_STAGES],
+  tech_interview: ['tech_interview', 'final', 'offer', ...OUTCOME_STAGES],
+  final: ['offer', ...OUTCOME_STAGES],
   offer: ['withdrawn'],
   rejected: [],
   ghosted: ACTIVE_STAGES,

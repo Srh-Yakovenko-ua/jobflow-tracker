@@ -6,6 +6,7 @@ import {
   createOwnedApplication,
   createResume,
   createResumeVersion,
+  createScheduledEvent,
   createStageEvent,
   createUser,
   type OwnedApplication,
@@ -53,13 +54,6 @@ type OwnerCheckedRow = {
 async function createAiResult(prisma: PrismaService, userId: string): Promise<string> {
   const aiResult = await prisma.aiResult.create({ data: { ...AI_RESULT, userId } });
   return aiResult.id;
-}
-
-async function createScheduledEvent(prisma: PrismaService, applicationId: string): Promise<string> {
-  const event = await prisma.scheduledEvent.create({
-    data: { applicationId, kind: 'tech_interview', startsAt: new Date('2026-10-28T10:00:00Z') },
-  });
-  return event.id;
 }
 
 const OWNER_CHECKED_ROWS: OwnerCheckedRow[] = [
@@ -138,7 +132,11 @@ const OWNER_CHECKED_ROWS: OwnerCheckedRow[] = [
           applicationId: mine.applicationId,
           type: 'interview_soon',
           dueAt: new Date('2026-10-27T10:00:00Z'),
-          scheduledEventId: await createScheduledEvent(prisma, theirs.applicationId),
+          scheduledEventId: await createScheduledEvent(prisma, {
+            applicationId: theirs.applicationId,
+            kind: 'tech_interview',
+            startsAt: new Date('2026-10-28T10:00:00Z'),
+          }),
         },
       }),
   },

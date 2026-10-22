@@ -1,9 +1,43 @@
 import { fakerUK as faker } from '@faker-js/faker';
+import { SOURCES, type Stage, STAGES } from '@jobflow/shared';
 
-import type { Prisma, User, UserSettings } from '../generated/prisma/client.js';
+import type {
+  AiJobStatus,
+  Prisma,
+  ScheduledEventKind,
+  ScheduledEventStatus,
+  SearchStatus,
+  User,
+  UserSettings,
+} from '../generated/prisma/client.js';
 import type { PrismaService } from '../prisma/prisma.service.js';
+import { minutesBefore } from './time.js';
 
 export type OwnedApplication = { userId: string; searchId: string; applicationId: string };
+
+export type NewSearch = { userId: string; status?: SearchStatus };
+
+export type ApplicationRowInput = Omit<
+  Partial<Prisma.ApplicationCreateManyInput>,
+  'userId' | 'searchId' | 'lastEventAt'
+> & { lastEventAt: Date };
+
+export type NewApplicationRows = { userId: string; searchId: string; rows: ApplicationRowInput[] };
+
+export type NewScheduledEvent = {
+  applicationId: string;
+  kind: ScheduledEventKind;
+  startsAt: Date;
+  status?: ScheduledEventStatus;
+};
+
+export type NewAiJob = { userId: string; applicationId: string; status: AiJobStatus };
+
+export type LoadedBoardRow = ApplicationRowInput & {
+  currentStage: Stage;
+  stack: string[];
+  matchScore: number | null;
+};
 
 export type CompensatedEvent = { applicationId: string; compensatesEventId: string };
 
@@ -41,21 +75,93 @@ export function createUser(
   });
 }
 
+export async function createSearch(
+  prisma: PrismaService,
+  { userId, status = 'active' }: NewSearch,
+): Promise<string> {
+  const search = await prisma.search.create({
+    data: { userId, status, title: faker.lorem.words(2) },
+  });
+  return search.id;
+}
+
 export async function createOwnedApplication(prisma: PrismaService): Promise<OwnedApplication> {
   const user = await createUser(prisma);
-  const search = await prisma.search.create({
-    data: { userId: user.id, title: faker.lorem.words(2) },
-  });
+  const searchId = await createSearch(prisma, { userId: user.id });
   const application = await prisma.application.create({
     data: {
       userId: user.id,
-      searchId: search.id,
+      searchId,
       company: faker.company.name(),
       position: faker.person.jobTitle(),
       source: 'djinni',
     },
   });
-  return { userId: user.id, searchId: search.id, applicationId: application.id };
+  return { userId: user.id, searchId, applicationId: application.id };
+}
+
+export async function createApplicationRows(
+  prisma: PrismaService,
+  { userId, searchId, rows }: NewApplicationRows,
+): Promise<string[]> {
+  const created = await prisma.application.createManyAndReturn({
+    data: rows.map((row) => ({
+      company: faker.company.name(),
+      position: faker.person.jobTitle(),
+      source: faker.helpers.arrayElement(SOURCES),
+      ...row,
+      userId,
+      searchId,
+    })),
+    select: { id: true },
+  });
+  return created.map(({ id }) => id);
+}
+
+export async function createScheduledEvent(
+  prisma: PrismaService,
+  { status = 'planned', ...event }: NewScheduledEvent,
+): Promise<string> {
+  const created = await prisma.scheduledEvent.create({ data: { ...event, status } });
+  return created.id;
+}
+
+export async function createStageEvents(
+  prisma: PrismaService,
+  events: Prisma.StageEventCreateManyInput[],
+): Promise<void> {
+  await prisma.stageEvent.createMany({ data: events });
+}
+
+export async function createAiJob(prisma: PrismaService, job: NewAiJob): Promise<string> {
+  const created = await prisma.aiJob.create({ data: { ...job, kind: 'parse_vacancy' } });
+  return created.id;
+}
+
+const BOARD_STAGE_WEIGHTS: Record<Stage, number> = {
+  applied: 3,
+  screening: 2,
+  tech_interview: 1,
+  final: 1,
+  offer: 1,
+  rejected: 8,
+  ghosted: 5,
+  withdrawn: 1,
+};
+
+const BOARD_STAGE_CYCLE = STAGES.flatMap((stage) =>
+  Array.from({ length: BOARD_STAGE_WEIGHTS[stage] }, () => stage),
+);
+
+const BOARD_STACK = ['TypeScript', 'NestJS', 'PostgreSQL', 'Redis', 'Docker', 'Kafka'];
+
+export function loadedBoardRows(count: number): LoadedBoardRow[] {
+  return Array.from({ length: count }, (_, index) => ({
+    currentStage: BOARD_STAGE_CYCLE[index % BOARD_STAGE_CYCLE.length] ?? 'applied',
+    lastEventAt: minutesBefore(index + 1),
+    stack: BOARD_STACK.slice(0, index % (BOARD_STACK.length + 1)),
+    matchScore: index % 4 === 0 ? null : 40 + (index % 60),
+  }));
 }
 
 export async function createStageEvent(
