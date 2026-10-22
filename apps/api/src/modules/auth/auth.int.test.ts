@@ -20,6 +20,7 @@ import {
   signIn,
 } from '../../test/auth.js';
 import { memoryLog, withLogSink } from '../../test/memory-log.js';
+import { outboxRows } from '../../test/outbox.js';
 
 const REFRESH_COOKIE_ATTRIBUTES = {
   name: 'refresh_token',
@@ -41,11 +42,6 @@ describe('register and login with email and password', () => {
 
   const login = (body: object) => http().post('/api/v1/auth/login').send(body);
 
-  const outboxRows = () =>
-    testApp.prisma.outboxEvent.findMany({
-      select: { aggregate: true, aggregateId: true, eventType: true, payload: true },
-    });
-
   it('registers a user with default settings and exactly one active search', async () => {
     const response = await register(OLENA);
 
@@ -65,7 +61,7 @@ describe('register and login with email and password', () => {
   it('writes one user.registered outbox row with the new user id on register', async () => {
     const { user } = authResponseSchema.parse((await register(OLENA)).body);
 
-    expect(await outboxRows()).toEqual([
+    expect(await outboxRows(testApp.prisma)).toEqual([
       {
         aggregate: 'user',
         aggregateId: user.id,
@@ -106,7 +102,7 @@ describe('register and login with email and password', () => {
       detail: 'Email is already registered',
     });
     expect(await testApp.prisma.user.count()).toBe(1);
-    expect(await outboxRows()).toHaveLength(1);
+    expect(await outboxRows(testApp.prisma)).toHaveLength(1);
   });
 
   it('refuses a password shorter than 10 characters with 422 on the password path', async () => {

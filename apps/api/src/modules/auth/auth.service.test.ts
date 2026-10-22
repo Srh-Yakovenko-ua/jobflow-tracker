@@ -5,6 +5,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { conflict } from '../../common/app-error.js';
 import { PrismaService } from '../../prisma/prisma.service.js';
 import { NEW_USER_SETTINGS_ROW } from '../../test/factories.js';
+import { FAKE_TRANSACTION, FakePrisma } from '../../test/fake-prisma.js';
 import {
   AuthRepository,
   type NewPassword,
@@ -20,8 +21,6 @@ type InTransaction<T> = T & { client: unknown };
 
 const DUMMY_HASH = 'dummy-hash';
 
-const TRANSACTION = { name: 'change-password transaction' };
-
 const NOW = new Date('2026-10-21T10:00:00.000Z');
 
 const FAMILY_ID = '0199f0a0-0000-7000-8000-0000000000f1';
@@ -32,12 +31,6 @@ const ANNA: AuthUser = {
   displayName: 'Анна',
   locale: 'uk',
 };
-
-class FakePrisma {
-  $transaction<T>(work: (client: typeof TRANSACTION) => Promise<T>): Promise<T> {
-    return work(TRANSACTION);
-  }
-}
 
 class FakeSessionRepository {
   readonly revokedAll: InTransaction<RevokeAllInput>[] = [];
@@ -200,10 +193,10 @@ describe('AuthService.changePassword', () => {
     await service.changePassword({ userId: ANNA.id, input, keepFamilyId: FAMILY_ID });
 
     expect(repository.passwords).toEqual([
-      { userId: ANNA.id, passwordHash: 'hashed:a brand new secret', client: TRANSACTION },
+      { userId: ANNA.id, passwordHash: 'hashed:a brand new secret', client: FAKE_TRANSACTION },
     ]);
     expect(sessions.revokedAll).toEqual([
-      { userId: ANNA.id, now: NOW, keepFamilyId: FAMILY_ID, client: TRANSACTION },
+      { userId: ANNA.id, now: NOW, keepFamilyId: FAMILY_ID, client: FAKE_TRANSACTION },
     ]);
   });
 

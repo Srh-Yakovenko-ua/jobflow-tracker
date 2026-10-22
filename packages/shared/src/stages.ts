@@ -17,6 +17,8 @@ export type Stage = z.infer<typeof stageSchema>;
 
 export const TERMINAL_STAGES: readonly Stage[] = ['rejected', 'withdrawn'];
 
+export const ACTIVE_STAGES: readonly Stage[] = ['applied', 'screening', 'tech_interview', 'final'];
+
 export const ALLOWED_TRANSITIONS: Record<Stage, readonly Stage[]> = {
   applied: ['screening', 'tech_interview', 'rejected', 'ghosted', 'withdrawn'],
   screening: ['tech_interview', 'final', 'offer', 'rejected', 'ghosted', 'withdrawn'],
@@ -24,7 +26,7 @@ export const ALLOWED_TRANSITIONS: Record<Stage, readonly Stage[]> = {
   final: ['offer', 'rejected', 'ghosted', 'withdrawn'],
   offer: ['withdrawn'],
   rejected: [],
-  ghosted: ['applied', 'screening', 'tech_interview', 'final'],
+  ghosted: ACTIVE_STAGES,
   withdrawn: [],
 };
 

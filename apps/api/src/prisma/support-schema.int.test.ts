@@ -4,9 +4,12 @@ import { useTestDatabase } from '../test/database.js';
 import {
   compensationOf,
   createOwnedApplication,
+  createResume,
+  createResumeVersion,
   createStageEvent,
   createUser,
   type OwnedApplication,
+  resumeVersionData,
 } from '../test/factories.js';
 import type { PrismaService } from './prisma.service.js';
 
@@ -39,8 +42,6 @@ const ANALYTICS_READABLE_TABLES = [
   'user_settings',
 ];
 
-type ResumeOwner = { userId: string; resumeId: string };
-
 type OwnerPairs = { mine: OwnedApplication; theirs: OwnedApplication };
 
 type OwnerCheckedRow = {
@@ -48,30 +49,6 @@ type OwnerCheckedRow = {
   target: string;
   create: (prisma: PrismaService, owners: OwnerPairs) => Promise<unknown>;
 };
-
-async function createResume(prisma: PrismaService, userId: string): Promise<string> {
-  const resume = await prisma.resume.create({ data: { userId, title: 'Backend CV' } });
-  return resume.id;
-}
-
-function resumeVersionData(owner: ResumeOwner) {
-  return {
-    ...owner,
-    storageKey: `resumes/${owner.resumeId}/v1.pdf`,
-    filename: 'cv.pdf',
-    mime: 'application/pdf',
-    sizeBytes: 2048,
-    title: 'v1',
-  };
-}
-
-async function createResumeVersion(prisma: PrismaService, userId: string): Promise<string> {
-  const resumeId = await createResume(prisma, userId);
-  const version = await prisma.resumeVersion.create({
-    data: resumeVersionData({ userId, resumeId }),
-  });
-  return version.id;
-}
 
 async function createAiResult(prisma: PrismaService, userId: string): Promise<string> {
   const aiResult = await prisma.aiResult.create({ data: { ...AI_RESULT, userId } });
