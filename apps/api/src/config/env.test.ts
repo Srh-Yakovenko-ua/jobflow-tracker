@@ -1,13 +1,7 @@
-import { readFileSync } from 'node:fs';
-import { parseEnv as parseDotenv } from 'node:util';
-
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
+import { exampleEnv } from '../test/example-env.js';
 import { loadEnv, parseEnv, validateEnv } from './env.js';
-
-const exampleEnv = parseDotenv(
-  readFileSync(new URL('../../../../.env.example', import.meta.url), 'utf8'),
-);
 
 class ExitCalled extends Error {
   constructor(readonly code: string | number | null | undefined) {
@@ -106,6 +100,22 @@ describe('validateEnv', () => {
   it('reads NODE_ENV production', () => {
     expect(validateEnv({ ...exampleEnv, NODE_ENV: 'production' }).NODE_ENV).toBe('production');
   });
+
+  it.each([
+    { key: 'RATE_LIMIT_LOGIN_PER_MINUTE', fallback: 5 },
+    { key: 'RATE_LIMIT_REGISTER_PER_HOUR', fallback: 3 },
+    { key: 'RATE_LIMIT_AI_PER_HOUR', fallback: 30 },
+    { key: 'RATE_LIMIT_CAPTURE_PER_HOUR', fallback: 60 },
+    { key: 'RATE_LIMIT_API_PER_MINUTE', fallback: 300 },
+  ] as const)(
+    'defaults $key to $fallback when it is empty and reads it as a number',
+    ({ key, fallback }) => {
+      const defaulted = validateEnv({ ...exampleEnv, [key]: '' });
+      const configured = validateEnv({ ...exampleEnv, [key]: '17' });
+
+      expect([defaulted[key], configured[key]]).toEqual([fallback, 17]);
+    },
+  );
 });
 
 describe('parseEnv', () => {
@@ -119,6 +129,12 @@ describe('parseEnv', () => {
 
   it('treats an empty DATABASE_URL as missing', () => {
     expect(failedPaths({ ...exampleEnv, DATABASE_URL: '' })).toEqual(['DATABASE_URL']);
+  });
+
+  it('refuses a rate limit of 0', () => {
+    expect(failedPaths({ ...exampleEnv, RATE_LIMIT_LOGIN_PER_MINUTE: '0' })).toEqual([
+      'RATE_LIMIT_LOGIN_PER_MINUTE',
+    ]);
   });
 
   it('refuses a REDIS_URL with a scheme other than redis or rediss', () => {

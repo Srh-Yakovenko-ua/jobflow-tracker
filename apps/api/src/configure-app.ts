@@ -23,7 +23,7 @@ export function configureApp(app: NestExpressApplication): NestExpressApplicatio
   app.enableCors({
     origin: [config.get('WEB_ORIGIN', { infer: true })],
     credentials: true,
-    exposedHeaders: [REQUEST_ID_HEADER],
+    exposedHeaders: [REQUEST_ID_HEADER, 'Retry-After'],
   });
   app.use(rejectOutsidePrefix);
   app.useBodyParser('json', { limit: '1mb' });

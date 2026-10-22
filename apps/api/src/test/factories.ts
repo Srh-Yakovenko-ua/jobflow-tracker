@@ -23,13 +23,15 @@ export const NEW_USER_SETTINGS_ROW = {
   activeResumeVersionId: null,
 } satisfies Omit<UserSettings, 'userId' | 'createdAt' | 'updatedAt'>;
 
+export const randomEmail = (): string => `${faker.string.uuid()}@example.test`;
+
 export function createUser(
   prisma: PrismaService,
   overrides: Partial<Prisma.UserCreateInput> = {},
 ): Promise<User> {
   return prisma.user.create({
     data: {
-      email: `${faker.string.uuid()}@example.test`,
+      email: randomEmail(),
       displayName: faker.person.fullName(),
       settings: { create: {} },
       ...overrides,

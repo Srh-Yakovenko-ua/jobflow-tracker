@@ -2,6 +2,7 @@ import { z } from 'zod';
 
 const httpUrl = z.url({ protocol: /^https?$/ });
 const requiredText = z.string().min(1);
+const positiveCount = z.coerce.number().int().positive();
 
 export const envSchema = z.object({
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
@@ -18,7 +19,12 @@ export const envSchema = z.object({
   PORT: z.coerce.number().int().min(1).max(65535).default(4000),
   WEB_ORIGIN: httpUrl,
   AI_SERVICE_URL: httpUrl.default('http://localhost:8001'),
-  AI_DAILY_LIMIT: z.coerce.number().int().positive().default(50),
+  AI_DAILY_LIMIT: positiveCount.default(50),
+  RATE_LIMIT_LOGIN_PER_MINUTE: positiveCount.default(5),
+  RATE_LIMIT_REGISTER_PER_HOUR: positiveCount.default(3),
+  RATE_LIMIT_AI_PER_HOUR: positiveCount.default(30),
+  RATE_LIMIT_CAPTURE_PER_HOUR: positiveCount.default(60),
+  RATE_LIMIT_API_PER_MINUTE: positiveCount.default(300),
   VAPID_PUBLIC_KEY: z.string().optional(),
   VAPID_PRIVATE_KEY: z.string().optional(),
   SMTP_URL: z.url({ protocol: /^smtps?$/ }),
