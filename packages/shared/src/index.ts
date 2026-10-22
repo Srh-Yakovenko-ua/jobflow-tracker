@@ -8,6 +8,7 @@ export * from './schemas/application.js';
 export * from './schemas/auth.js';
 export * from './schemas/contact.js';
 export * from './schemas/error-response.js';
+export * from './schemas/health.js';
 export * from './schemas/note.js';
 export * from './schemas/pagination.js';
 export * from './schemas/resume-version.js';

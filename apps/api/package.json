@@ -24,9 +24,11 @@
     "db:reset": "prisma migrate reset --force && pnpm run db:seed",
     "db:erd": "prisma generate",
     "gen:keys": "node scripts/gen-keys.js",
+    "openapi": "node dist/openapi.js ../../docs/api/openapi.json",
     "postinstall": "DISABLE_ERD=true prisma generate"
   },
   "dependencies": {
+    "@asteasolutions/zod-to-openapi": "^9.1.0",
     "@bull-board/api": "^9.10.4",
     "@bull-board/express": "^9.10.4",
     "@jobflow/shared": "workspace:*",
@@ -49,6 +51,7 @@
     "rate-limiter-flexible": "^11.2.3",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.2",
+    "swagger-ui-express": "^5.0.1",
     "zod": "^4.6.7"
   },
   "devDependencies": {
@@ -61,6 +64,7 @@
     "@types/express": "^5.0.6",
     "@types/node": "^26.6.4",
     "@types/supertest": "^7.2.1",
+    "@types/swagger-ui-express": "^4.1.8",
     "@vitest/coverage-v8": "^4.1.12",
     "eslint": "^10.13.0",
     "prisma": "7.10.1",

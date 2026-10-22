@@ -1,7 +1,8 @@
+import type { Health, Readiness } from '@jobflow/shared';
 import { Controller, Get } from '@nestjs/common';
 
 import { Public } from '../auth/index.js';
-import { type Health, HealthService, type Readiness } from './health.service.js';
+import { HealthService } from './health.service.js';
 
 @Controller()
 @Public()

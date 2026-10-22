@@ -6,11 +6,11 @@ import { API_PREFIX } from '../../common/api-prefix.middleware.js';
 import { REFRESH_TOKEN_TTL_MS } from './refresh-tokens.js';
 import type { IssuedSession } from './session.service.js';
 
-const REFRESH_COOKIE = 'refresh_token';
+export const REFRESH_COOKIE = 'refresh_token';
 
-const CLIENT_HEADER = 'x-client';
+export const CLIENT_HEADER = 'x-client';
 
-const MOBILE_CLIENT = 'mobile';
+export const MOBILE_CLIENT = 'mobile';
 
 const COOKIE_SCOPE: CookieOptions = {
   httpOnly: true,

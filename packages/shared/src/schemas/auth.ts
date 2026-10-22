@@ -32,7 +32,9 @@ export const authUserSchema = z.object({
   locale: z.string().min(1),
 });
 
-export const refreshTokenSchema = z.string().regex(/^[A-Za-z0-9_-]{43}$/);
+const BASE64URL_256_BIT = /^[A-Za-z0-9_-]{43}$/;
+
+export const refreshTokenSchema = z.string().regex(BASE64URL_256_BIT);
 
 export const sessionTokensSchema = z.object({
   accessToken: z.string().min(1),
@@ -52,6 +54,17 @@ export const meResponseSchema = z.object({
   settings: userSettingsSchema,
 });
 
+export const publicJwkSchema = z.strictObject({
+  kty: z.literal('RSA'),
+  alg: z.literal('RS256'),
+  use: z.literal('sig'),
+  kid: z.string().regex(BASE64URL_256_BIT),
+  n: z.string().min(1),
+  e: z.string().min(1),
+});
+
+export const jwksResponseSchema = z.object({ keys: z.array(publicJwkSchema) });
+
 export type RegisterInput = z.infer<typeof registerInputSchema>;
 export type LoginInput = z.infer<typeof loginInputSchema>;
 export type ChangePasswordInput = z.infer<typeof changePasswordInputSchema>;
@@ -61,3 +74,5 @@ export type SessionTokens = z.infer<typeof sessionTokensSchema>;
 export type AuthResponse = z.infer<typeof authResponseSchema>;
 export type RefreshTokenBody = z.infer<typeof refreshTokenBodySchema>;
 export type MeResponse = z.infer<typeof meResponseSchema>;
+export type PublicJwk = z.infer<typeof publicJwkSchema>;
+export type JwksResponse = z.infer<typeof jwksResponseSchema>;

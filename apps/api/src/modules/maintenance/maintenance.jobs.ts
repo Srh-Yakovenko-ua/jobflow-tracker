@@ -11,8 +11,10 @@ export const pingJobSchema = z.object({
 
 export const pingBodySchema = pingJobSchema.pick({ holdMs: true });
 
+export const jobAcceptedSchema = z.object({ jobId: z.string().min(1) });
+
 export type PingJob = z.infer<typeof pingJobSchema>;
 
 export type PingBody = z.infer<typeof pingBodySchema>;
 
-export type JobAccepted = { jobId: string };
+export type JobAccepted = z.infer<typeof jobAcceptedSchema>;

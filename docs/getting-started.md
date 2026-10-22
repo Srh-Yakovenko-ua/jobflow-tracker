@@ -73,6 +73,8 @@ docker compose up -d --build --wait web
 
 У режимі розробки (`NODE_ENV=development`, як у `.env.example`) api показує Bull Board на http://localhost:4000/admin/queues: черги `ai`, `notifications`, `push`, `domain-events`, `maintenance` і задачі в них. Панель лише для перегляду, видаляти чи перезапускати задачі з неї не можна. В інших режимах цієї адреси немає.
 
+У тому ж режимі розробки Swagger UI з усіма маршрутами API відкривається на http://localhost:4000/api/docs, а документ OpenAPI 3.1 віддається на http://localhost:4000/api/docs/openapi.json. В інших режимах обидві адреси відповідають 404. Документ будується з тих самих zod-схем, що перевіряють запити. Після зміни маршруту чи його схеми `pnpm api:openapi` перезаписує `docs/api/openapi.json`, і цей файл іде в той самий коміт: `pnpm contracts` (і CI) падає, якщо він застарів.
+
 Зупинити стек:
 
 ```bash

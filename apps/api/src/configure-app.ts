@@ -8,6 +8,7 @@ import { BOOT_OPTIONS } from './boot.js';
 import { API_PREFIX, JWKS_PATH, rejectOutsidePrefix } from './common/api-prefix.middleware.js';
 import { REQUEST_ID_HEADER, requestId } from './common/request-id.middleware.js';
 import type { AppConfig } from './config/app-config.js';
+import { mountApiDocs } from './openapi/api-docs.js';
 import { mountBullBoard } from './queues/bull-board.js';
 
 export const APP_OPTIONS = { ...BOOT_OPTIONS, bodyParser: false } satisfies NestApplicationOptions;
@@ -18,6 +19,7 @@ export function configureApp(app: NestExpressApplication): NestExpressApplicatio
   app.use(requestId);
   if (config.get('NODE_ENV', { infer: true }) === 'development') {
     mountBullBoard(app);
+    mountApiDocs(app);
   }
   app.use(helmet());
   app.enableCors({

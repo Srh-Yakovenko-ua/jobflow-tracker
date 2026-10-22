@@ -1,22 +1,7 @@
 import { readFile } from 'node:fs/promises';
 
-import {
-  calculateJwkThumbprint,
-  type CryptoKey,
-  exportJWK,
-  importPKCS8,
-  importSPKI,
-  type JWK,
-} from 'jose';
-
-export type PublicJwk = JWK & {
-  kty: 'RSA';
-  n: string;
-  e: string;
-  kid: string;
-  alg: 'RS256';
-  use: 'sig';
-};
+import type { PublicJwk } from '@jobflow/shared';
+import { calculateJwkThumbprint, type CryptoKey, exportJWK, importPKCS8, importSPKI } from 'jose';
 
 export abstract class JwtKeys {
   abstract readonly privateKey: CryptoKey;
