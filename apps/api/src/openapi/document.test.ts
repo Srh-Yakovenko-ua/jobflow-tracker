@@ -32,6 +32,14 @@ const EXAMPLES = ROUTES.flatMap(({ name, route }) => [
 
 const ERROR_EXAMPLES = EXAMPLES.filter(({ at }) => / [45]\d\d$/.test(at));
 
+const VALIDATION_EXAMPLES = EXAMPLES.filter(({ at }) => at.endsWith(' 422'));
+
+const BODY_ROUTES = ROUTES.filter(({ route }) => route.request?.body !== undefined);
+
+function exampleAt(at: string): unknown {
+  return EXAMPLES.find((candidate) => candidate.at === at)?.example;
+}
+
 const PATH_PARAMS = ROUTES.flatMap(({ name, route }) =>
   [...route.path.matchAll(/\{(\w+)\}/g)].map(([, param = '']) => ({
     at: `${name} ${param}`,
@@ -65,10 +73,30 @@ describe('the OpenAPI document', () => {
     expect(references).toHaveLength(ERROR_EXAMPLES.length + 1);
   });
 
-  it('gives the PATCH body an example the update validator accepts', () => {
-    const patch = EXAMPLES.find(({ at }) => at === 'PATCH /applications/{id} body');
+  it.each(VALIDATION_EXAMPLES)('shows the field errors in the $at example', ({ example }) => {
+    expect(errorResponseSchema.parse(example).errors).toEqual([
+      { path: 'email', message: 'Invalid input: expected string, received undefined' },
+    ]);
+  });
 
-    expect(updateApplicationInputSchema.safeParse(patch?.example).error).toBeUndefined();
+  it.each(BODY_ROUTES)('documents 400 for a malformed JSON body on $name', ({ name }) => {
+    expect(exampleAt(`${name} 400`)).toEqual(
+      expect.objectContaining({ type: 'bad_request', status: 400 }),
+    );
+  });
+
+  it('gives the PATCH body an example the update validator accepts', () => {
+    expect(
+      updateApplicationInputSchema.safeParse(exampleAt('PATCH /applications/{id} body')).error,
+    ).toBeUndefined();
+  });
+
+  it('answers the PATCH example with the fields its body changes', () => {
+    expect(exampleAt('PATCH /applications/{id} 200')).toMatchObject({
+      position: 'Senior Node.js engineer',
+      salaryMin: 4000,
+      salaryMax: 5500,
+    });
   });
 
   it.each(PATH_PARAMS)(

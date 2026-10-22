@@ -43,6 +43,12 @@ const APPLICATION = {
   silenceLevel: 'none',
 } satisfies ApplicationResponse;
 
+const APPLICATION_PATCH = {
+  position: 'Senior Node.js engineer',
+  salaryMin: 4000,
+  salaryMax: 5500,
+} satisfies z.input<typeof applicationPatchSchema>;
+
 const APPLICATION_PATH = '/applications/{id}';
 
 const TAGS = ['applications'];
@@ -68,7 +74,7 @@ export const APPLICATIONS_OPENAPI_PATHS: RouteConfig[] = [
     },
     responses: {
       201: { ...applicationReply, description: 'The created Application' },
-      ...errorResponses([401, 403, 409, 422]),
+      ...errorResponses([400, 401, 403, 409, 422]),
     },
   },
   {
@@ -89,14 +95,20 @@ export const APPLICATIONS_OPENAPI_PATHS: RouteConfig[] = [
       body: {
         required: true,
         description: `Send at least one field; salaryMin and salaryMax travel together. currentStage is refused: ${STAGE_CHANGE_HINT}.`,
-        content: jsonContent(applicationPatchSchema, {
-          position: 'Senior Node.js engineer',
-          salaryMin: 4000,
-          salaryMax: 5500,
-        }),
+        content: jsonContent(applicationPatchSchema, APPLICATION_PATCH),
       },
     },
-    responses: { 200: applicationReply, ...ownedErrors },
+    responses: {
+      200: {
+        description: 'The changed Application',
+        content: jsonContent(applicationResponseSchema, {
+          ...APPLICATION,
+          ...APPLICATION_PATCH,
+          updatedAt: '2026-10-22T09:15:00.000Z',
+        }),
+      },
+      ...errorResponses([400, 401, 403, 404, 422]),
+    },
   },
   {
     method: 'delete',

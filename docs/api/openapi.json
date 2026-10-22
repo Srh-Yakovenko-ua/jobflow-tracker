@@ -30,7 +30,7 @@
     },
     {
       "name": "dev",
-      "description": "development and test only"
+      "description": "Development and test only"
     }
   ],
   "components": {
@@ -432,6 +432,23 @@
               }
             }
           },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "example": {
+                  "type": "bad_request",
+                  "title": "Bad request",
+                  "status": 400,
+                  "detail": "Unexpected end of JSON input",
+                  "requestId": "0199f0c4-5d2e-7b31-8c4f-6a7b8c9d0e1f"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
           "409": {
             "description": "Conflict",
             "content": {
@@ -456,6 +473,12 @@
                   "type": "validation_error",
                   "title": "Invalid request",
                   "status": 422,
+                  "errors": [
+                    {
+                      "path": "email",
+                      "message": "Invalid input: expected string, received undefined"
+                    }
+                  ],
                   "requestId": "0199f0c4-5d2e-7b31-8c4f-6a7b8c9d0e1f"
                 },
                 "schema": {
@@ -637,6 +660,23 @@
               }
             }
           },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "example": {
+                  "type": "bad_request",
+                  "title": "Bad request",
+                  "status": 400,
+                  "detail": "Unexpected end of JSON input",
+                  "requestId": "0199f0c4-5d2e-7b31-8c4f-6a7b8c9d0e1f"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
           "401": {
             "description": "Unauthorized",
             "content": {
@@ -661,6 +701,12 @@
                   "type": "validation_error",
                   "title": "Invalid request",
                   "status": 422,
+                  "errors": [
+                    {
+                      "path": "email",
+                      "message": "Invalid input: expected string, received undefined"
+                    }
+                  ],
                   "requestId": "0199f0c4-5d2e-7b31-8c4f-6a7b8c9d0e1f"
                 },
                 "schema": {
@@ -800,6 +846,23 @@
               }
             }
           },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "example": {
+                  "type": "bad_request",
+                  "title": "Bad request",
+                  "status": 400,
+                  "detail": "Unexpected end of JSON input",
+                  "requestId": "0199f0c4-5d2e-7b31-8c4f-6a7b8c9d0e1f"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
           "401": {
             "description": "Unauthorized",
             "content": {
@@ -824,6 +887,12 @@
                   "type": "validation_error",
                   "title": "Invalid request",
                   "status": 422,
+                  "errors": [
+                    {
+                      "path": "email",
+                      "message": "Invalid input: expected string, received undefined"
+                    }
+                  ],
                   "requestId": "0199f0c4-5d2e-7b31-8c4f-6a7b8c9d0e1f"
                 },
                 "schema": {
@@ -939,6 +1008,23 @@
               }
             }
           },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "example": {
+                  "type": "bad_request",
+                  "title": "Bad request",
+                  "status": 400,
+                  "detail": "Unexpected end of JSON input",
+                  "requestId": "0199f0c4-5d2e-7b31-8c4f-6a7b8c9d0e1f"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
           "422": {
             "description": "Invalid request",
             "content": {
@@ -947,6 +1033,12 @@
                   "type": "validation_error",
                   "title": "Invalid request",
                   "status": 422,
+                  "errors": [
+                    {
+                      "path": "email",
+                      "message": "Invalid input: expected string, received undefined"
+                    }
+                  ],
                   "requestId": "0199f0c4-5d2e-7b31-8c4f-6a7b8c9d0e1f"
                 },
                 "schema": {
@@ -1140,6 +1232,23 @@
           "204": {
             "description": "The password is changed"
           },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "example": {
+                  "type": "bad_request",
+                  "title": "Bad request",
+                  "status": 400,
+                  "detail": "Unexpected end of JSON input",
+                  "requestId": "0199f0c4-5d2e-7b31-8c4f-6a7b8c9d0e1f"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
           "401": {
             "description": "Unauthorized",
             "content": {
@@ -1180,6 +1289,12 @@
                   "type": "validation_error",
                   "title": "Invalid request",
                   "status": 422,
+                  "errors": [
+                    {
+                      "path": "email",
+                      "message": "Invalid input: expected string, received undefined"
+                    }
+                  ],
                   "requestId": "0199f0c4-5d2e-7b31-8c4f-6a7b8c9d0e1f"
                 },
                 "schema": {
@@ -1948,6 +2063,23 @@
               }
             }
           },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "example": {
+                  "type": "bad_request",
+                  "title": "Bad request",
+                  "status": 400,
+                  "detail": "Unexpected end of JSON input",
+                  "requestId": "0199f0c4-5d2e-7b31-8c4f-6a7b8c9d0e1f"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
           "401": {
             "description": "Unauthorized",
             "content": {
@@ -2004,6 +2136,12 @@
                   "type": "validation_error",
                   "title": "Invalid request",
                   "status": 422,
+                  "errors": [
+                    {
+                      "path": "email",
+                      "message": "Invalid input: expected string, received undefined"
+                    }
+                  ],
                   "requestId": "0199f0c4-5d2e-7b31-8c4f-6a7b8c9d0e1f"
                 },
                 "schema": {
@@ -2363,6 +2501,12 @@
                   "type": "validation_error",
                   "title": "Invalid request",
                   "status": 422,
+                  "errors": [
+                    {
+                      "path": "email",
+                      "message": "Invalid input: expected string, received undefined"
+                    }
+                  ],
                   "requestId": "0199f0c4-5d2e-7b31-8c4f-6a7b8c9d0e1f"
                 },
                 "schema": {
@@ -2534,16 +2678,16 @@
         },
         "responses": {
           "200": {
-            "description": "The Application",
+            "description": "The changed Application",
             "content": {
               "application/json": {
                 "example": {
                   "company": "Кавун Лабс",
-                  "position": "Node.js engineer",
+                  "position": "Senior Node.js engineer",
                   "url": "https://jobs.example.com/kavun-labs/node-engineer",
                   "source": "djinni",
-                  "salaryMin": 3000,
-                  "salaryMax": 4500,
+                  "salaryMin": 4000,
+                  "salaryMax": 5500,
                   "currency": "USD",
                   "stack": [
                     "TypeScript",
@@ -2563,7 +2707,7 @@
                   "appliedAt": "2026-10-20T08:30:00.000Z",
                   "lastEventAt": "2026-10-20T08:30:00.000Z",
                   "createdAt": "2026-10-20T08:30:00.000Z",
-                  "updatedAt": "2026-10-20T08:30:00.000Z",
+                  "updatedAt": "2026-10-22T09:15:00.000Z",
                   "daysInStage": 2,
                   "daysSinceLastEvent": 2,
                   "silenceLevel": "none"
@@ -2763,6 +2907,23 @@
               }
             }
           },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "example": {
+                  "type": "bad_request",
+                  "title": "Bad request",
+                  "status": 400,
+                  "detail": "Unexpected end of JSON input",
+                  "requestId": "0199f0c4-5d2e-7b31-8c4f-6a7b8c9d0e1f"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
           "401": {
             "description": "Unauthorized",
             "content": {
@@ -2819,6 +2980,12 @@
                   "type": "validation_error",
                   "title": "Invalid request",
                   "status": 422,
+                  "errors": [
+                    {
+                      "path": "email",
+                      "message": "Invalid input: expected string, received undefined"
+                    }
+                  ],
                   "requestId": "0199f0c4-5d2e-7b31-8c4f-6a7b8c9d0e1f"
                 },
                 "schema": {
@@ -2949,6 +3116,12 @@
                   "type": "validation_error",
                   "title": "Invalid request",
                   "status": 422,
+                  "errors": [
+                    {
+                      "path": "email",
+                      "message": "Invalid input: expected string, received undefined"
+                    }
+                  ],
                   "requestId": "0199f0c4-5d2e-7b31-8c4f-6a7b8c9d0e1f"
                 },
                 "schema": {
@@ -3054,6 +3227,23 @@
               }
             }
           },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "example": {
+                  "type": "bad_request",
+                  "title": "Bad request",
+                  "status": 400,
+                  "detail": "Unexpected end of JSON input",
+                  "requestId": "0199f0c4-5d2e-7b31-8c4f-6a7b8c9d0e1f"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
           "401": {
             "description": "Unauthorized",
             "content": {
@@ -3110,6 +3300,12 @@
                   "type": "validation_error",
                   "title": "Invalid request",
                   "status": 422,
+                  "errors": [
+                    {
+                      "path": "email",
+                      "message": "Invalid input: expected string, received undefined"
+                    }
+                  ],
                   "requestId": "0199f0c4-5d2e-7b31-8c4f-6a7b8c9d0e1f"
                 },
                 "schema": {

@@ -18,7 +18,7 @@ export const MAINTENANCE_OPENAPI_PATHS: RouteConfig[] = [
         description: 'The job is queued',
         content: jsonContent(jobAcceptedSchema, { jobId: '17' }),
       },
-      ...errorResponses([401, 403, 404, 422]),
+      ...errorResponses([400, 401, 403, 404, 422]),
     },
   },
 ];

@@ -19,7 +19,7 @@ const TAGS = [
   { name: 'health', description: 'Liveness and readiness probes' },
   { name: 'auth', description: 'Accounts, sessions and the signing key' },
   { name: 'applications', description: 'The Applications of the signed-in user' },
-  { name: 'dev', description: 'development and test only' },
+  { name: 'dev', description: 'Development and test only' },
 ];
 
 const DESCRIPTION =

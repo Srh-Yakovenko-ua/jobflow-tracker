@@ -2,7 +2,7 @@ import type { ResponseConfig, RouteConfig, ZodContentObject } from '@asteasoluti
 import { errorResponseSchema } from '@jobflow/shared';
 import { z } from 'zod';
 
-import { ERROR_TYPES, type ErrorStatus } from '../common/app-error.js';
+import { ERROR_TYPES, type ErrorBody, type ErrorStatus } from '../common/app-error.js';
 import { envSchema } from '../config/env.js';
 import {
   DEFAULT_RATE_LIMIT_POLICY,
@@ -17,6 +17,13 @@ export const PUBLIC = { security: [] } satisfies Pick<RouteConfig, 'security'>;
 export const EXAMPLE_REQUEST_ID = '0199f0c4-5d2e-7b31-8c4f-6a7b8c9d0e1f';
 
 const errorResponse = errorResponseSchema.meta({ id: 'ErrorResponse' });
+
+const EXAMPLE_DETAILS: Partial<Record<ErrorStatus, Pick<ErrorBody, 'detail' | 'errors'>>> = {
+  400: { detail: 'Unexpected end of JSON input' },
+  422: {
+    errors: [{ path: 'email', message: 'Invalid input: expected string, received undefined' }],
+  },
+};
 
 const retryAfterHeaders = z.object({
   'Retry-After': z.int().positive().meta({ description: 'Seconds until the limit window resets' }),
@@ -33,7 +40,13 @@ function errorReply(status: ErrorStatus): ResponseConfig {
   const { type, title } = ERROR_TYPES[status];
   return {
     description: title,
-    content: jsonContent(errorResponse, { type, title, status, requestId: EXAMPLE_REQUEST_ID }),
+    content: jsonContent(errorResponse, {
+      type,
+      title,
+      status,
+      ...EXAMPLE_DETAILS[status],
+      requestId: EXAMPLE_REQUEST_ID,
+    }),
   };
 }
 

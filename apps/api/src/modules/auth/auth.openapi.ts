@@ -66,7 +66,7 @@ export const AUTH_OPENAPI_PATHS: RouteConfig[] = [
     },
     responses: {
       201: signedIn('Registered and signed in'),
-      ...errorResponses([409, 422], 'register'),
+      ...errorResponses([400, 409, 422], 'register'),
     },
   },
   {
@@ -80,7 +80,7 @@ export const AUTH_OPENAPI_PATHS: RouteConfig[] = [
       headers: clientHeaders,
       body: { required: true, content: jsonContent(loginInputSchema, AUTH_EXAMPLES.login) },
     },
-    responses: { 200: signedIn('Signed in'), ...errorResponses([401, 422], 'login') },
+    responses: { 200: signedIn('Signed in'), ...errorResponses([400, 401, 422], 'login') },
   },
   {
     method: 'post',
@@ -97,7 +97,7 @@ export const AUTH_OPENAPI_PATHS: RouteConfig[] = [
         headers: sessionCookie,
         content: jsonContent(sessionTokensSchema, AUTH_EXAMPLES.session),
       },
-      ...errorResponses([401, 422]),
+      ...errorResponses([400, 401, 422]),
     },
   },
   {
@@ -109,7 +109,7 @@ export const AUTH_OPENAPI_PATHS: RouteConfig[] = [
     request: { headers: clientHeaders, body: refreshBody },
     responses: {
       204: { description: 'The session family is revoked', headers: clearedCookie },
-      ...errorResponses([422]),
+      ...errorResponses([400, 422]),
     },
   },
   {
@@ -136,7 +136,7 @@ export const AUTH_OPENAPI_PATHS: RouteConfig[] = [
     },
     responses: {
       204: { description: 'The password is changed' },
-      ...errorResponses([401, 403, 422]),
+      ...errorResponses([400, 401, 403, 422]),
     },
   },
   {
