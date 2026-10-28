@@ -1,10 +1,35 @@
+import type { OAuthProvider } from '@jobflow/shared';
 import { z } from 'zod';
 
 const httpUrl = z.url({ protocol: /^https?$/ });
 const requiredText = z.string().min(1);
 const positiveCount = z.coerce.number().int().positive();
 
-export const envSchema = z.object({
+export const OAUTH_CREDENTIAL_KEYS = {
+  github: { clientId: 'OAUTH_GITHUB_CLIENT_ID', clientSecret: 'OAUTH_GITHUB_CLIENT_SECRET' },
+  google: { clientId: 'OAUTH_GOOGLE_CLIENT_ID', clientSecret: 'OAUTH_GOOGLE_CLIENT_SECRET' },
+} as const satisfies Record<OAuthProvider, { clientId: string; clientSecret: string }>;
+
+type OAuthCredentialKey = (typeof OAUTH_CREDENTIAL_KEYS)[OAuthProvider][
+  'clientId' | 'clientSecret'];
+
+type OAuthCredentials = Partial<Record<OAuthCredentialKey, string | undefined>>;
+
+function requireWholeCredentialPairs(env: OAuthCredentials, context: z.RefinementCtx): void {
+  for (const { clientId, clientSecret } of Object.values(OAUTH_CREDENTIAL_KEYS)) {
+    const [given, missing] =
+      env[clientId] === undefined ? [clientSecret, clientId] : [clientId, clientSecret];
+    if (env[given] !== undefined && env[missing] === undefined) {
+      context.addIssue({
+        code: 'custom',
+        path: [missing],
+        message: `${missing} is required when ${given} is set`,
+      });
+    }
+  }
+}
+
+const envFields = z.object({
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
   DATABASE_URL: z.url({ protocol: /^postgres(ql)?$/ }),
   REDIS_URL: z.url({ protocol: /^rediss?$/ }),
@@ -31,7 +56,13 @@ export const envSchema = z.object({
   SENTRY_DSN: z.url().optional(),
   MIXPANEL_TOKEN: z.string().optional(),
   TELEGRAM_BOT_TOKEN: z.string().optional(),
+  OAUTH_GITHUB_CLIENT_ID: z.string().optional(),
+  OAUTH_GITHUB_CLIENT_SECRET: z.string().optional(),
+  OAUTH_GOOGLE_CLIENT_ID: z.string().optional(),
+  OAUTH_GOOGLE_CLIENT_SECRET: z.string().optional(),
 });
+
+export const envSchema = envFields.superRefine(requireWholeCredentialPairs);
 
 export type Env = z.infer<typeof envSchema>;
 

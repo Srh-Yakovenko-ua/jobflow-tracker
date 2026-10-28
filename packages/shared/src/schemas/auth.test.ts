@@ -5,6 +5,7 @@ import {
   changePasswordInputSchema,
   jwksResponseSchema,
   loginInputSchema,
+  oauthCallbackQuerySchema,
   publicJwkSchema,
   refreshTokenBodySchema,
   registerInputSchema,
@@ -109,6 +110,58 @@ describe('publicJwkSchema', () => {
     ['an ES256 algorithm', { ...jwk, alg: 'ES256' }],
   ])('refuses a key with %s', (_label, key) => {
     expect(publicJwkSchema.safeParse(key).success).toBe(false);
+  });
+});
+
+describe('oauthCallbackQuerySchema', () => {
+  const code = '4/0AVG7fiQ';
+  const state = 'Ab9_-'.repeat(8) + 'xyz';
+
+  it.each([
+    [
+      'Google, with scope, authuser, prompt and iss dropped',
+      {
+        code,
+        state,
+        scope: 'email openid',
+        authuser: '0',
+        prompt: 'consent',
+        iss: 'https://accounts.google.com',
+      },
+    ],
+    ['GitHub', { code, state }],
+  ])('keeps only code and state from a %s callback', (_label, query) => {
+    expect(oauthCallbackQuerySchema.parse(query)).toEqual({ code, state });
+  });
+
+  it.each([
+    [
+      'the user declined at the provider',
+      { error: 'access_denied', error_description: 'The user denied access', state },
+    ],
+    ['an error that also carries a code', { error: 'access_denied', code, state }],
+  ])('keeps only the error from a callback where %s', (_label, query) => {
+    expect(oauthCallbackQuerySchema.parse(query)).toEqual({ error: 'access_denied' });
+  });
+
+  it.each([
+    ['neither a code nor an error', {}],
+    ['an empty error', { error: '' }],
+    ['no code', { state }],
+    ['no state', { code }],
+    ['an empty code', { code: '', state }],
+    ['an empty state', { code, state: '' }],
+    ['a code over 512 characters', { code: 'c'.repeat(513), state }],
+    ['a state over 512 characters', { code, state: 's'.repeat(513) }],
+  ])('refuses a callback with %s', (_label, query) => {
+    expect(oauthCallbackQuerySchema.safeParse(query).success).toBe(false);
+  });
+
+  it('accepts a code of exactly 512 characters', () => {
+    expect(oauthCallbackQuerySchema.parse({ code: 'c'.repeat(512), state })).toEqual({
+      code: 'c'.repeat(512),
+      state,
+    });
   });
 });
 

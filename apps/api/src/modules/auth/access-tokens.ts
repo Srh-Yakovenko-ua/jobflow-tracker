@@ -2,11 +2,11 @@ import { randomUUID } from 'node:crypto';
 
 import { type TokenScope, USER_TOKEN_SCOPES } from '@jobflow/shared';
 import { Injectable } from '@nestjs/common';
-import { errors, jwtVerify, type JWTVerifyOptions, SignJWT } from 'jose';
+import { errors, type JWTVerifyOptions } from 'jose';
 import { z } from 'zod';
 
 import { type AppError, tokenExpired, unauthorized } from '../../common/app-error.js';
-import { JwtKeys } from './jwt-keys.js';
+import { JwtKeys, signWithKeys, verifyWithKeys } from './jwt-keys.js';
 
 export const ACCESS_TOKEN_TTL_SECONDS = 15 * 60;
 
@@ -36,14 +36,12 @@ export function signAccessToken({
   issuedAt = new Date(),
   scope = USER_TOKEN_SCOPES,
 }: SignAccessTokenInput): Promise<string> {
-  const issuedAtSeconds = Math.floor(issuedAt.getTime() / 1000);
-  return new SignJWT({ scope: scope.join(' ') })
-    .setProtectedHeader({ alg: 'RS256', kid: keys.jwk.kid })
-    .setSubject(userId)
-    .setJti(randomUUID())
-    .setIssuedAt(issuedAtSeconds)
-    .setExpirationTime(issuedAtSeconds + ACCESS_TOKEN_TTL_SECONDS)
-    .sign(keys.privateKey);
+  return signWithKeys({
+    keys,
+    claims: { scope: scope.join(' '), sub: userId, jti: randomUUID() },
+    ttlSeconds: ACCESS_TOKEN_TTL_SECONDS,
+    issuedAt,
+  });
 }
 
 @Injectable()
@@ -55,12 +53,13 @@ export class AccessTokens {
   }
 
   async verify(token: string): Promise<AccessUser> {
-    try {
-      const { payload } = await jwtVerify(token, this.keys.publicKey, VERIFY_OPTIONS);
-      const { sub, scope } = accessClaimsSchema.parse(payload);
-      return { id: sub, scope: scope.split(' ') };
-    } catch (error) {
-      throw toAccessTokenError(error);
-    }
+    const { sub, scope } = await verifyWithKeys({
+      keys: this.keys,
+      token,
+      options: VERIFY_OPTIONS,
+      schema: accessClaimsSchema,
+      refusal: toAccessTokenError,
+    });
+    return { id: sub, scope: scope.split(' ') };
   }
 }

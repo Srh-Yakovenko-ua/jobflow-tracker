@@ -143,3 +143,38 @@ describe('parseEnv', () => {
     ]);
   });
 });
+
+describe('OAuth credentials', () => {
+  it('leaves every OAuth provider off when no credential is set', () => {
+    const env = validateEnv(exampleEnv);
+
+    expect([
+      env.OAUTH_GITHUB_CLIENT_ID,
+      env.OAUTH_GITHUB_CLIENT_SECRET,
+      env.OAUTH_GOOGLE_CLIENT_ID,
+      env.OAUTH_GOOGLE_CLIENT_SECRET,
+    ]).toEqual([undefined, undefined, undefined, undefined]);
+  });
+
+  it('reads a full GitHub pair', () => {
+    const env = validateEnv({
+      ...exampleEnv,
+      OAUTH_GITHUB_CLIENT_ID: 'Iv1.github-client',
+      OAUTH_GITHUB_CLIENT_SECRET: 'github-secret',
+    });
+
+    expect([env.OAUTH_GITHUB_CLIENT_ID, env.OAUTH_GITHUB_CLIENT_SECRET]).toEqual([
+      'Iv1.github-client',
+      'github-secret',
+    ]);
+  });
+
+  it.each([
+    { given: 'OAUTH_GITHUB_CLIENT_ID', missing: 'OAUTH_GITHUB_CLIENT_SECRET' },
+    { given: 'OAUTH_GITHUB_CLIENT_SECRET', missing: 'OAUTH_GITHUB_CLIENT_ID' },
+    { given: 'OAUTH_GOOGLE_CLIENT_ID', missing: 'OAUTH_GOOGLE_CLIENT_SECRET' },
+    { given: 'OAUTH_GOOGLE_CLIENT_SECRET', missing: 'OAUTH_GOOGLE_CLIENT_ID' },
+  ])('refuses $given without $missing and names the missing key', ({ given, missing }) => {
+    expect(failedPaths({ ...exampleEnv, [given]: 'half-of-a-pair' })).toEqual([missing]);
+  });
+});

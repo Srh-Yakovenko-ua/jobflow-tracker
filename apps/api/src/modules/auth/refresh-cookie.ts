@@ -1,8 +1,7 @@
 import type { RefreshTokenBody, SessionTokens } from '@jobflow/shared';
-import { parseCookie } from 'cookie';
-import type { CookieOptions, Request, Response } from 'express';
+import type { Request, Response } from 'express';
 
-import { API_PREFIX } from '../../common/api-prefix.middleware.js';
+import { httpOnlyCookie } from './http-only-cookie.js';
 import { REFRESH_TOKEN_TTL_MS } from './refresh-tokens.js';
 import type { IssuedSession } from './session.service.js';
 
@@ -12,12 +11,12 @@ export const CLIENT_HEADER = 'x-client';
 
 export const MOBILE_CLIENT = 'mobile';
 
-const COOKIE_SCOPE: CookieOptions = {
-  httpOnly: true,
-  secure: true,
+const refreshCookie = httpOnlyCookie({
+  name: REFRESH_COOKIE,
   sameSite: 'strict',
-  path: `/${API_PREFIX}/auth`,
-};
+  path: '/auth',
+  maxAgeMs: REFRESH_TOKEN_TTL_MS,
+});
 
 export type HttpExchange = { req: Request; res: Response };
 
@@ -28,7 +27,7 @@ function isMobile(req: Request): boolean {
 }
 
 export function readRefreshToken(req: Request, body?: RefreshTokenBody): string | undefined {
-  return isMobile(req) ? body?.refreshToken : parseCookie(req.headers.cookie ?? '')[REFRESH_COOKIE];
+  return isMobile(req) ? body?.refreshToken : refreshCookie.read(req);
 }
 
 export function sendSession({ req, res, session }: SessionReply): SessionTokens {
@@ -36,13 +35,10 @@ export function sendSession({ req, res, session }: SessionReply): SessionTokens 
   if (isMobile(req)) {
     return session;
   }
-  res.cookie(REFRESH_COOKIE, session.refreshToken, {
-    ...COOKIE_SCOPE,
-    maxAge: REFRESH_TOKEN_TTL_MS,
-  });
+  refreshCookie.set(res, session.refreshToken);
   return { accessToken: session.accessToken };
 }
 
 export function clearRefreshCookie(res: Response): void {
-  res.clearCookie(REFRESH_COOKIE, COOKIE_SCOPE);
+  refreshCookie.clear(res);
 }

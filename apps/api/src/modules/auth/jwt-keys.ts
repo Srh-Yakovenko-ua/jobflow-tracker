@@ -1,7 +1,19 @@
 import { readFile } from 'node:fs/promises';
 
 import type { PublicJwk } from '@jobflow/shared';
-import { calculateJwkThumbprint, type CryptoKey, exportJWK, importPKCS8, importSPKI } from 'jose';
+import {
+  calculateJwkThumbprint,
+  type CryptoKey,
+  exportJWK,
+  importPKCS8,
+  importSPKI,
+  type JWTHeaderParameters,
+  type JWTPayload,
+  jwtVerify,
+  type JWTVerifyOptions,
+  SignJWT,
+} from 'jose';
+import type { z } from 'zod';
 
 export abstract class JwtKeys {
   abstract readonly privateKey: CryptoKey;
@@ -12,6 +24,52 @@ export abstract class JwtKeys {
 export type JwtKeyPair = { privateKey: CryptoKey; publicKey: CryptoKey };
 
 export type JwtKeyPaths = { privateKeyPath: string; publicKeyPath: string };
+
+export type SignWithKeysInput = {
+  keys: JwtKeys;
+  claims: JWTPayload;
+  ttlSeconds: number;
+  issuedAt: Date;
+  header?: Pick<JWTHeaderParameters, 'typ'>;
+};
+
+export type VerifyWithKeysInput<Claims> = {
+  keys: JwtKeys;
+  token: string;
+  options: JWTVerifyOptions;
+  schema: z.ZodType<Claims>;
+  refusal: (error: unknown) => Error;
+};
+
+export function signWithKeys({
+  keys,
+  claims,
+  ttlSeconds,
+  issuedAt,
+  header,
+}: SignWithKeysInput): Promise<string> {
+  const issuedAtSeconds = Math.floor(issuedAt.getTime() / 1000);
+  return new SignJWT(claims)
+    .setProtectedHeader({ alg: 'RS256', kid: keys.jwk.kid, ...header })
+    .setIssuedAt(issuedAtSeconds)
+    .setExpirationTime(issuedAtSeconds + ttlSeconds)
+    .sign(keys.privateKey);
+}
+
+export async function verifyWithKeys<Claims>({
+  keys,
+  token,
+  options,
+  schema,
+  refusal,
+}: VerifyWithKeysInput<Claims>): Promise<Claims> {
+  try {
+    const { payload } = await jwtVerify(token, keys.publicKey, options);
+    return schema.parse(payload);
+  } catch (error) {
+    throw refusal(error);
+  }
+}
 
 async function publicJwkOf(publicKey: CryptoKey): Promise<PublicJwk> {
   const { kty, n, e } = await exportJWK(publicKey);

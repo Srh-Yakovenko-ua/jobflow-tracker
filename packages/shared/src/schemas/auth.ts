@@ -65,6 +65,19 @@ export const publicJwkSchema = z.strictObject({
 
 export const jwksResponseSchema = z.object({ keys: z.array(publicJwkSchema) });
 
+const oauthCallbackParamSchema = z.string().min(1).max(512);
+
+export const oauthCodeQuerySchema = z.object({
+  code: oauthCallbackParamSchema,
+  state: oauthCallbackParamSchema,
+});
+
+export const oauthErrorQuerySchema = z.object({ error: oauthCallbackParamSchema });
+
+export const oauthCallbackQuerySchema = z.union([oauthErrorQuerySchema, oauthCodeQuerySchema], {
+  error: 'Expected code and state, or error',
+});
+
 export type RegisterInput = z.infer<typeof registerInputSchema>;
 export type LoginInput = z.infer<typeof loginInputSchema>;
 export type ChangePasswordInput = z.infer<typeof changePasswordInputSchema>;
@@ -76,3 +89,5 @@ export type RefreshTokenBody = z.infer<typeof refreshTokenBodySchema>;
 export type MeResponse = z.infer<typeof meResponseSchema>;
 export type PublicJwk = z.infer<typeof publicJwkSchema>;
 export type JwksResponse = z.infer<typeof jwksResponseSchema>;
+export type OAuthCodeQuery = z.infer<typeof oauthCodeQuerySchema>;
+export type OAuthCallbackQuery = z.infer<typeof oauthCallbackQuerySchema>;
