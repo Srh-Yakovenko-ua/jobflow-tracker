@@ -14,7 +14,9 @@ allowBuilds:
   unrs-resolver: false
 
 overrides:
+  body-parser: ^2.4.0
   handlebars: ^4.7.10
+  multer: ^2.5.0
 
 audit:
   ignore:
