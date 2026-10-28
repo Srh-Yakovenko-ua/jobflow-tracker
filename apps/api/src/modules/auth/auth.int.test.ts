@@ -14,6 +14,7 @@ import { appTestingModule, useTestApp } from '../../test/app.js';
 import {
   cacheControlOf,
   OLENA,
+  REFRESH_COOKIE_ATTRIBUTES,
   refreshCookieOf,
   refreshTokenFromCookie,
   refreshWith,
@@ -21,15 +22,6 @@ import {
 } from '../../test/auth.js';
 import { memoryLog, withLogSink } from '../../test/memory-log.js';
 import { outboxRows } from '../../test/outbox.js';
-
-const REFRESH_COOKIE_ATTRIBUTES = {
-  name: 'refresh_token',
-  httpOnly: true,
-  secure: true,
-  sameSite: 'strict',
-  path: '/api/v1/auth',
-  maxAge: 2_592_000,
-};
 
 const log = memoryLog();
 

@@ -8,16 +8,20 @@ import { NEW_USER_SETTINGS_ROW } from '../../test/factories.js';
 import { FAKE_TRANSACTION, FakePrisma } from '../../test/fake-prisma.js';
 import {
   AuthRepository,
+  type NewOAuthLink,
   type NewPassword,
   type NewUser,
+  type OAuthAccountKey,
   type UserCredentials,
   type UserProfile,
 } from './auth.repository.js';
-import { AuthService } from './auth.service.js';
+import { AuthService, type OAuthIdentity } from './auth.service.js';
 import { PasswordHasher } from './password-hasher.js';
 import { type RevokeAllInput, SessionRepository } from './session.repository.js';
 
 type InTransaction<T> = T & { client: unknown };
+
+type StoredUser = UserCredentials & { oauthAccounts?: OAuthAccountKey[] };
 
 const DUMMY_HASH = 'dummy-hash';
 
@@ -59,11 +63,26 @@ class FakePasswordHasher {
 class FakeAuthRepository {
   readonly created: NewUser[] = [];
   readonly passwords: InTransaction<NewPassword>[] = [];
+  readonly linked: InTransaction<NewOAuthLink>[] = [];
 
   constructor(
-    private readonly users: UserCredentials[] = [],
+    private readonly users: StoredUser[] = [],
     private readonly profiles: UserProfile[] = [],
   ) {}
+
+  findUserByOAuthAccount({ provider, providerUserId }: OAuthAccountKey): Promise<AuthUser | null> {
+    const owner = this.users.find(({ oauthAccounts = [] }) =>
+      oauthAccounts.some(
+        (account) => account.provider === provider && account.providerUserId === providerUserId,
+      ),
+    );
+    return Promise.resolve(owner ?? null);
+  }
+
+  linkOAuthAccount(link: NewOAuthLink, client?: unknown): Promise<void> {
+    this.linked.push({ ...link, client });
+    return Promise.resolve();
+  }
 
   createUserWithDefaults(newUser: NewUser): Promise<AuthUser> {
     if (this.users.some((user) => user.email === newUser.email)) {
@@ -232,6 +251,81 @@ describe('AuthService.changePassword', () => {
       expect([repository.passwords, sessions.revokedAll]).toEqual([[], []]);
     },
   );
+});
+
+describe('AuthService.signInWithOAuth', () => {
+  const GITHUB_ANNA: OAuthAccountKey = { provider: 'github', providerUserId: '1001' };
+
+  const annaOnGitHub: OAuthIdentity = { ...GITHUB_ANNA, email: ANNA.email, displayName: 'Анна' };
+
+  const bohdan: StoredUser = {
+    id: '0199f0a0-0000-7000-8000-000000000002',
+    email: 'bohdan@example.test',
+    displayName: null,
+    locale: 'uk',
+    passwordHash: 'hashed:bohdan password',
+    oauthAccounts: [{ provider: 'github', providerUserId: '1002' }],
+  };
+
+  beforeEach(() => {
+    vi.useFakeTimers({ toFake: ['Date'], now: NOW });
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it('signs into the user the GitHub account is linked to, never another user', async () => {
+    const { repository, service } = await authServiceWith([
+      bohdan,
+      { ...ANNA, passwordHash: null, oauthAccounts: [GITHUB_ANNA] },
+    ]);
+
+    const user = await service.signInWithOAuth(annaOnGitHub);
+
+    expect(user).toMatchObject(ANNA);
+    expect([repository.created, repository.linked]).toEqual([[], []]);
+  });
+
+  it('links the GitHub account to the passwordless user with the same verified email and keeps its sessions', async () => {
+    const { repository, sessions, service } = await authServiceWith([
+      bohdan,
+      { ...ANNA, passwordHash: null },
+    ]);
+
+    const user = await service.signInWithOAuth(annaOnGitHub);
+
+    expect(user).toEqual(ANNA);
+    expect(repository.linked).toEqual([{ userId: ANNA.id, ...GITHUB_ANNA }]);
+    expect([repository.created, repository.passwords, sessions.revokedAll]).toEqual([[], [], []]);
+  });
+
+  it('links the GitHub account to the password user with the same verified email, drops the password and revokes every session in one transaction', async () => {
+    const { repository, sessions, service } = await authServiceWith([bohdan, annaWithPassword]);
+
+    const user = await service.signInWithOAuth(annaOnGitHub);
+
+    expect(user).toEqual(ANNA);
+    expect(repository.linked).toEqual([
+      { userId: ANNA.id, ...GITHUB_ANNA, client: FAKE_TRANSACTION },
+    ]);
+    expect(repository.passwords).toEqual([
+      { userId: ANNA.id, passwordHash: null, client: FAKE_TRANSACTION },
+    ]);
+    expect(sessions.revokedAll).toEqual([{ userId: ANNA.id, now: NOW, client: FAKE_TRANSACTION }]);
+  });
+
+  it('creates a user without a password for a new verified email', async () => {
+    const { repository, service } = await authServiceWith([bohdan]);
+
+    const user = await service.signInWithOAuth(annaOnGitHub);
+
+    expect(user).toEqual(ANNA);
+    expect(repository.created).toEqual([
+      { email: ANNA.email, displayName: 'Анна', passwordHash: null, oauthAccount: GITHUB_ANNA },
+    ]);
+    expect(repository.linked).toEqual([]);
+  });
 });
 
 describe('AuthService.me', () => {

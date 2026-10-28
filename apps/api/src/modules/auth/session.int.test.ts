@@ -11,6 +11,7 @@ import { appTestingModule, useTestApp } from '../../test/app.js';
 import {
   BOHDAN,
   cacheControlOf,
+  clearedCookie,
   OLENA,
   refreshCookie,
   refreshCookieOf,
@@ -135,11 +136,7 @@ describe('refresh token rotation and revocation', () => {
       .set('cookie', refreshCookie(refreshToken));
 
     expect(response.status).toBe(204);
-    expect(refreshCookieOf(response)).toMatchObject({
-      value: '',
-      path: '/api/v1/auth',
-      expires: new Date(0),
-    });
+    expect(refreshCookieOf(response)).toMatchObject(clearedCookie('/api/v1/auth'));
     expect((await refreshWith(testApp.app, { refreshToken })).status).toBe(401);
     expect((await refreshWith(testApp.app, otherSession)).status).toBe(200);
   });

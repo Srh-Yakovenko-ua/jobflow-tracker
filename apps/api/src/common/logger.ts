@@ -1,6 +1,6 @@
 import type { Request, Response } from 'express';
 import type { Params } from 'nestjs-pino';
-import type { DestinationStream } from 'pino';
+import type { DestinationStream, SerializedRequest } from 'pino';
 import type { Options } from 'pino-http';
 
 import { readRequestId } from './request-id.middleware.js';
@@ -12,6 +12,8 @@ const QUIET_METHODS = new Set(['GET', 'HEAD']);
 const REDACTED_PATHS = [
   'req.headers.authorization',
   'req.headers.cookie',
+  'req.query.code',
+  'req.query.state',
   'res.headers["set-cookie"]',
   'req.body.password',
   'req.body.currentPassword',
@@ -27,9 +29,15 @@ const REDACTED_PATHS = [
   '*.accessToken',
 ];
 
+const withoutQueryString = (req: SerializedRequest): SerializedRequest => ({
+  ...req,
+  url: req.url.split('?', 1)[0] ?? req.url,
+});
+
 const HTTP_LOG_OPTIONS: Options<Request, Response> = {
   genReqId: (req) => readRequestId(req),
   customProps: (req) => ({ requestId: readRequestId(req) }),
+  serializers: { req: withoutQueryString },
   redact: REDACTED_PATHS,
   autoLogging: {
     ignore: (req) => QUIET_METHODS.has(req.method) && QUIET_PATHS.has(req.originalUrl),

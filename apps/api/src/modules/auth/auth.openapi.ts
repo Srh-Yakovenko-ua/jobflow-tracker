@@ -14,6 +14,7 @@ import { z } from 'zod';
 import { JWKS_PATH } from '../../common/api-prefix.middleware.js';
 import { errorResponses, jsonContent, PUBLIC } from '../../openapi/route.js';
 import { AUTH_EXAMPLES } from './auth.openapi-examples.js';
+import { OAUTH_OPENAPI_PATHS } from './oauth.openapi.js';
 import { CLIENT_HEADER, MOBILE_CLIENT, REFRESH_COOKIE } from './refresh-cookie.js';
 
 const TAGS = ['auth'];
@@ -82,6 +83,7 @@ export const AUTH_OPENAPI_PATHS: RouteConfig[] = [
     },
     responses: { 200: signedIn('Signed in'), ...errorResponses([400, 401, 422], 'login') },
   },
+  ...OAUTH_OPENAPI_PATHS,
   {
     method: 'post',
     path: '/auth/refresh',

@@ -1,16 +1,29 @@
-import { type AuthUser, DEFAULT_SEARCH_TITLE, type RegisterInput } from '@jobflow/shared';
+import {
+  type AuthUser,
+  DEFAULT_SEARCH_TITLE,
+  type OAuthProvider,
+  type RegisterInput,
+} from '@jobflow/shared';
 import { Injectable } from '@nestjs/common';
 
 import { conflict } from '../../common/app-error.js';
 import { Prisma } from '../../generated/prisma/client.js';
 import { PrismaService } from '../../prisma/prisma.service.js';
 import { userRegisteredEvent } from './auth.events.js';
+import { OAUTH_PROVIDER_SPECS } from './oauth-profiles.js';
 
-export type NewUser = Omit<RegisterInput, 'password'> & { passwordHash: string };
+export type OAuthAccountKey = { provider: OAuthProvider; providerUserId: string };
+
+export type NewOAuthLink = OAuthAccountKey & { userId: string };
+
+export type NewUser = Omit<RegisterInput, 'password'> & {
+  passwordHash: string | null;
+  oauthAccount?: OAuthAccountKey;
+};
 
 export type UserCredentials = AuthUser & { passwordHash: string | null };
 
-export type NewPassword = { userId: string; passwordHash: string };
+export type NewPassword = { userId: string; passwordHash: string | null };
 
 const AUTH_USER_SELECT = { id: true, email: true, displayName: true, locale: true } as const;
 
@@ -40,32 +53,54 @@ function isUniqueViolation(error: unknown): boolean {
   return error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002';
 }
 
+async function conflictOnDuplicate<T>(write: Promise<T>, detail: string): Promise<T> {
+  try {
+    return await write;
+  } catch (error) {
+    throw isUniqueViolation(error) ? conflict(detail) : error;
+  }
+}
+
 @Injectable()
 export class AuthRepository {
   constructor(private readonly prisma: PrismaService) {}
 
-  async createUserWithDefaults(newUser: NewUser): Promise<AuthUser> {
-    try {
-      return await this.prisma.$transaction(async (tx) => {
-        const user = await tx.user.create({
-          data: {
-            email: newUser.email,
-            passwordHash: newUser.passwordHash,
-            displayName: newUser.displayName ?? null,
-            settings: { create: {} },
-            searches: { create: { title: DEFAULT_SEARCH_TITLE } },
-          },
-          select: AUTH_USER_SELECT,
-        });
-        await tx.outboxEvent.create({ data: userRegisteredEvent({ userId: user.id }) });
-        return user;
+  createUserWithDefaults({ oauthAccount, ...newUser }: NewUser): Promise<AuthUser> {
+    const created = this.prisma.$transaction(async (tx) => {
+      const user = await tx.user.create({
+        data: {
+          email: newUser.email,
+          passwordHash: newUser.passwordHash,
+          displayName: newUser.displayName ?? null,
+          settings: { create: {} },
+          searches: { create: { title: DEFAULT_SEARCH_TITLE } },
+          ...(oauthAccount && { oauthAccounts: { create: oauthAccount } }),
+        },
+        select: AUTH_USER_SELECT,
       });
-    } catch (error) {
-      if (isUniqueViolation(error)) {
-        throw conflict('Email is already registered');
-      }
-      throw error;
-    }
+      await tx.outboxEvent.create({ data: userRegisteredEvent({ userId: user.id }) });
+      return user;
+    });
+    return conflictOnDuplicate(created, 'Email is already registered');
+  }
+
+  async findUserByOAuthAccount(account: OAuthAccountKey): Promise<AuthUser | null> {
+    const linked = await this.prisma.oAuthAccount.findUnique({
+      where: { provider_providerUserId: account },
+      select: { user: { select: AUTH_USER_SELECT } },
+    });
+    return linked?.user ?? null;
+  }
+
+  async linkOAuthAccount(
+    link: NewOAuthLink,
+    client: Prisma.TransactionClient = this.prisma,
+  ): Promise<void> {
+    const { label } = OAUTH_PROVIDER_SPECS[link.provider];
+    await conflictOnDuplicate(
+      client.oAuthAccount.create({ data: link, select: { id: true } }),
+      `This account is already linked to another ${label} account`,
+    );
   }
 
   findCredentialsByEmail(email: string): Promise<UserCredentials | null> {

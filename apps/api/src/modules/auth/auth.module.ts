@@ -10,6 +10,10 @@ import { AuthService } from './auth.service.js';
 import { JwksController } from './jwks.controller.js';
 import { JwtAuthGuard } from './jwt-auth.guard.js';
 import { JwtKeys, loadJwtKeys } from './jwt-keys.js';
+import { OAuthController } from './oauth.controller.js';
+import { OAuthService } from './oauth.service.js';
+import { OAuthClient } from './oauth-client.js';
+import { OAuthStates } from './oauth-state.js';
 import { PasswordHasher } from './password-hasher.js';
 import { SessionRepository } from './session.repository.js';
 import { SessionService } from './session.service.js';
@@ -25,10 +29,13 @@ const jwtKeysProvider: FactoryProvider<Promise<JwtKeys>> = {
 };
 
 @Module({
-  controllers: [AuthController, JwksController],
+  controllers: [AuthController, OAuthController, JwksController],
   providers: [
     AuthService,
     AuthRepository,
+    OAuthService,
+    OAuthClient,
+    OAuthStates,
     PasswordHasher,
     SessionService,
     SessionRepository,

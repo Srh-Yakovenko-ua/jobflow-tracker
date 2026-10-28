@@ -70,11 +70,24 @@ export function cacheControlOf(...responses: Response[]): (string | undefined)[]
   return responses.map((response) => response.get('cache-control'));
 }
 
-export function refreshCookieOf(response: Response): SetCookie | undefined {
+export const REFRESH_COOKIE_ATTRIBUTES = {
+  name: 'refresh_token',
+  httpOnly: true,
+  secure: true,
+  sameSite: 'strict',
+  path: '/api/v1/auth',
+  maxAge: 2_592_000,
+};
+
+export function cookieOf(response: Response, cookieName: string): SetCookie | undefined {
   return setCookies(response)
     .map((line) => parseSetCookie(line))
-    .find(({ name }) => name === 'refresh_token');
+    .find(({ name }) => name === cookieName);
 }
+
+export const clearedCookie = (path: string) => ({ value: '', path, expires: new Date(0) });
+
+export const refreshCookieOf = (response: Response) => cookieOf(response, 'refresh_token');
 
 export function refreshTokenFromCookie(response: Response): string {
   const value = refreshCookieOf(response)?.value;
