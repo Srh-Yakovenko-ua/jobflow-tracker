@@ -1,13 +1,16 @@
 'use client';
 
 import type { Theme } from '@jobflow/shared';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { QueryClientProvider } from '@tanstack/react-query';
+import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 import type { ReactNode } from 'react';
 import { useState } from 'react';
 import { Toaster } from 'sonner';
 
 import { uk } from '@/shared/i18n';
 import { ThemeProvider, useTheme } from '@/shared/lib/theme';
+
+import { createQueryClient } from './query-client';
 
 export type ProvidersProps = Readonly<{ children: ReactNode; theme: Theme }>;
 
@@ -17,7 +20,7 @@ function ThemedToaster() {
 }
 
 export function Providers({ children, theme }: ProvidersProps) {
-  const [queryClient] = useState(() => new QueryClient());
+  const [queryClient] = useState(() => createQueryClient());
 
   return (
     <QueryClientProvider client={queryClient}>
@@ -25,6 +28,7 @@ export function Providers({ children, theme }: ProvidersProps) {
         {children}
         <ThemedToaster />
       </ThemeProvider>
+      <ReactQueryDevtools buttonPosition="bottom-left" />
     </QueryClientProvider>
   );
 }

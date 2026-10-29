@@ -11,6 +11,7 @@ import globals from 'globals';
 import tseslint from 'typescript-eslint';
 
 import {
+  HAND_WRITTEN_QUERY_KEY,
   NEST_MAX_PARAMS,
   RAW_COLOUR,
   RESTRICTED_SYNTAX,
@@ -153,6 +154,8 @@ const FSD_POLICIES = FSD_LAYERS.map((layer, index) => ({
   allow: { to: [...sameSliceOf(layer), ...FSD_LAYERS.slice(index + 1).map(publicApiOf)] },
 })).filter((policy) => policy.allow.to.length > 0);
 
+const WEB_RESTRICTED_SYNTAX = [...RESTRICTED_SYNTAX, ...RAW_COLOUR, ...HAND_WRITTEN_QUERY_KEY];
+
 export function web(rootDir) {
   return defineConfig(
     globalIgnores(['next-env.d.ts']),
@@ -174,7 +177,7 @@ export function web(rootDir) {
     },
     {
       files: [tseslint.globs.ts],
-      rules: { 'no-restricted-syntax': ['error', ...RESTRICTED_SYNTAX, ...RAW_COLOUR] },
+      rules: { 'no-restricted-syntax': ['error', ...WEB_RESTRICTED_SYNTAX] },
     },
     reactHooks.configs.flat.recommended,
     nextPlugin.configs['core-web-vitals'],
