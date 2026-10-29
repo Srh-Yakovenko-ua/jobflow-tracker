@@ -32,6 +32,21 @@ export const RAW_COLOUR = [
   { selector: `TemplateElement[value.raw=${RAW_COLOUR_PATTERN}]`, message: RAW_COLOUR_MESSAGE },
 ];
 
+const QUERY_KEY_PROPERTY = 'Property[key.name=/^(queryKey|mutationKey)$/]';
+
+const QUERY_KEY_CALL =
+  'CallExpression[callee.property.name=/^(getQueryData|setQueryData|getQueryState|setQueryDefaults|getQueryDefaults|ensureQueryData)$/]';
+
+const HAND_WRITTEN_QUERY_KEY_MESSAGE =
+  'Query key written by hand: build it with the entity key factory (applicationKeys, timelineKeys, resumeKeys, analyticsKeys, notificationKeys)';
+
+export const HAND_WRITTEN_QUERY_KEY = [
+  `${QUERY_KEY_PROPERTY} > ArrayExpression.value`,
+  `${QUERY_KEY_PROPERTY} > TSAsExpression.value > ArrayExpression`,
+  `${QUERY_KEY_CALL} > ArrayExpression.arguments:first-child`,
+  `${QUERY_KEY_CALL} > TSAsExpression.arguments:first-child > ArrayExpression`,
+].map((selector) => ({ selector, message: HAND_WRITTEN_QUERY_KEY_MESSAGE }));
+
 export const NEST_MAX_PARAMS = {
   selector:
     ":function[params.length>2]:not(MethodDefinition[kind='constructor'] > FunctionExpression, MethodDefinition > FunctionExpression[params.0.decorators.length>0])",

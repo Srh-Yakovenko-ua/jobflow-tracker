@@ -8,6 +8,7 @@ import type { DelayMode, JsonBodyType } from 'msw';
 import { http, HttpResponse } from 'msw/http';
 import { delay } from 'msw/utils/delay';
 
+import { ApiError } from '@/shared/api';
 import { config } from '@/shared/config';
 
 export type ErrorBodyOptions = Pick<ErrorResponse, 'status' | 'type'> &
@@ -59,6 +60,10 @@ export const REFRESH_URL = apiUrl('/auth/refresh');
 
 export function errorBody({ status, type, ...rest }: ErrorBodyOptions): ErrorResponse {
   return { status, type, title: 'Request failed', requestId: 'req-test', ...rest };
+}
+
+export function apiErrorOf(options: ErrorBodyOptions): ApiError {
+  return new ApiError({ body: errorBody(options), retryAfterSeconds: undefined });
 }
 
 export function errorReply(options: ErrorBodyOptions) {

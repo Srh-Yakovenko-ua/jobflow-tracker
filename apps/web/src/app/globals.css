@@ -48,6 +48,10 @@
   @apply focus-ring;
 }
 
+[data-sonner-toaster] [data-sonner-toast]:focus-visible {
+  @apply focus-ring rounded-xl;
+}
+
 @utility num {
   @apply font-display text-num tabular-nums;
 }

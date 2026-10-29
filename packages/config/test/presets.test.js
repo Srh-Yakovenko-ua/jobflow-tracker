@@ -143,6 +143,22 @@ describe('web preset', () => {
       ]);
     });
   });
+
+  describe('hand-written query keys', () => {
+    const REFUSED_ROWS = [8, 10, 12, 14, 16].map((line) => [
+      'no-restricted-syntax',
+      line,
+      'Query key written by hand: build it with the entity key factory (applicationKeys, timelineKeys, resumeKeys, analyticsKeys, notificationKeys)',
+    ]);
+
+    it('refuses queryKey and mutationKey arrays and an array as a cache method key, bare or as const', () => {
+      assert.deepEqual(shapeRowsOf(messagesByFile['hand-written-key.ts']), REFUSED_ROWS);
+    });
+
+    it('accepts factory keys as queryKey, setQueryData and invalidateQueries arguments', () => {
+      assert.deepEqual(shapeRowsOf(messagesByFile['factory-key.ts']), []);
+    });
+  });
 });
 
 describe('web FSD boundaries', () => {

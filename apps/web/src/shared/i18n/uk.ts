@@ -2,6 +2,13 @@ export const uk = {
   app: {
     title: 'JobFlow · трекер пошуку роботи',
     notifications: 'Сповіщення',
+    close: 'Закрити',
+  },
+  errors: {
+    saveFailed: {
+      title: 'Не вдалося зберегти',
+      description: 'Це збій на нашому боці, збережені дані на місці. Спробуй ще раз.',
+    },
   },
   auth: {
     login: { title: 'Увійти' },
