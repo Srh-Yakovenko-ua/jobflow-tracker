@@ -21,7 +21,7 @@ EXPOSE 3000
 CMD ["pnpm", "--filter", "@jobflow/web", "exec", "next", "dev", "--hostname", "0.0.0.0", "--port", "3000"]
 
 FROM source AS build
-RUN pnpm turbo run build --filter @jobflow/web...
+RUN --network=none pnpm turbo run build --filter @jobflow/web...
 
 FROM node:26.12.0-alpine3.24 AS prod
 ENV NODE_ENV=production

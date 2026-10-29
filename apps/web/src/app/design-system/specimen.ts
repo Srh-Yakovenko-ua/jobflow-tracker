@@ -16,3 +16,9 @@ export const TYPE_ROLES = [
   { role: 'caption', token: 'caption 11.5/1.5' },
   { role: 'eyebrow', token: 'eyebrow 11/.14em' },
 ] as const;
+
+export const SURFACE_SWATCHES = [
+  { label: '22%', swatch: 'bg-paper inset-ring inset-ring-line' },
+  { label: '27%', swatch: 'bg-surface' },
+  { label: 'accent', swatch: 'bg-linear-140 from-accent to-accent-press' },
+] as const;
