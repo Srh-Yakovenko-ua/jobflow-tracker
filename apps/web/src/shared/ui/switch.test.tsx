@@ -21,4 +21,12 @@ describe('Switch', () => {
     await user.keyboard('{Enter}');
     expect(toggle.getAttribute('aria-checked')).toBe('true');
   });
+
+  it('the 26 px track carries the 44 px touch target', () => {
+    render(<Switch label={LABELS.autoGhost} />);
+
+    expect(screen.getByRole('switch', { name: LABELS.autoGhost }).className).toContain(
+      'touch-target',
+    );
+  });
 });

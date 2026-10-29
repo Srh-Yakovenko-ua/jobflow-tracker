@@ -24,6 +24,14 @@ describe('Checkbox', () => {
     expect(onCheckedChange.mock.calls).toEqual([[true], [false]]);
   });
 
+  it('the 18 px box carries the 44 px touch target', () => {
+    render(<Checkbox label={LABELS.weekly} />);
+
+    expect(screen.getByRole('checkbox', { name: LABELS.weekly }).className).toContain(
+      'touch-target',
+    );
+  });
+
   it('a partial state is read as mixed', () => {
     render(<Checkbox label={LABELS.partial} checked="indeterminate" />);
 

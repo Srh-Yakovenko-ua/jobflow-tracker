@@ -5,13 +5,9 @@ import { describe, expect, it, vi } from 'vitest';
 import { uk } from '@/shared/i18n';
 
 import { RadioGroup } from './radio-group';
+import { SIDE_OPTIONS } from './specimen-options';
 
 const COPY = uk.devUi.choice;
-
-const SIDES = [
-  { value: 'company', label: COPY.radios.company },
-  { value: 'candidate', label: COPY.radios.mine },
-];
 
 describe('RadioGroup', () => {
   it('Tab lands on the checked option and ArrowDown checks the next one', async () => {
@@ -20,7 +16,7 @@ describe('RadioGroup', () => {
     render(
       <RadioGroup
         aria-label={COPY.radioLabel}
-        options={SIDES}
+        options={SIDE_OPTIONS}
         value="company"
         onValueChange={onValueChange}
       />,
@@ -34,5 +30,19 @@ describe('RadioGroup', () => {
       expect(onValueChange).toHaveBeenCalledExactlyOnceWith('candidate');
     });
     expect(screen.getByRole('radiogroup', { name: COPY.radioLabel })).toBeDefined();
+  });
+
+  it('every 18 px radio carries the 44 px touch target', () => {
+    render(
+      <RadioGroup
+        aria-label={COPY.radioLabel}
+        options={SIDE_OPTIONS}
+        value="company"
+        onValueChange={vi.fn()}
+      />,
+    );
+
+    const targets = screen.getAllByRole('radio').map((radio) => radio.className);
+    expect(targets.filter((className) => className.includes('touch-target'))).toHaveLength(2);
   });
 });

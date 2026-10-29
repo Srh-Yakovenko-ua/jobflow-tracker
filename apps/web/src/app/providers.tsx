@@ -35,8 +35,8 @@ export function Providers({ children, theme }: ProvidersProps) {
       <ThemeProvider initialTheme={theme}>
         <LucideProvider strokeWidth={1.9} size={16}>
           {children}
+          <ThemedToaster />
         </LucideProvider>
-        <ThemedToaster />
       </ThemeProvider>
       <ReactQueryDevtools buttonPosition="bottom-left" />
     </QueryClientProvider>

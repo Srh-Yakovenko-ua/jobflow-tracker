@@ -1,13 +1,13 @@
 'use client';
 
-import { Check } from 'lucide-react';
 import { Select as SelectPrimitive } from 'radix-ui';
+import { useRef } from 'react';
 
 import { uk } from '@/shared/i18n';
 import { cn } from '@/shared/lib/cn';
 
 import { ClearButton } from './clear-button';
-import { useField } from './field';
+import { fieldLabelId, useField } from './field';
 import {
   FIELD_SURFACE,
   MENU_LABEL,
@@ -16,7 +16,7 @@ import {
   type SelectOption,
   type SelectOptionGroup,
 } from './field-surface';
-import { OptionContent } from './option-content';
+import { CheckSlot, OptionContent } from './option-content';
 import { SelectIndicators } from './select-indicators';
 import { Spinner } from './spinner';
 
@@ -36,32 +36,43 @@ export type SelectProps = Readonly<{
 const TRIGGER = cn(
   FIELD_SURFACE.self,
   FIELD_SURFACE.height.trigger,
-  'group flex w-full items-center gap-2 pr-1.5 pl-2.75 text-left data-placeholder:text-ink-3 data-[state=open]:bg-surface data-[state=open]:focus-halo',
+  'group touch-target flex w-full items-center gap-2 pr-1.5 pl-2.75 text-left data-placeholder:text-ink-3 data-[state=open]:bg-surface data-[state=open]:focus-halo',
 );
 
 const ITEM =
   'data-highlighted:bg-accent-tint data-highlighted:shadow-[inset_2px_0_0_var(--accent)] data-[state=checked]:font-semibold';
 
-function SelectItem({ option }: Readonly<{ option: SelectOption }>) {
+const NAME_FROM_CONTENT = { 'aria-labelledby': undefined } as const;
+
+type SelectItemProps = Readonly<{ option: SelectOption; checked: boolean }>;
+
+function SelectItem({ option, checked }: SelectItemProps) {
   return (
-    <SelectPrimitive.Item value={option.value} className={cn(OPTION_ROW, ITEM)}>
+    <SelectPrimitive.Item
+      value={option.value}
+      data-focus="option"
+      {...NAME_FROM_CONTENT}
+      className={cn(OPTION_ROW, ITEM)}
+    >
       <OptionContent
         option={option}
         label={<SelectPrimitive.ItemText>{option.label}</SelectPrimitive.ItemText>}
       />
-      <span className="flex w-3.75 flex-none justify-center text-accent-press">
-        <SelectPrimitive.ItemIndicator>
-          <Check aria-hidden size={14} />
-        </SelectPrimitive.ItemIndicator>
-      </span>
+      <CheckSlot checked={checked} />
     </SelectPrimitive.Item>
   );
 }
 
-function SelectMenu({ groups }: Pick<SelectProps, 'groups'>) {
+type SelectMenuProps = Pick<SelectProps, 'groups' | 'value'> &
+  Readonly<{ labelledBy: string | undefined }>;
+
+function SelectMenu({ groups, value, labelledBy }: SelectMenuProps) {
   return (
     <SelectPrimitive.Portal>
       <SelectPrimitive.Content
+        role="dialog"
+        aria-modal
+        aria-labelledby={labelledBy}
         position="popper"
         sideOffset={6}
         className={cn(
@@ -69,14 +80,18 @@ function SelectMenu({ groups }: Pick<SelectProps, 'groups'>) {
           'max-h-(--radix-select-content-available-height) w-(--radix-select-trigger-width)',
         )}
       >
-        <SelectPrimitive.Viewport className="flex flex-col gap-px">
+        <SelectPrimitive.Viewport
+          role="listbox"
+          aria-labelledby={labelledBy}
+          className="flex flex-col gap-px"
+        >
           {groups.map((group) => (
             <SelectPrimitive.Group key={group.label ?? group.options[0]?.value}>
               {group.label && (
                 <SelectPrimitive.Label className={MENU_LABEL}>{group.label}</SelectPrimitive.Label>
               )}
               {group.options.map((option) => (
-                <SelectItem key={option.value} option={option} />
+                <SelectItem key={option.value} option={option} checked={option.value === value} />
               ))}
             </SelectPrimitive.Group>
           ))}
@@ -88,6 +103,7 @@ function SelectMenu({ groups }: Pick<SelectProps, 'groups'>) {
 
 export function Select({ groups, value, onValueChange, view = {} }: SelectProps) {
   const field = useField();
+  const triggerRef = useRef<HTMLButtonElement>(null);
   const loading = view.status === 'loading';
   const clearable = Boolean(view.clearable) && value !== '';
   return (
@@ -99,8 +115,10 @@ export function Select({ groups, value, onValueChange, view = {} }: SelectProps)
     >
       <div className="relative">
         <SelectPrimitive.Trigger
+          ref={triggerRef}
           data-focus="halo"
           data-invalid={field['aria-invalid']}
+          aria-haspopup="dialog"
           aria-busy={loading || undefined}
           {...field}
           className={TRIGGER}
@@ -117,12 +135,13 @@ export function Select({ groups, value, onValueChange, view = {} }: SelectProps)
               label={uk.ui.clear}
               onClear={() => {
                 onValueChange('');
+                triggerRef.current?.focus();
               }}
             />
           </span>
         )}
       </div>
-      <SelectMenu groups={groups} />
+      <SelectMenu groups={groups} value={value} labelledBy={field.id && fieldLabelId(field.id)} />
     </SelectPrimitive.Root>
   );
 }

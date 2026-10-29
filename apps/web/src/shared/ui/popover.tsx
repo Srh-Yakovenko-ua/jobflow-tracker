@@ -5,6 +5,8 @@ import type { ComponentProps } from 'react';
 
 import { cn } from '@/shared/lib/cn';
 
+import { OVERLAY_SURFACE } from './field-surface';
+
 export const Popover = PopoverPrimitive.Root;
 
 export const PopoverTrigger = PopoverPrimitive.Trigger;
@@ -23,10 +25,7 @@ export function PopoverContent({ className, ...props }: PopoverContentProps) {
         sideOffset={6}
         collisionPadding={8}
         {...props}
-        className={cn(
-          'z-50 rounded-lg bg-surface p-3.5 font-ui text-ink shadow-e2 inset-ring inset-ring-line-soft animate-pop-in',
-          className,
-        )}
+        className={cn(OVERLAY_SURFACE, 'p-3.5', className)}
       />
     </PopoverPrimitive.Portal>
   );

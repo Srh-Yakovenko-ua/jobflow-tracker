@@ -11,15 +11,19 @@ const BASE =
   'touch-target inline-flex flex-none items-center justify-center gap-2 font-ui font-semibold whitespace-nowrap select-none transition-[background-color,color,box-shadow,translate] duration-(--duration-instant) ease-standard enabled:hover:-translate-y-px enabled:active:translate-y-0 disabled:cursor-not-allowed aria-busy:cursor-progress';
 
 const VARIANTS = {
-  primary: 'bg-accent text-surface shadow-accent enabled:hover:bg-accent-press',
+  primary:
+    'bg-accent text-surface shadow-accent enabled:hover:bg-accent-press dark:enabled:hover:text-paper',
   secondary: 'bg-surface-2 text-ink inset-ring inset-ring-line enabled:hover:bg-surface-3',
-  ghost: 'bg-transparent text-accent-press enabled:hover:bg-accent-tint',
+  ghost: 'bg-transparent text-link enabled:hover:bg-accent-tint',
   danger: 'bg-danger/6 text-danger inset-ring inset-ring-danger/30 enabled:hover:bg-danger/10',
 } as const;
 
 const SIZES = {
-  xs: { label: 'h-control-xs rounded-sm px-3.25 text-[12px]', icon: 'size-control-xs rounded-sm' },
-  sm: { label: 'h-control-sm rounded-sm px-3.5 text-[12.5px]', icon: 'size-control-sm rounded-sm' },
+  xs: { label: 'h-control-xs rounded-sm px-3 text-[12px]', icon: 'size-control-xs rounded-sm' },
+  sm: {
+    label: 'h-control-sm rounded-sm px-3.25 text-[12.5px]',
+    icon: 'size-control-sm rounded-sm',
+  },
   md: { label: 'h-control-md rounded-md px-4 text-[13.5px]', icon: 'size-control-md rounded-md' },
   lg: {
     label: 'h-control-lg rounded-[10px] px-5 text-[14.5px] enabled:hover:-translate-y-0.5',

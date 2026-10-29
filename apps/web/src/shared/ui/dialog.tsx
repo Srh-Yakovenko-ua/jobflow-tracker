@@ -7,6 +7,8 @@ import type { ReactNode } from 'react';
 import { uk } from '@/shared/i18n';
 import { cn } from '@/shared/lib/cn';
 
+import { ICON_ACTION } from './field-surface';
+
 export const Dialog = DialogPrimitive.Root;
 
 export const DialogTrigger = DialogPrimitive.Trigger;
@@ -55,10 +57,7 @@ export function DialogContent({ header, children, className }: DialogContentProp
       >
         <div className="flex items-start justify-between gap-4">
           <DialogHead header={header} />
-          <DialogPrimitive.Close
-            aria-label={uk.app.close}
-            className="touch-target flex size-7 flex-none items-center justify-center rounded-sm text-ink-3 transition-colors duration-(--duration-instant) ease-standard hover:bg-surface-3 hover:text-ink"
-          >
+          <DialogPrimitive.Close aria-label={uk.app.close} className={cn(ICON_ACTION, 'size-7')}>
             <X aria-hidden />
           </DialogPrimitive.Close>
         </div>

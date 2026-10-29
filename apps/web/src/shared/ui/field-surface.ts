@@ -12,7 +12,7 @@ export const FIELD_SURFACE = {
   control:
     'h-full min-w-0 flex-1 bg-transparent outline-hidden placeholder:text-ink-3 disabled:cursor-not-allowed',
   trigger:
-    'flex h-full min-w-0 flex-1 items-center gap-2 text-left outline-hidden after:absolute after:inset-0 disabled:cursor-not-allowed',
+    'flex h-full min-w-0 flex-1 items-center gap-2 text-left outline-hidden after:absolute after:inset-x-0 after:top-1/2 after:h-[max(100%,44px)] after:-translate-y-1/2 disabled:cursor-not-allowed',
   height: { field: 'h-control-md', trigger: 'h-9.5 rounded-[10px]' },
 } as const;
 
@@ -20,8 +20,13 @@ export type SelectOption = { value: string; label: string; meta?: string; detail
 
 export type SelectOptionGroup = { label?: string; options: readonly SelectOption[] };
 
-export const MENU_SURFACE =
-  'z-50 flex flex-col gap-px overflow-y-auto rounded-lg bg-surface p-1.5 font-ui text-ink shadow-e2 inset-ring inset-ring-line-soft animate-pop-in';
+export const OVERLAY_SURFACE =
+  'z-50 rounded-lg bg-surface font-ui text-ink shadow-e2 inset-ring inset-ring-line-soft animate-pop-in';
+
+export const MENU_SURFACE = cn(OVERLAY_SURFACE, 'flex flex-col gap-px overflow-y-auto p-1.5');
+
+export const ICON_ACTION =
+  'touch-target flex flex-none items-center justify-center rounded-sm text-ink-3 transition-colors duration-(--duration-instant) ease-standard hover:bg-surface-3 hover:text-ink';
 
 export const CHOICE_ROW =
   'flex min-h-11 w-fit cursor-pointer items-center gap-2.5 text-body text-ink has-disabled:cursor-not-allowed has-disabled:text-ink-3';

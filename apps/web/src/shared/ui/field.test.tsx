@@ -16,7 +16,7 @@ function describedText(control: HTMLElement) {
 describe('Field', () => {
   it('the label names the input and the hint describes it', () => {
     render(
-      <Field label={COPY.company.label} hint={COPY.company.hint}>
+      <Field label={COPY.company.label} footer={{ hint: COPY.company.hint }}>
         <Input placeholder={COPY.company.placeholder} />
       </Field>,
     );
@@ -28,7 +28,10 @@ describe('Field', () => {
 
   it('an error replaces the hint, marks the input invalid and sits in a polite live region', () => {
     render(
-      <Field label={COPY.salary.label} hint={COPY.company.hint} error={COPY.salary.error}>
+      <Field
+        label={COPY.salary.label}
+        footer={{ hint: COPY.company.hint, error: COPY.salary.error }}
+      >
         <Input />
       </Field>,
     );
@@ -41,17 +44,17 @@ describe('Field', () => {
 
   it('the counter turns danger only above 95 percent of the limit', () => {
     const { rerender } = render(
-      <Field label={COPY.note.label} counter={{ value: 190, max: 200 }}>
+      <Field label={COPY.note.label} footer={{ counter: { value: 190, max: 200 } }}>
         <Textarea />
       </Field>,
     );
-    expect(screen.getByText('190/200').className).not.toContain('text-danger');
+    expect(screen.getByText('190 / 200').className).not.toContain('text-danger');
 
     rerender(
-      <Field label={COPY.note.label} counter={{ value: 191, max: 200 }}>
+      <Field label={COPY.note.label} footer={{ counter: { value: 191, max: 200 } }}>
         <Textarea />
       </Field>,
     );
-    expect(screen.getByText('191/200').className).toContain('text-danger');
+    expect(screen.getByText('191 / 200').className).toContain('text-danger');
   });
 });

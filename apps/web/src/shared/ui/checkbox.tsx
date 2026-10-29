@@ -20,7 +20,7 @@ export function Checkbox({ label, className, ...props }: CheckboxProps) {
         className={cn(
           CHECK_BOX.base,
           CHECK_BOX.off,
-          'group data-[state=checked]:bg-accent data-[state=checked]:text-surface data-[state=checked]:inset-ring-0 data-[state=indeterminate]:bg-accent data-[state=indeterminate]:text-surface data-[state=indeterminate]:inset-ring-0 data-disabled:bg-surface-3 data-disabled:text-ink-3',
+          'group touch-target data-[state=checked]:bg-accent data-[state=checked]:text-surface data-[state=checked]:inset-ring-0 data-[state=indeterminate]:bg-accent data-[state=indeterminate]:text-surface data-[state=indeterminate]:inset-ring-0 data-disabled:bg-surface-3 data-disabled:text-ink-3',
           className,
         )}
       >

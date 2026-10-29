@@ -23,8 +23,18 @@ const STEP_BUTTON =
   'touch-target flex h-7 w-6.5 flex-none items-center justify-center rounded-xs bg-surface text-ink-2 shadow-e1 transition-colors duration-(--duration-instant) ease-standard enabled:hover:bg-accent-tint disabled:cursor-not-allowed disabled:text-ink-3/60 disabled:shadow-none';
 
 const STEPS = [
-  { direction: -1, label: uk.ui.decrease, Icon: Minus },
-  { direction: 1, label: uk.ui.increase, Icon: Plus },
+  {
+    direction: -1,
+    label: uk.ui.decrease,
+    Icon: Minus,
+    hitArea: 'after:left-auto after:right-[-3px] after:[transform:translateY(-50%)]',
+  },
+  {
+    direction: 1,
+    label: uk.ui.increase,
+    Icon: Plus,
+    hitArea: 'after:left-[-3px] after:[transform:translateY(-50%)]',
+  },
 ] as const;
 
 const STEP_KEYS: Partial<Record<string, 1 | -1>> = { ArrowUp: 1, ArrowDown: -1 };
@@ -76,7 +86,7 @@ export function NumberInput({ value, onValueChange, range, unit }: NumberInputPr
         className={cn(FIELD_SURFACE.control, 'field-sizing-content flex-none tabular-nums')}
       />
       <span className="flex-1 text-ink">{unit}</span>
-      {STEPS.map(({ direction, label, Icon }) => (
+      {STEPS.map(({ direction, label, Icon, hitArea }) => (
         <button
           key={label}
           type="button"
@@ -85,7 +95,7 @@ export function NumberInput({ value, onValueChange, range, unit }: NumberInputPr
           onClick={() => {
             commit(value + direction * step);
           }}
-          className={STEP_BUTTON}
+          className={cn(STEP_BUTTON, hitArea)}
         >
           <Icon aria-hidden size={13} />
         </button>

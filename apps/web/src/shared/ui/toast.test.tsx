@@ -5,9 +5,11 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { uk } from '@/shared/i18n';
 
-import { showToast } from './toast';
+import { showToast, ToastCard } from './toast';
 
 const COPY = uk.devUi.feedback.realToast;
+
+const UNDO = uk.devUi.feedback.toasts.undo;
 
 function showActionToast() {
   const onAction = vi.fn();
@@ -52,5 +54,17 @@ describe('showToast', () => {
     await user.dblClick(await screen.findByRole('button', { name: COPY.action }));
 
     expect(onAction).toHaveBeenCalledTimes(1);
+  });
+
+  it('a static specimen card that never leaves runs its action on every press', async () => {
+    const user = userEvent.setup();
+    const onAction = vi.fn();
+    render(
+      <ToastCard content={{ tone: 'undo', ...UNDO, action: { label: UNDO.action, onAction } }} />,
+    );
+
+    await user.dblClick(screen.getByRole('button', { name: UNDO.action }));
+
+    expect(onAction).toHaveBeenCalledTimes(2);
   });
 });

@@ -2,6 +2,18 @@
 @import '@jobflow/shared/tokens.css';
 @import '@jobflow/shared/theme.css';
 
+@custom-variant dark {
+  &:where([data-theme='dark'], [data-theme='dark'] *) {
+    @slot;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    &:where(:root:not([data-theme='light']), :root:not([data-theme='light']) *) {
+      @slot;
+    }
+  }
+}
+
 @theme inline {
   --font-display: var(--font-unbounded), sans-serif;
   --font-ui: var(--font-onest), sans-serif;
@@ -67,7 +79,7 @@
   }
 }
 
-:focus-visible:not([data-focus='halo']) {
+:focus-visible:not([data-focus]) {
   @apply focus-ring;
 }
 

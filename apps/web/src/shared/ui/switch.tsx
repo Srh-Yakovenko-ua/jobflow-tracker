@@ -17,7 +17,7 @@ export function Switch({ label, className, ...props }: SwitchProps) {
       <SwitchPrimitive.Root
         {...props}
         className={cn(
-          'relative h-6.5 w-10.5 flex-none rounded-pill bg-line transition-colors duration-(--duration-fast) ease-standard data-[state=checked]:bg-accent data-disabled:bg-surface-3',
+          'touch-target h-6.5 w-10.5 flex-none rounded-pill bg-line transition-colors duration-(--duration-fast) ease-standard data-[state=checked]:bg-accent data-disabled:bg-surface-3',
           className,
         )}
       >

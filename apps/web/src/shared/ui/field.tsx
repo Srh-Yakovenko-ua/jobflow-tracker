@@ -10,12 +10,16 @@ const COUNTER_WARNING_SHARE = 0.95;
 
 export type FieldCounter = { value: number; max: number };
 
-export type FieldProps = Readonly<{
-  label: ReactNode;
-  children: ReactNode;
+export type FieldFooter = Readonly<{
   hint?: ReactNode;
   error?: ReactNode;
   counter?: FieldCounter;
+}>;
+
+export type FieldProps = Readonly<{
+  label: ReactNode;
+  children: ReactNode;
+  footer?: FieldFooter;
 }>;
 
 export type FieldControlProps = {
@@ -30,7 +34,11 @@ export function useField(): FieldControlProps {
   return use(FieldContext);
 }
 
-function FieldMessage({ hint, error }: Pick<FieldProps, 'hint' | 'error'>) {
+export function fieldLabelId(controlId: string): string {
+  return `${controlId}-label`;
+}
+
+function FieldMessage({ hint, error }: Pick<FieldFooter, 'hint' | 'error'>) {
   return (
     <span aria-live="polite" className="flex min-w-0 items-start gap-1.5">
       {error ? (
@@ -49,12 +57,13 @@ function CounterText({ counter }: Readonly<{ counter: FieldCounter }>) {
   const nearLimit = counter.value > counter.max * COUNTER_WARNING_SHARE;
   return (
     <span className={cn('flex-none tabular-nums', nearLimit ? 'text-danger' : 'text-ink-3')}>
-      {`${String(counter.value)}/${String(counter.max)}`}
+      {`${String(counter.value)} / ${String(counter.max)}`}
     </span>
   );
 }
 
-export function Field({ label, children, hint, error, counter }: FieldProps) {
+export function Field({ label, children, footer = {} }: FieldProps) {
+  const { hint, error, counter } = footer;
   const id = useId();
   const footerId = `${id}-footer`;
   const hasFooter = Boolean(hint ?? error) || counter !== undefined;
@@ -65,7 +74,7 @@ export function Field({ label, children, hint, error, counter }: FieldProps) {
   };
   return (
     <div className="flex min-w-0 flex-col gap-1.5">
-      <label htmlFor={id} className="label w-fit text-ink">
+      <label id={fieldLabelId(id)} htmlFor={id} className="label w-fit text-ink">
         {label}
       </label>
       <FieldContext value={control}>{children}</FieldContext>

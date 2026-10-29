@@ -14,6 +14,7 @@ export const RN_THEME = {
       "accent-press": "#125492",
       "accent-tint": "#EDF4FD",
       "accent-ink": "#0F4A85",
+      "link": "#125492",
       "danger": "#874131",
       "scrim": "#26201B"
     },
@@ -53,6 +54,7 @@ export const RN_THEME = {
       "accent-press": "#4C8FD8",
       "accent-tint": "#243951",
       "accent-ink": "#6AA9EE",
+      "link": "#6AA9EE",
       "danger": "#D58775",
       "scrim": "#26201B"
     },

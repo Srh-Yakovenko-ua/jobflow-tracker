@@ -1,11 +1,11 @@
 'use client';
 
-import { X } from 'lucide-react';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 
 import { uk } from '@/shared/i18n';
 import { cn } from '@/shared/lib/cn';
 
+import { Chip } from './chip';
 import { ClearButton } from './clear-button';
 import { ComboboxMenu, type ComboboxView } from './combobox-menu';
 import { useField } from './field';
@@ -39,22 +39,14 @@ function Chips({ values, labelOf, onRemove }: ChipsProps) {
   return (
     <>
       {values.slice(0, CHIP_LIMIT).map((value) => (
-        <span
+        <Chip
           key={value}
-          className="relative z-10 flex items-center gap-1.25 rounded-[7px] bg-accent-tint py-0.75 pr-1 pl-2 text-[12px] font-medium text-accent-ink inset-ring inset-ring-accent/20"
-        >
-          {labelOf(value)}
-          <button
-            type="button"
-            aria-label={`${uk.ui.remove} ${labelOf(value)}`}
-            onClick={() => {
-              onRemove(value);
-            }}
-            className="touch-target flex size-4.25 items-center justify-center rounded-xs transition-colors duration-(--duration-instant) hover:bg-accent/15"
-          >
-            <X aria-hidden size={12} />
-          </button>
-        </span>
+          label={labelOf(value)}
+          tone="accent"
+          onRemove={() => {
+            onRemove(value);
+          }}
+        />
       ))}
       {hidden > 0 && (
         <span className="relative z-10 px-1 text-[12px] font-semibold text-ink-2 tabular-nums">
@@ -77,6 +69,7 @@ function toggled(values: readonly string[], value: string): string[] {
 export function Combobox({ groups, selection, view, onCreate }: ComboboxProps) {
   const field = useField();
   const [open, setOpen] = useState(false);
+  const triggerRef = useRef<HTMLButtonElement>(null);
   const picked = pickedOf(selection);
   const options = groups.flatMap((group) => group.options);
   const labelOf = (value: string) =>
@@ -92,6 +85,7 @@ export function Combobox({ groups, selection, view, onCreate }: ComboboxProps) {
   const clear = () => {
     if (selection.mode === 'multi') selection.onValueChange([]);
     else selection.onValueChange('');
+    triggerRef.current?.focus();
   };
   const summary = selection.mode === 'single' && picked[0] ? labelOf(picked[0]) : undefined;
   return (
@@ -110,10 +104,13 @@ export function Combobox({ groups, selection, view, onCreate }: ComboboxProps) {
               labelOf={labelOf}
               onRemove={(value) => {
                 selection.onValueChange(toggled(selection.value, value));
+                triggerRef.current?.focus();
               }}
             />
           )}
           <PopoverTrigger
+            ref={triggerRef}
+            role="combobox"
             data-focus="halo"
             {...field}
             className={cn(FIELD_SURFACE.trigger, 'min-h-7 min-w-2.5')}

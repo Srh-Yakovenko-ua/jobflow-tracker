@@ -39,6 +39,14 @@ describe('Button', () => {
     expect(onClick).not.toHaveBeenCalled();
   });
 
+  it('the primary hover switches its text to paper in dark, keeping 4.5:1 on accent-press', () => {
+    render(<Button>{LABELS.addVacancy}</Button>);
+
+    const { className } = screen.getByRole('button', { name: LABELS.addVacancy });
+    expect(className).toContain('enabled:hover:bg-accent-press');
+    expect(className).toContain('dark:enabled:hover:text-paper');
+  });
+
   it('an icon-only button is named by its label and shows it as a tooltip on focus', async () => {
     const user = userEvent.setup();
     render(

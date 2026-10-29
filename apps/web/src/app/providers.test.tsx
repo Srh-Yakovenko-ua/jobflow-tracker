@@ -36,6 +36,10 @@ async function failSave(save: () => Promise<unknown>) {
   });
 }
 
+function lucideLookOf(icon: Element | null | undefined) {
+  return { strokeWidth: icon?.getAttribute('stroke-width'), width: icon?.getAttribute('width') };
+}
+
 async function showSaveFailedToast() {
   const { result } = renderInProviders(() => useMutation({ mutationFn: rejectWithServerError }));
   await failSave(() => result.current.mutateAsync());
@@ -90,9 +94,18 @@ describe('Providers', () => {
       </Providers>,
     );
 
-    const icon = container.querySelector('svg');
-    expect(icon?.getAttribute('stroke-width')).toBe('1.9');
-    expect(icon?.getAttribute('width')).toBe('16');
+    expect(lucideLookOf(container.querySelector('svg'))).toEqual({
+      strokeWidth: '1.9',
+      width: '16',
+    });
+  });
+
+  it('draws the toast tone icon with the 1.9 stroke at the 14 px of the design', async () => {
+    await showSaveFailedToast();
+
+    const title = await screen.findByText(SAVE_FAILED.title);
+    const icon = title.closest('[data-sonner-toast]')?.querySelector('svg');
+    expect(lucideLookOf(icon)).toEqual({ strokeWidth: '1.9', width: '14' });
   });
 
   it('a failed query keeps its error for the block after one call and shows no toast', async () => {

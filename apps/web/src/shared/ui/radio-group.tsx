@@ -20,7 +20,7 @@ export function RadioGroup({ options, ...props }: RadioGroupProps) {
         <label key={option.value} className={CHOICE_ROW}>
           <RadioGroupPrimitive.Item
             value={option.value}
-            className="flex size-4.5 flex-none items-center justify-center rounded-pill bg-surface inset-ring-[1.5px] inset-ring-ink-3/30 transition-shadow duration-(--duration-instant) ease-standard data-[state=checked]:inset-ring-accent"
+            className="touch-target flex size-4.5 flex-none items-center justify-center rounded-pill bg-surface inset-ring-[1.5px] inset-ring-ink-3/30 transition-shadow duration-(--duration-instant) ease-standard data-[state=checked]:inset-ring-accent"
           >
             <RadioGroupPrimitive.Indicator className="size-2 rounded-pill bg-accent" />
           </RadioGroupPrimitive.Item>

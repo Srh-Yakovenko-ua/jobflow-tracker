@@ -88,6 +88,13 @@ describe('web theme', () => {
     expect(dark).toContain('--scrim: oklch(25% 0.013 62);');
   });
 
+  it('keeps link at the drawn ghost text in light and lifts it to 72% L in dark', () => {
+    const css = renderTokensCss(tokens);
+
+    expect(blockAfter(css, ':root')).toContain('--link: oklch(44% 0.12 252);');
+    expect(blockAfter(css, "[data-theme='dark']")).toContain('--link: oklch(72% 0.12 252);');
+  });
+
   it('follows the system dark theme unless the user picked light', () => {
     const css = renderTokensCss(tokens);
 
@@ -128,6 +135,7 @@ describe('web theme', () => {
     expect(theme).toContain('--color-data-6: var(--data-6);');
     expect(theme).toContain('--color-danger: var(--danger);');
     expect(theme).toContain('--color-scrim: var(--scrim);');
+    expect(theme).toContain('--color-link: var(--link);');
     expect(theme).toContain('--ease-spring: var(--easing-spring);');
   });
 
@@ -136,7 +144,7 @@ describe('web theme', () => {
     const bound = [...renderThemeCss(tokens).matchAll(/--color-[\w-]+: var\((--[\w-]+)\);/g)];
     const undeclared = bound.filter(([, name]) => !root.includes(`  ${String(name)}: `));
 
-    expect(bound).toHaveLength(29);
+    expect(bound).toHaveLength(30);
     expect(undeclared).toEqual([]);
   });
 });

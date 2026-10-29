@@ -1,23 +1,19 @@
+import type { Theme } from '@jobflow/shared';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 
 import { uk } from '@/shared/i18n';
+import { THEME_OPTIONS } from '@/shared/lib/theme';
 
 import { SegmentedControl } from './segmented-control';
 
-const THEME_SEGMENTS = [
-  { value: 'light', label: uk.theme.light },
-  { value: 'dark', label: uk.theme.dark },
-  { value: 'system', label: uk.theme.system },
-] as const;
-
-function renderThemes(value: (typeof THEME_SEGMENTS)[number]['value']) {
+function renderThemes(value: Theme) {
   const onValueChange = vi.fn();
   render(
     <SegmentedControl
       aria-label={uk.ui.theme}
-      options={THEME_SEGMENTS}
+      options={THEME_OPTIONS}
       value={value}
       onValueChange={onValueChange}
     />,

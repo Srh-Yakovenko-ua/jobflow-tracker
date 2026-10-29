@@ -6,30 +6,25 @@ import { uk } from '@/shared/i18n';
 import { cn } from '@/shared/lib/cn';
 import { Combobox } from '@/shared/ui/combobox';
 import { Field } from '@/shared/ui/field';
-import type { SelectOption } from '@/shared/ui/field-surface';
 import { Select, type SelectView } from '@/shared/ui/select';
+import { SOURCE_OPTIONS, useStackSpecimen } from '@/shared/ui/specimen-options';
 
 import { GallerySection, Note, PANEL, Specimen, TILE_GRID } from './gallery';
-import { CV_GROUPS, SOURCE_OPTIONS, STACK_OPTIONS, STAGE_GROUPS } from './specimen';
+import { CV_GROUPS, STAGE_GROUPS } from './specimen';
 
 const COPY = uk.devUi.selects;
 
 const STATES = COPY.states;
 
 function SourcePicker() {
-  const [options, setOptions] = useState<readonly SelectOption[]>(SOURCE_OPTIONS);
   const [source, setSource] = useState('djinni');
   return (
     <Specimen eyebrow={COPY.source.eyebrow}>
       <Field label={COPY.source.label}>
         <Combobox
-          groups={[{ options }]}
+          groups={[{ options: SOURCE_OPTIONS }]}
           selection={{ mode: 'single', value: source, onValueChange: setSource }}
           view={COPY.source}
-          onCreate={(query) => {
-            setOptions([...options, { value: query, label: query }]);
-            setSource(query);
-          }}
         />
       </Field>
       <Note>{COPY.source.note}</Note>
@@ -38,15 +33,11 @@ function SourcePicker() {
 }
 
 function StackPicker() {
-  const [stack, setStack] = useState(['react', 'typescript']);
+  const stack = useStackSpecimen(['react', 'typescript']);
   return (
     <Specimen eyebrow={COPY.stack.eyebrow}>
       <Field label={COPY.stack.label}>
-        <Combobox
-          groups={[{ label: COPY.stack.group, options: STACK_OPTIONS }]}
-          selection={{ mode: 'multi', value: stack, onValueChange: setStack }}
-          view={COPY.stack}
-        />
+        <Combobox {...stack} view={{ ...COPY.stack, footer: false }} />
       </Field>
       <Note>{COPY.stack.note}</Note>
     </Specimen>
@@ -87,7 +78,7 @@ const STATE_SPECIMENS: readonly StateSpecimen[] = [
 function StateSelect({ specimen }: Readonly<{ specimen: StateSpecimen }>) {
   const [value, setValue] = useState(specimen.value ?? '');
   return (
-    <Field label={specimen.caption} error={specimen.error}>
+    <Field label={specimen.caption} footer={{ error: specimen.error }}>
       <Select groups={STAGE_GROUPS} value={value} onValueChange={setValue} view={specimen.view} />
     </Field>
   );

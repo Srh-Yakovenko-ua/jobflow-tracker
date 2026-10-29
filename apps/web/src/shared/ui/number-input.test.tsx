@@ -50,6 +50,16 @@ describe('NumberInput', () => {
     expect(input).toHaveProperty('value', '7');
   });
 
+  it('minus and plus anchor their 44 px hit areas outward so they meet in the gap', () => {
+    render(<Threshold />);
+
+    const minus = screen.getByRole('button', { name: uk.ui.decrease }).className;
+    const plus = screen.getByRole('button', { name: uk.ui.increase }).className;
+    expect(minus).toContain('after:left-auto after:right-[-3px]');
+    expect(minus).not.toContain('after:left-[-3px]');
+    expect(plus).toContain('after:left-[-3px]');
+  });
+
   it('the minus button steps down from the pointer', async () => {
     const user = userEvent.setup();
     render(<Threshold />);

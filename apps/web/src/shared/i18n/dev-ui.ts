@@ -33,11 +33,12 @@ export const devUi = {
     },
     salary: { label: 'Вилка, $', currency: '$', net: 'net', error: 'нижче твоєї медіани $4 900' },
     threshold: { label: 'Поріг тиші', unit: 'днів', hint: 'твоя медіана відповіді — 6 днів' },
+    source: { hint: 'клік веде до групи 07' },
     tags: {
       label: 'Стек · теги',
       placeholder: 'додати й ENTER…',
-      search: 'шукати або додати тег…',
       hint: 'ENTER додає тег',
+      count: (total: number) => `${String(total)} тегів · BACKSPACE прибирає останній`,
     },
     note: {
       label: 'Заметка',
@@ -65,7 +66,7 @@ export const devUi = {
       label: 'Стек',
       placeholder: 'обери стек…',
       search: 'шукати технологію…',
-      group: 'технології',
+      group: (total: number) => `технології · ${String(total)}`,
       note: 'Чип видаляється хрестиком, «скинути все» — у контролі. Понад 4 чипи згортаються в «+N».',
     },
     cv: {
@@ -111,7 +112,7 @@ export const devUi = {
     },
     radioEyebrow: 'радіо',
     radioLabel: 'Хто відмовив',
-    radios: { company: 'Відмовила компанія', mine: 'Відмовився я' },
+    radios: { company: 'Відмовила компанія', candidate: 'Відмовився я' },
     radioNote: 'Радіо — тільки для 2–3 взаємовиключних; більше — select.',
     switchEyebrow: 'перемикачі',
     switches: { autoGhost: 'Авто-ghost за 30 днів', push: 'Пуші про тишу' },
@@ -146,7 +147,7 @@ export const devUi = {
     popoverTrigger: 'Нагадування',
     popoverTitle: 'нагадування · 0',
     popoverText: 'Усі відповіли. Найкращий вигляд цього списку.',
-    toastsEyebrow: 'тости · 3 типи',
+    toastsEyebrow: 'тости · 4 типи',
     toasts: {
       success: {
         title: 'Причину збережено',
@@ -159,14 +160,20 @@ export const devUi = {
         action: 'Ще раз',
       },
       info: { title: 'Розбір у черзі', description: '2 задачі перед твоєю · ~30 с' },
+      undo: {
+        title: 'Карточку видалено',
+        description: 'Acme Technologies · дію можна відкотити 8 с',
+        action: 'Вернути',
+      },
     },
+    lastAction: (label: string) => `остання дія: ${label}`,
     fireToast: '↑ показати справжній тост',
     realToast: {
       title: 'Причину збережено',
       description: 'Acme → відмова. Тепер у статистиці причин 12 записів.',
       action: 'Скасувати',
     },
-    modalEyebrow: 'модалка',
+    modalEyebrow: 'модалка · спецімент',
     openModal: '↑ відкрити на весь екран',
     modal: {
       eyebrow: "Acme Technologies · техінтерв'ю → відмова",

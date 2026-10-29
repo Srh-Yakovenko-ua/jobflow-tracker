@@ -7,17 +7,13 @@ import { cn } from '@/shared/lib/cn';
 import { Checkbox } from '@/shared/ui/checkbox';
 import { RadioGroup } from '@/shared/ui/radio-group';
 import { SegmentedControl } from '@/shared/ui/segmented-control';
+import { SIDE_OPTIONS } from '@/shared/ui/specimen-options';
 import { Switch } from '@/shared/ui/switch';
 
 import { GallerySection, Note, PANEL, Specimen, TILE_GRID } from './gallery';
 import { THRESHOLD_DAYS, type ThresholdDays } from './specimen';
 
 const COPY = uk.devUi.choice;
-
-const REJECTION_SIDES = [
-  { value: 'company', label: COPY.radios.company },
-  { value: 'candidate', label: COPY.radios.mine },
-];
 
 const THRESHOLD_OPTIONS = THRESHOLD_DAYS.map((days) => ({
   value: days,
@@ -39,7 +35,7 @@ export function ChoiceSection() {
         <Specimen eyebrow={COPY.radioEyebrow} className="gap-0">
           <RadioGroup
             aria-label={COPY.radioLabel}
-            options={REJECTION_SIDES}
+            options={SIDE_OPTIONS}
             value={side}
             onValueChange={setSide}
           />
