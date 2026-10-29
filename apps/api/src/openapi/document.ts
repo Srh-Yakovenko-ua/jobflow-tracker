@@ -6,6 +6,7 @@ import { AUTH_OPENAPI_PATHS, REFRESH_COOKIE } from '../modules/auth/index.js';
 import { TIMELINE_OPENAPI_PATHS } from '../modules/events/index.js';
 import { HEALTH_OPENAPI_PATHS } from '../modules/health/index.js';
 import { MAINTENANCE_OPENAPI_PATHS } from '../modules/maintenance/index.js';
+import { NOTES_OPENAPI_PATHS } from '../modules/notes/index.js';
 
 export type OpenApiDocument = ReturnType<OpenApiGeneratorV31['generateDocument']>;
 
@@ -14,6 +15,7 @@ export const API_OPENAPI_PATHS = [
   ...AUTH_OPENAPI_PATHS,
   ...APPLICATIONS_OPENAPI_PATHS,
   ...TIMELINE_OPENAPI_PATHS,
+  ...NOTES_OPENAPI_PATHS,
   ...MAINTENANCE_OPENAPI_PATHS,
 ];
 

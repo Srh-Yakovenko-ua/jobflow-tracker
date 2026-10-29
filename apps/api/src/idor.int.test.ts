@@ -10,6 +10,10 @@ import { TO_SCREENING } from './test/service-fixtures.js';
 
 type OwnerOnlyCase = Omit<RouteCall, 'accessToken'> & { card: string; ownerStatus: number };
 
+const OLENAS_NOTE = 'Нотатка Олени';
+
+const FOREIGN_NOTE = { body: 'Чужа нотатка' };
+
 const OWNER_ONLY_CASES: OwnerOnlyCase[] = [
   { card: 'BE-14', method: 'get', path: '/applications/:id', ownerStatus: 200 },
   {
@@ -29,11 +33,26 @@ const OWNER_ONLY_CASES: OwnerOnlyCase[] = [
   },
   { card: 'BE-17', method: 'post', path: '/applications/:id/events/undo-last', ownerStatus: 409 },
   { card: 'BE-18', method: 'get', path: '/applications/:id/timeline', ownerStatus: 200 },
+  {
+    card: 'BE-22',
+    method: 'post',
+    path: '/applications/:id/notes',
+    body: FOREIGN_NOTE,
+    ownerStatus: 201,
+  },
+  { card: 'BE-22', method: 'get', path: '/applications/:id/notes', ownerStatus: 200 },
+  {
+    card: 'BE-22',
+    method: 'patch',
+    path: '/applications/:id/notes/:noteId',
+    body: FOREIGN_NOTE,
+    ownerStatus: 200,
+  },
+  { card: 'BE-22', method: 'delete', path: '/applications/:id/notes/:noteId', ownerStatus: 204 },
 ];
 
 const ROUTES_WITHOUT_IDOR_CASE = [
   { card: 'BE-21', method: 'post', path: '/applications/:id/contacts', resource: 'contact' },
-  { card: 'BE-22', method: 'post', path: '/applications/:id/notes', resource: 'note' },
   { card: 'BE-30', method: 'patch', path: '/resumes/versions/:id', resource: 'resume version' },
 ] as const;
 
@@ -65,7 +84,12 @@ describe("another user's data", () => {
         accessToken: olena.accessToken,
         input: ROMASHKA,
       });
-      const route = { method, path: `/api/v1${path.replace(':id', application.id)}`, body };
+      const note = await testApp.prisma.note.create({
+        data: { applicationId: application.id, body: OLENAS_NOTE },
+        select: { id: true },
+      });
+      const filled = path.replace(':id', application.id).replace(':noteId', note.id);
+      const route = { method, path: `/api/v1${filled}`, body };
 
       const intruder = await callRoute(testApp.app, { ...route, accessToken: bohdan.accessToken });
 
@@ -78,6 +102,9 @@ describe("another user's data", () => {
       });
       expect(afterwards.status).toBe(200);
       expect(applicationResponseSchema.parse(afterwards.body)).toEqual(application);
+      expect(
+        await testApp.prisma.note.findUnique({ where: { id: note.id }, select: { body: true } }),
+      ).toEqual({ body: OLENAS_NOTE });
       const owner = await callRoute(testApp.app, { ...route, accessToken: olena.accessToken });
       expect(owner.status).toBe(ownerStatus);
     },

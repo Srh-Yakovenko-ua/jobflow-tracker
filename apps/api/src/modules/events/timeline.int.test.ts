@@ -10,9 +10,9 @@ import { Clock } from '../../common/clock.js';
 import { appTestingModule, useTestApp } from '../../test/app.js';
 import {
   applicationPath,
-  createApplication,
   postStageMove,
-  ROMASHKA,
+  type SignedInApplication,
+  signUpWithApplication,
   stageEventsOf,
   timelinePath,
   undoLastMove,
@@ -23,8 +23,6 @@ import { callRoute } from '../../test/http.js';
 import { APPLICATION_NOT_FOUND, MISSING_ID, TO_SCREENING } from '../../test/service-fixtures.js';
 import { NOW, settableClock } from '../../test/time.js';
 import { TimelineService } from './timeline.service.js';
-
-type OwnApplication = { accessToken: string; id: string };
 
 type DesignRecord = TimelineRecord & { occurredAt: Date };
 
@@ -144,7 +142,7 @@ describe('the application timeline', () => {
 
   const timeline = () => testApp.app.get(TimelineService);
 
-  const getTimeline = ({ accessToken, id }: OwnApplication) =>
+  const getTimeline = ({ accessToken, id }: SignedInApplication) =>
     callRoute(testApp.app, { method: 'get', path: timelinePath(id), accessToken });
 
   const journalRowCount = (applicationId: string) =>
@@ -173,12 +171,6 @@ describe('the application timeline', () => {
     };
   }
 
-  async function olenaWithApplication(): Promise<OwnApplication> {
-    const { accessToken } = await signUp(testApp.app, OLENA);
-    const { id } = await createApplication(testApp.app, { accessToken, input: ROMASHKA });
-    return { accessToken, id };
-  }
-
   it('returns the design example newest first in its wording, the note once from the notes table', async () => {
     const { noteId, ...application } = await designApplication();
 
@@ -200,7 +192,7 @@ describe('the application timeline', () => {
   });
 
   it('hides an undone move and the row that undid it, both kept in stage_events', async () => {
-    const application = await olenaWithApplication();
+    const application = await signUpWithApplication(testApp.app);
     const { accessToken, id } = application;
     await postStageMove(testApp.app, { accessToken, id, input: TO_SCREENING });
     await undoLastMove(testApp.app, { accessToken, id });
@@ -214,7 +206,7 @@ describe('the application timeline', () => {
   });
 
   it('answers a soft-deleted application with 404', async () => {
-    const application = await olenaWithApplication();
+    const application = await signUpWithApplication(testApp.app);
     const { accessToken, id } = application;
     const deleted = await callRoute(testApp.app, {
       method: 'delete',
