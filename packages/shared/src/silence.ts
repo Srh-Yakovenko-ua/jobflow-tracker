@@ -1,7 +1,7 @@
 import { z } from 'zod';
 
 import type { UserSettings } from './schemas/user-settings.js';
-import { ACTIVE_STAGES, type Stage, STAGES } from './stages.js';
+import { ACTIVE_STAGES, INACTIVE_STAGES, isActiveStage, type Stage } from './stages.js';
 
 export const SILENCE_LEVELS = ['none', 'warn', 'silent'] as const;
 
@@ -31,7 +31,7 @@ export function silenceLevelOf({
   silenceDays,
   daysSinceLastEvent,
 }: SilenceLevelInput): SilenceLevel {
-  if (!ACTIVE_STAGES.includes(stage)) {
+  if (!isActiveStage(stage)) {
     return 'none';
   }
   const threshold = effectiveSilenceDays({ silenceDays }, stage);
@@ -53,8 +53,6 @@ export type SilenceWindowsInput = SilenceSettings & {
 };
 
 type ThresholdGroup = { stages: readonly Stage[]; threshold: number };
-
-const NEVER_SILENT_STAGES = STAGES.filter((stage) => !ACTIVE_STAGES.includes(stage));
 
 const daysBefore = (now: Date, days: number) => new Date(now.getTime() - days * DAY_MS);
 
@@ -89,9 +87,7 @@ export function silenceWindows({ levels, silenceDays, now }: SilenceWindowsInput
   const activeWindows = levels.flatMap((level) =>
     groups.map((group) => ACTIVE_WINDOW_OF[level](group, now)),
   );
-  return levels.includes('none')
-    ? [...activeWindows, { stages: NEVER_SILENT_STAGES }]
-    : activeWindows;
+  return levels.includes('none') ? [...activeWindows, { stages: INACTIVE_STAGES }] : activeWindows;
 }
 
 export function wholeDaysBetween(from: Date, to: Date): number {

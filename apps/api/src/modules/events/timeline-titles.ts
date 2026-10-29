@@ -1,5 +1,8 @@
 import {
   type CaptureMethod,
+  countedUk,
+  DAY_FORMS_UK,
+  type PluralForms,
   SCHEDULED_EVENT_KIND_LABELS,
   type Stage,
   STAGE_LABELS,
@@ -21,22 +24,13 @@ const CAPTURE_TITLES: Record<CaptureMethod, string> = {
   paste: 'Карточку створено з тексту',
 };
 
-type PluralForms = Partial<Record<Intl.LDMLPluralRule, string>> & { other: string };
-
-const UKRAINIAN_PLURALS = new Intl.PluralRules('uk');
-
 const SECONDS: PluralForms = { one: 'секунду', few: 'секунди', other: 'секунд' };
-
-const DAYS: PluralForms = { one: 'день', few: 'дні', other: 'днів' };
-
-function counted(count: number, forms: PluralForms): string {
-  return `${String(count)} ${forms[UKRAINIAN_PLURALS.select(count)] ?? forms.other}`;
-}
 
 const RECORD_TITLES: RecordTitles = {
   captured: ({ method }) => CAPTURE_TITLES[method],
-  ai_parsed: ({ durationSec }) => `AI розібрав опис за ${counted(durationSec, SECONDS)}`,
-  silence_started: ({ silenceDays }) => `${counted(silenceDays, DAYS)} тиші · індикатор увімкнено`,
+  ai_parsed: ({ durationSec }) => `AI розібрав опис за ${countedUk(durationSec, SECONDS)}`,
+  silence_started: ({ silenceDays }) =>
+    `${countedUk(silenceDays, DAY_FORMS_UK)} тиші · індикатор увімкнено`,
   followup_generated: () => 'Фоллоу-ап згенеровано',
   followup_sent: () => 'Фоллоу-ап надіслано',
   interview_scheduled: ({ kind }) => `${SCHEDULED_EVENT_KIND_LABELS[kind].labelUk} заплановано`,

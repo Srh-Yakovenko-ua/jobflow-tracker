@@ -59,6 +59,16 @@
 @theme {
   --animate-pop-in: pop-in var(--duration-base) var(--easing);
   --animate-spring-in: spring-in var(--duration-spring) var(--easing-spring);
+  --animate-shimmer: shimmer 1600ms linear infinite;
+
+  @keyframes shimmer {
+    from {
+      background-position: -260px 0;
+    }
+    to {
+      background-position: 460px 0;
+    }
+  }
 
   @keyframes pop-in {
     from {
