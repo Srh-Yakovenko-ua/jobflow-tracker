@@ -13,7 +13,10 @@ export const CHART_THEME = {
       "accent": "#2D6BAB",
       "accent-press": "#125492",
       "accent-tint": "#EDF4FD",
-      "accent-ink": "#0F4A85"
+      "accent-ink": "#0F4A85",
+      "link": "#125492",
+      "danger": "#874131",
+      "scrim": "#26201B"
     },
     "outcome": {
       "offer": "#20714A",
@@ -50,7 +53,10 @@ export const CHART_THEME = {
       "accent": "#6AA9EE",
       "accent-press": "#4C8FD8",
       "accent-tint": "#243951",
-      "accent-ink": "#6AA9EE"
+      "accent-ink": "#6AA9EE",
+      "link": "#6AA9EE",
+      "danger": "#D58775",
+      "scrim": "#26201B"
     },
     "outcome": {
       "offer": "#51BD85",
