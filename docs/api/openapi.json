@@ -3949,6 +3949,861 @@
         }
       }
     },
+    "/applications/{id}/events": {
+      "post": {
+        "tags": [
+          "applications"
+        ],
+        "summary": "Move an Application to another stage",
+        "description": "Writes the stage event and moves the Application in one transaction. fromStage is the stage the card left: another current stage is 409 conflict, a move the stage machine refuses is 409 illegal_transition. A move to rejected needs reasonCode while askRejectionReason is on (unspecified counts). occurredAt defaults to now and may be in the past, never before the previous event.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "example": "0199f0c4-6e3f-7c42-9d50-7b8c9d0e1f2a"
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "example": {
+                "fromStage": "tech_interview",
+                "toStage": "rejected",
+                "reasonCode": "skills_gap",
+                "comment": "Попросили більше досвіду з Kafka"
+              },
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "fromStage": {
+                    "type": "string",
+                    "enum": [
+                      "applied",
+                      "screening",
+                      "tech_interview",
+                      "final",
+                      "offer",
+                      "rejected",
+                      "ghosted",
+                      "withdrawn"
+                    ]
+                  },
+                  "toStage": {
+                    "type": "string",
+                    "enum": [
+                      "applied",
+                      "screening",
+                      "tech_interview",
+                      "final",
+                      "offer",
+                      "rejected",
+                      "ghosted",
+                      "withdrawn"
+                    ]
+                  },
+                  "reasonCode": {
+                    "type": "string",
+                    "enum": [
+                      "skills_gap",
+                      "english_level",
+                      "salary_expectations",
+                      "chose_other",
+                      "position_closed",
+                      "no_explanation",
+                      "low_salary",
+                      "office_schedule",
+                      "red_flags",
+                      "accepted_other",
+                      "silence_timeout",
+                      "unspecified"
+                    ]
+                  },
+                  "comment": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 1000
+                  },
+                  "occurredAt": {
+                    "type": "string",
+                    "format": "date-time"
+                  }
+                },
+                "required": [
+                  "fromStage",
+                  "toStage"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "The moved Application",
+            "content": {
+              "application/json": {
+                "example": {
+                  "company": "Кавун Лабс",
+                  "position": "Node.js engineer",
+                  "url": "https://jobs.example.com/kavun-labs/node-engineer",
+                  "source": "djinni",
+                  "salaryMin": 3000,
+                  "salaryMax": 4500,
+                  "currency": "USD",
+                  "stack": [
+                    "TypeScript",
+                    "NestJS",
+                    "PostgreSQL"
+                  ],
+                  "location": "Львів",
+                  "workMode": "hybrid",
+                  "id": "0199f0c4-6e3f-7c42-9d50-7b8c9d0e1f2a",
+                  "searchId": "0199f0b2-1a2b-7c3d-8e4f-5a6b7c8d9e0f",
+                  "currentStage": "rejected",
+                  "isDraft": false,
+                  "resumeVersionId": "0199f0b3-2b3c-7d4e-9f50-6b7c8d9e0f1a",
+                  "matchScore": null,
+                  "aiParsed": null,
+                  "rawText": null,
+                  "appliedAt": "2026-10-20T08:30:00.000Z",
+                  "lastEventAt": "2026-10-22T09:15:00.000Z",
+                  "createdAt": "2026-10-20T08:30:00.000Z",
+                  "updatedAt": "2026-10-22T09:15:00.000Z",
+                  "daysInStage": 0,
+                  "daysSinceLastEvent": 0,
+                  "silenceLevel": "none"
+                },
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "format": "uuid"
+                    },
+                    "searchId": {
+                      "type": "string",
+                      "format": "uuid"
+                    },
+                    "company": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "position": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "url": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "format": "uri"
+                    },
+                    "source": {
+                      "type": "string",
+                      "enum": [
+                        "djinni",
+                        "dou",
+                        "robota",
+                        "workua",
+                        "linkedin",
+                        "referral",
+                        "company_site",
+                        "other"
+                      ]
+                    },
+                    "salaryMin": {
+                      "type": [
+                        "integer",
+                        "null"
+                      ],
+                      "minimum": 0
+                    },
+                    "salaryMax": {
+                      "type": [
+                        "integer",
+                        "null"
+                      ],
+                      "minimum": 0
+                    },
+                    "currency": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "pattern": "^[A-Z]{3}$"
+                    },
+                    "stack": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    "location": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "workMode": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "enum": [
+                        "remote",
+                        "hybrid",
+                        "office",
+                        null
+                      ]
+                    },
+                    "currentStage": {
+                      "type": "string",
+                      "enum": [
+                        "applied",
+                        "screening",
+                        "tech_interview",
+                        "final",
+                        "offer",
+                        "rejected",
+                        "ghosted",
+                        "withdrawn"
+                      ]
+                    },
+                    "isDraft": {
+                      "type": "boolean"
+                    },
+                    "resumeVersionId": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "format": "uuid"
+                    },
+                    "matchScore": {
+                      "type": [
+                        "integer",
+                        "null"
+                      ],
+                      "minimum": 0,
+                      "maximum": 100
+                    },
+                    "aiParsed": {
+                      "type": [
+                        "object",
+                        "null"
+                      ],
+                      "additionalProperties": {}
+                    },
+                    "rawText": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "appliedAt": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "format": "date-time"
+                    },
+                    "lastEventAt": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "createdAt": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "updatedAt": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "daysInStage": {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    "daysSinceLastEvent": {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    "silenceLevel": {
+                      "type": "string",
+                      "enum": [
+                        "none",
+                        "warn",
+                        "silent"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "searchId",
+                    "company",
+                    "position",
+                    "url",
+                    "source",
+                    "salaryMin",
+                    "salaryMax",
+                    "currency",
+                    "stack",
+                    "location",
+                    "workMode",
+                    "currentStage",
+                    "isDraft",
+                    "resumeVersionId",
+                    "matchScore",
+                    "aiParsed",
+                    "rawText",
+                    "appliedAt",
+                    "lastEventAt",
+                    "createdAt",
+                    "updatedAt",
+                    "daysInStage",
+                    "daysSinceLastEvent",
+                    "silenceLevel"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "example": {
+                  "type": "bad_request",
+                  "title": "Bad request",
+                  "status": 400,
+                  "detail": "Unexpected end of JSON input",
+                  "requestId": "0199f0c4-5d2e-7b31-8c4f-6a7b8c9d0e1f"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "example": {
+                  "type": "unauthorized",
+                  "title": "Unauthorized",
+                  "status": 401,
+                  "requestId": "0199f0c4-5d2e-7b31-8c4f-6a7b8c9d0e1f"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "example": {
+                  "type": "forbidden",
+                  "title": "Forbidden",
+                  "status": 403,
+                  "requestId": "0199f0c4-5d2e-7b31-8c4f-6a7b8c9d0e1f"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "example": {
+                  "type": "not_found",
+                  "title": "Not found",
+                  "status": 404,
+                  "requestId": "0199f0c4-5d2e-7b31-8c4f-6a7b8c9d0e1f"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "example": {
+                  "type": "conflict",
+                  "title": "Conflict",
+                  "status": 409,
+                  "requestId": "0199f0c4-5d2e-7b31-8c4f-6a7b8c9d0e1f"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Invalid request",
+            "content": {
+              "application/json": {
+                "example": {
+                  "type": "validation_error",
+                  "title": "Invalid request",
+                  "status": 422,
+                  "errors": [
+                    {
+                      "path": "email",
+                      "message": "Invalid input: expected string, received undefined"
+                    }
+                  ],
+                  "requestId": "0199f0c4-5d2e-7b31-8c4f-6a7b8c9d0e1f"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too many requests: 300 per 60 s by default (RATE_LIMIT_API_PER_MINUTE)",
+            "headers": {
+              "Retry-After": {
+                "schema": {
+                  "type": "integer",
+                  "exclusiveMinimum": 0,
+                  "description": "Seconds until the limit window resets"
+                },
+                "required": true,
+                "description": "Seconds until the limit window resets"
+              }
+            },
+            "content": {
+              "application/json": {
+                "example": {
+                  "type": "rate_limited",
+                  "title": "Too many requests",
+                  "status": 429,
+                  "requestId": "0199f0c4-5d2e-7b31-8c4f-6a7b8c9d0e1f"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal error",
+            "content": {
+              "application/json": {
+                "example": {
+                  "type": "internal_error",
+                  "title": "Internal error",
+                  "status": 500,
+                  "requestId": "0199f0c4-5d2e-7b31-8c4f-6a7b8c9d0e1f"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/applications/{id}/events/undo-last": {
+      "post": {
+        "tags": [
+          "applications"
+        ],
+        "summary": "Undo the last stage move",
+        "description": "Writes a compensating event back to the stage before the last move, at most 10000 ms after it. Later, or with no move to undo, it is 409 conflict.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "example": "0199f0c4-6e3f-7c42-9d50-7b8c9d0e1f2a"
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "The Application back in its previous stage",
+            "content": {
+              "application/json": {
+                "example": {
+                  "company": "Кавун Лабс",
+                  "position": "Node.js engineer",
+                  "url": "https://jobs.example.com/kavun-labs/node-engineer",
+                  "source": "djinni",
+                  "salaryMin": 3000,
+                  "salaryMax": 4500,
+                  "currency": "USD",
+                  "stack": [
+                    "TypeScript",
+                    "NestJS",
+                    "PostgreSQL"
+                  ],
+                  "location": "Львів",
+                  "workMode": "hybrid",
+                  "id": "0199f0c4-6e3f-7c42-9d50-7b8c9d0e1f2a",
+                  "searchId": "0199f0b2-1a2b-7c3d-8e4f-5a6b7c8d9e0f",
+                  "currentStage": "applied",
+                  "isDraft": false,
+                  "resumeVersionId": "0199f0b3-2b3c-7d4e-9f50-6b7c8d9e0f1a",
+                  "matchScore": null,
+                  "aiParsed": null,
+                  "rawText": null,
+                  "appliedAt": "2026-10-20T08:30:00.000Z",
+                  "lastEventAt": "2026-10-20T08:30:00.000Z",
+                  "createdAt": "2026-10-20T08:30:00.000Z",
+                  "updatedAt": "2026-10-22T09:15:05.000Z",
+                  "daysInStage": 2,
+                  "daysSinceLastEvent": 2,
+                  "silenceLevel": "none"
+                },
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "format": "uuid"
+                    },
+                    "searchId": {
+                      "type": "string",
+                      "format": "uuid"
+                    },
+                    "company": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "position": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "url": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "format": "uri"
+                    },
+                    "source": {
+                      "type": "string",
+                      "enum": [
+                        "djinni",
+                        "dou",
+                        "robota",
+                        "workua",
+                        "linkedin",
+                        "referral",
+                        "company_site",
+                        "other"
+                      ]
+                    },
+                    "salaryMin": {
+                      "type": [
+                        "integer",
+                        "null"
+                      ],
+                      "minimum": 0
+                    },
+                    "salaryMax": {
+                      "type": [
+                        "integer",
+                        "null"
+                      ],
+                      "minimum": 0
+                    },
+                    "currency": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "pattern": "^[A-Z]{3}$"
+                    },
+                    "stack": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    "location": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "workMode": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "enum": [
+                        "remote",
+                        "hybrid",
+                        "office",
+                        null
+                      ]
+                    },
+                    "currentStage": {
+                      "type": "string",
+                      "enum": [
+                        "applied",
+                        "screening",
+                        "tech_interview",
+                        "final",
+                        "offer",
+                        "rejected",
+                        "ghosted",
+                        "withdrawn"
+                      ]
+                    },
+                    "isDraft": {
+                      "type": "boolean"
+                    },
+                    "resumeVersionId": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "format": "uuid"
+                    },
+                    "matchScore": {
+                      "type": [
+                        "integer",
+                        "null"
+                      ],
+                      "minimum": 0,
+                      "maximum": 100
+                    },
+                    "aiParsed": {
+                      "type": [
+                        "object",
+                        "null"
+                      ],
+                      "additionalProperties": {}
+                    },
+                    "rawText": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "appliedAt": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "format": "date-time"
+                    },
+                    "lastEventAt": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "createdAt": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "updatedAt": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "daysInStage": {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    "daysSinceLastEvent": {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    "silenceLevel": {
+                      "type": "string",
+                      "enum": [
+                        "none",
+                        "warn",
+                        "silent"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "searchId",
+                    "company",
+                    "position",
+                    "url",
+                    "source",
+                    "salaryMin",
+                    "salaryMax",
+                    "currency",
+                    "stack",
+                    "location",
+                    "workMode",
+                    "currentStage",
+                    "isDraft",
+                    "resumeVersionId",
+                    "matchScore",
+                    "aiParsed",
+                    "rawText",
+                    "appliedAt",
+                    "lastEventAt",
+                    "createdAt",
+                    "updatedAt",
+                    "daysInStage",
+                    "daysSinceLastEvent",
+                    "silenceLevel"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "example": {
+                  "type": "unauthorized",
+                  "title": "Unauthorized",
+                  "status": 401,
+                  "requestId": "0199f0c4-5d2e-7b31-8c4f-6a7b8c9d0e1f"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "example": {
+                  "type": "forbidden",
+                  "title": "Forbidden",
+                  "status": 403,
+                  "requestId": "0199f0c4-5d2e-7b31-8c4f-6a7b8c9d0e1f"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "example": {
+                  "type": "not_found",
+                  "title": "Not found",
+                  "status": 404,
+                  "requestId": "0199f0c4-5d2e-7b31-8c4f-6a7b8c9d0e1f"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "example": {
+                  "type": "conflict",
+                  "title": "Conflict",
+                  "status": 409,
+                  "requestId": "0199f0c4-5d2e-7b31-8c4f-6a7b8c9d0e1f"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Invalid request",
+            "content": {
+              "application/json": {
+                "example": {
+                  "type": "validation_error",
+                  "title": "Invalid request",
+                  "status": 422,
+                  "errors": [
+                    {
+                      "path": "email",
+                      "message": "Invalid input: expected string, received undefined"
+                    }
+                  ],
+                  "requestId": "0199f0c4-5d2e-7b31-8c4f-6a7b8c9d0e1f"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too many requests: 300 per 60 s by default (RATE_LIMIT_API_PER_MINUTE)",
+            "headers": {
+              "Retry-After": {
+                "schema": {
+                  "type": "integer",
+                  "exclusiveMinimum": 0,
+                  "description": "Seconds until the limit window resets"
+                },
+                "required": true,
+                "description": "Seconds until the limit window resets"
+              }
+            },
+            "content": {
+              "application/json": {
+                "example": {
+                  "type": "rate_limited",
+                  "title": "Too many requests",
+                  "status": 429,
+                  "requestId": "0199f0c4-5d2e-7b31-8c4f-6a7b8c9d0e1f"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal error",
+            "content": {
+              "application/json": {
+                "example": {
+                  "type": "internal_error",
+                  "title": "Internal error",
+                  "status": 500,
+                  "requestId": "0199f0c4-5d2e-7b31-8c4f-6a7b8c9d0e1f"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/applications/board": {
       "get": {
         "tags": [
