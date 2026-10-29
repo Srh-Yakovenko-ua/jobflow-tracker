@@ -18,9 +18,12 @@
     "@tanstack/react-query": "5.104.4",
     "clsx": "2.1.1",
     "next": "16.4.2",
+    "pino": "10.4.0",
     "react": "19.3.1",
     "react-dom": "19.3.1",
-    "sonner": "2.0.8"
+    "react-hook-form": "7.91.0",
+    "sonner": "2.0.8",
+    "zod": "^4.6.7"
   },
   "devDependencies": {
     "@jobflow/config": "workspace:*",
@@ -36,6 +39,7 @@
     "babel-plugin-react-compiler": "1.0.0",
     "eslint": "^10.13.0",
     "jsdom": "30.1.3",
+    "msw": "3.0.3",
     "tailwindcss": "4.3.3",
     "typescript": "~6.0.3",
     "vitest": "^4.1.12"
