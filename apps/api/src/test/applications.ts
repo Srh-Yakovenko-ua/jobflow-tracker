@@ -12,7 +12,7 @@ import type { z } from 'zod';
 
 import type { ApplicationEvent } from '../modules/applications/index.js';
 import type { PrismaService } from '../prisma/prisma.service.js';
-import { accessTokenFor } from './auth.js';
+import { accessTokenFor, OLENA, signUp, type SignUpInput } from './auth.js';
 import { createSearch, createUser } from './factories.js';
 import { callRoute } from './http.js';
 import { NOW } from './time.js';
@@ -37,6 +37,10 @@ export type StageMoveRequest = ApplicationRequest<object> & { id: string };
 
 export type UndoRequest = Omit<StageMoveRequest, 'input'>;
 
+export type NoteTarget = { id: string; noteId: string };
+
+export type SignedInApplication = { accessToken: string; id: string };
+
 export const ROMASHKA = {
   company: 'Ромашка',
   position: 'Backend developer',
@@ -49,6 +53,10 @@ export const applicationPath = (id: string) => `${APPLICATIONS_PATH}/${id}`;
 export const stageEventsPath = (id: string) => `${applicationPath(id)}/events`;
 
 export const timelinePath = (id: string) => `${applicationPath(id)}/timeline`;
+
+export const notesPath = (id: string) => `${applicationPath(id)}/notes`;
+
+export const notePath = ({ id, noteId }: NoteTarget) => `${notesPath(id)}/${noteId}`;
 
 export function postStageMove(
   app: NestExpressApplication,
@@ -74,6 +82,15 @@ export async function createApplication(
 ): Promise<ApplicationResponse> {
   const response = await postApplication(app, options);
   return applicationResponseSchema.parse(response.body);
+}
+
+export async function signUpWithApplication(
+  app: NestExpressApplication,
+  user: SignUpInput = OLENA,
+): Promise<SignedInApplication> {
+  const { accessToken } = await signUp(app, user);
+  const { id } = await createApplication(app, { accessToken, input: ROMASHKA });
+  return { accessToken, id };
 }
 
 export function getWithQuery(
