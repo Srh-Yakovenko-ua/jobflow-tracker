@@ -61,6 +61,12 @@ export const NEW_USER_SETTINGS_ROW = {
   activeResumeVersionId: null,
 } satisfies Omit<UserSettings, 'userId' | 'createdAt' | 'updatedAt'>;
 
+export const NEW_USER_SETTINGS = {
+  ...NEW_USER_SETTINGS_ROW,
+  quietHoursStart: '22:00',
+  quietHoursEnd: '08:00',
+};
+
 export const randomEmail = (): string => `${faker.string.uuid()}@example.test`;
 
 export function seedRejectionReasons(prisma: PrismaService): Promise<number> {

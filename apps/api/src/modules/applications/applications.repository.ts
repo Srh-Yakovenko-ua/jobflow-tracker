@@ -1,6 +1,7 @@
 import type { CreateApplicationInput, Stage, UpdateApplicationInput } from '@jobflow/shared';
 import { Injectable } from '@nestjs/common';
 
+import { withoutUndefined } from '../../common/without-undefined.js';
 import type { Prisma } from '../../generated/prisma/client.js';
 import { EFFECTIVE_STAGE_EVENTS } from '../../prisma/effective-stage-events.js';
 import { PrismaService } from '../../prisma/prisma.service.js';
@@ -69,14 +70,6 @@ export type ApplicationById = InTransaction & { id: string };
 export type UpdateApplicationById = ApplicationById & { data: ApplicationChanges };
 
 export type SoftDeleteApplication = ApplicationById & { deletedAt: Date };
-
-type WithoutUndefined<T> = { [Key in keyof T]: Exclude<T[Key], undefined> };
-
-function withoutUndefined<T extends object>(value: T): WithoutUndefined<T> {
-  return Object.fromEntries(
-    Object.entries(value).filter(([, field]) => field !== undefined),
-  ) as WithoutUndefined<T>;
-}
 
 @Injectable()
 export class ApplicationsRepository {

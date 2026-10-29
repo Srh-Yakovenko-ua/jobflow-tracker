@@ -13,6 +13,7 @@ export * from './schemas/error-response.js';
 export * from './schemas/health.js';
 export * from './schemas/note.js';
 export * from './schemas/pagination.js';
+export * from './schemas/patch.js';
 export * from './schemas/resume-version.js';
 export * from './schemas/stage-event.js';
 export * from './schemas/text.js';

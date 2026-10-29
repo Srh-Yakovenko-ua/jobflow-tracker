@@ -53,6 +53,10 @@ export const ALLOWED_TRANSITIONS: Record<Stage, readonly Stage[]> = {
   withdrawn: [],
 };
 
+export const RESPONSE_STAGES: readonly Stage[] = ALLOWED_TRANSITIONS.applied.filter(
+  (stage) => stage !== 'ghosted' && stage !== 'withdrawn',
+);
+
 export const TRANSITION_REFUSAL_REASONS = ['terminal_stage', 'not_allowed'] as const;
 
 export type TransitionRefusalReason = (typeof TRANSITION_REFUSAL_REASONS)[number];

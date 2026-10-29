@@ -25,6 +25,10 @@
       "description": "Accounts, sessions and the signing key"
     },
     {
+      "name": "settings",
+      "description": "The preferences of the signed-in user"
+    },
+    {
       "name": "applications",
       "description": "The Applications of the signed-in user"
     },
@@ -1997,6 +2001,598 @@
                   "required": [
                     "keys"
                   ]
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too many requests: 300 per 60 s by default (RATE_LIMIT_API_PER_MINUTE)",
+            "headers": {
+              "Retry-After": {
+                "schema": {
+                  "type": "integer",
+                  "exclusiveMinimum": 0,
+                  "description": "Seconds until the limit window resets"
+                },
+                "required": true,
+                "description": "Seconds until the limit window resets"
+              }
+            },
+            "content": {
+              "application/json": {
+                "example": {
+                  "type": "rate_limited",
+                  "title": "Too many requests",
+                  "status": 429,
+                  "requestId": "0199f0c4-5d2e-7b31-8c4f-6a7b8c9d0e1f"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal error",
+            "content": {
+              "application/json": {
+                "example": {
+                  "type": "internal_error",
+                  "title": "Internal error",
+                  "status": 500,
+                  "requestId": "0199f0c4-5d2e-7b31-8c4f-6a7b8c9d0e1f"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/settings": {
+      "get": {
+        "tags": [
+          "settings"
+        ],
+        "summary": "The settings of the signed-in user",
+        "responses": {
+          "200": {
+            "description": "The settings",
+            "content": {
+              "application/json": {
+                "example": {
+                  "silenceDays": 10,
+                  "autoGhostDays": 45,
+                  "askRejectionReason": false,
+                  "monthlySummaryEnabled": false,
+                  "theme": "dark",
+                  "timezone": "Europe/Kyiv",
+                  "quietHoursStart": "23:00",
+                  "quietHoursEnd": "07:30",
+                  "notifyInApp": true,
+                  "notifyPush": true,
+                  "notifyEmail": false,
+                  "analyticsOptOut": true,
+                  "activeResumeVersionId": "0199f0b3-2b3c-7d4e-9f50-6b7c8d9e0f1a"
+                },
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "silenceDays": {
+                      "type": "integer"
+                    },
+                    "autoGhostDays": {
+                      "type": [
+                        "integer",
+                        "null"
+                      ]
+                    },
+                    "askRejectionReason": {
+                      "type": "boolean"
+                    },
+                    "monthlySummaryEnabled": {
+                      "type": "boolean"
+                    },
+                    "theme": {
+                      "type": "string",
+                      "enum": [
+                        "light",
+                        "dark",
+                        "system"
+                      ]
+                    },
+                    "timezone": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "quietHoursStart": {
+                      "type": "string",
+                      "pattern": "^([01]\\d|2[0-3]):[0-5]\\d$"
+                    },
+                    "quietHoursEnd": {
+                      "type": "string",
+                      "pattern": "^([01]\\d|2[0-3]):[0-5]\\d$"
+                    },
+                    "notifyInApp": {
+                      "type": "boolean"
+                    },
+                    "notifyPush": {
+                      "type": "boolean"
+                    },
+                    "notifyEmail": {
+                      "type": "boolean"
+                    },
+                    "analyticsOptOut": {
+                      "type": "boolean"
+                    },
+                    "activeResumeVersionId": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "format": "uuid"
+                    }
+                  },
+                  "required": [
+                    "silenceDays",
+                    "autoGhostDays",
+                    "askRejectionReason",
+                    "monthlySummaryEnabled",
+                    "theme",
+                    "timezone",
+                    "quietHoursStart",
+                    "quietHoursEnd",
+                    "notifyInApp",
+                    "notifyPush",
+                    "notifyEmail",
+                    "analyticsOptOut",
+                    "activeResumeVersionId"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "example": {
+                  "type": "unauthorized",
+                  "title": "Unauthorized",
+                  "status": 401,
+                  "requestId": "0199f0c4-5d2e-7b31-8c4f-6a7b8c9d0e1f"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "example": {
+                  "type": "forbidden",
+                  "title": "Forbidden",
+                  "status": 403,
+                  "requestId": "0199f0c4-5d2e-7b31-8c4f-6a7b8c9d0e1f"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too many requests: 300 per 60 s by default (RATE_LIMIT_API_PER_MINUTE)",
+            "headers": {
+              "Retry-After": {
+                "schema": {
+                  "type": "integer",
+                  "exclusiveMinimum": 0,
+                  "description": "Seconds until the limit window resets"
+                },
+                "required": true,
+                "description": "Seconds until the limit window resets"
+              }
+            },
+            "content": {
+              "application/json": {
+                "example": {
+                  "type": "rate_limited",
+                  "title": "Too many requests",
+                  "status": 429,
+                  "requestId": "0199f0c4-5d2e-7b31-8c4f-6a7b8c9d0e1f"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal error",
+            "content": {
+              "application/json": {
+                "example": {
+                  "type": "internal_error",
+                  "title": "Internal error",
+                  "status": 500,
+                  "requestId": "0199f0c4-5d2e-7b31-8c4f-6a7b8c9d0e1f"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "settings"
+        ],
+        "summary": "Change some of the settings",
+        "description": "Writes only the sent fields and records settings.changed with their names in the same transaction. activeResumeVersionId is not changed here.",
+        "requestBody": {
+          "required": true,
+          "description": "At least one field. silenceDays 3 to 30, autoGhostDays 14 to 90 or null (off), timezone an IANA name, quiet hours as HH:MM.",
+          "content": {
+            "application/json": {
+              "example": {
+                "silenceDays": 10,
+                "timezone": "Europe/Warsaw",
+                "notifyPush": true
+              },
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "silenceDays": {
+                    "type": "integer",
+                    "minimum": 3,
+                    "maximum": 30
+                  },
+                  "autoGhostDays": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ],
+                    "minimum": 14,
+                    "maximum": 90
+                  },
+                  "askRejectionReason": {
+                    "type": "boolean"
+                  },
+                  "monthlySummaryEnabled": {
+                    "type": "boolean"
+                  },
+                  "theme": {
+                    "type": "string",
+                    "enum": [
+                      "light",
+                      "dark",
+                      "system"
+                    ]
+                  },
+                  "timezone": {
+                    "type": "string",
+                    "maxLength": 64,
+                    "pattern": "^[A-Z][A-Za-z0-9_+-]*(?:\\/[A-Z0-9][A-Za-z0-9_+-]*)*$"
+                  },
+                  "quietHoursStart": {
+                    "type": "string",
+                    "pattern": "^([01]\\d|2[0-3]):[0-5]\\d$"
+                  },
+                  "quietHoursEnd": {
+                    "type": "string",
+                    "pattern": "^([01]\\d|2[0-3]):[0-5]\\d$"
+                  },
+                  "notifyInApp": {
+                    "type": "boolean"
+                  },
+                  "notifyPush": {
+                    "type": "boolean"
+                  },
+                  "notifyEmail": {
+                    "type": "boolean"
+                  },
+                  "analyticsOptOut": {
+                    "type": "boolean"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The settings after the change",
+            "content": {
+              "application/json": {
+                "example": {
+                  "silenceDays": 10,
+                  "autoGhostDays": 45,
+                  "askRejectionReason": false,
+                  "monthlySummaryEnabled": false,
+                  "theme": "dark",
+                  "timezone": "Europe/Warsaw",
+                  "quietHoursStart": "23:00",
+                  "quietHoursEnd": "07:30",
+                  "notifyInApp": true,
+                  "notifyPush": true,
+                  "notifyEmail": false,
+                  "analyticsOptOut": true,
+                  "activeResumeVersionId": "0199f0b3-2b3c-7d4e-9f50-6b7c8d9e0f1a"
+                },
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "silenceDays": {
+                      "type": "integer"
+                    },
+                    "autoGhostDays": {
+                      "type": [
+                        "integer",
+                        "null"
+                      ]
+                    },
+                    "askRejectionReason": {
+                      "type": "boolean"
+                    },
+                    "monthlySummaryEnabled": {
+                      "type": "boolean"
+                    },
+                    "theme": {
+                      "type": "string",
+                      "enum": [
+                        "light",
+                        "dark",
+                        "system"
+                      ]
+                    },
+                    "timezone": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "quietHoursStart": {
+                      "type": "string",
+                      "pattern": "^([01]\\d|2[0-3]):[0-5]\\d$"
+                    },
+                    "quietHoursEnd": {
+                      "type": "string",
+                      "pattern": "^([01]\\d|2[0-3]):[0-5]\\d$"
+                    },
+                    "notifyInApp": {
+                      "type": "boolean"
+                    },
+                    "notifyPush": {
+                      "type": "boolean"
+                    },
+                    "notifyEmail": {
+                      "type": "boolean"
+                    },
+                    "analyticsOptOut": {
+                      "type": "boolean"
+                    },
+                    "activeResumeVersionId": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "format": "uuid"
+                    }
+                  },
+                  "required": [
+                    "silenceDays",
+                    "autoGhostDays",
+                    "askRejectionReason",
+                    "monthlySummaryEnabled",
+                    "theme",
+                    "timezone",
+                    "quietHoursStart",
+                    "quietHoursEnd",
+                    "notifyInApp",
+                    "notifyPush",
+                    "notifyEmail",
+                    "analyticsOptOut",
+                    "activeResumeVersionId"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "example": {
+                  "type": "bad_request",
+                  "title": "Bad request",
+                  "status": 400,
+                  "detail": "Unexpected end of JSON input",
+                  "requestId": "0199f0c4-5d2e-7b31-8c4f-6a7b8c9d0e1f"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "example": {
+                  "type": "unauthorized",
+                  "title": "Unauthorized",
+                  "status": 401,
+                  "requestId": "0199f0c4-5d2e-7b31-8c4f-6a7b8c9d0e1f"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "example": {
+                  "type": "forbidden",
+                  "title": "Forbidden",
+                  "status": 403,
+                  "requestId": "0199f0c4-5d2e-7b31-8c4f-6a7b8c9d0e1f"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Invalid request",
+            "content": {
+              "application/json": {
+                "example": {
+                  "type": "validation_error",
+                  "title": "Invalid request",
+                  "status": 422,
+                  "errors": [
+                    {
+                      "path": "email",
+                      "message": "Invalid input: expected string, received undefined"
+                    }
+                  ],
+                  "requestId": "0199f0c4-5d2e-7b31-8c4f-6a7b8c9d0e1f"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too many requests: 300 per 60 s by default (RATE_LIMIT_API_PER_MINUTE)",
+            "headers": {
+              "Retry-After": {
+                "schema": {
+                  "type": "integer",
+                  "exclusiveMinimum": 0,
+                  "description": "Seconds until the limit window resets"
+                },
+                "required": true,
+                "description": "Seconds until the limit window resets"
+              }
+            },
+            "content": {
+              "application/json": {
+                "example": {
+                  "type": "rate_limited",
+                  "title": "Too many requests",
+                  "status": 429,
+                  "requestId": "0199f0c4-5d2e-7b31-8c4f-6a7b8c9d0e1f"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal error",
+            "content": {
+              "application/json": {
+                "example": {
+                  "type": "internal_error",
+                  "title": "Internal error",
+                  "status": 500,
+                  "requestId": "0199f0c4-5d2e-7b31-8c4f-6a7b8c9d0e1f"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/settings/suggestions": {
+      "get": {
+        "tags": [
+          "settings"
+        ],
+        "summary": "A silence threshold from the user's own median response time",
+        "description": "One day over the whole median days from applied to the first company answer, kept within the silenceDays limits. Fewer than 5 answered Applications: 7 days and no median.",
+        "responses": {
+          "200": {
+            "description": "The suggested silence threshold",
+            "content": {
+              "application/json": {
+                "example": {
+                  "silenceDays": 7,
+                  "medianResponseDays": 6,
+                  "answeredApplications": 12
+                },
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "silenceDays": {
+                      "type": "integer"
+                    },
+                    "medianResponseDays": {
+                      "type": [
+                        "integer",
+                        "null"
+                      ],
+                      "minimum": 0
+                    },
+                    "answeredApplications": {
+                      "type": "integer",
+                      "minimum": 0
+                    }
+                  },
+                  "required": [
+                    "silenceDays",
+                    "medianResponseDays",
+                    "answeredApplications"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "example": {
+                  "type": "unauthorized",
+                  "title": "Unauthorized",
+                  "status": 401,
+                  "requestId": "0199f0c4-5d2e-7b31-8c4f-6a7b8c9d0e1f"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "example": {
+                  "type": "forbidden",
+                  "title": "Forbidden",
+                  "status": 403,
+                  "requestId": "0199f0c4-5d2e-7b31-8c4f-6a7b8c9d0e1f"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
             }

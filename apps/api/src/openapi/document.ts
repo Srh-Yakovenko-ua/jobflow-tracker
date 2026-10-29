@@ -7,12 +7,14 @@ import { TIMELINE_OPENAPI_PATHS } from '../modules/events/index.js';
 import { HEALTH_OPENAPI_PATHS } from '../modules/health/index.js';
 import { MAINTENANCE_OPENAPI_PATHS } from '../modules/maintenance/index.js';
 import { NOTES_OPENAPI_PATHS } from '../modules/notes/index.js';
+import { SETTINGS_OPENAPI_PATHS } from '../modules/settings/index.js';
 
 export type OpenApiDocument = ReturnType<OpenApiGeneratorV31['generateDocument']>;
 
 export const API_OPENAPI_PATHS = [
   ...HEALTH_OPENAPI_PATHS,
   ...AUTH_OPENAPI_PATHS,
+  ...SETTINGS_OPENAPI_PATHS,
   ...APPLICATIONS_OPENAPI_PATHS,
   ...TIMELINE_OPENAPI_PATHS,
   ...NOTES_OPENAPI_PATHS,
@@ -22,6 +24,7 @@ export const API_OPENAPI_PATHS = [
 const TAGS = [
   { name: 'health', description: 'Liveness and readiness probes' },
   { name: 'auth', description: 'Accounts, sessions and the signing key' },
+  { name: 'settings', description: 'The preferences of the signed-in user' },
   { name: 'applications', description: 'The Applications of the signed-in user' },
   { name: 'dev', description: 'Development and test only' },
 ];

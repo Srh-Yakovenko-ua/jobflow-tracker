@@ -4,7 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { conflict } from '../../common/app-error.js';
 import { PrismaService } from '../../prisma/prisma.service.js';
-import { NEW_USER_SETTINGS_ROW } from '../../test/factories.js';
+import { NEW_USER_SETTINGS, NEW_USER_SETTINGS_ROW } from '../../test/factories.js';
 import { FAKE_TRANSACTION, FakePrisma } from '../../test/fake-prisma.js';
 import {
   AuthRepository,
@@ -334,10 +334,7 @@ describe('AuthService.me', () => {
 
     const me = await service.me(ANNA.id);
 
-    expect(me).toEqual({
-      user: ANNA,
-      settings: { ...NEW_USER_SETTINGS_ROW, quietHoursStart: '22:00', quietHoursEnd: '08:00' },
-    });
+    expect(me).toEqual({ user: ANNA, settings: NEW_USER_SETTINGS });
   });
 
   it.each([

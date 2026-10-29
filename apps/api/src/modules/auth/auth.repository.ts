@@ -9,6 +9,7 @@ import { Injectable } from '@nestjs/common';
 import { conflict } from '../../common/app-error.js';
 import { Prisma } from '../../generated/prisma/client.js';
 import { PrismaService } from '../../prisma/prisma.service.js';
+import { USER_SETTINGS_SELECT, type UserSettingsRow } from '../../prisma/user-settings-row.js';
 import { userRegisteredEvent } from './auth.events.js';
 import { OAUTH_PROVIDER_SPECS } from './oauth-profiles.js';
 
@@ -29,25 +30,7 @@ const AUTH_USER_SELECT = { id: true, email: true, displayName: true, locale: tru
 
 const CREDENTIALS_SELECT = { ...AUTH_USER_SELECT, passwordHash: true } as const;
 
-const SETTINGS_SELECT = {
-  silenceDays: true,
-  autoGhostDays: true,
-  askRejectionReason: true,
-  monthlySummaryEnabled: true,
-  theme: true,
-  timezone: true,
-  quietHoursStart: true,
-  quietHoursEnd: true,
-  notifyInApp: true,
-  notifyPush: true,
-  notifyEmail: true,
-  analyticsOptOut: true,
-  activeResumeVersionId: true,
-} as const satisfies Prisma.UserSettingsSelect;
-
-export type SettingsRow = Prisma.UserSettingsGetPayload<{ select: typeof SETTINGS_SELECT }>;
-
-export type UserProfile = AuthUser & { settings: SettingsRow | null };
+export type UserProfile = AuthUser & { settings: UserSettingsRow | null };
 
 function isUniqueViolation(error: unknown): boolean {
   return error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002';
@@ -120,7 +103,7 @@ export class AuthRepository {
   findProfile(userId: string): Promise<UserProfile | null> {
     return this.prisma.user.findUnique({
       where: { id: userId },
-      select: { ...AUTH_USER_SELECT, settings: { select: SETTINGS_SELECT } },
+      select: { ...AUTH_USER_SELECT, settings: { select: USER_SETTINGS_SELECT } },
     });
   }
 

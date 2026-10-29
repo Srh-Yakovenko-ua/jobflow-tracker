@@ -4,18 +4,13 @@ import type {
   LoginInput,
   MeResponse,
   RegisterInput,
-  UserSettings,
 } from '@jobflow/shared';
 import { Injectable } from '@nestjs/common';
 
 import { unauthorized, validation } from '../../common/app-error.js';
 import { PrismaService } from '../../prisma/prisma.service.js';
-import {
-  AuthRepository,
-  type OAuthAccountKey,
-  type SettingsRow,
-  type UserCredentials,
-} from './auth.repository.js';
+import { toUserSettings } from '../../prisma/user-settings-row.js';
+import { AuthRepository, type OAuthAccountKey, type UserCredentials } from './auth.repository.js';
 import type { OAuthProfile } from './oauth-profiles.js';
 import { PasswordHasher } from './password-hasher.js';
 import { SessionRepository } from './session.repository.js';
@@ -32,20 +27,6 @@ type EmailLink = { user: UserCredentials; oauthAccount: OAuthAccountKey };
 
 function toAuthUser({ id, email, displayName, locale }: AuthUser): AuthUser {
   return { id, email, displayName, locale };
-}
-
-const clockTime = (time: Date) => time.toISOString().slice(11, 16);
-
-function toUserSettings({
-  quietHoursStart,
-  quietHoursEnd,
-  ...settings
-}: SettingsRow): UserSettings {
-  return {
-    ...settings,
-    quietHoursStart: clockTime(quietHoursStart),
-    quietHoursEnd: clockTime(quietHoursEnd),
-  };
 }
 
 @Injectable()
