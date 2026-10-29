@@ -1,5 +1,6 @@
 import path from 'node:path';
 
+import { withTailwindMerge } from '@tailwind-merge/next';
 import type { NextConfig } from 'next';
 
 const nextConfig: NextConfig = {
@@ -10,4 +11,4 @@ const nextConfig: NextConfig = {
   outputFileTracingRoot: path.join(import.meta.dirname, '../..'),
 };
 
-export default nextConfig;
+export default withTailwindMerge(nextConfig);

@@ -54,5 +54,18 @@ export const uk = {
       motionNote:
         'Ховер тіні 180 мс, пульс даних 820 мс. З prefers-reduced-motion усі тривалості 0.',
     },
+    darkTheme: {
+      index: '04',
+      title: 'Темна тема',
+      surfacesEyebrow: 'поверхні',
+      note: 'База тепла, не сине-сіра. Тіней немає — ієрархію тримає світлість поверхонь і акцентні ореоли. Акцент піднімається до 72% L, щоб тримати контраст на темному.',
+      card: {
+        title: 'Senior React Developer',
+        company: 'Acme Technologies',
+        score: '78',
+        salary: '$4 500–6 000',
+        silence: '5 днів тиші',
+      },
+    },
   },
 } as const;
