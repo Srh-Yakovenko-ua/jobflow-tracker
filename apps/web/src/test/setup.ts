@@ -1,4 +1,17 @@
 import { cleanup } from '@testing-library/react';
-import { afterEach } from 'vitest';
+import { afterAll, afterEach, beforeAll, beforeEach } from 'vitest';
 
-afterEach(cleanup);
+import { installFakeLockManager } from './fake-lock-manager';
+import { server } from './server';
+
+beforeAll(() => {
+  server.listen({ onUnhandledFrame: 'error' });
+});
+beforeEach(installFakeLockManager);
+afterEach(() => {
+  cleanup();
+  server.resetHandlers();
+});
+afterAll(() => {
+  server.close();
+});
