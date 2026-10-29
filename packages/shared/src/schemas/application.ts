@@ -4,6 +4,7 @@ import { silenceLevelSchema } from '../silence.js';
 import { sourceSchema } from '../sources.js';
 import { stageSchema } from '../stages.js';
 import { workModeSchema } from '../work-modes.js';
+import { isNonEmptyPatch, NON_EMPTY_PATCH_ISSUE } from './patch.js';
 
 export const applicationSchema = z.object({
   id: z.uuid(),
@@ -90,7 +91,7 @@ export const createApplicationInputSchema = applicationPatchSchema
 
 export const updateApplicationInputSchema = applicationPatchSchema
   .extend({ currentStage: z.never({ error: STAGE_CHANGE_HINT }).optional() })
-  .refine((patch) => Object.keys(patch).length > 0, { error: 'Send at least one field to change' })
+  .refine(isNonEmptyPatch, NON_EMPTY_PATCH_ISSUE)
   .refine(salaryRangeIsSentWhole, {
     error: 'Send salaryMin and salaryMax together',
     path: ['salaryMin'],

@@ -10,6 +10,8 @@ import type {
   SessionTokens,
 } from '@jobflow/shared';
 
+import { EXAMPLE_USER_SETTINGS } from '../../openapi/route.js';
+
 const USER = {
   id: '0199f0b0-3c4d-7e5f-8a6b-7c8d9e0f1a2b',
   email: 'iryna.koval@example.com',
@@ -35,24 +37,7 @@ export const AUTH_EXAMPLES = {
   refreshBody: {
     refreshToken: 'q8Zr3VbX0nLw5Tf2Ky7Hc1Md9Pg4Rs6Ua_Ej-WoNxIb',
   } satisfies RefreshTokenBody,
-  me: {
-    user: USER,
-    settings: {
-      silenceDays: 10,
-      autoGhostDays: 45,
-      askRejectionReason: false,
-      monthlySummaryEnabled: false,
-      theme: 'dark',
-      timezone: 'Europe/Kyiv',
-      quietHoursStart: '23:00',
-      quietHoursEnd: '07:30',
-      notifyInApp: true,
-      notifyPush: true,
-      notifyEmail: false,
-      analyticsOptOut: true,
-      activeResumeVersionId: '0199f0b3-2b3c-7d4e-9f50-6b7c8d9e0f1a',
-    },
-  } satisfies MeResponse,
+  me: { user: USER, settings: EXAMPLE_USER_SETTINGS } satisfies MeResponse,
   jwks: {
     keys: [
       {

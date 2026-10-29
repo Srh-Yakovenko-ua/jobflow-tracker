@@ -5,6 +5,7 @@ import {
   ACTIVE_STAGES,
   canTransition,
   OUTCOME_STAGES,
+  RESPONSE_STAGES,
   type Stage,
   STAGE_LABELS,
   STAGES,
@@ -136,4 +137,10 @@ describe('OUTCOME_STAGES', () => {
       expect(canTransition(from, to)).toEqual({ ok: true });
     },
   );
+});
+
+describe('RESPONSE_STAGES', () => {
+  it('counts a company answer to an applied application, never ghosted or withdrawn', () => {
+    expect(RESPONSE_STAGES).toEqual(['screening', 'tech_interview', 'rejected']);
+  });
 });
