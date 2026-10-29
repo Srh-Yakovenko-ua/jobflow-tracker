@@ -1,5 +1,5 @@
 import type { ResponseConfig, RouteConfig, ZodContentObject } from '@asteasolutions/zod-to-openapi';
-import { errorResponseSchema } from '@jobflow/shared';
+import { applicationIdSchema, errorResponseSchema } from '@jobflow/shared';
 import { z } from 'zod';
 
 import { ERROR_TYPES, type ErrorBody, type ErrorStatus } from '../common/app-error.js';
@@ -15,6 +15,12 @@ export type RouteResponses = RouteConfig['responses'];
 export const PUBLIC = { security: [] } satisfies Pick<RouteConfig, 'security'>;
 
 export const EXAMPLE_REQUEST_ID = '0199f0c4-5d2e-7b31-8c4f-6a7b8c9d0e1f';
+
+export const EXAMPLE_APPLICATION_ID = '0199f0c4-6e3f-7c42-9d50-7b8c9d0e1f2a';
+
+export const applicationIdParams = z.object({
+  id: applicationIdSchema.meta({ example: EXAMPLE_APPLICATION_ID }),
+});
 
 const errorResponse = errorResponseSchema.meta({ id: 'ErrorResponse' });
 

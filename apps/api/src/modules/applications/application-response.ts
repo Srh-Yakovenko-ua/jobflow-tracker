@@ -1,17 +1,7 @@
 import { type ApplicationResponse, applicationSchema, DEFAULT_SILENCE_DAYS } from '@jobflow/shared';
 
-import { notFound } from '../../common/app-error.js';
 import { withApplicationTiming } from './application-timing.js';
 import type { ApplicationRow } from './applications.repository.js';
-
-export const APPLICATION_NOT_FOUND = 'Application not found';
-
-export function owned<Row>(row: Row | null): Row {
-  if (row === null) {
-    throw notFound(APPLICATION_NOT_FOUND);
-  }
-  return row;
-}
 
 export function toApplicationResponse(row: ApplicationRow, now: Date): ApplicationResponse {
   const { user, ...timed } = row;

@@ -1,6 +1,14 @@
 import { describe, expect, it } from 'vitest';
 
-import { ACTIVE_STAGES, canTransition, OUTCOME_STAGES, type Stage, STAGES } from './stages.js';
+import tokens from '../tokens/tokens.json';
+import {
+  ACTIVE_STAGES,
+  canTransition,
+  OUTCOME_STAGES,
+  type Stage,
+  STAGE_LABELS,
+  STAGES,
+} from './stages.js';
 
 const ALLOWED = { ok: true } as const;
 const NOT_ALLOWED = { ok: false, reason: 'not_allowed' } as const;
@@ -107,6 +115,12 @@ describe('canTransition', () => {
 
   it('revives a ghosted application to a stage that leads into ghosted', () => {
     expect(canTransition('ghosted', 'final')).toEqual({ ok: true });
+  });
+});
+
+describe('STAGE_LABELS', () => {
+  it('names the stages in STAGES order with the tokens.json taxonomy words', () => {
+    expect(STAGES.map((stage) => STAGE_LABELS[stage].labelUk)).toEqual(tokens.taxonomy.stages);
   });
 });
 

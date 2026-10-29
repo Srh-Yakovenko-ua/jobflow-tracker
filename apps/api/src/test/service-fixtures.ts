@@ -16,6 +16,7 @@ export const APPLICATION_ID = '0199f0a0-0000-7000-8000-0000000000c1';
 export const MISSING_ID = '0199f0a0-0000-7000-8000-0000000000c2';
 export const CREATION_EVENT_ID = '0199f0a0-0000-7000-8000-0000000000d0';
 export const MOVE_EVENT_ID = '0199f0a0-0000-7000-8000-0000000000d1';
+export const NOTE_ID = '0199f0a0-0000-7000-8000-0000000000e1';
 
 export type Target = { userId: string; id: string };
 

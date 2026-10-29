@@ -2,9 +2,10 @@ import type { ApplicationResponse, MoveApplicationInput } from '@jobflow/shared'
 import { Injectable } from '@nestjs/common';
 
 import { Clock } from '../../common/clock.js';
+import { owned } from '../../common/owned.js';
 import type { Prisma } from '../../generated/prisma/client.js';
 import { PrismaService } from '../../prisma/prisma.service.js';
-import { owned, toApplicationResponse } from './application-response.js';
+import { toApplicationResponse } from './application-response.js';
 import { APPLICATION_EVENTS, type ApplicationEvent } from './applications.events.js';
 import { ApplicationsRepository } from './applications.repository.js';
 import {
