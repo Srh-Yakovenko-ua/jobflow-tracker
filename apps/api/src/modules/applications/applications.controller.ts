@@ -7,6 +7,8 @@ import {
   type ApplicationResponse,
   type CreateApplicationInput,
   createApplicationInputSchema,
+  type MoveApplicationInput,
+  moveApplicationInputSchema,
   type UpdateApplicationInput,
   updateApplicationInputSchema,
 } from '@jobflow/shared';
@@ -16,12 +18,14 @@ import { type AccessUser, CurrentUser } from '../auth/index.js';
 import { type ApplicationListRequest, applicationListRequestSchema } from './application-cursor.js';
 import { ApplicationListService } from './application-list.service.js';
 import { ApplicationsService } from './applications.service.js';
+import { StageTransitionService } from './stage-transition.service.js';
 
 @Controller('applications')
 export class ApplicationsController {
   constructor(
     private readonly applications: ApplicationsService,
     private readonly applicationList: ApplicationListService,
+    private readonly stageTransitions: StageTransitionService,
   ) {}
 
   @Post()
@@ -63,6 +67,23 @@ export class ApplicationsController {
     @Body({ schema: updateApplicationInputSchema }) input: UpdateApplicationInput,
   ): Promise<ApplicationResponse> {
     return this.applications.update(user.id, { id, input });
+  }
+
+  @Post(':id/events')
+  move(
+    @CurrentUser() user: AccessUser,
+    @Param('id', { schema: applicationIdSchema }) id: string,
+    @Body({ schema: moveApplicationInputSchema }) input: MoveApplicationInput,
+  ): Promise<ApplicationResponse> {
+    return this.stageTransitions.move(user.id, { id, input });
+  }
+
+  @Post(':id/events/undo-last')
+  undoLast(
+    @CurrentUser() user: AccessUser,
+    @Param('id', { schema: applicationIdSchema }) id: string,
+  ): Promise<ApplicationResponse> {
+    return this.stageTransitions.undoLast(user.id, id);
   }
 
   @Delete(':id')

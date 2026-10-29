@@ -1,11 +1,19 @@
 import type { ApplicationResponse, CreateApplicationInput } from '@jobflow/shared';
-import { Test } from '@nestjs/testing';
 import { describe, expect, it } from 'vitest';
 
-import { Clock } from '../../common/clock.js';
-import { PrismaService } from '../../prisma/prisma.service.js';
-import { FAKE_TRANSACTION, FakePrisma } from '../../test/fake-prisma.js';
-import { BOHDAN_ID, OLENA_ID, SEARCH_ID } from '../../test/service-fixtures.js';
+import { FAKE_TRANSACTION, fakeTransactionModule } from '../../test/fake-prisma.js';
+import { type ByUser, RecordedEvents } from '../../test/recorded-events.js';
+import {
+  APPLICATION_ID,
+  APPLICATION_NOT_FOUND as NOT_FOUND,
+  APPLICATION_ROW as ROW,
+  COLUMNS_AS_STORED,
+  MISSING_TARGETS,
+  OLENA_ID,
+  RESUME_VERSION_ID,
+  SEARCH_ID,
+  type Target,
+} from '../../test/service-fixtures.js';
 import { daysBefore, NOW } from '../../test/time.js';
 import {
   type ApplicationById,
@@ -19,62 +27,22 @@ import {
 } from './applications.repository.js';
 import { ApplicationsService } from './applications.service.js';
 
-type ByUser<T> = T & { userId: string };
-
 type OwnedRow = { userId: string; row: ApplicationRow };
 
 type FakeData = { owned?: OwnedRow[]; defaults?: CreateDefaults };
 
-type Target = { userId: string; id: string };
-
-const RESUME_VERSION_ID = '0199f0a0-0000-7000-8000-0000000000b1';
-const APPLICATION_ID = '0199f0a0-0000-7000-8000-0000000000c1';
-const MISSING_ID = '0199f0a0-0000-7000-8000-0000000000c2';
-
 const ACTIVE_DEFAULTS: CreateDefaults = { searchId: SEARCH_ID, resumeVersionId: RESUME_VERSION_ID };
-
-const COLUMNS_AS_STORED = {
-  id: APPLICATION_ID,
-  searchId: SEARCH_ID,
-  company: 'Ромашка',
-  position: 'Backend developer',
-  url: 'https://jobs.example.test/1',
-  source: 'djinni',
-  salaryMin: 3000,
-  salaryMax: 4000,
-  currency: 'USD',
-  stack: ['NestJS'],
-  location: 'Київ',
-  workMode: 'remote',
-  currentStage: 'applied',
-  isDraft: false,
-  resumeVersionId: RESUME_VERSION_ID,
-  matchScore: null,
-  rawText: null,
-} satisfies Partial<ApplicationRow & ApplicationResponse>;
-
-const ROW: ApplicationRow = {
-  ...COLUMNS_AS_STORED,
-  aiParsed: { seniority: 'middle' },
-  appliedAt: daysBefore(10),
-  lastEventAt: daysBefore(4),
-  createdAt: daysBefore(10),
-  updatedAt: daysBefore(1),
-  stageEvents: [{ occurredAt: daysBefore(10) }],
-  user: { settings: { silenceDays: 7 } },
-};
 
 const OLENAS_ROW: OwnedRow = { userId: OLENA_ID, row: ROW };
 
-const NOT_FOUND = { body: { status: 404, type: 'not_found', detail: 'Application not found' } };
-
-class FakeApplicationsRepository {
+class FakeApplicationsRepository extends RecordedEvents<RecordApplicationEvent> {
   readonly inserted: ByUser<InsertApplication>[] = [];
-  readonly events: ByUser<RecordApplicationEvent>[] = [];
   readonly updates: ByUser<UpdateApplicationById>[] = [];
   readonly deletions: ByUser<SoftDeleteApplication>[] = [];
 
-  constructor(private readonly data: Required<FakeData>) {}
+  constructor(private readonly data: Required<FakeData>) {
+    super();
+  }
 
   findCreateDefaults(): Promise<CreateDefaults> {
     return Promise.resolve(this.data.defaults);
@@ -83,11 +51,6 @@ class FakeApplicationsRepository {
   insert(userId: string, input: InsertApplication): Promise<ApplicationRow> {
     this.inserted.push({ userId, ...input });
     return Promise.resolve(ROW);
-  }
-
-  recordEvent(userId: string, input: RecordApplicationEvent): Promise<void> {
-    this.events.push({ userId, ...input });
-    return Promise.resolve();
   }
 
   findOwned(userId: string, { id }: ApplicationById): Promise<ApplicationRow | null> {
@@ -111,15 +74,12 @@ class FakeApplicationsRepository {
 
 async function serviceWith({ owned = [OLENAS_ROW], defaults = ACTIVE_DEFAULTS }: FakeData = {}) {
   const repository = new FakeApplicationsRepository({ owned, defaults });
-  const moduleRef = await Test.createTestingModule({
-    providers: [ApplicationsService, ApplicationsRepository, PrismaService, Clock],
+  const moduleRef = await fakeTransactionModule({
+    providers: [ApplicationsService, ApplicationsRepository],
+    now: NOW,
   })
     .overrideProvider(ApplicationsRepository)
     .useValue(repository)
-    .overrideProvider(PrismaService)
-    .useValue(new FakePrisma())
-    .overrideProvider(Clock)
-    .useValue({ now: () => NOW })
     .compile();
   return { repository, service: moduleRef.get(ApplicationsService) };
 }
@@ -138,11 +98,6 @@ const OWNER_ONLY_CALLS = [
     method: 'remove',
     call: (service: ApplicationsService, { userId, id }: Target) => service.remove(userId, id),
   },
-];
-
-const MISSING_TARGETS = [
-  { case: 'a missing id', userId: OLENA_ID, id: MISSING_ID },
-  { case: "another user's application", userId: BOHDAN_ID, id: APPLICATION_ID },
 ];
 
 describe('ApplicationsService.create', () => {

@@ -21,7 +21,7 @@ import {
   getApplicationBoard,
   getWithQuery,
   listApplications,
-  type QueryString,
+  listPages,
   signedInWithSearch,
 } from '../../test/applications.js';
 import {
@@ -32,7 +32,7 @@ import {
   createSearch,
   createStageEvents,
 } from '../../test/factories.js';
-import { callRoute } from '../../test/http.js';
+import { callRoute, errorPathsOf } from '../../test/http.js';
 import { daysBefore, minutesAfter, minutesBefore, NOW } from '../../test/time.js';
 
 type Owner = { userId: string; searchId: string };
@@ -171,9 +171,6 @@ const sortedIds = (cards: ApplicationCard[]) => cards.map(({ id }) => id).sort()
 
 const companiesOf = ({ items }: ApplicationListResponse) => items.map(({ company }) => company);
 
-const errorPaths = (body: unknown) =>
-  (errorResponseSchema.parse(body).errors ?? []).map(({ path }) => path);
-
 describe('the application list and board routes', () => {
   const testApp = useTestApp(() => appTestingModule().overrideProvider(Clock).useValue(clock));
 
@@ -202,15 +199,8 @@ describe('the application list and board routes', () => {
   }
 
   async function walkPages({ accessToken, sort }: { accessToken: string; sort: string }) {
-    const pages: string[][] = [];
-    let cursor: string | null = null;
-    do {
-      const query: QueryString = { limit: '2', sort, ...(cursor === null ? {} : { cursor }) };
-      const page = await listApplications(testApp.app, { accessToken, query });
-      pages.push(companiesOf(page));
-      cursor = page.nextCursor;
-    } while (cursor !== null && pages.length < 10);
-    return pages;
+    const pages = await listPages(testApp.app, { accessToken, query: { limit: '2', sort } });
+    return pages.map(companiesOf);
   }
 
   it("counts every stage of the active search exactly, keeps outcomes as counts only and leaves out deleted, archived and BOHDAN's applications", async () => {
@@ -509,7 +499,7 @@ describe('the application list and board routes', () => {
 
     expect(response.status).toBe(422);
     expect(errorResponseSchema.parse(response.body).type).toBe('validation_error');
-    expect(errorPaths(response.body)).toEqual([error]);
+    expect(errorPathsOf(response.body)).toEqual([error]);
   });
 
   it.each([APPLICATIONS_PATH, APPLICATIONS_BOARD_PATH])(

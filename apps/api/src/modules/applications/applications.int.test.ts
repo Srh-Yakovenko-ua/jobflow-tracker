@@ -8,22 +8,19 @@ import {
   applicationPath,
   APPLICATIONS_PATH,
   createApplication,
+  CREATION_EVENT_ROW,
   postApplication,
+  ROMASHKA,
+  stageEventsOf,
 } from '../../test/applications.js';
 import { accessTokenFor, BOHDAN, OLENA, signUp } from '../../test/auth.js';
 import { createResumeVersion, createUser } from '../../test/factories.js';
-import { callRoute, type RouteCall } from '../../test/http.js';
+import { callRoute, errorPathsOf, type RouteCall } from '../../test/http.js';
 import { outboxRows } from '../../test/outbox.js';
+import { MISSING_ID } from '../../test/service-fixtures.js';
+import { daysAfter, NOW, settableClock } from '../../test/time.js';
 
 const START_ISO = '2026-10-22T09:00:00.000Z';
-
-const START = new Date(START_ISO);
-
-const DAY_MS = 24 * 60 * 60 * 1000;
-
-const ROMASHKA = { company: 'Ромашка', position: 'Backend developer' };
-
-const MISSING_ID = '0199f0a0-0000-7000-8000-0000000000c2';
 
 const ID_ROUTES: Omit<RouteCall, 'path'>[] = [
   { method: 'get' },
@@ -31,19 +28,17 @@ const ID_ROUTES: Omit<RouteCall, 'path'>[] = [
   { method: 'delete' },
 ];
 
-let instant = START;
+const clock = settableClock(NOW);
 
-const clock: Clock = { now: () => instant };
-
-function travelDays(days: number): void {
-  instant = new Date(START.getTime() + days * DAY_MS);
-}
+const travelDays = (days: number) => {
+  clock.at(daysAfter(days));
+};
 
 describe('the applications routes', () => {
   const testApp = useTestApp(() => appTestingModule().overrideProvider(Clock).useValue(clock));
 
   beforeEach(() => {
-    instant = START;
+    clock.at(NOW);
   });
 
   async function signedUpWithApplication() {
@@ -70,15 +65,6 @@ describe('the applications routes', () => {
     });
     return activeResumeVersionId;
   }
-
-  const stageEventsOf = (applicationId: string) =>
-    testApp.prisma.stageEvent.findMany({
-      where: { applicationId },
-      select: { fromStage: true, toStage: true, occurredAt: true },
-    });
-
-  const errorPaths = (body: unknown) =>
-    (errorResponseSchema.parse(body).errors ?? []).map((error) => error.path);
 
   const updatedEvents = () => outboxRows(testApp.prisma, { eventType: 'application.updated' });
 
@@ -109,9 +95,7 @@ describe('the applications routes', () => {
       daysSinceLastEvent: 0,
       silenceLevel: 'none',
     });
-    expect(await stageEventsOf(application.id)).toEqual([
-      { fromStage: null, toStage: 'applied', occurredAt: START },
-    ]);
+    expect(await stageEventsOf(testApp.prisma, application.id)).toEqual([CREATION_EVENT_ROW]);
     expect(await outboxRows(testApp.prisma, { aggregate: 'application' })).toEqual([
       applicationEventRow({
         eventType: 'application.created',
@@ -185,7 +169,7 @@ describe('the applications routes', () => {
     });
 
     expect(response.status).toBe(422);
-    expect(errorPaths(response.body)).toContain(path);
+    expect(errorPathsOf(response.body)).toContain(path);
     expect(await testApp.prisma.application.count()).toBe(0);
   });
 
@@ -297,7 +281,7 @@ describe('the applications routes', () => {
         select: { currentStage: true, company: true },
       });
       expect(stored).toEqual({ currentStage: 'applied', company: 'Ромашка' });
-      expect(await stageEventsOf(application.id)).toHaveLength(1);
+      expect(await stageEventsOf(testApp.prisma, application.id)).toHaveLength(1);
       expect(await updatedEvents()).toEqual([]);
     },
   );
@@ -319,9 +303,7 @@ describe('the applications routes', () => {
       select: { deletedAt: true },
     });
     expect(stored.deletedAt).toEqual(new Date('2026-10-23T09:00:00.000Z'));
-    expect(await stageEventsOf(application.id)).toEqual([
-      { fromStage: null, toStage: 'applied', occurredAt: START },
-    ]);
+    expect(await stageEventsOf(testApp.prisma, application.id)).toEqual([CREATION_EVENT_ROW]);
     expect(await updatedEvents()).toEqual([
       applicationEventRow({
         eventType: 'application.updated',

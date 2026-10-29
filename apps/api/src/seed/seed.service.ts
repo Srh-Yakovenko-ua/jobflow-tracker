@@ -10,7 +10,7 @@ export const DEMO_USER = {
   displayName: 'Демо',
 } satisfies RegisterInput;
 
-function sharedRejectionReasons(): RejectionReasonRow[] {
+export function sharedRejectionReasons(): RejectionReasonRow[] {
   return Object.entries(REJECTION_REASONS).map(([code, reason]) => ({ code, ...reason }));
 }
 
