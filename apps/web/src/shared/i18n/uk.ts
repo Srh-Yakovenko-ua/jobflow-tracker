@@ -1,9 +1,30 @@
+import type { Theme } from '@jobflow/shared';
+
+import { devUi } from './dev-ui';
+
 export const uk = {
   app: {
     title: 'JobFlow · трекер пошуку роботи',
     notifications: 'Сповіщення',
     close: 'Закрити',
   },
+  ui: {
+    clear: 'Скинути',
+    clearAll: 'Скинути все',
+    remove: 'Прибрати',
+    addOption: (query: string) => `+ додати «${query}»`,
+    noMatches: 'Немає збігів',
+    loading: 'Завантаження…',
+    decrease: 'Зменшити',
+    increase: 'Збільшити',
+    navigate: 'навігація',
+    select: 'обрати',
+    ofTotal: 'із',
+    keys: { navigate: '↑↓', select: '↵' },
+    theme: 'Тема',
+  },
+  theme: { light: 'Світла', dark: 'Темна', system: 'Системна' } satisfies Record<Theme, string>,
+  devUi,
   errors: {
     saveFailed: {
       title: 'Не вдалося зберегти',

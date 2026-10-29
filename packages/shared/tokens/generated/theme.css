@@ -12,6 +12,8 @@
   --color-accent-press: var(--accent-press);
   --color-accent-tint: var(--accent-tint);
   --color-accent-ink: var(--accent-ink);
+  --color-danger: var(--danger);
+  --color-scrim: var(--scrim);
   --color-offer: var(--offer);
   --color-rejected: var(--rejected);
   --color-ghosted: var(--ghosted);

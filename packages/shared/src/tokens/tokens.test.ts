@@ -79,6 +79,15 @@ describe('web theme', () => {
     );
   });
 
+  it('lifts danger in dark and keeps the scrim dark in both themes', () => {
+    const css = renderTokensCss(tokens);
+    const dark = blockAfter(css, "[data-theme='dark']");
+
+    expect(blockAfter(css, ':root')).toContain('--danger: oklch(46% 0.10 34);');
+    expect(dark).toContain('--danger: oklch(70% 0.10 34);');
+    expect(dark).toContain('--scrim: oklch(25% 0.013 62);');
+  });
+
   it('follows the system dark theme unless the user picked light', () => {
     const css = renderTokensCss(tokens);
 
@@ -117,6 +126,8 @@ describe('web theme', () => {
     expect(theme).not.toContain('--text-body--letter-spacing');
     expect(theme).toContain('--color-stage-tech: var(--stage-tech);');
     expect(theme).toContain('--color-data-6: var(--data-6);');
+    expect(theme).toContain('--color-danger: var(--danger);');
+    expect(theme).toContain('--color-scrim: var(--scrim);');
     expect(theme).toContain('--ease-spring: var(--easing-spring);');
   });
 
@@ -125,7 +136,7 @@ describe('web theme', () => {
     const bound = [...renderThemeCss(tokens).matchAll(/--color-[\w-]+: var\((--[\w-]+)\);/g)];
     const undeclared = bound.filter(([, name]) => !root.includes(`  ${String(name)}: `));
 
-    expect(bound).toHaveLength(27);
+    expect(bound).toHaveLength(29);
     expect(undeclared).toEqual([]);
   });
 });

@@ -1,6 +1,7 @@
 import { useMutation, useQuery } from '@tanstack/react-query';
-import { act, renderHook, screen, waitFor } from '@testing-library/react';
+import { act, render, renderHook, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { Star } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { toast } from 'sonner';
 import { afterEach, describe, expect, it, vi } from 'vitest';
@@ -80,6 +81,18 @@ describe('Providers', () => {
     await failSave(() => result.current.mutateAsync());
 
     expect(toast.getToasts()).toEqual([]);
+  });
+
+  it('draws every lucide icon with the 1.9 stroke and 16 px size of the design', () => {
+    const { container } = render(
+      <Providers theme="light">
+        <Star aria-hidden />
+      </Providers>,
+    );
+
+    const icon = container.querySelector('svg');
+    expect(icon?.getAttribute('stroke-width')).toBe('1.9');
+    expect(icon?.getAttribute('width')).toBe('16');
   });
 
   it('a failed query keeps its error for the block after one call and shows no toast', async () => {

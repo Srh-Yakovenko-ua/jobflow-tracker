@@ -57,10 +57,10 @@ What the references do not draw:
 - Web screens are drawn at 1440 px in the light theme. That pair is a pixel
   comparison.
 - The dark theme has no per-screen drawing. The reference is #s4 and the `dark`
-  section of `packages/shared/tokens/tokens.json` (17 tokens on a warm base:
-  the 14 drawn plus the three DES-02 filled from them, see Dark gaps below). A
-  dark check means every surface, text and line uses its dark token and
-  contrast holds.
+  section of `packages/shared/tokens/tokens.json` (19 tokens on a warm base:
+  the 14 drawn, the three DES-02 filled from them and the `danger` and `scrim`
+  FE-05 added, see Dark gaps and Danger and scrim colours below). A dark check
+  means every surface, text and line uses its dark token and contrast holds.
 - 390 px has no web drawing; the phone design is the RN companion. A 390 check
   is by rule, not by pixels: no horizontal scroll, nothing clipped, touch zones
   of 44 px, navigation reachable (FE-02, FIN-02).
@@ -175,6 +175,7 @@ NativeWind 4 with the same `tokens.json` (MOB-01).
 | Sankey plugin version | The references load chartjs-chart-sankey 0.12.1 | No version in the plan | Decision: FE-32 uses chartjs-chart-sankey 0.19.1 with Chart.js 4 |
 | Tailwind config | The handoff README says `tokens.json` generates `tailwind.config.ts` and `theme.ts` | Tailwind 4 is CSS first | Done in DES-02: `tokens.css`, a `@theme inline` `theme.css`, `chart-theme.ts` and `rn-theme.ts` in `packages/shared/tokens/generated/`, built by `pnpm tokens:build`; no `tailwind.config` |
 | Dark gaps | The `dark` section has no `surface-3`, `line-soft` or `accent-ink`, and no dark stage or data colours | A light recess or light accent text on a dark page fails contrast | Resolved by DES-02 with existing dark values only: `surface-3` = dark `paper`, `line-soft` = dark `line`, `accent-ink` = dark `accent`. Stage and data colours keep their one value in both themes; a lifted dark ramp is for the chart cards (FE-32, FE-33) to define. In dark, `e1` to `e3` shadows are the empty shadow `0 0 #0000`; `flat`, `focus` and `accent` stay |
+| Danger and scrim colours | Destructive actions and error text are drawn in `oklch(46% 0.10 34)` (#s5 to #s12), a value with no token. The #s13 modal dims the page with `ink` at .34 | `rejected` is the rejection outcome, not a system error, and gives 4.37:1 on `surface`, below 4.5:1. Dark `ink` is light, so an `ink` overlay would wash out a dark page | Decision: FE-05 adds `danger`, the drawn `oklch(46% 0.10 34)` (7.29:1 on `surface`), with the dark `rejected` value `oklch(70% 0.10 34)` as its dark entry. It also adds `scrim`, `oklch(25% 0.013 62)` with one value in both themes, for the modal overlay (`bg-scrim/34`). `rejected` stays for the rejection outcome only. Owner FE-05 |
 | Skipping the rejection reason | The #s22 example has «Пропустити», the kanban modal has «Не хочу зараз вказувати» | DOC-03 defines `unspecified` (side `system`) | Decision: both record `unspecified`. With `ask_rejection_reason` off no modal shows and `unspecified` is recorded. Owners FE-14, BE-17 |
 | Salary block | The dashboard draws salary analytics | AN-12 is P2, FE-37 is P1, FE-33 is P0 | Decision: FE-33 renders only blocks whose endpoint exists. The salary block appears with AN-12 and FE-37; until then it is absent, not a fake «мало даних» state |
 | OAuth buttons | Login draws «Продовжити з Google» and «Продовжити з GitHub» | Email and password in BE-06 | Covered by FE-09 (behind a feature flag) and BE-13 |
