@@ -2,13 +2,9 @@ import type { CreateApplicationInput, Stage, UpdateApplicationInput } from '@job
 import { Injectable } from '@nestjs/common';
 
 import type { Prisma } from '../../generated/prisma/client.js';
+import { EFFECTIVE_STAGE_EVENTS } from '../../prisma/effective-stage-events.js';
 import { PrismaService } from '../../prisma/prisma.service.js';
 import { type ApplicationEvent, applicationEvent } from './applications.events.js';
-
-export const EFFECTIVE_STAGE_EVENTS = {
-  where: { compensatesEventId: null, compensatedBy: { is: null } },
-  orderBy: [{ occurredAt: 'desc' }, { id: 'desc' }],
-} satisfies Prisma.Application$stageEventsArgs;
 
 export const LATEST_STAGE_EVENT_SELECT = {
   ...EFFECTIVE_STAGE_EVENTS,

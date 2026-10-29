@@ -1,5 +1,7 @@
 import { z } from 'zod';
 
+import type { LocalizedLabel } from './labels.js';
+
 export const STAGES = [
   'applied',
   'screening',
@@ -14,6 +16,17 @@ export const STAGES = [
 export const stageSchema = z.enum(STAGES);
 
 export type Stage = z.infer<typeof stageSchema>;
+
+export const STAGE_LABELS: Record<Stage, LocalizedLabel> = {
+  applied: { labelUk: 'відгук', labelEn: 'Applied' },
+  screening: { labelUk: 'скринінг', labelEn: 'Screening' },
+  tech_interview: { labelUk: "техінтерв'ю", labelEn: 'Tech interview' },
+  final: { labelUk: 'фінал', labelEn: 'Final' },
+  offer: { labelUk: 'офер', labelEn: 'Offer' },
+  rejected: { labelUk: 'відмова', labelEn: 'Rejected' },
+  ghosted: { labelUk: 'ghosted', labelEn: 'Ghosted' },
+  withdrawn: { labelUk: 'відкликав', labelEn: 'Withdrawn' },
+};
 
 export const TERMINAL_STAGES: readonly Stage[] = ['rejected', 'withdrawn'];
 

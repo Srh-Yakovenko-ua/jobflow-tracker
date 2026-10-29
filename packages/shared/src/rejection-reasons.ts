@@ -1,5 +1,7 @@
 import { z } from 'zod';
 
+import type { LocalizedLabel } from './labels.js';
+
 export const REJECTION_SIDES = ['company', 'candidate', 'system'] as const;
 
 export const rejectionSideSchema = z.enum(REJECTION_SIDES);
@@ -25,10 +27,8 @@ export const rejectionReasonCodeSchema = z.enum(REJECTION_REASON_CODES);
 
 export type RejectionReasonCode = z.infer<typeof rejectionReasonCodeSchema>;
 
-export type RejectionReason = {
+export type RejectionReason = LocalizedLabel & {
   side: RejectionSide;
-  labelUk: string;
-  labelEn: string;
   sortOrder: number;
 };
 

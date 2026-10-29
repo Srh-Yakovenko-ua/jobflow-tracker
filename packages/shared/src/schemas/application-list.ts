@@ -1,7 +1,7 @@
 import { z } from 'zod';
 
 import { aiJobStatusSchema } from '../ai-statuses.js';
-import { scheduledEventKindSchema } from '../scheduled-events.js';
+import { scheduledEventSlotSchema } from '../scheduled-events.js';
 import { silenceLevelSchema } from '../silence.js';
 import { sourceSchema } from '../sources.js';
 import { outcomeStageSchema, stageSchema } from '../stages.js';
@@ -66,9 +66,7 @@ export const applicationCardSchema = applicationResponseSchema
   .extend({
     stack: z.array(z.string()).max(APPLICATION_CARD_STACK_LIMIT),
     stackCount: z.int32().min(0),
-    nextScheduledEvent: z
-      .object({ kind: scheduledEventKindSchema, startsAt: z.iso.datetime() })
-      .nullable(),
+    nextScheduledEvent: scheduledEventSlotSchema.nullable(),
     aiStatus: aiJobStatusSchema.nullable(),
   });
 

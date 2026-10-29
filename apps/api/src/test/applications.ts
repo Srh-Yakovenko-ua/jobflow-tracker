@@ -48,6 +48,8 @@ export const applicationPath = (id: string) => `${APPLICATIONS_PATH}/${id}`;
 
 export const stageEventsPath = (id: string) => `${applicationPath(id)}/events`;
 
+export const timelinePath = (id: string) => `${applicationPath(id)}/timeline`;
+
 export function postStageMove(
   app: NestExpressApplication,
   { accessToken, id, input }: StageMoveRequest,

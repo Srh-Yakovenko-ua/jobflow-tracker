@@ -28,6 +28,7 @@ const OWNER_ONLY_CASES: OwnerOnlyCase[] = [
     ownerStatus: 201,
   },
   { card: 'BE-17', method: 'post', path: '/applications/:id/events/undo-last', ownerStatus: 409 },
+  { card: 'BE-18', method: 'get', path: '/applications/:id/timeline', ownerStatus: 200 },
 ];
 
 const ROUTES_WITHOUT_IDOR_CASE = [

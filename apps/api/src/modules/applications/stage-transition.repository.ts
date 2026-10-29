@@ -2,12 +2,12 @@ import type { RejectionReasonCode, Stage } from '@jobflow/shared';
 import { Injectable } from '@nestjs/common';
 
 import type { Prisma } from '../../generated/prisma/client.js';
+import { EFFECTIVE_STAGE_EVENTS } from '../../prisma/effective-stage-events.js';
 import { PrismaService } from '../../prisma/prisma.service.js';
 import {
   APPLICATION_SELECT,
   type ApplicationById,
   type ApplicationRow,
-  EFFECTIVE_STAGE_EVENTS,
 } from './applications.repository.js';
 
 const STAGE_STATE_SELECT = {

@@ -1,6 +1,5 @@
 import type { RouteConfig } from '@asteasolutions/zod-to-openapi';
 import {
-  applicationIdSchema,
   applicationPatchSchema,
   type ApplicationResponse,
   applicationResponseSchema,
@@ -11,7 +10,12 @@ import {
 } from '@jobflow/shared';
 import { z } from 'zod';
 
-import { errorResponses, jsonContent } from '../../openapi/route.js';
+import {
+  applicationIdParams,
+  errorResponses,
+  EXAMPLE_APPLICATION_ID,
+  jsonContent,
+} from '../../openapi/route.js';
 import { APPLICATION_LIST_OPENAPI_PATHS } from './application-list.openapi.js';
 
 const NEW_APPLICATION = {
@@ -29,7 +33,7 @@ const NEW_APPLICATION = {
 
 const APPLICATION = {
   ...NEW_APPLICATION,
-  id: '0199f0c4-6e3f-7c42-9d50-7b8c9d0e1f2a',
+  id: EXAMPLE_APPLICATION_ID,
   searchId: '0199f0b2-1a2b-7c3d-8e4f-5a6b7c8d9e0f',
   currentStage: 'applied',
   isDraft: false,
@@ -65,8 +69,6 @@ const STAGE_EVENTS_PATH = `${APPLICATION_PATH}/events`;
 
 const TAGS = ['applications'];
 
-const idParams = z.object({ id: applicationIdSchema.meta({ example: APPLICATION.id }) });
-
 const applicationReply = {
   description: 'The Application',
   content: jsonContent(applicationResponseSchema, APPLICATION),
@@ -94,7 +96,7 @@ export const APPLICATIONS_OPENAPI_PATHS: RouteConfig[] = [
     path: APPLICATION_PATH,
     tags: TAGS,
     summary: 'Read an Application',
-    request: { params: idParams },
+    request: { params: applicationIdParams },
     responses: { 200: applicationReply, ...ownedErrors },
   },
   {
@@ -103,7 +105,7 @@ export const APPLICATIONS_OPENAPI_PATHS: RouteConfig[] = [
     tags: TAGS,
     summary: 'Change the fields of an Application',
     request: {
-      params: idParams,
+      params: applicationIdParams,
       body: {
         required: true,
         description: `Send at least one field; salaryMin and salaryMax travel together. currentStage is refused: ${STAGE_CHANGE_HINT}.`,
@@ -127,7 +129,7 @@ export const APPLICATIONS_OPENAPI_PATHS: RouteConfig[] = [
     path: APPLICATION_PATH,
     tags: TAGS,
     summary: 'Delete an Application',
-    request: { params: idParams },
+    request: { params: applicationIdParams },
     responses: { 204: { description: 'The Application is deleted' }, ...ownedErrors },
   },
   {
@@ -138,7 +140,7 @@ export const APPLICATIONS_OPENAPI_PATHS: RouteConfig[] = [
     description:
       'Writes the stage event and moves the Application in one transaction. fromStage is the stage the card left: another current stage is 409 conflict, a move the stage machine refuses is 409 illegal_transition. A move to rejected needs reasonCode while askRejectionReason is on (unspecified counts). occurredAt defaults to now and may be in the past, never before the previous event.',
     request: {
-      params: idParams,
+      params: applicationIdParams,
       body: { required: true, content: jsonContent(moveApplicationInputSchema, STAGE_MOVE) },
     },
     responses: {
@@ -162,7 +164,7 @@ export const APPLICATIONS_OPENAPI_PATHS: RouteConfig[] = [
     tags: TAGS,
     summary: 'Undo the last stage move',
     description: `Writes a compensating event back to the stage before the last move, at most ${String(STAGE_MOVE_LIMITS.undoWindowMs)} ms after it. Later, or with no move to undo, it is 409 conflict.`,
-    request: { params: idParams },
+    request: { params: applicationIdParams },
     responses: {
       201: {
         description: 'The Application back in its previous stage',
