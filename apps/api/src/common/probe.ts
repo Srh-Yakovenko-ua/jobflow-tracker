@@ -14,3 +14,10 @@ export async function isAnswered(check: Promise<unknown>): Promise<boolean> {
   );
   return Promise.race([answered, delay(DEPENDENCY_LIMITS.pingTimeoutMs, false, { ref: false })]);
 }
+
+export async function withinLimit<T>(work: Promise<T>, limitMs: number): Promise<T> {
+  const timedOut = delay(limitMs, undefined, { ref: false }).then((): never => {
+    throw new Error(`timed out after ${String(limitMs)} ms`);
+  });
+  return Promise.race([work, timedOut]);
+}
