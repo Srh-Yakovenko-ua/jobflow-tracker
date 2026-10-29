@@ -30,7 +30,26 @@ export const STAGE_LABELS: Record<Stage, LocalizedLabel> = {
 
 export const TERMINAL_STAGES: readonly Stage[] = ['rejected', 'withdrawn'];
 
-export const ACTIVE_STAGES: readonly Stage[] = ['applied', 'screening', 'tech_interview', 'final'];
+export const ACTIVE_STAGES = [
+  'applied',
+  'screening',
+  'tech_interview',
+  'final',
+] as const satisfies readonly Stage[];
+
+export type ActiveStage = (typeof ACTIVE_STAGES)[number];
+
+const ACTIVE_STAGE_LIST: readonly Stage[] = ACTIVE_STAGES;
+
+export function isActiveStage(stage: Stage): stage is ActiveStage {
+  return ACTIVE_STAGE_LIST.includes(stage);
+}
+
+export type InactiveStage = Exclude<Stage, ActiveStage>;
+
+export const INACTIVE_STAGES: readonly InactiveStage[] = STAGES.filter(
+  (stage): stage is InactiveStage => !isActiveStage(stage),
+);
 
 export const OUTCOME_STAGES = [
   'rejected',

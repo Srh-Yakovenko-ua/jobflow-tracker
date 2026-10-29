@@ -4,11 +4,14 @@ import { ThemeSwitcher } from '@/features/switch-theme';
 import { uk } from '@/shared/i18n';
 
 import { ButtonsSection } from './buttons-section';
+import { CardsSection } from './cards-section';
 import { ChoiceSection } from './choice-section';
 import { FeedbackSection } from './feedback-section';
 import { FieldsSection } from './fields-section';
 import { NavigationSection } from './navigation-section';
+import { ScoreSection } from './score-section';
 import { SelectsSection } from './selects-section';
+import { StagesSection } from './stages-section';
 
 export const metadata: Metadata = { title: uk.devUi.pageTitle, robots: { index: false } };
 
@@ -27,6 +30,9 @@ export default function DevUiPage() {
       <ChoiceSection />
       <NavigationSection />
       <FeedbackSection />
+      <ScoreSection />
+      <StagesSection />
+      <CardsSection />
     </main>
   );
 }

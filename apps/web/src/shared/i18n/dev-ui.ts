@@ -1,3 +1,5 @@
+import { devUiDomain } from './dev-ui-domain';
+
 export const devUi = {
   pageTitle: 'Кіт інтерфейсу',
   buttons: {
@@ -184,4 +186,5 @@ export const devUi = {
       save: 'Зберегти',
     },
   },
+  ...devUiDomain,
 } as const;

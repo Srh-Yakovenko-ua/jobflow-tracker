@@ -2,6 +2,7 @@ export * from './ai-statuses.js';
 export * from './labels.js';
 export * from './notifications.js';
 export * from './oauth-providers.js';
+export * from './plurals.js';
 export * from './rejection-reasons.js';
 export * from './reminders.js';
 export * from './scheduled-events.js';

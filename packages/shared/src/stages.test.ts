@@ -4,6 +4,8 @@ import tokens from '../tokens/tokens.json';
 import {
   ACTIVE_STAGES,
   canTransition,
+  INACTIVE_STAGES,
+  isActiveStage,
   OUTCOME_STAGES,
   RESPONSE_STAGES,
   type Stage,
@@ -137,6 +139,18 @@ describe('OUTCOME_STAGES', () => {
       expect(canTransition(from, to)).toEqual({ ok: true });
     },
   );
+});
+
+describe('isActiveStage', () => {
+  it('keeps the four board columns apart from offer and the closed outcomes', () => {
+    expect(STAGES.filter(isActiveStage)).toEqual([
+      'applied',
+      'screening',
+      'tech_interview',
+      'final',
+    ]);
+    expect(INACTIVE_STAGES).toEqual(['offer', 'rejected', 'ghosted', 'withdrawn']);
+  });
 });
 
 describe('RESPONSE_STAGES', () => {
