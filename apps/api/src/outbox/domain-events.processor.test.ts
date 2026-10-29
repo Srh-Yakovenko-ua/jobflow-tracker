@@ -8,6 +8,7 @@ import { configModule } from '../config/app-config.js';
 import type { ApplicationEvent } from '../modules/applications/index.js';
 import { memoryLog } from '../test/memory-log.js';
 import { recordingHandler } from '../test/outbox.js';
+import { processedJob } from '../test/processed-job.js';
 import { DomainEventRouter } from './domain-event-router.js';
 import { DomainEventsProcessor } from './domain-events.processor.js';
 
@@ -21,15 +22,8 @@ const PAYLOAD = { userId: '019a0b7e-4c2d-7a3e-9f10-5b6c7d8e9f02', applicationId:
 
 const log = memoryLog();
 
-function domainEventJob(fields: { id?: string; name?: string } = {}) {
-  return {
-    id: OUTBOX_ID,
-    name: CREATED,
-    queueName: 'domain-events',
-    data: PAYLOAD,
-    attemptsMade: 0,
-    ...fields,
-  };
+function domainEventJob(id = OUTBOX_ID) {
+  return processedJob({ queueName: 'domain-events', name: CREATED, data: PAYLOAD, id });
 }
 
 describe('DomainEventsProcessor', () => {
@@ -87,7 +81,7 @@ describe('DomainEventsProcessor', () => {
     const handler = recordingHandler();
     router.subscribe(CREATED, handler.handle);
 
-    await expect(processor.process(domainEventJob({ id: '42' }))).rejects.toBeInstanceOf(
+    await expect(processor.process(domainEventJob('42'))).rejects.toBeInstanceOf(
       UnrecoverableError,
     );
     expect(handler.events).toEqual([]);

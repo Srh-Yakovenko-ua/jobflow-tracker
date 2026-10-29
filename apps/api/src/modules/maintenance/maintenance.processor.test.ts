@@ -7,6 +7,7 @@ import { loggerParams } from '../../common/logger.js';
 import { configModule } from '../../config/app-config.js';
 import { OutboxRelayService } from '../../outbox/outbox-relay.service.js';
 import { memoryLog } from '../../test/memory-log.js';
+import { processedJob } from '../../test/processed-job.js';
 import { MaintenanceProcessor } from './maintenance.processor.js';
 
 const log = memoryLog();
@@ -26,11 +27,11 @@ class FakeOutboxRelay {
 }
 
 function pingJob(data: unknown) {
-  return { id: '42', name: 'ping', queueName: 'maintenance', data, attemptsMade: 0 };
+  return processedJob({ queueName: 'maintenance', name: 'ping', data, id: '42' });
 }
 
 function tickJob(name: string) {
-  return { ...pingJob(undefined), name };
+  return processedJob({ queueName: 'maintenance', name, data: undefined });
 }
 
 describe('MaintenanceProcessor', () => {

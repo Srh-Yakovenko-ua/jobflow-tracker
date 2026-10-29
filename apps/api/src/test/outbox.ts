@@ -6,12 +6,38 @@ import type { ApplicationEvent } from '../modules/applications/index.js';
 import type { DomainEvent, DomainEventHandler } from '../outbox/domain-event-router.js';
 import { OUTBOX_LIMITS, type OutboxRelayService } from '../outbox/outbox-relay.service.js';
 import type { PrismaService } from '../prisma/prisma.service.js';
+import { applicationEventRow } from './applications.js';
+
+type ApplicationEventType = ApplicationEvent['eventType'];
 
 export type NewOutboxRows = {
   count: number;
-  eventType: ApplicationEvent['eventType'];
+  eventType: ApplicationEventType;
   publishedAt?: Date;
   createdAt?: Date;
+};
+
+type SampleApplicationEvents = {
+  [Type in ApplicationEventType]: (
+    applicationId: string,
+  ) => Extract<ApplicationEvent, { eventType: Type }>;
+};
+
+const SAMPLE_APPLICATION_EVENTS: SampleApplicationEvents = {
+  'application.created': (applicationId) => ({ eventType: 'application.created', applicationId }),
+  'application.updated': (applicationId) => ({
+    eventType: 'application.updated',
+    applicationId,
+    fields: ['company'],
+  }),
+  'application.stage_changed': (applicationId) => ({
+    eventType: 'application.stage_changed',
+    applicationId,
+    fromStage: 'applied',
+    toStage: 'screening',
+    reasonCode: null,
+    compensatesEventId: null,
+  }),
 };
 
 export type RecordingHandler = {
@@ -50,17 +76,12 @@ export async function createOutboxRows(
   prisma: PrismaService,
   { count, eventType, ...dates }: NewOutboxRows,
 ): Promise<void> {
+  const userId = randomUUID();
   await prisma.outboxEvent.createMany({
-    data: Array.from({ length: count }, () => {
-      const applicationId = randomUUID();
-      return {
-        aggregate: 'application',
-        aggregateId: applicationId,
-        eventType,
-        payload: { applicationId },
-        ...dates,
-      };
-    }),
+    data: Array.from({ length: count }, () => ({
+      ...applicationEventRow({ ...SAMPLE_APPLICATION_EVENTS[eventType](randomUUID()), userId }),
+      ...dates,
+    })),
   });
 }
 

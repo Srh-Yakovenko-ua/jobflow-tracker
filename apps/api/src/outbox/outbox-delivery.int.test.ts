@@ -85,12 +85,13 @@ describe('domain events relayed from the outbox to the subscribers by the worker
     { timeout: DELIVERY_TEST_TIMEOUT_MS },
     async () => {
       const { accessToken } = await signedInWithSearch(testApp.prisma);
-      const responses = await Promise.all(
-        Array.from({ length: 10 }, () =>
-          postApplication(testApp.app, { accessToken, input: ROMASHKA }),
-        ),
-      );
-      expect(responses.map(({ status }) => status)).toEqual(Array.from({ length: 10 }, () => 201));
+      const statuses: number[] = [];
+      for (let post = 0; post < 10; post += 1) {
+        statuses.push(
+          (await postApplication(testApp.app, { accessToken, input: ROMASHKA })).status,
+        );
+      }
+      expect(statuses).toEqual(Array.from({ length: 10 }, () => 201));
       const outboxIds = await unpublishedOutboxIds(testApp.prisma);
       expect(outboxIds).toHaveLength(10);
 
