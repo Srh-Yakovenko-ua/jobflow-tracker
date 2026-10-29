@@ -1,3 +1,4 @@
+import { errorResponseSchema } from '@jobflow/shared';
 import type { NestExpressApplication } from '@nestjs/platform-express';
 import request from 'supertest';
 
@@ -17,3 +18,6 @@ export function callRoute(
     accessToken === undefined ? call : call.set('authorization', `Bearer ${accessToken}`);
   return body === undefined ? authorized : authorized.send(body);
 }
+
+export const errorPathsOf = (body: unknown) =>
+  (errorResponseSchema.parse(body).errors ?? []).map(({ path }) => path);

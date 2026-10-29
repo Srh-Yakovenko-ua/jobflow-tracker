@@ -11,6 +11,8 @@ import type {
   UserSettings,
 } from '../generated/prisma/client.js';
 import type { PrismaService } from '../prisma/prisma.service.js';
+import { SeedRepository } from '../seed/seed.repository.js';
+import { sharedRejectionReasons } from '../seed/seed.service.js';
 import { minutesBefore } from './time.js';
 
 export type OwnedApplication = { userId: string; searchId: string; applicationId: string };
@@ -60,6 +62,10 @@ export const NEW_USER_SETTINGS_ROW = {
 } satisfies Omit<UserSettings, 'userId' | 'createdAt' | 'updatedAt'>;
 
 export const randomEmail = (): string => `${faker.string.uuid()}@example.test`;
+
+export function seedRejectionReasons(prisma: PrismaService): Promise<number> {
+  return new SeedRepository(prisma).upsertRejectionReasons(sharedRejectionReasons());
+}
 
 export function createUser(
   prisma: PrismaService,

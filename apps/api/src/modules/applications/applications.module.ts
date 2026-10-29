@@ -6,6 +6,8 @@ import { ApplicationListService } from './application-list.service.js';
 import { ApplicationsController } from './applications.controller.js';
 import { ApplicationsRepository } from './applications.repository.js';
 import { ApplicationsService } from './applications.service.js';
+import { StageTransitionRepository } from './stage-transition.repository.js';
+import { StageTransitionService } from './stage-transition.service.js';
 
 @Module({
   controllers: [ApplicationsController],
@@ -14,6 +16,8 @@ import { ApplicationsService } from './applications.service.js';
     ApplicationsRepository,
     ApplicationListService,
     ApplicationListRepository,
+    StageTransitionService,
+    StageTransitionRepository,
     Clock,
   ],
   exports: [ApplicationsService],

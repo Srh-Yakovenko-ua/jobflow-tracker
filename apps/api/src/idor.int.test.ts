@@ -3,9 +3,10 @@ import request from 'supertest';
 import { describe, expect, it } from 'vitest';
 
 import { useTestApp } from './test/app.js';
-import { applicationPath, createApplication } from './test/applications.js';
+import { applicationPath, createApplication, ROMASHKA } from './test/applications.js';
 import { BOHDAN, OLENA, signUp } from './test/auth.js';
 import { callRoute, type RouteCall } from './test/http.js';
+import { TO_SCREENING } from './test/service-fixtures.js';
 
 type OwnerOnlyCase = Omit<RouteCall, 'accessToken'> & { card: string; ownerStatus: number };
 
@@ -19,10 +20,17 @@ const OWNER_ONLY_CASES: OwnerOnlyCase[] = [
     ownerStatus: 200,
   },
   { card: 'BE-14', method: 'delete', path: '/applications/:id', ownerStatus: 204 },
+  {
+    card: 'BE-17',
+    method: 'post',
+    path: '/applications/:id/events',
+    body: TO_SCREENING,
+    ownerStatus: 201,
+  },
+  { card: 'BE-17', method: 'post', path: '/applications/:id/events/undo-last', ownerStatus: 409 },
 ];
 
 const ROUTES_WITHOUT_IDOR_CASE = [
-  { card: 'BE-17', method: 'post', path: '/applications/:id/events', resource: 'stage event' },
   { card: 'BE-21', method: 'post', path: '/applications/:id/contacts', resource: 'contact' },
   { card: 'BE-22', method: 'post', path: '/applications/:id/notes', resource: 'note' },
   { card: 'BE-30', method: 'patch', path: '/resumes/versions/:id', resource: 'resume version' },
@@ -54,7 +62,7 @@ describe("another user's data", () => {
       const bohdan = await signUp(testApp.app, BOHDAN);
       const application = await createApplication(testApp.app, {
         accessToken: olena.accessToken,
-        input: { company: 'Ромашка', position: 'Backend developer' },
+        input: ROMASHKA,
       });
       const route = { method, path: `/api/v1${path.replace(':id', application.id)}`, body };
 

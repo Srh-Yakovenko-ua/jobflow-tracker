@@ -47,6 +47,14 @@ export const notFound = (detail?: string) => errorFor(404, detail);
 
 export const conflict = (detail?: string) => errorFor(409, detail);
 
+export const illegalTransition = (detail: string) =>
+  new AppError({
+    status: 409,
+    type: 'illegal_transition',
+    title: 'Illegal stage transition',
+    detail,
+  });
+
 export const unauthorized = (detail?: string) => errorFor(401, detail);
 
 export const tokenExpired = () =>

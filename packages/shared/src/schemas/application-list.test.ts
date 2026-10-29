@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import type { z } from 'zod';
 
 import { type Stage, STAGES } from '../stages.js';
+import { issuePathsOf } from '../test/zod-issues.js';
 import {
   applicationBoardQuerySchema,
   applicationBoardResponseSchema,
@@ -32,9 +32,6 @@ const CARD = {
   nextScheduledEvent: { kind: 'screening_call', startsAt: '2026-10-22T13:00:00.000Z' },
   aiStatus: 'done',
 } satisfies ApplicationCard;
-
-const issuePathsOf = ({ error }: { error?: z.ZodError | undefined }) =>
-  error?.issues.map(({ path }) => path.join('.')) ?? [];
 
 const columnsOf = (stages: readonly Stage[]) =>
   Object.fromEntries(stages.map((stage) => [stage, { count: 0, items: [] }]));

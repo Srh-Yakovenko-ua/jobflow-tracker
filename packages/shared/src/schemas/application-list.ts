@@ -7,6 +7,7 @@ import { sourceSchema } from '../sources.js';
 import { outcomeStageSchema, stageSchema } from '../stages.js';
 import { applicationResponseSchema } from './application.js';
 import { paginatedSchema, paginationQuerySchema } from './pagination.js';
+import { plainTextSchema } from './text.js';
 
 export const APPLICATION_SORTS = ['-lastEventAt', 'lastEventAt'] as const;
 
@@ -27,13 +28,7 @@ export function csvListOf<Item extends z.ZodType<unknown, string>>(item: Item) {
 export const applicationFiltersSchema = z.object({
   stage: csvListOf(stageSchema).optional(),
   source: csvListOf(sourceSchema).optional(),
-  q: z
-    .string()
-    .trim()
-    .min(1)
-    .max(200)
-    .refine((text) => !text.includes('\u0000'), { error: 'q must not contain NUL characters' })
-    .optional(),
+  q: plainTextSchema(200).optional(),
   hasScore: z
     .enum(['true', 'false'])
     .transform((value) => value === 'true')

@@ -1,23 +1,13 @@
-import {
-  type ApplicationResponse,
-  applicationSchema,
-  type CreateApplicationInput,
-  DEFAULT_SILENCE_DAYS,
-  type Stage,
-} from '@jobflow/shared';
+import type { ApplicationResponse, CreateApplicationInput, Stage } from '@jobflow/shared';
 import { Injectable } from '@nestjs/common';
 
 import { conflict, notFound } from '../../common/app-error.js';
 import { Clock } from '../../common/clock.js';
 import type { Prisma } from '../../generated/prisma/client.js';
 import { PrismaService } from '../../prisma/prisma.service.js';
-import { withApplicationTiming } from './application-timing.js';
+import { APPLICATION_NOT_FOUND, owned, toApplicationResponse } from './application-response.js';
 import { APPLICATION_EVENTS } from './applications.events.js';
-import {
-  type ApplicationChanges,
-  type ApplicationRow,
-  ApplicationsRepository,
-} from './applications.repository.js';
+import { type ApplicationChanges, ApplicationsRepository } from './applications.repository.js';
 
 export type ApplicationUpdate = { id: string; input: ApplicationChanges };
 
@@ -29,33 +19,6 @@ type RecordedChange = {
 };
 
 const FIRST_STAGE = 'applied' satisfies Stage;
-
-const APPLICATION_NOT_FOUND = 'Application not found';
-
-function owned(row: ApplicationRow | null): ApplicationRow {
-  if (row === null) {
-    throw notFound(APPLICATION_NOT_FOUND);
-  }
-  return row;
-}
-
-function toApplicationResponse(row: ApplicationRow, now: Date): ApplicationResponse {
-  const { user, ...timed } = row;
-  const silenceDays = user.settings?.silenceDays ?? DEFAULT_SILENCE_DAYS;
-  const { aiParsed, appliedAt, lastEventAt, updatedAt, ...columns } = withApplicationTiming({
-    row: timed,
-    silenceDays,
-    now,
-  });
-  return {
-    ...columns,
-    aiParsed: applicationSchema.shape.aiParsed.parse(aiParsed),
-    appliedAt: appliedAt?.toISOString() ?? null,
-    lastEventAt: lastEventAt.toISOString(),
-    createdAt: row.createdAt.toISOString(),
-    updatedAt: updatedAt.toISOString(),
-  };
-}
 
 @Injectable()
 export class ApplicationsService {

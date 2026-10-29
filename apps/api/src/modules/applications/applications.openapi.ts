@@ -5,7 +5,9 @@ import {
   type ApplicationResponse,
   applicationResponseSchema,
   createApplicationInputSchema,
+  moveApplicationInputSchema,
   STAGE_CHANGE_HINT,
+  STAGE_MOVE_LIMITS,
 } from '@jobflow/shared';
 import { z } from 'zod';
 
@@ -50,7 +52,16 @@ const APPLICATION_PATCH = {
   salaryMax: 5500,
 } satisfies z.input<typeof applicationPatchSchema>;
 
+const STAGE_MOVE = {
+  fromStage: 'tech_interview',
+  toStage: 'rejected',
+  reasonCode: 'skills_gap',
+  comment: 'Попросили більше досвіду з Kafka',
+} satisfies z.input<typeof moveApplicationInputSchema>;
+
 const APPLICATION_PATH = '/applications/{id}';
+
+const STAGE_EVENTS_PATH = `${APPLICATION_PATH}/events`;
 
 const TAGS = ['applications'];
 
@@ -118,6 +129,50 @@ export const APPLICATIONS_OPENAPI_PATHS: RouteConfig[] = [
     summary: 'Delete an Application',
     request: { params: idParams },
     responses: { 204: { description: 'The Application is deleted' }, ...ownedErrors },
+  },
+  {
+    method: 'post',
+    path: STAGE_EVENTS_PATH,
+    tags: TAGS,
+    summary: 'Move an Application to another stage',
+    description:
+      'Writes the stage event and moves the Application in one transaction. fromStage is the stage the card left: another current stage is 409 conflict, a move the stage machine refuses is 409 illegal_transition. A move to rejected needs reasonCode while askRejectionReason is on (unspecified counts). occurredAt defaults to now and may be in the past, never before the previous event.',
+    request: {
+      params: idParams,
+      body: { required: true, content: jsonContent(moveApplicationInputSchema, STAGE_MOVE) },
+    },
+    responses: {
+      201: {
+        description: 'The moved Application',
+        content: jsonContent(applicationResponseSchema, {
+          ...APPLICATION,
+          currentStage: 'rejected',
+          lastEventAt: '2026-10-22T09:15:00.000Z',
+          updatedAt: '2026-10-22T09:15:00.000Z',
+          daysInStage: 0,
+          daysSinceLastEvent: 0,
+        }),
+      },
+      ...errorResponses([400, 401, 403, 404, 409, 422]),
+    },
+  },
+  {
+    method: 'post',
+    path: `${STAGE_EVENTS_PATH}/undo-last`,
+    tags: TAGS,
+    summary: 'Undo the last stage move',
+    description: `Writes a compensating event back to the stage before the last move, at most ${String(STAGE_MOVE_LIMITS.undoWindowMs)} ms after it. Later, or with no move to undo, it is 409 conflict.`,
+    request: { params: idParams },
+    responses: {
+      201: {
+        description: 'The Application back in its previous stage',
+        content: jsonContent(applicationResponseSchema, {
+          ...APPLICATION,
+          updatedAt: '2026-10-22T09:15:05.000Z',
+        }),
+      },
+      ...errorResponses([401, 403, 404, 409, 422]),
+    },
   },
   ...APPLICATION_LIST_OPENAPI_PATHS,
 ];
