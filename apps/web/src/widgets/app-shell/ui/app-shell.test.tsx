@@ -1,13 +1,11 @@
 import { screen, within } from '@testing-library/react';
-import type { HttpResponseResolver } from 'msw';
 import { http, HttpResponse } from 'msw/http';
-import { delay } from 'msw/utils/delay';
 import { describe, expect, it, vi } from 'vitest';
 
 import { applicationKeys } from '@/entities/application';
 import { userKeys } from '@/entities/user';
 import { uk } from '@/shared/i18n';
-import { apiUrl, errorReply } from '@/test/api-handlers';
+import { apiUrl, errorReply, OUTAGES } from '@/test/api-handlers';
 import { boardOf, type ColumnCounts } from '@/test/board-fixtures';
 import { axeViolations } from '@/test/dev-ui';
 import { QueryProbe, waitForQuery } from '@/test/query-status';
@@ -40,16 +38,6 @@ function renderShell() {
   );
   return { user, sidebar: screen.getByRole('navigation', { name: SHELL.navLabel }) };
 }
-
-const OUTAGES: { name: string; reply: HttpResponseResolver; settled: 'error' | 'pending' }[] = [
-  {
-    name: 'answers 500',
-    reply: () => errorReply({ status: 500, type: 'internal_error' }),
-    settled: 'error',
-  },
-  { name: 'refuses the connection', reply: () => HttpResponse.error(), settled: 'error' },
-  { name: 'never answers', reply: () => delay('infinite'), settled: 'pending' },
-];
 
 describe('AppShell', () => {
   it('Tab walks the skip link, the collapse toggle, Дошка, the search and the user menu, and Enter collapses the sidebar', async () => {

@@ -1,6 +1,7 @@
 import { sessionTokensSchema } from '@jobflow/shared';
 
 import { config } from '@/shared/config';
+import { clearSessionCookie, writeSessionCookie } from '@/shared/lib/session-cookie';
 
 import { ApiError } from './api-error';
 import { parseResponse } from './parse-response';
@@ -9,19 +10,39 @@ import { send } from './transport';
 const REFRESH_REQUEST = { method: 'POST', path: '/auth/refresh' } as const;
 const REFRESH_LOCK = 'jobflow:auth-refresh';
 
+type SessionEndListener = () => void;
+
+const sessionEndListeners = new Set<SessionEndListener>();
+
 let accessToken: string | undefined;
 let refreshInFlight: Promise<string> | undefined;
 
 export function setAccessToken(token: string): void {
   accessToken = token;
+  writeSessionCookie();
 }
 
 export function clearAccessToken(): void {
   accessToken = undefined;
+  clearSessionCookie();
 }
 
 export function getAccessToken(): string | undefined {
   return accessToken;
+}
+
+export function onSessionEnd(listener: SessionEndListener): () => void {
+  sessionEndListeners.add(listener);
+  return () => {
+    sessionEndListeners.delete(listener);
+  };
+}
+
+function endSession(): void {
+  clearAccessToken();
+  for (const listener of sessionEndListeners) {
+    listener();
+  }
 }
 
 async function requestFreshToken(): Promise<string> {
@@ -35,11 +56,11 @@ async function requestFreshToken(): Promise<string> {
       },
     });
     const tokens = parseResponse({ schema: sessionTokensSchema, body, request: REFRESH_REQUEST });
-    accessToken = tokens.accessToken;
+    setAccessToken(tokens.accessToken);
     return tokens.accessToken;
   } catch (error) {
     if (error instanceof ApiError && error.status === 401) {
-      accessToken = undefined;
+      endSession();
     }
     throw error;
   }
@@ -57,4 +78,8 @@ export function refreshAfter(staleToken: string | undefined): Promise<string> {
     return Promise.resolve(accessToken);
   }
   return refreshAccessToken();
+}
+
+export function ensureAccessToken(): Promise<string> {
+  return refreshAfter(undefined);
 }

@@ -9,6 +9,7 @@ import { Button } from '@/shared/ui/button';
 import type { ShellNav } from '../model/nav-items';
 import { useSidebarStore } from '../model/sidebar-store';
 import { NavList } from './nav-list';
+import { sidebarFrameOf } from './sidebar-frame';
 
 export type SidebarProps = Readonly<{ nav: ShellNav }>;
 
@@ -19,8 +20,8 @@ export function Sidebar({ nav }: SidebarProps) {
     <nav
       aria-label={uk.shell.navLabel}
       className={cn(
-        'sticky top-0 hidden h-dvh flex-none flex-col gap-5 bg-paper px-3 py-4 shadow-[1px_0_0_var(--line-soft)] ease-standard motion-safe:transition-[width] motion-safe:duration-(--duration-base) md:flex',
-        collapsed ? 'w-18' : 'w-60',
+        sidebarFrameOf({ collapsed }),
+        'flex-col gap-5 px-3 py-4 ease-standard motion-safe:transition-[width] motion-safe:duration-(--duration-base)',
       )}
     >
       <div className={cn('flex h-9 items-center', collapsed ? 'justify-center' : 'ps-3')}>

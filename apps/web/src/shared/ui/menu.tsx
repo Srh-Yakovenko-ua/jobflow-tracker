@@ -7,6 +7,9 @@ import type { ComponentProps } from 'react';
 import { cn } from '@/shared/lib/cn';
 
 import { MENU_ITEM, MENU_LABEL, MENU_SURFACE } from './field-surface';
+import { TOUCH_HEIGHT } from './touch-height';
+
+const ITEM = cn(MENU_ITEM, TOUCH_HEIGHT);
 
 export const Menu = MenuPrimitive.Root;
 
@@ -37,7 +40,7 @@ export function MenuItem({ className, ...props }: MenuItemProps) {
     <MenuPrimitive.Item
       data-focus="option"
       {...props}
-      className={cn(MENU_ITEM, 'gap-2.5 [&_svg]:flex-none [&_svg]:text-ink-3', className)}
+      className={cn(ITEM, 'gap-2.5 [&_svg]:flex-none [&_svg]:text-ink-3', className)}
     />
   );
 }
@@ -59,7 +62,7 @@ export function MenuRadioItem({ className, children, ...props }: MenuRadioItemPr
     <MenuPrimitive.RadioItem
       data-focus="option"
       {...props}
-      className={cn(MENU_ITEM, 'data-[state=checked]:font-semibold', className)}
+      className={cn(ITEM, 'data-[state=checked]:font-semibold', className)}
     >
       <span className="min-w-0 flex-1 truncate">{children}</span>
       <span aria-hidden className="flex w-3.75 flex-none justify-center text-accent-press">

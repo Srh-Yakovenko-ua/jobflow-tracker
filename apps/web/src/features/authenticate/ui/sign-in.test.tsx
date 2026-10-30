@@ -1,9 +1,11 @@
+import { useQuery } from '@tanstack/react-query';
 import { act, screen } from '@testing-library/react';
 import { HttpResponse } from 'msw/http';
 import { delay } from 'msw/utils/delay';
 import { toast } from 'sonner';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
+import { meQueryOptions, userKeys } from '@/entities/user';
 import { API_CLIENT_LIMITS } from '@/shared/api';
 import {
   CREDENTIALS,
@@ -14,12 +16,18 @@ import {
   resetSignIn,
 } from '@/test/auth-form';
 import { replace } from '@/test/navigation';
+import { QueryProbe, waitForQuery } from '@/test/query-status';
 import { server } from '@/test/server';
-import { AUTH_RESPONSE, authErrorRoute, authRoute } from '@/test/session-fixtures';
+import { AUTH_RESPONSE, authErrorRoute, authRoute, meRoute } from '@/test/session-fixtures';
 
 vi.mock('next/navigation', () => import('@/test/navigation'));
 
 const LOGIN = { path: '/auth/login' } as const;
+
+function PreviousSession() {
+  useQuery(meQueryOptions());
+  return <QueryProbe queryKey={userKeys.me()} />;
+}
 
 const UNAVAILABLE = 'Сервер не відповідаєЦе збій на нашому боці. Спробуй ще раз за хвилину.';
 
@@ -36,6 +44,20 @@ describe('sign in', () => {
     await form.fillAndSubmit(CREDENTIALS);
 
     await expectSignedIn();
+  });
+
+  it('signing in from a protected page returns there and drops what the previous session cached', async () => {
+    server.use(authRoute(LOGIN), meRoute());
+    const form = renderAuthForm(
+      { mode: 'login', returnTo: '/applications/123' },
+      <PreviousSession />,
+    );
+    await waitForQuery({ queryKey: userKeys.me(), status: 'success' });
+
+    await form.fillAndSubmit(CREDENTIALS);
+
+    await expectSignedIn('/applications/123');
+    await waitForQuery({ queryKey: userKeys.me(), status: 'absent' });
   });
 
   it('401 shows the generic message, marks no field and raises no save toast', async () => {

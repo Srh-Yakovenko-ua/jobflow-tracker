@@ -4,7 +4,7 @@ import {
   type SettingsSuggestions,
   settingsSuggestionsSchema,
 } from '@jobflow/shared';
-import type { DelayMode, JsonBodyType } from 'msw';
+import type { DelayMode, HttpResponseResolver, JsonBodyType } from 'msw';
 import { http, HttpResponse } from 'msw/http';
 import { delay } from 'msw/utils/delay';
 import { vi } from 'vitest';
@@ -27,6 +27,8 @@ export type ExpiringRouteOptions = {
   body?: JsonBodyType;
 };
 
+export type Outage = { name: string; reply: HttpResponseResolver; settled: 'error' | 'pending' };
+
 export const SESSION_TOKENS = {
   expired: 'expired-access-token',
   fresh: 'fresh-access-token',
@@ -36,6 +38,12 @@ export const TOKEN_EXPIRED = {
   status: 401,
   type: 'token_expired',
   title: 'Token expired',
+} as const;
+
+export const REFRESH_REFUSED = {
+  status: 401,
+  type: 'unauthorized',
+  title: 'Session ended',
 } as const;
 
 export const SUGGESTIONS: SettingsSuggestions = {
@@ -69,6 +77,20 @@ export function apiErrorOf(options: ErrorBodyOptions): ApiError {
 
 export function errorReply(options: ErrorBodyOptions) {
   return HttpResponse.json(errorBody(options), { status: options.status });
+}
+
+export const OUTAGES: readonly Outage[] = [
+  {
+    name: 'answers 500',
+    reply: () => errorReply({ status: 500, type: 'internal_error' }),
+    settled: 'error',
+  },
+  { name: 'refuses the connection', reply: () => HttpResponse.error(), settled: 'error' },
+  { name: 'never answers', reply: () => delay('infinite'), settled: 'pending' },
+];
+
+export function refusedRefreshRoute() {
+  return http.post(REFRESH_URL, () => errorReply(REFRESH_REFUSED));
 }
 
 export function rateLimitedReply(headers: Record<string, string>) {

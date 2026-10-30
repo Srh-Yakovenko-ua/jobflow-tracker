@@ -5,6 +5,7 @@ import type { LoginInput } from '@jobflow/shared';
 import { useForm, type UseFormReturn, useFormState } from 'react-hook-form';
 
 import { uk } from '@/shared/i18n';
+import { AUTH_ROUTES } from '@/shared/lib/return-to';
 import { useCountdown } from '@/shared/lib/use-countdown';
 import { Banner } from '@/shared/ui/banner';
 import { Button } from '@/shared/ui/button';
@@ -20,13 +21,18 @@ import {
   credentialFieldOf,
 } from '../model/auth-modes';
 import { useAuthenticateMutation } from '../model/use-authenticate-mutation';
+import { useExistingSession } from '../model/use-existing-session';
 import { AuthTabs } from './auth-tabs';
 import { OAuthLinks } from './oauth-links';
 import { RateLimitAlert } from './rate-limit-alert';
 
 export type AuthNotice = 'oauthDenied';
 
-export type AuthFormProps = Readonly<{ mode: AuthMode; notice?: AuthNotice | undefined }>;
+export type AuthFormProps = Readonly<{
+  mode: AuthMode;
+  notice?: AuthNotice | undefined;
+  returnTo?: string | undefined;
+}>;
 
 type CredentialFieldsProps = Readonly<{ form: UseFormReturn<LoginInput>; spec: AuthModeSpec }>;
 
@@ -76,7 +82,7 @@ function OrDivider() {
   );
 }
 
-export function AuthForm({ mode, notice }: AuthFormProps) {
+export function AuthForm({ mode, notice, returnTo = AUTH_ROUTES.home }: AuthFormProps) {
   const spec = AUTH_MODES[mode];
   const form = useForm<LoginInput>({
     mode: 'onBlur',
@@ -88,7 +94,8 @@ export function AuthForm({ mode, notice }: AuthFormProps) {
       },
     }),
   });
-  const mutation = useAuthenticateMutation({ mode, setError: form.setError });
+  const mutation = useAuthenticateMutation({ mode, setError: form.setError, returnTo });
+  useExistingSession({ returnTo, enabled: mutation.isIdle });
   const alert = authAlertOf({ error: mutation.error, submittedAt: mutation.submittedAt });
   const secondsLeft = useCountdown(alert?.kind === 'rateLimited' ? alert.deadline : undefined);
   const submit = form.handleSubmit((credentials) => {
