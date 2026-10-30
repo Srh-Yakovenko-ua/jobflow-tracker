@@ -39,7 +39,7 @@ const EVENT_ICON: Record<ScheduledEventKind, LucideIcon> = {
 };
 
 const CARD_LOOK = {
-  live: 'bg-surface text-ink shadow-e1 duration-(--duration-base) ease-standard hover:shadow-e2 motion-safe:transition-[translate,box-shadow] motion-safe:hover:-translate-y-0.75',
+  live: 'bg-surface text-ink shadow-e1 duration-(--duration-base) ease-standard hover:shadow-e2 active:shadow-e1 motion-safe:transition-[translate,box-shadow] motion-safe:hover:-translate-y-0.75 motion-safe:active:translate-y-0',
   silent: 'bg-surface-2 text-ink-2 inset-ring inset-ring-line-soft',
 };
 

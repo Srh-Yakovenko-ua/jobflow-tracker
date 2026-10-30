@@ -42,8 +42,9 @@ export const AUTH_RESPONSE: AuthResponse = {
   accessToken: SESSION_TOKENS.fresh,
 };
 
-export function meRoute() {
-  return http.get(apiUrl('/auth/me'), () => HttpResponse.json(ME_RESPONSE));
+export function meRoute(settings: Partial<MeResponse['settings']> = {}) {
+  const me: MeResponse = { ...ME_RESPONSE, settings: { ...ME_RESPONSE.settings, ...settings } };
+  return http.get(apiUrl('/auth/me'), () => HttpResponse.json(me));
 }
 
 export function authRoute({

@@ -21,6 +21,7 @@ export type DialogContentProps = Readonly<{
   header: DialogHeader;
   children?: ReactNode;
   className?: string | undefined;
+  onCloseAutoFocus?: ((event: Event) => void) | undefined;
 }>;
 
 function DialogHead({ header }: Readonly<{ header: DialogHeader }>) {
@@ -43,13 +44,19 @@ function DialogHead({ header }: Readonly<{ header: DialogHeader }>) {
   );
 }
 
-export function DialogContent({ header, children, className }: DialogContentProps) {
+export function DialogContent({
+  header,
+  children,
+  className,
+  onCloseAutoFocus,
+}: DialogContentProps) {
   const describedBy = header.description ? {} : { 'aria-describedby': undefined };
   return (
     <DialogPrimitive.Portal>
       <DialogPrimitive.Overlay className="fixed inset-0 z-50 bg-scrim/34 backdrop-blur-[2px] transition-opacity duration-(--duration-base) ease-standard starting:opacity-0" />
       <DialogPrimitive.Content
         {...describedBy}
+        onCloseAutoFocus={onCloseAutoFocus}
         className={cn(
           'fixed top-1/2 left-1/2 z-50 flex max-h-[calc(100dvh-32px)] w-[calc(100vw-32px)] max-w-130 -translate-1/2 animate-spring-in flex-col gap-4.5 overflow-y-auto rounded-3xl bg-surface p-6 font-ui text-ink shadow-e3',
           className,
