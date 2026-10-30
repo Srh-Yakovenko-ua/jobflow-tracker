@@ -3,7 +3,7 @@ import { keepPreviousData, useQuery, useQueryClient } from '@tanstack/react-quer
 import { useState } from 'react';
 
 import { type ApplicationCardContext, boardQueryOptions } from '@/entities/application';
-import { meQueryOptions } from '@/entities/user';
+import { useUserTimeZone } from '@/entities/user';
 
 export type BoardLoad = Readonly<{ failed: boolean; onRetry: () => void }>;
 
@@ -18,11 +18,6 @@ function toggled(expanded: readonly OutcomeStage[], stage: OutcomeStage): Outcom
     ? expanded.filter((outcome) => outcome !== stage)
     : [...expanded, stage];
   return OUTCOME_STAGES.filter((outcome) => open.includes(outcome));
-}
-
-function useUserTimeZone(): string {
-  const { data } = useQuery({ ...meQueryOptions(), select: (me) => me.settings.timezone });
-  return data ?? Intl.DateTimeFormat().resolvedOptions().timeZone;
 }
 
 export function useKanbanBoard() {

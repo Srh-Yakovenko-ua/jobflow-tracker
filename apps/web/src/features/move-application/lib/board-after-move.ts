@@ -1,6 +1,13 @@
-import type { ApplicationBoardResponse, ApplicationCard, Stage } from '@jobflow/shared';
+import {
+  type ApplicationBoardResponse,
+  type ApplicationCard,
+  applicationCardSchema,
+  type Stage,
+} from '@jobflow/shared';
 
-export type BoardMove = Readonly<{ application: ApplicationCard; toStage: Stage; at: string }>;
+import type { MovingApplication } from '@/entities/application';
+
+export type BoardMove = Readonly<{ application: MovingApplication; toStage: Stage; at: string }>;
 
 type BoardColumn = ApplicationBoardResponse['columns'][Stage];
 
@@ -15,13 +22,26 @@ function withCardOnTop(column: BoardColumn, card: ApplicationCard): BoardColumn 
   return { count: column.count + 1, items: column.items && [card, ...column.items] };
 }
 
+function movedCardOf(
+  board: ApplicationBoardResponse,
+  application: MovingApplication,
+): ApplicationCard | undefined {
+  const { items } = board.columns[application.currentStage];
+  const held = items?.find((card) => card.id === application.id);
+  if (held !== undefined) return held;
+  const folded = applicationCardSchema.safeParse(application);
+  return folded.success ? folded.data : undefined;
+}
+
 export function boardAfterMove(
   board: ApplicationBoardResponse,
   { application, toStage, at }: BoardMove,
 ): ApplicationBoardResponse {
+  const card = movedCardOf(board, application);
+  if (card === undefined) return board;
   const fromStage = application.currentStage;
   const moved: ApplicationCard = {
-    ...application,
+    ...card,
     currentStage: toStage,
     lastEventAt: at,
     daysInStage: 0,

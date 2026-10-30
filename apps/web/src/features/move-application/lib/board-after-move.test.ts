@@ -70,6 +70,37 @@ describe('boardAfterMove', () => {
     ]);
   });
 
+  it('a move from the vacancy page leaves a board that does not hold the card as it was', () => {
+    const before = boardWith([]);
+    const elsewhere = { id: '0b6f3c1e-5d2a-4c8e-9f10-0000000000aa', company: 'Acme' };
+
+    const after = boardAfterMove(before, {
+      application: { ...elsewhere, currentStage: 'tech_interview' },
+      toStage: 'final',
+      at: AT,
+    });
+
+    expect(after).toBe(before);
+  });
+
+  it('a move from the vacancy page moves the card the board holds, with the fields the board knows', () => {
+    const after = boardAfterMove(boardWith([]), {
+      application: { id: STAYING.id, company: STAYING.company, currentStage: 'applied' },
+      toStage: 'screening',
+      at: AT,
+    });
+
+    expect(after.columns.applied).toEqual({ count: 1, items: [MOVED] });
+    expect(after.columns.screening.items?.[0]).toEqual({
+      ...STAYING,
+      currentStage: 'screening',
+      lastEventAt: AT,
+      daysInStage: 0,
+      daysSinceLastEvent: 0,
+      silenceLevel: 'none',
+    });
+  });
+
   it('leaves the board it was given and every other column as they were', () => {
     const before = boardWith([]);
     const snapshot = structuredClone(before);

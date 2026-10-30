@@ -14,7 +14,12 @@ const COPY = uk.devUi.buttons;
 
 const SIZES: readonly ButtonSize[] = ['xs', 'sm', 'md', 'lg'];
 
-const VARIANTS: readonly ButtonVariant[] = ['primary', 'secondary', 'ghost', 'danger'];
+const VARIANTS = [
+  'primary',
+  'secondary',
+  'ghost',
+  'danger',
+] as const satisfies readonly ButtonVariant[];
 
 const PERIODS = [
   { value: 'all', label: COPY.periods.all },

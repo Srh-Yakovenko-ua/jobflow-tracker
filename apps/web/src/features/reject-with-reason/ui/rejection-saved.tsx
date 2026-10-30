@@ -1,7 +1,8 @@
 'use client';
 
-import { type ApplicationCard, REJECTION_REASONS, STAGE_LABELS } from '@jobflow/shared';
+import { REJECTION_REASONS, STAGE_LABELS } from '@jobflow/shared';
 
+import type { MovingApplication } from '@/entities/application';
 import { uk } from '@/shared/i18n';
 import { useCountdown } from '@/shared/lib/use-countdown';
 import { Button } from '@/shared/ui/button';
@@ -18,7 +19,7 @@ const COPY = uk.board.reject;
 const FOOTER_BUTTON = 'h-9.5 rounded-[10px] px-3.75 text-[13px]';
 
 export type RejectionSavedProps = Readonly<{
-  application: ApplicationCard;
+  application: MovingApplication;
   step: SavedStep;
   actions: Pick<RejectionActions, 'onUndo' | 'onNote' | 'onDone'>;
 }>;

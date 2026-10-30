@@ -37,7 +37,7 @@ function invalidatedKeysOf(queryClient: QueryClient) {
 }
 
 describe('invalidateAfterMove', () => {
-  it('invalidates every board, the reasons summaries and the analytics summary and nothing else', async () => {
+  it('invalidates every board, every application detail, the reasons summaries and the analytics summary and nothing else', async () => {
     const queryClient = clientWithOneQueryPerKey();
 
     await invalidateAfterMove(queryClient);
@@ -45,6 +45,7 @@ describe('invalidateAfterMove', () => {
     expect(invalidatedKeysOf(queryClient)).toEqual([
       ['applications', 'board', {}],
       ['applications', 'board', { q: 'react' }],
+      ['applications', 'detail', APPLICATION_ID],
       ['applications', 'reasons-summary', 'tech_interview'],
       ['analytics', 'summary'],
     ]);

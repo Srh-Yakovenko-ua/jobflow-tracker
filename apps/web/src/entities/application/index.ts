@@ -1,6 +1,9 @@
+export { applicationQueryOptions } from './api/application';
 export { boardQueryOptions } from './api/board';
 export { applicationListQueryOptions } from './api/list';
+export { formatSalaryRange } from './lib/salary';
 export { silentCountOf } from './lib/silent-count';
+export type { ApplicationMove, MovingApplication } from './model/application-move';
 export type { ApplicationCardContext } from './model/card-context';
 export { FULL_CARD } from './model/card-specimens';
 export { applicationKeys, timelineKeys } from './model/keys';

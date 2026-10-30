@@ -1,21 +1,9 @@
-import type {
-  ApplicationBoardResponse,
-  ApplicationCard,
-  ApplicationResponse,
-  RejectionReasonCode,
-  Stage,
-} from '@jobflow/shared';
+import type { ApplicationBoardResponse, ApplicationResponse } from '@jobflow/shared';
 import type { QueryClient } from '@tanstack/react-query';
 
-import { applicationKeys } from '@/entities/application';
+import { applicationKeys, type ApplicationMove } from '@/entities/application';
 
 import { boardAfterMove } from '../lib/board-after-move';
-
-export type ApplicationMove = Readonly<{
-  application: ApplicationCard;
-  toStage: Stage;
-  reasonCode?: RejectionReasonCode;
-}>;
 
 export type OptimisticMove = Readonly<{
   queryClient: QueryClient;

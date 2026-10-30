@@ -1,11 +1,7 @@
-import {
-  type ApplicationCard,
-  REJECTION_REASONS,
-  type RejectionReasonCode,
-  STAGE_LABELS,
-} from '@jobflow/shared';
+import { REJECTION_REASONS, type RejectionReasonCode, STAGE_LABELS } from '@jobflow/shared';
 import { Check } from 'lucide-react';
 
+import type { MovingApplication } from '@/entities/application';
 import { uk } from '@/shared/i18n';
 import type { DialogHeader } from '@/shared/ui/dialog';
 
@@ -13,9 +9,12 @@ import type { RejectionPrompt } from '../model/rejection-step';
 
 const COPY = uk.board.reject;
 
-type SavedTitleOf = Readonly<{ application: ApplicationCard; reasonCode?: RejectionReasonCode }>;
+type SavedTitleOf = Readonly<{
+  application: MovingApplication;
+  reasonCode?: RejectionReasonCode;
+}>;
 
-function chooseHeader(application: ApplicationCard): DialogHeader {
+function chooseHeader(application: MovingApplication): DialogHeader {
   const from = STAGE_LABELS[application.currentStage].labelUk;
   return {
     eyebrow: COPY.eyebrow({ company: application.company, from }),

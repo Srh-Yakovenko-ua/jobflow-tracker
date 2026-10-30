@@ -12,13 +12,12 @@ import type { ApplicationBoardResponse } from '@jobflow/shared';
 import type { ReactNode } from 'react';
 
 import { ApplicationCard, type ApplicationCardContext } from '@/entities/application';
-import { RejectionReasonDialog } from '@/features/reject-with-reason';
+import { type RejectionFlow, RejectionReasonDialog } from '@/features/reject-with-reason';
 import { uk } from '@/shared/i18n';
 
 import { dragAnnouncements } from '../model/drag-announcements';
 import { DragSourceContext } from '../model/drag-source';
 import { useBoardDrag } from '../model/use-board-drag';
-import type { RejectionFlow } from '../model/use-rejection-prompt';
 
 export type BoardDndProps = Readonly<{
   board: ApplicationBoardResponse;

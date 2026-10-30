@@ -1,9 +1,10 @@
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
-import { type ApplicationCard, type NoteInput, noteInputSchema } from '@jobflow/shared';
+import { type NoteInput, noteInputSchema } from '@jobflow/shared';
 import { type FieldErrors, useForm } from 'react-hook-form';
 
+import type { MovingApplication } from '@/entities/application';
 import { uk } from '@/shared/i18n';
 import { Button } from '@/shared/ui/button';
 import { DialogFooter } from '@/shared/ui/dialog';
@@ -19,7 +20,7 @@ const COPY = uk.board.reject.note;
 const EMPTY_NOTE: NoteInput = { body: '' };
 
 export type RejectionNoteProps = Readonly<{
-  application: ApplicationCard;
+  application: MovingApplication;
   actions: Pick<RejectionActions, 'onDone'>;
 }>;
 

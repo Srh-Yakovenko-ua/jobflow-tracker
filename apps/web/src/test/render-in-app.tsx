@@ -4,7 +4,7 @@ import type { ReactNode } from 'react';
 
 import { Providers } from '@/app/providers';
 
-function InApp({ children }: Readonly<{ children: ReactNode }>) {
+export function InApp({ children }: Readonly<{ children: ReactNode }>) {
   return <Providers theme="light">{children}</Providers>;
 }
 

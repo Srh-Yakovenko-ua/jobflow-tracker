@@ -1,11 +1,12 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 
+import type { ApplicationMove } from '@/entities/application';
 import { showErrorToast } from '@/shared/ui/error-toast';
 
 import { undoLastMove } from '../api/undo-move';
 import { undoErrorMessage } from '../lib/undo-error-toast';
 import { invalidateAfterMove } from './invalidate-after-move';
-import { type ApplicationMove, withOptimisticBoard } from './optimistic-move';
+import { withOptimisticBoard } from './optimistic-move';
 
 function reverseOf({ application, toStage }: ApplicationMove): ApplicationMove {
   return {

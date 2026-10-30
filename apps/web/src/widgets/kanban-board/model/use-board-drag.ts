@@ -1,17 +1,16 @@
 import type { DragEndEvent, DragStartEvent, Over, UniqueIdentifier } from '@dnd-kit/core';
 import type { ApplicationBoardResponse, ApplicationCard } from '@jobflow/shared';
-import { useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
 
-import { meQueryOptions } from '@/entities/user';
+import type { ApplicationMove } from '@/entities/application';
 import {
-  type ApplicationMove,
   isLegalDrop,
   useMoveApplicationMutation,
+  useUndoMoveMutation,
 } from '@/features/move-application';
+import { useRejectionPrompt } from '@/features/reject-with-reason';
 
 import { findCard, stageOf } from './board-lookup';
-import { useRejectionPrompt } from './use-rejection-prompt';
 
 type DropAttempt = { card: ApplicationCard | undefined; over: Over | null };
 
@@ -25,25 +24,17 @@ function legalMoveOf({ card, over }: DropAttempt): ApplicationMove | undefined {
     : undefined;
 }
 
-function useAskRejectionReason(): boolean {
-  const { data } = useQuery({
-    ...meQueryOptions(),
-    select: (me) => me.settings.askRejectionReason,
-  });
-  return data ?? true;
-}
-
 export function useBoardDrag(board: ApplicationBoardResponse) {
   const [activeId, setActiveId] = useState<UniqueIdentifier | null>(null);
-  const askReason = useAskRejectionReason();
   const { mutate } = useMoveApplicationMutation();
-  const rejection = useRejectionPrompt(mutate);
+  const { mutate: undo } = useUndoMoveMutation();
+  const rejection = useRejectionPrompt({ send: mutate, undo });
   const activeCard = activeId === null ? undefined : findCard(board, activeId);
   const onDragEnd = ({ over }: DragEndEvent) => {
     setActiveId(null);
     const move = legalMoveOf({ card: activeCard, over });
     if (move === undefined) return;
-    if (move.toStage === 'rejected' && askReason) {
+    if (move.toStage === 'rejected') {
       rejection.ask(move);
       return;
     }

@@ -14,7 +14,9 @@ const UP_TO_ONE_DECIMAL = new Intl.NumberFormat(uk.locale, { maximumFractionDigi
 
 const CLOCK = { hour: '2-digit', minute: '2-digit' } as const;
 
-const INCIDENT_TIME = { day: '2-digit', month: '2-digit', ...CLOCK } as const;
+const DAY_MONTH = { day: '2-digit', month: '2-digit' } as const;
+
+const INCIDENT_TIME = { ...DAY_MONTH, ...CLOCK } as const;
 
 export type ZonedInstant = { at: Date; timeZone: string | undefined };
 
@@ -36,6 +38,10 @@ function formatZoned({ at, timeZone }: ZonedInstant, options: Intl.DateTimeForma
 
 export function formatClock(instant: ZonedInstant): string {
   return formatZoned(instant, CLOCK);
+}
+
+export function formatDayMonth(instant: ZonedInstant): string {
+  return formatZoned(instant, DAY_MONTH);
 }
 
 export function formatIncidentTime(instant: ZonedInstant): string {

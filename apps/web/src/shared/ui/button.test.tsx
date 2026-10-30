@@ -72,4 +72,20 @@ describe('Button', () => {
     expect(document.activeElement).toBe(screen.getByRole('button', { name: LABELS.addVacancy }));
     expect((await screen.findByRole('tooltip')).textContent).toBe(LABELS.addVacancy);
   });
+
+  it.each([
+    [
+      'outline',
+      ['bg-transparent', 'text-ink', 'inset-ring-line', 'not-disabled:hover:bg-surface-3'],
+    ],
+    [
+      'reject',
+      ['bg-transparent', 'text-danger', 'inset-ring-rejected', 'not-disabled:hover:bg-rejected/8'],
+    ],
+  ] as const)('the %s look is a transparent ring button: %j', (variant, classes) => {
+    render(<Button variant={variant}>{LABELS.addVacancy}</Button>);
+
+    const { className } = screen.getByRole('button', { name: LABELS.addVacancy });
+    expect(className.split(' ')).toEqual(expect.arrayContaining([...classes]));
+  });
 });

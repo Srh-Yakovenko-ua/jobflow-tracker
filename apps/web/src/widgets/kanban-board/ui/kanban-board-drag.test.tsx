@@ -1,4 +1,4 @@
-import { act, screen, waitFor, within } from '@testing-library/react';
+import { act, fireEvent, screen, waitFor, within } from '@testing-library/react';
 import type { HttpResponseResolver } from 'msw';
 import { http, HttpResponse } from 'msw/http';
 import { delay } from 'msw/utils/delay';
@@ -22,11 +22,16 @@ import {
   undoRoute,
 } from '@/test/board-fixtures';
 import { latch } from '@/test/latch';
+import { push } from '@/test/navigation';
 import { waitForQuery } from '@/test/query-status';
 import { type BoardSettings, columnNamed, renderBoard } from '@/test/render-board';
 import { server } from '@/test/server';
 
+vi.mock('next/link', () => import('@/test/link'));
+
 const MOVE = uk.board.move;
+
+const DRAGGED_PAGE = '/applications/0b6f3c1e-5d2a-4c8e-9f10-000000000101';
 
 const DRAGGED = 'Senior Frontend Engineer';
 
@@ -121,7 +126,7 @@ async function savedRejection(undo?: MoveRouteOptions) {
 }
 
 function draggedCard() {
-  return within(columnNamed('відгук 2')).getByText(DRAGGED).closest('[role="button"]');
+  return within(columnNamed('відгук 2')).getByText(DRAGGED).closest('a');
 }
 
 async function overlayGone() {
@@ -133,6 +138,7 @@ async function overlayGone() {
 afterEach(() => {
   localStorage.clear();
   toast.dismiss();
+  push.mockClear();
   vi.restoreAllMocks();
   vi.useRealTimers();
 });
@@ -379,7 +385,7 @@ describe('KanbanBoard drag and drop', () => {
         'Go Backend Engineer',
         'Platform Engineer',
         'Frontend Engineer',
-      ].map((position) => screen.getByText(position).closest('[role="button"]')),
+      ].map((position) => screen.getByText(position).closest('a')),
       ...['відмова 32', 'ghosted 17', 'відкликав 0'].map((name) =>
         screen.getByRole('button', { name }),
       ),
@@ -392,5 +398,27 @@ describe('KanbanBoard drag and drop', () => {
     }
 
     expect(focused).toEqual(stops);
+  });
+
+  it('a click on a card opens its vacancy page and keeps the board scroll', async () => {
+    const { user } = await boardReadyToDrag();
+    const card = draggedCard();
+
+    await user.click(screen.getByText(DRAGGED));
+
+    expect(card?.getAttribute('href')).toBe(DRAGGED_PAGE);
+    expect(card?.dataset.scroll).toBe('false');
+    expect(card?.getAttribute('role')).toBeNull();
+    expect(push.mock.calls).toEqual([[DRAGGED_PAGE]]);
+  });
+
+  it('a card dropped on скринінг does not open its vacancy page', async () => {
+    await boardReadyToDrag({ move: { latch: latch() } });
+
+    dragCardTo('скринінг 1');
+    fireEvent.click(screen.getAllByText(DRAGGED)[0] ?? document.body);
+
+    await screen.findByRole('heading', { name: 'скринінг 2' });
+    expect(push).not.toHaveBeenCalled();
   });
 });
