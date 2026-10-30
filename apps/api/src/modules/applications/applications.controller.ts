@@ -9,6 +9,9 @@ import {
   createApplicationInputSchema,
   type MoveApplicationInput,
   moveApplicationInputSchema,
+  type RejectionReasonsSummary,
+  type RejectionReasonsSummaryQuery,
+  rejectionReasonsSummaryQuerySchema,
   type UpdateApplicationInput,
   updateApplicationInputSchema,
 } from '@jobflow/shared';
@@ -50,6 +53,14 @@ export class ApplicationsController {
     @Query({ schema: applicationBoardQuerySchema }) query: ApplicationBoardQuery,
   ): Promise<ApplicationBoardResponse> {
     return this.applicationList.board(user.id, query);
+  }
+
+  @Get('reasons-summary')
+  reasonsSummary(
+    @CurrentUser() user: AccessUser,
+    @Query({ schema: rejectionReasonsSummaryQuerySchema }) query: RejectionReasonsSummaryQuery,
+  ): Promise<RejectionReasonsSummary> {
+    return this.applicationList.reasonsSummary(user.id, query);
   }
 
   @Get(':id')

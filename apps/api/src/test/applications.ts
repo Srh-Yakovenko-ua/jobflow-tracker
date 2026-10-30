@@ -8,18 +8,23 @@ import {
   type createApplicationInputSchema,
 } from '@jobflow/shared';
 import type { NestExpressApplication } from '@nestjs/platform-express';
+import { beforeAll, beforeEach } from 'vitest';
 import type { z } from 'zod';
 
+import { Clock } from '../common/clock.js';
 import type { ApplicationEvent } from '../modules/applications/index.js';
 import type { PrismaService } from '../prisma/prisma.service.js';
+import { appTestingModule, type TestApp, useTestApp } from './app.js';
 import { accessTokenFor, OLENA, signUp, type SignUpInput } from './auth.js';
-import { createSearch, createUser } from './factories.js';
+import { createSearch, createUser, seedRejectionReasons } from './factories.js';
 import { callRoute } from './http.js';
-import { NOW } from './time.js';
+import { NOW, type SettableClock } from './time.js';
 
 export const APPLICATIONS_PATH = '/api/v1/applications';
 
 export const APPLICATIONS_BOARD_PATH = `${APPLICATIONS_PATH}/board`;
+
+export const REASONS_SUMMARY_PATH = `${APPLICATIONS_PATH}/reasons-summary`;
 
 export type NewApplicationBody = z.input<typeof createApplicationInputSchema>;
 
@@ -140,6 +145,15 @@ export async function signedInWithSearch(prisma: PrismaService): Promise<SignedI
   const user = await createUser(prisma);
   const searchId = await createSearch(prisma, { userId: user.id });
   return { userId: user.id, searchId, accessToken: await accessTokenFor(user) };
+}
+
+export function useStageMoveTestApp(clock: SettableClock): TestApp {
+  const testApp = useTestApp(() => appTestingModule().overrideProvider(Clock).useValue(clock));
+  beforeAll(() => seedRejectionReasons(testApp.prisma));
+  beforeEach(() => {
+    clock.at(NOW);
+  });
+  return testApp;
 }
 
 export const CREATION_EVENT_ROW = {

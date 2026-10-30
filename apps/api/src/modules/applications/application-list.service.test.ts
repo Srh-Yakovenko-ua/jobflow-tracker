@@ -1,4 +1,4 @@
-import type { ApplicationCard, Stage } from '@jobflow/shared';
+import type { ApplicationCard, RejectionReasonsSummaryQuery, Stage } from '@jobflow/shared';
 import { Test } from '@nestjs/testing';
 import { describe, expect, it } from 'vitest';
 
@@ -11,6 +11,7 @@ import {
   ApplicationListRepository,
   type CardRow,
   type FindCards,
+  type ReasonCount,
   type StageCount,
 } from './application-list.repository.js';
 import { ApplicationListService } from './application-list.service.js';
@@ -20,6 +21,7 @@ type OwnedSearch = { userId: string; id: string };
 type FakeData = {
   cards?: CardRow[];
   counts?: StageCount[];
+  reasonCounts?: ReasonCount[];
   silenceDays?: number;
   searches?: OwnedSearch[];
 };
@@ -27,6 +29,8 @@ type FakeData = {
 type CardQuery = FindCards & { userId: string };
 
 type CountQuery = { userId: string; filter: ApplicationListFilter };
+
+type ReasonQuery = RejectionReasonsSummaryQuery & { userId: string };
 
 const MISSING_SEARCH_ID = '0199f0a0-0000-7000-8000-0000000000a2';
 
@@ -64,6 +68,8 @@ class FakeApplicationListRepository {
 
   readonly countQueries: CountQuery[] = [];
 
+  readonly reasonQueries: ReasonQuery[] = [];
+
   constructor(private readonly data: Required<FakeData>) {}
 
   findSilenceDays(): Promise<number> {
@@ -81,6 +87,14 @@ class FakeApplicationListRepository {
     return Promise.resolve(this.data.counts);
   }
 
+  countRejectionReasons(
+    userId: string,
+    query: RejectionReasonsSummaryQuery,
+  ): Promise<ReasonCount[]> {
+    this.reasonQueries.push({ userId, ...query });
+    return Promise.resolve(this.data.reasonCounts);
+  }
+
   findCards(userId: string, query: FindCards): Promise<CardRow[]> {
     this.cardQueries.push({ userId, ...query });
     const { stages, take } = query;
@@ -92,10 +106,17 @@ class FakeApplicationListRepository {
 async function serviceWith({
   cards = [CARD_ROW],
   counts = [],
+  reasonCounts = [],
   silenceDays = 7,
   searches = [{ userId: OLENA_ID, id: SEARCH_ID }],
 }: FakeData = {}) {
-  const repository = new FakeApplicationListRepository({ cards, counts, silenceDays, searches });
+  const repository = new FakeApplicationListRepository({
+    cards,
+    counts,
+    reasonCounts,
+    silenceDays,
+    searches,
+  });
   const moduleRef = await Test.createTestingModule({
     providers: [ApplicationListService, ApplicationListRepository, Clock],
   })
@@ -287,6 +308,42 @@ describe('ApplicationListService.board', () => {
       },
     ]);
     expect(repository.countQueries).toEqual([{ userId: OLENA_ID, filter: { source: ['djinni'] } }]);
+  });
+});
+
+describe('ApplicationListService.reasonsSummary', () => {
+  it('counts a null reason code as unspecified and sorts the reasons by count, then by the taxonomy order, with their sum as the total', async () => {
+    const { repository, service } = await serviceWith({
+      reasonCounts: [
+        { reasonCode: 'chose_other', count: 2 },
+        { reasonCode: null, count: 1 },
+        { reasonCode: 'skills_gap', count: 2 },
+        { reasonCode: 'unspecified', count: 2 },
+        { reasonCode: 'low_salary', count: 4 },
+      ],
+    });
+
+    const summary = await service.reasonsSummary(OLENA_ID, { stage: 'tech_interview' });
+
+    expect(summary).toEqual({
+      stage: 'tech_interview',
+      total: 11,
+      reasons: [
+        { code: 'low_salary', count: 4 },
+        { code: 'unspecified', count: 3 },
+        { code: 'skills_gap', count: 2 },
+        { code: 'chose_other', count: 2 },
+      ],
+    });
+    expect(repository.reasonQueries).toEqual([{ userId: OLENA_ID, stage: 'tech_interview' }]);
+  });
+
+  it('answers a stage without rejections with total 0 and no reasons', async () => {
+    const { service } = await serviceWith();
+
+    const summary = await service.reasonsSummary(OLENA_ID, { stage: 'offer' });
+
+    expect(summary).toEqual({ stage: 'offer', total: 0, reasons: [] });
   });
 });
 

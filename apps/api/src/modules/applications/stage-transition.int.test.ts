@@ -1,8 +1,6 @@
 import { applicationResponseSchema, errorResponseSchema } from '@jobflow/shared';
-import { beforeAll, beforeEach, describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vitest';
 
-import { Clock } from '../../common/clock.js';
-import { appTestingModule, useTestApp } from '../../test/app.js';
 import {
   applicationEventRow,
   createApplication,
@@ -13,9 +11,9 @@ import {
   stageEventsOf,
   stageEventsPath,
   undoLastMove,
+  useStageMoveTestApp,
 } from '../../test/applications.js';
 import { OLENA, signUp } from '../../test/auth.js';
-import { seedRejectionReasons } from '../../test/factories.js';
 import { callRoute, errorPathsOf, type RouteCall } from '../../test/http.js';
 import { outboxRows } from '../../test/outbox.js';
 import { MISSING_ID, TO_SCREENING } from '../../test/service-fixtures.js';
@@ -40,13 +38,7 @@ const MOVE_INSTANTS = [
 ];
 
 describe('the stage move routes', () => {
-  const testApp = useTestApp(() => appTestingModule().overrideProvider(Clock).useValue(clock));
-
-  beforeAll(() => seedRejectionReasons(testApp.prisma));
-
-  beforeEach(() => {
-    clock.at(NOW);
-  });
+  const testApp = useStageMoveTestApp(clock);
 
   async function appliedAt(accessToken: string, createdAt: Date): Promise<string> {
     clock.at(createdAt);

@@ -1,11 +1,7 @@
 import type { DragEndEvent, DragStartEvent, Over, UniqueIdentifier } from '@dnd-kit/core';
-import type {
-  ApplicationBoardResponse,
-  ApplicationCard,
-  RejectionReasonCode,
-} from '@jobflow/shared';
+import type { ApplicationBoardResponse, ApplicationCard } from '@jobflow/shared';
 import { useQuery } from '@tanstack/react-query';
-import { useRef, useState } from 'react';
+import { useState } from 'react';
 
 import { meQueryOptions } from '@/entities/user';
 import {
@@ -15,6 +11,7 @@ import {
 } from '@/features/move-application';
 
 import { findCard, stageOf } from './board-lookup';
+import { useRejectionPrompt } from './use-rejection-prompt';
 
 type DropAttempt = { card: ApplicationCard | undefined; over: Over | null };
 
@@ -35,29 +32,6 @@ function useAskRejectionReason(): boolean {
   });
   return data ?? true;
 }
-
-function useRejectionPrompt(send: (move: ApplicationMove) => void) {
-  const [move, setMove] = useState<ApplicationMove | null>(null);
-  const focusBackRef = useRef<UniqueIdentifier | null>(null);
-  const close = (focusId: UniqueIdentifier | undefined) => {
-    focusBackRef.current = focusId ?? null;
-    setMove(null);
-  };
-  return {
-    move,
-    focusBackRef,
-    ask: setMove,
-    onPick: (reasonCode: RejectionReasonCode) => {
-      if (move !== null) send({ ...move, reasonCode });
-      close(move?.toStage);
-    },
-    onCancel: () => {
-      close(move?.application.id);
-    },
-  };
-}
-
-export type RejectionPrompt = ReturnType<typeof useRejectionPrompt>;
 
 export function useBoardDrag(board: ApplicationBoardResponse) {
   const [activeId, setActiveId] = useState<UniqueIdentifier | null>(null);

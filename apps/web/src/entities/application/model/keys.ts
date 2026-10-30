@@ -1,4 +1,9 @@
-import type { Application, ApplicationBoardQuery, ApplicationListQuery } from '@jobflow/shared';
+import type {
+  Application,
+  ApplicationBoardQuery,
+  ApplicationListQuery,
+  Stage,
+} from '@jobflow/shared';
 
 export const applicationKeys = {
   all: ['applications'] as const,
@@ -7,6 +12,8 @@ export const applicationKeys = {
   boards: () => [...applicationKeys.all, 'board'] as const,
   board: (query: ApplicationBoardQuery) => [...applicationKeys.boards(), query] as const,
   detail: (id: Application['id']) => [...applicationKeys.all, 'detail', id] as const,
+  reasonsSummaries: () => [...applicationKeys.all, 'reasons-summary'] as const,
+  reasonsSummary: (stage: Stage) => [...applicationKeys.reasonsSummaries(), stage] as const,
 };
 
 export const timelineKeys = {

@@ -2,12 +2,14 @@ import {
   type ApplicationFilters,
   type ApplicationListQuery,
   DEFAULT_SILENCE_DAYS,
+  type RejectionReasonsSummaryQuery,
   type SilenceWindow,
   type Stage,
 } from '@jobflow/shared';
 import { Injectable } from '@nestjs/common';
 
 import type { Prisma } from '../../generated/prisma/client.js';
+import { EFFECTIVE_STAGE_EVENTS } from '../../prisma/effective-stage-events.js';
 import { PrismaService } from '../../prisma/prisma.service.js';
 import type { ApplicationCursor } from './application-cursor.js';
 import { LATEST_STAGE_EVENT_SELECT } from './applications.repository.js';
@@ -29,6 +31,8 @@ export type FindCards = {
 };
 
 export type StageCount = { stage: Stage; count: number };
+
+export type ReasonCount = { reasonCode: string | null; count: number };
 
 type Where = Prisma.ApplicationWhereInput;
 
@@ -145,6 +149,23 @@ export class ApplicationListRepository {
       _count: { _all: true },
     });
     return groups.map(({ currentStage, _count }) => ({ stage: currentStage, count: _count._all }));
+  }
+
+  async countRejectionReasons(
+    userId: string,
+    { stage }: RejectionReasonsSummaryQuery,
+  ): Promise<ReasonCount[]> {
+    const groups = await this.prisma.stageEvent.groupBy({
+      by: ['reasonCode'],
+      where: {
+        ...EFFECTIVE_STAGE_EVENTS.where,
+        toStage: 'rejected',
+        fromStage: stage,
+        application: listWhere(userId, { filter: {} }),
+      },
+      _count: { _all: true },
+    });
+    return groups.map(({ reasonCode, _count }) => ({ reasonCode, count: _count._all }));
   }
 
   findCards(userId: string, query: FindCards): Promise<CardRow[]> {

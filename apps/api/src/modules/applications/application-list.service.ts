@@ -6,6 +6,11 @@ import {
   type ApplicationFilters,
   type ApplicationListResponse,
   OUTCOME_STAGES,
+  REJECTION_REASONS,
+  type RejectionReasonCode,
+  rejectionReasonCodeSchema,
+  type RejectionReasonsSummary,
+  type RejectionReasonsSummaryQuery,
   silenceWindows,
   type Stage,
   STAGES,
@@ -19,10 +24,13 @@ import {
   type ApplicationListFilter,
   ApplicationListRepository,
   type CardRow,
+  type ReasonCount,
 } from './application-list.repository.js';
 import { withApplicationTiming } from './application-timing.js';
 
 type BoardColumns = ApplicationBoardResponse['columns'];
+
+type ReasonTally = RejectionReasonsSummary['reasons'][number];
 
 type CardContext = { now: Date; silenceDays: number };
 
@@ -56,6 +64,21 @@ function listFilterOf(
 
 function columnsOf(columnOf: (stage: Stage) => BoardColumns[Stage]): BoardColumns {
   return Object.fromEntries(STAGES.map((stage) => [stage, columnOf(stage)])) as BoardColumns;
+}
+
+function byCountThenSortOrder(left: ReasonTally, right: ReasonTally): number {
+  return right.count === left.count
+    ? REJECTION_REASONS[left.code].sortOrder - REJECTION_REASONS[right.code].sortOrder
+    : right.count - left.count;
+}
+
+function reasonTalliesOf(rows: ReasonCount[]): ReasonTally[] {
+  const counts = new Map<RejectionReasonCode, number>();
+  for (const { reasonCode, count } of rows) {
+    const code = rejectionReasonCodeSchema.parse(reasonCode ?? 'unspecified');
+    counts.set(code, (counts.get(code) ?? 0) + count);
+  }
+  return [...counts].map(([code, count]) => ({ code, count })).sort(byCountThenSortOrder);
 }
 
 @Injectable()
@@ -109,6 +132,14 @@ export class ApplicationListService {
           : cards.filter((card) => card.currentStage === stage),
       })),
     };
+  }
+
+  async reasonsSummary(
+    userId: string,
+    { stage }: RejectionReasonsSummaryQuery,
+  ): Promise<RejectionReasonsSummary> {
+    const reasons = reasonTalliesOf(await this.repository.countRejectionReasons(userId, { stage }));
+    return { stage, total: reasons.reduce((sum, { count }) => sum + count, 0), reasons };
   }
 
   private async cardContext(userId: string): Promise<CardContext> {

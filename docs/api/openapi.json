@@ -7186,6 +7186,215 @@
         }
       }
     },
+    "/applications/reasons-summary": {
+      "get": {
+        "tags": [
+          "applications"
+        ],
+        "summary": "Count the rejection reasons of moves from one stage into rejected",
+        "description": "Counts the stage events from stage into rejected of the active search, leaving out undone moves and deleted applications. A missing reason counts as unspecified; reasons are sorted by count, then by the taxonomy order.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "applied",
+                "screening",
+                "tech_interview",
+                "final",
+                "offer",
+                "rejected",
+                "ghosted",
+                "withdrawn"
+              ]
+            },
+            "required": true,
+            "name": "stage",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The reason counts at the stage",
+            "content": {
+              "application/json": {
+                "example": {
+                  "stage": "tech_interview",
+                  "total": 3,
+                  "reasons": [
+                    {
+                      "code": "skills_gap",
+                      "count": 2
+                    },
+                    {
+                      "code": "chose_other",
+                      "count": 1
+                    }
+                  ]
+                },
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "stage": {
+                      "type": "string",
+                      "enum": [
+                        "applied",
+                        "screening",
+                        "tech_interview",
+                        "final",
+                        "offer",
+                        "rejected",
+                        "ghosted",
+                        "withdrawn"
+                      ]
+                    },
+                    "total": {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "reasons": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "code": {
+                            "type": "string",
+                            "enum": [
+                              "skills_gap",
+                              "english_level",
+                              "salary_expectations",
+                              "chose_other",
+                              "position_closed",
+                              "no_explanation",
+                              "low_salary",
+                              "office_schedule",
+                              "red_flags",
+                              "accepted_other",
+                              "silence_timeout",
+                              "unspecified"
+                            ]
+                          },
+                          "count": {
+                            "type": "number",
+                            "minimum": 1
+                          }
+                        },
+                        "required": [
+                          "code",
+                          "count"
+                        ]
+                      }
+                    }
+                  },
+                  "required": [
+                    "stage",
+                    "total",
+                    "reasons"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "example": {
+                  "type": "unauthorized",
+                  "title": "Unauthorized",
+                  "status": 401,
+                  "requestId": "0199f0c4-5d2e-7b31-8c4f-6a7b8c9d0e1f"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "example": {
+                  "type": "forbidden",
+                  "title": "Forbidden",
+                  "status": 403,
+                  "requestId": "0199f0c4-5d2e-7b31-8c4f-6a7b8c9d0e1f"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Invalid request",
+            "content": {
+              "application/json": {
+                "example": {
+                  "type": "validation_error",
+                  "title": "Invalid request",
+                  "status": 422,
+                  "errors": [
+                    {
+                      "path": "email",
+                      "message": "Invalid input: expected string, received undefined"
+                    }
+                  ],
+                  "requestId": "0199f0c4-5d2e-7b31-8c4f-6a7b8c9d0e1f"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too many requests: 300 per 60 s by default (RATE_LIMIT_API_PER_MINUTE)",
+            "headers": {
+              "Retry-After": {
+                "schema": {
+                  "type": "integer",
+                  "exclusiveMinimum": 0,
+                  "description": "Seconds until the limit window resets"
+                },
+                "required": true,
+                "description": "Seconds until the limit window resets"
+              }
+            },
+            "content": {
+              "application/json": {
+                "example": {
+                  "type": "rate_limited",
+                  "title": "Too many requests",
+                  "status": 429,
+                  "requestId": "0199f0c4-5d2e-7b31-8c4f-6a7b8c9d0e1f"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal error",
+            "content": {
+              "application/json": {
+                "example": {
+                  "type": "internal_error",
+                  "title": "Internal error",
+                  "status": 500,
+                  "requestId": "0199f0c4-5d2e-7b31-8c4f-6a7b8c9d0e1f"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/applications/{id}/timeline": {
       "get": {
         "tags": [

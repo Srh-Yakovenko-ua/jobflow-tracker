@@ -1,9 +1,18 @@
-import { type QueryKey, type QueryStatus, useQueryClient } from '@tanstack/react-query';
+import {
+  dehydrate,
+  HydrationBoundary,
+  QueryClient,
+  type QueryKey,
+  type QueryStatus,
+  useQueryClient,
+} from '@tanstack/react-query';
 import { screen, waitFor } from '@testing-library/react';
 import { useSyncExternalStore } from 'react';
 import { expect } from 'vitest';
 
 export type QueryProbeProps = Readonly<{ queryKey: QueryKey }>;
+
+export type StaleQueryProps = QueryProbeProps & Readonly<{ data: unknown }>;
 
 export type QuerySettle = Readonly<{ queryKey: QueryKey; status: QueryStatus | 'absent' }>;
 
@@ -20,6 +29,12 @@ export function QueryProbe({ queryKey }: QueryProbeProps) {
     () => cache.find({ queryKey, exact: true })?.state.status ?? 'absent',
   );
   return <output aria-label={probeName(queryKey)}>{status}</output>;
+}
+
+export function StaleQuery({ queryKey, data }: StaleQueryProps) {
+  const earlier = new QueryClient();
+  earlier.setQueryData(queryKey, data, { updatedAt: 0 });
+  return <HydrationBoundary state={dehydrate(earlier)} />;
 }
 
 export async function waitForQuery({ queryKey, status }: QuerySettle) {

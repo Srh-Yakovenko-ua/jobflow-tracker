@@ -17,7 +17,8 @@ import { uk } from '@/shared/i18n';
 
 import { dragAnnouncements } from '../model/drag-announcements';
 import { DragSourceContext } from '../model/drag-source';
-import { type RejectionPrompt, useBoardDrag } from '../model/use-board-drag';
+import { useBoardDrag } from '../model/use-board-drag';
+import type { RejectionFlow } from '../model/use-rejection-prompt';
 
 export type BoardDndProps = Readonly<{
   board: ApplicationBoardResponse;
@@ -40,21 +41,24 @@ function useBoardSensors() {
   );
 }
 
-function RejectionPromptDialog({ rejection }: Readonly<{ rejection: RejectionPrompt }>) {
+function RejectionPromptDialog({ rejection }: Readonly<{ rejection: RejectionFlow }>) {
   const { draggableNodes, droppableContainers } = useDndContext();
-  const { move, onPick, onCancel, focusBackRef } = rejection;
+  const { prompt, actions, focusBackRef } = rejection;
   return (
     <RejectionReasonDialog
-      move={move}
-      onPick={onPick}
-      onCancel={onCancel}
-      onCloseAutoFocus={(event) => {
-        event.preventDefault();
-        const id = focusBackRef.current;
-        if (id === null) return;
-        const card = draggableNodes.get(id)?.node.current;
-        const strip = droppableContainers.get(id)?.node.current?.querySelector('button');
-        (card ?? strip)?.focus();
+      prompt={prompt}
+      actions={actions}
+      handlers={{
+        onCloseAutoFocus: (event) => {
+          event.preventDefault();
+          const id = focusBackRef.current;
+          if (id === null) return;
+          setTimeout(() => {
+            const card = draggableNodes.get(id)?.node.current;
+            const strip = droppableContainers.get(id)?.node.current?.querySelector('button');
+            (card ?? strip)?.focus();
+          }, 0);
+        },
       }}
     />
   );

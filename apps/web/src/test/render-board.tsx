@@ -4,7 +4,7 @@ import { screen } from '@testing-library/react';
 import { userKeys } from '@/entities/user';
 import { KanbanBoard } from '@/widgets/kanban-board';
 
-import { boardRoute, type BoardRouteOptions } from './board-fixtures';
+import { boardRoute, type BoardRouteOptions, reasonsSummaryRoute } from './board-fixtures';
 import { QueryProbe } from './query-status';
 import { renderInApp } from './render-in-app';
 import { server } from './server';
@@ -14,7 +14,7 @@ export type BoardSettings = Partial<MeResponse['settings']>;
 
 export function renderBoard(route: BoardRouteOptions, settings?: BoardSettings) {
   const board = boardRoute(route);
-  server.use(meRoute(settings), board.handler);
+  server.use(meRoute(settings), board.handler, reasonsSummaryRoute().handler);
   const user = renderInApp(
     <>
       <KanbanBoard />

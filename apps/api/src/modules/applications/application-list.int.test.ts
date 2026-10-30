@@ -22,6 +22,7 @@ import {
   getWithQuery,
   listApplications,
   listPages,
+  REASONS_SUMMARY_PATH,
   signedInWithSearch,
 } from '../../test/applications.js';
 import {
@@ -495,6 +496,8 @@ describe('the application list and board routes', () => {
     { path: APPLICATIONS_PATH, query: { q: 'a\u0000b' }, error: 'q' },
     { path: APPLICATIONS_BOARD_PATH, query: { expand: 'offer' }, error: 'expand.0' },
     { path: APPLICATIONS_BOARD_PATH, query: { q: 'a\u0000b' }, error: 'q' },
+    { path: REASONS_SUMMARY_PATH, query: {}, error: 'stage' },
+    { path: REASONS_SUMMARY_PATH, query: { stage: 'hired' }, error: 'stage' },
   ])('answers GET $path with $query by 422 at $error', async ({ path, query, error }) => {
     const { accessToken } = await signedInWithSearch(testApp.prisma);
 
@@ -505,7 +508,7 @@ describe('the application list and board routes', () => {
     expect(errorPathsOf(response.body)).toEqual([error]);
   });
 
-  it.each([APPLICATIONS_PATH, APPLICATIONS_BOARD_PATH])(
+  it.each([APPLICATIONS_PATH, APPLICATIONS_BOARD_PATH, REASONS_SUMMARY_PATH])(
     'answers GET %s without a token with 401',
     async (path) => {
       const response = await callRoute(testApp.app, { method: 'get', path });

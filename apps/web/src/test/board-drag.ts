@@ -1,4 +1,4 @@
-import { fireEvent } from '@testing-library/react';
+import { act, fireEvent } from '@testing-library/react';
 import { vi } from 'vitest';
 
 export type BoardDrag = {
@@ -12,6 +12,8 @@ const COLUMN_BOX = { pitch: 300, width: 280, height: 600 } as const;
 const DROP_SECTION = 'section[data-drop]';
 
 const ACTIVATION_STEP_PX = 10;
+
+const DROP_CLICK_GUARD_MS = 50;
 
 function columnBoxOf(element: Element): DOMRect {
   const section = element.closest(DROP_SECTION);
@@ -51,4 +53,13 @@ export function startDrag(card: HTMLElement): BoardDrag {
       fireEvent.keyDown(document, { key: 'Escape', code: 'Escape' });
     },
   };
+}
+
+export function fakeTimeouts() {
+  vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'], shouldAdvanceTime: true });
+}
+
+export async function waitOutDropClickGuard() {
+  await act(() => vi.advanceTimersByTimeAsync(DROP_CLICK_GUARD_MS));
+  vi.useRealTimers();
 }

@@ -6,7 +6,11 @@ import {
   type ApplicationResponse,
   applicationResponseSchema,
   moveApplicationInputSchema,
+  type Note,
+  noteInputSchema,
   OPEN_STAGES,
+  type RejectionReasonsSummary,
+  rejectionReasonsSummaryQuerySchema,
   type Stage,
   STAGES,
 } from '@jobflow/shared';
@@ -48,7 +52,22 @@ export function boardOf(counts: ColumnCounts, shown?: ShownCards): ApplicationBo
 
 export type MoveRouteOptions = { reply?: HttpResponseResolver; latch?: Latch };
 
+export type ReasonsSummaryRouteOptions = MoveRouteOptions & {
+  reasons?: RejectionReasonsSummary['reasons'];
+};
+
 type MovedCard = Pick<ApplicationResponse, 'id' | 'currentStage'>;
+
+type ResolverInfo = Parameters<HttpResponseResolver>[0];
+
+type HeldReply = MoveRouteOptions & { info: ResolverInfo; fallback: () => Response };
+
+const UNDONE_TO: Stage = 'applied';
+
+async function heldReply({ info, reply, latch, fallback }: HeldReply) {
+  await latch?.reached;
+  return reply === undefined ? fallback() : reply(info);
+}
 
 export const DESIGN_BOARD: BoardRouteOptions = {
   counts: { applied: 2, screening: 1, tech_interview: 1, offer: 1, rejected: 32, ghosted: 17 },
@@ -90,17 +109,64 @@ function movedApplication({ id, currentStage }: MovedCard): ApplicationResponse 
   });
 }
 
-export function moveRoute({ reply, latch }: MoveRouteOptions = {}) {
+export function moveRoute(control: MoveRouteOptions = {}) {
   const sent: unknown[] = [];
   const handler = http.post<{ id: string }>(apiUrl('/applications/:id/events'), async (info) => {
     const body: unknown = await info.request.json();
     sent.push(body);
-    await latch?.reached;
-    if (reply !== undefined) {
-      return reply(info);
-    }
     const { toStage } = moveApplicationInputSchema.parse(body);
-    return HttpResponse.json(movedApplication({ id: info.params.id, currentStage: toStage }));
+    const moved = movedApplication({ id: info.params.id, currentStage: toStage });
+    return heldReply({ ...control, info, fallback: () => HttpResponse.json(moved) });
+  });
+  return { handler, sent };
+}
+
+export function undoRoute(control: MoveRouteOptions = {}) {
+  const sent: { id: string; body: string }[] = [];
+  const path = '/applications/:id/events/undo-last';
+  const handler = http.post<{ id: string }>(apiUrl(path), async (info) => {
+    sent.push({ id: info.params.id, body: await info.request.text() });
+    const restored = movedApplication({ id: info.params.id, currentStage: UNDONE_TO });
+    return heldReply({
+      ...control,
+      info,
+      fallback: () => HttpResponse.json(restored, { status: 201 }),
+    });
+  });
+  return { handler, sent };
+}
+
+export function reasonsSummaryRoute({ reasons = [], ...control }: ReasonsSummaryRouteOptions = {}) {
+  const sent: Stage[] = [];
+  const handler = http.get(apiUrl('/applications/reasons-summary'), (info) => {
+    const query = Object.fromEntries(new URL(info.request.url).searchParams);
+    const { stage } = rejectionReasonsSummaryQuerySchema.parse(query);
+    sent.push(stage);
+    const total = reasons.reduce((sum, reason) => sum + reason.count, 0);
+    const summary: RejectionReasonsSummary = { stage, total, reasons };
+    return heldReply({ ...control, info, fallback: () => HttpResponse.json(summary) });
+  });
+  return { handler, sent };
+}
+
+export function noteRoute(control: MoveRouteOptions = {}) {
+  const sent: { id: string; body: unknown }[] = [];
+  const handler = http.post<{ id: string }>(apiUrl('/applications/:id/notes'), async (info) => {
+    const body = noteInputSchema.parse(await info.request.json());
+    sent.push({ id: info.params.id, body });
+    const at = FULL_CARD.lastEventAt;
+    const note: Note = {
+      id: '0b6f3c1e-5d2a-4c8e-9f10-0000000000ee',
+      applicationId: info.params.id,
+      body: body.body,
+      createdAt: at,
+      updatedAt: at,
+    };
+    return heldReply({
+      ...control,
+      info,
+      fallback: () => HttpResponse.json(note, { status: 201 }),
+    });
   });
   return { handler, sent };
 }
