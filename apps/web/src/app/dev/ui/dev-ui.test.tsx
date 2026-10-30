@@ -1,14 +1,11 @@
-import { render, screen, waitFor, within } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
-import axe from 'axe-core';
+import { screen, waitFor } from '@testing-library/react';
 import { toast } from 'sonner';
 import { afterEach, describe, expect, it } from 'vitest';
 
 import { uk } from '@/shared/i18n';
+import { axeViolations, findLiveToaster, renderGallery, specimenOf } from '@/test/dev-ui';
 
-import { Providers } from '../../providers';
 import { LONG_TEXT_CARD } from './card-specimens';
-import DevUiPage from './page';
 
 const COPY = uk.devUi;
 
@@ -22,33 +19,6 @@ function sourceCombobox() {
   return picker;
 }
 
-function renderGallery() {
-  render(
-    <Providers theme="light">
-      <DevUiPage />
-    </Providers>,
-  );
-  return userEvent.setup();
-}
-
-async function findLiveToaster() {
-  const description = await screen.findByText(COPY.feedback.realToast.description);
-  const toaster = description.closest<HTMLElement>('[data-sonner-toaster]');
-  if (toaster === null) throw new Error('the live toast is outside the sonner toaster');
-  return within(toaster);
-}
-
-async function expectNoAxeViolations() {
-  const { violations } = await axe.run(document.body);
-  expect(violations).toEqual([]);
-}
-
-function specimenOf(eyebrow: string) {
-  const specimen = screen.getByText(eyebrow).parentElement;
-  if (specimen === null) throw new Error(`the "${eyebrow}" specimen is missing`);
-  return within(specimen);
-}
-
 describe('/dev/ui gallery', () => {
   afterEach(() => {
     toast.dismiss();
@@ -58,7 +28,7 @@ describe('/dev/ui gallery', () => {
     renderGallery();
 
     expect(screen.getByRole('heading', { level: 1, name: COPY.pageTitle })).toBeDefined();
-    await expectNoAxeViolations();
+    expect(await axeViolations()).toEqual([]);
   });
 
   it('has no axe violations with the dialog open', async () => {
@@ -67,7 +37,7 @@ describe('/dev/ui gallery', () => {
     await user.click(screen.getByRole('button', { name: COPY.feedback.openModal }));
     await screen.findByRole('dialog', { name: COPY.feedback.modal.title });
 
-    await expectNoAxeViolations();
+    expect(await axeViolations()).toEqual([]);
   });
 
   it('has no axe violations with the source combobox open', async () => {
@@ -76,7 +46,7 @@ describe('/dev/ui gallery', () => {
     await user.click(sourceCombobox());
     await screen.findByRole('listbox', { name: COPY.selects.source.label });
 
-    await expectNoAxeViolations();
+    expect(await axeViolations()).toEqual([]);
   });
 
   it('has no axe violations on the whole page with the CV select open', async () => {
@@ -85,7 +55,7 @@ describe('/dev/ui gallery', () => {
     await user.click(screen.getByRole('combobox', { name: COPY.selects.cv.label }));
     await screen.findByRole('listbox', { name: COPY.selects.cv.label });
 
-    await expectNoAxeViolations();
+    expect(await axeViolations()).toEqual([]);
   });
 
   it('has no axe violations with an action toast shown', async () => {
@@ -94,7 +64,7 @@ describe('/dev/ui gallery', () => {
     await user.click(screen.getByRole('button', { name: COPY.feedback.fireToast }));
     await screen.findByText(COPY.feedback.realToast.description);
 
-    await expectNoAxeViolations();
+    expect(await axeViolations()).toEqual([]);
   });
 
   it('the live toast action closes the toast and the status line names it', async () => {

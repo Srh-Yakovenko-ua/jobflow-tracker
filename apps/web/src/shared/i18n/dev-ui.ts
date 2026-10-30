@@ -1,4 +1,5 @@
 import { devUiDomain } from './dev-ui-domain';
+import { devUiStates } from './dev-ui-states';
 
 export const devUi = {
   pageTitle: 'Кіт інтерфейсу',
@@ -187,4 +188,5 @@ export const devUi = {
     },
   },
   ...devUiDomain,
+  ...devUiStates,
 } as const;

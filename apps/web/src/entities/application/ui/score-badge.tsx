@@ -3,6 +3,7 @@ import type { ReactNode } from 'react';
 
 import { uk } from '@/shared/i18n';
 import { cn } from '@/shared/lib/cn';
+import { SHIMMER } from '@/shared/ui/shimmer';
 
 import { type ScoreSource, type ScoreState, scoreStateOf, type ScoreTier } from '../lib/score-tier';
 
@@ -35,8 +36,7 @@ const STATUS_LOOK: Record<Exclude<ScoreState['kind'], 'score'>, BadgeLook> = {
     ),
   },
   processing: {
-    className:
-      'bg-linear-to-r from-surface-3 via-surface to-surface-3 bg-size-[340px_100%] text-ink-3 inset-ring inset-ring-line-soft motion-safe:animate-shimmer',
+    className: cn(SHIMMER, 'text-ink-3 inset-ring inset-ring-line-soft'),
     label: COPY.processing,
     content: COPY.pending,
   },
