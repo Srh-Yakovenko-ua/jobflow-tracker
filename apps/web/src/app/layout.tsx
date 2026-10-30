@@ -12,7 +12,7 @@ import { onest, unbounded } from './fonts';
 import { Providers } from './providers';
 
 export const metadata: Metadata = {
-  title: uk.app.title,
+  title: { default: uk.app.title, template: `%s · ${uk.app.brand}` },
 };
 
 export type RootLayoutProps = Readonly<{ children: ReactNode }>;

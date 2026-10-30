@@ -48,12 +48,12 @@ type IconButtonProps = Omit<ComponentProps<'button'>, 'children'> &
 
 export type ButtonProps = LabelButtonProps | IconButtonProps;
 
-type ButtonShape = Required<Pick<ButtonLook, 'variant' | 'size'>> & {
+export type ButtonShape = Required<Pick<ButtonLook, 'variant' | 'size'>> & {
   iconOnly: boolean;
   dimmed: boolean;
 };
 
-function buttonClasses({ variant, size, iconOnly, dimmed }: ButtonShape): string {
+export function buttonClasses({ variant, size, iconOnly, dimmed }: ButtonShape): string {
   return cn(
     BASE,
     VARIANTS[variant],

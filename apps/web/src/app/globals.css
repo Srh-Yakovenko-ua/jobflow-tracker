@@ -97,6 +97,22 @@
   --width: min(440px, calc(100vw - 40px)) !important;
 }
 
+:root:has([data-app-shell]) {
+  scroll-padding-bottom: calc(var(--spacing) * 14 + env(safe-area-inset-bottom));
+
+  @media (width >= 48rem) {
+    scroll-padding-top: calc(var(--spacing) * 18);
+    scroll-padding-bottom: 0;
+  }
+}
+
+@media (width < 48rem) {
+  :root:has([data-app-shell]) [data-sonner-toaster] {
+    --offset-bottom: calc(var(--spacing) * 18 + env(safe-area-inset-bottom)) !important;
+    --mobile-offset-bottom: calc(var(--spacing) * 18 + env(safe-area-inset-bottom)) !important;
+  }
+}
+
 [data-sonner-toaster] [data-sonner-toast]:focus-visible {
   @apply focus-ring rounded-2xl;
 }

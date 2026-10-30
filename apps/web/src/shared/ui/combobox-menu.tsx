@@ -1,7 +1,7 @@
 'use client';
 
 import { Command } from 'cmdk';
-import { Check, Search, SearchX } from 'lucide-react';
+import { Check, Search } from 'lucide-react';
 import { useRef, useState } from 'react';
 
 import { uk } from '@/shared/i18n';
@@ -10,13 +10,14 @@ import { cn } from '@/shared/lib/cn';
 import { ClearButton } from './clear-button';
 import {
   CHECK_BOX,
+  COMMAND_ITEM,
   FIELD_SURFACE,
   MENU_LABEL,
-  OPTION_ROW,
   type SelectOption,
   type SelectOptionGroup,
 } from './field-surface';
 import { Kbd } from './kbd';
+import { NoMatches } from './no-matches';
 import { CheckSlot, OptionContent } from './option-content';
 
 export type ComboboxMode = 'single' | 'multi';
@@ -34,11 +35,6 @@ export type ComboboxMenuProps = Readonly<{
   actions: { onPick: (value: string) => void; onCreate?: ((query: string) => void) | undefined };
   view: ComboboxView;
 }>;
-
-const ITEM = cn(
-  OPTION_ROW,
-  'data-[selected=true]:bg-accent-tint data-[selected=true]:shadow-[inset_2px_0_0_var(--accent)]',
-);
 
 const CREATE_PREFIX = 'create:';
 
@@ -102,20 +98,6 @@ function SearchRow({ query, onQueryChange, placeholder }: SearchRowProps) {
   );
 }
 
-function NoMatches() {
-  return (
-    <div role="status" className="flex flex-col items-center gap-2 px-2.5 pt-4 pb-3 text-center">
-      <span
-        aria-hidden
-        className="flex size-6.5 items-center justify-center rounded-md bg-surface-2 text-ink-3"
-      >
-        <SearchX size={15} />
-      </span>
-      <span className="text-[12.5px] text-ink-3">{uk.ui.noMatches}</span>
-    </div>
-  );
-}
-
 function MenuFooter({ count }: Readonly<{ count: { shown: number; total: number } }>) {
   return (
     <div className="caption mt-1 flex items-center justify-between gap-3 border-t border-line-soft px-2.5 pt-2 pb-1 text-ink-3">
@@ -153,7 +135,7 @@ export function ComboboxMenu({ groups, selection, actions, view }: ComboboxMenuP
           actions.onPick(option.value);
         }}
         aria-checked={selection.mode === 'multi' ? checked : undefined}
-        className={cn(ITEM, checked && 'font-semibold')}
+        className={cn(COMMAND_ITEM, checked && 'font-semibold')}
       >
         {selection.mode === 'multi' && <BoxMark checked={checked} />}
         <OptionContent option={option} label={option.label} />
@@ -181,7 +163,7 @@ export function ComboboxMenu({ groups, selection, actions, view }: ComboboxMenuP
               create(needle);
               setQuery('');
             }}
-            className={cn(ITEM, 'font-semibold text-link')}
+            className={cn(COMMAND_ITEM, 'font-semibold text-link')}
           >
             {uk.ui.addOption(needle)}
           </Command.Item>

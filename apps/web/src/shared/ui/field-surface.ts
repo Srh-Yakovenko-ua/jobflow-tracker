@@ -40,5 +40,15 @@ export const CHECK_BOX = {
 export const OPTION_ROW =
   'flex min-h-9 cursor-pointer items-center gap-2.25 rounded-md py-1.5 pr-2.5 pl-2.25 text-[13px] text-ink outline-hidden transition-colors duration-(--duration-instant) ease-standard';
 
+export const COMMAND_ITEM = cn(
+  OPTION_ROW,
+  'data-[selected=true]:bg-accent-tint data-[selected=true]:shadow-[inset_2px_0_0_var(--accent)]',
+);
+
+export const MENU_ITEM = cn(
+  OPTION_ROW,
+  'data-highlighted:bg-accent-tint data-highlighted:shadow-[inset_2px_0_0_var(--accent)]',
+);
+
 export const MENU_LABEL =
   'px-2.5 pt-1.5 pb-1.25 text-[10px] font-semibold tracking-[0.12em] text-ink-3 uppercase';

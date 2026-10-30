@@ -10,9 +10,9 @@ import { ClearButton } from './clear-button';
 import { fieldLabelId, useField } from './field';
 import {
   FIELD_SURFACE,
+  MENU_ITEM,
   MENU_LABEL,
   MENU_SURFACE,
-  OPTION_ROW,
   type SelectOption,
   type SelectOptionGroup,
 } from './field-surface';
@@ -39,8 +39,7 @@ const TRIGGER = cn(
   'group touch-target flex w-full items-center gap-2 pr-1.5 pl-2.75 text-left data-placeholder:text-ink-3 data-[state=open]:bg-surface data-[state=open]:focus-halo',
 );
 
-const ITEM =
-  'data-highlighted:bg-accent-tint data-highlighted:shadow-[inset_2px_0_0_var(--accent)] data-[state=checked]:font-semibold';
+const ITEM = cn(MENU_ITEM, 'data-[state=checked]:font-semibold');
 
 const NAME_FROM_CONTENT = { 'aria-labelledby': undefined } as const;
 
@@ -52,7 +51,7 @@ function SelectItem({ option, checked }: SelectItemProps) {
       value={option.value}
       data-focus="option"
       {...NAME_FROM_CONTENT}
-      className={cn(OPTION_ROW, ITEM)}
+      className={ITEM}
     >
       <OptionContent
         option={option}

@@ -1,5 +1,7 @@
 import { type Theme, themeSchema } from '@jobflow/shared';
 
+import { writeCookie } from '../cookie';
+
 export const THEME_COOKIE = 'jobflow_theme';
 
 export function themeFromCookie(value: string | undefined): Theme {
@@ -7,5 +9,5 @@ export function themeFromCookie(value: string | undefined): Theme {
 }
 
 export function writeThemeCookie(theme: Theme): void {
-  document.cookie = `${THEME_COOKIE}=${theme}; Path=/; Max-Age=31536000; SameSite=Lax`;
+  writeCookie({ name: THEME_COOKIE, value: theme });
 }
