@@ -10,7 +10,7 @@ export type MoveFailure = Readonly<{ error: Error; move: StagePair }>;
 
 const COPY = uk.board.move;
 
-function conflictTypeOf(error: Error): string | undefined {
+export function conflictTypeOf(error: Error): string | undefined {
   return error instanceof ApiError && error.status === 409 ? error.body.type : undefined;
 }
 

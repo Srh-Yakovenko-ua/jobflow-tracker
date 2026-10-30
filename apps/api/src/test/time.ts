@@ -16,6 +16,8 @@ export const daysBefore = (days: number) => minutesBefore(days * DAY_MINUTES);
 
 export const daysAfter = (days: number) => daysBefore(-days);
 
+export type SettableClock = ReturnType<typeof settableClock>;
+
 export function settableClock(start: Date) {
   let instant = start;
   return {

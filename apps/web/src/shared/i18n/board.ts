@@ -42,14 +42,46 @@ const move = {
   },
 } as const;
 
+const REJECTED = STAGE_LABELS.rejected.labelUk;
+
+type SavedTitle = { company: string; reason: string | undefined };
+
 const reject = {
   eyebrow: ({ company, from }: { company: string; from: string }) =>
-    `${company} · ${from} → ${STAGE_LABELS.rejected.labelUk}`,
+    `${company} · ${from} → ${REJECTED}`,
   title: 'Що сталося?',
   description:
     'Один клік — і карточка переїде. Причина потрібна не для звітності, а щоб аналітика знала, де саме ти застряг.',
   sides: { company: 'Відмовила компанія', candidate: 'Відмовився я' },
   skip: 'Не хочу зараз вказувати',
+  keysHint: 'ENTER — остання причина · ESC — скасувати',
+  saved: {
+    eyebrow: 'записано в аналітику',
+    title: ({ company, reason }: SavedTitle) =>
+      reason === undefined ? `${company} → ${REJECTED}` : `${company} → ${REJECTED}: ${reason}`,
+    reasonsAt: (stage: string) => `причини відмов на ${stage}`,
+    undo: 'Скасувати перенос',
+    addNote: 'Додати заметку',
+    done: 'Готово',
+  },
+  insight: {
+    total: ({ stage, total }: { stage: string; total: number }) =>
+      `Відмов на етапі «${stage}»: ${String(total)}.`,
+    pickedTop: (reason: string) => `Причина «${reason}» стала найчастішою на цьому етапі.`,
+    otherTop: (reason: string) => `Найчастіша причина на цьому етапі — «${reason}».`,
+  },
+  note: {
+    title: 'Заметка до відмови',
+    label: "Що варто запам'ятати",
+    blank: 'Напиши хоча б кілька слів',
+    tooLong: 'Заметка задовга',
+    save: 'Зберегти',
+    saved: 'Заметку збережено',
+  },
+  undoExpired: {
+    title: 'Час на скасування минув',
+    description: `Карточка лишилася у «${REJECTED}».`,
+  },
 } as const;
 
 export const board = {

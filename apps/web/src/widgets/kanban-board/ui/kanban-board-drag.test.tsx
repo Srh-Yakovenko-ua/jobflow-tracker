@@ -6,17 +6,20 @@ import { toast } from 'sonner';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { userKeys } from '@/entities/user';
+import { rememberLastReason } from '@/features/reject-with-reason';
 import { API_CLIENT_LIMITS } from '@/shared/api';
 import { uk } from '@/shared/i18n';
 import type { ErrorToastContent } from '@/shared/ui/error-toast';
 import { apiUrl, errorReply } from '@/test/api-handlers';
-import { layOutColumns, startDrag } from '@/test/board-drag';
+import { fakeTimeouts, layOutColumns, startDrag, waitOutDropClickGuard } from '@/test/board-drag';
 import {
+  boardRoute,
   type BoardRouteOptions,
   DESIGN_BOARD,
   DESIGN_BOARD_HEADINGS,
   moveRoute,
   type MoveRouteOptions,
+  undoRoute,
 } from '@/test/board-fixtures';
 import { latch } from '@/test/latch';
 import { waitForQuery } from '@/test/query-status';
@@ -30,6 +33,11 @@ const DRAGGED = 'Senior Frontend Engineer';
 const EMPTY_SCREENING: BoardRouteOptions = {
   counts: { ...DESIGN_BOARD.counts, screening: 0 },
   cards: (DESIGN_BOARD.cards ?? []).filter((card) => card.currentStage !== 'screening'),
+};
+
+const AFTER_REJECT: BoardRouteOptions = {
+  counts: { ...DESIGN_BOARD.counts, applied: 1, rejected: 33 },
+  cards: (DESIGN_BOARD.cards ?? []).filter((card) => card.position !== DRAGGED),
 };
 
 type DragSetup = { board?: BoardRouteOptions; move?: MoveRouteOptions; settings?: BoardSettings };
@@ -99,6 +107,23 @@ function stallBoardRefetch() {
   return asked;
 }
 
+async function savedRejection(undo?: MoveRouteOptions) {
+  fakeTimeouts();
+  const undone = undoRoute(undo);
+  const setup = await boardReadyToDrag();
+  server.use(undone.handler, boardRoute(AFTER_REJECT).handler);
+  dragCardTo('відмова 32');
+  await waitOutDropClickGuard();
+  await screen.findByRole('dialog', { name: uk.board.reject.title });
+  await setup.user.keyboard('1');
+  expect(await screen.findByText('записано в аналітику')).toBeDefined();
+  return { ...setup, undone: undone.sent };
+}
+
+function draggedCard() {
+  return within(columnNamed('відгук 2')).getByText(DRAGGED).closest('[role="button"]');
+}
+
 async function overlayGone() {
   await waitFor(() => {
     expect(screen.getAllByText(DRAGGED)).toHaveLength(1);
@@ -106,6 +131,7 @@ async function overlayGone() {
 }
 
 afterEach(() => {
+  localStorage.clear();
   toast.dismiss();
   vi.restoreAllMocks();
   vi.useRealTimers();
@@ -137,7 +163,7 @@ describe('KanbanBoard drag and drop', () => {
   it.each(FAILED_MOVES)(
     'after $name the card goes back to відгук and one toast says why',
     async (failure) => {
-      vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'], shouldAdvanceTime: true });
+      fakeTimeouts();
       const answer = latch();
       const { moves } = await boardReadyToDrag({ move: { reply: failure.reply, latch: answer } });
       const boardAsked = stallBoardRefetch();
@@ -241,8 +267,10 @@ describe('KanbanBoard drag and drop', () => {
     });
   });
 
-  it('a drop on відмова asks why before any request: Escape keeps the card and focuses it, a reason sends it with its code and focuses the strip', async () => {
-    const { user, moves } = await boardReadyToDrag({ move: { latch: latch() } });
+  it('a drop on відмова asks why before any request: Escape keeps the card and focuses it, a reason moves it at once with its code, the dialog says it was recorded, and «Готово» focuses the strip', async () => {
+    fakeTimeouts();
+    const answer = latch();
+    const { user, moves } = await boardReadyToDrag({ move: { latch: answer } });
 
     dragCardTo('відмова 32');
     expect(await screen.findByRole('dialog', { name: uk.board.reject.title })).toBeDefined();
@@ -251,24 +279,80 @@ describe('KanbanBoard drag and drop', () => {
     await waitFor(() => {
       expect(screen.queryByRole('dialog')).toBeNull();
     });
-    const card = within(columnNamed('відгук 2')).getByText(DRAGGED).closest('[role="button"]');
+    const card = draggedCard();
     await waitFor(() => {
       expect(document.activeElement).toBe(card);
     });
     expect(moves).toEqual([]);
 
     dragCardTo('відмова 32');
+    await waitOutDropClickGuard();
     await user.click(await screen.findByRole('button', { name: 'не вистачає скілів' }));
 
-    const strip = await screen.findByRole('button', { name: 'відмова 33' });
-    await waitFor(() => {
-      expect(document.activeElement).toBe(strip);
-    });
+    const strip = await screen.findByRole('button', { name: 'відмова 33', hidden: true });
     await waitFor(() => {
       expect(moves).toEqual([
         { fromStage: 'applied', toStage: 'rejected', reasonCode: 'skills_gap' },
       ]);
     });
+    server.use(boardRoute(AFTER_REJECT).handler);
+    answer.release();
+    expect(await screen.findByText('записано в аналітику')).toBeDefined();
+    await user.click(screen.getByRole('button', { name: 'Готово' }));
+    await waitFor(() => {
+      expect(document.activeElement).toBe(strip);
+    });
+    expect(moves).toHaveLength(1);
+  });
+
+  it('ENTER in the reason question repeats the reason used last with one move, and a second ENTER sends nothing more', async () => {
+    rememberLastReason('chose_other');
+    const { user, moves } = await boardReadyToDrag();
+    server.use(boardRoute(AFTER_REJECT).handler);
+
+    dragCardTo('відмова 32');
+    await screen.findByRole('dialog', { name: uk.board.reject.title });
+    await user.keyboard('{Enter}{Enter}');
+
+    expect(await screen.findByText('записано в аналітику')).toBeDefined();
+    await user.keyboard('{Enter}');
+    expect(
+      screen.getByRole('dialog', { name: 'Trident Systems → відмова: обрали іншого' }),
+    ).toBeDefined();
+    expect(moves).toEqual([
+      { fromStage: 'applied', toStage: 'rejected', reasonCode: 'chose_other' },
+    ]);
+  });
+
+  it('«Скасувати перенос» puts the card back in відгук with one undo-last and focuses it', async () => {
+    const { user, undone } = await savedRejection();
+    server.use(boardRoute(DESIGN_BOARD).handler);
+
+    await user.click(screen.getByRole('button', { name: 'Скасувати перенос' }));
+
+    expect(await screen.findByRole('button', { name: 'відмова 32' })).toBeDefined();
+    const card = draggedCard();
+    await waitFor(() => {
+      expect(document.activeElement).toBe(card);
+    });
+    await waitFor(() => {
+      expect(undone).toEqual([{ id: '0b6f3c1e-5d2a-4c8e-9f10-000000000101', body: '' }]);
+    });
+    expect(toast.getToasts()).toEqual([]);
+  });
+
+  it('a 409 on undo keeps the card in відмова and one toast says the undo time is over', async () => {
+    const { user } = await savedRejection({
+      reply: () => errorReply({ status: 409, type: 'conflict' }),
+    });
+
+    await user.click(screen.getByRole('button', { name: 'Скасувати перенос' }));
+
+    expect(await screen.findByText('Час на скасування минув')).toBeDefined();
+    expect(screen.getByText('Карточка лишилася у «відмова».')).toBeDefined();
+    expect(await screen.findByRole('button', { name: 'відмова 33' })).toBeDefined();
+    expect(within(columnNamed('відгук 1')).queryByText(DRAGGED)).toBeNull();
+    expect(toast.getToasts()).toHaveLength(1);
   });
 
   it('with the reason question turned off a drop on відмова sends the move at once, with no reason', async () => {

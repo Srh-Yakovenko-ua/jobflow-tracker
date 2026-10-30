@@ -4,6 +4,8 @@ import {
   applicationBoardResponseSchema,
   type ApplicationCard,
   applicationListResponseSchema,
+  rejectionReasonsSummaryQuerySchema,
+  rejectionReasonsSummarySchema,
 } from '@jobflow/shared';
 
 import { errorResponses, jsonContent } from '../../openapi/route.js';
@@ -90,6 +92,29 @@ export const APPLICATION_LIST_OPENAPI_PATHS: RouteConfig[] = [
             ghosted: { count: 5, items: null },
             withdrawn: { count: 1, items: null },
           },
+        }),
+      },
+      ...errorResponses([401, 403, 422]),
+    },
+  },
+  {
+    method: 'get',
+    path: '/applications/reasons-summary',
+    tags: TAGS,
+    summary: 'Count the rejection reasons of moves from one stage into rejected',
+    description:
+      'Counts the stage events from stage into rejected of the active search, leaving out undone moves and deleted applications. A missing reason counts as unspecified; reasons are sorted by count, then by the taxonomy order.',
+    request: { query: rejectionReasonsSummaryQuerySchema },
+    responses: {
+      200: {
+        description: 'The reason counts at the stage',
+        content: jsonContent(rejectionReasonsSummarySchema, {
+          stage: 'tech_interview',
+          total: 3,
+          reasons: [
+            { code: 'skills_gap', count: 2 },
+            { code: 'chose_other', count: 1 },
+          ],
         }),
       },
       ...errorResponses([401, 403, 422]),

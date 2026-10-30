@@ -18,6 +18,7 @@ function clientWithOneQueryPerKey() {
     applicationKeys.board({ q: 'react' }),
     applicationKeys.list(applicationListQuerySchema.parse({})),
     applicationKeys.detail(APPLICATION_ID),
+    applicationKeys.reasonsSummary('tech_interview'),
     timelineKeys.detail(APPLICATION_ID),
     resumeKeys.list(),
     analyticsKeys.summary(),
@@ -36,7 +37,7 @@ function invalidatedKeysOf(queryClient: QueryClient) {
 }
 
 describe('invalidateAfterMove', () => {
-  it('invalidates every board and the analytics summary and nothing else', async () => {
+  it('invalidates every board, the reasons summaries and the analytics summary and nothing else', async () => {
     const queryClient = clientWithOneQueryPerKey();
 
     await invalidateAfterMove(queryClient);
@@ -44,6 +45,7 @@ describe('invalidateAfterMove', () => {
     expect(invalidatedKeysOf(queryClient)).toEqual([
       ['applications', 'board', {}],
       ['applications', 'board', { q: 'react' }],
+      ['applications', 'reasons-summary', 'tech_interview'],
       ['analytics', 'summary'],
     ]);
   });

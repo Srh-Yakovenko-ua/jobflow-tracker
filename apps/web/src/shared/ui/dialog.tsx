@@ -2,7 +2,7 @@
 
 import { X } from 'lucide-react';
 import { Dialog as DialogPrimitive } from 'radix-ui';
-import type { ReactNode } from 'react';
+import type { KeyboardEvent, ReactNode } from 'react';
 
 import { uk } from '@/shared/i18n';
 import { cn } from '@/shared/lib/cn';
@@ -17,12 +17,20 @@ export const DialogClose = DialogPrimitive.Close;
 
 export type DialogHeader = { eyebrow?: ReactNode; title: ReactNode; description?: ReactNode };
 
+export type DialogContentHandlers = Readonly<{
+  onOpenAutoFocus?: (event: Event) => void;
+  onCloseAutoFocus?: (event: Event) => void;
+  onKeyDown?: (event: KeyboardEvent<HTMLDivElement>) => void;
+}>;
+
 export type DialogContentProps = Readonly<{
   header: DialogHeader;
   children?: ReactNode;
   className?: string | undefined;
-  onCloseAutoFocus?: ((event: Event) => void) | undefined;
+  handlers?: DialogContentHandlers;
 }>;
+
+export type DialogFooterProps = Readonly<{ children: ReactNode; className?: string }>;
 
 function DialogHead({ header }: Readonly<{ header: DialogHeader }>) {
   return (
@@ -44,19 +52,32 @@ function DialogHead({ header }: Readonly<{ header: DialogHeader }>) {
   );
 }
 
-export function DialogContent({
-  header,
-  children,
-  className,
-  onCloseAutoFocus,
-}: DialogContentProps) {
+export function keepFocusOnDialog(event: Event) {
+  event.preventDefault();
+  if (event.target instanceof HTMLElement) event.target.focus();
+}
+
+export function DialogFooter({ children, className }: DialogFooterProps) {
+  return (
+    <div
+      className={cn(
+        '-mx-6 -mb-6 flex flex-wrap items-center justify-between gap-4 bg-surface-2 px-6 pt-3.75 pb-4.5',
+        className,
+      )}
+    >
+      {children}
+    </div>
+  );
+}
+
+export function DialogContent({ header, children, className, handlers }: DialogContentProps) {
   const describedBy = header.description ? {} : { 'aria-describedby': undefined };
   return (
     <DialogPrimitive.Portal>
       <DialogPrimitive.Overlay className="fixed inset-0 z-50 bg-scrim/34 backdrop-blur-[2px] transition-opacity duration-(--duration-base) ease-standard starting:opacity-0" />
       <DialogPrimitive.Content
         {...describedBy}
-        onCloseAutoFocus={onCloseAutoFocus}
+        {...handlers}
         className={cn(
           'fixed top-1/2 left-1/2 z-50 flex max-h-[calc(100dvh-32px)] w-[calc(100vw-32px)] max-w-130 -translate-1/2 animate-spring-in flex-col gap-4.5 overflow-y-auto rounded-3xl bg-surface p-6 font-ui text-ink shadow-e3',
           className,
@@ -64,7 +85,10 @@ export function DialogContent({
       >
         <div className="flex items-start justify-between gap-4">
           <DialogHead header={header} />
-          <DialogPrimitive.Close aria-label={uk.app.close} className={cn(ICON_ACTION, 'size-7')}>
+          <DialogPrimitive.Close
+            aria-label={uk.app.close}
+            className={cn(ICON_ACTION, 'size-8 rounded-[10px] bg-surface-2')}
+          >
             <X aria-hidden />
           </DialogPrimitive.Close>
         </div>

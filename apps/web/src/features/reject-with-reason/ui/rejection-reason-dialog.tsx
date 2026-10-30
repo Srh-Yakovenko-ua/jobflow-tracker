@@ -1,115 +1,80 @@
 'use client';
 
+import type { RejectionReasonCode } from '@jobflow/shared';
+import type { KeyboardEvent } from 'react';
+
 import {
-  type ApplicationCard,
-  REJECTION_REASON_CODES,
-  REJECTION_REASONS,
-  REJECTION_SIDES,
-  type RejectionReasonCode,
-  type RejectionSide,
-  STAGE_LABELS,
-} from '@jobflow/shared';
-import { CircleMinus, CircleSlash2, type LucideIcon } from 'lucide-react';
-import { useId } from 'react';
+  Dialog,
+  DialogContent,
+  type DialogContentHandlers,
+  keepFocusOnDialog,
+} from '@/shared/ui/dialog';
 
-import { uk } from '@/shared/i18n';
-import { cn } from '@/shared/lib/cn';
-import { Button } from '@/shared/ui/button';
-import { Dialog, DialogContent } from '@/shared/ui/dialog';
-
-const COPY = uk.board.reject;
-
-type PickedSide = Exclude<RejectionSide, 'system'>;
-
-const PICKED_SIDES = REJECTION_SIDES.filter((side): side is PickedSide => side !== 'system');
-
-const SIDE_MARK: Record<PickedSide, { Icon: LucideIcon; className: string }> = {
-  company: { Icon: CircleMinus, className: 'text-rejected' },
-  candidate: { Icon: CircleSlash2, className: 'text-withdrawn' },
-};
+import { readLastReason } from '../lib/last-reason';
+import { reasonForKey } from '../lib/reason-order';
+import type { RejectionActions, RejectionPrompt } from '../model/rejection-step';
+import { ReasonPicker } from './reason-picker';
+import { RejectionNote } from './rejection-note';
+import { RejectionSaved } from './rejection-saved';
+import { stepHeader } from './step-header';
 
 export type RejectionReasonDialogProps = Readonly<{
-  move: Readonly<{ application: ApplicationCard }> | null;
-  onPick: (reasonCode: RejectionReasonCode) => void;
-  onCancel: () => void;
-  onCloseAutoFocus?: ((event: Event) => void) | undefined;
+  prompt: RejectionPrompt | null;
+  actions: RejectionActions;
+  handlers?: Pick<DialogContentHandlers, 'onCloseAutoFocus'>;
 }>;
 
-type ReasonGroupProps = Readonly<{ side: PickedSide; onPick: (code: RejectionReasonCode) => void }>;
+type StepBodyProps = Readonly<{ prompt: RejectionPrompt; actions: RejectionActions }>;
 
-function reasonsOf(side: PickedSide): RejectionReasonCode[] {
-  return REJECTION_REASON_CODES.filter((code) => REJECTION_REASONS[code].side === side).sort(
-    (left, right) => REJECTION_REASONS[left].sortOrder - REJECTION_REASONS[right].sortOrder,
-  );
+function keyedReason(event: KeyboardEvent<HTMLDivElement>): RejectionReasonCode | undefined {
+  if (event.ctrlKey || event.metaKey || event.altKey) return undefined;
+  if (event.key === 'Enter') {
+    return event.target === event.currentTarget ? readLastReason() : undefined;
+  }
+  return reasonForKey(event.key);
 }
 
-function ReasonGroup({ side, onPick }: ReasonGroupProps) {
-  const headingId = useId();
-  const { Icon, className } = SIDE_MARK[side];
-  return (
-    <div role="group" aria-labelledby={headingId} className="flex flex-col gap-2.5">
-      <span id={headingId} className="flex items-center gap-2.25 text-[12.5px] font-semibold">
-        <Icon aria-hidden size={16} className={cn('flex-none', className)} />
-        {COPY.sides[side]}
-      </span>
-      <div className="flex flex-wrap gap-2">
-        {reasonsOf(side).map((code) => (
-          <Button
-            key={code}
-            variant="secondary"
-            size="lg"
-            onClick={() => {
-              onPick(code);
-            }}
-          >
-            {REJECTION_REASONS[code].labelUk}
-          </Button>
-        ))}
-      </div>
-    </div>
-  );
+function StepBody({ prompt, actions }: StepBodyProps) {
+  const { application, step } = prompt;
+  switch (step.kind) {
+    case 'choose':
+    case 'saving':
+      return <ReasonPicker onPick={actions.onPick} />;
+    case 'saved':
+      return <RejectionSaved application={application} step={step} actions={actions} />;
+    case 'note':
+      return <RejectionNote application={application} actions={actions} />;
+    default: {
+      const unhandled: never = step;
+      throw new Error(`Unknown rejection step ${JSON.stringify(unhandled)}`);
+    }
+  }
 }
 
-function eyebrowOf(application: ApplicationCard): string {
-  const from = STAGE_LABELS[application.currentStage].labelUk;
-  return COPY.eyebrow({ company: application.company, from });
-}
-
-export function RejectionReasonDialog({
-  move,
-  onPick,
-  onCancel,
-  onCloseAutoFocus,
-}: RejectionReasonDialogProps) {
+export function RejectionReasonDialog({ prompt, actions, handlers }: RejectionReasonDialogProps) {
+  const choosing = prompt?.step.kind === 'choose';
+  const onKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
+    const reasonCode = choosing ? keyedReason(event) : undefined;
+    if (reasonCode === undefined) return;
+    event.preventDefault();
+    actions.onPick(reasonCode);
+  };
   return (
     <Dialog
-      open={move !== null}
+      open={prompt !== null}
       onOpenChange={(open) => {
-        if (!open) onCancel();
+        if (open) return;
+        if (choosing) actions.onCancel();
+        else actions.onDone();
       }}
     >
-      {move && (
+      {prompt && (
         <DialogContent
-          onCloseAutoFocus={onCloseAutoFocus}
-          header={{
-            eyebrow: eyebrowOf(move.application),
-            title: COPY.title,
-            description: COPY.description,
-          }}
+          className="max-w-140"
+          header={stepHeader(prompt)}
+          handlers={{ ...handlers, onOpenAutoFocus: keepFocusOnDialog, onKeyDown }}
         >
-          {PICKED_SIDES.map((side) => (
-            <ReasonGroup key={side} side={side} onPick={onPick} />
-          ))}
-          <Button
-            variant="ghost"
-            size="lg"
-            className="self-start"
-            onClick={() => {
-              onPick('unspecified');
-            }}
-          >
-            {COPY.skip}
-          </Button>
+          <StepBody prompt={prompt} actions={actions} />
         </DialogContent>
       )}
     </Dialog>
