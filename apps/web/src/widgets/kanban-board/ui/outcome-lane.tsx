@@ -6,10 +6,12 @@ import { cn } from '@/shared/lib/cn';
 import { LoadFailedPanel } from '@/shared/ui/error-panel';
 import { CardSkeleton } from '@/shared/ui/skeleton';
 
+import { useDropZone } from '../model/drag-source';
 import type { BoardLoad } from '../model/use-kanban-board';
 import { ColumnCards } from './column-cards';
 import { COLUMN_FRAME } from './column-frame';
 import { type ColumnHead, ColumnTitle } from './column-title';
+import { DropPlaceholder } from './drop-placeholder';
 
 export type OutcomeColumn = ApplicationBoardResponse['columns'][OutcomeStage] & {
   stage: OutcomeStage;
@@ -41,7 +43,7 @@ const STRIP_LOOK: Record<OutcomeStage, StripLook> = {
 };
 
 const STRIP = {
-  lane: 'flex w-14.5 flex-none rounded-2xl',
+  lane: 'flex w-14.5 flex-none rounded-2xl data-[drop=over]:focus-halo',
   button: 'group flex w-full flex-col items-center gap-3.5 rounded-2xl py-3',
   chevron:
     'flex size-7.5 items-center justify-center rounded-md bg-surface transition-colors duration-(--duration-instant) group-hover:text-link group-active:bg-surface-2',
@@ -80,10 +82,13 @@ function LaneBody({ column, context, load }: Omit<OutcomeLaneProps, 'disclosure'
 export function OutcomeLane({ column, context, disclosure, load }: OutcomeLaneProps) {
   const { expanded, onToggle } = disclosure;
   const look = STRIP_LOOK[column.stage];
+  const { setNodeRef, drop } = useDropZone(column.stage);
   return (
     <section
+      ref={setNodeRef}
+      data-drop={drop}
       aria-busy={expanded && column.items === null && !load.failed}
-      className={expanded ? COLUMN_FRAME.column : cn(STRIP.lane, look.lane)}
+      className={cn(expanded ? COLUMN_FRAME.column : [STRIP.lane, look.lane], COLUMN_FRAME.drop)}
     >
       <h2 className={cn(!expanded && 'flex w-full')}>
         <button
@@ -104,6 +109,7 @@ export function OutcomeLane({ column, context, disclosure, load }: OutcomeLanePr
           )}
         </button>
       </h2>
+      {expanded && drop === 'over' && <DropPlaceholder />}
       {expanded && <LaneBody column={column} context={context} load={load} />}
     </section>
   );

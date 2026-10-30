@@ -19,6 +19,7 @@ import { ColumnSkeleton } from '@/shared/ui/skeleton';
 
 import { type BoardLoad, useKanbanBoard } from '../model/use-kanban-board';
 import { BoardColumn } from './board-column';
+import { BoardDnd } from './board-dnd';
 import { ColumnCards } from './column-cards';
 import { FirstRunState } from './first-run-state';
 import { OutcomeLane } from './outcome-lane';
@@ -87,29 +88,31 @@ function BoardColumns({ board, context, outcomes }: BoardColumnsProps) {
     <>
       <InWorkEyebrow board={board} />
       <BoardFrame>
-        {OPEN_STAGES.map((stage) => (
-          <BoardColumn key={stage} column={{ stage, count: columns[stage].count }}>
-            <ColumnCards
-              items={columns[stage].items ?? []}
+        <BoardDnd board={board} context={context}>
+          {OPEN_STAGES.map((stage) => (
+            <BoardColumn key={stage} column={{ stage, count: columns[stage].count }}>
+              <ColumnCards
+                items={columns[stage].items ?? []}
+                context={context}
+                footnote={FOOTNOTES[stage]}
+              />
+            </BoardColumn>
+          ))}
+          {OUTCOME_STAGES.map((stage) => (
+            <OutcomeLane
+              key={stage}
+              column={{ stage, ...columns[stage] }}
               context={context}
-              footnote={FOOTNOTES[stage]}
+              load={outcomes.load}
+              disclosure={{
+                expanded: outcomes.expanded.includes(stage),
+                onToggle: () => {
+                  outcomes.onToggle(stage);
+                },
+              }}
             />
-          </BoardColumn>
-        ))}
-        {OUTCOME_STAGES.map((stage) => (
-          <OutcomeLane
-            key={stage}
-            column={{ stage, ...columns[stage] }}
-            context={context}
-            load={outcomes.load}
-            disclosure={{
-              expanded: outcomes.expanded.includes(stage),
-              onToggle: () => {
-                outcomes.onToggle(stage);
-              },
-            }}
-          />
-        ))}
+          ))}
+        </BoardDnd>
       </BoardFrame>
     </>
   );

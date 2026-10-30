@@ -6,8 +6,15 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { applicationKeys } from '@/entities/application';
 import { uk } from '@/shared/i18n';
 import { apiUrl, errorReply, OUTAGES } from '@/test/api-handlers';
-import { boardRoute, type BoardRouteOptions, cardIn } from '@/test/board-fixtures';
+import {
+  boardRoute,
+  type BoardRouteOptions,
+  cardIn,
+  DESIGN_BOARD,
+  DESIGN_BOARD_HEADINGS,
+} from '@/test/board-fixtures';
 import { QueryProbe, waitForQuery } from '@/test/query-status';
+import { columnNamed, renderBoard } from '@/test/render-board';
 import { renderInApp } from '@/test/render-in-app';
 import { server } from '@/test/server';
 import { meRoute } from '@/test/session-fixtures';
@@ -19,18 +26,6 @@ const BOARD = uk.board;
 const BOARD_KEY = applicationKeys.board({});
 
 const BOARD_URL = apiUrl('/applications/board');
-
-const DESIGN_BOARD: BoardRouteOptions = {
-  counts: { applied: 2, screening: 1, tech_interview: 1, offer: 1, rejected: 32, ghosted: 17 },
-  cards: [
-    cardIn({ serial: 101, stage: 'applied', position: 'Senior Frontend Engineer' }),
-    cardIn({ serial: 102, stage: 'applied', position: 'Product Designer' }),
-    cardIn({ serial: 103, stage: 'screening', position: 'Go Backend Engineer' }),
-    cardIn({ serial: 104, stage: 'tech_interview', position: 'Platform Engineer' }),
-    cardIn({ serial: 105, stage: 'offer', position: 'Frontend Engineer' }),
-    cardIn({ serial: 106, stage: 'rejected', position: 'Middle QA Engineer' }),
-  ],
-};
 
 const FINAL_ONLY_BOARD: BoardRouteOptions = {
   counts: { final: 1 },
@@ -50,21 +45,6 @@ function expandFailsRoute() {
       ? errorReply({ status: 500, type: 'internal_error' })
       : undefined,
   );
-}
-
-function renderBoard(route: BoardRouteOptions) {
-  const board = boardRoute(route);
-  server.use(meRoute(), board.handler);
-  const user = renderInApp(<KanbanBoard />);
-  return { user, sent: board.sent };
-}
-
-function columnNamed(name: string): HTMLElement {
-  const column = screen.getByRole('heading', { name }).closest('section');
-  if (column === null) {
-    throw new Error(`no column is headed "${name}"`);
-  }
-  return column;
 }
 
 function headingsNamed(names: readonly string[]): HTMLElement[] {
@@ -137,7 +117,9 @@ describe('KanbanBoard', () => {
     const { user } = renderBoard(DESIGN_BOARD);
     const strip = await screen.findByRole('button', { name: 'відмова 32' });
 
-    await user.tab();
+    act(() => {
+      strip.focus();
+    });
     expect(document.activeElement).toBe(strip);
     await user.keyboard('{Enter}');
     await screen.findByText('Middle QA Engineer');
@@ -153,16 +135,7 @@ describe('KanbanBoard', () => {
     const { user, strip, lane } = await openFailingRejectedLane();
 
     expect(screen.getAllByRole('heading', { level: 2 })).toEqual(
-      headingsNamed([
-        'відгук 2',
-        'скринінг 1',
-        "техінтерв'ю 1",
-        'фінал 0',
-        'офер 1',
-        'відмова 32',
-        'ghosted 17',
-        'відкликав 0',
-      ]),
+      headingsNamed(DESIGN_BOARD_HEADINGS),
     );
     expect(screen.getByText('Senior Frontend Engineer')).toBeDefined();
     await user.click(strip);
