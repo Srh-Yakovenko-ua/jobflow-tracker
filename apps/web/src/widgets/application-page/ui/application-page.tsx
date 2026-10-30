@@ -15,6 +15,7 @@ import { HeadingSkeleton, TextSkeleton } from '@/shared/ui/skeleton';
 import { useApplicationPage } from '../model/use-application-page';
 import { ApplicationActions } from './application-actions';
 import { ApplicationHeader } from './application-header';
+import { ApplicationTimeline } from './application-timeline';
 import { type ApplicationPageMode, PageTopBar } from './page-top-bar';
 
 export type { ApplicationPageMode } from './page-top-bar';
@@ -72,25 +73,28 @@ function PageContent({ id, view }: ApplicationPageProps) {
     <>
       <PageTopBar application={application} view={{ mode: view.mode, timeZone: page.timeZone }} />
       <div className={COLUMNS}>
-        <ApplicationHeader
-          application={application}
-          titleRef={titleRef}
-          editor={{ editing: editing !== null, onEdit: page.actions.onEdit }}
-        >
-          {editing === null ? (
-            <ApplicationActions
-              application={application}
-              actions={page.actions}
-              focusTarget={titleRef}
-            />
-          ) : (
-            <ApplicationEditForm
-              application={application}
-              focusField={editing}
-              actions={{ onDone: closeEditor }}
-            />
-          )}
-        </ApplicationHeader>
+        <div className="flex min-w-0 flex-col gap-10">
+          <ApplicationHeader
+            application={application}
+            titleRef={titleRef}
+            editor={{ editing: editing !== null, onEdit: page.actions.onEdit }}
+          >
+            {editing === null ? (
+              <ApplicationActions
+                application={application}
+                actions={page.actions}
+                focusTarget={titleRef}
+              />
+            ) : (
+              <ApplicationEditForm
+                application={application}
+                focusField={editing}
+                actions={{ onDone: closeEditor }}
+              />
+            )}
+          </ApplicationHeader>
+          <ApplicationTimeline application={application} />
+        </div>
         <div />
       </div>
       <DeleteApplicationDialog

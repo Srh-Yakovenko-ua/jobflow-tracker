@@ -14,6 +14,7 @@ import { moveRoute, type MoveRouteOptions, reasonsSummaryRoute, undoRoute } from
 import { renderInApp } from './render-in-app';
 import { server } from './server';
 import { meRoute } from './session-fixtures';
+import { EMPTY_TIMELINE, timelineRoute } from './timeline-fixtures';
 
 export type ApplicationPageSetup = Partial<Pick<ApplicationRouteOptions, 'reply'>> & {
   application?: ApplicationResponse;
@@ -42,6 +43,7 @@ export function renderApplicationPage({
     patch.handler,
     removal.handler,
     reasonsSummaryRoute().handler,
+    timelineRoute({ timeline: EMPTY_TIMELINE }),
   );
   const user = renderInApp(<ApplicationPage id={id} view={{ mode }} />);
   return {

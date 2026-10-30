@@ -7,6 +7,7 @@ import { board } from './board';
 import { devUi } from './dev-ui';
 import { shell } from './shell';
 import { states } from './states';
+import { timeline } from './timeline';
 
 export const uk = {
   locale: 'uk-UA',
@@ -36,6 +37,7 @@ export const uk = {
   devUi,
   application,
   applicationPage,
+  timeline,
   states,
   shell,
   errors: {
