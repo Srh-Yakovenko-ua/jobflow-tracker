@@ -23,6 +23,13 @@ export const shell = {
   silentBadge: (count: number) => countedUk(count, SILENT_CARDS),
   addApplication: 'Додати вакансію',
   userMenu: 'Меню користувача',
+  logout: {
+    label: 'Вийти',
+    failed: {
+      title: 'Не вдалося вийти',
+      description: "Ти досі в акаунті. Перевір з'єднання і спробуй ще раз.",
+    },
+  },
   search: {
     label: 'Пошук вакансій',
     results: 'Знайдені вакансії',

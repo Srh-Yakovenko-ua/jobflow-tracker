@@ -5,12 +5,14 @@ import type { ReactNode } from 'react';
 
 import { FEATURE_FLAGS } from '@/shared/config';
 import { uk } from '@/shared/i18n';
+import { cn } from '@/shared/lib/cn';
 
 import { activeHrefOf, type ShellNav, visibleNavItems } from '../model/nav-items';
 import type { SidebarState } from '../model/sidebar-cookie';
 import { SidebarStoreProvider } from '../model/sidebar-store';
 import { useSilentCount } from '../model/use-silent-count';
 import { BottomBar } from './bottom-bar';
+import { SHELL_FRAME } from './shell-frame';
 import { ShellHeader } from './shell-header';
 import { Sidebar } from './sidebar';
 
@@ -37,7 +39,10 @@ export function AppShell({ initial, children }: AppShellProps) {
           <main
             id="main"
             tabIndex={-1}
-            className="flex-1 px-4 pt-4 pb-[calc(var(--spacing)*18_+_env(safe-area-inset-bottom))] md:p-6.5"
+            className={cn(
+              SHELL_FRAME.main,
+              'pb-[calc(var(--spacing)*18_+_env(safe-area-inset-bottom))]',
+            )}
           >
             {children}
           </main>

@@ -71,6 +71,16 @@ describe('Menu', () => {
     expect(document.activeElement).toBe(trigger);
   });
 
+  it('gives every item a 44px touch height below md', async () => {
+    await openWithEnter();
+
+    const items = [...screen.getAllByRole('menuitem'), ...screen.getAllByRole('menuitemradio')].map(
+      (item) => item.className.split(' '),
+    );
+
+    expect(items.filter((classes) => classes.includes('max-md:min-h-11'))).toHaveLength(3);
+  });
+
   it('marks the picked radio item checked and the other one unchecked', async () => {
     const { user } = await openWithEnter();
 

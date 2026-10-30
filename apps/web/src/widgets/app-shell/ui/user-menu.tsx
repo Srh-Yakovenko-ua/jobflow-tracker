@@ -1,11 +1,10 @@
 'use client';
 
 import type { AuthUser } from '@jobflow/shared';
-import { useQuery } from '@tanstack/react-query';
-import { Settings, User } from 'lucide-react';
+import { LogOut, Settings, User } from 'lucide-react';
 import Link from 'next/link';
 
-import { initialsOf, meQueryOptions } from '@/entities/user';
+import { initialsOf, useSession } from '@/entities/user';
 import { ThemeMenuItems } from '@/features/switch-theme';
 import { FEATURE_FLAGS } from '@/shared/config';
 import { uk } from '@/shared/i18n';
@@ -14,6 +13,9 @@ import { Menu, MenuContent, MenuItem, MenuSeparator, MenuTrigger } from '@/share
 
 const AVATAR =
   'flex flex-none items-center justify-center rounded-pill bg-linear-140 from-accent to-accent-press font-semibold text-surface';
+
+const DANGER_ITEM =
+  'text-danger data-highlighted:bg-danger/6 active:bg-danger/10 data-highlighted:active:bg-danger/10 [&_svg]:text-danger';
 
 function UserCard({ user }: Readonly<{ user: AuthUser }>) {
   return (
@@ -32,7 +34,7 @@ function UserCard({ user }: Readonly<{ user: AuthUser }>) {
 }
 
 export function UserMenu() {
-  const user = useQuery(meQueryOptions()).data?.user;
+  const { user, logout } = useSession();
   return (
     <Menu>
       <MenuTrigger asChild>
@@ -56,6 +58,11 @@ export function UserMenu() {
           </MenuItem>
         )}
         <ThemeMenuItems />
+        <MenuSeparator />
+        <MenuItem className={DANGER_ITEM} onSelect={logout}>
+          <LogOut aria-hidden size={16} strokeWidth={1.9} />
+          {uk.shell.logout.label}
+        </MenuItem>
       </MenuContent>
     </Menu>
   );

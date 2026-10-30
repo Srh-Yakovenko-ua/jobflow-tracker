@@ -5,7 +5,7 @@ import { expect } from 'vitest';
 
 export type QueryProbeProps = Readonly<{ queryKey: QueryKey }>;
 
-export type QuerySettle = Readonly<{ queryKey: QueryKey; status: QueryStatus }>;
+export type QuerySettle = Readonly<{ queryKey: QueryKey; status: QueryStatus | 'absent' }>;
 
 const RETRIED_ERROR_TIMEOUT_MS = 2500;
 
