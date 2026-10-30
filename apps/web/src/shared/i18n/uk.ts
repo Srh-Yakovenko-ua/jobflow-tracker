@@ -2,6 +2,7 @@ import type { Theme } from '@jobflow/shared';
 
 import { application } from './application';
 import { devUi } from './dev-ui';
+import { states } from './states';
 
 export const uk = {
   locale: 'uk-UA',
@@ -28,6 +29,7 @@ export const uk = {
   theme: { light: 'Світла', dark: 'Темна', system: 'Системна' } satisfies Record<Theme, string>,
   devUi,
   application,
+  states,
   errors: {
     saveFailed: {
       title: 'Не вдалося зберегти',

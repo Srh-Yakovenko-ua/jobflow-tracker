@@ -6,8 +6,11 @@ import { uk } from '@/shared/i18n';
 import { ButtonsSection } from './buttons-section';
 import { CardsSection } from './cards-section';
 import { ChoiceSection } from './choice-section';
+import { EmptyStatesSection } from './empty-states-section';
+import { ErrorStatesSection } from './error-states-section';
 import { FeedbackSection } from './feedback-section';
 import { FieldsSection } from './fields-section';
+import { LoadingStatesSection } from './loading-states-section';
 import { NavigationSection } from './navigation-section';
 import { ScoreSection } from './score-section';
 import { SelectsSection } from './selects-section';
@@ -24,6 +27,9 @@ export default function DevUiPage() {
         </h1>
         <ThemeSwitcher />
       </div>
+      <EmptyStatesSection />
+      <LoadingStatesSection />
+      <ErrorStatesSection />
       <ButtonsSection />
       <FieldsSection />
       <SelectsSection />

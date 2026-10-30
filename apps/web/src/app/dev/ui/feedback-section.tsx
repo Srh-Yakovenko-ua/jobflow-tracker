@@ -11,6 +11,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/shared/ui/popover';
 import { showToast, type ToastAction, ToastCard, type ToastContent } from '@/shared/ui/toast';
 import { Tooltip } from '@/shared/ui/tooltip';
 
+import { FeedbackBanners } from './feedback-banners';
 import { Divider, GallerySection, Note, PANEL, Specimen, TILE_GRID } from './gallery';
 
 const COPY = uk.devUi.feedback;
@@ -133,6 +134,8 @@ export function FeedbackSection() {
         <ToastSpecimens />
         <Divider />
         <ModalSpecimen />
+        <Divider />
+        <FeedbackBanners />
       </div>
     </GallerySection>
   );
