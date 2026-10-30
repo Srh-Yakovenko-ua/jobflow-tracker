@@ -5,7 +5,7 @@ import { describe, expect, it, vi } from 'vitest';
 
 import { uk } from '@/shared/i18n';
 
-import { Button } from './button';
+import { Button, buttonLinkClasses } from './button';
 
 const LABELS = uk.devUi.buttons;
 
@@ -43,8 +43,22 @@ describe('Button', () => {
     render(<Button>{LABELS.addVacancy}</Button>);
 
     const { className } = screen.getByRole('button', { name: LABELS.addVacancy });
-    expect(className).toContain('enabled:hover:bg-accent-press');
-    expect(className).toContain('dark:enabled:hover:text-paper');
+    expect(className).toContain('not-disabled:hover:bg-accent-press');
+    expect(className).toContain('dark:not-disabled:hover:text-paper');
+  });
+
+  it('a link drawn as a button carries the same look, with a hover that an anchor can match', () => {
+    render(
+      <Button variant="secondary" size="lg">
+        {LABELS.addVacancy}
+      </Button>,
+    );
+
+    const link = buttonLinkClasses({ variant: 'secondary', size: 'lg' });
+    expect(link).toBe(screen.getByRole('button', { name: LABELS.addVacancy }).className);
+    expect(link).toContain('not-disabled:hover:bg-surface-3');
+    expect(link).toContain('not-disabled:hover:-translate-y-0.5');
+    expect(link).not.toContain('enabled:');
   });
 
   it('an icon-only button is named by its label and shows it as a tooltip on focus', async () => {

@@ -6,12 +6,14 @@ export type ApplyFieldErrorsOptions<T extends FieldValues> = {
   error: ApiError;
   fields: readonly NoInfer<Path<T>>[];
   setError: UseFormSetError<T>;
+  messages?: Readonly<Partial<Record<NoInfer<Path<T>>, string>>>;
 };
 
 export function applyFieldErrors<T extends FieldValues>({
   error,
   fields,
   setError,
+  messages,
 }: ApplyFieldErrorsOptions<T>): void {
   const unmatched: string[] = [];
   let matched = 0;
@@ -21,7 +23,7 @@ export function applyFieldErrors<T extends FieldValues>({
       unmatched.push(message);
     } else {
       matched += 1;
-      setError(field, { type: 'server', message });
+      setError(field, { type: 'server', message: messages?.[field] ?? message });
     }
   }
   if (unmatched.length > 0 || matched === 0) {

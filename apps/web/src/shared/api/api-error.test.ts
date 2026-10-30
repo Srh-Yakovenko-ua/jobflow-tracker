@@ -1,15 +1,9 @@
 import { HttpResponse } from 'msw/http';
 import { describe, expect, it } from 'vitest';
 
-import { errorBody } from '@/test/api-handlers';
+import { errorBody, rateLimitedReply } from '@/test/api-handlers';
 
 import { toApiError } from './api-error';
-
-const RATE_LIMITED = errorBody({ status: 429, type: 'rate_limited', title: 'Too many requests' });
-
-function rateLimited(headers: Record<string, string>) {
-  return HttpResponse.json(RATE_LIMITED, { status: 429, headers });
-}
 
 describe('toApiError', () => {
   it('keeps a DOC-04 body as the API sent it', async () => {
@@ -33,7 +27,7 @@ describe('toApiError', () => {
   });
 
   it('reads Retry-After: 30 on a 429 as 30 seconds', async () => {
-    const error = await toApiError(rateLimited({ 'Retry-After': '30' }));
+    const error = await toApiError(rateLimitedReply({ 'Retry-After': '30' }));
 
     expect(error.retryAfterSeconds).toBe(30);
   });
@@ -43,7 +37,7 @@ describe('toApiError', () => {
     ['an HTTP date', { 'Retry-After': 'Wed, 21 Oct 2026 07:28:00 GMT' }],
     ['negative', { 'Retry-After': '-5' }],
   ])('leaves retryAfterSeconds undefined when Retry-After is %s', async (_case, headers) => {
-    const error = await toApiError(rateLimited(headers));
+    const error = await toApiError(rateLimitedReply(headers));
 
     expect(error.retryAfterSeconds).toBeUndefined();
   });

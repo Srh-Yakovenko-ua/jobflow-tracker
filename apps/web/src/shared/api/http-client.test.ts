@@ -9,6 +9,7 @@ import {
   apiUrl,
   errorReply,
   expiringRoute,
+  recordSentRequests,
   REFRESH_URL,
   refreshRoute,
   SESSION_TOKENS,
@@ -34,8 +35,8 @@ const SUGGESTIONS_URL = apiUrl(SUGGESTIONS_REQUEST.path);
 const FUNNEL_URL = analyticsUrl('/funnel');
 
 function recordSentCredentials() {
-  const sentFetch = vi.spyOn(globalThis, 'fetch');
-  return () => sentFetch.mock.calls.map(([url, init]) => [url, init?.credentials]);
+  const sentRequests = recordSentRequests();
+  return () => sentRequests().map(({ url, credentials }) => [url, credentials]);
 }
 
 describe('apiClient', () => {

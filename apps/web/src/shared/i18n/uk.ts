@@ -1,6 +1,7 @@
 import type { Theme } from '@jobflow/shared';
 
 import { application } from './application';
+import { auth } from './auth';
 import { devUi } from './dev-ui';
 import { shell } from './shell';
 import { states } from './states';
@@ -27,6 +28,7 @@ export const uk = {
     ofTotal: 'із',
     keys: { navigate: '↑↓', select: '↵' },
     theme: 'Тема',
+    showPassword: 'Показати пароль',
   },
   theme: { light: 'Світла', dark: 'Темна', system: 'Системна' } satisfies Record<Theme, string>,
   devUi,
@@ -39,10 +41,7 @@ export const uk = {
       description: 'Це збій на нашому боці, збережені дані на місці. Спробуй ще раз.',
     },
   },
-  auth: {
-    login: { title: 'Увійти' },
-    register: { title: 'Створити акаунт' },
-  },
+  auth,
   board: {
     title: 'Дошка',
   },
