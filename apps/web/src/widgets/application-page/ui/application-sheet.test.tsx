@@ -7,6 +7,7 @@ import { back } from '@/test/navigation';
 import { InApp, renderInApp } from '@/test/render-in-app';
 import { server } from '@/test/server';
 import { meRoute } from '@/test/session-fixtures';
+import { EMPTY_TIMELINE, timelineRoute } from '@/test/timeline-fixtures';
 
 import { ApplicationSheet } from './application-sheet';
 
@@ -15,8 +16,16 @@ vi.mock('next/link', () => import('@/test/link'));
 
 const BOARD_CARD = 'Acme card';
 
+function serveSheet() {
+  server.use(
+    meRoute(),
+    applicationRoute({ application: ACME_APPLICATION }).handler,
+    timelineRoute({ timeline: EMPTY_TIMELINE }),
+  );
+}
+
 function renderSheet() {
-  server.use(meRoute(), applicationRoute({ application: ACME_APPLICATION }).handler);
+  serveSheet();
   return renderInApp(<ApplicationSheet id={ACME_APPLICATION.id} />);
 }
 
@@ -80,7 +89,7 @@ describe('ApplicationSheet', () => {
   it.each(CLOSERS)(
     'closing with $closer hands focus back to the board card that opened the sheet',
     async ({ close }) => {
-      server.use(meRoute(), applicationRoute({ application: ACME_APPLICATION }).handler);
+      serveSheet();
       const { rerender } = render(<BoardUnderSheet open={false} />, { wrapper: InApp });
       const user = userEvent.setup();
       const card = screen.getByRole('link', { name: BOARD_CARD });

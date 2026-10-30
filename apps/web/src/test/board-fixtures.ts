@@ -26,9 +26,12 @@ export type ColumnCounts = Partial<Record<Stage, number>>;
 
 export type CardSeed = { serial: number; stage: Stage; position: string };
 
+export function fixtureIdOf(serial: number): string {
+  return `0b6f3c1e-5d2a-4c8e-9f10-${String(serial).padStart(12, '0')}`;
+}
+
 export function cardIn({ serial, stage, position }: CardSeed): ApplicationCard {
-  const id = `0b6f3c1e-5d2a-4c8e-9f10-${String(serial).padStart(12, '0')}`;
-  return { ...FULL_CARD, id, position, currentStage: stage };
+  return { ...FULL_CARD, id: fixtureIdOf(serial), position, currentStage: stage };
 }
 
 export type ShownCards = { cards: readonly ApplicationCard[]; stages: readonly Stage[] };

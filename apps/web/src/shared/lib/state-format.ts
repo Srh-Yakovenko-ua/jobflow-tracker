@@ -16,6 +16,8 @@ const CLOCK = { hour: '2-digit', minute: '2-digit' } as const;
 
 const DAY_MONTH = { day: '2-digit', month: '2-digit' } as const;
 
+const DAY_MONTH_YEAR = { ...DAY_MONTH, year: 'numeric' } as const;
+
 const INCIDENT_TIME = { ...DAY_MONTH, ...CLOCK } as const;
 
 export type ZonedInstant = { at: Date; timeZone: string | undefined };
@@ -42,6 +44,10 @@ export function formatClock(instant: ZonedInstant): string {
 
 export function formatDayMonth(instant: ZonedInstant): string {
   return formatZoned(instant, DAY_MONTH);
+}
+
+export function formatDayMonthYear(instant: ZonedInstant): string {
+  return formatZoned(instant, DAY_MONTH_YEAR);
 }
 
 export function formatIncidentTime(instant: ZonedInstant): string {
