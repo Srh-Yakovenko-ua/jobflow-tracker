@@ -129,6 +129,11 @@ function ProgressMeter({ progress }: Readonly<{ progress: EmptyStateProgress }>)
   );
 }
 
+function ActionRow({ action }: Readonly<{ action: ReactNode }>) {
+  if (!action) return null;
+  return <div className="flex max-w-full min-w-0 flex-wrap gap-2.5">{action}</div>;
+}
+
 export type EmptyStateSlots = { figure?: ReactNode; action?: ReactNode };
 
 export type EmptyStateProps = Readonly<{
@@ -154,7 +159,7 @@ export function EmptyState({ content, progress, slots = {}, view = {} }: EmptySt
       </div>
       {!size.figureFirst && figure}
       {progress && <ProgressMeter progress={progress} />}
-      {action}
+      <ActionRow action={action} />
       {content.footnote && <span className={STATE_TEXT.meta}>{content.footnote}</span>}
     </div>
   );

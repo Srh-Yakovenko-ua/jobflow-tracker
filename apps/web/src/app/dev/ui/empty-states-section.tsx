@@ -16,7 +16,10 @@ const FIRST_RUN = uk.devUi.firstRun;
 
 const SCREENS = uk.devUi.emptyScreens;
 
-const SCREEN_ACTION = cn('self-start', TOUCH_HEIGHT);
+const SCREEN_ACTION = cn(
+  'h-auto max-w-full min-h-control-md py-1.5 whitespace-normal',
+  TOUCH_HEIGHT,
+);
 
 function FirstRunBoard() {
   return (
@@ -26,14 +29,14 @@ function FirstRunBoard() {
       slots={{
         figure: <DashedBars />,
         action: (
-          <div className="flex flex-wrap gap-2.5">
+          <>
             <Button size="lg" className={TOUCH_HEIGHT}>
               {FIRST_RUN.addFirst}
             </Button>
             <Button size="lg" variant="secondary" className={TOUCH_HEIGHT}>
               {FIRST_RUN.bookmarklet}
             </Button>
-          </div>
+          </>
         ),
       }}
     />

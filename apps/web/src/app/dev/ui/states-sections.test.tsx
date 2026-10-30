@@ -112,6 +112,19 @@ describe('/dev/ui states from the empty states screen', () => {
     }
   });
 
+  it('the ghosted follow-up action wraps its label inside the card instead of running past the dashed border', () => {
+    renderGallery();
+
+    const classes = screen
+      .getByRole('button', { name: 'Спробувати фоллоу-ап по 4 свіжих' })
+      .className.split(' ');
+    expect(classes).toEqual(
+      expect.arrayContaining(['max-w-full', 'whitespace-normal', 'h-auto', 'min-h-control-md']),
+    );
+    expect(classes).not.toContain('whitespace-nowrap');
+    expect(classes).not.toContain('h-control-md');
+  });
+
   it('the 03 skeletons shimmer, and 20 more card skeletons turn every one static', async () => {
     const user = renderGallery();
     expect(shimmeringBars(skeletonSection())).toBe(7);

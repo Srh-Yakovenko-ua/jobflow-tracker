@@ -10,6 +10,8 @@ const ANALYTICS = uk.devUi.emptyScreens.analytics.content;
 
 const COMPACT = uk.devUi.banners.compactEmpty;
 
+const GHOSTED = uk.devUi.emptyScreens.ghosted;
+
 describe('EmptyState', () => {
   it('a 4 of 10 meter fills four of ten segments and reads 4 / 10', () => {
     render(<EmptyState content={ANALYTICS} progress={{ count: 4, goal: 10 }} />);
@@ -42,6 +44,23 @@ describe('EmptyState', () => {
       screen.getByText('Перші висновки — на 10 відгуках, прогноз — на 15. Зараз 4.'),
     ).toBeDefined();
     expect(screen.getByRole('button', { name: 'Додати вакансію' })).toBeDefined();
+  });
+
+  it('holds the action in a wrapping row capped at the card content box', () => {
+    render(
+      <EmptyState
+        content={GHOSTED.content}
+        slots={{ action: <Button>{GHOSTED.action}</Button> }}
+        view={{ tone: 'ghosted' }}
+      />,
+    );
+
+    const row = screen.getByRole('button', {
+      name: 'Спробувати фоллоу-ап по 4 свіжих',
+    }).parentElement;
+    expect(row?.className.split(' ')).toEqual(
+      expect.arrayContaining(['flex', 'flex-wrap', 'max-w-full', 'min-w-0']),
+    );
   });
 
   it('puts the figure before the text on a page and after it on a panel', () => {

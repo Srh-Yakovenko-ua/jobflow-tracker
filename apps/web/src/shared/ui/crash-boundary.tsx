@@ -1,6 +1,6 @@
 'use client';
 
-import { Component, type ReactNode } from 'react';
+import { Component, createRef, type ReactNode } from 'react';
 
 import {
   type IncidentError,
@@ -22,6 +22,8 @@ function asIncidentError(thrown: unknown): IncidentError {
 export class CrashBoundary extends Component<CrashBoundaryProps, CrashBoundaryState> {
   override state: CrashBoundaryState = { crash: null };
 
+  private readonly region = createRef<HTMLDivElement>();
+
   static getDerivedStateFromError(thrown: unknown): CrashBoundaryState {
     const error = asIncidentError(thrown);
     return { crash: { error, incident: newIncident({ error, now: new Date() }) } };
@@ -31,6 +33,10 @@ export class CrashBoundary extends Component<CrashBoundaryProps, CrashBoundarySt
     if (this.state.crash) logIncident(this.state.crash);
   }
 
+  override componentDidUpdate(_: CrashBoundaryProps, previous: CrashBoundaryState): void {
+    if (previous.crash && !this.state.crash) this.region.current?.focus();
+  }
+
   private readonly retry = () => {
     this.props.onReset?.();
     this.setState({ crash: null });
@@ -38,7 +44,14 @@ export class CrashBoundary extends Component<CrashBoundaryProps, CrashBoundarySt
 
   override render() {
     const { crash } = this.state;
-    if (!crash) return this.props.children;
-    return <CrashPanel incident={crash.incident} view={{ scope: 'widget' }} onRetry={this.retry} />;
+    return (
+      <div ref={this.region} tabIndex={-1} className="min-w-0">
+        {crash ? (
+          <CrashPanel incident={crash.incident} view={{ scope: 'widget' }} onRetry={this.retry} />
+        ) : (
+          this.props.children
+        )}
+      </div>
+    );
   }
 }

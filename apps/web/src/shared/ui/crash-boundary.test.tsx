@@ -85,6 +85,7 @@ describe('CrashBoundary', () => {
     await user.click(screen.getByRole('button', { name: 'presses 0' }));
 
     expect(screen.getByRole('button', { name: 'presses 1' })).toBeDefined();
+    expect(document.activeElement).toBe(screen.getByRole('button', { name: 'presses 1' }));
   });
 
   it('reload resets the widget and brings it back', async () => {
@@ -95,6 +96,7 @@ describe('CrashBoundary', () => {
 
     expect(screen.getByText(DEMO.widget)).toBeDefined();
     expect(screen.queryByText('Блок впав')).toBeNull();
+    expect(document.activeElement).toBe(screen.getByText(DEMO.widget).closest('[tabindex="-1"]'));
   });
 
   it('logs the crash under the same code the panel shows', async () => {
