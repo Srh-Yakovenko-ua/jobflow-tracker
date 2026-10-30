@@ -2,11 +2,13 @@ import type { Theme } from '@jobflow/shared';
 
 import { application } from './application';
 import { devUi } from './dev-ui';
+import { shell } from './shell';
 import { states } from './states';
 
 export const uk = {
   locale: 'uk-UA',
   app: {
+    brand: 'JobFlow',
     title: 'JobFlow · трекер пошуку роботи',
     notifications: 'Сповіщення',
     close: 'Закрити',
@@ -30,6 +32,7 @@ export const uk = {
   devUi,
   application,
   states,
+  shell,
   errors: {
     saveFailed: {
       title: 'Не вдалося зберегти',

@@ -1,3 +1,7 @@
+export { boardQueryOptions } from './api/board';
+export { applicationListQueryOptions } from './api/list';
+export { silentCountOf } from './lib/silent-count';
+export { FULL_CARD } from './model/card-specimens';
 export { applicationKeys, timelineKeys } from './model/keys';
 export {
   ApplicationCard,

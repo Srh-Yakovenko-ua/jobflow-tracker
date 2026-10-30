@@ -5,6 +5,8 @@ import type { ComponentProps } from 'react';
 
 import { cn } from '@/shared/lib/cn';
 
+import { COUNT_PILL } from './count-pill';
+
 export const Tabs = TabsPrimitive.Root;
 
 export const TabsContent = TabsPrimitive.Content;
@@ -40,9 +42,7 @@ export function TabsTrigger({ count, children, className, ...props }: TabsTrigge
       {count !== undefined && (
         <>
           {' '}
-          <span className="flex h-4.25 min-w-4.25 items-center justify-center rounded-pill bg-accent px-1 text-[10px] font-semibold text-surface tabular-nums">
-            {count}
-          </span>
+          <span className={COUNT_PILL}>{count}</span>
         </>
       )}
     </TabsPrimitive.Trigger>
