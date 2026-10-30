@@ -16,6 +16,9 @@ const VARIANTS = {
   secondary: 'bg-surface-2 text-ink inset-ring inset-ring-line not-disabled:hover:bg-surface-3',
   ghost: 'bg-transparent text-link not-disabled:hover:bg-accent-tint',
   danger: 'bg-danger/6 text-danger inset-ring inset-ring-danger/30 not-disabled:hover:bg-danger/10',
+  outline: 'bg-transparent text-ink inset-ring inset-ring-line not-disabled:hover:bg-surface-3',
+  reject:
+    'bg-transparent text-danger inset-ring inset-ring-rejected not-disabled:hover:bg-rejected/8',
 } as const;
 
 const SIZES = {

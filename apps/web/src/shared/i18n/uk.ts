@@ -1,6 +1,7 @@
 import type { Theme } from '@jobflow/shared';
 
 import { application } from './application';
+import { applicationPage } from './application-page';
 import { auth } from './auth';
 import { board } from './board';
 import { devUi } from './dev-ui';
@@ -34,6 +35,7 @@ export const uk = {
   theme: { light: 'Світла', dark: 'Темна', system: 'Системна' } satisfies Record<Theme, string>,
   devUi,
   application,
+  applicationPage,
   states,
   shell,
   errors: {

@@ -1,4 +1,5 @@
 import { useDraggable } from '@dnd-kit/core';
+import Link from 'next/link';
 
 import { ApplicationCard, type ApplicationCardProps } from '@/entities/application';
 import { canDragFrom } from '@/features/move-application';
@@ -7,8 +8,14 @@ import { cn } from '@/shared/lib/cn';
 
 export type DraggableCardProps = Pick<ApplicationCardProps, 'application' | 'context'>;
 
+const CARD_LINK = 'block rounded-xl focus-visible:focus-ring';
+
 const HANDLE =
-  'cursor-grab touch-manipulation rounded-xl select-none [-webkit-touch-callout:none] focus-visible:focus-ring active:cursor-grabbing';
+  'cursor-grab touch-manipulation select-none [-webkit-touch-callout:none] active:cursor-grabbing';
+
+function pageOf(application: DraggableCardProps['application']): string {
+  return `/applications/${application.id}`;
+}
 
 function DragHandle({ application, context }: DraggableCardProps) {
   const { setNodeRef, attributes, listeners, isDragging } = useDraggable({
@@ -16,20 +23,30 @@ function DragHandle({ application, context }: DraggableCardProps) {
     attributes: { roleDescription: uk.board.move.a11y.roleDescription },
   });
   return (
-    <div
+    <Link
+      href={pageOf(application)}
+      scroll={false}
+      prefetch={false}
+      draggable={false}
       ref={setNodeRef}
-      {...attributes}
+      aria-roledescription={attributes['aria-roledescription']}
+      aria-describedby={attributes['aria-describedby']}
+      aria-disabled={attributes['aria-disabled']}
       {...listeners}
-      className={cn(HANDLE, isDragging && 'opacity-40')}
+      className={cn(CARD_LINK, HANDLE, isDragging && 'opacity-40')}
     >
       <ApplicationCard application={application} context={context} />
-    </div>
+    </Link>
   );
 }
 
 export function DraggableCard({ application, context }: DraggableCardProps) {
   if (!canDragFrom(application.currentStage)) {
-    return <ApplicationCard application={application} context={context} />;
+    return (
+      <Link href={pageOf(application)} scroll={false} prefetch={false} className={CARD_LINK}>
+        <ApplicationCard application={application} context={context} />
+      </Link>
+    );
   }
   return <DragHandle application={application} context={context} />;
 }

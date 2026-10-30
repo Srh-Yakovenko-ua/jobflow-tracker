@@ -1,4 +1,4 @@
-import type { ScheduledEventKind } from '@jobflow/shared';
+import type { ScheduledEventKind, WorkMode } from '@jobflow/shared';
 
 export const application = {
   score: {
@@ -18,6 +18,10 @@ export const application = {
   },
   silence: (days: string) => `${days} тиші`,
   daysInStage: (days: string) => `${days} на етапі`,
+  workModes: { remote: 'віддалено', hybrid: 'гібрид', office: 'офіс' } satisfies Record<
+    WorkMode,
+    string
+  >,
   stageNorm: (days: number) => `· норма ${String(days)}`,
   inFunnel: (days: string) => `${days} у воронці`,
   stackMore: (count: number) => `+${String(count)}`,

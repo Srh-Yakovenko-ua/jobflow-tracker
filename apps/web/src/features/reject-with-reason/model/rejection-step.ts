@@ -1,4 +1,6 @@
-import type { ApplicationCard, RejectionReasonCode } from '@jobflow/shared';
+import type { RejectionReasonCode } from '@jobflow/shared';
+
+import type { MovingApplication } from '@/entities/application';
 
 export type SavedStep = Readonly<{
   kind: 'saved';
@@ -12,7 +14,7 @@ export type RejectionStep =
   | SavedStep
   | Readonly<{ kind: 'note' }>;
 
-export type RejectionPrompt = Readonly<{ application: ApplicationCard; step: RejectionStep }>;
+export type RejectionPrompt = Readonly<{ application: MovingApplication; step: RejectionStep }>;
 
 export type RejectionActions = Readonly<{
   onPick: (reasonCode: RejectionReasonCode) => void;

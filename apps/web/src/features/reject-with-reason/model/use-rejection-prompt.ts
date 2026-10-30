@@ -1,27 +1,28 @@
-import type { UniqueIdentifier } from '@dnd-kit/core';
-import { type ApplicationCard, type RejectionReasonCode, STAGE_MOVE_LIMITS } from '@jobflow/shared';
+import {
+  type ApplicationResponse,
+  type RejectionReasonCode,
+  STAGE_MOVE_LIMITS,
+} from '@jobflow/shared';
+import { type UseMutateFunction, useQuery } from '@tanstack/react-query';
 import { type Dispatch, type RefObject, type SetStateAction, useRef, useState } from 'react';
 
-import {
-  type ApplicationMove,
-  type useMoveApplicationMutation,
-  useUndoMoveMutation,
-} from '@/features/move-application';
-import {
-  type RejectionActions,
-  type RejectionPrompt,
-  rememberLastReason,
-} from '@/features/reject-with-reason';
+import type { ApplicationMove, MovingApplication } from '@/entities/application';
+import { meQueryOptions } from '@/entities/user';
 
-type SendMove = ReturnType<typeof useMoveApplicationMutation>['mutate'];
+import { rememberLastReason } from '../lib/last-reason';
+import type { RejectionActions, RejectionPrompt } from './rejection-step';
+
+export type SendMove = UseMutateFunction<ApplicationResponse, Error, ApplicationMove>;
+
+export type RejectionMutations = Readonly<{ send: SendMove; undo: SendMove }>;
 
 type PickContext = Readonly<{
   send: SendMove;
   setPrompt: Dispatch<SetStateAction<RejectionPrompt | null>>;
-  focusBackRef: RefObject<UniqueIdentifier | null>;
+  focusBackRef: RefObject<string | null>;
 }>;
 
-type ReasonChoice = Readonly<{ application: ApplicationCard; reasonCode: RejectionReasonCode }>;
+type ReasonChoice = Readonly<{ application: MovingApplication; reasonCode: RejectionReasonCode }>;
 
 const REJECTED = 'rejected';
 
@@ -48,11 +49,25 @@ function pickReason(context: PickContext, { application, reasonCode }: ReasonCho
   );
 }
 
-export function useRejectionPrompt(send: SendMove) {
+function useAskReason({ send, setPrompt }: Pick<PickContext, 'send' | 'setPrompt'>) {
+  const { data: askReason = true } = useQuery({
+    ...meQueryOptions(),
+    select: (me) => me.settings.askRejectionReason,
+  });
+  return ({ application }: Pick<ApplicationMove, 'application'>) => {
+    if (!askReason) {
+      send({ application, toStage: REJECTED });
+      return;
+    }
+    setPrompt({ application, step: { kind: 'choose' } });
+  };
+}
+
+export function useRejectionPrompt({ send, undo }: RejectionMutations) {
   const [prompt, setPrompt] = useState<RejectionPrompt | null>(null);
-  const focusBackRef = useRef<UniqueIdentifier | null>(null);
-  const { mutate: undo } = useUndoMoveMutation();
-  const close = (focusId: UniqueIdentifier) => {
+  const ask = useAskReason({ send, setPrompt });
+  const focusBackRef = useRef<string | null>(null);
+  const close = (focusId: string) => {
     focusBackRef.current = focusId;
     setPrompt(null);
   };
@@ -80,9 +95,6 @@ export function useRejectionPrompt(send: SendMove) {
     onDone: () => {
       close(REJECTED);
     },
-  };
-  const ask = ({ application }: ApplicationMove) => {
-    setPrompt({ application, step: { kind: 'choose' } });
   };
   return { prompt, actions, focusBackRef, ask };
 }

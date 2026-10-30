@@ -11,6 +11,9 @@ import { TOUCH_HEIGHT } from './touch-height';
 
 const ITEM = cn(MENU_ITEM, TOUCH_HEIGHT);
 
+export const DANGER_MENU_ITEM =
+  'text-danger data-highlighted:bg-danger/6 active:bg-danger/10 data-highlighted:active:bg-danger/10 [&_svg]:text-danger';
+
 export const Menu = MenuPrimitive.Root;
 
 export const MenuTrigger = MenuPrimitive.Trigger;

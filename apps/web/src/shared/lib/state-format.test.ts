@@ -1,6 +1,12 @@
 import { describe, expect, it } from 'vitest';
 
-import { formatClock, formatDuration, formatIncidentTime, formatMegabytes } from './state-format';
+import {
+  formatClock,
+  formatDayMonth,
+  formatDuration,
+  formatIncidentTime,
+  formatMegabytes,
+} from './state-format';
 
 const KYIV = 'Europe/Kyiv';
 
@@ -36,6 +42,15 @@ describe('formatClock', () => {
 
     expect(formatClock({ at, timeZone: KYIV })).toBe('15:42');
     expect(formatClock({ at, timeZone: 'UTC' })).toBe('12:42');
+  });
+});
+
+describe('formatDayMonth', () => {
+  it('reads the day and month in the given time zone, past midnight in Kyiv', () => {
+    const at = new Date('2026-10-11T22:30:00Z');
+
+    expect(formatDayMonth({ at, timeZone: KYIV })).toBe('12.10');
+    expect(formatDayMonth({ at, timeZone: 'UTC' })).toBe('11.10');
   });
 });
 

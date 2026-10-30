@@ -13,9 +13,10 @@ export type TagInputProps = Readonly<{
   value: readonly string[];
   onValueChange: (value: string[]) => void;
   placeholder?: string;
+  autoFocus?: boolean;
 }>;
 
-export function TagInput({ value, onValueChange, placeholder }: TagInputProps) {
+export function TagInput({ value, onValueChange, placeholder, autoFocus }: TagInputProps) {
   const field = useField();
   const [draft, setDraft] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
@@ -58,6 +59,7 @@ export function TagInput({ value, onValueChange, placeholder }: TagInputProps) {
         }}
         onKeyDown={onKeyDown}
         placeholder={placeholder}
+        autoFocus={autoFocus}
         className={cn(FIELD_SURFACE.control, 'min-w-22.5 text-[13px]')}
       />
     </div>

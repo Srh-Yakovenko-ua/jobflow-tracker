@@ -56,15 +56,13 @@ export type ReasonsSummaryRouteOptions = MoveRouteOptions & {
   reasons?: RejectionReasonsSummary['reasons'];
 };
 
-type MovedCard = Pick<ApplicationResponse, 'id' | 'currentStage'>;
-
 type ResolverInfo = Parameters<HttpResponseResolver>[0];
 
 type HeldReply = MoveRouteOptions & { info: ResolverInfo; fallback: () => Response };
 
 const UNDONE_TO: Stage = 'applied';
 
-async function heldReply({ info, reply, latch, fallback }: HeldReply) {
+export async function heldReply({ info, reply, latch, fallback }: HeldReply) {
   await latch?.reached;
   return reply === undefined ? fallback() : reply(info);
 }
@@ -92,11 +90,9 @@ export const DESIGN_BOARD_HEADINGS: readonly string[] = [
   'відкликав 0',
 ];
 
-function movedApplication({ id, currentStage }: MovedCard): ApplicationResponse {
+export function applicationResponseOf(fields: Partial<ApplicationResponse>): ApplicationResponse {
   return applicationResponseSchema.parse({
     ...FULL_CARD,
-    id,
-    currentStage,
     searchId: '0b6f3c1e-5d2a-4c8e-9f10-0000000000ff',
     url: null,
     location: null,
@@ -106,6 +102,7 @@ function movedApplication({ id, currentStage }: MovedCard): ApplicationResponse 
     rawText: null,
     createdAt: FULL_CARD.lastEventAt,
     updatedAt: FULL_CARD.lastEventAt,
+    ...fields,
   });
 }
 
@@ -115,7 +112,7 @@ export function moveRoute(control: MoveRouteOptions = {}) {
     const body: unknown = await info.request.json();
     sent.push(body);
     const { toStage } = moveApplicationInputSchema.parse(body);
-    const moved = movedApplication({ id: info.params.id, currentStage: toStage });
+    const moved = applicationResponseOf({ id: info.params.id, currentStage: toStage });
     return heldReply({ ...control, info, fallback: () => HttpResponse.json(moved) });
   });
   return { handler, sent };
@@ -126,7 +123,7 @@ export function undoRoute(control: MoveRouteOptions = {}) {
   const path = '/applications/:id/events/undo-last';
   const handler = http.post<{ id: string }>(apiUrl(path), async (info) => {
     sent.push({ id: info.params.id, body: await info.request.text() });
-    const restored = movedApplication({ id: info.params.id, currentStage: UNDONE_TO });
+    const restored = applicationResponseOf({ id: info.params.id, currentStage: UNDONE_TO });
     return heldReply({
       ...control,
       info,

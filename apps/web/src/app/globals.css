@@ -59,6 +59,7 @@
 @theme {
   --animate-pop-in: pop-in var(--duration-base) var(--easing);
   --animate-spring-in: spring-in var(--duration-spring) var(--easing-spring);
+  --animate-sheet-in: sheet-in var(--duration-spring) var(--easing-spring);
   --animate-shimmer: shimmer 1600ms linear infinite;
 
   @keyframes shimmer {
@@ -82,6 +83,15 @@
   @keyframes spring-in {
     from {
       transform: translateY(14px) scale(0.96);
+    }
+    to {
+      transform: none;
+    }
+  }
+
+  @keyframes sheet-in {
+    from {
+      transform: translateX(40px);
     }
     to {
       transform: none;

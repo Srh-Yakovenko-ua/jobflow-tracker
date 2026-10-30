@@ -9,13 +9,17 @@ import { ThemeMenuItems } from '@/features/switch-theme';
 import { FEATURE_FLAGS } from '@/shared/config';
 import { uk } from '@/shared/i18n';
 import { cn } from '@/shared/lib/cn';
-import { Menu, MenuContent, MenuItem, MenuSeparator, MenuTrigger } from '@/shared/ui/menu';
+import {
+  DANGER_MENU_ITEM,
+  Menu,
+  MenuContent,
+  MenuItem,
+  MenuSeparator,
+  MenuTrigger,
+} from '@/shared/ui/menu';
 
 const AVATAR =
   'flex flex-none items-center justify-center rounded-pill bg-linear-140 from-accent to-accent-press font-semibold text-surface';
-
-const DANGER_ITEM =
-  'text-danger data-highlighted:bg-danger/6 active:bg-danger/10 data-highlighted:active:bg-danger/10 [&_svg]:text-danger';
 
 function UserCard({ user }: Readonly<{ user: AuthUser }>) {
   return (
@@ -59,7 +63,7 @@ export function UserMenu() {
         )}
         <ThemeMenuItems />
         <MenuSeparator />
-        <MenuItem className={DANGER_ITEM} onSelect={logout}>
+        <MenuItem className={DANGER_MENU_ITEM} onSelect={logout}>
           <LogOut aria-hidden size={16} strokeWidth={1.9} />
           {uk.shell.logout.label}
         </MenuItem>

@@ -70,11 +70,17 @@ export function DialogFooter({ children, className }: DialogFooterProps) {
   );
 }
 
+export function DialogOverlay() {
+  return (
+    <DialogPrimitive.Overlay className="fixed inset-0 z-50 bg-scrim/34 backdrop-blur-[2px] transition-opacity duration-(--duration-base) ease-standard starting:opacity-0" />
+  );
+}
+
 export function DialogContent({ header, children, className, handlers }: DialogContentProps) {
   const describedBy = header.description ? {} : { 'aria-describedby': undefined };
   return (
     <DialogPrimitive.Portal>
-      <DialogPrimitive.Overlay className="fixed inset-0 z-50 bg-scrim/34 backdrop-blur-[2px] transition-opacity duration-(--duration-base) ease-standard starting:opacity-0" />
+      <DialogOverlay />
       <DialogPrimitive.Content
         {...describedBy}
         {...handlers}

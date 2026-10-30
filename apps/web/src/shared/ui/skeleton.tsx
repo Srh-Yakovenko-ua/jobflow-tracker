@@ -95,6 +95,17 @@ export function ChartSkeleton() {
   );
 }
 
+export function HeadingSkeleton() {
+  const motion = useSkeletonMotion();
+  return (
+    <div aria-hidden className="flex flex-col gap-4.5">
+      <Bar motion={motion} className="h-6.5 w-44" />
+      <Bar motion={motion} className="h-9.5 w-[72%]" />
+      <Bar motion={motion} className="h-4 w-[48%]" />
+    </div>
+  );
+}
+
 export function TextSkeleton() {
   const motion = useSkeletonMotion();
   return (
