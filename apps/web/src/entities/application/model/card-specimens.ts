@@ -11,6 +11,7 @@ export const FULL_CARD: ApplicationCard = {
   matchScore: 84,
   currentStage: 'applied',
   isDraft: false,
+  appliedAt: '2026-10-20T09:00:00Z',
   lastEventAt: '2026-10-20T09:00:00Z',
   daysInStage: 3,
   daysSinceLastEvent: 3,

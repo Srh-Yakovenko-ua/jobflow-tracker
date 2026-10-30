@@ -3244,6 +3244,7 @@
                       "matchScore": 78,
                       "currentStage": "screening",
                       "isDraft": false,
+                      "appliedAt": "2026-10-14T10:20:00.000Z",
                       "lastEventAt": "2026-10-18T14:10:00.000Z",
                       "daysInStage": 4,
                       "daysSinceLastEvent": 4,
@@ -3341,6 +3342,13 @@
                           "isDraft": {
                             "type": "boolean"
                           },
+                          "appliedAt": {
+                            "type": [
+                              "string",
+                              "null"
+                            ],
+                            "format": "date-time"
+                          },
                           "lastEventAt": {
                             "type": "string",
                             "format": "date-time"
@@ -3423,6 +3431,7 @@
                           "matchScore",
                           "currentStage",
                           "isDraft",
+                          "appliedAt",
                           "lastEventAt",
                           "daysInStage",
                           "daysSinceLastEvent",
@@ -5480,6 +5489,7 @@
                           "matchScore": 78,
                           "currentStage": "screening",
                           "isDraft": false,
+                          "appliedAt": "2026-10-14T10:20:00.000Z",
                           "lastEventAt": "2026-10-18T14:10:00.000Z",
                           "daysInStage": 4,
                           "daysSinceLastEvent": 4,
@@ -5615,6 +5625,13 @@
                                   "isDraft": {
                                     "type": "boolean"
                                   },
+                                  "appliedAt": {
+                                    "type": [
+                                      "string",
+                                      "null"
+                                    ],
+                                    "format": "date-time"
+                                  },
                                   "lastEventAt": {
                                     "type": "string",
                                     "format": "date-time"
@@ -5697,6 +5714,7 @@
                                   "matchScore",
                                   "currentStage",
                                   "isDraft",
+                                  "appliedAt",
                                   "lastEventAt",
                                   "daysInStage",
                                   "daysSinceLastEvent",
@@ -5799,6 +5817,13 @@
                                   "isDraft": {
                                     "type": "boolean"
                                   },
+                                  "appliedAt": {
+                                    "type": [
+                                      "string",
+                                      "null"
+                                    ],
+                                    "format": "date-time"
+                                  },
                                   "lastEventAt": {
                                     "type": "string",
                                     "format": "date-time"
@@ -5881,6 +5906,7 @@
                                   "matchScore",
                                   "currentStage",
                                   "isDraft",
+                                  "appliedAt",
                                   "lastEventAt",
                                   "daysInStage",
                                   "daysSinceLastEvent",
@@ -5983,6 +6009,13 @@
                                   "isDraft": {
                                     "type": "boolean"
                                   },
+                                  "appliedAt": {
+                                    "type": [
+                                      "string",
+                                      "null"
+                                    ],
+                                    "format": "date-time"
+                                  },
                                   "lastEventAt": {
                                     "type": "string",
                                     "format": "date-time"
@@ -6065,6 +6098,7 @@
                                   "matchScore",
                                   "currentStage",
                                   "isDraft",
+                                  "appliedAt",
                                   "lastEventAt",
                                   "daysInStage",
                                   "daysSinceLastEvent",
@@ -6167,6 +6201,13 @@
                                   "isDraft": {
                                     "type": "boolean"
                                   },
+                                  "appliedAt": {
+                                    "type": [
+                                      "string",
+                                      "null"
+                                    ],
+                                    "format": "date-time"
+                                  },
                                   "lastEventAt": {
                                     "type": "string",
                                     "format": "date-time"
@@ -6249,6 +6290,7 @@
                                   "matchScore",
                                   "currentStage",
                                   "isDraft",
+                                  "appliedAt",
                                   "lastEventAt",
                                   "daysInStage",
                                   "daysSinceLastEvent",
@@ -6351,6 +6393,13 @@
                                   "isDraft": {
                                     "type": "boolean"
                                   },
+                                  "appliedAt": {
+                                    "type": [
+                                      "string",
+                                      "null"
+                                    ],
+                                    "format": "date-time"
+                                  },
                                   "lastEventAt": {
                                     "type": "string",
                                     "format": "date-time"
@@ -6433,6 +6482,7 @@
                                   "matchScore",
                                   "currentStage",
                                   "isDraft",
+                                  "appliedAt",
                                   "lastEventAt",
                                   "daysInStage",
                                   "daysSinceLastEvent",
@@ -6535,6 +6585,13 @@
                                   "isDraft": {
                                     "type": "boolean"
                                   },
+                                  "appliedAt": {
+                                    "type": [
+                                      "string",
+                                      "null"
+                                    ],
+                                    "format": "date-time"
+                                  },
                                   "lastEventAt": {
                                     "type": "string",
                                     "format": "date-time"
@@ -6617,6 +6674,7 @@
                                   "matchScore",
                                   "currentStage",
                                   "isDraft",
+                                  "appliedAt",
                                   "lastEventAt",
                                   "daysInStage",
                                   "daysSinceLastEvent",
@@ -6719,6 +6777,13 @@
                                   "isDraft": {
                                     "type": "boolean"
                                   },
+                                  "appliedAt": {
+                                    "type": [
+                                      "string",
+                                      "null"
+                                    ],
+                                    "format": "date-time"
+                                  },
                                   "lastEventAt": {
                                     "type": "string",
                                     "format": "date-time"
@@ -6801,6 +6866,7 @@
                                   "matchScore",
                                   "currentStage",
                                   "isDraft",
+                                  "appliedAt",
                                   "lastEventAt",
                                   "daysInStage",
                                   "daysSinceLastEvent",
@@ -6903,6 +6969,13 @@
                                   "isDraft": {
                                     "type": "boolean"
                                   },
+                                  "appliedAt": {
+                                    "type": [
+                                      "string",
+                                      "null"
+                                    ],
+                                    "format": "date-time"
+                                  },
                                   "lastEventAt": {
                                     "type": "string",
                                     "format": "date-time"
@@ -6985,6 +7058,7 @@
                                   "matchScore",
                                   "currentStage",
                                   "isDraft",
+                                  "appliedAt",
                                   "lastEventAt",
                                   "daysInStage",
                                   "daysSinceLastEvent",

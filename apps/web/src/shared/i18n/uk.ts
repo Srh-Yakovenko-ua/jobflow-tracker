@@ -2,6 +2,7 @@ import type { Theme } from '@jobflow/shared';
 
 import { application } from './application';
 import { auth } from './auth';
+import { board } from './board';
 import { devUi } from './dev-ui';
 import { shell } from './shell';
 import { states } from './states';
@@ -42,9 +43,7 @@ export const uk = {
     },
   },
   auth,
-  board: {
-    title: 'Дошка',
-  },
+  board,
   designSystem: {
     pageTitle: 'Дизайн-система',
     typography: {

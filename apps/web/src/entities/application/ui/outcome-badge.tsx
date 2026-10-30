@@ -4,12 +4,14 @@ import type { ReactNode } from 'react';
 
 import { cn } from '@/shared/lib/cn';
 
+import { StageMarker } from './stage-marker';
+
 export type OutcomeBadgeProps = Readonly<{ outcome: InactiveStage }>;
 
 const OUTCOME_LOOK: Record<InactiveStage, { badge: string; marker: ReactNode }> = {
   offer: {
     badge: 'bg-offer/15 text-offer',
-    marker: <span aria-hidden className="size-2.5 flex-none rounded-full bg-offer" />,
+    marker: <StageMarker stage="offer" />,
   },
   rejected: {
     badge: 'bg-rejected/15 text-ink-2',

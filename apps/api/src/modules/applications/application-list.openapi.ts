@@ -24,6 +24,7 @@ const CARD = {
   matchScore: 78,
   currentStage: 'screening',
   isDraft: false,
+  appliedAt: '2026-10-14T10:20:00.000Z',
   lastEventAt: '2026-10-18T14:10:00.000Z',
   daysInStage: 4,
   daysSinceLastEvent: 4,

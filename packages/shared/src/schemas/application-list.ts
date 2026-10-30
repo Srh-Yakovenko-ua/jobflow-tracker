@@ -58,6 +58,7 @@ export const applicationCardSchema = applicationResponseSchema
     matchScore: true,
     currentStage: true,
     isDraft: true,
+    appliedAt: true,
     lastEventAt: true,
     daysInStage: true,
     daysSinceLastEvent: true,

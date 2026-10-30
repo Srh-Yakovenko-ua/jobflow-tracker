@@ -6,6 +6,7 @@ import {
   canTransition,
   INACTIVE_STAGES,
   isActiveStage,
+  OPEN_STAGES,
   OUTCOME_STAGES,
   RESPONSE_STAGES,
   type Stage,
@@ -139,6 +140,13 @@ describe('OUTCOME_STAGES', () => {
       expect(canTransition(from, to)).toEqual({ ok: true });
     },
   );
+});
+
+describe('OPEN_STAGES', () => {
+  it('names the five open board columns in STAGES order, apart from the outcomes', () => {
+    expect(OPEN_STAGES).toEqual(['applied', 'screening', 'tech_interview', 'final', 'offer']);
+    expect([...OPEN_STAGES, ...OUTCOME_STAGES]).toEqual(STAGES);
+  });
 });
 
 describe('isActiveStage', () => {
