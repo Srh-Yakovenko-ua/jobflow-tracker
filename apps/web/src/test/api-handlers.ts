@@ -7,6 +7,7 @@ import {
 import type { DelayMode, JsonBodyType } from 'msw';
 import { http, HttpResponse } from 'msw/http';
 import { delay } from 'msw/utils/delay';
+import { vi } from 'vitest';
 
 import { ApiError } from '@/shared/api';
 import { config } from '@/shared/config';
@@ -70,6 +71,24 @@ export function errorReply(options: ErrorBodyOptions) {
   return HttpResponse.json(errorBody(options), { status: options.status });
 }
 
+export function rateLimitedReply(headers: Record<string, string>) {
+  return HttpResponse.json(
+    errorBody({ status: 429, type: 'rate_limited', title: 'Too many requests' }),
+    { status: 429, headers },
+  );
+}
+
+export function recordSentRequests() {
+  const sentFetch = vi.spyOn(globalThis, 'fetch');
+  return () =>
+    sentFetch.mock.calls.map(([url, init]) => ({
+      url,
+      method: init?.method,
+      credentials: init?.credentials,
+      body: typeof init?.body === 'string' ? (JSON.parse(init.body) as unknown) : init?.body,
+    }));
+}
+
 export function refreshRoute({ token, onCall, hold }: RefreshRouteOptions) {
   let openCalls = 0;
   return http.post(REFRESH_URL, async () => {
@@ -96,13 +115,14 @@ export function expiringRoute({ url, freshToken, body }: ExpiringRouteOptions) {
   });
 }
 
+export function freshSuggestionsRoute() {
+  return expiringRoute({
+    url: apiUrl(SUGGESTIONS_REQUEST.path),
+    freshToken: SESSION_TOKENS.fresh,
+    body: SUGGESTIONS,
+  });
+}
+
 export function suggestionsSession(refresh: Omit<RefreshRouteOptions, 'token'>) {
-  return [
-    refreshRoute({ token: SESSION_TOKENS.fresh, ...refresh }),
-    expiringRoute({
-      url: apiUrl(SUGGESTIONS_REQUEST.path),
-      freshToken: SESSION_TOKENS.fresh,
-      body: SUGGESTIONS,
-    }),
-  ];
+  return [refreshRoute({ token: SESSION_TOKENS.fresh, ...refresh }), freshSuggestionsRoute()];
 }

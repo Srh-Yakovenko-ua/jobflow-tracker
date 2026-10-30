@@ -1,7 +1,17 @@
-import type { MeResponse } from '@jobflow/shared';
+import type { AuthResponse, MeResponse } from '@jobflow/shared';
+import type { HttpResponseResolver } from 'msw';
 import { http, HttpResponse } from 'msw/http';
 
-import { apiUrl } from './api-handlers';
+import { apiUrl, type ErrorBodyOptions, errorReply, SESSION_TOKENS } from './api-handlers';
+
+export type AuthRouteOptions = {
+  path: '/auth/login' | '/auth/register';
+  reply?: HttpResponseResolver;
+};
+
+export type AuthErrorRouteOptions = Pick<AuthRouteOptions, 'path'> & {
+  error: ErrorBodyOptions;
+};
 
 export const ME_RESPONSE: MeResponse = {
   user: {
@@ -27,6 +37,22 @@ export const ME_RESPONSE: MeResponse = {
   },
 };
 
+export const AUTH_RESPONSE: AuthResponse = {
+  user: ME_RESPONSE.user,
+  accessToken: SESSION_TOKENS.fresh,
+};
+
 export function meRoute() {
   return http.get(apiUrl('/auth/me'), () => HttpResponse.json(ME_RESPONSE));
+}
+
+export function authRoute({
+  path,
+  reply = () => HttpResponse.json(AUTH_RESPONSE),
+}: AuthRouteOptions) {
+  return http.post(apiUrl(path), reply);
+}
+
+export function authErrorRoute({ path, error }: AuthErrorRouteOptions) {
+  return authRoute({ path, reply: () => errorReply(error) });
 }

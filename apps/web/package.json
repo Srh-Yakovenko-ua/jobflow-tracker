@@ -13,6 +13,7 @@
     "typecheck": "next typegen && tsgo -p . --noEmit"
   },
   "dependencies": {
+    "@hookform/resolvers": "6.0.2",
     "@jobflow/shared": "workspace:*",
     "@tailwind-merge/next": "0.0.0-dev.ab12ab17b7fbc861f04300973065b9f1cff9863b",
     "@tanstack/react-query": "5.104.4",

@@ -1,8 +1,10 @@
+import type { ReactNode } from 'react';
+
 import { cn } from '@/shared/lib/cn';
 
 export type BannerTone = 'info' | 'error';
 
-export type BannerContent = { title: string; description: string };
+export type BannerContent = { title: string; description: ReactNode };
 
 type BannerLook = { role: 'status' | 'alert'; ring: string; dot: string };
 

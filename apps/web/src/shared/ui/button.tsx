@@ -8,14 +8,14 @@ import { Spinner } from './spinner';
 import { Tooltip } from './tooltip';
 
 const BASE =
-  'touch-target inline-flex flex-none items-center justify-center gap-2 font-ui font-semibold whitespace-nowrap select-none transition-[background-color,color,box-shadow,translate] duration-(--duration-instant) ease-standard enabled:hover:-translate-y-px enabled:active:translate-y-0 disabled:cursor-not-allowed aria-busy:cursor-progress';
+  'touch-target inline-flex flex-none items-center justify-center gap-2 font-ui font-semibold whitespace-nowrap select-none transition-[background-color,color,box-shadow,translate] duration-(--duration-instant) ease-standard not-disabled:hover:-translate-y-px not-disabled:active:translate-y-0 disabled:cursor-not-allowed aria-busy:cursor-progress';
 
 const VARIANTS = {
   primary:
-    'bg-accent text-surface shadow-accent enabled:hover:bg-accent-press dark:enabled:hover:text-paper',
-  secondary: 'bg-surface-2 text-ink inset-ring inset-ring-line enabled:hover:bg-surface-3',
-  ghost: 'bg-transparent text-link enabled:hover:bg-accent-tint',
-  danger: 'bg-danger/6 text-danger inset-ring inset-ring-danger/30 enabled:hover:bg-danger/10',
+    'bg-accent text-surface shadow-accent not-disabled:hover:bg-accent-press dark:not-disabled:hover:text-paper',
+  secondary: 'bg-surface-2 text-ink inset-ring inset-ring-line not-disabled:hover:bg-surface-3',
+  ghost: 'bg-transparent text-link not-disabled:hover:bg-accent-tint',
+  danger: 'bg-danger/6 text-danger inset-ring inset-ring-danger/30 not-disabled:hover:bg-danger/10',
 } as const;
 
 const SIZES = {
@@ -26,7 +26,7 @@ const SIZES = {
   },
   md: { label: 'h-control-md rounded-md px-4 text-[13.5px]', icon: 'size-control-md rounded-md' },
   lg: {
-    label: 'h-control-lg rounded-[10px] px-5 text-[14.5px] enabled:hover:-translate-y-0.5',
+    label: 'h-control-lg rounded-[10px] px-5 text-[14.5px] not-disabled:hover:-translate-y-0.5',
     icon: 'size-control-lg rounded-[10px]',
   },
 } as const;
@@ -53,7 +53,9 @@ export type ButtonShape = Required<Pick<ButtonLook, 'variant' | 'size'>> & {
   dimmed: boolean;
 };
 
-export function buttonClasses({ variant, size, iconOnly, dimmed }: ButtonShape): string {
+export type ButtonLinkLook = Pick<ButtonShape, 'variant' | 'size'>;
+
+function buttonClasses({ variant, size, iconOnly, dimmed }: ButtonShape): string {
   return cn(
     BASE,
     VARIANTS[variant],
@@ -61,6 +63,10 @@ export function buttonClasses({ variant, size, iconOnly, dimmed }: ButtonShape):
     iconOnly && variant === 'secondary' && ICON_ONLY_TONE,
     dimmed && DISABLED,
   );
+}
+
+export function buttonLinkClasses(look: ButtonLinkLook): string {
+  return buttonClasses({ ...look, iconOnly: false, dimmed: false });
 }
 
 export function Button({
