@@ -2,6 +2,8 @@ import type { ApplicationCard } from '@jobflow/shared';
 
 import { uk } from '@/shared/i18n';
 
+import { calendarDateOf } from './calendar-date';
+
 const COPY = uk.application.nextEvent;
 
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -17,7 +19,7 @@ export type ScheduledEventSlot = NonNullable<ApplicationCard['nextScheduledEvent
 export type NextEventInput = { event: ScheduledEventSlot; now: Date; timeZone: string };
 
 function calendarDayOf(date: Date, timeZone: string): number {
-  return Date.parse(new Intl.DateTimeFormat('en-CA', { timeZone }).format(date)) / DAY_MS;
+  return calendarDateOf(date, timeZone).getTime() / DAY_MS;
 }
 
 export function formatNextEvent({ event, now, timeZone }: NextEventInput): string {

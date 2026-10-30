@@ -12,13 +12,15 @@ import { cn } from '@/shared/lib/cn';
 import { formatDaysInStage } from '../lib/days-in-stage';
 import { formatNextEvent, type ScheduledEventSlot } from '../lib/next-event';
 import { formatSalaryRange } from '../lib/salary';
+import type { ApplicationCardContext } from '../model/card-context';
+import { CARD_FRAME } from './card-frame';
+import { CardHeading } from './card-heading';
+import { OfferCard } from './offer-card';
 import { ScoreBadge } from './score-badge';
 import { SilenceIndicator } from './silence-indicator';
 import { STAGE_COLOR_CLASS } from './stage-color';
 
 const COPY = uk.application;
-
-export type ApplicationCardContext = { now: Date; timeZone: string; stageNormDays?: number };
 
 export type ApplicationCardProps = Readonly<{
   application: ApplicationCardData;
@@ -40,22 +42,6 @@ const CARD_LOOK = {
   live: 'bg-surface text-ink shadow-e1 duration-(--duration-base) ease-standard hover:shadow-e2 motion-safe:transition-[translate,box-shadow] motion-safe:hover:-translate-y-0.75',
   silent: 'bg-surface-2 text-ink-2 inset-ring inset-ring-line-soft',
 };
-
-function CardHeading({ application, silent }: CardPartProps) {
-  return (
-    <div className="flex items-start justify-between gap-2.5">
-      <div className="flex min-w-0 flex-col gap-0.75">
-        <span className="text-[14.5px] leading-[1.32] font-semibold tracking-[-0.01em] wrap-anywhere">
-          {application.position}
-        </span>
-        <span title={application.company} className="truncate text-[12.5px] text-ink-3">
-          {application.company}
-        </span>
-      </div>
-      <ScoreBadge application={application} view={{ muted: silent }} />
-    </div>
-  );
-}
 
 function StackTags({ application }: Readonly<{ application: ApplicationCardData }>) {
   const hidden = application.stackCount - application.stack.length;
@@ -112,10 +98,10 @@ function DaysInStage({
 function CardFooter({ application, silent }: CardPartProps) {
   const salary = formatSalaryRange(application);
   return (
-    <div className="flex flex-wrap items-center justify-between gap-2 text-[12px] text-ink-3">
+    <div className={CARD_FRAME.footer}>
       <span
         className={cn(
-          'whitespace-nowrap',
+          CARD_FRAME.salary,
           salary !== null && 'tabular-nums',
           salary !== null && !silent && 'font-medium',
         )}
@@ -134,17 +120,23 @@ function CardFooter({ application, silent }: CardPartProps) {
 }
 
 export function ApplicationCard({ application, view, context }: ApplicationCardProps) {
+  if (application.currentStage === 'offer') {
+    return <OfferCard application={application} context={context} />;
+  }
   const silent = application.silenceLevel === 'silent';
   const showStack = view?.density !== 'compact' && application.stack.length > 0;
   return (
     <article
       className={cn(
-        'flex flex-col rounded-xl px-3.75 py-3.25 leading-[normal]',
+        CARD_FRAME.article,
         CARD_LOOK[silent ? 'silent' : 'live'],
         showStack ? 'gap-2.75' : 'gap-2.5',
       )}
     >
-      <CardHeading application={application} silent={silent} />
+      <CardHeading
+        application={application}
+        badge={<ScoreBadge application={application} view={{ muted: silent }} />}
+      />
       {showStack && <StackTags application={application} />}
       {application.nextScheduledEvent !== null && (
         <NextEventChip event={application.nextScheduledEvent} context={context} />

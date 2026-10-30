@@ -6,8 +6,9 @@ import { uk } from '@/shared/i18n';
 import { cn } from '@/shared/lib/cn';
 import { Button } from '@/shared/ui/button';
 import { Chip } from '@/shared/ui/chip';
-import { DashedBars, EmptyState } from '@/shared/ui/empty-state';
+import { EmptyState } from '@/shared/ui/empty-state';
 import { TOUCH_HEIGHT } from '@/shared/ui/touch-height';
+import { FirstRunState } from '@/widgets/kanban-board';
 
 import { GallerySection, STATE_GRID, StateRule } from './gallery';
 import { ANALYTICS_PROGRESS } from './state-specimens';
@@ -23,22 +24,17 @@ const SCREEN_ACTION = cn(
 
 function FirstRunBoard() {
   return (
-    <EmptyState
-      content={FIRST_RUN.content}
-      view={{ size: 'page' }}
-      slots={{
-        figure: <DashedBars />,
-        action: (
-          <>
-            <Button size="lg" className={TOUCH_HEIGHT}>
-              {FIRST_RUN.addFirst}
-            </Button>
-            <Button size="lg" variant="secondary" className={TOUCH_HEIGHT}>
-              {FIRST_RUN.bookmarklet}
-            </Button>
-          </>
-        ),
-      }}
+    <FirstRunState
+      action={
+        <>
+          <Button size="lg" className={TOUCH_HEIGHT}>
+            {FIRST_RUN.addFirst}
+          </Button>
+          <Button size="lg" variant="secondary" className={TOUCH_HEIGHT}>
+            {FIRST_RUN.bookmarklet}
+          </Button>
+        </>
+      }
     />
   );
 }

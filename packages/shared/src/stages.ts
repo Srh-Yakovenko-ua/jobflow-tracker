@@ -61,6 +61,14 @@ export const outcomeStageSchema = z.enum(OUTCOME_STAGES);
 
 export type OutcomeStage = z.infer<typeof outcomeStageSchema>;
 
+export type OpenStage = Exclude<Stage, OutcomeStage>;
+
+const OUTCOME_STAGE_LIST: readonly Stage[] = OUTCOME_STAGES;
+
+export const OPEN_STAGES: readonly OpenStage[] = STAGES.filter(
+  (stage): stage is OpenStage => !OUTCOME_STAGE_LIST.includes(stage),
+);
+
 export const ALLOWED_TRANSITIONS: Record<Stage, readonly Stage[]> = {
   applied: ['screening', 'tech_interview', ...OUTCOME_STAGES],
   screening: ['tech_interview', 'final', 'offer', ...OUTCOME_STAGES],

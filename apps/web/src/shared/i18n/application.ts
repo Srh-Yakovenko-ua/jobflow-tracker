@@ -19,6 +19,7 @@ export const application = {
   silence: (days: string) => `${days} тиші`,
   daysInStage: (days: string) => `${days} на етапі`,
   stageNorm: (days: number) => `· норма ${String(days)}`,
+  inFunnel: (days: string) => `${days} у воронці`,
   stackMore: (count: number) => `+${String(count)}`,
   nextEvent: {
     today: 'сьогодні',

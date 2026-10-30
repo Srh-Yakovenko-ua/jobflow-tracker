@@ -23,6 +23,7 @@ const CARD = {
   matchScore: 81,
   currentStage: 'screening',
   isDraft: false,
+  appliedAt: '2026-10-16T09:30:00.000Z',
   lastEventAt: '2026-10-19T14:00:00.000Z',
   daysInStage: 3,
   daysSinceLastEvent: 3,
@@ -113,8 +114,8 @@ describe('applicationBoardQuerySchema', () => {
 });
 
 describe('applicationCardSchema', () => {
-  it('accepts a card with three stack items, no salary and no AI job', () => {
-    const card = { ...CARD, aiStatus: null, nextScheduledEvent: null };
+  it('accepts a card with three stack items, no salary, no applied date and no AI job', () => {
+    const card = { ...CARD, appliedAt: null, aiStatus: null, nextScheduledEvent: null };
     expect(applicationCardSchema.parse(card)).toEqual(card);
   });
 

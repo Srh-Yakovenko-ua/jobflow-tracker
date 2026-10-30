@@ -421,6 +421,7 @@ describe('the application list and board routes', () => {
         stack: ['TypeScript', 'NestJS', 'PostgreSQL', 'Redis', 'Docker'],
         matchScore: 78,
         currentStage: 'screening',
+        appliedAt: daysBefore(9),
         lastEventAt: daysBefore(2),
         createdAt: daysBefore(10),
       },
@@ -461,6 +462,7 @@ describe('the application list and board routes', () => {
       matchScore: 78,
       currentStage: 'screening',
       isDraft: false,
+      appliedAt: '2026-10-13T09:00:00.000Z',
       lastEventAt: '2026-10-20T09:00:00.000Z',
       daysInStage: 3,
       daysSinceLastEvent: 2,
@@ -474,6 +476,7 @@ describe('the application list and board routes', () => {
     expect(board.columns.screening.items).toEqual([card]);
     expect(list.items[1]).toMatchObject({
       id: bareId,
+      appliedAt: null,
       stack: [],
       stackCount: 0,
       nextScheduledEvent: null,

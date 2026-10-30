@@ -29,14 +29,12 @@ type CardContext = { now: Date; silenceDays: number };
 const OUTCOMES: readonly Stage[] = OUTCOME_STAGES;
 
 function toApplicationCard(row: CardRow, { now, silenceDays }: CardContext): ApplicationCard {
-  const { scheduledEvents, aiJobs, stack, lastEventAt, ...columns } = withApplicationTiming({
-    row,
-    silenceDays,
-    now,
-  });
+  const { scheduledEvents, aiJobs, stack, appliedAt, lastEventAt, ...columns } =
+    withApplicationTiming({ row, silenceDays, now });
   const [nextEvent] = scheduledEvents;
   return {
     ...columns,
+    appliedAt: appliedAt?.toISOString() ?? null,
     lastEventAt: lastEventAt.toISOString(),
     stack: stack.slice(0, APPLICATION_CARD_STACK_LIMIT),
     stackCount: stack.length,

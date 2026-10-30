@@ -44,6 +44,7 @@ const CARD_ROW: CardRow = {
   matchScore: 81,
   currentStage: 'screening',
   isDraft: false,
+  appliedAt: daysBefore(9),
   lastEventAt: daysBefore(4),
   createdAt: daysBefore(10),
   stageEvents: [{ occurredAt: daysBefore(6) }],
@@ -290,7 +291,7 @@ describe('ApplicationListService.board', () => {
 });
 
 describe('the application card', () => {
-  it('carries the first three stack items, the full stack count, the next event, the AI status and the timing', async () => {
+  it('carries the applied date, the first three stack items, the full stack count, the next event, the AI status and the timing', async () => {
     const { service } = await serviceWith();
 
     const page = await service.list(OLENA_ID, FIRST_PAGE);
@@ -307,6 +308,7 @@ describe('the application card', () => {
         matchScore: 81,
         currentStage: 'screening',
         isDraft: false,
+        appliedAt: '2026-10-13T09:00:00.000Z',
         lastEventAt: '2026-10-18T09:00:00.000Z',
         stack: ['Go', 'Kafka', 'Redis'],
         stackCount: 5,
@@ -319,13 +321,21 @@ describe('the application card', () => {
     ] satisfies ApplicationCard[]);
   });
 
-  it('gives null for no planned event and no AI job, and counts days in stage from createdAt without a stage event', async () => {
-    const row = { ...CARD_ROW, stageEvents: [], scheduledEvents: [], aiJobs: [], stack: ['Go'] };
+  it('gives null for no applied date, no planned event and no AI job, and counts days in stage from createdAt without a stage event', async () => {
+    const row = {
+      ...CARD_ROW,
+      appliedAt: null,
+      stageEvents: [],
+      scheduledEvents: [],
+      aiJobs: [],
+      stack: ['Go'],
+    };
     const { service } = await serviceWith({ cards: [row], silenceDays: 3 });
 
     const page = await service.list(OLENA_ID, FIRST_PAGE);
 
     expect(page.items[0]).toMatchObject({
+      appliedAt: null,
       stack: ['Go'],
       stackCount: 1,
       nextScheduledEvent: null,

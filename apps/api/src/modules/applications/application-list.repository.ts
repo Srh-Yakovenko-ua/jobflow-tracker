@@ -52,6 +52,7 @@ function cardSelectAt(now: Date) {
     matchScore: true,
     currentStage: true,
     isDraft: true,
+    appliedAt: true,
     lastEventAt: true,
     createdAt: true,
     stageEvents: LATEST_STAGE_EVENT_SELECT,
