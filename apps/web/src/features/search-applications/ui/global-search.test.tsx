@@ -1,5 +1,5 @@
-import type { ApplicationCard, ApplicationListResponse } from '@jobflow/shared';
-import { screen } from '@testing-library/react';
+import type { ApplicationListItem, ApplicationListResponse } from '@jobflow/shared';
+import { screen, within } from '@testing-library/react';
 import { http, HttpResponse } from 'msw/http';
 import { delay } from 'msw/utils/delay';
 import { afterEach, describe, expect, it, vi } from 'vitest';
@@ -17,15 +17,22 @@ vi.mock('next/navigation', () => import('@/test/navigation'));
 
 const SEARCH = uk.shell.search;
 
-const REJECTED_CARD: ApplicationCard = {
+const TRIDENT_HIT: ApplicationListItem = { ...FULL_CARD, snippet: null };
+
+const REJECTED_HIT: ApplicationListItem = {
   ...FULL_CARD,
   id: '0b6f3c1e-5d2a-4c8e-9f10-0000000000b2',
   company: 'Kvit Software',
   position: 'Full-stack Developer',
   currentStage: 'rejected',
+  snippet: [
+    { text: 'Event bus on ', match: false },
+    { text: 'Kafka', match: true },
+    { text: ' with Redis', match: false },
+  ],
 };
 
-const HITS: ApplicationListResponse = { items: [FULL_CARD, REJECTED_CARD], nextCursor: null };
+const HITS: ApplicationListResponse = { items: [TRIDENT_HIT, REJECTED_HIT], nextCursor: null };
 
 const LIST_URL = apiUrl('/applications');
 
@@ -76,7 +83,7 @@ describe('GlobalSearch', () => {
     expect(document.activeElement).toBe(notes);
   });
 
-  it('asks for the 8 newest matches and opens the hit picked with the arrows and Enter', async () => {
+  it('asks for the 8 most relevant matches and opens the hit picked with the arrows and Enter', async () => {
     const asked = answerWith(HITS);
     const { user, field } = await typeQuery('tri');
 
@@ -86,9 +93,9 @@ describe('GlobalSearch', () => {
     expect(Object.fromEntries(asked.at(-1) ?? [])).toEqual({
       q: 'tri',
       limit: '8',
-      sort: '-lastEventAt',
+      sort: 'relevance',
     });
-    expect(push).toHaveBeenCalledWith(`/applications/${REJECTED_CARD.id}`);
+    expect(push).toHaveBeenCalledWith(`/applications/${REJECTED_HIT.id}`);
     expect(field).toHaveProperty('value', '');
     expect(screen.queryByRole('listbox')).toBeNull();
   });
@@ -100,6 +107,20 @@ describe('GlobalSearch', () => {
     const hit = await screen.findByRole('option', { name: /Kvit Software/ });
 
     expect(hit.textContent).toContain('відмова');
+  });
+
+  it('marks the matched word of a snippet and keeps the rest of it as plain text', async () => {
+    answerWith(HITS);
+    await typeQuery('kaf');
+
+    const hit = await screen.findByRole('option', { name: /Kvit Software/ });
+
+    expect(within(hit).getByText('Kafka').tagName).toBe('MARK');
+    expect(within(hit).getByText(/Event bus on/).tagName).not.toBe('MARK');
+    expect(hit.querySelectorAll('mark')).toHaveLength(1);
+    expect(
+      screen.getByRole('option', { name: /Trident Systems/ }).querySelector('mark'),
+    ).toBeNull();
   });
 
   it('one letter keeps the results closed', async () => {

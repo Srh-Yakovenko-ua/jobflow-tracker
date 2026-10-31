@@ -11,22 +11,23 @@ import { Injectable } from '@nestjs/common';
 import type { Prisma } from '../../generated/prisma/client.js';
 import { EFFECTIVE_STAGE_EVENTS } from '../../prisma/effective-stage-events.js';
 import { PrismaService } from '../../prisma/prisma.service.js';
-import type { ApplicationCursor } from './application-cursor.js';
+import type { DateCursor } from './application-cursor.js';
 import { LATEST_STAGE_EVENT_SELECT } from './applications.repository.js';
 
-export type ApplicationListFilter = Omit<ApplicationFilters, 'silence'> & {
+export type ApplicationListFilter = Omit<ApplicationFilters, 'silence' | 'q'> & {
   searchId?: string | undefined;
   silenceWindows?: readonly SilenceWindow[] | undefined;
+  applicationIds?: readonly string[] | undefined;
 };
 
-export type ApplicationSort = ApplicationListQuery['sort'];
+export type DateSort = Exclude<ApplicationListQuery['sort'], 'relevance'>;
 
 export type FindCards = {
   filter: ApplicationListFilter;
-  sort: ApplicationSort;
+  sort: DateSort;
   now: Date;
   stages?: readonly Stage[];
-  cursor?: ApplicationCursor | undefined;
+  cursor?: DateCursor | undefined;
   take?: number;
 };
 
@@ -41,7 +42,7 @@ type ListWhere = { filter: ApplicationListFilter; also?: Where[] };
 const SORT_DIRECTION = {
   '-lastEventAt': 'desc',
   lastEventAt: 'asc',
-} as const satisfies Record<ApplicationSort, Prisma.SortOrder>;
+} as const satisfies Record<DateSort, Prisma.SortOrder>;
 
 function cardSelectAt(now: Date) {
   return {
@@ -86,26 +87,17 @@ function silenceWindowWhere({ stages, lastEventAtOrBefore, lastEventAfter }: Sil
   };
 }
 
-function likeLiteralOf(text: string): string {
-  return text.replace(/[\\%_]/g, (character) => `\\${character}`);
-}
-
-function textWhere(q: string): Where {
-  const contains = { contains: likeLiteralOf(q), mode: 'insensitive' } as const;
-  return { OR: [{ company: contains }, { position: contains }] };
-}
-
 function filterWhere({
   stage,
   source,
-  q,
   hasScore,
   silenceWindows,
+  applicationIds,
 }: ApplicationListFilter): Where[] {
   const conditions: (Where | undefined)[] = [
     stage && { currentStage: { in: stage } },
     source && { source: { in: source } },
-    q === undefined ? undefined : textWhere(q),
+    applicationIds && { id: { in: [...applicationIds] } },
     hasScore === undefined ? undefined : { matchScore: hasScore ? { not: null } : null },
     silenceWindows && { OR: silenceWindows.map(silenceWindowWhere) },
   ];
@@ -120,7 +112,7 @@ function listWhere(userId: string, { filter, also = [] }: ListWhere): Where {
   return { userId, deletedAt: null, ...scope, AND: [...filterWhere(filter), ...also] };
 }
 
-function afterCursor({ lastEventAt, id }: ApplicationCursor, direction: Prisma.SortOrder): Where {
+function afterCursor({ lastEventAt, id }: DateCursor, direction: Prisma.SortOrder): Where {
   const beyond = <Value>(value: Value) => (direction === 'desc' ? { lt: value } : { gt: value });
   return { OR: [{ lastEventAt: beyond(lastEventAt) }, { lastEventAt, id: beyond(id) }] };
 }
@@ -166,6 +158,14 @@ export class ApplicationListRepository {
       _count: { _all: true },
     });
     return groups.map(({ reasonCode, _count }) => ({ reasonCode, count: _count._all }));
+  }
+
+  async findIds(userId: string, filter: ApplicationListFilter): Promise<string[]> {
+    const rows = await this.prisma.application.findMany({
+      where: listWhere(userId, { filter }),
+      select: { id: true },
+    });
+    return rows.map(({ id }) => id);
   }
 
   findCards(userId: string, query: FindCards): Promise<CardRow[]> {

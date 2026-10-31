@@ -9,12 +9,14 @@ import {
   APPLICATIONS_BOARD_PATH,
   APPLICATIONS_PATH,
   getWithQuery,
+  listApplications,
   type QueryString,
   signedInWithSearch,
 } from '../../test/applications.js';
 import {
   createAiJob,
   createApplicationRows,
+  createNotes,
   createScheduledEvent,
   createStageEvents,
   loadedBoardRows,
@@ -24,9 +26,17 @@ import { minutesAfter, NOW } from '../../test/time.js';
 
 const LOAD = { few: 5, loaded: 500, maxStatements: 8 } as const;
 
-const TIMING = { warmUpCalls: 5, timedCalls: 30, p95LimitMs: 100 } as const;
+const TIMING = { warmUpCalls: 5, timedCalls: 30, p95LimitMs: 100, searchP95LimitMs: 50 } as const;
+
+const KAFKA_NOTE = { everyNth: 4, body: 'На скринінгу питали про Kafka і черги' } as const;
 
 type LoadRoute = { name: string; path: string; query: QueryString };
+
+const SEARCH_DROPDOWN: LoadRoute = {
+  name: 'the search dropdown',
+  path: APPLICATIONS_PATH,
+  query: { q: 'kafka', sort: 'relevance', limit: '8' },
+};
 
 const ROUTES: readonly LoadRoute[] = [
   { name: 'the default board', path: APPLICATIONS_BOARD_PATH, query: {} },
@@ -36,7 +46,11 @@ const ROUTES: readonly LoadRoute[] = [
     query: { expand: 'rejected,ghosted,withdrawn' },
   },
   { name: 'the first list page', path: APPLICATIONS_PATH, query: { limit: '50' } },
+  SEARCH_DROPDOWN,
 ];
+
+const p95LimitOf = (route: LoadRoute) =>
+  route === SEARCH_DROPDOWN ? TIMING.searchP95LimitMs : TIMING.p95LimitMs;
 
 function p95Of(durations: number[]): number {
   const sorted = [...durations].sort((left, right) => left - right);
@@ -78,6 +92,12 @@ describe('the board and the list with 500 applications', () => {
         toStage: row.currentStage,
         occurredAt: row.lastEventAt,
       })),
+    );
+    await createNotes(
+      prisma,
+      loaded
+        .filter(({ index }) => index % KAFKA_NOTE.everyNth === 0)
+        .map(({ applicationId }) => ({ applicationId, body: KAFKA_NOTE.body })),
     );
     const withEvents = loaded.filter(({ index }) => index % 3 === 0);
     await Promise.all(
@@ -141,16 +161,21 @@ describe('the board and the list with 500 applications', () => {
   );
 
   it(
-    'answers the default board, the expanded board and the first list page under 100 ms at p95',
+    'answers the boards and the first list page under 100 ms and a full search dropdown under 50 ms at p95',
     { timeout: 120_000 },
     async ({ annotate }) => {
       const accessToken = await signedInWith(LOAD.loaded);
+      const dropdown = await listApplications(testApp.app, {
+        accessToken,
+        query: SEARCH_DROPDOWN.query,
+      });
 
       for (const route of ROUTES) {
         const p95 = await p95Ms(route, accessToken);
         await annotate(`${route.name}: p95 ${p95.toFixed(1)} ms`);
-        expect(p95, route.name).toBeLessThan(TIMING.p95LimitMs);
+        expect(p95, route.name).toBeLessThan(p95LimitOf(route));
       }
+      expect(dropdown.items).toHaveLength(8);
     },
   );
 });

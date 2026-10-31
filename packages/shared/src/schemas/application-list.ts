@@ -9,7 +9,7 @@ import { applicationResponseSchema } from './application.js';
 import { paginatedSchema, paginationQuerySchema } from './pagination.js';
 import { plainTextSchema } from './text.js';
 
-export const APPLICATION_SORTS = ['-lastEventAt', 'lastEventAt'] as const;
+export const APPLICATION_SORTS = ['-lastEventAt', 'lastEventAt', 'relevance'] as const;
 
 export const APPLICATION_CARD_STACK_LIMIT = 3;
 
@@ -36,11 +36,18 @@ export const applicationFiltersSchema = z.object({
   silence: csvListOf(silenceLevelSchema).optional(),
 });
 
-export const applicationListQuerySchema = applicationFiltersSchema.extend({
-  ...paginationQuerySchema.shape,
-  sort: z.enum(APPLICATION_SORTS).default('-lastEventAt'),
-  searchId: z.uuid().optional(),
-});
+export const applicationListQuerySchema = applicationFiltersSchema
+  .extend({
+    ...paginationQuerySchema.shape,
+    sort: z.enum(APPLICATION_SORTS).default('-lastEventAt'),
+    searchId: z.uuid().optional(),
+  })
+  .check(
+    z.refine((query) => query.sort !== 'relevance' || query.q !== undefined, {
+      error: 'Sort relevance needs a search query q',
+      path: ['sort'],
+    }),
+  );
 
 export const applicationBoardQuerySchema = applicationFiltersSchema
   .omit({ stage: true })
@@ -71,7 +78,15 @@ export const applicationCardSchema = applicationResponseSchema
     aiStatus: aiJobStatusSchema.nullable(),
   });
 
-export const applicationListResponseSchema = paginatedSchema(applicationCardSchema);
+export const searchSnippetSchema = z
+  .array(z.object({ text: z.string(), match: z.boolean() }))
+  .min(1);
+
+export const applicationListItemSchema = applicationCardSchema.extend({
+  snippet: searchSnippetSchema.nullable(),
+});
+
+export const applicationListResponseSchema = paginatedSchema(applicationListItemSchema);
 
 export const boardColumnSchema = z.object({
   count: z.int32().min(0),
@@ -86,5 +101,7 @@ export type ApplicationFilters = z.infer<typeof applicationFiltersSchema>;
 export type ApplicationListQuery = z.infer<typeof applicationListQuerySchema>;
 export type ApplicationBoardQuery = z.infer<typeof applicationBoardQuerySchema>;
 export type ApplicationCard = z.infer<typeof applicationCardSchema>;
+export type SearchSnippet = z.infer<typeof searchSnippetSchema>;
+export type ApplicationListItem = z.infer<typeof applicationListItemSchema>;
 export type ApplicationListResponse = z.infer<typeof applicationListResponseSchema>;
 export type ApplicationBoardResponse = z.infer<typeof applicationBoardResponseSchema>;

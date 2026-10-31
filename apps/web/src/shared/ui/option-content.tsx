@@ -5,11 +5,15 @@ import { cn } from '@/shared/lib/cn';
 
 import type { SelectOption } from './field-surface';
 
-export type OptionContentProps = Readonly<{ option: SelectOption; label: ReactNode }>;
+export type OptionContentProps = Readonly<{
+  option: SelectOption;
+  label: ReactNode;
+  footnote?: ReactNode;
+}>;
 
 export type CheckSlotProps = Readonly<{ checked: boolean }>;
 
-const CAPTION =
+export const OPTION_CAPTION =
   'caption font-normal text-ink-3 dark:in-data-highlighted:text-ink-2 dark:in-data-[selected=true]:text-ink-2';
 
 export function CheckSlot({ checked }: CheckSlotProps) {
@@ -20,14 +24,17 @@ export function CheckSlot({ checked }: CheckSlotProps) {
   );
 }
 
-export function OptionContent({ option, label }: OptionContentProps) {
+export function OptionContent({ option, label, footnote }: OptionContentProps) {
   return (
     <>
       <span className="flex min-w-0 flex-1 flex-col gap-px">
         <span className="truncate">{label}</span>
-        {option.detail && <span className={CAPTION}>{option.detail}</span>}
+        {option.detail && <span className={OPTION_CAPTION}>{option.detail}</span>}
+        {footnote}
       </span>
-      {option.meta && <span className={cn(CAPTION, 'flex-none tabular-nums')}>{option.meta}</span>}
+      {option.meta && (
+        <span className={cn(OPTION_CAPTION, 'flex-none tabular-nums')}>{option.meta}</span>
+      )}
     </>
   );
 }

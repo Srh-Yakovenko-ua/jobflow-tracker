@@ -3,17 +3,15 @@ import {
   applicationBoardQuerySchema,
   applicationBoardResponseSchema,
   type ApplicationCard,
+  type ApplicationListItem,
+  applicationListQuerySchema,
   applicationListResponseSchema,
   rejectionReasonsSummaryQuerySchema,
   rejectionReasonsSummarySchema,
 } from '@jobflow/shared';
 
 import { errorResponses, jsonContent } from '../../openapi/route.js';
-import {
-  applicationCursorSchema,
-  applicationListRequestSchema,
-  encodeApplicationCursor,
-} from './application-cursor.js';
+import { cursorTextSchema, encodeApplicationCursor } from './application-cursor.js';
 
 const CARD = {
   id: '0199f1a7-3c4d-7e5f-8a6b-9c0d1e2f3a4b',
@@ -37,13 +35,25 @@ const CARD = {
   aiStatus: 'processing',
 } satisfies ApplicationCard;
 
+const LIST_ITEM = {
+  ...CARD,
+  snippet: [
+    { text: 'Go, Kubernetes, gRPC … Шукаємо досвід з ', match: false },
+    { text: 'Kafka', match: true },
+    { text: ' у продакшені', match: false },
+  ],
+} satisfies ApplicationListItem;
+
 const TAGS = ['applications'];
 
 const FILTERS =
-  'Filters are comma lists (stage, source, silence), q searches company and position, hasScore is true or false. Without searchId only the active search is read.';
+  'Filters are comma lists (stage, source, silence), q searches company, position, stack, vacancy text and notes by word prefix in web search syntax (quotes, or, -), hasScore is true or false. Without searchId only the active search is read.';
 
-const listQuery = applicationListRequestSchema.extend({
-  cursor: applicationCursorSchema.optional().meta({
+const LIST =
+  'sort=relevance orders by rank and needs q, and its cursor pages only that sort. With q each item carries snippet, the matched words of its stack, vacancy text and notes, or null when only company or position matched; without q snippet is null.';
+
+const listQuery = applicationListQuerySchema.safeExtend({
+  cursor: cursorTextSchema.optional().meta({
     description:
       'The opaque nextCursor of the previous page, sent back unchanged; any other value answers 422 at cursor',
   }),
@@ -55,13 +65,13 @@ export const APPLICATION_LIST_OPENAPI_PATHS: RouteConfig[] = [
     path: '/applications',
     tags: TAGS,
     summary: 'List Applications as cards',
-    description: `${FILTERS} Pages follow nextCursor until it is null; another user's searchId answers 404.`,
+    description: `${FILTERS} ${LIST} Pages follow nextCursor until it is null; another user's searchId answers 404.`,
     request: { query: listQuery },
     responses: {
       200: {
         description: 'One page of cards',
         content: jsonContent(applicationListResponseSchema, {
-          items: [CARD],
+          items: [LIST_ITEM],
           nextCursor: encodeApplicationCursor({
             lastEventAt: new Date(CARD.lastEventAt),
             id: CARD.id,

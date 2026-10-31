@@ -163,6 +163,9 @@ export async function listApplications(
   return applicationListResponseSchema.parse(response.body);
 }
 
+export const companiesOf = ({ items }: ApplicationListResponse) =>
+  items.map(({ company }) => company);
+
 export async function listPages(
   app: NestExpressApplication,
   { accessToken, query = {} }: QueryRequest,
