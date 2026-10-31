@@ -4,7 +4,6 @@ import {
   type ApplicationBoardResponse,
   applicationBoardResponseSchema,
   type ApplicationCard,
-  type ApplicationListResponse,
   applicationResponseSchema,
   errorResponseSchema,
   type Stage,
@@ -18,6 +17,7 @@ import {
   applicationPath,
   APPLICATIONS_BOARD_PATH,
   APPLICATIONS_PATH,
+  companiesOf,
   getApplicationBoard,
   getWithQuery,
   listApplications,
@@ -169,8 +169,6 @@ const boardCards = ({ columns }: ApplicationBoardResponse): ApplicationCard[] =>
   Object.values(columns).flatMap(({ items }) => items ?? []);
 
 const sortedIds = (cards: ApplicationCard[]) => cards.map(({ id }) => id).sort();
-
-const companiesOf = ({ items }: ApplicationListResponse) => items.map(({ company }) => company);
 
 describe('the application list and board routes', () => {
   const testApp = useTestApp(() => appTestingModule().overrideProvider(Clock).useValue(clock));
@@ -366,21 +364,24 @@ describe('the application list and board routes', () => {
   );
 
   it.each([
-    { q: '%', companies: ['Знижка 100%'] },
-    { q: '_', companies: ['Софт_1'] },
-    { q: 'Софт_1', companies: ['Софт_1'] },
-    { q: '\\', companies: ['Back\\slash'] },
-  ])('matches q $q as literal text on the list and the board', async ({ q, companies }) => {
-    const olena = await signedInWithSearch(testApp.prisma);
-    await rowsFor(olena, LIKE_PATTERN_ROWS);
-    const { accessToken } = olena;
+    { q: '%', companies: [] },
+    { q: '_', companies: [] },
+    { q: 'Софт_1', companies: ['Смерека Софт 10', 'Софт_1'] },
+    { q: '\\', companies: [] },
+  ])(
+    'matches q $q by words and word prefixes on the list and the board',
+    async ({ q, companies }) => {
+      const olena = await signedInWithSearch(testApp.prisma);
+      await rowsFor(olena, LIKE_PATTERN_ROWS);
+      const { accessToken } = olena;
 
-    const list = await listApplications(testApp.app, { accessToken, query: { q } });
-    const board = await getApplicationBoard(testApp.app, { accessToken, query: { q } });
+      const list = await listApplications(testApp.app, { accessToken, query: { q } });
+      const board = await getApplicationBoard(testApp.app, { accessToken, query: { q } });
 
-    expect(companiesOf(list)).toEqual(companies);
-    expect(columnViewsOf(board).applied).toEqual({ count: companies.length, companies });
-  });
+      expect(companiesOf(list)).toEqual(companies);
+      expect(columnViewsOf(board).applied).toEqual({ count: companies.length, companies });
+    },
+  );
 
   it.each([
     {
@@ -473,7 +474,7 @@ describe('the application list and board routes', () => {
       nextScheduledEvent: { kind: 'screening_call', startsAt: '2026-10-22T13:00:00.000Z' },
       aiStatus: 'processing',
     } satisfies ApplicationCard;
-    expect(list.items[0]).toEqual(card);
+    expect(list.items[0]).toEqual({ ...card, snippet: null });
     expect(board.columns.screening.items).toEqual([card]);
     expect(list.items[1]).toMatchObject({
       id: bareId,

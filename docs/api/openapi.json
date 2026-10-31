@@ -3137,7 +3137,7 @@
           "applications"
         ],
         "summary": "List Applications as cards",
-        "description": "Filters are comma lists (stage, source, silence), q searches company and position, hasScore is true or false. Without searchId only the active search is read. Pages follow nextCursor until it is null; another user's searchId answers 404.",
+        "description": "Filters are comma lists (stage, source, silence), q searches company, position, stack, vacancy text and notes by word prefix in web search syntax (quotes, or, -), hasScore is true or false. Without searchId only the active search is read. sort=relevance orders by rank and needs q, and its cursor pages only that sort. With q each item carries snippet, the matched words of its stack, vacancy text and notes, or null when only company or position matched; without q snippet is null. Pages follow nextCursor until it is null; another user's searchId answers 404.",
         "parameters": [
           {
             "schema": {
@@ -3212,7 +3212,8 @@
               "type": "string",
               "enum": [
                 "-lastEventAt",
-                "lastEventAt"
+                "lastEventAt",
+                "relevance"
               ],
               "default": "-lastEventAt"
             },
@@ -3263,7 +3264,21 @@
                         "kind": "screening_call",
                         "startsAt": "2026-10-23T13:00:00.000Z"
                       },
-                      "aiStatus": "processing"
+                      "aiStatus": "processing",
+                      "snippet": [
+                        {
+                          "text": "Go, Kubernetes, gRPC … Шукаємо досвід з ",
+                          "match": false
+                        },
+                        {
+                          "text": "Kafka",
+                          "match": true
+                        },
+                        {
+                          "text": " у продакшені",
+                          "match": false
+                        }
+                      ]
                     }
                   ],
                   "nextCursor": "WyIyMDI2LTEwLTE4VDE0OjEwOjAwLjAwMFoiLCIwMTk5ZjFhNy0zYzRkLTdlNWYtOGE2Yi05YzBkMWUyZjNhNGIiXQ"
@@ -3422,6 +3437,28 @@
                               "failed",
                               null
                             ]
+                          },
+                          "snippet": {
+                            "type": [
+                              "array",
+                              "null"
+                            ],
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "text": {
+                                  "type": "string"
+                                },
+                                "match": {
+                                  "type": "boolean"
+                                }
+                              },
+                              "required": [
+                                "text",
+                                "match"
+                              ]
+                            },
+                            "minItems": 1
                           }
                         },
                         "required": [
@@ -3443,7 +3480,8 @@
                           "stack",
                           "stackCount",
                           "nextScheduledEvent",
-                          "aiStatus"
+                          "aiStatus",
+                          "snippet"
                         ]
                       }
                     },
@@ -5419,7 +5457,7 @@
           "applications"
         ],
         "summary": "Read the kanban board of the active search",
-        "description": "Filters are comma lists (stage, source, silence), q searches company and position, hasScore is true or false. Without searchId only the active search is read. Every stage has its count; rejected, ghosted and withdrawn carry items only when named in expand.",
+        "description": "Filters are comma lists (stage, source, silence), q searches company, position, stack, vacancy text and notes by word prefix in web search syntax (quotes, or, -), hasScore is true or false. Without searchId only the active search is read. Every stage has its count; rejected, ghosted and withdrawn carry items only when named in expand.",
         "parameters": [
           {
             "schema": {

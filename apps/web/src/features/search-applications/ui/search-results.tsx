@@ -12,6 +12,7 @@ import { OptionContent } from '@/shared/ui/option-content';
 import { Spinner } from '@/shared/ui/spinner';
 
 import type { ApplicationSearch } from '../model/use-application-search';
+import { SearchSnippet } from './search-snippet';
 
 const SEARCH = uk.shell.search;
 
@@ -63,7 +64,11 @@ export function SearchResults({ search, onPick }: SearchResultsProps) {
             }}
             className={COMMAND_ITEM}
           >
-            <OptionContent option={optionOf(application)} label={application.position} />
+            <OptionContent
+              option={optionOf(application)}
+              label={application.position}
+              footnote={application.snippet && <SearchSnippet snippet={application.snippet} />}
+            />
             <StageMark stage={application.currentStage} />
           </Command.Item>
         ))}

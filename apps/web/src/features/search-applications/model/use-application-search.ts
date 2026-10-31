@@ -16,7 +16,7 @@ export function isSearchable(text: string): boolean {
 export function useApplicationSearch(text: string) {
   const q = useDebouncedValue(text.trim(), SEARCH_LIMITS.debounceMs);
   return useQuery({
-    ...applicationListQueryOptions({ q, limit: SEARCH_LIMITS.results, sort: '-lastEventAt' }),
+    ...applicationListQueryOptions({ q, limit: SEARCH_LIMITS.results, sort: 'relevance' }),
     enabled: isSearchable(q),
     placeholderData: keepPreviousData,
   });

@@ -7,6 +7,7 @@ import {
   applicationBoardResponseSchema,
   type ApplicationCard,
   applicationCardSchema,
+  applicationListItemSchema,
   applicationListQuerySchema,
 } from './application-list.js';
 
@@ -76,6 +77,14 @@ describe('applicationListQuerySchema', () => {
     expect(applicationListQuerySchema.parse({ hasScore: 'true' }).hasScore).toBe(true);
   });
 
+  it('accepts sort relevance when q is given', () => {
+    expect(applicationListQuerySchema.parse({ q: 'kafka', sort: 'relevance' })).toEqual({
+      q: 'kafka',
+      sort: 'relevance',
+      limit: 50,
+    });
+  });
+
   it.for([
     { label: 'an unknown second stage', query: { stage: 'applied,hired' }, path: 'stage.1' },
     { label: 'a stage list of commas only', query: { stage: ' , ,' }, path: 'stage' },
@@ -88,6 +97,7 @@ describe('applicationListQuerySchema', () => {
     { label: 'a q past 200 characters', query: { q: 'q'.repeat(201) }, path: 'q' },
     { label: 'a q with a NUL character', query: { q: 'a\u0000b' }, path: 'q' },
     { label: 'a sort by createdAt', query: { sort: 'createdAt' }, path: 'sort' },
+    { label: 'sort relevance without q', query: { sort: 'relevance' }, path: 'sort' },
     { label: 'limit 0', query: { limit: '0' }, path: 'limit' },
     { label: 'limit 101', query: { limit: '101' }, path: 'limit' },
     { label: 'a searchId that is not a uuid', query: { searchId: '42' }, path: 'searchId' },
@@ -122,6 +132,22 @@ describe('applicationCardSchema', () => {
   it('refuses a fourth stack item', () => {
     const card = { ...CARD, stack: [...CARD.stack, 'gRPC'] };
     expect(issuePathsOf(applicationCardSchema.safeParse(card))).toEqual(['stack']);
+  });
+});
+
+describe('applicationListItemSchema', () => {
+  it('accepts a card with a snippet split into plain and matched parts', () => {
+    const snippet = [
+      { text: 'Черги на ', match: false },
+      { text: 'Kafka', match: true },
+    ];
+    expect(applicationListItemSchema.parse({ ...CARD, snippet })).toEqual({ ...CARD, snippet });
+  });
+
+  it('refuses an empty snippet, which must be null instead', () => {
+    expect(issuePathsOf(applicationListItemSchema.safeParse({ ...CARD, snippet: [] }))).toEqual([
+      'snippet',
+    ]);
   });
 });
 

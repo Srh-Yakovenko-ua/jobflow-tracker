@@ -151,6 +151,23 @@ describe('the applications domain tables in Postgres', () => {
     });
   });
 
+  describe('notes', () => {
+    it('fills the search vector of a note and refreshes it when the body changes', async () => {
+      const { prisma } = database;
+      const { applicationId } = await createOwnedApplication(prisma);
+
+      const [inserted] = await prisma.$queryRaw<{ id: string; matches: boolean }[]>`
+        INSERT INTO notes (application_id, body) VALUES (${applicationId}::uuid, 'Офіс у Zürich, питали про Kafka')
+        RETURNING id, search_vector @@ jobflow_search_query('zurich kaf') AS matches`;
+      const edited = await prisma.$queryRaw<{ matches: boolean }[]>`
+        UPDATE notes SET body = 'Офіс у Zürich, тільки Go' WHERE id = ${inserted?.id}::uuid
+        RETURNING search_vector @@ jobflow_search_query('zurich kaf') AS matches`;
+
+      expect(inserted?.matches).toBe(true);
+      expect(edited).toEqual([{ matches: false }]);
+    });
+  });
+
   describe('searches', () => {
     it('refuses a second active search for the same user', async () => {
       const { userId } = await createOwnedApplication(database.prisma);

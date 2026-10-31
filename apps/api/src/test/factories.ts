@@ -48,6 +48,8 @@ export type NewReminder = {
 
 export type NewAiJob = { userId: string; applicationId: string; status: AiJobStatus };
 
+export type NewNote = { applicationId: string; body: string };
+
 export type LoadedBoardRow = ApplicationRowInput & {
   currentStage: Stage;
   stack: string[];
@@ -164,6 +166,11 @@ export async function createStageEvents(
   events: Prisma.StageEventCreateManyInput[],
 ): Promise<void> {
   await prisma.stageEvent.createMany({ data: events });
+}
+
+export async function createNotes(prisma: PrismaService, notes: NewNote[]): Promise<string[]> {
+  const created = await prisma.note.createManyAndReturn({ data: notes, select: { id: true } });
+  return created.map(({ id }) => id);
 }
 
 export async function createAiJob(prisma: PrismaService, job: NewAiJob): Promise<string> {

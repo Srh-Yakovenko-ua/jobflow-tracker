@@ -1,4 +1,9 @@
-import type { ApplicationCard, RejectionReasonsSummaryQuery, Stage } from '@jobflow/shared';
+import type {
+  ApplicationCard,
+  ApplicationListItem,
+  RejectionReasonsSummaryQuery,
+  Stage,
+} from '@jobflow/shared';
 import { Test } from '@nestjs/testing';
 import { describe, expect, it } from 'vitest';
 
@@ -15,6 +20,13 @@ import {
   type StageCount,
 } from './application-list.repository.js';
 import { ApplicationListService } from './application-list.service.js';
+import { HEADLINE_MARKS, type SearchMatch } from './application-search.js';
+import {
+  ApplicationSearchRepository,
+  type SearchHeadline,
+  type SearchQuery,
+  type SnippetQuery,
+} from './application-search.repository.js';
 
 type OwnedSearch = { userId: string; id: string };
 
@@ -26,11 +38,17 @@ type FakeData = {
   searches?: OwnedSearch[];
 };
 
+type FakeSearchData = { matches: SearchMatch[]; headlines: SearchHeadline[] };
+
 type CardQuery = FindCards & { userId: string };
 
 type CountQuery = { userId: string; filter: ApplicationListFilter };
 
 type ReasonQuery = RejectionReasonsSummaryQuery & { userId: string };
+
+type MatchQuery = SearchQuery & { userId: string };
+
+type HeadlineQuery = SnippetQuery & { userId: string };
 
 const MISSING_SEARCH_ID = '0199f0a0-0000-7000-8000-0000000000a2';
 
@@ -63,10 +81,48 @@ const rowAt = (stage: Stage, index: number): CardRow => ({
   lastEventAt: daysBefore(index),
 });
 
+const ROWS_BY_DATE = [1, 2, 3].map((index) => rowAt('applied', index));
+
+const UNLISTED_ID = '0199f0a0-0000-7000-8000-0000000001ff';
+
+const RANKED_MATCHES: SearchMatch[] = [
+  { id: '0199f0a0-0000-7000-8000-000000000103', rank: 0.9 },
+  { id: '0199f0a0-0000-7000-8000-000000000101', rank: 0.5 },
+  { id: UNLISTED_ID, rank: 0.4 },
+  { id: '0199f0a0-0000-7000-8000-000000000102', rank: 0.2 },
+];
+
+const KAFKA_PAGE: ApplicationListRequest = { q: 'kafka', sort: 'relevance', limit: 2 };
+
+const rowsWithin = (rows: CardRow[], ids: readonly string[] | undefined) =>
+  ids === undefined ? rows : rows.filter(({ id }) => ids.includes(id));
+
+class FakeApplicationSearchRepository {
+  readonly matchQueries: MatchQuery[] = [];
+
+  readonly headlineQueries: HeadlineQuery[] = [];
+
+  constructor(private readonly data: FakeSearchData) {}
+
+  findMatches(userId: string, query: SearchQuery): Promise<SearchMatch[]> {
+    this.matchQueries.push({ userId, ...query });
+    return Promise.resolve(this.data.matches);
+  }
+
+  findSnippets(userId: string, query: SnippetQuery): Promise<SearchHeadline[]> {
+    this.headlineQueries.push({ userId, ...query });
+    return Promise.resolve(
+      this.data.headlines.filter(({ id }) => query.applicationIds.includes(id)),
+    );
+  }
+}
+
 class FakeApplicationListRepository {
   readonly cardQueries: CardQuery[] = [];
 
   readonly countQueries: CountQuery[] = [];
+
+  readonly idQueries: CountQuery[] = [];
 
   readonly reasonQueries: ReasonQuery[] = [];
 
@@ -95,10 +151,17 @@ class FakeApplicationListRepository {
     return Promise.resolve(this.data.reasonCounts);
   }
 
+  findIds(userId: string, filter: ApplicationListFilter): Promise<string[]> {
+    this.idQueries.push({ userId, filter });
+    return Promise.resolve(rowsWithin(this.data.cards, filter.applicationIds).map(({ id }) => id));
+  }
+
   findCards(userId: string, query: FindCards): Promise<CardRow[]> {
     this.cardQueries.push({ userId, ...query });
-    const { stages, take } = query;
-    const rows = this.data.cards.filter((row) => stages?.includes(row.currentStage) ?? true);
+    const { filter, stages, take } = query;
+    const rows = rowsWithin(this.data.cards, filter.applicationIds).filter(
+      (row) => stages?.includes(row.currentStage) ?? true,
+    );
     return Promise.resolve(rows.slice(0, take));
   }
 }
@@ -109,7 +172,9 @@ async function serviceWith({
   reasonCounts = [],
   silenceDays = 7,
   searches = [{ userId: OLENA_ID, id: SEARCH_ID }],
-}: FakeData = {}) {
+  matches = [{ id: CARD_ROW.id, rank: 0.3 }],
+  headlines = [],
+}: FakeData & Partial<FakeSearchData> = {}) {
   const repository = new FakeApplicationListRepository({
     cards,
     counts,
@@ -117,15 +182,23 @@ async function serviceWith({
     silenceDays,
     searches,
   });
+  const search = new FakeApplicationSearchRepository({ matches, headlines });
   const moduleRef = await Test.createTestingModule({
-    providers: [ApplicationListService, ApplicationListRepository, Clock],
+    providers: [
+      ApplicationListService,
+      ApplicationListRepository,
+      ApplicationSearchRepository,
+      Clock,
+    ],
   })
     .overrideProvider(ApplicationListRepository)
     .useValue(repository)
+    .overrideProvider(ApplicationSearchRepository)
+    .useValue(search)
     .overrideProvider(Clock)
     .useValue({ now: () => NOW })
     .compile();
-  return { repository, service: moduleRef.get(ApplicationListService) };
+  return { repository, search, service: moduleRef.get(ApplicationListService) };
 }
 
 const itemsByStage = (columns: Record<Stage, { items: ApplicationCard[] | null }>) =>
@@ -159,8 +232,8 @@ describe('ApplicationListService.list', () => {
     ]);
   });
 
-  it('asks for one row past the limit with the sort, the cursor, the filters and the clock time', async () => {
-    const { repository, service } = await serviceWith();
+  it('asks for one row past the limit with the sort, the cursor, the filters, the ids q matched and the clock time', async () => {
+    const { repository, search, service } = await serviceWith();
     const cursor = { lastEventAt: daysBefore(3), id: CARD_ROW.id };
 
     await service.list(OLENA_ID, {
@@ -173,16 +246,128 @@ describe('ApplicationListService.list', () => {
       hasScore: true,
     });
 
+    expect(search.matchQueries).toEqual([{ userId: OLENA_ID, q: 'смерека' }]);
     expect(repository.cardQueries).toEqual([
       {
         userId: OLENA_ID,
-        filter: { stage: ['applied'], source: ['dou'], q: 'смерека', hasScore: true },
+        filter: {
+          stage: ['applied'],
+          source: ['dou'],
+          hasScore: true,
+          applicationIds: ['0199f0a0-0000-7000-8000-0000000000c1'],
+        },
         sort: 'lastEventAt',
         cursor,
         take: 21,
         now: NOW,
       },
     ]);
+  });
+
+  it('filters by an empty id list when q matched nothing, and reads no matches without q', async () => {
+    const { repository, search, service } = await serviceWith({ matches: [] });
+
+    const hits = await service.list(OLENA_ID, { ...FIRST_PAGE, q: 'erlang' });
+    await service.list(OLENA_ID, FIRST_PAGE);
+
+    expect(hits).toEqual({ items: [], nextCursor: null });
+    expect(search.matchQueries).toEqual([{ userId: OLENA_ID, q: 'erlang' }]);
+    expect(repository.cardQueries.map(({ filter }) => filter)).toEqual([
+      { applicationIds: [] },
+      {},
+    ]);
+  });
+
+  it('pages relevance by rank over the matches the other filters keep, reading the cards of the page only', async () => {
+    const { repository, service } = await serviceWith({
+      cards: ROWS_BY_DATE,
+      matches: RANKED_MATCHES,
+    });
+
+    const page = await service.list(OLENA_ID, { ...KAFKA_PAGE, source: ['dou'] });
+
+    expect(page.items.map(({ id }) => id)).toEqual([
+      '0199f0a0-0000-7000-8000-000000000103',
+      '0199f0a0-0000-7000-8000-000000000101',
+    ]);
+    expect(applicationCursorSchema.parse(page.nextCursor)).toEqual({
+      rank: 0.5,
+      id: '0199f0a0-0000-7000-8000-000000000101',
+    });
+    const matchedIds = RANKED_MATCHES.map(({ id }) => id);
+    expect(repository.idQueries).toEqual([
+      { userId: OLENA_ID, filter: { source: ['dou'], applicationIds: matchedIds } },
+    ]);
+    expect(repository.cardQueries).toEqual([
+      {
+        userId: OLENA_ID,
+        filter: {
+          source: ['dou'],
+          applicationIds: [
+            '0199f0a0-0000-7000-8000-000000000103',
+            '0199f0a0-0000-7000-8000-000000000101',
+          ],
+        },
+        sort: '-lastEventAt',
+        now: NOW,
+      },
+    ]);
+  });
+
+  it('continues relevance after the rank cursor past a match the filters drop and ends with no nextCursor', async () => {
+    const { service } = await serviceWith({ cards: ROWS_BY_DATE, matches: RANKED_MATCHES });
+    const cursor = { rank: 0.5, id: '0199f0a0-0000-7000-8000-000000000101' };
+
+    const page = await service.list(OLENA_ID, { ...KAFKA_PAGE, limit: 1, cursor });
+
+    expect([page.items.map(({ id }) => id), page.nextCursor]).toEqual([
+      ['0199f0a0-0000-7000-8000-000000000102'],
+      null,
+    ]);
+  });
+
+  it('gives each item of a q page its snippet parts, null for a headline without a match, and reads headlines for the page ids only', async () => {
+    const { search, service } = await serviceWith({
+      cards: ROWS_BY_DATE,
+      matches: RANKED_MATCHES,
+      headlines: [
+        {
+          id: '0199f0a0-0000-7000-8000-000000000103',
+          headline: `Go, ${HEADLINE_MARKS.start}Kafka${HEADLINE_MARKS.stop} і Redis`,
+        },
+        { id: '0199f0a0-0000-7000-8000-000000000101', headline: 'Go, Redis' },
+      ],
+    });
+
+    const page = await service.list(OLENA_ID, KAFKA_PAGE);
+
+    expect(page.items.map(({ snippet }) => snippet)).toEqual([
+      [
+        { text: 'Go, ', match: false },
+        { text: 'Kafka', match: true },
+        { text: ' і Redis', match: false },
+      ],
+      null,
+    ]);
+    expect(search.headlineQueries).toEqual([
+      {
+        userId: OLENA_ID,
+        q: 'kafka',
+        applicationIds: [
+          '0199f0a0-0000-7000-8000-000000000103',
+          '0199f0a0-0000-7000-8000-000000000101',
+        ],
+      },
+    ]);
+  });
+
+  it('reads no headlines and gives a null snippet without q', async () => {
+    const { search, service } = await serviceWith();
+
+    const page = await service.list(OLENA_ID, FIRST_PAGE);
+
+    expect(page.items.map(({ snippet }) => snippet)).toEqual([null]);
+    expect(search.headlineQueries).toEqual([]);
   });
 
   it('gives a nextCursor at the last kept row when one row more than the limit came back', async () => {
@@ -309,6 +494,20 @@ describe('ApplicationListService.board', () => {
     ]);
     expect(repository.countQueries).toEqual([{ userId: OLENA_ID, filter: { source: ['djinni'] } }]);
   });
+
+  it('counts and shows on the board only the ids q matched', async () => {
+    const { repository, search, service } = await serviceWith({
+      cards: ROWS_BY_DATE,
+      matches: RANKED_MATCHES,
+    });
+
+    await service.board(OLENA_ID, { q: 'kafka', source: ['dou'] });
+
+    const filter = { source: ['dou'], applicationIds: RANKED_MATCHES.map(({ id }) => id) };
+    expect(search.matchQueries).toEqual([{ userId: OLENA_ID, q: 'kafka' }]);
+    expect(repository.countQueries).toEqual([{ userId: OLENA_ID, filter }]);
+    expect(repository.cardQueries.map((query) => query.filter)).toEqual([filter]);
+  });
 });
 
 describe('ApplicationListService.reasonsSummary', () => {
@@ -374,8 +573,9 @@ describe('the application card', () => {
         daysInStage: 6,
         daysSinceLastEvent: 4,
         silenceLevel: 'warn',
+        snippet: null,
       },
-    ] satisfies ApplicationCard[]);
+    ] satisfies ApplicationListItem[]);
   });
 
   it('gives null for no applied date, no planned event and no AI job, and counts days in stage from createdAt without a stage event', async () => {

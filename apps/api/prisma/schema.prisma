@@ -384,14 +384,16 @@ model Contact {
 }
 
 model Note {
-  id            String      @id @default(dbgenerated("uuidv7()")) @db.Uuid
-  applicationId String      @map("application_id") @db.Uuid
+  id            String                   @id @default(dbgenerated("uuidv7()")) @db.Uuid
+  applicationId String                   @map("application_id") @db.Uuid
   body          String
-  createdAt     DateTime    @default(now()) @map("created_at") @db.Timestamptz
-  updatedAt     DateTime    @default(now()) @updatedAt @map("updated_at") @db.Timestamptz
-  application   Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  searchVector  Unsupported("tsvector")? @map("search_vector")
+  createdAt     DateTime                 @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt     DateTime                 @default(now()) @updatedAt @map("updated_at") @db.Timestamptz
+  application   Application              @relation(fields: [applicationId], references: [id], onDelete: Cascade)
 
   @@index([applicationId])
+  @@index([searchVector], type: Gin)
   @@map("notes")
 }
 
