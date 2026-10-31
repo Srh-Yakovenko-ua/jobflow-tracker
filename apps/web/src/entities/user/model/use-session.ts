@@ -14,6 +14,7 @@ export type Session = {
   user: MeResponse['user'] | undefined;
   settings: MeResponse['settings'] | undefined;
   logout: () => void;
+  logoutEverywhere: () => void;
 };
 
 export function useSession(): Session {
@@ -33,7 +34,10 @@ export function useSession(): Session {
     user: me?.user,
     settings: me?.settings,
     logout: () => {
-      mutate();
+      mutate('this');
+    },
+    logoutEverywhere: () => {
+      mutate('all');
     },
   };
 }

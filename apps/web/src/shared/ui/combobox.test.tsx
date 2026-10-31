@@ -15,15 +15,19 @@ const SOURCE_VIEW = { label: SOURCE.label, search: SOURCE.search, placeholder: S
 
 const STACK_VIEW = { label: STACK.label, search: STACK.search, placeholder: STACK.placeholder };
 
-type SourcePickerProps = Readonly<{ value: string; onValueChange: (value: string) => void }>;
+type SourcePickerProps = Readonly<{
+  value: string;
+  onValueChange: (value: string) => void;
+  view?: ComboboxView;
+}>;
 
-function SourcePicker(selection: SourcePickerProps) {
+function SourcePicker({ view = SOURCE_VIEW, ...selection }: SourcePickerProps) {
   return (
     <Field label={SOURCE.label}>
       <Combobox
         groups={[{ options: SOURCE_OPTIONS }]}
         selection={{ mode: 'single', ...selection }}
-        view={SOURCE_VIEW}
+        view={view}
       />
     </Field>
   );
@@ -64,6 +68,20 @@ describe('Combobox', () => {
     render(<SourcePicker value="djinni" onValueChange={vi.fn()} />);
 
     expect(triggerOf(SOURCE.label).textContent).toBe('Djinni');
+  });
+
+  it('a single pick that must keep a value offers no clear button, an optional one does', () => {
+    const { rerender } = render(<SourcePicker value="djinni" onValueChange={vi.fn()} />);
+
+    expect(screen.getByRole('button', { name: uk.ui.clear })).toBeDefined();
+    rerender(
+      <SourcePicker
+        value="djinni"
+        onValueChange={vi.fn()}
+        view={{ ...SOURCE_VIEW, clearable: false }}
+      />,
+    );
+    expect(screen.queryByRole('button', { name: uk.ui.clear })).toBeNull();
   });
 
   it('the trigger hit area reaches 44 px over the 38 px control', () => {

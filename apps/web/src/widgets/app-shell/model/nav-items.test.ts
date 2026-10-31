@@ -1,21 +1,13 @@
 import { describe, expect, it } from 'vitest';
 
-import { FEATURE_FLAGS, type FeatureFlags } from '@/shared/config';
+import { FEATURE_FLAGS } from '@/shared/config';
+import { EVERY_FLAG_ON } from '@/test/feature-flags';
 
 import { activeHrefOf, NAV_ITEMS, visibleNavItems } from './nav-items';
 
-const EVERY_FLAG_ON: FeatureFlags = {
-  analytics: true,
-  calendar: true,
-  resumes: true,
-  reminders: true,
-  settings: true,
-  addApplication: true,
-};
-
 describe('visibleNavItems', () => {
-  it('shows only the board while no other page has shipped', () => {
-    expect(visibleNavItems(FEATURE_FLAGS).map((item) => item.id)).toEqual(['board']);
+  it('shows the board and settings while no other page has shipped', () => {
+    expect(visibleNavItems(FEATURE_FLAGS).map((item) => item.id)).toEqual(['board', 'settings']);
   });
 
   it('shows all six pages in order once every flag is on', () => {

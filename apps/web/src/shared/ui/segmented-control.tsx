@@ -30,7 +30,7 @@ export function SegmentedControl<Value extends string>({
         <RadioGroupPrimitive.Item
           key={option.value}
           value={option.value}
-          className="touch-target h-7.5 rounded-[7px] px-3.25 font-ui text-[12.5px] font-semibold whitespace-nowrap text-ink-2 transition-[background-color,color,box-shadow] duration-(--duration-fast) ease-standard hover:text-ink data-[state=checked]:bg-surface data-[state=checked]:text-ink data-[state=checked]:shadow-e1"
+          className="touch-target h-7.5 min-w-11 rounded-[7px] px-3.25 font-ui text-[12.5px] font-semibold whitespace-nowrap text-ink-2 transition-[background-color,color,box-shadow] duration-(--duration-fast) ease-standard hover:text-ink data-[state=checked]:bg-surface data-[state=checked]:text-ink data-[state=checked]:shadow-e1"
         >
           {option.label}
         </RadioGroupPrimitive.Item>

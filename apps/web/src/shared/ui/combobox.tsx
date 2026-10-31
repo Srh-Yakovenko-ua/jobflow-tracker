@@ -119,7 +119,7 @@ export function Combobox({ groups, selection, view, onCreate }: ComboboxProps) {
               {summary ?? (picked.length === 0 ? view.placeholder : undefined)}
             </span>
           </PopoverTrigger>
-          {picked.length > 0 && (
+          {picked.length > 0 && view.clearable !== false && (
             <ClearButton
               label={selection.mode === 'multi' ? uk.ui.clearAll : uk.ui.clear}
               onClear={clear}

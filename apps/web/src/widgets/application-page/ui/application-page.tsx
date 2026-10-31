@@ -6,11 +6,10 @@ import { useRef } from 'react';
 
 import { DeleteApplicationDialog } from '@/features/delete-application';
 import { ApplicationEditForm } from '@/features/edit-application';
-import { uk } from '@/shared/i18n';
 import { AUTH_ROUTES } from '@/shared/lib/return-to';
 import { LoadFailedPanel } from '@/shared/ui/error-panel';
 import { NotFoundState } from '@/shared/ui/not-found-state';
-import { HeadingSkeleton, TextSkeleton } from '@/shared/ui/skeleton';
+import { PageSkeleton } from '@/shared/ui/skeleton';
 
 import { useApplicationPage } from '../model/use-application-page';
 import { ApplicationActions } from './application-actions';
@@ -27,18 +26,6 @@ export type ApplicationPageProps = Readonly<{
 
 const COLUMNS =
   'grid grid-cols-1 items-start gap-10 pt-8 @4xl:grid-cols-[minmax(0,1.55fr)_minmax(280px,1fr)]';
-
-function PageSkeleton() {
-  return (
-    <div aria-busy="true" className="flex flex-col gap-8 pt-14">
-      <p role="status" className="sr-only">
-        {uk.ui.loading}
-      </p>
-      <HeadingSkeleton />
-      <TextSkeleton />
-    </div>
-  );
-}
 
 function useLeaveAfterDelete(mode: ApplicationPageMode): () => void {
   const router = useRouter();
@@ -59,7 +46,11 @@ function PageContent({ id, view }: ApplicationPageProps) {
   const { application, panel } = page;
   if (page.missing) return <NotFoundState />;
   if (application === undefined) {
-    return page.load.failed ? <LoadFailedPanel onRetry={page.load.onRetry} /> : <PageSkeleton />;
+    return page.load.failed ? (
+      <LoadFailedPanel onRetry={page.load.onRetry} />
+    ) : (
+      <PageSkeleton className="pt-14" />
+    );
   }
   const editing = panel?.kind === 'edit' ? panel.field : null;
   const focusTitle = () => {
