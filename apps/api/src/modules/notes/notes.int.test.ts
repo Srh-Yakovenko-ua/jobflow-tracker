@@ -4,24 +4,21 @@ import {
   noteListResponseSchema,
   noteSchema,
 } from '@jobflow/shared';
-import type { Response } from 'supertest';
 import { beforeEach, describe, expect, it } from 'vitest';
 
 import { Clock } from '../../common/clock.js';
 import { appTestingModule, useTestApp } from '../../test/app.js';
 import {
   applicationPath,
-  createApplication,
+  foreignReaches,
   notePath,
   notesPath,
   type NoteTarget,
-  ROMASHKA,
   type SignedInApplication,
   signUpWithApplication,
   timelinePath,
 } from '../../test/applications.js';
-import { BOHDAN } from '../../test/auth.js';
-import { callRoute, errorPathsOf, type RouteCall } from '../../test/http.js';
+import { callRoute, errorPathsOf, type RouteCall, statusAndDetail } from '../../test/http.js';
 import { minutesAfter, NOW, settableClock } from '../../test/time.js';
 import { NOTE_SELECT } from './notes.repository.js';
 
@@ -55,11 +52,6 @@ const noteRoutes = (target: NoteTarget, body: object = EDITED): NoteRoutes => ({
   patch: { method: 'patch', path: notePath(target), body },
   delete: { method: 'delete', path: notePath(target) },
 });
-
-const statusAndDetail = ({ status, body }: Response) => [
-  status,
-  errorResponseSchema.safeParse(body).data?.detail,
-];
 
 describe('the notes routes', () => {
   const testApp = useTestApp(() => appTestingModule().overrideProvider(Clock).useValue(clock));
@@ -102,26 +94,6 @@ describe('the notes routes', () => {
     const { items } = applicationTimelineResponseSchema.parse(response.body);
     return items.filter(({ type }) => type === 'note_added');
   }
-
-  const FOREIGN_REACHES = [
-    {
-      case: "OLENA's note under her other application",
-      reach: async (note: SignedInNote): Promise<SignedInNote> => {
-        const other = await createApplication(testApp.app, {
-          accessToken: note.accessToken,
-          input: ROMASHKA,
-        });
-        return { ...note, id: other.id };
-      },
-    },
-    {
-      case: "OLENA's note id under BOHDAN's own application",
-      reach: async ({ noteId }: SignedInNote): Promise<SignedInNote> => ({
-        ...(await signUpWithApplication(testApp.app, BOHDAN)),
-        noteId,
-      }),
-    },
-  ];
 
   it('POST answers 201 with the note and stores the markdown body byte for byte, script tag included', async () => {
     const application = await signUpWithApplication(testApp.app);
@@ -245,7 +217,7 @@ describe('the notes routes', () => {
     expect(noteSchema.parse(response.body).body).toBe(body);
   });
 
-  it.each(FOREIGN_REACHES)(
+  it.each(foreignReaches<SignedInNote>(testApp, 'note'))(
     'PATCH and DELETE answer $case with 404 and keep the note',
     async ({ reach }) => {
       const note = await olenaWithNote();

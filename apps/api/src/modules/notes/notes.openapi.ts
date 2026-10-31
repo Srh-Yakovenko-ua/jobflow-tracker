@@ -12,7 +12,8 @@ import {
 import {
   applicationIdParams,
   errorResponses,
-  EXAMPLE_APPLICATION_ID,
+  EXAMPLE_CHILD_ROW,
+  EXAMPLE_EDITED_AT,
   jsonContent,
 } from '../../openapi/route.js';
 
@@ -22,13 +23,7 @@ const NOTE_INPUT = {
   body: "## Технічне інтерв'ю\n\n- Спитати про on-call\n- Повторити індекси в PostgreSQL",
 } satisfies NoteInput;
 
-const NOTE = {
-  ...NOTE_INPUT,
-  id: EXAMPLE_NOTE_ID,
-  applicationId: EXAMPLE_APPLICATION_ID,
-  createdAt: '2026-10-23T18:05:00.000Z',
-  updatedAt: '2026-10-23T18:05:00.000Z',
-} satisfies Note;
+const NOTE = { ...NOTE_INPUT, id: EXAMPLE_NOTE_ID, ...EXAMPLE_CHILD_ROW } satisfies Note;
 
 const NOTES_PATH = '/applications/{id}/notes';
 
@@ -87,7 +82,7 @@ export const NOTES_OPENAPI_PATHS: RouteConfig[] = [
     responses: {
       200: {
         description: 'The changed note',
-        content: jsonContent(noteSchema, { ...NOTE, updatedAt: '2026-10-24T07:40:00.000Z' }),
+        content: jsonContent(noteSchema, { ...NOTE, updatedAt: EXAMPLE_EDITED_AT }),
       },
       ...bodyErrors,
     },

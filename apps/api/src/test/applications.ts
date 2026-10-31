@@ -15,7 +15,7 @@ import { Clock } from '../common/clock.js';
 import type { ApplicationEvent } from '../modules/applications/index.js';
 import type { PrismaService } from '../prisma/prisma.service.js';
 import { appTestingModule, type TestApp, useTestApp } from './app.js';
-import { accessTokenFor, OLENA, signUp, type SignUpInput } from './auth.js';
+import { accessTokenFor, BOHDAN, OLENA, signUp, type SignUpInput } from './auth.js';
 import { createSearch, createUser, seedRejectionReasons } from './factories.js';
 import { callRoute } from './http.js';
 import { NOW, type SettableClock } from './time.js';
@@ -44,7 +44,14 @@ export type UndoRequest = Omit<StageMoveRequest, 'input'>;
 
 export type NoteTarget = { id: string; noteId: string };
 
+export type ContactTarget = { id: string; contactId: string };
+
 export type SignedInApplication = { accessToken: string; id: string };
+
+export type ForeignReach<Target extends SignedInApplication> = {
+  case: string;
+  reach: (target: Target) => Promise<Target>;
+};
 
 export const ROMASHKA = {
   company: 'Ромашка',
@@ -62,6 +69,10 @@ export const timelinePath = (id: string) => `${applicationPath(id)}/timeline`;
 export const notesPath = (id: string) => `${applicationPath(id)}/notes`;
 
 export const notePath = ({ id, noteId }: NoteTarget) => `${notesPath(id)}/${noteId}`;
+
+export const contactsPath = (id: string) => `${applicationPath(id)}/contacts`;
+
+export const contactPath = ({ id, contactId }: ContactTarget) => `${contactsPath(id)}/${contactId}`;
 
 export function postStageMove(
   app: NestExpressApplication,
@@ -96,6 +107,31 @@ export async function signUpWithApplication(
   const { accessToken } = await signUp(app, user);
   const { id } = await createApplication(app, { accessToken, input: ROMASHKA });
   return { accessToken, id };
+}
+
+export function foreignReaches<Target extends SignedInApplication>(
+  testApp: TestApp,
+  child: string,
+): ForeignReach<Target>[] {
+  return [
+    {
+      case: `OLENA's ${child} under her other application`,
+      reach: async (target) => {
+        const other = await createApplication(testApp.app, {
+          accessToken: target.accessToken,
+          input: ROMASHKA,
+        });
+        return { ...target, id: other.id };
+      },
+    },
+    {
+      case: `OLENA's ${child} id under BOHDAN's own application`,
+      reach: async (target) => ({
+        ...target,
+        ...(await signUpWithApplication(testApp.app, BOHDAN)),
+      }),
+    },
+  ];
 }
 
 export function getWithQuery(

@@ -6,6 +6,7 @@ import {
   canTransition,
   INACTIVE_STAGES,
   isActiveStage,
+  isReplyStage,
   OPEN_STAGES,
   OUTCOME_STAGES,
   RESPONSE_STAGES,
@@ -158,6 +159,27 @@ describe('isActiveStage', () => {
       'final',
     ]);
     expect(INACTIVE_STAGES).toEqual(['offer', 'rejected', 'ghosted', 'withdrawn']);
+  });
+});
+
+describe('isReplyStage', () => {
+  const REPLY_BY_STAGE = [
+    ['applied', true],
+    ['screening', true],
+    ['tech_interview', true],
+    ['final', true],
+    ['offer', true],
+    ['rejected', true],
+    ['ghosted', false],
+    ['withdrawn', false],
+  ] as const;
+
+  it('has an expected answer for every stage', () => {
+    expect(REPLY_BY_STAGE.map(([stage]) => stage)).toEqual(STAGES);
+  });
+
+  it.for(REPLY_BY_STAGE)('counts a move to %s as a company reply: %s', ([stage, expected]) => {
+    expect(isReplyStage(stage)).toBe(expected);
   });
 });
 
