@@ -42,9 +42,13 @@ export const AUTH_RESPONSE: AuthResponse = {
   accessToken: SESSION_TOKENS.fresh,
 };
 
-export function meRoute(settings: Partial<MeResponse['settings']> = {}) {
-  const me: MeResponse = { ...ME_RESPONSE, settings: { ...ME_RESPONSE.settings, ...settings } };
-  return http.get(apiUrl('/auth/me'), () => HttpResponse.json(me));
+export function meWithSettings(settings: Partial<MeResponse['settings']>): MeResponse {
+  return { ...ME_RESPONSE, settings: { ...ME_RESPONSE.settings, ...settings } };
+}
+
+export function meRoute(me: Partial<MeResponse['settings']> | HttpResponseResolver = {}) {
+  const reply = typeof me === 'function' ? me : () => HttpResponse.json(meWithSettings(me));
+  return http.get(apiUrl('/auth/me'), reply);
 }
 
 export function authRoute({

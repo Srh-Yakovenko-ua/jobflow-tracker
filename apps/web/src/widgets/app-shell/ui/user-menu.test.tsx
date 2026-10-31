@@ -79,7 +79,10 @@ describe('UserMenu', () => {
     server.use(meRoute());
     const { user, menu } = await openWithKeyboard();
 
-    await user.keyboard('{ArrowDown}');
+    expect(document.activeElement).toBe(
+      within(menu).getByRole('menuitem', { name: uk.shell.nav.settings }),
+    );
+    await user.keyboard('{ArrowDown}{ArrowDown}');
     expect(document.activeElement).toBe(
       within(menu).getByRole('menuitemradio', { name: uk.theme.dark }),
     );

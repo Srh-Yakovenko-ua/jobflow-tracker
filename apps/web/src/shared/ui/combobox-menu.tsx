@@ -27,6 +27,7 @@ export type ComboboxView = {
   search: string;
   placeholder?: string;
   footer?: boolean;
+  clearable?: boolean;
 };
 
 export type ComboboxMenuProps = Readonly<{

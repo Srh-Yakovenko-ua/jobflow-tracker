@@ -5,6 +5,11 @@ export const FEATURES = [
   'reminders',
   'settings',
   'addApplication',
+  'browserPush',
+  'emailNotifications',
+  'captureToken',
+  'aiDataDeletion',
+  'accountDeletion',
 ] as const;
 
 export type FeatureFlag = (typeof FEATURES)[number];
@@ -16,6 +21,11 @@ export const FEATURE_FLAGS: FeatureFlags = {
   calendar: false,
   resumes: false,
   reminders: false,
-  settings: false,
+  settings: true,
   addApplication: false,
+  browserPush: false,
+  emailNotifications: false,
+  captureToken: false,
+  aiDataDeletion: false,
+  accountDeletion: false,
 };

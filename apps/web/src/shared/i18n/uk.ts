@@ -5,6 +5,7 @@ import { applicationPage } from './application-page';
 import { auth } from './auth';
 import { board } from './board';
 import { devUi } from './dev-ui';
+import { settings } from './settings';
 import { shell } from './shell';
 import { states } from './states';
 import { timeline } from './timeline';
@@ -48,6 +49,7 @@ export const uk = {
   },
   auth,
   board,
+  settings,
   designSystem: {
     pageTitle: 'Дизайн-система',
     typography: {

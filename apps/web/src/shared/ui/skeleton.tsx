@@ -2,6 +2,7 @@
 
 import type { ComponentType } from 'react';
 
+import { uk } from '@/shared/i18n';
 import { cn } from '@/shared/lib/cn';
 
 import { SHIMMER } from './shimmer';
@@ -113,6 +114,20 @@ export function TextSkeleton() {
       {TEXT_LINES.map((width) => (
         <Bar key={width} motion={motion} className={cn('h-2.75', width)} />
       ))}
+    </div>
+  );
+}
+
+export type PageSkeletonProps = Readonly<{ className?: string }>;
+
+export function PageSkeleton({ className }: PageSkeletonProps) {
+  return (
+    <div aria-busy="true" className={cn('flex flex-col gap-8', className)}>
+      <p role="status" className="sr-only">
+        {uk.ui.loading}
+      </p>
+      <HeadingSkeleton />
+      <TextSkeleton />
     </div>
   );
 }
