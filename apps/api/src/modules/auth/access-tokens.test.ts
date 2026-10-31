@@ -1,8 +1,8 @@
-import { generateKeyPair, jwtVerify, SignJWT } from 'jose';
+import { generateKeyPair, SignJWT } from 'jose';
 import { describe, expect, it } from 'vitest';
 import { z } from 'zod';
 
-import { testJwtKeys } from '../../test/auth.js';
+import { TEST_KEY_HEADER, testJwtKeys, verifyWithTestKey } from '../../test/auth.js';
 import { AccessTokens, signAccessToken } from './access-tokens.js';
 import { jwtKeysFrom } from './jwt-keys.js';
 
@@ -19,7 +19,7 @@ const encodePart = (part: object) => Buffer.from(JSON.stringify(part)).toString(
 const claims = { sub: USER_ID, scope: 'user analytics:read', jti: crypto.randomUUID() };
 
 const signedByTestKey = (jwt: SignJWT) =>
-  jwt.setProtectedHeader({ alg: 'RS256', kid: testJwtKeys.jwk.kid }).sign(testJwtKeys.privateKey);
+  jwt.setProtectedHeader(TEST_KEY_HEADER).sign(testJwtKeys.privateKey);
 
 const forgedTokens: [string, () => Promise<string>][] = [
   ['signed by another key', () => signAccessToken({ keys: otherKeys, userId: USER_ID })],
@@ -56,11 +56,8 @@ describe('signAccessToken', () => {
       issuedAt: ISSUED_AT,
     });
 
-    const { payload, protectedHeader } = await jwtVerify(token, testJwtKeys.publicKey, {
-      currentDate: ISSUED_AT,
-    });
-    expect(protectedHeader).toEqual({ alg: 'RS256', kid: testJwtKeys.jwk.kid });
-    const { jti, ...claims } = payload;
+    const { protectedHeader, jti, claims } = await verifyWithTestKey(token, ISSUED_AT);
+    expect(protectedHeader).toEqual(TEST_KEY_HEADER);
     expect(claims).toEqual({
       sub: USER_ID,
       scope: 'user analytics:read',

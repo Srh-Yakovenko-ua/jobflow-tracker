@@ -1,0 +1,10 @@
+{
+  "company": "Acme",
+  "position": "Senior React Developer",
+  "location": null,
+  "workMode": "remote",
+  "salaryMin": 4000,
+  "salaryMax": 5000,
+  "currency": "USD",
+  "stack": ["React", "TypeScript"]
+}

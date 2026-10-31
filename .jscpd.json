@@ -11,7 +11,8 @@
     "docs/design/**",
     "**/migrations/**",
     "**/generated/**",
-    "**/test/fixtures/**"
+    "**/test/fixtures/**",
+    "services/ai/app/contracts/**"
   ],
   "gitignore": true
 }

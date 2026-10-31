@@ -1,4 +1,4 @@
 {
   "extends": "@jobflow/config/tsconfig.base.json",
-  "include": ["src", "tokens"]
+  "include": ["src", "testing", "tokens"]
 }

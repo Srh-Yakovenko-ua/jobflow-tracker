@@ -9,8 +9,8 @@
 - Щонайменше 6 ГБ пам'яті для Docker.
 - Node.js 26, версія записана в `.nvmrc`. З nvm: `nvm install && nvm use` у корені репозиторію.
 - pnpm 12.14.0, як у полі `packageManager` у `package.json`. Node 26 постачається без corepack, тому pnpm ставиться окремо: `npm install -g pnpm@12.14.0`.
-- Вільні порти з таблиці нижче, насамперед 5432, 6379, 9000, 9001, 1025, 8025, 4000 і 3000.
-- uv знадобиться для Python-сервісів (`services/analytics`, `services/documents`, `services/ai`), коли вони з'являться.
+- Вільні порти з таблиці нижче, насамперед 5432, 6379, 9000, 9001, 1025, 8025, 4000, 3000 і 8001.
+- uv для Python-сервісів. Зараз він потрібен `services/ai`, згодом `services/analytics` і `services/documents`. Без uv `pnpm dev` не запустить `services/ai`.
 
 ## Кроки
 
@@ -28,7 +28,7 @@ pnpm dev
 2. `pnpm install --frozen-lockfile` ставить залежності точно за `pnpm-lock.yaml` і вмикає git-хуки husky.
 3. `cp .env.example .env` створює єдиний кореневий `.env`. Значення з `.env.example` підходять для локального стеку, міняти їх не треба. Змінна `COMPOSE_FILE` у ньому вказує compose на `infra/docker/`, тому `docker compose` працює з кореня без `-f`.
 4. `pnpm gen:keys` створює пару ключів RS256 для JWT і друкує `JWT keys written to .secrets/jwt-private.pem and .secrets/jwt-public.pem.` Повторний запуск ключі не перезаписує, а друкує `JWT keys already exist in .secrets/, nothing to do.`
-5. `pnpm dev` піднімає Postgres, Redis, MinIO і Mailpit, чекає до 120 секунд, поки їхні healthcheck-и стануть healthy, і створює бакет `resumes`. Далі йдуть міграції, а за ними api на порту 4000 і web на порту 3000, обидва з hot reload через `turbo dev`. Ctrl+C зупиняє застосунки, контейнери інфраструктури працюють далі.
+5. `pnpm dev` піднімає Postgres, Redis, MinIO і Mailpit, чекає до 120 секунд, поки їхні healthcheck-и стануть healthy, і створює бакет `resumes`. Далі йдуть міграції, а за ними api на порту 4000, web на порту 3000 і ai на порту 8001, усі з hot reload через `turbo dev`. Ctrl+C зупиняє застосунки, контейнери інфраструктури працюють далі.
 
 Міграції запускає `pnpm db:migrate`, тобто `prisma migrate deploy` у `apps/api`. На порожній базі перший запуск застосовує всі міграції з `apps/api/prisma/migrations` і друкує серед іншого такі рядки:
 
@@ -53,13 +53,13 @@ Api живий, якщо http://localhost:4000/api/v1/health відповіда�
 docker compose up -d
 ```
 
-Зараз у compose є інфраструктура, api, worker і web. Лише api і worker разом з Redis, від якого вони залежать:
+Зараз у compose є інфраструктура, api, worker, web і ai. Лише api і worker разом з Redis, від якого вони залежать:
 
 ```bash
 docker compose up -d --build --wait api worker
 ```
 
-Команда збирає образ api (ціль `dev`, `apps/api/src` змонтовано в контейнер) і повертає керування, коли healthcheck api стане `healthy`, а worker запуститься. Worker використовує той самий образ з іншою командою, порту не має і healthcheck-а теж, тому в `docker compose ps` у колонці `STATUS` у нього лише `Up`, без `(healthy)`. `--build` потрібен, щоб після pull образ підхопив нові залежності. Health відповідає на http://localhost:4000/api/v1/health. Контейнер api займає той самий порт 4000, що й `pnpm dev`, тому одночасно працює щось одне. Контейнери analytics, documents і ai додадуть картки з таблиці портів. Моніторинг (Grafana, Jaeger та інші) вмикатиметься профілем: `docker compose --profile observability up -d`, коли з'являться картки OBS.
+Команда збирає образ api (ціль `dev`, `apps/api/src` змонтовано в контейнер) і повертає керування, коли healthcheck api стане `healthy`, а worker запуститься. Worker використовує той самий образ з іншою командою, порту не має і healthcheck-а теж, тому в `docker compose ps` у колонці `STATUS` у нього лише `Up`, без `(healthy)`. `--build` потрібен, щоб після pull образ підхопив нові залежності. Health відповідає на http://localhost:4000/api/v1/health. Контейнер api займає той самий порт 4000, що й `pnpm dev`, тому одночасно працює щось одне. Контейнер ai описано в розділі [AI](#ai), analytics і documents додадуть картки з таблиці портів. Моніторинг (Grafana, Jaeger та інші) вмикатиметься профілем: `docker compose --profile observability up -d`, коли з'являться картки OBS.
 
 Лише web:
 
@@ -100,7 +100,7 @@ docker compose down
 | worker        | без порту                  | працює             |
 | web (Next.js) | 3000                       | працює             |
 | analytics     | 8000                       | з'явиться в AN-01  |
-| ai            | 8001                       | з'явиться в AI-01  |
+| ai            | 8001                       | працює             |
 | documents     | 8002                       | з'явиться в AI-11  |
 | Prometheus    | 9090                       | з'явиться в OBS-02 |
 | Grafana       | 3001                       | з'явиться в OBS-02 |
@@ -132,7 +132,7 @@ docker compose down
 | `pnpm gen:vapid`                            | ключі VAPID для web push у `.env`                                                        | з'явиться в BE-36                                  |
 | `pnpm lint`, `pnpm typecheck`, `pnpm build` | ESLint, перевірка типів, збірка всіх пакетів                                             | працює                                             |
 | `pnpm format`                               | Prettier по всьому репозиторію                                                           | працює                                             |
-| `docker compose logs -f api worker`         | стежити за логами api і worker (JSON, з `requestId`)                                     | працює, логи ai з'являться в AI-01                 |
+| `docker compose logs -f api worker`         | стежити за логами api і worker (JSON, з `requestId`)                                     | працює, логи ai: `docker compose logs -f ai`       |
 
 Python-тести запускаються в теці сервісу: `uv run pytest`.
 
@@ -144,7 +144,27 @@ Python-тести запускаються в теці сервісу: `uv run p
 
 ## AI
 
-AI-провайдера обирає `services/ai`, а не API. Ключі вендорів і `AI_PROVIDER` задаються в `services/ai/.env`, за замовчуванням там провайдер `fake`, якому ключ і модель не потрібні. Сервіс з'явиться в AI-01. API знає лише `AI_SERVICE_URL`, адресу сервісу (локально `http://localhost:8001`).
+AI-провайдера обирає `services/ai`, а не API. API знає лише `AI_SERVICE_URL`, адресу сервісу: на хості `http://localhost:8001`, у compose `http://ai:8001`.
+
+У сервісу свій `.env`, окремий від кореневого:
+
+```bash
+cp services/ai/.env.example services/ai/.env
+```
+
+`AI_PROVIDER` приймає `fake`, `anthropic`, `openai` або `nvidia`. За замовчуванням стоїть `fake`: він повертає фікстури, ключ і модель йому не потрібні, тому для розробки, тестів і демо файл можна не міняти. Для справжнього вендора задайте `AI_MODEL` і ключ цього вендора: `ANTHROPIC_API_KEY`, `OPENAI_API_KEY` або `NVIDIA_API_KEY`. `nvidia` звертається до OpenAI-сумісного каталогу NVIDIA за адресою `NVIDIA_BASE_URL`. Провайдер перемикається лише в `services/ai/.env`, після чого сервіс треба перезапустити: на хості перезапуском `pnpm dev`, у compose командою `docker compose up -d --force-recreate ai`. Якщо ключа чи моделі бракує, сервіс не стартує і називає їх, наприклад `AI_PROVIDER=nvidia needs AI_MODEL, NVIDIA_API_KEY`.
+
+На хості сервіс запускає `pnpm dev` разом з api і web: turbo виконує скрипт `dev` з `services/ai/package.json`, тобто `uv run uvicorn` на 127.0.0.1:8001 з hot reload. Перший запуск сам створює `services/ai/.venv` за `uv.lock`, а якщо Python 3.14 немає, uv його завантажить. Лише ai, без решти: `pnpm --filter @jobflow/ai dev`.
+
+У контейнері:
+
+```bash
+docker compose up -d --build --wait ai
+```
+
+Образ збирається з цілі `dev`, `services/ai/app` змонтовано в контейнер, і uvicorn перезапускається після змін у ньому. Команда повертає керування, коли healthcheck ai стане `healthy`: http://localhost:8001/health відповідає `{"status":"ok"}`. Контейнер займає той самий порт 8001, що й `pnpm dev`, тому одночасно працює щось одне.
+
+`POST /v1/complete/{kind}` і `POST /v1/embed` викликає лише worker із сервісним токеном. Без токена сервіс відповідає 401. Публічний ключ для перевірки токена він бере з JWKS api, тому поки api не працює, запит з токеном отримує 503.
 
 ## Типові проблеми
 

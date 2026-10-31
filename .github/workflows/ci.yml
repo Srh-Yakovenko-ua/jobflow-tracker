@@ -21,6 +21,7 @@ jobs:
     timeout-minutes: 5
     outputs:
       code: ${{ steps.diff.outputs.code }}
+      ai: ${{ steps.diff.outputs.ai }}
     steps:
       - uses: actions/checkout@v7.0.1
         with:
@@ -30,12 +31,17 @@ jobs:
           BASE: ${{ github.event.pull_request.base.sha || github.event.before }}
         run: |
           code=true
+          ai=true
           if files=$(git -c core.quotePath=false diff --name-only "$BASE" HEAD); then
             if ! grep -qvE '^docs/|\.md$' <<< "$files" && ! grep -qxF -e 'docs/diagrams/erd.md' -e 'docs/api/openapi.json' <<< "$files"; then
               code=false
             fi
+            if ! grep -qE '^(services/ai|packages/shared/src/ai)/' <<< "$files"; then
+              ai=false
+            fi
           fi
           echo "code=$code" >> "$GITHUB_OUTPUT"
+          echo "ai=$ai" >> "$GITHUB_OUTPUT"
 
   lint:
     runs-on: ubuntu-latest
@@ -145,9 +151,35 @@ jobs:
     steps:
       - uses: actions/checkout@v7.0.1
       - uses: ./.github/actions/setup
+      - uses: astral-sh/setup-uv@v10.3.3
+        with:
+          working-directory: services/ai
+          enable-cache: true
       - run: pnpm contracts
       - run: pnpm --filter @jobflow/api db:erd
       - run: git diff --exit-code -- docs/diagrams/erd.md
+      - run: pnpm gen:contracts
+      - run: git diff --exit-code -- services/ai/app/contracts
+
+  ai:
+    needs: changes
+    if: needs.changes.outputs.ai == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: services/ai
+    steps:
+      - uses: actions/checkout@v7.0.1
+      - uses: astral-sh/setup-uv@v10.3.3
+        with:
+          working-directory: services/ai
+          enable-cache: true
+      - run: uv sync --locked
+      - run: uv run ruff check .
+      - run: uv run ruff format --check .
+      - run: uv run mypy app
+      - run: uv run pytest --cov=app
 
   build:
     needs: changes
@@ -157,7 +189,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7.0.1
       - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069
-        if: hashFiles('apps/api/Dockerfile', 'apps/web/Dockerfile', 'services/analytics/Dockerfile') != ''
+        if: hashFiles('apps/api/Dockerfile', 'apps/web/Dockerfile', 'services/analytics/Dockerfile', 'services/ai/Dockerfile') != ''
       - uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc
         if: hashFiles('apps/api/Dockerfile') != ''
         with:
@@ -190,6 +222,17 @@ jobs:
           tags: jobflow-analytics:ci
           cache-from: type=gha,scope=analytics
           cache-to: type=gha,mode=max,scope=analytics
+      - uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc
+        if: hashFiles('services/ai/Dockerfile') != ''
+        with:
+          context: .
+          file: services/ai/Dockerfile
+          target: prod
+          push: false
+          load: true
+          tags: jobflow-ai:ci
+          cache-from: type=gha,scope=ai
+          cache-to: type=gha,mode=max,scope=ai
       - name: Image sizes
         run: |
           {

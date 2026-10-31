@@ -5,6 +5,7 @@ dist-worker/
 dist-seed/
 .next/
 coverage/
+.coverage
 *.tsbuildinfo
 
 .env

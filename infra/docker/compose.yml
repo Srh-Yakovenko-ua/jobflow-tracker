@@ -7,6 +7,7 @@ x-api-environment: &api-environment
   SMTP_URL: smtp://mailpit:1025
   JWT_PRIVATE_KEY_PATH: /app/.secrets/jwt-private.pem
   JWT_PUBLIC_KEY_PATH: /app/.secrets/jwt-public.pem
+  AI_SERVICE_URL: http://ai:8001
 
 services:
   postgres:
@@ -141,6 +142,31 @@ services:
     healthcheck:
       disable: true
     mem_limit: 512m
+    networks:
+      - jobflow
+
+  ai:
+    build:
+      context: ../..
+      dockerfile: services/ai/Dockerfile
+    env_file:
+      - path: ../../services/ai/.env
+        required: false
+    environment:
+      API_JWKS_URL: http://api:4000/.well-known/jwks.json
+    ports:
+      - '127.0.0.1:8001:8001'
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8001/health', timeout=2)"
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 10s
+    mem_limit: 256m
     networks:
       - jobflow
 

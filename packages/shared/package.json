@@ -25,11 +25,16 @@
     "./rn-theme": {
       "types": "./dist/rn-theme.d.ts",
       "import": "./dist/rn-theme.js"
+    },
+    "./testing": {
+      "types": "./dist/testing.d.ts",
+      "import": "./dist/testing.js"
     }
   },
   "scripts": {
     "prebuild": "node scripts/build-tokens.js",
     "build": "tsup && node scripts/export-enums.js",
+    "gen:contracts": "node scripts/export-contracts.js",
     "lint": "eslint . --max-warnings 0",
     "typecheck": "tsgo -p . --noEmit",
     "test": "vitest run --coverage",
@@ -41,7 +46,8 @@
     "entry": {
       "index": "src/index.ts",
       "chart-theme": "tokens/generated/chart-theme.ts",
-      "rn-theme": "tokens/generated/rn-theme.ts"
+      "rn-theme": "tokens/generated/rn-theme.ts",
+      "testing": "testing/index.ts"
     },
     "format": [
       "esm"

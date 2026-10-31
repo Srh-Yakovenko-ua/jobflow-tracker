@@ -9,12 +9,12 @@ import {
 } from '@jobflow/shared';
 import type { NestExpressApplication } from '@nestjs/platform-express';
 import { parseSetCookie, type SetCookie } from 'cookie';
-import { generateKeyPair } from 'jose';
+import { generateKeyPair, jwtVerify } from 'jose';
 import request, { type Response } from 'supertest';
 import { z } from 'zod';
 
 import type { User } from '../generated/prisma/client.js';
-import { jwtKeysFrom, signAccessToken } from '../modules/auth/index.js';
+import { jwtKeysFrom, signAccessToken, signServiceToken } from '../modules/auth/index.js';
 
 export const OLENA = {
   email: 'olena@example.test',
@@ -54,6 +54,20 @@ export function accessTokenFor(
   { issuedAt, scope }: AccessTokenOptions = {},
 ): Promise<string> {
   return signAccessToken({ keys: testJwtKeys, userId: user.id, issuedAt, scope });
+}
+
+export function serviceTokenFor(issuedAt = new Date()): Promise<string> {
+  return signServiceToken({ keys: testJwtKeys, scope: 'ai:invoke', issuedAt });
+}
+
+export const TEST_KEY_HEADER = { alg: 'RS256', kid: testJwtKeys.jwk.kid };
+
+export async function verifyWithTestKey(token: string, currentDate: Date) {
+  const { payload, protectedHeader } = await jwtVerify(token, testJwtKeys.publicKey, {
+    currentDate,
+  });
+  const { jti, ...claims } = payload;
+  return { protectedHeader, jti, claims };
 }
 
 export async function authAs(app: NestExpressApplication, user: Pick<User, 'id'>) {

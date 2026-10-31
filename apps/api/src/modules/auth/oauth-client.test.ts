@@ -6,8 +6,15 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { DEPENDENCY_LIMITS } from '../../common/probe.js';
 import { validateEnv } from '../../config/env.js';
-import { testJwtKeys } from '../../test/auth.js';
+import { TEST_KEY_HEADER, testJwtKeys } from '../../test/auth.js';
 import { exampleEnv } from '../../test/example-env.js';
+import {
+  type FetchReply,
+  recordFetch,
+  refusedConnection,
+  stalled,
+  timeOutAtOnce,
+} from '../../test/fetch.js';
 import { type OAuthCallback, OAuthClient } from './oauth-client.js';
 
 const GITHUB_TOKEN_URL = 'https://github.com/login/oauth/access_token';
@@ -49,11 +56,7 @@ const GITHUB_EMAILS = [
   { email: 'olena@example.test', primary: true, verified: true },
 ];
 
-type FetchCall = { url: string; body: Record<string, string> | undefined; headers: Headers };
-
-type Reply = (init: RequestInit | undefined) => Response | Promise<Response>;
-
-type Replies = Record<string, Reply>;
+type Replies = Record<string, FetchReply>;
 
 const oauthClient = clientWith(CREDENTIALS);
 
@@ -61,16 +64,10 @@ function clientWith(credentials: Partial<typeof CREDENTIALS>): OAuthClient {
   return new OAuthClient(new ConfigService(validateEnv({ ...exampleEnv, ...credentials })));
 }
 
-function routeFetch(replies: Replies): FetchCall[] {
-  const calls: FetchCall[] = [];
-  vi.stubGlobal('fetch', (url: string, init?: RequestInit) => {
-    const body = init?.body instanceof URLSearchParams ? Object.fromEntries(init.body) : undefined;
-    calls.push({ url, body, headers: new Headers(init?.headers) });
-    const reply = replies[url];
-    return reply ? Promise.resolve(reply(init)) : Promise.reject(new Error(`No fake for ${url}`));
-  });
-  return calls;
-}
+const formBody = (body: RequestInit['body']) =>
+  body instanceof URLSearchParams ? Object.fromEntries(body) : undefined;
+
+const routeFetch = (replies: Replies) => recordFetch({ replies, decodeBody: formBody });
 
 const githubReplies = (overrides: Replies = {}): Replies => ({
   [GITHUB_TOKEN_URL]: () => Response.json(GITHUB_TOKENS),
@@ -81,7 +78,7 @@ const githubReplies = (overrides: Replies = {}): Replies => ({
 
 function googleIdToken(claims: object): Promise<string> {
   return new SignJWT({ email: 'olena@example.test', name: 'Олена', ...claims })
-    .setProtectedHeader({ alg: 'RS256', kid: testJwtKeys.jwk.kid })
+    .setProtectedHeader(TEST_KEY_HEADER)
     .setIssuer('https://accounts.google.com')
     .setAudience('google-client-id')
     .setSubject('109876543210987654321')
@@ -98,29 +95,6 @@ async function googleTokens(claims: object): Promise<Response> {
     id_token: idToken,
   });
 }
-
-function abortReason(signal: AbortSignal): Error {
-  return signal.reason instanceof Error ? signal.reason : new Error('aborted');
-}
-
-const stalled: Reply = (init) =>
-  new Promise((_resolve, reject) => {
-    const signal = init?.signal;
-    if (!signal) {
-      return;
-    }
-    if (signal.aborted) {
-      reject(abortReason(signal));
-      return;
-    }
-    signal.addEventListener('abort', () => {
-      reject(abortReason(signal));
-    });
-  });
-
-const refusedConnection = new TypeError('fetch failed', {
-  cause: Object.assign(new Error('connect ECONNREFUSED 127.0.0.1:443'), { code: 'ECONNREFUSED' }),
-});
 
 afterEach(() => {
   vi.unstubAllGlobals();
@@ -290,10 +264,7 @@ describe('OAuthClient.profile', () => {
   });
 
   it('gives up on a stalled provider at the provider time limit with 503', async () => {
-    const timedOut = AbortSignal.abort(
-      new DOMException('The operation timed out.', 'TimeoutError'),
-    );
-    const timeout = vi.spyOn(AbortSignal, 'timeout').mockReturnValue(timedOut);
+    const timeout = timeOutAtOnce();
     routeFetch({ [GITHUB_TOKEN_URL]: stalled });
 
     await expect(oauthClient.profile(GITHUB_CALLBACK)).rejects.toMatchObject({

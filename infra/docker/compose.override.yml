@@ -22,6 +22,12 @@ services:
         'tsconfig.worker.json',
       ]
 
+  ai:
+    build:
+      target: dev
+    volumes:
+      - ../../services/ai/app:/app/app
+
   web:
     build:
       target: dev
