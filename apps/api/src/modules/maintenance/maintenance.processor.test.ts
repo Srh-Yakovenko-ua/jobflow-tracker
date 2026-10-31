@@ -1,13 +1,10 @@
-import { Test } from '@nestjs/testing';
 import { UnrecoverableError } from 'bullmq';
-import { Logger, LoggerModule } from 'nestjs-pino';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 
-import { loggerParams } from '../../common/logger.js';
-import { configModule } from '../../config/app-config.js';
 import { OutboxRelayService } from '../../outbox/outbox-relay.service.js';
 import { memoryLog } from '../../test/memory-log.js';
 import { processedJob } from '../../test/processed-job.js';
+import { compileProcessorModule } from '../../test/processor.js';
 import { MaintenanceProcessor } from './maintenance.processor.js';
 
 const log = memoryLog();
@@ -40,11 +37,10 @@ describe('MaintenanceProcessor', () => {
   let close: () => Promise<void>;
 
   beforeAll(async () => {
-    const moduleRef = await Test.createTestingModule({
-      imports: [configModule, LoggerModule.forRoot(loggerParams(log.sink))],
-      providers: [MaintenanceProcessor, { provide: OutboxRelayService, useValue: outbox }],
-    }).compile();
-    moduleRef.useLogger(moduleRef.get(Logger));
+    const moduleRef = await compileProcessorModule(log.sink, [
+      MaintenanceProcessor,
+      { provide: OutboxRelayService, useValue: outbox },
+    ]);
     processor = moduleRef.get(MaintenanceProcessor);
     close = () => moduleRef.close();
   });

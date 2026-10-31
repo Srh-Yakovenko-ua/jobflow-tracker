@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { z } from 'zod';
 
+import { AI_KINDS, aiKindSchema } from './ai/kinds.js';
 import {
   AI_JOB_STATUSES,
   AI_RESULT_STATUSES,
@@ -40,6 +41,7 @@ const DOMAIN_ENUMS: DomainEnumCase[] = [
   { name: 'notification type', values: NOTIFICATION_TYPES, schema: notificationTypeSchema },
   { name: 'ai job status', values: AI_JOB_STATUSES, schema: aiJobStatusSchema },
   { name: 'ai result status', values: AI_RESULT_STATUSES, schema: aiResultStatusSchema },
+  { name: 'ai kind', values: AI_KINDS, schema: aiKindSchema },
   { name: 'token scope', values: TOKEN_SCOPES, schema: tokenScopeSchema },
 ];
 

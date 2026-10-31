@@ -1,0 +1,6 @@
+*
+!services/ai/pyproject.toml
+!services/ai/uv.lock
+!services/ai/app
+**/__pycache__
+**/.env*

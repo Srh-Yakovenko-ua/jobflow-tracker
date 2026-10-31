@@ -1,0 +1,63 @@
+[project]
+name = "jobflow-ai"
+version = "0.0.0"
+requires-python = ">=3.14"
+dependencies = [
+    "anthropic>=1.17.0,<2",
+    "fastapi>=0.162.0",
+    "httpx>=0.28.1",
+    "httpx2>=2.16.0",
+    "loguru>=0.7.3",
+    "openai>=3.41.0",
+    "pydantic>=2.14.2",
+    "pydantic-settings>=2.16.2",
+    "pyjwt[crypto]>=2.15.1",
+    "uvicorn>=0.54.0",
+]
+
+[tool.ruff]
+extend-exclude = ["app/contracts"]
+
+[tool.ruff.lint]
+extend-select = ["PLR0913", "PLR0915", "PLR0917", "FBT001", "FBT002", "C901"]
+
+[tool.ruff.lint.pylint]
+max-args = 5
+max-positional-args = 2
+max-statements = 30
+
+[tool.ruff.lint.mccabe]
+max-complexity = 10
+
+[tool.mypy]
+strict = true
+plugins = ["pydantic.mypy"]
+
+[tool.pytest.ini_options]
+addopts = "--disable-socket --allow-unix-socket --allow-hosts=127.0.0.1"
+testpaths = ["tests"]
+pythonpath = ["."]
+
+[tool.datamodel-codegen]
+input = "../../packages/shared/dist/contracts/schemas"
+input-file-type = "jsonschema"
+output = "app/contracts"
+output-model-type = "pydantic_v2.BaseModel"
+disable-timestamp = true
+snake-case-field = true
+allow-population-by-field-name = true
+use-annotated = true
+use-union-operator = true
+use-standard-collections = true
+target-python-version = "3.14"
+formatters = ["builtin"]
+
+[dependency-groups]
+dev = [
+    "datamodel-code-generator==0.87.0",
+    "mypy==2.4.1",
+    "pytest==9.2.0",
+    "pytest-cov==7.1.0",
+    "pytest-socket==0.8.1",
+    "ruff==0.17.3",
+]

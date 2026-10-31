@@ -15,3 +15,9 @@ services:
   web:
     build:
       target: prod
+
+  ai:
+    build:
+      target: prod
+    environment:
+      AI_PROVIDER: fake

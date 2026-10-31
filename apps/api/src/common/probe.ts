@@ -5,6 +5,7 @@ export const DEPENDENCY_LIMITS = {
   pingTimeoutMs: 1000,
   queryTimeoutMs: 3000,
   providerTimeoutMs: 5000,
+  aiServiceTimeoutMs: 65_000,
 } as const;
 
 export async function isAnswered(check: Promise<unknown>): Promise<boolean> {

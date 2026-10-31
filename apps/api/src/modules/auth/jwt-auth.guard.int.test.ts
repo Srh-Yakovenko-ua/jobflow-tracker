@@ -6,7 +6,7 @@ import request from 'supertest';
 import { describe, expect, it } from 'vitest';
 
 import { appTestingModule, useTestApp } from '../../test/app.js';
-import { accessTokenFor, cacheControlOf } from '../../test/auth.js';
+import { accessTokenFor, cacheControlOf, serviceTokenFor } from '../../test/auth.js';
 import type { AccessUser } from './access-tokens.js';
 import { CurrentUser } from './current-user.decorator.js';
 import { Public } from './public.decorator.js';
@@ -75,6 +75,19 @@ describe('the global access token guard', () => {
     expect(response.status).toBe(200);
     expect(response.body).toEqual({ id: USER.id, scope: ['user', 'analytics:read'] });
     expect(cacheControlOf(response)).toEqual(['no-store']);
+  });
+
+  it('refuses the worker service token scoped ai:invoke on a route with no decorator with 401', async () => {
+    const token = await serviceTokenFor();
+
+    const response = await routes.default().set('authorization', `Bearer ${token}`);
+
+    expect(response.status).toBe(401);
+    expect(errorResponseSchema.parse(response.body)).toMatchObject({
+      type: 'unauthorized',
+      detail: 'Invalid access token',
+    });
+    expect(response.get('www-authenticate')).toBe('Bearer error="invalid_token"');
   });
 
   it('answers a @Public() route without an access token with 200', async () => {
