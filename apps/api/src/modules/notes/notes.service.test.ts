@@ -2,7 +2,7 @@ import type { NoteInput } from '@jobflow/shared';
 import { describe, expect, it } from 'vitest';
 
 import { FAKE_TRANSACTION, fakeTransactionModule } from '../../test/fake-prisma.js';
-import { type ByUser, RecordedEvents } from '../../test/recorded-events.js';
+import { type ByUser, TimelineRecorder } from '../../test/recorded-events.js';
 import {
   APPLICATION_ID,
   APPLICATION_NOT_FOUND,
@@ -13,7 +13,7 @@ import {
   type Target,
 } from '../../test/service-fixtures.js';
 import { daysBefore, NOW } from '../../test/time.js';
-import { type TimelineEntry, TimelineService } from '../events/index.js';
+import { TimelineService } from '../events/index.js';
 import {
   type ApplicationNotes,
   type FindNote,
@@ -89,12 +89,6 @@ class FakeNotesRepository {
 
   private ownsNote(userId: string, { applicationId, noteId }: NoteOfApplication): boolean {
     return this.ownsApplication({ userId, id: applicationId }) && noteId === this.stored.id;
-  }
-}
-
-class TimelineRecorder extends RecordedEvents<TimelineEntry> {
-  record(userId: string, entry: TimelineEntry): Promise<void> {
-    return this.recordEvent(userId, entry);
   }
 }
 

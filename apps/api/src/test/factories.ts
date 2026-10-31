@@ -4,6 +4,8 @@ import { SOURCES, type Stage, STAGES } from '@jobflow/shared';
 import type {
   AiJobStatus,
   Prisma,
+  ReminderStatus,
+  ReminderType,
   ScheduledEventKind,
   ScheduledEventStatus,
   SearchStatus,
@@ -30,7 +32,18 @@ export type NewScheduledEvent = {
   applicationId: string;
   kind: ScheduledEventKind;
   startsAt: Date;
+  durationMin?: number;
   status?: ScheduledEventStatus;
+};
+
+export type NewReminder = {
+  userId: string;
+  applicationId: string;
+  dueAt: Date;
+  type?: ReminderType;
+  status?: ReminderStatus;
+  snoozedUntil?: Date;
+  scheduledEventId?: string;
 };
 
 export type NewAiJob = { userId: string; applicationId: string; status: AiJobStatus };
@@ -135,6 +148,14 @@ export async function createScheduledEvent(
   { status = 'planned', ...event }: NewScheduledEvent,
 ): Promise<string> {
   const created = await prisma.scheduledEvent.create({ data: { ...event, status } });
+  return created.id;
+}
+
+export async function createReminder(
+  prisma: PrismaService,
+  { type = 'followup', status = 'pending', ...reminder }: NewReminder,
+): Promise<string> {
+  const created = await prisma.reminder.create({ data: { ...reminder, type, status } });
   return created.id;
 }
 
