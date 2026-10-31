@@ -8,6 +8,7 @@ import { TIMELINE_OPENAPI_PATHS } from '../modules/events/index.js';
 import { HEALTH_OPENAPI_PATHS } from '../modules/health/index.js';
 import { MAINTENANCE_OPENAPI_PATHS } from '../modules/maintenance/index.js';
 import { NOTES_OPENAPI_PATHS } from '../modules/notes/index.js';
+import { SCHEDULE_OPENAPI_PATHS } from '../modules/schedule/index.js';
 import { SETTINGS_OPENAPI_PATHS } from '../modules/settings/index.js';
 
 export type OpenApiDocument = ReturnType<OpenApiGeneratorV31['generateDocument']>;
@@ -20,6 +21,7 @@ export const API_OPENAPI_PATHS = [
   ...TIMELINE_OPENAPI_PATHS,
   ...NOTES_OPENAPI_PATHS,
   ...CONTACTS_OPENAPI_PATHS,
+  ...SCHEDULE_OPENAPI_PATHS,
   ...MAINTENANCE_OPENAPI_PATHS,
 ];
 
@@ -28,6 +30,7 @@ const TAGS = [
   { name: 'auth', description: 'Accounts, sessions and the signing key' },
   { name: 'settings', description: 'The preferences of the signed-in user' },
   { name: 'applications', description: 'The Applications of the signed-in user' },
+  { name: 'calendar', description: 'Scheduled events and follow-ups across Applications' },
   { name: 'dev', description: 'Development and test only' },
 ];
 

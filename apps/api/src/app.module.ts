@@ -13,6 +13,7 @@ import { EventsModule } from './modules/events/index.js';
 import { HealthModule } from './modules/health/index.js';
 import { MaintenanceModule } from './modules/maintenance/index.js';
 import { NotesModule } from './modules/notes/index.js';
+import { ScheduleModule } from './modules/schedule/index.js';
 import { SettingsModule } from './modules/settings/index.js';
 import { PrismaModule } from './prisma/prisma.module.js';
 import { QueuesModule } from './queues/queues.module.js';
@@ -34,6 +35,7 @@ import { RedisModule } from './redis/redis.module.js';
     EventsModule,
     NotesModule,
     ContactsModule,
+    ScheduleModule,
     SettingsModule,
   ],
   providers: [

@@ -46,6 +46,8 @@ export type NoteTarget = { id: string; noteId: string };
 
 export type ContactTarget = { id: string; contactId: string };
 
+export type ScheduledEventTarget = { id: string; eventId: string };
+
 export type SignedInApplication = { accessToken: string; id: string };
 
 export type ForeignReach<Target extends SignedInApplication> = {
@@ -73,6 +75,13 @@ export const notePath = ({ id, noteId }: NoteTarget) => `${notesPath(id)}/${note
 export const contactsPath = (id: string) => `${applicationPath(id)}/contacts`;
 
 export const contactPath = ({ id, contactId }: ContactTarget) => `${contactsPath(id)}/${contactId}`;
+
+export const scheduledEventsPath = (id: string) => `${applicationPath(id)}/scheduled-events`;
+
+export const scheduledEventPath = ({ id, eventId }: ScheduledEventTarget) =>
+  `${scheduledEventsPath(id)}/${eventId}`;
+
+export const CALENDAR_PATH = '/api/v1/calendar';
 
 export function postStageMove(
   app: NestExpressApplication,

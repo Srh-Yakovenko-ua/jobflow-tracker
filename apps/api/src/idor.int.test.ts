@@ -18,6 +18,18 @@ const OLENAS_CONTACT = { name: 'Оксана Левченко', email: 'o.levche
 
 const FOREIGN_CONTACT = { name: 'Чужий рекрутер' };
 
+const OLENAS_EVENT = {
+  kind: 'tech_interview',
+  startsAt: new Date('2026-11-03T14:00:00.000Z'),
+  durationMin: 90,
+  status: 'planned',
+  outcomeNote: null,
+} as const;
+
+const FOREIGN_EVENT = { kind: 'screening_call', startsAt: '2026-11-04T10:00:00+02:00' };
+
+const FOREIGN_EVENT_PATCH = { status: 'cancelled', outcomeNote: 'Чужа зміна' };
+
 const OWNER_ONLY_CASES: OwnerOnlyCase[] = [
   { card: 'BE-14', method: 'get', path: '/applications/:id', ownerStatus: 200 },
   {
@@ -74,6 +86,33 @@ const OWNER_ONLY_CASES: OwnerOnlyCase[] = [
     path: '/applications/:id/contacts/:contactId',
     ownerStatus: 204,
   },
+  {
+    card: 'BE-23',
+    method: 'post',
+    path: '/applications/:id/scheduled-events',
+    body: FOREIGN_EVENT,
+    ownerStatus: 201,
+  },
+  { card: 'BE-23', method: 'get', path: '/applications/:id/scheduled-events', ownerStatus: 200 },
+  {
+    card: 'BE-23',
+    method: 'patch',
+    path: '/applications/:id/scheduled-events/:eventId',
+    body: FOREIGN_EVENT_PATCH,
+    ownerStatus: 200,
+  },
+  {
+    card: 'BE-23',
+    method: 'delete',
+    path: '/applications/:id/scheduled-events/:eventId',
+    ownerStatus: 204,
+  },
+  {
+    card: 'BE-23',
+    method: 'get',
+    path: '/applications/:id/scheduled-events/:eventId/ics',
+    ownerStatus: 200,
+  },
 ];
 
 const ROUTES_WITHOUT_IDOR_CASE = [
@@ -116,10 +155,15 @@ describe("another user's data", () => {
         data: { applicationId: application.id, ...OLENAS_CONTACT },
         select: { id: true },
       });
+      const event = await testApp.prisma.scheduledEvent.create({
+        data: { applicationId: application.id, ...OLENAS_EVENT },
+        select: { id: true },
+      });
       const filled = path
         .replace(':id', application.id)
         .replace(':noteId', note.id)
-        .replace(':contactId', contact.id);
+        .replace(':contactId', contact.id)
+        .replace(':eventId', event.id);
       const route = { method, path: `/api/v1${filled}`, body };
 
       const intruder = await callRoute(testApp.app, { ...route, accessToken: bohdan.accessToken });
@@ -142,6 +186,18 @@ describe("another user's data", () => {
           select: { name: true, email: true },
         }),
       ).toEqual(OLENAS_CONTACT);
+      expect(
+        await testApp.prisma.scheduledEvent.findMany({
+          where: { applicationId: application.id },
+          select: {
+            kind: true,
+            startsAt: true,
+            durationMin: true,
+            status: true,
+            outcomeNote: true,
+          },
+        }),
+      ).toEqual([OLENAS_EVENT]);
       const owner = await callRoute(testApp.app, { ...route, accessToken: olena.accessToken });
       expect(owner.status).toBe(ownerStatus);
     },
