@@ -32,8 +32,5 @@ export function responseHistory(
   stageEvents: StageMove[],
   waitHours: number[] = [],
 ): ResponseHistory {
-  return {
-    stageEvents,
-    timelineEvents: waitHours.map((hours) => ({ occurredAt: hoursLater(hours) })),
-  };
+  return { stageEvents, waitStarts: waitHours.map((hours) => hoursLater(hours)) };
 }

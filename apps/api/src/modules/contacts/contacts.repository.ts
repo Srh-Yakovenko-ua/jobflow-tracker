@@ -1,4 +1,4 @@
-import type { CreateContactInput, TimelineEventKind, UpdateContactInput } from '@jobflow/shared';
+import type { CreateContactInput, UpdateContactInput } from '@jobflow/shared';
 import { Injectable } from '@nestjs/common';
 
 import { withoutUndefined } from '../../common/without-undefined.js';
@@ -20,18 +20,12 @@ export const CONTACT_SELECT = {
   updatedAt: true,
 } satisfies Prisma.ContactSelect;
 
-const WAITING_TIMELINE_KINDS: TimelineEventKind[] = ['followup_sent', 'interview_done'];
-
 const APPLICATION_HISTORY_SELECT = {
   id: true,
   contacts: { select: CONTACT_SELECT, orderBy: [{ createdAt: 'asc' }, { id: 'asc' }] },
   stageEvents: {
     ...EFFECTIVE_STAGE_EVENTS,
     select: { fromStage: true, toStage: true, reasonCode: true, occurredAt: true },
-  },
-  timelineEvents: {
-    where: { kind: { in: WAITING_TIMELINE_KINDS } },
-    select: { occurredAt: true },
   },
 } satisfies Prisma.ApplicationSelect;
 

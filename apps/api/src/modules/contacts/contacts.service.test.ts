@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 
 import { fakeTransactionModule } from '../../test/fake-prisma.js';
 import type { ByUser } from '../../test/recorded-events.js';
-import { APPLIED_AT_NOW, moved, responseHistory } from '../../test/response-history.js';
+import { APPLIED_AT_NOW, hoursLater, moved } from '../../test/response-history.js';
 import {
   APPLICATION_ID,
   APPLICATION_NOT_FOUND,
@@ -14,6 +14,11 @@ import {
   type Target,
 } from '../../test/service-fixtures.js';
 import { daysBefore, NOW } from '../../test/time.js';
+import {
+  type OccurrencesQuery,
+  type TimelineOccurrence,
+  TimelineService,
+} from '../events/index.js';
 import {
   type ApplicationHistory,
   type ContactOfApplication,
@@ -36,6 +41,7 @@ const THIRD_APPLICATION_ID = '0199f0a0-0000-7000-8000-0000000000c4';
 const IHOR_ID = '0199f0a0-0000-7000-8000-0000000000e3';
 const MARTA_NEWER_ID = '0199f0a0-0000-7000-8000-0000000000e4';
 const PETRO_ID = '0199f0a0-0000-7000-8000-0000000000e5';
+const NO_EMAIL_ID = '0199f0a0-0000-7000-8000-0000000000e8';
 
 const CONTACT_NOT_FOUND = {
   body: { status: 404, type: 'not_found', detail: 'Contact not found' },
@@ -71,11 +77,11 @@ const HISTORIES: OwnedHistory[] = [
     userId: OLENA_ID,
     id: APPLICATION_ID,
     contacts: [OKSANA, contactRow({ id: IHOR_ID, applicationId: APPLICATION_ID, name: 'Ігор' })],
-    ...responseHistory([
+    stageEvents: [
       APPLIED_AT_NOW,
       moved({ from: 'applied', to: 'screening', hours: 10 }),
       moved({ from: 'screening', to: 'tech_interview', hours: 28 }),
-    ]),
+    ],
   },
   {
     userId: OLENA_ID,
@@ -96,7 +102,7 @@ const HISTORIES: OwnedHistory[] = [
         updatedAt: daysBefore(4),
       }),
     ],
-    ...responseHistory([APPLIED_AT_NOW, moved({ from: 'applied', to: 'screening', hours: 2 })]),
+    stageEvents: [APPLIED_AT_NOW, moved({ from: 'applied', to: 'screening', hours: 2 })],
   },
   {
     userId: OLENA_ID,
@@ -117,15 +123,28 @@ const HISTORIES: OwnedHistory[] = [
         updatedAt: daysBefore(3),
       }),
       contactRow({
-        id: '0199f0a0-0000-7000-8000-0000000000e8',
+        id: NO_EMAIL_ID,
         applicationId: THIRD_APPLICATION_ID,
         name: 'Без пошти',
         updatedAt: daysBefore(0),
       }),
     ],
-    ...responseHistory([APPLIED_AT_NOW, moved({ from: 'applied', to: 'screening', hours: 40 })]),
+    stageEvents: [APPLIED_AT_NOW, moved({ from: 'applied', to: 'screening', hours: 40 })],
   },
 ];
+
+const WAIT_STARTS: TimelineOccurrence[] = [
+  { applicationId: THIRD_APPLICATION_ID, occurredAt: hoursLater(9) },
+];
+
+class FakeTimelineService {
+  occurrences(userId: string, { applicationIds }: OccurrencesQuery): Promise<TimelineOccurrence[]> {
+    const owns = userId === OLENA_ID;
+    return Promise.resolve(
+      WAIT_STARTS.filter(({ applicationId }) => owns && applicationIds.includes(applicationId)),
+    );
+  }
+}
 
 class FakeContactsRepository {
   readonly inserted: ByUser<InsertContact>[] = [];
@@ -177,11 +196,13 @@ class FakeContactsRepository {
 async function serviceWithFakes() {
   const repository = new FakeContactsRepository();
   const moduleRef = await fakeTransactionModule({
-    providers: [ContactsService, ContactsRepository],
+    providers: [ContactsService, ContactsRepository, TimelineService],
     now: NOW,
   })
     .overrideProvider(ContactsRepository)
     .useValue(repository)
+    .overrideProvider(TimelineService)
+    .useValue(new FakeTimelineService())
     .compile();
   return { repository, service: moduleRef.get(ContactsService) };
 }
@@ -195,6 +216,18 @@ describe('ContactsService.list', () => {
     expect(items.map(({ id, avgResponseHours }) => ({ id, avgResponseHours }))).toEqual([
       { id: CONTACT_ID, avgResponseHours: 10 },
       { id: IHOR_ID, avgResponseHours: 14 },
+    ]);
+  });
+
+  it('measures a reply from a followup_sent row of its own application only', async () => {
+    const { service } = await serviceWithFakes();
+
+    const { items } = await service.list(OLENA_ID, THIRD_APPLICATION_ID);
+
+    expect(items.map(({ id, avgResponseHours }) => ({ id, avgResponseHours }))).toEqual([
+      { id: MARTA_NEWER_ID, avgResponseHours: 17 },
+      { id: PETRO_ID, avgResponseHours: null },
+      { id: NO_EMAIL_ID, avgResponseHours: null },
     ]);
   });
 

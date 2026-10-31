@@ -11,6 +11,7 @@ import { Clock } from '../../common/clock.js';
 import { withIsoTimestamps } from '../../common/iso-timestamps.js';
 import { changedOrNotFound, owned } from '../../common/owned.js';
 import { PrismaService } from '../../prisma/prisma.service.js';
+import { type TimelineOccurrence, TimelineService } from '../events/index.js';
 import {
   type ApplicationHistory,
   type ContactOfApplication,
@@ -18,7 +19,7 @@ import {
   type ContactsOfApplication,
   ContactsRepository,
 } from './contacts.repository.js';
-import { averageResponseHours } from './response-time.js';
+import { averageResponseHours, type ResponseHistory, WAIT_START_KINDS } from './response-time.js';
 
 const CONTACT_NOT_FOUND = 'Contact not found';
 
@@ -26,7 +27,9 @@ export type CreateContact = ContactsOfApplication & { input: CreateContactInput 
 
 export type EditContact = ContactOfApplication & { input: UpdateContactInput };
 
-type CompanyHistory = { own: ApplicationHistory; histories: ApplicationHistory[] };
+type CompanyApplication = ApplicationHistory & ResponseHistory;
+
+type CompanyHistory = { own: CompanyApplication; histories: CompanyApplication[] };
 
 const toContact = (row: ContactRow): Contact => withIsoTimestamps(row);
 
@@ -63,12 +66,22 @@ function suggestionsFor({ own, histories }: CompanyHistory): Contact[] {
   return [...latest.values()].map(toContact);
 }
 
+function withWaitStarts(occurrences: TimelineOccurrence[]) {
+  return (history: ApplicationHistory): CompanyApplication => ({
+    ...history,
+    waitStarts: occurrences
+      .filter(({ applicationId }) => applicationId === history.id)
+      .map(({ occurredAt }) => occurredAt),
+  });
+}
+
 @Injectable()
 export class ContactsService {
   constructor(
     private readonly repository: ContactsRepository,
     private readonly prisma: PrismaService,
     private readonly clock: Clock,
+    private readonly timeline: TimelineService,
   ) {}
 
   async create(userId: string, { applicationId, input }: CreateContact): Promise<Contact> {
@@ -80,7 +93,11 @@ export class ContactsService {
     const applicationIds = await this.repository.sameCompanyApplicationIds(userId, {
       applicationId,
     });
-    const histories = await this.repository.findHistory(userId, { applicationIds });
+    const [rows, occurrences] = await Promise.all([
+      this.repository.findHistory(userId, { applicationIds }),
+      this.timeline.occurrences(userId, { applicationIds, kinds: WAIT_START_KINDS }),
+    ]);
+    const histories = rows.map(withWaitStarts(occurrences));
     const own = owned(histories.find(({ id }) => id === applicationId) ?? null);
     const company = { own, histories };
     return {

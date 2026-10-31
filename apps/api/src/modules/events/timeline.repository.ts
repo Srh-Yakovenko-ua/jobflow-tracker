@@ -1,4 +1,4 @@
-import type { TimelineRecord } from '@jobflow/shared';
+import type { TimelineEventKind, TimelineRecord } from '@jobflow/shared';
 import { Injectable } from '@nestjs/common';
 
 import type { Prisma } from '../../generated/prisma/client.js';
@@ -25,7 +25,18 @@ const TIMELINE_SELECT = {
   notes: { select: { id: true, body: true, createdAt: true } },
 } satisfies Prisma.ApplicationSelect;
 
+const OCCURRENCE_SELECT = {
+  applicationId: true,
+  occurredAt: true,
+} satisfies Prisma.TimelineEventSelect;
+
 export type TimelineRows = Prisma.ApplicationGetPayload<{ select: typeof TIMELINE_SELECT }>;
+
+export type TimelineOccurrence = Prisma.TimelineEventGetPayload<{
+  select: typeof OCCURRENCE_SELECT;
+}>;
+
+export type OccurrencesQuery = { applicationIds: string[]; kinds: TimelineEventKind[] };
 
 export type TimelineOfApplication = { applicationId: string };
 
@@ -47,6 +58,20 @@ export class TimelineRepository {
     return this.prisma.application.findFirst({
       where: { id: applicationId, userId, deletedAt: null },
       select: TIMELINE_SELECT,
+    });
+  }
+
+  findOccurrences(
+    userId: string,
+    { applicationIds, kinds }: OccurrencesQuery,
+  ): Promise<TimelineOccurrence[]> {
+    return this.prisma.timelineEvent.findMany({
+      where: {
+        applicationId: { in: applicationIds },
+        kind: { in: kinds },
+        application: { userId, deletedAt: null },
+      },
+      select: OCCURRENCE_SELECT,
     });
   }
 

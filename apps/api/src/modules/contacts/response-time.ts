@@ -1,8 +1,15 @@
-import { isReplyStage, REJECTION_REASONS, rejectionReasonCodeSchema } from '@jobflow/shared';
+import {
+  isReplyStage,
+  REJECTION_REASONS,
+  rejectionReasonCodeSchema,
+  type TimelineEventKind,
+} from '@jobflow/shared';
 
 import type { ApplicationHistory } from './contacts.repository.js';
 
-export type ResponseHistory = Pick<ApplicationHistory, 'stageEvents' | 'timelineEvents'>;
+export type ResponseHistory = Pick<ApplicationHistory, 'stageEvents'> & { waitStarts: Date[] };
+
+export const WAIT_START_KINDS: TimelineEventKind[] = ['followup_sent', 'interview_done'];
 
 type StageMove = ResponseHistory['stageEvents'][number];
 
@@ -25,14 +32,10 @@ function stageStep({ fromStage, toStage, reasonCode, occurredAt }: StageMove): S
   };
 }
 
-function stepsOf({ stageEvents, timelineEvents }: ResponseHistory): Step[] {
+function stepsOf({ stageEvents, waitStarts }: ResponseHistory): Step[] {
   return [
     ...stageEvents.map(stageStep),
-    ...timelineEvents.map(({ occurredAt }) => ({
-      at: occurredAt,
-      isReply: false,
-      startsWait: true,
-    })),
+    ...waitStarts.map((at) => ({ at, isReply: false, startsWait: true })),
   ].sort((left, right) => left.at.getTime() - right.at.getTime());
 }
 

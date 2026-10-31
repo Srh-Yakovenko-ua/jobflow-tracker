@@ -7,7 +7,12 @@ import { Injectable } from '@nestjs/common';
 
 import { notFound } from '../../common/app-error.js';
 import { APPLICATION_NOT_FOUND, owned } from '../../common/owned.js';
-import { TimelineRepository, type TimelineWrite } from './timeline.repository.js';
+import {
+  type OccurrencesQuery,
+  type TimelineOccurrence,
+  TimelineRepository,
+  type TimelineWrite,
+} from './timeline.repository.js';
 import { timelineItemsOf } from './timeline-items.js';
 
 export type TimelineEntry = TimelineRecord & TimelineWrite;
@@ -19,6 +24,10 @@ export class TimelineService {
   async list(userId: string, applicationId: string): Promise<ApplicationTimelineResponse> {
     const rows = owned(await this.repository.findTimeline(userId, { applicationId }));
     return { items: timelineItemsOf(rows) };
+  }
+
+  occurrences(userId: string, query: OccurrencesQuery): Promise<TimelineOccurrence[]> {
+    return this.repository.findOccurrences(userId, query);
   }
 
   async record(userId: string, { kind, payload, ...write }: TimelineEntry): Promise<void> {
