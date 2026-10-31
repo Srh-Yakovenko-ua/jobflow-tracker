@@ -3,6 +3,7 @@ import { OpenApiGeneratorV31, OpenAPIRegistry } from '@asteasolutions/zod-to-ope
 import { API_PREFIX } from '../common/api-prefix.middleware.js';
 import { APPLICATIONS_OPENAPI_PATHS } from '../modules/applications/index.js';
 import { AUTH_OPENAPI_PATHS, REFRESH_COOKIE } from '../modules/auth/index.js';
+import { CONTACTS_OPENAPI_PATHS } from '../modules/contacts/index.js';
 import { TIMELINE_OPENAPI_PATHS } from '../modules/events/index.js';
 import { HEALTH_OPENAPI_PATHS } from '../modules/health/index.js';
 import { MAINTENANCE_OPENAPI_PATHS } from '../modules/maintenance/index.js';
@@ -18,6 +19,7 @@ export const API_OPENAPI_PATHS = [
   ...APPLICATIONS_OPENAPI_PATHS,
   ...TIMELINE_OPENAPI_PATHS,
   ...NOTES_OPENAPI_PATHS,
+  ...CONTACTS_OPENAPI_PATHS,
   ...MAINTENANCE_OPENAPI_PATHS,
 ];
 

@@ -8,3 +8,9 @@ export function owned<Row>(row: Row | null, missing = APPLICATION_NOT_FOUND): Ro
   }
   return row;
 }
+
+export function changedOrNotFound(count: number, missing: string): void {
+  if (count === 0) {
+    throw notFound(missing);
+  }
+}

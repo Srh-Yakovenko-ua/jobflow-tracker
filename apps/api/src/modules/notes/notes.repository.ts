@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 
 import type { Prisma } from '../../generated/prisma/client.js';
+import { ownedChildWhere } from '../../prisma/owned-child-where.js';
 import { PrismaService } from '../../prisma/prisma.service.js';
 
 export const NOTE_SELECT = {
@@ -33,13 +34,6 @@ export type FindNote = NoteOfApplication & InTransaction;
 
 export type UpdateNote = FindNote & { body: string; updatedAt: Date };
 
-function ownedNote(
-  userId: string,
-  { applicationId, noteId }: NoteOfApplication,
-): Prisma.NoteWhereInput {
-  return { id: noteId, applicationId, application: { userId, deletedAt: null } };
-}
-
 @Injectable()
 export class NotesRepository {
   constructor(private readonly prisma: PrismaService) {}
@@ -71,21 +65,29 @@ export class NotesRepository {
 
   async updateOwned(
     userId: string,
-    { body, updatedAt, tx = this.prisma, ...note }: UpdateNote,
+    { body, updatedAt, tx = this.prisma, applicationId, noteId }: UpdateNote,
   ): Promise<number> {
     const { count } = await tx.note.updateMany({
-      where: ownedNote(userId, note),
+      where: ownedChildWhere(userId, { applicationId, id: noteId }),
       data: { body, updatedAt },
     });
     return count;
   }
 
-  findOwned(userId: string, { tx = this.prisma, ...note }: FindNote): Promise<NoteRow | null> {
-    return tx.note.findFirst({ where: ownedNote(userId, note), select: NOTE_SELECT });
+  findOwned(
+    userId: string,
+    { tx = this.prisma, applicationId, noteId }: FindNote,
+  ): Promise<NoteRow | null> {
+    return tx.note.findFirst({
+      where: ownedChildWhere(userId, { applicationId, id: noteId }),
+      select: NOTE_SELECT,
+    });
   }
 
-  async deleteOwned(userId: string, note: NoteOfApplication): Promise<number> {
-    const { count } = await this.prisma.note.deleteMany({ where: ownedNote(userId, note) });
+  async deleteOwned(userId: string, { applicationId, noteId }: NoteOfApplication): Promise<number> {
+    const { count } = await this.prisma.note.deleteMany({
+      where: ownedChildWhere(userId, { applicationId, id: noteId }),
+    });
     return count;
   }
 }

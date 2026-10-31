@@ -80,9 +80,13 @@ export const ALLOWED_TRANSITIONS: Record<Stage, readonly Stage[]> = {
   withdrawn: [],
 };
 
-export const RESPONSE_STAGES: readonly Stage[] = ALLOWED_TRANSITIONS.applied.filter(
-  (stage) => stage !== 'ghosted' && stage !== 'withdrawn',
-);
+const NON_REPLY_STAGES: readonly Stage[] = ['ghosted', 'withdrawn'];
+
+export function isReplyStage(stage: Stage) {
+  return !NON_REPLY_STAGES.includes(stage);
+}
+
+export const RESPONSE_STAGES: readonly Stage[] = ALLOWED_TRANSITIONS.applied.filter(isReplyStage);
 
 export const TRANSITION_REFUSAL_REASONS = ['terminal_stage', 'not_allowed'] as const;
 

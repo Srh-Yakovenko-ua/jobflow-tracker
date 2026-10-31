@@ -1,9 +1,9 @@
 import type { Note, NoteInput, NoteListResponse } from '@jobflow/shared';
 import { Injectable } from '@nestjs/common';
 
-import { notFound } from '../../common/app-error.js';
 import { Clock } from '../../common/clock.js';
-import { owned } from '../../common/owned.js';
+import { withIsoTimestamps } from '../../common/iso-timestamps.js';
+import { changedOrNotFound, owned } from '../../common/owned.js';
 import { PrismaService } from '../../prisma/prisma.service.js';
 import { TimelineService } from '../events/index.js';
 import {
@@ -19,15 +19,7 @@ export type CreateNote = NotesOfApplication & { input: NoteInput };
 
 export type EditNote = NoteOfApplication & { input: NoteInput };
 
-function toNote({ createdAt, updatedAt, ...row }: NoteRow): Note {
-  return { ...row, createdAt: createdAt.toISOString(), updatedAt: updatedAt.toISOString() };
-}
-
-function noteChanged(count: number): void {
-  if (count === 0) {
-    throw notFound(NOTE_NOT_FOUND);
-  }
-}
+const toNote = (row: NoteRow): Note => withIsoTimestamps(row);
 
 @Injectable()
 export class NotesService {
@@ -64,8 +56,9 @@ export class NotesService {
   async update(userId: string, { input, ...note }: EditNote): Promise<Note> {
     const updatedAt = this.clock.now();
     const row = await this.prisma.$transaction(async (tx) => {
-      noteChanged(
+      changedOrNotFound(
         await this.repository.updateOwned(userId, { ...note, body: input.body, updatedAt, tx }),
+        NOTE_NOT_FOUND,
       );
       return owned(await this.repository.findOwned(userId, { ...note, tx }), NOTE_NOT_FOUND);
     });
@@ -73,6 +66,6 @@ export class NotesService {
   }
 
   async remove(userId: string, note: NoteOfApplication): Promise<void> {
-    noteChanged(await this.repository.deleteOwned(userId, note));
+    changedOrNotFound(await this.repository.deleteOwned(userId, note), NOTE_NOT_FOUND);
   }
 }

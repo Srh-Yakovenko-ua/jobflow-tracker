@@ -22,6 +22,7 @@ import { createOwnedApplication, createStageEvents, createUser } from '../../tes
 import { callRoute } from '../../test/http.js';
 import { APPLICATION_NOT_FOUND, MISSING_ID, TO_SCREENING } from '../../test/service-fixtures.js';
 import { NOW, settableClock } from '../../test/time.js';
+import type { OccurrencesQuery } from './timeline.repository.js';
 import { TimelineService } from './timeline.service.js';
 
 type DesignRecord = TimelineRecord & { occurredAt: Date };
@@ -251,6 +252,22 @@ describe('the application timeline', () => {
       }),
     ).rejects.toMatchObject(APPLICATION_NOT_FOUND);
     expect(await journalRowCount(olena.applicationId)).toBe(0);
+  });
+
+  it('gives OLENA the occurrences of the asked kind only and BOHDAN none of them', async () => {
+    const { userId, applicationId } = await createOwnedApplication(testApp.prisma);
+    const bohdan = await createUser(testApp.prisma);
+    await Promise.all(
+      DESIGN_RECORDS.map((record) => timeline().record(userId, { ...record, applicationId })),
+    );
+    const query: OccurrencesQuery = { applicationIds: [applicationId], kinds: ['followup_sent'] };
+
+    const occurrences = await Promise.all([
+      timeline().occurrences(userId, query),
+      timeline().occurrences(bohdan.id, query),
+    ]);
+
+    expect(occurrences).toEqual([[{ applicationId, occurredAt: at('08-27T18:00:00') }], []]);
   });
 
   it('leaves no row when the transaction the record joined rolls back', async () => {

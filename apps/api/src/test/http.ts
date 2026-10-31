@@ -1,6 +1,6 @@
 import { errorResponseSchema } from '@jobflow/shared';
 import type { NestExpressApplication } from '@nestjs/platform-express';
-import request from 'supertest';
+import request, { type Response } from 'supertest';
 
 export type RouteCall = {
   method: 'get' | 'post' | 'patch' | 'delete';
@@ -21,3 +21,8 @@ export function callRoute(
 
 export const errorPathsOf = (body: unknown) =>
   (errorResponseSchema.parse(body).errors ?? []).map(({ path }) => path);
+
+export const statusAndDetail = ({ status, body }: Response) => [
+  status,
+  errorResponseSchema.safeParse(body).data?.detail,
+];
