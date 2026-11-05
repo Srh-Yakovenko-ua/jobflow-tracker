@@ -34,6 +34,15 @@ export function cardIn({ serial, stage, position }: CardSeed): ApplicationCard {
   return { ...FULL_CARD, id: fixtureIdOf(serial), position, currentStage: stage };
 }
 
+export type CardRun = { stage: Stage; count: number; from: number };
+
+export function cardsIn({ stage, count, from }: CardRun): ApplicationCard[] {
+  return Array.from({ length: count }, (_, offset) => {
+    const serial = from + offset;
+    return cardIn({ serial, stage, position: `Vacancy ${String(serial)}` });
+  });
+}
+
 export type ShownCards = { cards: readonly ApplicationCard[]; stages: readonly Stage[] };
 
 export type BoardRouteOptions = { counts: ColumnCounts; cards?: readonly ApplicationCard[] };

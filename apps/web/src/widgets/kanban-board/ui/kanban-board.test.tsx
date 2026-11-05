@@ -228,7 +228,7 @@ describe('KanbanBoard', () => {
     server.use(meRoute(), http.get(BOARD_URL, outage.reply));
     renderInApp(
       <>
-        <KanbanBoard />
+        <KanbanBoard initial={{ density: 'full' }} />
         <QueryProbe queryKey={BOARD_KEY} />
       </>,
     );
@@ -243,7 +243,7 @@ describe('KanbanBoard', () => {
       meRoute(),
       http.get(BOARD_URL, () => delay('infinite')),
     );
-    renderInApp(<KanbanBoard />);
+    renderInApp(<KanbanBoard initial={{ density: 'full' }} />);
 
     const [rejected, ghosted, withdrawn] = skeletonStripClasses();
     expect(ghosted).toEqual(
@@ -259,7 +259,7 @@ describe('KanbanBoard', () => {
       meRoute(),
       http.get(BOARD_URL, () => errorReply({ status: 500, type: 'internal_error' })),
     );
-    const user = renderInApp(<KanbanBoard />);
+    const user = renderInApp(<KanbanBoard initial={{ density: 'full' }} />);
     const failed = await screen.findByRole('alert', {}, { timeout: 2500 });
     expect(failed.closest('.animate-fade-in')).toBeInstanceOf(HTMLElement);
 

@@ -1,14 +1,18 @@
 import { useDndContext } from '@dnd-kit/core';
 import type { ApplicationCard as ApplicationCardData, Stage } from '@jobflow/shared';
-import { AnimatePresence, motion } from 'motion/react';
-import { type Ref, use } from 'react';
+import { AnimatePresence } from 'motion/react';
+import { use } from 'react';
 
 import type { ApplicationCardContext } from '@/entities/application';
 import { uk } from '@/shared/i18n';
-import { Fade, FADE_PRESENCE, type FadeMotion, type FadeProps } from '@/shared/ui/fade';
+import { Fade, type FadeMotion, type FadeProps } from '@/shared/ui/fade';
 
-import { DragSourceContext, type LandingCard } from '../model/drag-source';
+import { useBoardDensity } from '../model/board-density-store';
+import { COLUMN_VIRTUAL } from '../model/column-virtual';
+import { DragSourceContext, isLanding, type LandingCard } from '../model/drag-source';
+import { ColumnNote } from './column-note';
 import { DraggableCard } from './draggable-card';
+import { VirtualColumnCards } from './virtual-column-cards';
 
 export type ColumnCardsProps = Readonly<{
   stage: Stage;
@@ -17,31 +21,7 @@ export type ColumnCardsProps = Readonly<{
   footnote?: readonly string[] | undefined;
 }>;
 
-type ColumnNoteProps = Readonly<{
-  lines: readonly string[];
-  ref?: Ref<HTMLParagraphElement>;
-}>;
-
 const LANDING = { className: 'invisible', transition: { duration: 0 } } as const;
-
-function ColumnNote({ lines, ref }: ColumnNoteProps) {
-  return (
-    <motion.p
-      ref={ref}
-      layout
-      {...FADE_PRESENCE}
-      className="flex min-h-16.5 flex-col items-center justify-center rounded-xl border-[1.5px] border-dashed border-line p-3 text-center text-[12px] leading-[1.5] text-ink-3"
-    >
-      {lines.map((line) => (
-        <span key={line}>{line}</span>
-      ))}
-    </motion.p>
-  );
-}
-
-function isLanding(application: ApplicationCardData, landing: LandingCard | null): boolean {
-  return application.id === landing?.id && application.currentStage === landing.stage;
-}
 
 function cardFade(
   application: ApplicationCardData,
@@ -55,14 +35,15 @@ function cardFade(
   };
 }
 
-export function ColumnCards({ stage, items, context, footnote }: ColumnCardsProps) {
+function GrowingColumnCards({ stage, items, context, footnote }: ColumnCardsProps) {
   const { landing } = use(DragSourceContext);
+  const density = useBoardDensity((store) => store.density);
   const dropOver = useDndContext().over?.id === stage;
   return (
     <AnimatePresence mode="popLayout" initial={false}>
       {items.map((application) => (
         <Fade key={application.id} {...cardFade(application, landing)}>
-          <DraggableCard application={application} context={context} />
+          <DraggableCard application={application} context={context} view={{ density }} />
         </Fade>
       ))}
       {footnote !== undefined && <ColumnNote key="footnote" lines={footnote} />}
@@ -71,4 +52,11 @@ export function ColumnCards({ stage, items, context, footnote }: ColumnCardsProp
       )}
     </AnimatePresence>
   );
+}
+
+export function ColumnCards({ stage, items, context, footnote }: ColumnCardsProps) {
+  if (items.length > COLUMN_VIRTUAL.threshold) {
+    return <VirtualColumnCards items={items} context={context} footnote={footnote} />;
+  }
+  return <GrowingColumnCards stage={stage} items={items} context={context} footnote={footnote} />;
 }

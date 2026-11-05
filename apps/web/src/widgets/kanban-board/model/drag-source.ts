@@ -1,5 +1,5 @@
 import { type UniqueIdentifier, useDroppable } from '@dnd-kit/core';
-import type { Stage } from '@jobflow/shared';
+import type { ApplicationCard, Stage } from '@jobflow/shared';
 import { createContext, use } from 'react';
 
 import { isLegalDrop } from '@/features/move-application';
@@ -10,11 +10,25 @@ export type DropZone = { setNodeRef: (element: HTMLElement | null) => void; drop
 
 export type LandingCard = Readonly<{ id: UniqueIdentifier; stage: Stage }>;
 
-export type DragSource = Readonly<{ from: Stage | null; landing: LandingCard | null }>;
+export type DragSource = Readonly<{
+  from: Stage | null;
+  landing: LandingCard | null;
+  activeId: UniqueIdentifier | null;
+  focusId: UniqueIdentifier | null;
+}>;
 
 type DropTarget = { from: Stage | null; to: Stage; isOver: boolean };
 
-export const DragSourceContext = createContext<DragSource>({ from: null, landing: null });
+export const DragSourceContext = createContext<DragSource>({
+  from: null,
+  landing: null,
+  activeId: null,
+  focusId: null,
+});
+
+export function isLanding(application: ApplicationCard, landing: LandingCard | null): boolean {
+  return application.id === landing?.id && application.currentStage === landing.stage;
+}
 
 function dropStateOf({ from, to, isOver }: DropTarget): DropState {
   if (from === null || from === to) {

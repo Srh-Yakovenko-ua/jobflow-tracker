@@ -1,10 +1,9 @@
 'use client';
 
-import { createContext, type ReactNode, use, useState } from 'react';
-import { useStore } from 'zustand';
 import { createStore } from 'zustand/vanilla';
 
 import { writeCookie } from '@/shared/lib/cookie';
+import { createStoreContext } from '@/shared/lib/store-context';
 
 import { SIDEBAR_COOKIE, sidebarCookieOf, type SidebarState } from './sidebar-cookie';
 
@@ -21,21 +20,9 @@ export function createSidebarStore(initial: SidebarState) {
   }));
 }
 
-type SidebarStoreApi = ReturnType<typeof createSidebarStore>;
+const { Provider, useStoreSelector } = createStoreContext({
+  name: 'SidebarStore',
+  create: createSidebarStore,
+});
 
-const SidebarStoreContext = createContext<SidebarStoreApi | null>(null);
-
-export type SidebarStoreProviderProps = Readonly<{ initial: SidebarState; children: ReactNode }>;
-
-export function SidebarStoreProvider({ initial, children }: SidebarStoreProviderProps) {
-  const [store] = useState(() => createSidebarStore(initial));
-  return <SidebarStoreContext value={store}>{children}</SidebarStoreContext>;
-}
-
-export function useSidebarStore<Picked>(selector: (store: SidebarStore) => Picked): Picked {
-  const store = use(SidebarStoreContext);
-  if (!store) {
-    throw new Error('useSidebarStore must be used inside SidebarStoreProvider');
-  }
-  return useStore(store, selector);
-}
+export { Provider as SidebarStoreProvider, useStoreSelector as useSidebarStore };
