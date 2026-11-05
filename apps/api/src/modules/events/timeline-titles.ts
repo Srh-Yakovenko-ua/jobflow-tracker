@@ -17,11 +17,11 @@ type RecordTitles = { [Kind in keyof PayloadOf]: (payload: PayloadOf[Kind]) => s
 
 export type StageChange = { fromStage: Stage | null; toStage: Stage };
 
-export const NOTE_TITLE = 'Заметка';
+export const NOTE_TITLE = 'Нотатка';
 
 const CAPTURE_TITLES: Record<CaptureMethod, string> = {
-  bookmarklet: 'Карточку створено букмарклетом',
-  paste: 'Карточку створено з тексту',
+  bookmarklet: 'Картку створено букмарклетом',
+  paste: 'Картку створено з тексту',
 };
 
 const SECONDS: PluralForms = { one: 'секунду', few: 'секунди', other: 'секунд' };

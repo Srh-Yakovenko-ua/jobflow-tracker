@@ -119,7 +119,7 @@ describe('the notes routes', () => {
     ]);
   });
 
-  it('GET timeline shows the note once as Заметка with its body', async () => {
+  it('GET timeline shows the note once as Нотатка with its body', async () => {
     const note = await olenaWithNote();
 
     expect(await timelineNotesOf(note)).toEqual([
@@ -127,7 +127,7 @@ describe('the notes routes', () => {
         id: note.noteId,
         type: 'note_added',
         occurredAt: NOW_ISO,
-        title: 'Заметка',
+        title: 'Нотатка',
         meta: { body: NOTE_BODY },
         actor: 'user',
       },
