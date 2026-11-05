@@ -363,7 +363,7 @@ describe('KanbanBoard drag and drop', () => {
     await user.click(screen.getByRole('button', { name: 'Скасувати перенос' }));
 
     expect(await screen.findByText('Час на скасування минув')).toBeDefined();
-    expect(screen.getByText('Карточка лишилася у «відмова».')).toBeDefined();
+    expect(screen.getByText('Картка лишилася у «відмова».')).toBeDefined();
     expect(await screen.findByRole('button', { name: 'відмова 33' })).toBeDefined();
     expect(within(columnNamed('відгук 1')).queryByText(DRAGGED)).toBeNull();
     expect(toast.getToasts()).toHaveLength(1);

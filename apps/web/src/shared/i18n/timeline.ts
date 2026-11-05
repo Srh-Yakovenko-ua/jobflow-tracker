@@ -14,9 +14,9 @@ export const timeline = {
   today: 'сьогодні',
   waiting: (stageGenitive: string) => `Чекаєш на відповідь після ${stageGenitive}`,
   silence: ({ days, threshold, remindOn }: RemindCopy) =>
-    `${daysOf(days)} тиші. Поріг фоллоу-апу — ${daysOf(threshold)}, нагадаємо ${remindOn}.`,
+    `${daysOf(days)} тиші. Поріг фоллоу-апу: ${daysOf(threshold)}, нагадаємо ${remindOn}.`,
   silencePassed: ({ days, threshold }: SilenceCopy) =>
-    `${daysOf(days)} тиші. Поріг фоллоу-апу — ${daysOf(threshold)} пройдено.`,
+    `${daysOf(days)} тиші. Поріг фоллоу-апу в ${daysOf(threshold)} пройдено.`,
   stageGenitive: {
     applied: 'відгуку',
     screening: 'скринінгу',
@@ -32,6 +32,6 @@ export const timeline = {
     `${daysOf(days)} на етапі ${stageGenitive}.`,
   reason: (label: string) => `Причина: ${label}.`,
   via: (source: string) => `Через ${source}.`,
-  silenceMeta: 'Автоматична подія. Карточка приглушилась на дошці.',
+  silenceMeta: 'Автоматична подія. Картка приглушилась на дошці.',
   empty: 'Подій ще немає',
 } as const;

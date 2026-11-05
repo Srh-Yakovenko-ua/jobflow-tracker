@@ -80,7 +80,7 @@ describe('RejectionReasonDialog', () => {
     expect(document.activeElement).toBe(screen.getByRole('dialog'));
     expect(shortcutsIn('Відмовила компанія')).toEqual(['1', '2', '3', '4', '5', '6']);
     expect(shortcutsIn('Відмовився я')).toEqual(['7', '8', '9', '0']);
-    expect(screen.getByText('ENTER — остання причина · ESC — скасувати')).toBeDefined();
+    expect(screen.getByText('ENTER: остання причина · ESC: скасувати')).toBeDefined();
   });
 
   it('a reason click picks its code and nothing is cancelled', async () => {

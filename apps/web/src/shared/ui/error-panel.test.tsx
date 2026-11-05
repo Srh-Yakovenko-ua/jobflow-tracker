@@ -72,12 +72,12 @@ describe('error panels', () => {
     {
       queue: { queued: 47, etaMinutes: 4, waiting: 3 },
       body: 'У черзі 47 задач, орієнтовно 4 хвилини.',
-      waiting: '3 карточки чекають',
+      waiting: '3 картки чекають',
     },
     {
       queue: { queued: 21, etaMinutes: 1, waiting: 1 },
       body: 'У черзі 21 задача, орієнтовно 1 хвилина.',
-      waiting: '1 карточка чекає',
+      waiting: '1 картка чекає',
     },
   ])(
     'the AI queue counts $queue.queued tasks, minutes and waiting cards in Ukrainian plurals',
@@ -97,7 +97,7 @@ describe('error panels', () => {
     );
 
     expect(screen.getByText('Резюме важить 8,4 МБ')).toBeDefined();
-    expect(screen.getByRole('alert').textContent).toContain('Максимум — 5 МБ.');
+    expect(screen.getByRole('alert').textContent).toContain('Максимум 5 МБ.');
     await user.click(screen.getByRole('button', { name: 'Обрати інший файл' }));
     expect(onPick).toHaveBeenCalledTimes(1);
   });

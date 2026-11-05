@@ -74,7 +74,7 @@ describe('KanbanBoard', () => {
     });
     await screen.findByText('Senior Frontend Engineer');
 
-    expect(screen.getByText('активний пошук · 17 карточок в роботі')).toBeDefined();
+    expect(screen.getByText('активний пошук · 17 карток у роботі')).toBeDefined();
     expect(screen.getAllByRole('heading', { level: 2 })).toEqual(
       headingsNamed([
         'відгук 8',
@@ -93,7 +93,7 @@ describe('KanbanBoard', () => {
     renderBoard(DESIGN_BOARD);
     await screen.findByText('Senior Frontend Engineer');
 
-    expect(screen.getByText('активний пошук · 4 карточки в роботі')).toBeDefined();
+    expect(screen.getByText('активний пошук · 4 картки в роботі')).toBeDefined();
     for (const name of ['відмова 32', 'ghosted 17', 'відкликав 0']) {
       expect(screen.getByRole('button', { name }).getAttribute('aria-expanded')).toBe('false');
     }

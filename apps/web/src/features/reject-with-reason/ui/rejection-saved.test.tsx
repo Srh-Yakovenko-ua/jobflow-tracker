@@ -194,7 +194,7 @@ describe('RejectionReasonDialog, saved step', () => {
 
   it.each([
     { button: 'Скасувати перенос', action: 'undo' },
-    { button: 'Додати заметку', action: 'note' },
+    { button: 'Додати нотатку', action: 'note' },
     { button: 'Готово', action: 'done' },
   ])('«$button» calls $action', async ({ button, action }) => {
     const { user, finished } = renderSaved();
@@ -224,7 +224,7 @@ describe('RejectionReasonDialog, note step', () => {
     await user.type(screen.getByLabelText("Що варто запам'ятати"), 'Попросили live coding 3');
     await user.click(screen.getByRole('button', { name: 'Зберегти' }));
 
-    expect(await screen.findByText('Заметку збережено')).toBeDefined();
+    expect(await screen.findByText('Нотатку збережено')).toBeDefined();
     expect(notes.sent).toEqual([
       { id: ACME_TECH_INTERVIEW.id, body: { body: 'Попросили live coding 3' } },
     ]);

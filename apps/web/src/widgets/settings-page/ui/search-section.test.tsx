@@ -10,7 +10,7 @@ import { regionOf, renderLoadedSettings, SUGGESTIONS_KEY } from '@/test/render-s
 vi.mock('next/navigation', () => import('@/test/navigation'));
 
 const FINAL_STAGE =
-  'На етапі «фінал» поріг автоматично подвоюється: там 24 дні — норма, і нагадування були б хибними.';
+  'На етапі «фінал» поріг автоматично подвоюється: там 24 дні є нормою, і нагадування були б хибними.';
 
 const searchRegion = () => within(regionOf('Пошук і тиша'));
 
@@ -49,7 +49,7 @@ describe('SearchSection', () => {
     );
     expect(await searchRegion().findByText('Збережено')).toBeDefined();
     expect(routes.patches).toEqual([{ silenceDays: 14 }]);
-    expect(hint()).toContain('там 28 днів — норма');
+    expect(hint()).toContain('там 28 днів є нормою');
   });
 
   it('the hint recommends the preset that covers the suggestion and names the final-stage doubling', async () => {
@@ -57,7 +57,7 @@ describe('SearchSection', () => {
     await waitForQuery({ queryKey: SUGGESTIONS_KEY, status: 'success' });
 
     expect(hint()).toBe(
-      `Твоя медіана відповіді — 6 днів, тому 14 — розумний поріг. ${FINAL_STAGE}`,
+      `Твоя медіана відповіді становить 6 днів, тому 14 буде розумним порогом. ${FINAL_STAGE}`,
     );
   });
 
@@ -69,7 +69,7 @@ describe('SearchSection', () => {
     await waitForQuery({ queryKey: SUGGESTIONS_KEY, status: 'success' });
 
     expect(hint()).toBe(
-      `Поки замало відповідей, щоб порадити поріг; 7 днів — стартове значення. ${FINAL_STAGE}`,
+      `Поки замало відповідей, щоб порадити поріг. Стартове значення: 7 днів. ${FINAL_STAGE}`,
     );
   });
 
