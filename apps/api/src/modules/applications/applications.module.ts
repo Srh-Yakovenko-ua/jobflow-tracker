@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 
 import { Clock } from '../../common/clock.js';
+import { ApplicationDuplicatesRepository } from './application-duplicates.repository.js';
 import { ApplicationListRepository } from './application-list.repository.js';
 import { ApplicationListService } from './application-list.service.js';
 import { ApplicationSearchRepository } from './application-search.repository.js';
@@ -15,6 +16,7 @@ import { StageTransitionService } from './stage-transition.service.js';
   providers: [
     ApplicationsService,
     ApplicationsRepository,
+    ApplicationDuplicatesRepository,
     ApplicationListService,
     ApplicationListRepository,
     ApplicationSearchRepository,

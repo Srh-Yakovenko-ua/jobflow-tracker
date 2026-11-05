@@ -1,11 +1,23 @@
-import type { ApplicationResponse, CreateApplicationInput, Stage } from '@jobflow/shared';
+import type {
+  ApplicationResponse,
+  CreateApplicationInput,
+  CreateApplicationResponse,
+  PossibleDuplicate,
+  Stage,
+} from '@jobflow/shared';
 import { Injectable } from '@nestjs/common';
 
+import { addMinutes } from '../../common/add-minutes.js';
 import { conflict, notFound } from '../../common/app-error.js';
 import { Clock } from '../../common/clock.js';
 import { APPLICATION_NOT_FOUND, owned } from '../../common/owned.js';
 import type { Prisma } from '../../generated/prisma/client.js';
 import { PrismaService } from '../../prisma/prisma.service.js';
+import {
+  ApplicationDuplicatesRepository,
+  DUPLICATE_LIMITS,
+  type DuplicateProbe,
+} from './application-duplicates.repository.js';
 import { toApplicationResponse } from './application-response.js';
 import { APPLICATION_EVENTS } from './applications.events.js';
 import { type ApplicationChanges, ApplicationsRepository } from './applications.repository.js';
@@ -21,15 +33,28 @@ type RecordedChange = {
 
 const FIRST_STAGE = 'applied' satisfies Stage;
 
+const DAY_MINUTES = 24 * 60;
+
 @Injectable()
 export class ApplicationsService {
   constructor(
     private readonly repository: ApplicationsRepository,
+    private readonly duplicates: ApplicationDuplicatesRepository,
     private readonly prisma: PrismaService,
     private readonly clock: Clock,
   ) {}
 
-  async create(userId: string, input: CreateApplicationInput): Promise<ApplicationResponse> {
+  async possibleDuplicates(userId: string, probe: DuplicateProbe): Promise<PossibleDuplicate[]> {
+    const since = addMinutes(this.clock.now(), -DUPLICATE_LIMITS.windowDays * DAY_MINUTES);
+    const rows = await this.duplicates.findPossible(userId, { ...probe, since });
+    return rows.map(({ appliedAt, ...duplicate }) => ({
+      ...duplicate,
+      appliedAt: appliedAt?.toISOString() ?? null,
+    }));
+  }
+
+  async create(userId: string, input: CreateApplicationInput): Promise<CreateApplicationResponse> {
+    const possibleDuplicates = await this.possibleDuplicates(userId, input);
     const now = this.clock.now();
     const row = await this.prisma.$transaction(async (tx) => {
       const { searchId, resumeVersionId } = await this.repository.findCreateDefaults(userId, {
@@ -54,7 +79,7 @@ export class ApplicationsService {
       await this.repository.recordEvent(userId, { event, tx });
       return created;
     });
-    return toApplicationResponse(row, now);
+    return { ...toApplicationResponse(row, now), possibleDuplicates };
   }
 
   async get(userId: string, id: string): Promise<ApplicationResponse> {
