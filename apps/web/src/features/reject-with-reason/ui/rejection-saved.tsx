@@ -7,6 +7,7 @@ import { uk } from '@/shared/i18n';
 import { useCountdown } from '@/shared/lib/use-countdown';
 import { Button } from '@/shared/ui/button';
 import { DialogFooter } from '@/shared/ui/dialog';
+import { Reveal } from '@/shared/ui/reveal';
 import { TextSkeleton } from '@/shared/ui/skeleton';
 
 import { type ReasonInsight, reasonInsightOf } from '../lib/reason-insight';
@@ -55,11 +56,11 @@ function SavedFooter({ step, actions }: Omit<RejectionSavedProps, 'application'>
   const secondsLeft = useCountdown(step.undoUntil);
   return (
     <DialogFooter className="gap-3">
-      {secondsLeft > 0 && (
-        <Button variant="ghost" className="-mx-2 px-2 text-[13px]" onClick={actions.onUndo}>
+      <Reveal shown={secondsLeft > 0} className="-mx-2">
+        <Button variant="ghost" className="px-2 text-[13px]" onClick={actions.onUndo}>
           {COPY.saved.undo}
         </Button>
-      )}
+      </Reveal>
       <div className="ml-auto flex flex-wrap gap-2.25">
         <Button
           variant="secondary"

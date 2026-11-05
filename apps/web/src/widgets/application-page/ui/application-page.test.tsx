@@ -1,4 +1,4 @@
-import { screen, within } from '@testing-library/react';
+import { fireEvent, screen, waitFor, within } from '@testing-library/react';
 import { http, HttpResponse } from 'msw/http';
 import { describe, expect, it, vi } from 'vitest';
 
@@ -31,6 +31,28 @@ describe('ApplicationPage', () => {
       'GraphQL',
       'Vitest',
     ]);
+  });
+
+  it('a click on the title opens the editor while the title, the meta line and the stack fold away out of reach', async () => {
+    renderApplicationPage();
+    const title = await screen.findByRole('button', { name: ACME_APPLICATION.position });
+
+    fireEvent.click(title);
+
+    const folding = [
+      title,
+      screen.getByText('Acme Technologies'),
+      screen.getByRole('list', { name: 'Стек' }),
+    ];
+    for (const part of folding) {
+      expect(part.closest('[inert]')).toBeInstanceOf(HTMLElement);
+    }
+    await waitFor(() => {
+      expect(screen.queryByRole('list', { name: 'Стек' })).toBeNull();
+    });
+    expect(
+      screen.getByRole('heading', { level: 1, name: ACME_APPLICATION.position }),
+    ).toBeDefined();
   });
 
   it('leads back to the board from the top bar', async () => {

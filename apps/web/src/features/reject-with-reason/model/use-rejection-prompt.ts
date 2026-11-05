@@ -54,12 +54,13 @@ function useAskReason({ send, setPrompt }: Pick<PickContext, 'send' | 'setPrompt
     ...meQueryOptions(),
     select: (me) => me.settings.askRejectionReason,
   });
-  return ({ application }: Pick<ApplicationMove, 'application'>) => {
+  return ({ application }: Pick<ApplicationMove, 'application'>): 'sent' | 'asked' => {
     if (!askReason) {
       send({ application, toStage: REJECTED });
-      return;
+      return 'sent';
     }
     setPrompt({ application, step: { kind: 'choose' } });
+    return 'asked';
   };
 }
 

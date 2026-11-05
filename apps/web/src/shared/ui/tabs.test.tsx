@@ -41,6 +41,20 @@ describe('Tabs', () => {
     expect(screen.getByRole('tabpanel').textContent).toBe(reminders.panel);
   });
 
+  it('the active look moves with the tab picked from the keyboard', async () => {
+    const user = userEvent.setup();
+    renderTabs();
+    const indicatorIn = (name: string) =>
+      screen.getByRole('tab', { name }).querySelector('[data-slot="active-indicator"]');
+    expect(indicatorIn(board.label)).not.toBeNull();
+
+    await user.tab();
+    await user.keyboard('{ArrowRight}');
+
+    expect(indicatorIn(analytics.label)).not.toBeNull();
+    expect(indicatorIn(board.label)).toBeNull();
+  });
+
   it('a count is read as part of the tab name', () => {
     renderTabs();
 

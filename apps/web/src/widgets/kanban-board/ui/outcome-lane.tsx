@@ -1,9 +1,11 @@
 import { type ApplicationBoardResponse, type OutcomeStage, STAGE_LABELS } from '@jobflow/shared';
 import { ChevronDown, ChevronRight } from 'lucide-react';
+import { AnimatePresence, motion } from 'motion/react';
 
 import { type ApplicationCardContext, StageMarker } from '@/entities/application';
 import { cn } from '@/shared/lib/cn';
 import { LoadFailedPanel } from '@/shared/ui/error-panel';
+import { Fade } from '@/shared/ui/fade';
 import { CardSkeleton } from '@/shared/ui/skeleton';
 
 import { useDropZone } from '../model/drag-source';
@@ -43,13 +45,14 @@ const STRIP_LOOK: Record<OutcomeStage, StripLook> = {
 };
 
 const STRIP = {
-  lane: 'flex w-14.5 flex-none rounded-2xl data-[drop=over]:focus-halo',
+  lane: 'relative flex w-14.5 flex-none rounded-2xl data-[drop=over]:focus-halo',
   button: 'group flex w-full flex-col items-center gap-3.5 rounded-2xl py-3',
   chevron:
     'flex size-7.5 items-center justify-center rounded-md bg-surface transition-colors duration-(--duration-instant) group-hover:text-link group-active:bg-surface-2',
   label:
     'flex rotate-180 items-center gap-2.5 text-[13px] leading-[normal] font-semibold [writing-mode:vertical-rl]',
   count: 'text-[12px] font-normal text-ink-3 tabular-nums',
+  body: 'relative flex flex-col gap-2.5',
 } as const;
 
 function StripFace({ stage, count }: Readonly<ColumnHead<OutcomeStage>>) {
@@ -84,13 +87,14 @@ export function OutcomeLane({ column, context, disclosure, load }: OutcomeLanePr
   const look = STRIP_LOOK[column.stage];
   const { setNodeRef, drop } = useDropZone(column.stage);
   return (
-    <section
+    <motion.section
+      layout
       ref={setNodeRef}
       data-drop={drop}
       aria-busy={expanded && column.items === null && !load.failed}
       className={cn(expanded ? COLUMN_FRAME.column : [STRIP.lane, look.lane], COLUMN_FRAME.drop)}
     >
-      <h2 className={cn(!expanded && 'flex w-full')}>
+      <motion.h2 layout="position" className={cn(!expanded && 'flex w-full')}>
         <button
           type="button"
           aria-expanded={expanded}
@@ -108,9 +112,15 @@ export function OutcomeLane({ column, context, disclosure, load }: OutcomeLanePr
             <StripFace stage={column.stage} count={column.count} />
           )}
         </button>
-      </h2>
-      {expanded && drop === 'over' && <DropPlaceholder />}
-      {expanded && <LaneBody column={column} context={context} load={load} />}
-    </section>
+      </motion.h2>
+      <DropPlaceholder shown={expanded && drop === 'over'} />
+      <AnimatePresence initial={false} mode="popLayout">
+        {expanded && (
+          <Fade key="body" layout="position" className={STRIP.body}>
+            <LaneBody column={column} context={context} load={load} />
+          </Fade>
+        )}
+      </AnimatePresence>
+    </motion.section>
   );
 }

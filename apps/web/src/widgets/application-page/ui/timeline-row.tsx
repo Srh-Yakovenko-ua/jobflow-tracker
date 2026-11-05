@@ -1,4 +1,8 @@
+import { motion } from 'motion/react';
+import type { Ref } from 'react';
+
 import { cn } from '@/shared/lib/cn';
+import { FADE_PRESENCE } from '@/shared/ui/fade';
 
 import type { TimelineRow, TimelineTone } from '../lib/timeline-rows';
 import { TimelineMarker, type TimelineMarkerKind } from './timeline-marker';
@@ -8,7 +12,7 @@ export type TimelineEntry = Pick<TimelineRow, 'id' | 'title' | 'meta' | 'tone'> 
   when: { label: string; at: Date };
 };
 
-export type TimelineEntryRowProps = Readonly<{ entry: TimelineEntry }>;
+export type TimelineEntryRowProps = Readonly<{ entry: TimelineEntry; ref?: Ref<HTMLLIElement> }>;
 
 const TITLE_TONE: Record<TimelineTone, string> = {
   strong: 'font-semibold',
@@ -16,9 +20,14 @@ const TITLE_TONE: Record<TimelineTone, string> = {
   muted: 'font-medium text-ink-2',
 };
 
-export function TimelineEntryRow({ entry }: TimelineEntryRowProps) {
+export function TimelineEntryRow({ entry, ref }: TimelineEntryRowProps) {
   return (
-    <li className="group grid grid-cols-[64px_20px_minmax(0,1fr)] gap-x-3.5">
+    <motion.li
+      ref={ref}
+      layout
+      {...FADE_PRESENCE}
+      className="group grid grid-cols-[64px_20px_minmax(0,1fr)] gap-x-3.5"
+    >
       <time
         dateTime={entry.when.at.toISOString()}
         className="pt-0.75 text-[11px] font-semibold text-ink-3 tabular-nums"
@@ -35,6 +44,6 @@ export function TimelineEntryRow({ entry }: TimelineEntryRowProps) {
           <p className="text-[13px] leading-normal text-ink-3">{entry.meta}</p>
         )}
       </div>
-    </li>
+    </motion.li>
   );
 }

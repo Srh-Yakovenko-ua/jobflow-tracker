@@ -9,6 +9,7 @@ import {
   type OutcomeStage,
   STAGES,
 } from '@jobflow/shared';
+import { LayoutGroup, motion } from 'motion/react';
 import type { ReactNode } from 'react';
 
 import type { ApplicationCardContext } from '@/entities/application';
@@ -49,9 +50,9 @@ function InWorkEyebrow({ board }: Readonly<{ board: ApplicationBoardResponse }>)
 
 function BoardFrame({ children }: Readonly<{ children: ReactNode }>) {
   return (
-    <div className={cn(BOARD_WIDTH, 'overflow-x-auto p-1')}>
+    <motion.div layoutScroll className={cn(BOARD_WIDTH, 'overflow-x-auto p-1')}>
       <div className="flex items-stretch gap-3">{children}</div>
-    </div>
+    </motion.div>
   );
 }
 
@@ -61,11 +62,21 @@ function BoardSkeleton() {
       <p role="status" className="sr-only">
         {uk.ui.loading}
       </p>
+      <p aria-hidden className={cn(BOARD_WIDTH, 'eyebrow px-1 pb-2')}>
+        <span className="inline-block h-2.25 w-28 rounded-[7px] bg-line-soft align-middle" />
+      </p>
       <BoardFrame>
         {OPEN_STAGES.map((stage) => (
           <div key={stage} aria-hidden className="min-w-62.5 flex-1">
             <ColumnSkeleton />
           </div>
+        ))}
+        {OUTCOME_STAGES.map((stage) => (
+          <div
+            key={stage}
+            aria-hidden
+            className="w-14.5 flex-none rounded-lg bg-surface-3 inset-ring inset-ring-line-soft"
+          />
         ))}
       </BoardFrame>
     </div>
@@ -85,7 +96,7 @@ function FirstRunBoard() {
 function BoardColumns({ board, context, outcomes }: BoardColumnsProps) {
   const { columns } = board;
   return (
-    <>
+    <LayoutGroup>
       <InWorkEyebrow board={board} />
       <BoardFrame>
         <BoardDnd board={board} context={context}>
@@ -114,7 +125,7 @@ function BoardColumns({ board, context, outcomes }: BoardColumnsProps) {
           ))}
         </BoardDnd>
       </BoardFrame>
-    </>
+    </LayoutGroup>
   );
 }
 
@@ -133,5 +144,9 @@ export function KanbanBoard() {
   if (STAGES.every((stage) => data.columns[stage].count === 0)) {
     return <FirstRunBoard />;
   }
-  return <BoardColumns board={data} context={context} outcomes={{ expanded, onToggle, load }} />;
+  return (
+    <div className="animate-fade-in">
+      <BoardColumns board={data} context={context} outcomes={{ expanded, onToggle, load }} />
+    </div>
+  );
 }

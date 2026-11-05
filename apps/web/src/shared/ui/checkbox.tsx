@@ -24,7 +24,7 @@ export function Checkbox({ label, className, ...props }: CheckboxProps) {
           className,
         )}
       >
-        <CheckboxPrimitive.Indicator>
+        <CheckboxPrimitive.Indicator className="animate-check-in data-[state=unchecked]:animate-check-out">
           <Check
             aria-hidden
             size={12}

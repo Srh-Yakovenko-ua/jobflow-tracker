@@ -26,8 +26,8 @@ const START_MARKER = 'inset-y-2 start-0 w-0.75 rounded-e-xs';
 const VARIANTS: Record<NavLinkVariant, VariantLook> = {
   sidebar: {
     link: 'h-9 gap-2.5 rounded-[9px] px-3 text-[13.5px]',
-    label: 'min-w-0 flex-1 truncate',
-    count: 'text-[11.5px] tabular-nums',
+    label: 'min-w-0 flex-1 animate-fade-in truncate',
+    count: 'animate-fade-in text-[11.5px] tabular-nums',
     marker: START_MARKER,
   },
   rail: {

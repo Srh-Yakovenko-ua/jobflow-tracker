@@ -19,7 +19,7 @@ export function Tooltip({ content, children, side = 'top' }: TooltipProps) {
             side={side}
             sideOffset={6}
             collisionPadding={8}
-            className="z-50 max-w-60 rounded-md bg-ink px-2.75 py-2 font-ui text-[12px] leading-[1.45] text-paper shadow-e2 transition-opacity duration-(--duration-fast) ease-standard starting:opacity-0"
+            className="z-50 max-w-60 rounded-md bg-ink px-2.75 py-2 font-ui text-[12px] leading-[1.45] text-paper shadow-e2 animate-[fade-in_var(--duration-fast)_var(--easing)] data-[state=closed]:animate-[fade-out_var(--duration-fast)_var(--easing)]"
           >
             {content}
           </TooltipPrimitive.Content>

@@ -1,18 +1,21 @@
 'use client';
 
 import type { RejectionReasonCode } from '@jobflow/shared';
+import { AnimatePresence } from 'motion/react';
 import type { KeyboardEvent } from 'react';
 
+import { useLastPresent } from '@/shared/lib/use-last-present';
 import {
   Dialog,
   DialogContent,
   type DialogContentHandlers,
   keepFocusOnDialog,
 } from '@/shared/ui/dialog';
+import { Fade } from '@/shared/ui/fade';
 
 import { readLastReason } from '../lib/last-reason';
 import { reasonForKey } from '../lib/reason-order';
-import type { RejectionActions, RejectionPrompt } from '../model/rejection-step';
+import type { RejectionActions, RejectionPrompt, RejectionStep } from '../model/rejection-step';
 import { ReasonPicker } from './reason-picker';
 import { RejectionNote } from './rejection-note';
 import { RejectionSaved } from './rejection-saved';
@@ -25,6 +28,13 @@ export type RejectionReasonDialogProps = Readonly<{
 }>;
 
 type StepBodyProps = Readonly<{ prompt: RejectionPrompt; actions: RejectionActions }>;
+
+const STEP_BODY: Record<RejectionStep['kind'], string> = {
+  choose: 'reasons',
+  saving: 'reasons',
+  saved: 'saved',
+  note: 'note',
+};
 
 function keyedReason(event: KeyboardEvent<HTMLDivElement>): RejectionReasonCode | undefined {
   if (event.ctrlKey || event.metaKey || event.altKey) return undefined;
@@ -52,6 +62,7 @@ function StepBody({ prompt, actions }: StepBodyProps) {
 }
 
 export function RejectionReasonDialog({ prompt, actions, handlers }: RejectionReasonDialogProps) {
+  const shown = useLastPresent(prompt);
   const choosing = prompt?.step.kind === 'choose';
   const onKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
     const reasonCode = choosing ? keyedReason(event) : undefined;
@@ -68,13 +79,17 @@ export function RejectionReasonDialog({ prompt, actions, handlers }: RejectionRe
         else actions.onDone();
       }}
     >
-      {prompt && (
+      {shown && (
         <DialogContent
           className="max-w-140"
-          header={stepHeader(prompt)}
+          header={stepHeader(shown)}
           handlers={{ ...handlers, onOpenAutoFocus: keepFocusOnDialog, onKeyDown }}
         >
-          <StepBody prompt={prompt} actions={actions} />
+          <AnimatePresence mode="popLayout" initial={false}>
+            <Fade key={STEP_BODY[shown.step.kind]} className="flex flex-col gap-4.5">
+              <StepBody prompt={shown} actions={actions} />
+            </Fade>
+          </AnimatePresence>
         </DialogContent>
       )}
     </Dialog>

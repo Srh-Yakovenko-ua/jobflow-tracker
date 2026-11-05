@@ -1,8 +1,11 @@
 import { useDndContext } from '@dnd-kit/core';
 
 import { uk } from '@/shared/i18n';
+import { Reveal } from '@/shared/ui/reveal';
 
-export function DropPlaceholder() {
+export type DropPlaceholderProps = Readonly<{ shown: boolean }>;
+
+function Slot() {
   const { activeNodeRect } = useDndContext();
   return (
     <div
@@ -12,5 +15,15 @@ export function DropPlaceholder() {
     >
       {uk.board.move.dropHere}
     </div>
+  );
+}
+
+export function DropPlaceholder({ shown }: DropPlaceholderProps) {
+  return (
+    <Reveal shown={shown} mode="popLayout" className="-mb-2.5 flex-none">
+      <div className="pb-2.5">
+        <Slot />
+      </div>
+    </Reveal>
   );
 }

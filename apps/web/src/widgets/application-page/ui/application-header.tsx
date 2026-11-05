@@ -4,7 +4,7 @@ import type { ReactNode, Ref } from 'react';
 import { formatSalaryRange, StageChip } from '@/entities/application';
 import type { EditField } from '@/features/edit-application';
 import { uk } from '@/shared/i18n';
-import { cn } from '@/shared/lib/cn';
+import { Reveal } from '@/shared/ui/reveal';
 
 import { EditTrigger } from './edit-trigger';
 
@@ -100,18 +100,17 @@ export function ApplicationHeader({
   children,
 }: ApplicationHeaderProps) {
   const days = countedUk(application.daysInStage, DAY_FORMS_UK);
+  const shown = !editor.editing;
   return (
-    <section className="flex flex-col gap-4.5">
-      <div className="flex flex-wrap items-center gap-2.5">
+    <section className="flex flex-col">
+      <div className="flex flex-wrap items-center gap-2.5 pb-4.5">
         <StageChip stage={application.currentStage} view={{ size: 'sm' }} />
         <span className="text-[11px] font-semibold text-ink-3 tabular-nums">
           {uk.application.daysInStage(days)}
         </span>
       </div>
-      <h1 ref={titleRef} tabIndex={-1} className={cn(TITLE, editor.editing && 'sr-only')}>
-        {editor.editing ? (
-          application.position
-        ) : (
+      <h1 ref={titleRef} tabIndex={-1} className={TITLE}>
+        <Reveal shown={shown}>
           <EditTrigger
             onEdit={() => {
               editor.onEdit('position');
@@ -119,10 +118,15 @@ export function ApplicationHeader({
           >
             {application.position}
           </EditTrigger>
-        )}
+        </Reveal>
+        {editor.editing && <span className="sr-only">{application.position}</span>}
       </h1>
-      {!editor.editing && <MetaLine application={application} onEdit={editor.onEdit} />}
-      {!editor.editing && <StackChips application={application} onEdit={editor.onEdit} />}
+      <Reveal shown={shown}>
+        <div className="flex flex-col gap-4.5 py-4.5">
+          <MetaLine application={application} onEdit={editor.onEdit} />
+          <StackChips application={application} onEdit={editor.onEdit} />
+        </div>
+      </Reveal>
       {children}
     </section>
   );

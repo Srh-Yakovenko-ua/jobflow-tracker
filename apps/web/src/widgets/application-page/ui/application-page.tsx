@@ -9,6 +9,8 @@ import { ApplicationEditForm } from '@/features/edit-application';
 import { AUTH_ROUTES } from '@/shared/lib/return-to';
 import { LoadFailedPanel } from '@/shared/ui/error-panel';
 import { NotFoundState } from '@/shared/ui/not-found-state';
+import { Reveal } from '@/shared/ui/reveal';
+import { useSheetClose } from '@/shared/ui/sheet';
 import { PageSkeleton } from '@/shared/ui/skeleton';
 
 import { useApplicationPage } from '../model/use-application-page';
@@ -27,13 +29,10 @@ export type ApplicationPageProps = Readonly<{
 const COLUMNS =
   'grid grid-cols-1 items-start gap-10 pt-8 @4xl:grid-cols-[minmax(0,1.55fr)_minmax(280px,1fr)]';
 
-function useLeaveAfterDelete(mode: ApplicationPageMode): () => void {
+function useLeaveAfterDelete(): () => void {
   const router = useRouter();
-  if (mode === 'sheet') {
-    return () => {
-      router.back();
-    };
-  }
+  const closeSheet = useSheetClose();
+  if (closeSheet !== null) return closeSheet;
   return () => {
     router.replace(AUTH_ROUTES.home);
   };
@@ -42,7 +41,7 @@ function useLeaveAfterDelete(mode: ApplicationPageMode): () => void {
 function PageContent({ id, view }: ApplicationPageProps) {
   const page = useApplicationPage(id);
   const titleRef = useRef<HTMLHeadingElement>(null);
-  const onDeleted = useLeaveAfterDelete(view.mode);
+  const onDeleted = useLeaveAfterDelete();
   const { application, panel } = page;
   if (page.missing) return <NotFoundState />;
   if (application === undefined) {
@@ -61,7 +60,7 @@ function PageContent({ id, view }: ApplicationPageProps) {
     focusTitle();
   };
   return (
-    <>
+    <div className="animate-fade-in">
       <PageTopBar application={application} view={{ mode: view.mode, timeZone: page.timeZone }} />
       <div className={COLUMNS}>
         <div className="flex min-w-0 flex-col gap-10">
@@ -70,19 +69,24 @@ function PageContent({ id, view }: ApplicationPageProps) {
             titleRef={titleRef}
             editor={{ editing: editing !== null, onEdit: page.actions.onEdit }}
           >
-            {editing === null ? (
-              <ApplicationActions
-                application={application}
-                actions={page.actions}
-                focusTarget={titleRef}
-              />
-            ) : (
-              <ApplicationEditForm
-                application={application}
-                focusField={editing}
-                actions={{ onDone: closeEditor }}
-              />
-            )}
+            <div>
+              <Reveal shown={editing === null}>
+                <ApplicationActions
+                  application={application}
+                  actions={page.actions}
+                  focusTarget={titleRef}
+                />
+              </Reveal>
+              <Reveal shown={editing !== null}>
+                {editing !== null && (
+                  <ApplicationEditForm
+                    application={application}
+                    focusField={editing}
+                    actions={{ onDone: closeEditor }}
+                  />
+                )}
+              </Reveal>
+            </div>
           </ApplicationHeader>
           <ApplicationTimeline application={application} />
         </div>
@@ -98,7 +102,7 @@ function PageContent({ id, view }: ApplicationPageProps) {
           },
         }}
       />
-    </>
+    </div>
   );
 }
 

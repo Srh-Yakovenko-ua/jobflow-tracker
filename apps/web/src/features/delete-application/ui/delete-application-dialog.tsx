@@ -3,6 +3,7 @@
 import type { ApplicationResponse } from '@jobflow/shared';
 
 import { uk } from '@/shared/i18n';
+import { useLastPresent } from '@/shared/lib/use-last-present';
 import { Button } from '@/shared/ui/button';
 import {
   Dialog,
@@ -30,16 +31,17 @@ export function DeleteApplicationDialog({
   handlers,
 }: DeleteApplicationDialogProps) {
   const mutation = useDeleteApplicationMutation();
+  const shown = useLastPresent(application);
   return (
     <Dialog
-      open={application !== null}
+      open={application !== null && !mutation.isSuccess}
       onOpenChange={(open) => {
         if (!open) actions.onCancel();
       }}
     >
-      {application && (
+      {shown && (
         <DialogContent
-          header={{ title: COPY.title, description: COPY.body(application.position) }}
+          header={{ title: COPY.title, description: COPY.body(shown.position) }}
           handlers={{ ...handlers }}
         >
           <DialogFooter className="justify-end">
@@ -50,7 +52,7 @@ export function DeleteApplicationDialog({
               variant="danger"
               loading={mutation.isPending}
               onClick={() => {
-                mutation.mutate(application.id, { onSuccess: actions.onDeleted });
+                mutation.mutate(shown.id, { onSuccess: actions.onDeleted });
               }}
             >
               {COPY.confirm}

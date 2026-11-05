@@ -152,7 +152,12 @@ describe('KanbanBoard drag and drop', () => {
 
     await screen.findByRole('heading', { name: 'скринінг 2' });
     expect(within(columnNamed('скринінг 2')).getByText(DRAGGED)).toBeDefined();
-    expect(within(columnNamed('відгук 1')).queryByText(DRAGGED)).toBeNull();
+    expect(
+      within(columnNamed('скринінг 2')).getByText(DRAGGED).closest('.invisible'),
+    ).toBeInstanceOf(HTMLElement);
+    await waitFor(() => {
+      expect(within(columnNamed('відгук 1')).queryByText(DRAGGED)).toBeNull();
+    });
     expect(
       screen.getByText('«Senior Frontend Engineer» відпущено в колонці «скринінг».'),
     ).toBeDefined();
@@ -186,7 +191,10 @@ describe('KanbanBoard drag and drop', () => {
       expect(screen.getByText(failure.toast.description)).toBeDefined();
       expect(toast.getToasts()).toHaveLength(1);
       expect(within(columnNamed('відгук 2')).getByText(DRAGGED)).toBeDefined();
-      expect(within(columnNamed('скринінг 1')).queryByText(DRAGGED)).toBeNull();
+      expect(within(columnNamed('відгук 2')).getByText(DRAGGED).closest('.invisible')).toBeNull();
+      await waitFor(() => {
+        expect(within(columnNamed('скринінг 1')).queryByText(DRAGGED)).toBeNull();
+      });
       await waitFor(() => {
         expect(boardAsked).toEqual(['']);
       });

@@ -1,7 +1,11 @@
 import type { ApplicationResponse } from '@jobflow/shared';
 import { screen } from '@testing-library/react';
 
-import { ApplicationPage, type ApplicationPageMode } from '@/widgets/application-page';
+import {
+  ApplicationPage,
+  type ApplicationPageMode,
+  ApplicationSheet,
+} from '@/widgets/application-page';
 
 import {
   ACME_APPLICATION,
@@ -45,7 +49,9 @@ export function renderApplicationPage({
     reasonsSummaryRoute().handler,
     timelineRoute({ timeline: EMPTY_TIMELINE }),
   );
-  const user = renderInApp(<ApplicationPage id={id} view={{ mode }} />);
+  const user = renderInApp(
+    mode === 'sheet' ? <ApplicationSheet id={id} /> : <ApplicationPage id={id} view={{ mode }} />,
+  );
   return {
     user,
     sent: page.sent,

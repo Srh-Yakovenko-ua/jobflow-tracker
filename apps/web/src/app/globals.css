@@ -60,6 +60,13 @@
   --animate-pop-in: pop-in var(--duration-base) var(--easing);
   --animate-spring-in: spring-in var(--duration-spring) var(--easing-spring);
   --animate-sheet-in: sheet-in var(--duration-spring) var(--easing-spring);
+  --animate-pop-out: pop-out var(--duration-base) var(--easing);
+  --animate-spring-out: spring-out var(--duration-spring) var(--easing-spring);
+  --animate-sheet-out: sheet-out var(--duration-spring) var(--easing-spring);
+  --animate-fade-in: fade-in var(--duration-base) var(--easing);
+  --animate-fade-out: fade-out var(--duration-base) var(--easing);
+  --animate-check-in: check-in var(--duration-spring) var(--easing-spring);
+  --animate-check-out: check-out var(--duration-spring) var(--easing-spring);
   --animate-shimmer: shimmer 1600ms linear infinite;
 
   @keyframes shimmer {
@@ -97,6 +104,53 @@
       transform: none;
     }
   }
+
+  @keyframes pop-out {
+    to {
+      transform: translateY(-6px) scale(0.99);
+      opacity: 0;
+    }
+  }
+
+  @keyframes spring-out {
+    to {
+      transform: translateY(14px) scale(0.96);
+      opacity: 0;
+    }
+  }
+
+  @keyframes sheet-out {
+    to {
+      transform: translateX(40px);
+      opacity: 0;
+    }
+  }
+
+  @keyframes fade-in {
+    from {
+      opacity: 0;
+    }
+  }
+
+  @keyframes fade-out {
+    to {
+      opacity: 0;
+    }
+  }
+
+  @keyframes check-in {
+    from {
+      transform: scale(0.6);
+      opacity: 0;
+    }
+  }
+
+  @keyframes check-out {
+    to {
+      transform: scale(0.6);
+      opacity: 0;
+    }
+  }
 }
 
 :focus-visible:not([data-focus]) {
@@ -105,6 +159,12 @@
 
 [data-sonner-toaster] {
   --width: min(440px, calc(100vw - 40px)) !important;
+
+  & [data-sonner-toast],
+  & [data-sonner-toast] > * {
+    transition-duration: var(--duration-spring);
+    transition-timing-function: var(--easing-spring);
+  }
 }
 
 :root:has([data-app-shell]) {

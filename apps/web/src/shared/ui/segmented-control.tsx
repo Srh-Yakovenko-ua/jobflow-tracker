@@ -1,7 +1,9 @@
 'use client';
 
 import { RadioGroup as RadioGroupPrimitive } from 'radix-ui';
+import { useId } from 'react';
 
+import { ActiveIndicator } from './active-indicator';
 import type { ChoiceOption } from './radio-group';
 
 export type SegmentedControlProps<Value extends string> = Readonly<{
@@ -16,6 +18,7 @@ export function SegmentedControl<Value extends string>({
   onValueChange,
   ...props
 }: SegmentedControlProps<Value>) {
+  const groupId = useId();
   return (
     <RadioGroupPrimitive.Root
       {...props}
@@ -24,14 +27,15 @@ export function SegmentedControl<Value extends string>({
         const picked = options.find((option) => option.value === next);
         if (picked) onValueChange(picked.value);
       }}
-      className="inline-flex w-fit gap-0.5 rounded-md bg-surface-3 p-0.75 inset-ring inset-ring-line-soft"
+      className="isolate inline-flex w-fit gap-0.5 rounded-md bg-surface-3 p-0.75 inset-ring inset-ring-line-soft"
     >
       {options.map((option) => (
         <RadioGroupPrimitive.Item
           key={option.value}
           value={option.value}
-          className="touch-target h-7.5 min-w-11 rounded-[7px] px-3.25 font-ui text-[12.5px] font-semibold whitespace-nowrap text-ink-2 transition-[background-color,color,box-shadow] duration-(--duration-fast) ease-standard hover:text-ink data-[state=checked]:bg-surface data-[state=checked]:text-ink data-[state=checked]:shadow-e1"
+          className="touch-target h-7.5 min-w-11 rounded-[7px] px-3.25 font-ui text-[12.5px] font-semibold whitespace-nowrap text-ink-2 transition-colors duration-(--duration-fast) ease-standard hover:text-ink data-[state=checked]:text-ink"
         >
+          {option.value === props.value && <ActiveIndicator group={groupId} />}
           {option.label}
         </RadioGroupPrimitive.Item>
       ))}

@@ -7,7 +7,7 @@ import {
   STAGE_LABELS,
 } from '@jobflow/shared';
 import { Ellipsis, Pencil, Trash2 } from 'lucide-react';
-import type { RefObject } from 'react';
+import { type RefObject, useRef } from 'react';
 
 import {
   nextStageOf,
@@ -30,6 +30,7 @@ export type ApplicationActionsProps = Readonly<{
 const COPY = uk.applicationPage;
 
 function MoreMenu({ actions }: Readonly<{ actions: ApplicationPageActions }>) {
+  const editChosenRef = useRef(false);
   return (
     <Menu>
       <MenuTrigger asChild>
@@ -39,10 +40,17 @@ function MoreMenu({ actions }: Readonly<{ actions: ApplicationPageActions }>) {
           icon={<Ellipsis aria-hidden size={16} strokeWidth={1.9} />}
         />
       </MenuTrigger>
-      <MenuContent>
+      <MenuContent
+        onCloseAutoFocus={(event) => {
+          if (!editChosenRef.current) return;
+          editChosenRef.current = false;
+          event.preventDefault();
+          actions.onEdit('position');
+        }}
+      >
         <MenuItem
           onSelect={() => {
-            actions.onEdit('position');
+            editChosenRef.current = true;
           }}
         >
           <Pencil aria-hidden size={16} strokeWidth={1.9} />

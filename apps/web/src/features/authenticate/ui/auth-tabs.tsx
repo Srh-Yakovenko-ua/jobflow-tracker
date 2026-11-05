@@ -1,3 +1,4 @@
+import { motion } from 'motion/react';
 import Link from 'next/link';
 
 import { uk } from '@/shared/i18n';
@@ -12,7 +13,7 @@ const TAB_ORDER: readonly AuthMode[] = ['register', 'login'];
 const TAB =
   'touch-target flex h-[42px] items-center justify-center px-3.5 pb-2.5 text-[14.5px] transition-colors duration-(--duration-instant) ease-standard';
 
-const CURRENT = '-mb-px border-b-2 border-ink font-semibold text-ink';
+const CURRENT = '-mb-px border-b-2 border-transparent font-semibold text-ink';
 
 const IDLE = 'text-ink-3 hover:text-ink active:text-ink';
 
@@ -27,6 +28,13 @@ export function AuthTabs({ mode }: AuthTabsProps) {
           className={cn(TAB, tab === mode ? CURRENT : IDLE)}
         >
           {AUTH_MODES[tab].copy.title}
+          {tab === mode && (
+            <motion.span
+              aria-hidden
+              layoutId="auth-tab-underline"
+              className="absolute inset-x-0 -bottom-0.5 h-0.5 bg-ink"
+            />
+          )}
         </Link>
       ))}
     </nav>
