@@ -7,27 +7,24 @@ import { delay } from 'msw/utils/delay';
 import { toast } from 'sonner';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { userKeys } from '@/entities/user';
 import { rememberLastReason } from '@/features/reject-with-reason';
 import { API_CLIENT_LIMITS } from '@/shared/api';
 import { uk } from '@/shared/i18n';
 import type { ErrorToastContent } from '@/shared/ui/error-toast';
 import { apiUrl, errorReply } from '@/test/api-handlers';
-import { layOutColumns, startDrag, waitOutDropClickGuard } from '@/test/board-drag';
+import { startDrag, waitOutDropClickGuard } from '@/test/board-drag';
 import {
   boardRoute,
   type BoardRouteOptions,
   DESIGN_BOARD,
   DESIGN_BOARD_HEADINGS,
-  moveRoute,
   type MoveRouteOptions,
   undoRoute,
 } from '@/test/board-fixtures';
 import { fakeTimeouts } from '@/test/fake-timeouts';
 import { latch } from '@/test/latch';
 import { push } from '@/test/navigation';
-import { waitForQuery } from '@/test/query-status';
-import { type BoardSettings, columnNamed, renderBoard } from '@/test/render-board';
+import { boardReadyToDrag, columnNamed } from '@/test/render-board';
 import { server } from '@/test/server';
 
 import { DROP_GLIDE } from '../model/drop-glide';
@@ -51,8 +48,6 @@ const AFTER_REJECT: BoardRouteOptions = {
     card.position === DRAGGED ? { ...card, currentStage: 'rejected' } : card,
   ),
 };
-
-type DragSetup = { board?: BoardRouteOptions; move?: MoveRouteOptions; settings?: BoardSettings };
 
 type RejectionSetup = { undo?: MoveRouteOptions; openLane?: boolean };
 
@@ -91,16 +86,6 @@ const FAILED_MOVES: readonly FailedMove[] = [
     toast: MOVE.failed,
   },
 ];
-
-async function boardReadyToDrag({ board = DESIGN_BOARD, move, settings }: DragSetup = {}) {
-  const moves = moveRoute(move);
-  server.use(moves.handler);
-  const { user, sent } = renderBoard(board, settings);
-  await screen.findByText(DRAGGED);
-  await waitForQuery({ queryKey: userKeys.me(), status: 'success' });
-  layOutColumns();
-  return { user, moves: moves.sent, boardSent: sent };
-}
 
 function dragCardTo(column: string) {
   const drag = startDrag(screen.getByText(DRAGGED));

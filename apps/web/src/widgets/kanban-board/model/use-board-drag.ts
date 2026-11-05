@@ -1,4 +1,10 @@
-import type { DragEndEvent, DragStartEvent, Over, UniqueIdentifier } from '@dnd-kit/core';
+import type {
+  DragCancelEvent,
+  DragEndEvent,
+  DragStartEvent,
+  Over,
+  UniqueIdentifier,
+} from '@dnd-kit/core';
 import type { ApplicationBoardResponse, ApplicationCard } from '@jobflow/shared';
 import { useEffect, useState } from 'react';
 
@@ -38,6 +44,10 @@ function sentLandingOf({ application, toStage }: ApplicationMove): Landing {
   return { id: application.id, stage: toStage, glide };
 }
 
+function focusIdOf({ application, toStage }: ApplicationMove): UniqueIdentifier {
+  return canDragFrom(toStage) ? application.id : toStage;
+}
+
 function settledFrom(landed: Landing | null) {
   return (current: Landing | null) => (current === landed ? null : current);
 }
@@ -62,35 +72,54 @@ function useDropLanding() {
   return { landing, setLanding, dropAnimation };
 }
 
-export function useBoardDrag(board: ApplicationBoardResponse) {
-  const [activeId, setActiveId] = useState<UniqueIdentifier | null>(null);
-  const { landing, setLanding, dropAnimation } = useDropLanding();
+function keyboardOnly(event: DragCancelEvent, focusId: UniqueIdentifier | null) {
+  return event.activatorEvent instanceof KeyboardEvent ? focusId : null;
+}
+
+function useMoveSender() {
   const { mutate } = useMoveApplicationMutation();
   const { mutate: undo } = useUndoMoveMutation();
   const rejection = useRejectionPrompt({ send: mutate, undo });
-  const activeCard = activeId === null ? undefined : findCard(board, activeId);
   const sent = (move: ApplicationMove): boolean => {
     if (move.toStage === 'rejected') return rejection.ask(move) === 'sent';
     mutate(move);
     return true;
   };
-  const onDragEnd = ({ over }: DragEndEvent) => {
+  return { rejection, sent };
+}
+
+export function useBoardDrag(board: ApplicationBoardResponse) {
+  const [activeId, setActiveId] = useState<UniqueIdentifier | null>(null);
+  const [keyboardDrop, setKeyboardDrop] = useState<UniqueIdentifier | null>(null);
+  const { landing, setLanding, dropAnimation } = useDropLanding();
+  const { rejection, sent } = useMoveSender();
+  const activeCard = activeId === null ? undefined : findCard(board, activeId);
+  const putBack = (event: DragCancelEvent) => {
     setActiveId(null);
-    const move = legalMoveOf({ card: activeCard, over });
-    const landed = move !== undefined && sent(move);
+    setLanding(sourceLandingOf(activeCard));
+    setKeyboardDrop(keyboardOnly(event, event.active.id));
+  };
+  const onDragEnd = (event: DragEndEvent) => {
+    const move = legalMoveOf({ card: activeCard, over: event.over });
+    if (move === undefined) {
+      putBack(event);
+      return;
+    }
+    setActiveId(null);
+    const landed = sent(move);
     setLanding(landed ? sentLandingOf(move) : sourceLandingOf(activeCard));
+    setKeyboardDrop(landed ? keyboardOnly(event, focusIdOf(move)) : null);
   };
   const handlers = {
     onDragStart: ({ active }: DragStartEvent) => {
       setActiveId(active.id);
       setLanding(null);
+      setKeyboardDrop(null);
     },
     onDragEnd,
-    onDragCancel: () => {
-      setActiveId(null);
-      setLanding(sourceLandingOf(activeCard));
-    },
+    onDragCancel: putBack,
   };
   const landingToHide = landing?.glide === 'in-place' ? null : landing;
-  return { activeCard, landing: landingToHide, dropAnimation, handlers, rejection };
+  const keyboardFocus = landing === null ? keyboardDrop : null;
+  return { activeCard, landing: landingToHide, dropAnimation, handlers, rejection, keyboardFocus };
 }

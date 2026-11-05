@@ -4,13 +4,27 @@ import { screen } from '@testing-library/react';
 import { userKeys } from '@/entities/user';
 import { KanbanBoard } from '@/widgets/kanban-board';
 
-import { boardRoute, type BoardRouteOptions, reasonsSummaryRoute } from './board-fixtures';
-import { QueryProbe } from './query-status';
+import { layOutColumns } from './board-drag';
+import {
+  boardRoute,
+  type BoardRouteOptions,
+  DESIGN_BOARD,
+  moveRoute,
+  type MoveRouteOptions,
+  reasonsSummaryRoute,
+} from './board-fixtures';
+import { QueryProbe, waitForQuery } from './query-status';
 import { renderInApp } from './render-in-app';
 import { server } from './server';
 import { meRoute } from './session-fixtures';
 
 export type BoardSettings = Partial<MeResponse['settings']>;
+
+export type DragSetup = {
+  board?: BoardRouteOptions;
+  move?: MoveRouteOptions;
+  settings?: BoardSettings;
+};
 
 export function renderBoard(route: BoardRouteOptions, settings?: BoardSettings) {
   const board = boardRoute(route);
@@ -22,6 +36,16 @@ export function renderBoard(route: BoardRouteOptions, settings?: BoardSettings) 
     </>,
   );
   return { user, sent: board.sent };
+}
+
+export async function boardReadyToDrag({ board = DESIGN_BOARD, move, settings }: DragSetup = {}) {
+  const moves = moveRoute(move);
+  server.use(moves.handler);
+  const { user, sent } = renderBoard(board, settings);
+  await screen.findAllByRole('heading');
+  await waitForQuery({ queryKey: userKeys.me(), status: 'success' });
+  layOutColumns();
+  return { user, moves: moves.sent, boardSent: sent };
 }
 
 export function columnNamed(name: string): HTMLElement {
