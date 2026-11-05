@@ -9,7 +9,7 @@ describe('undoErrorMessage', () => {
   it('a 409 conflict says the undo window has passed', () => {
     expect(undoErrorMessage(apiErrorOf({ status: 409, type: 'conflict' }))).toEqual({
       title: 'Час на скасування минув',
-      description: 'Карточка лишилася у «відмова».',
+      description: 'Картка лишилася у «відмова».',
     });
   });
 

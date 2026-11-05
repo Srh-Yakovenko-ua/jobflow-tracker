@@ -40,9 +40,7 @@ describe('EmptyState', () => {
     );
 
     expect(screen.getByRole('heading', { level: 2, name: 'Порахувати ще нічого' })).toBeDefined();
-    expect(
-      screen.getByText('Перші висновки — на 10 відгуках, прогноз — на 15. Зараз 4.'),
-    ).toBeDefined();
+    expect(screen.getByText('Перші висновки з 10 відгуків, прогноз з 15. Зараз 4.')).toBeDefined();
     expect(screen.getByRole('button', { name: 'Додати вакансію' })).toBeDefined();
   });
 

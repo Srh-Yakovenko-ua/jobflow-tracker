@@ -8,7 +8,7 @@ describe('the promise panel', () => {
     render(<PromisePanel />);
 
     expect(
-      screen.getByRole('heading', { level: 2, name: 'Пошук роботи — це воронка, а не удача' }),
+      screen.getByRole('heading', { level: 2, name: 'Пошук роботи є воронкою, а не удачею' }),
     ).toBeDefined();
   });
 });

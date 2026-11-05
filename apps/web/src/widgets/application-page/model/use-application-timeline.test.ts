@@ -31,7 +31,7 @@ describe('useApplicationTimeline', () => {
     expect(result.current.timeline.load.pending).toBe(true);
     await waitFor(() => {
       expect(result.current.timeline.waiting?.meta).toBe(
-        '4 дні тиші. Поріг фоллоу-апу — 12 днів, нагадаємо 15.09.',
+        '4 дні тиші. Поріг фоллоу-апу: 12 днів, нагадаємо 15.09.',
       );
     });
     await waitFor(() => {

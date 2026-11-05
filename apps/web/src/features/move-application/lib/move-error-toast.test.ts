@@ -21,7 +21,7 @@ describe('moveErrorMessage', () => {
 
     expect(moveErrorMessage({ error, move: MOVE })).toEqual({
       title: 'Такий перехід неможливий',
-      description: 'З «відгук» карточка не переходить у «офер». Вона повернулася на місце.',
+      description: 'З «відгук» картка не переходить у «офер». Вона повернулася на місце.',
     });
   });
 
