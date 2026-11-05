@@ -55,10 +55,6 @@ export function startDrag(card: HTMLElement): BoardDrag {
   };
 }
 
-export function fakeTimeouts() {
-  vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'], shouldAdvanceTime: true });
-}
-
 export async function waitOutDropClickGuard() {
   await act(() => vi.advanceTimersByTimeAsync(DROP_CLICK_GUARD_MS));
   vi.useRealTimers();

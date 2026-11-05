@@ -13,7 +13,7 @@ import { API_CLIENT_LIMITS } from '@/shared/api';
 import { uk } from '@/shared/i18n';
 import type { ErrorToastContent } from '@/shared/ui/error-toast';
 import { apiUrl, errorReply } from '@/test/api-handlers';
-import { fakeTimeouts, layOutColumns, startDrag, waitOutDropClickGuard } from '@/test/board-drag';
+import { layOutColumns, startDrag, waitOutDropClickGuard } from '@/test/board-drag';
 import {
   boardRoute,
   type BoardRouteOptions,
@@ -23,6 +23,7 @@ import {
   type MoveRouteOptions,
   undoRoute,
 } from '@/test/board-fixtures';
+import { fakeTimeouts } from '@/test/fake-timeouts';
 import { latch } from '@/test/latch';
 import { push } from '@/test/navigation';
 import { waitForQuery } from '@/test/query-status';
