@@ -1,9 +1,11 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent, { type UserEvent } from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { ACME_APPLICATION, applicationRoute } from '@/test/application-fixtures';
+import { holdExitAnimations } from '@/test/held-exits';
 import { back } from '@/test/navigation';
+import { renderApplicationPage } from '@/test/render-application-page';
 import { InApp, renderInApp } from '@/test/render-in-app';
 import { server } from '@/test/server';
 import { meRoute } from '@/test/session-fixtures';
@@ -48,6 +50,7 @@ const CLOSERS = [
 
 afterEach(() => {
   back.mockClear();
+  vi.restoreAllMocks();
 });
 
 describe('ApplicationSheet', () => {
@@ -84,6 +87,29 @@ describe('ApplicationSheet', () => {
     await user.click(await screen.findByRole('button', { name: 'Дошка' }));
 
     expect(back).toHaveBeenCalledTimes(1);
+  });
+
+  it('a delete plays the sheet exit with the application still shown, then goes back once', async () => {
+    const exits = holdExitAnimations();
+    const { user, deletes } = renderApplicationPage({ mode: 'sheet' });
+    const sheet = await screen.findByRole('dialog', { name: ACME_APPLICATION.position });
+
+    await user.click(await within(sheet).findByRole('button', { name: 'Ще дії' }));
+    await user.click(await screen.findByRole('menuitem', { name: 'Видалити' }));
+    exits.finish();
+    const confirm = await screen.findByRole('dialog', { name: 'Видалити картку?' });
+    await user.click(within(confirm).getByRole('button', { name: 'Видалити' }));
+
+    await waitFor(() => {
+      expect(sheet.dataset.state).toBe('closed');
+    });
+    const title = { level: 1, name: ACME_APPLICATION.position, hidden: true } as const;
+    expect(within(sheet).getByRole('heading', title)).toBeDefined();
+    expect(back).not.toHaveBeenCalled();
+    exits.finish();
+    expect(sheet.isConnected).toBe(false);
+    expect(back).toHaveBeenCalledTimes(1);
+    expect(deletes).toEqual([ACME_APPLICATION.id]);
   });
 
   it.each(CLOSERS)(

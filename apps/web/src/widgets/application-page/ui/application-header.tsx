@@ -110,7 +110,7 @@ export function ApplicationHeader({
         </span>
       </div>
       <h1 ref={titleRef} tabIndex={-1} className={TITLE}>
-        <Reveal shown={shown}>
+        <Reveal shown={shown} view={{ as: 'span' }} className="block">
           <EditTrigger
             onEdit={() => {
               editor.onEdit('position');

@@ -45,4 +45,14 @@ describe('Reveal', () => {
     });
     expect(save()?.parentElement?.classList.contains('overflow-clip')).toBe(false);
   });
+
+  it('as a span the block stays phrasing content, so it can fold a title inside a heading', () => {
+    render(
+      <Reveal shown view={{ as: 'span' }}>
+        {<button type="button">Save</button>}
+      </Reveal>,
+    );
+
+    expect(screen.getByRole('button', { name: 'Save' }).parentElement?.tagName).toBe('SPAN');
+  });
 });

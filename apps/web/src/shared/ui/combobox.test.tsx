@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 
@@ -198,6 +198,18 @@ describe('Combobox', () => {
     expect(screen.queryByRole('button', { name: `${uk.ui.remove} React` })).toBeNull();
     expect(screen.getByText('+1')).toBeDefined();
     expect(document.activeElement).toBe(triggerOf(STACK.label));
+  });
+
+  it('a removed chip is inert while it fades out, so Tab skips it, and then it is gone', async () => {
+    render(<StackPicker initial={['react', 'aws']} />);
+    const remove = screen.getByRole('button', { name: `${uk.ui.remove} React` });
+
+    fireEvent.click(remove);
+
+    expect(remove.closest('[inert]')).toBeInstanceOf(HTMLElement);
+    await waitFor(() => {
+      expect(remove.isConnected).toBe(false);
+    });
   });
 
   it('the last chip remove hit area ends halfway into the gap, so the trigger after it stays the trigger', () => {

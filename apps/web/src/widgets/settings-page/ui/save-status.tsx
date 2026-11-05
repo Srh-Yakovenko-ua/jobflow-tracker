@@ -14,7 +14,9 @@ const STATUS_TEXT: Record<MutationStatus, string> = {
 export function SaveStatus({ status }: SaveStatusProps) {
   return (
     <p role="status" className="text-[12.5px] leading-[1.4] font-medium text-ink-3">
-      {STATUS_TEXT[status]}
+      <span key={status} className="animate-fade-in">
+        {STATUS_TEXT[status]}
+      </span>
     </p>
   );
 }

@@ -52,7 +52,8 @@ export function DeleteApplicationDialog({
               variant="danger"
               loading={mutation.isPending}
               onClick={() => {
-                mutation.mutate(shown.id, { onSuccess: actions.onDeleted });
+                if (application === null) return;
+                mutation.mutate(application.id, { onSuccess: actions.onDeleted });
               }}
             >
               {COPY.confirm}
