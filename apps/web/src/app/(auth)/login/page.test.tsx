@@ -28,12 +28,33 @@ describe('the login page', () => {
     );
   });
 
-  it('any other oauth value shows no notice', async () => {
-    await renderLogin({ oauth: 'granted' });
+  it.each([
+    {
+      provider: 'google',
+      status: 'Вхід через Google зараз недоступнийУвійди поштою або спробуй пізніше.',
+    },
+    {
+      provider: 'github',
+      status: 'Вхід через GitHub зараз недоступнийУвійди поштою або спробуй пізніше.',
+    },
+  ])(
+    '?oauth=unavailable&provider=$provider says that provider sign-in is unavailable in a polite status',
+    async ({ provider, status }) => {
+      await renderLogin({ oauth: 'unavailable', provider });
 
-    expect(screen.queryByRole('status')).toBeNull();
-    expect(screen.getByRole('heading', { level: 1, name: 'Увійти' })).toBeDefined();
-  });
+      expect(screen.getByRole('status').textContent).toBe(status);
+    },
+  );
+
+  it.each([{ oauth: 'granted' }, { oauth: 'unavailable', provider: 'facebook' }])(
+    '%o shows no notice',
+    async (query) => {
+      await renderLogin(query);
+
+      expect(screen.queryByRole('status')).toBeNull();
+      expect(screen.getByRole('heading', { level: 1, name: 'Увійти' })).toBeDefined();
+    },
+  );
 
   it.each([
     { next: '/applications/123', lands: '/applications/123' },

@@ -1,4 +1,4 @@
-import type { OAuthProvider } from '@jobflow/shared';
+import { OAUTH_PROVIDERS, type OAuthProvider } from '@jobflow/shared';
 import type { NestExpressApplication } from '@nestjs/platform-express';
 import request, { type Response } from 'supertest';
 
@@ -10,7 +10,7 @@ const OAUTH_STATE_COOKIE = 'oauth_state';
 
 const FAKE_AUTHORIZE_URL = 'https://github.com/login/oauth/authorize';
 
-export type FakeOAuthClient = Pick<OAuthClient, 'begin' | 'profile'>;
+export type FakeOAuthClient = Pick<OAuthClient, 'begin' | 'profile' | 'enabledProviders'>;
 
 export type OAuthStarted = { response: Response; state: string; stateCookie: string | undefined };
 
@@ -36,8 +36,12 @@ export function stateOf(url: string): string {
   return new URL(url).searchParams.get('state') ?? '';
 }
 
-export function fakeOAuthClient(profilesByCode: Record<string, OAuthProfile>): FakeOAuthClient {
+export function fakeOAuthClient(
+  profilesByCode: Record<string, OAuthProfile>,
+  enabled: readonly OAuthProvider[] = OAUTH_PROVIDERS,
+): FakeOAuthClient {
   return {
+    enabledProviders: () => [...enabled],
     begin: (provider) => {
       const state = `state-${provider}`;
       const url = new URL(FAKE_AUTHORIZE_URL);
@@ -51,6 +55,10 @@ export function fakeOAuthClient(profilesByCode: Record<string, OAuthProfile>): F
         : Promise.resolve(profile);
     },
   };
+}
+
+export function listOAuthProviders(app: NestExpressApplication) {
+  return request(app.getHttpServer()).get('/api/v1/auth/oauth/providers');
 }
 
 export async function startOAuth(

@@ -15,6 +15,7 @@ import { PasswordInput } from '@/shared/ui/password-input';
 import { Reveal } from '@/shared/ui/reveal';
 
 import { type AuthAlert, authAlertOf } from '../lib/auth-alert';
+import { type AuthNotice, noticeCopyOf } from '../lib/auth-notice';
 import {
   AUTH_MODES,
   type AuthMode,
@@ -26,8 +27,6 @@ import { useExistingSession } from '../model/use-existing-session';
 import { AuthTabs } from './auth-tabs';
 import { OAuthLinks } from './oauth-links';
 import { RateLimitAlert } from './rate-limit-alert';
-
-export type AuthNotice = 'oauthDenied';
 
 export type AuthFormProps = Readonly<{
   mode: AuthMode;
@@ -85,16 +84,6 @@ function AlertSlot({ alert, secondsLeft }: AlertSlotProps) {
   );
 }
 
-function OrDivider() {
-  return (
-    <div className="flex items-center gap-3">
-      <span aria-hidden className="h-px flex-1 bg-line-soft" />
-      <span className="eyebrow text-ink-3">{COPY.or}</span>
-      <span aria-hidden className="h-px flex-1 bg-line-soft" />
-    </div>
-  );
-}
-
 export function AuthForm({ mode, notice, returnTo = AUTH_ROUTES.home }: AuthFormProps) {
   const spec = AUTH_MODES[mode];
   const form = useForm<LoginInput>({
@@ -118,7 +107,7 @@ export function AuthForm({ mode, notice, returnTo = AUTH_ROUTES.home }: AuthForm
     <div className="flex flex-col gap-5.5">
       <h1 className="sr-only">{spec.copy.title}</h1>
       <AuthTabs mode={mode} />
-      {notice !== undefined && <Banner tone="info" content={COPY.alerts[notice]} />}
+      {notice !== undefined && <Banner tone="info" content={noticeCopyOf(notice)} />}
       <form
         method="post"
         noValidate
@@ -139,7 +128,6 @@ export function AuthForm({ mode, notice, returnTo = AUTH_ROUTES.home }: AuthForm
           {spec.copy.submit}
         </Button>
       </form>
-      <OrDivider />
       <OAuthLinks />
       <p className="text-[12.5px] leading-[1.55] text-ink-3">{COPY.privacy}</p>
     </div>

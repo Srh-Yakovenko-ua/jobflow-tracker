@@ -1,4 +1,10 @@
-import type { AuthResponse, MeResponse } from '@jobflow/shared';
+import {
+  type AuthResponse,
+  type MeResponse,
+  OAUTH_PROVIDERS,
+  type OAuthProvider,
+  type OAuthProvidersResponse,
+} from '@jobflow/shared';
 import type { HttpResponseResolver } from 'msw';
 import { http, HttpResponse } from 'msw/http';
 
@@ -49,6 +55,16 @@ export function meWithSettings(settings: Partial<MeResponse['settings']>): MeRes
 export function meRoute(me: Partial<MeResponse['settings']> | HttpResponseResolver = {}) {
   const reply = typeof me === 'function' ? me : () => HttpResponse.json(meWithSettings(me));
   return http.get(apiUrl('/auth/me'), reply);
+}
+
+export function oauthProvidersRoute(
+  enabled: readonly OAuthProvider[] | HttpResponseResolver = OAUTH_PROVIDERS,
+) {
+  const reply =
+    typeof enabled === 'function'
+      ? enabled
+      : () => HttpResponse.json<OAuthProvidersResponse>({ items: [...enabled] });
+  return http.get(apiUrl('/auth/oauth/providers'), reply);
 }
 
 export function authRoute({
