@@ -22,6 +22,7 @@ import { type BoardLoad, useKanbanBoard } from '../model/use-kanban-board';
 import { BoardColumn } from './board-column';
 import { BoardDnd } from './board-dnd';
 import { ColumnCards } from './column-cards';
+import { STRIP_LOOK } from './column-frame';
 import { FirstRunState } from './first-run-state';
 import { OutcomeLane } from './outcome-lane';
 
@@ -75,7 +76,7 @@ function BoardSkeleton() {
           <div
             key={stage}
             aria-hidden
-            className="w-14.5 flex-none rounded-lg bg-surface-3 inset-ring inset-ring-line-soft"
+            className={cn('w-14.5 flex-none rounded-2xl', STRIP_LOOK[stage].lane)}
           />
         ))}
       </BoardFrame>
@@ -85,11 +86,13 @@ function BoardSkeleton() {
 
 function FirstRunBoard() {
   return (
-    <BoardFrame>
-      <BoardColumn column={{ stage: 'applied', count: 0 }}>
-        <FirstRunState />
-      </BoardColumn>
-    </BoardFrame>
+    <div className="animate-fade-in">
+      <BoardFrame>
+        <BoardColumn column={{ stage: 'applied', count: 0 }}>
+          <FirstRunState />
+        </BoardColumn>
+      </BoardFrame>
+    </div>
   );
 }
 
@@ -103,6 +106,7 @@ function BoardColumns({ board, context, outcomes }: BoardColumnsProps) {
           {OPEN_STAGES.map((stage) => (
             <BoardColumn key={stage} column={{ stage, count: columns[stage].count }}>
               <ColumnCards
+                stage={stage}
                 items={columns[stage].items ?? []}
                 context={context}
                 footnote={FOOTNOTES[stage]}
@@ -136,7 +140,7 @@ export function KanbanBoard() {
       return <BoardSkeleton />;
     }
     return (
-      <div className="max-w-120">
+      <div className="max-w-120 animate-fade-in">
         <LoadFailedPanel onRetry={load.onRetry} />
       </div>
     );

@@ -1,5 +1,6 @@
 'use client';
 
+import { AnimatePresence } from 'motion/react';
 import { useRef, useState } from 'react';
 
 import { uk } from '@/shared/i18n';
@@ -8,6 +9,7 @@ import { cn } from '@/shared/lib/cn';
 import { Chip } from './chip';
 import { ClearButton } from './clear-button';
 import { ComboboxMenu, type ComboboxView } from './combobox-menu';
+import { Fade } from './fade';
 import { useField } from './field';
 import { FIELD_SURFACE, type SelectOptionGroup } from './field-surface';
 import { Popover, PopoverAnchor, PopoverContent, PopoverTrigger } from './popover';
@@ -38,16 +40,19 @@ function Chips({ values, labelOf, onRemove }: ChipsProps) {
   const hidden = values.length - CHIP_LIMIT;
   return (
     <>
-      {values.slice(0, CHIP_LIMIT).map((value) => (
-        <Chip
-          key={value}
-          label={labelOf(value)}
-          tone="accent"
-          onRemove={() => {
-            onRemove(value);
-          }}
-        />
-      ))}
+      <AnimatePresence initial={false} mode="popLayout">
+        {values.slice(0, CHIP_LIMIT).map((value) => (
+          <Fade key={value} motion={{ layout: 'position' }} className="relative z-10 flex">
+            <Chip
+              label={labelOf(value)}
+              tone="accent"
+              onRemove={() => {
+                onRemove(value);
+              }}
+            />
+          </Fade>
+        ))}
+      </AnimatePresence>
       {hidden > 0 && (
         <span className="relative z-10 px-1 text-[12px] font-semibold text-ink-2 tabular-nums">
           {`+${String(hidden)}`}

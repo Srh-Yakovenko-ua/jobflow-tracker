@@ -55,6 +55,12 @@ describe('ApplicationPage', () => {
     ).toBeDefined();
   });
 
+  it('folds the title inside the h1 as a span, so the heading holds no div', async () => {
+    renderApplicationPage();
+
+    expect((await findApplicationTitle()).querySelector('div')).toBeNull();
+  });
+
   it('leads back to the board from the top bar', async () => {
     renderApplicationPage();
 

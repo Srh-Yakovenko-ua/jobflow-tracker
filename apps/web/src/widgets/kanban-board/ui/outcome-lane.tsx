@@ -1,9 +1,11 @@
 import { type ApplicationBoardResponse, type OutcomeStage, STAGE_LABELS } from '@jobflow/shared';
+import { RN_THEME } from '@jobflow/shared/rn-theme';
 import { ChevronDown, ChevronRight } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
 
 import { type ApplicationCardContext, StageMarker } from '@/entities/application';
 import { cn } from '@/shared/lib/cn';
+import { useMoving } from '@/shared/lib/use-moving';
 import { LoadFailedPanel } from '@/shared/ui/error-panel';
 import { Fade } from '@/shared/ui/fade';
 import { CardSkeleton } from '@/shared/ui/skeleton';
@@ -11,7 +13,7 @@ import { CardSkeleton } from '@/shared/ui/skeleton';
 import { useDropZone } from '../model/drag-source';
 import type { BoardLoad } from '../model/use-kanban-board';
 import { ColumnCards } from './column-cards';
-import { COLUMN_FRAME } from './column-frame';
+import { COLUMN_FRAME, STRIP_LOOK } from './column-frame';
 import { type ColumnHead, ColumnTitle } from './column-title';
 import { DropPlaceholder } from './drop-placeholder';
 
@@ -26,24 +28,6 @@ export type OutcomeLaneProps = Readonly<{
   load: BoardLoad;
 }>;
 
-type StripLook = { lane: string; label: string; chevron: string };
-
-const RAISED_STRIP: StripLook = {
-  lane: 'bg-surface-3',
-  label: 'text-ink-2',
-  chevron: 'text-ink-2 shadow-e1',
-};
-
-const STRIP_LOOK: Record<OutcomeStage, StripLook> = {
-  rejected: RAISED_STRIP,
-  ghosted: {
-    lane: 'bg-paper inset-ring inset-ring-line-soft',
-    label: 'text-ink-3',
-    chevron: 'text-ink-3 inset-ring inset-ring-line-soft',
-  },
-  withdrawn: RAISED_STRIP,
-};
-
 const STRIP = {
   lane: 'relative flex w-14.5 flex-none rounded-2xl data-[drop=over]:focus-halo',
   button: 'group flex w-full flex-col items-center gap-3.5 rounded-2xl py-3',
@@ -54,6 +38,8 @@ const STRIP = {
   count: 'text-[12px] font-normal text-ink-3 tabular-nums',
   body: 'relative flex flex-col gap-2.5',
 } as const;
+
+const LANE_CORNERS = { borderRadius: RN_THEME.radius['2xl'] } as const;
 
 function StripFace({ stage, count }: Readonly<ColumnHead<OutcomeStage>>) {
   const look = STRIP_LOOK[stage];
@@ -74,7 +60,7 @@ function StripFace({ stage, count }: Readonly<ColumnHead<OutcomeStage>>) {
 
 function LaneBody({ column, context, load }: Omit<OutcomeLaneProps, 'disclosure'>) {
   if (column.items !== null) {
-    return <ColumnCards items={column.items} context={context} />;
+    return <ColumnCards stage={column.stage} items={column.items} context={context} />;
   }
   if (load.failed) {
     return <LoadFailedPanel onRetry={load.onRetry} />;
@@ -86,13 +72,21 @@ export function OutcomeLane({ column, context, disclosure, load }: OutcomeLanePr
   const { expanded, onToggle } = disclosure;
   const look = STRIP_LOOK[column.stage];
   const { setNodeRef, drop } = useDropZone(column.stage);
+  const { moving, start, end } = useMoving();
   return (
     <motion.section
       layout
       ref={setNodeRef}
+      style={LANE_CORNERS}
+      onLayoutAnimationStart={start}
+      onLayoutAnimationComplete={end}
       data-drop={drop}
       aria-busy={expanded && column.items === null && !load.failed}
-      className={cn(expanded ? COLUMN_FRAME.column : [STRIP.lane, look.lane], COLUMN_FRAME.drop)}
+      className={cn(
+        expanded ? COLUMN_FRAME.column : [STRIP.lane, look.lane],
+        COLUMN_FRAME.drop,
+        moving && 'overflow-clip',
+      )}
     >
       <motion.h2 layout="position" className={cn(!expanded && 'flex w-full')}>
         <button
@@ -116,7 +110,7 @@ export function OutcomeLane({ column, context, disclosure, load }: OutcomeLanePr
       <DropPlaceholder shown={expanded && drop === 'over'} />
       <AnimatePresence initial={false} mode="popLayout">
         {expanded && (
-          <Fade key="body" layout="position" className={STRIP.body}>
+          <Fade key="body" motion={{ layout: 'position' }} className={STRIP.body}>
             <LaneBody column={column} context={context} load={load} />
           </Fade>
         )}

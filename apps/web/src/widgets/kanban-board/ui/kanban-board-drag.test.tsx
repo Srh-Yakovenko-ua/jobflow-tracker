@@ -1,4 +1,6 @@
+import type { ApplicationCard } from '@jobflow/shared';
 import { act, fireEvent, screen, waitFor, within } from '@testing-library/react';
+import type { UserEvent } from '@testing-library/user-event';
 import type { HttpResponseResolver } from 'msw';
 import { http, HttpResponse } from 'msw/http';
 import { delay } from 'msw/utils/delay';
@@ -27,6 +29,8 @@ import { waitForQuery } from '@/test/query-status';
 import { type BoardSettings, columnNamed, renderBoard } from '@/test/render-board';
 import { server } from '@/test/server';
 
+import { DROP_GLIDE } from '../model/drop-glide';
+
 vi.mock('next/link', () => import('@/test/link'));
 
 const MOVE = uk.board.move;
@@ -42,10 +46,14 @@ const EMPTY_SCREENING: BoardRouteOptions = {
 
 const AFTER_REJECT: BoardRouteOptions = {
   counts: { ...DESIGN_BOARD.counts, applied: 1, rejected: 33 },
-  cards: (DESIGN_BOARD.cards ?? []).filter((card) => card.position !== DRAGGED),
+  cards: (DESIGN_BOARD.cards ?? []).map((card): ApplicationCard =>
+    card.position === DRAGGED ? { ...card, currentStage: 'rejected' } : card,
+  ),
 };
 
 type DragSetup = { board?: BoardRouteOptions; move?: MoveRouteOptions; settings?: BoardSettings };
+
+type RejectionSetup = { undo?: MoveRouteOptions; openLane?: boolean };
 
 type FailedMove = {
   name: string;
@@ -54,13 +62,15 @@ type FailedMove = {
   toast: ErrorToastContent;
 };
 
+const CONFLICT: FailedMove = {
+  name: 'a 409 conflict',
+  reply: () => errorReply({ status: 409, type: 'conflict' }),
+  waitMs: 0,
+  toast: MOVE.conflict,
+};
+
 const FAILED_MOVES: readonly FailedMove[] = [
-  {
-    name: 'a 409 conflict',
-    reply: () => errorReply({ status: 409, type: 'conflict' }),
-    waitMs: 0,
-    toast: MOVE.conflict,
-  },
+  CONFLICT,
   {
     name: 'a 409 illegal_transition',
     reply: () => errorReply({ status: 409, type: 'illegal_transition' }),
@@ -112,10 +122,16 @@ function stallBoardRefetch() {
   return asked;
 }
 
-async function savedRejection(undo?: MoveRouteOptions) {
+async function openRejectedLane(user: UserEvent) {
+  await user.click(screen.getByRole('button', { name: 'відмова 32' }));
+  await screen.findByText('Middle QA Engineer');
+}
+
+async function savedRejection({ undo, openLane = false }: RejectionSetup = {}) {
   fakeTimeouts();
   const undone = undoRoute(undo);
   const setup = await boardReadyToDrag();
+  if (openLane) await openRejectedLane(setup.user);
   server.use(undone.handler, boardRoute(AFTER_REJECT).handler);
   dragCardTo('відмова 32');
   await waitOutDropClickGuard();
@@ -133,6 +149,22 @@ async function overlayGone() {
   await waitFor(() => {
     expect(screen.getAllByText(DRAGGED)).toHaveLength(1);
   });
+}
+
+function draggedLinks(): HTMLAnchorElement[] {
+  return screen.getAllByText(DRAGGED).flatMap((text) => text.closest('a') ?? []);
+}
+
+function focusableDraggedLinks(): number {
+  return draggedLinks().filter((link) => link.closest('[inert]') === null).length;
+}
+
+async function expectOneFocusableCopy() {
+  expect(focusableDraggedLinks()).toBe(1);
+  await waitFor(() => {
+    expect(draggedLinks()).toHaveLength(1);
+  });
+  expect(focusableDraggedLinks()).toBe(1);
 }
 
 afterEach(() => {
@@ -171,6 +203,32 @@ describe('KanbanBoard drag and drop', () => {
     expect(toast.getToasts()).toEqual([]);
   });
 
+  it('a card dropped on скринінг whose glide never runs is shown once the glide time is over', async () => {
+    fakeTimeouts();
+    await boardReadyToDrag({ move: { latch: latch() } });
+
+    dragCardTo('скринінг 1');
+    await screen.findByRole('heading', { name: 'скринінг 2' });
+    const landed = within(columnNamed('скринінг 2')).getByText(DRAGGED);
+    expect(landed.closest('.invisible')).toBeInstanceOf(HTMLElement);
+    await act(() => vi.advanceTimersByTimeAsync(DROP_GLIDE.settleMs));
+
+    expect(landed.closest('.invisible')).toBeNull();
+  });
+
+  it('a card dropped on the open відмова lane is never hidden there, it fades in from its first frame', async () => {
+    const { user } = await boardReadyToDrag({
+      move: { latch: latch() },
+      settings: { askRejectionReason: false },
+    });
+    await openRejectedLane(user);
+
+    dragCardTo('відмова 32');
+    await screen.findByRole('heading', { name: 'відмова 33' });
+
+    expect(within(columnNamed('відмова 33')).getByText(DRAGGED).closest('.invisible')).toBeNull();
+  });
+
   it.each(FAILED_MOVES)(
     'after $name the card goes back to відгук and one toast says why',
     async (failure) => {
@@ -200,6 +258,29 @@ describe('KanbanBoard drag and drop', () => {
       });
     },
   );
+
+  it('a card dropped on скринінг and rolled back by a 409 is one focusable link while each old copy fades out', async () => {
+    const answer = latch();
+    await boardReadyToDrag({ move: { reply: CONFLICT.reply, latch: answer } });
+
+    dragCardTo('скринінг 1');
+    await screen.findByRole('heading', { name: 'скринінг 2' });
+    await expectOneFocusableCopy();
+    answer.release();
+    await screen.findByRole('heading', { name: 'відгук 2' });
+
+    await expectOneFocusableCopy();
+  });
+
+  it('«Скасувати перенос» from the open відмова lane leaves the card one focusable link while the lane copy fades out', async () => {
+    await savedRejection({ openLane: true });
+    server.use(boardRoute(DESIGN_BOARD).handler);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Скасувати перенос' }));
+    await screen.findByRole('heading', { name: 'відгук 2' });
+
+    await expectOneFocusableCopy();
+  });
 
   it('while a відгук card is held фінал and офер refuse it and dim, and a drop on фінал sends nothing', async () => {
     const { moves } = await boardReadyToDrag();
@@ -250,7 +331,7 @@ describe('KanbanBoard drag and drop', () => {
     expect(moves).toEqual([]);
   });
 
-  it('over an empty скринінг the drop placeholder takes the place of its empty note', async () => {
+  it('over an empty скринінг the drop placeholder takes the place of its empty note, and Escape brings the note back', async () => {
     await boardReadyToDrag({ board: EMPTY_SCREENING });
 
     const drag = startDrag(screen.getByText(DRAGGED));
@@ -259,10 +340,12 @@ describe('KanbanBoard drag and drop', () => {
     const screening = columnNamed('скринінг 0');
     expect(screening.dataset.drop).toBe('over');
     expect(within(screening).getByText(MOVE.dropHere)).toBeDefined();
-    expect(within(screening).getByText(uk.board.columnEmpty[0]).closest('p')?.classList).toContain(
-      'in-data-[drop=over]:hidden',
-    );
+    await waitFor(() => {
+      expect(within(screening).queryByText(uk.board.columnEmpty[0])).toBeNull();
+    });
     drag.cancel();
+
+    expect(await within(screening).findByText(uk.board.columnEmpty[0])).toBeDefined();
   });
 
   it('a card dropped on the folded ghosted strip moves there with one request and the strip stays folded', async () => {
@@ -356,9 +439,7 @@ describe('KanbanBoard drag and drop', () => {
   });
 
   it('a 409 on undo keeps the card in відмова and one toast says the undo time is over', async () => {
-    const { user } = await savedRejection({
-      reply: () => errorReply({ status: 409, type: 'conflict' }),
-    });
+    const { user } = await savedRejection({ undo: { reply: CONFLICT.reply } });
 
     await user.click(screen.getByRole('button', { name: 'Скасувати перенос' }));
 

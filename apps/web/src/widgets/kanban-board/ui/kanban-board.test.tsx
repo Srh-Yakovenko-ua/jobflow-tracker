@@ -1,6 +1,7 @@
 import { focusManager, type QueryStatus } from '@tanstack/react-query';
 import { act, fireEvent, screen, waitFor, within } from '@testing-library/react';
 import { http } from 'msw/http';
+import { delay } from 'msw/utils/delay';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { applicationKeys } from '@/entities/application';
@@ -59,6 +60,11 @@ async function openFailingRejectedLane() {
   const lane = within(columnNamed('відмова 32'));
   const retry = await lane.findByRole('button', { name: RETRY }, { timeout: 2500 });
   return { user, strip, lane, retry };
+}
+
+function skeletonStripClasses(): string[][] {
+  const skeleton = screen.getByText(uk.ui.loading).closest('[aria-busy]');
+  return [...(skeleton?.querySelectorAll('.flex-none') ?? [])].map((strip) => [...strip.classList]);
 }
 
 afterEach(() => {
@@ -172,10 +178,11 @@ describe('KanbanBoard', () => {
     expect(await lane.findByText('Middle QA Engineer')).toBeDefined();
   });
 
-  it('with no cards shows only the відгук column holding the first run state, with no strips and no count of cards in work', async () => {
+  it('with no cards fades in only the відгук column holding the first run state, with no strips and no count of cards in work', async () => {
     renderBoard({ counts: {} });
 
-    await screen.findByRole('heading', { name: BOARD.firstRun.title });
+    const firstRun = await screen.findByRole('heading', { name: BOARD.firstRun.title });
+    expect(firstRun.closest('.animate-fade-in')).toBeInstanceOf(HTMLElement);
     expect(screen.getAllByRole('heading', { level: 2 })).toEqual(
       headingsNamed(['відгук 0', BOARD.firstRun.title]),
     );
@@ -231,13 +238,30 @@ describe('KanbanBoard', () => {
     expect(screen.getByText(state.text).closest('[role]')?.getAttribute('role')).toBe(state.role);
   });
 
-  it('the retry on the load-failed panel brings the board in', async () => {
+  it('while the board loads its outcome strips are drawn like the real ones: rounded, ghosted on paper with its ring, the other two raised with none', () => {
+    server.use(
+      meRoute(),
+      http.get(BOARD_URL, () => delay('infinite')),
+    );
+    renderInApp(<KanbanBoard />);
+
+    const [rejected, ghosted, withdrawn] = skeletonStripClasses();
+    expect(ghosted).toEqual(
+      expect.arrayContaining(['rounded-2xl', 'bg-paper', 'inset-ring', 'inset-ring-line-soft']),
+    );
+    expect(rejected).toEqual(expect.arrayContaining(['rounded-2xl', 'bg-surface-3']));
+    expect(rejected).not.toContain('inset-ring');
+    expect(withdrawn).toEqual(rejected);
+  });
+
+  it('the load-failed panel fades in over the skeleton, and its retry brings the board in', async () => {
     server.use(
       meRoute(),
       http.get(BOARD_URL, () => errorReply({ status: 500, type: 'internal_error' })),
     );
     const user = renderInApp(<KanbanBoard />);
-    await screen.findByRole('alert', {}, { timeout: 2500 });
+    const failed = await screen.findByRole('alert', {}, { timeout: 2500 });
+    expect(failed.closest('.animate-fade-in')).toBeInstanceOf(HTMLElement);
 
     server.use(boardRoute(DESIGN_BOARD).handler);
     await user.click(screen.getByRole('button', { name: uk.states.errors.loadFailed.action }));

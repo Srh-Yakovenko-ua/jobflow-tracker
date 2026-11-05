@@ -20,7 +20,7 @@ function Slot() {
 
 export function DropPlaceholder({ shown }: DropPlaceholderProps) {
   return (
-    <Reveal shown={shown} mode="popLayout" className="-mb-2.5 flex-none">
+    <Reveal shown={shown} view={{ mode: 'popLayout' }} className="-mb-2.5 flex-none">
       <div className="pb-2.5">
         <Slot />
       </div>

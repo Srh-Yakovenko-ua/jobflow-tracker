@@ -28,12 +28,13 @@ export type GlideStart = Readonly<{
 
 export const DROP_GLIDE = {
   waitFrames: 30,
+  settleMs: 1000,
   timing: {
     duration: CHART_THEME.motion.base,
     easing: `cubic-bezier(${CHART_THEME.motion.easing.join(', ')})`,
     fill: 'forwards',
   },
-} as const satisfies { waitFrames: number; timing: KeyframeAnimationOptions };
+} as const satisfies { waitFrames: number; settleMs: number; timing: KeyframeAnimationOptions };
 
 const FADE_OUT: Keyframe[] = [{ opacity: 1 }, { opacity: 0 }];
 

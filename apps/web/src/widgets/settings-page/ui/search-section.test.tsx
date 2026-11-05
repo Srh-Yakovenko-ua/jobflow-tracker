@@ -39,7 +39,7 @@ describe('SearchSection', () => {
     ]);
   });
 
-  it('a preset sends only the threshold, shows it at once and then says it is saved', async () => {
+  it('a preset sends only the threshold, shows it at once and then fades in that it is saved', async () => {
     const { user, routes } = await renderLoadedSettings();
 
     await user.click(searchRegion().getByRole('radio', { name: '14' }));
@@ -47,7 +47,8 @@ describe('SearchSection', () => {
     expect(searchRegion().getByRole('radio', { name: '14' }).getAttribute('aria-checked')).toBe(
       'true',
     );
-    expect(await searchRegion().findByText('Збережено')).toBeDefined();
+    const saved = await searchRegion().findByText('Збережено');
+    expect(saved.className).toBe('animate-fade-in');
     expect(routes.patches).toEqual([{ silenceDays: 14 }]);
     expect(hint()).toContain('там 28 днів є нормою');
   });

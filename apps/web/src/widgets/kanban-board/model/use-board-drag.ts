@@ -1,6 +1,6 @@
 import type { DragEndEvent, DragStartEvent, Over, UniqueIdentifier } from '@dnd-kit/core';
 import type { ApplicationBoardResponse, ApplicationCard } from '@jobflow/shared';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import type { ApplicationMove } from '@/entities/application';
 import {
@@ -13,7 +13,7 @@ import { useRejectionPrompt } from '@/features/reject-with-reason';
 
 import { findCard, stageOf } from './board-lookup';
 import type { LandingCard } from './drag-source';
-import { createDropGlide, type DropLanding } from './drop-glide';
+import { createDropGlide, DROP_GLIDE, type DropLanding } from './drop-glide';
 
 type DropAttempt = { card: ApplicationCard | undefined; over: Over | null };
 
@@ -38,12 +38,25 @@ function sentLandingOf({ application, toStage }: ApplicationMove): Landing {
   return { id: application.id, stage: toStage, glide };
 }
 
+function settledFrom(landed: Landing | null) {
+  return (current: Landing | null) => (current === landed ? null : current);
+}
+
 function useDropLanding() {
   const [landing, setLanding] = useState<Landing | null>(null);
+  useEffect(() => {
+    if (landing === null) return;
+    const settle = setTimeout(() => {
+      setLanding(settledFrom(landing));
+    }, DROP_GLIDE.settleMs);
+    return () => {
+      clearTimeout(settle);
+    };
+  }, [landing]);
   const dropAnimation = createDropGlide({
     landing: landing?.glide ?? 'to-source',
     onLanded: () => {
-      setLanding((current) => (current === landing ? null : current));
+      setLanding(settledFrom(landing));
     },
   });
   return { landing, setLanding, dropAnimation };
@@ -78,5 +91,6 @@ export function useBoardDrag(board: ApplicationBoardResponse) {
       setLanding(sourceLandingOf(activeCard));
     },
   };
-  return { activeCard, landing, dropAnimation, handlers, rejection };
+  const landingToHide = landing?.glide === 'in-place' ? null : landing;
+  return { activeCard, landing: landingToHide, dropAnimation, handlers, rejection };
 }
