@@ -56,7 +56,7 @@ const DESIGN_TIMELINE: Omit<TimelineItem, 'id'>[] = [
   {
     type: 'note_added',
     occurredAt: '2026-09-03T13:00:00.000Z',
-    title: 'Заметка',
+    title: 'Нотатка',
     meta: { body: DESIGN_NOTE.body },
     actor: 'user',
   },
@@ -130,7 +130,7 @@ const DESIGN_TIMELINE: Omit<TimelineItem, 'id'>[] = [
   {
     type: 'captured',
     occurredAt: '2026-08-12T09:00:00.000Z',
-    title: 'Карточку створено букмарклетом',
+    title: 'Картку створено букмарклетом',
     meta: { method: 'bookmarklet' },
     actor: 'user',
   },

@@ -64,7 +64,7 @@ export const DESIGN_TIMELINE = applicationTimelineResponseSchema.parse({
       serial: 309,
       type: 'note_added',
       occurredAt: '2026-09-03T12:40:00Z',
-      title: 'Заметка',
+      title: 'Нотатка',
       meta: { body: DESIGN_NOTE },
     }),
     timelineItemOf({
@@ -126,7 +126,7 @@ export const DESIGN_TIMELINE = applicationTimelineResponseSchema.parse({
       serial: 301,
       type: 'captured',
       occurredAt: '2026-08-12T10:00:00Z',
-      title: 'Карточку створено букмарклетом',
+      title: 'Картку створено букмарклетом',
       meta: { method: 'bookmarklet' },
     }),
   ],

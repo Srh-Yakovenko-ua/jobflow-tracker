@@ -53,13 +53,13 @@ const TITLE_CASES: TitleCase[] = [
   {
     type: 'captured',
     rows: journal({ kind: 'captured', payload: { method: 'bookmarklet' } }),
-    title: 'Карточку створено букмарклетом',
+    title: 'Картку створено букмарклетом',
     actor: 'user',
   },
   {
     type: 'captured',
     rows: journal({ kind: 'captured', payload: { method: 'paste' } }),
-    title: 'Карточку створено з тексту',
+    title: 'Картку створено з тексту',
     actor: 'user',
   },
   {
@@ -107,7 +107,7 @@ const TITLE_CASES: TitleCase[] = [
   {
     type: 'note_added',
     rows: { ...NO_ROWS, notes: [{ id: NOTE_ID, body: 'Спитати про on-call', createdAt: NOW }] },
-    title: 'Заметка',
+    title: 'Нотатка',
     actor: 'user',
   },
   {

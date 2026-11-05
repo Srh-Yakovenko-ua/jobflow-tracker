@@ -27,7 +27,7 @@ function itemOf(fields: Pick<TimelineItem, 'type' | 'meta'> & Partial<TimelineIt
 describe('timelineRowsOf', () => {
   it('the design fixture reads newest first with the AI parse time folded into the capture row', () => {
     expect(looksOf(DESIGN_TIMELINE.items)).toEqual([
-      { title: 'Заметка', meta: DESIGN_NOTE, marker: RING, tone: 'strong' },
+      { title: 'Нотатка', meta: DESIGN_NOTE, marker: RING, tone: 'strong' },
       {
         title: "Техінтерв'ю пройдено · 90 хв",
         meta: null,
@@ -60,7 +60,7 @@ describe('timelineRowsOf', () => {
         tone: 'strong',
       },
       {
-        title: 'Карточку створено букмарклетом',
+        title: 'Картку створено букмарклетом',
         meta: 'AI розібрав опис за 6 секунд',
         marker: RING,
         tone: 'medium',
