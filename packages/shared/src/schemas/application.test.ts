@@ -3,6 +3,8 @@ import type { z } from 'zod';
 
 import {
   createApplicationInputSchema,
+  createApplicationResponseSchema,
+  possibleDuplicateSchema,
   STACK_MAX_ITEMS,
   updateApplicationInputSchema,
 } from './application.js';
@@ -117,5 +119,24 @@ describe('updateApplicationInputSchema', () => {
     expect(issuesOf(updateApplicationInputSchema.safeParse(body))).toEqual([
       { path: 'currentStage', message: STAGE_HINT },
     ]);
+  });
+});
+
+describe('createApplicationResponseSchema', () => {
+  it('refuses a created response without possibleDuplicates', () => {
+    expect(issuePathsOf(createApplicationResponseSchema.safeParse({}))).toContain(
+      'possibleDuplicates',
+    );
+  });
+
+  it('accepts a possible duplicate with no applied date at stage rejected', () => {
+    const duplicate = {
+      id: '0b9f6b3e-6a59-4f1e-9a43-2f1d8c7e5a10',
+      company: 'acme technologies',
+      position: 'Senior React Dev',
+      stage: 'rejected',
+      appliedAt: null,
+    };
+    expect(possibleDuplicateSchema.parse(duplicate)).toEqual(duplicate);
   });
 });

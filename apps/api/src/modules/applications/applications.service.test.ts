@@ -16,6 +16,11 @@ import {
 } from '../../test/service-fixtures.js';
 import { daysBefore, NOW } from '../../test/time.js';
 import {
+  ApplicationDuplicatesRepository,
+  type DuplicateQuery,
+  type DuplicateRow,
+} from './application-duplicates.repository.js';
+import {
   type ApplicationById,
   type ApplicationRow,
   ApplicationsRepository,
@@ -31,7 +36,13 @@ type OwnedRow = { userId: string; row: ApplicationRow };
 
 type FakeData = { owned?: OwnedRow[]; defaults?: CreateDefaults };
 
+type ServiceFakes = FakeData & { duplicates?: DuplicateRow[] };
+
 const ACTIVE_DEFAULTS: CreateDefaults = { searchId: SEARCH_ID, resumeVersionId: RESUME_VERSION_ID };
+
+const REJECTED_DUPLICATE_ID = '0199f0a0-0000-7000-8000-0000000000c3';
+
+const DRAFT_DUPLICATE_ID = '0199f0a0-0000-7000-8000-0000000000c4';
 
 const OLENAS_ROW: OwnedRow = { userId: OLENA_ID, row: ROW };
 
@@ -72,16 +83,34 @@ class FakeApplicationsRepository extends RecordedEvents<RecordApplicationEvent> 
   }
 }
 
-async function serviceWith({ owned = [OLENAS_ROW], defaults = ACTIVE_DEFAULTS }: FakeData = {}) {
+class FakeApplicationDuplicatesRepository {
+  readonly queries: ByUser<DuplicateQuery>[] = [];
+
+  constructor(private readonly rows: DuplicateRow[]) {}
+
+  findPossible(userId: string, query: DuplicateQuery): Promise<DuplicateRow[]> {
+    this.queries.push({ userId, ...query });
+    return Promise.resolve(this.rows);
+  }
+}
+
+async function serviceWith({
+  owned = [OLENAS_ROW],
+  defaults = ACTIVE_DEFAULTS,
+  duplicates = [],
+}: ServiceFakes = {}) {
   const repository = new FakeApplicationsRepository({ owned, defaults });
+  const duplicatesRepository = new FakeApplicationDuplicatesRepository(duplicates);
   const moduleRef = await fakeTransactionModule({
-    providers: [ApplicationsService, ApplicationsRepository],
+    providers: [ApplicationsService, ApplicationsRepository, ApplicationDuplicatesRepository],
     now: NOW,
   })
     .overrideProvider(ApplicationsRepository)
     .useValue(repository)
+    .overrideProvider(ApplicationDuplicatesRepository)
+    .useValue(duplicatesRepository)
     .compile();
-  return { repository, service: moduleRef.get(ApplicationsService) };
+  return { repository, duplicatesRepository, service: moduleRef.get(ApplicationsService) };
 }
 
 const OWNER_ONLY_CALLS = [
@@ -153,6 +182,53 @@ describe('ApplicationsService.create', () => {
       body: { status: 409, type: 'conflict', detail: 'No active search' },
     });
     expect([repository.inserted, repository.events]).toEqual([[], []]);
+  });
+
+  it('still creates the application and returns its possible duplicates with ISO appliedAt, probed over the 90 days before now', async () => {
+    const { repository, duplicatesRepository, service } = await serviceWith({
+      duplicates: [
+        {
+          id: REJECTED_DUPLICATE_ID,
+          company: 'ТОВ «Ромашка»',
+          position: 'Backend developer',
+          stage: 'rejected',
+          appliedAt: daysBefore(23),
+        },
+        {
+          id: DRAFT_DUPLICATE_ID,
+          company: 'Ромашка',
+          position: 'Backend developer',
+          stage: 'applied',
+          appliedAt: null,
+        },
+      ],
+    });
+
+    const response = await service.create(OLENA_ID, input);
+
+    expect(response).toMatchObject({
+      id: APPLICATION_ID,
+      possibleDuplicates: [
+        {
+          id: REJECTED_DUPLICATE_ID,
+          company: 'ТОВ «Ромашка»',
+          position: 'Backend developer',
+          stage: 'rejected',
+          appliedAt: '2026-09-29T09:00:00.000Z',
+        },
+        {
+          id: DRAFT_DUPLICATE_ID,
+          company: 'Ромашка',
+          position: 'Backend developer',
+          stage: 'applied',
+          appliedAt: null,
+        },
+      ],
+    });
+    expect(repository.inserted).toHaveLength(1);
+    expect(duplicatesRepository.queries).toEqual([
+      { userId: OLENA_ID, ...input, since: new Date('2026-07-24T09:00:00.000Z') },
+    ]);
   });
 });
 

@@ -104,9 +104,19 @@ export const applicationResponseSchema = applicationSchema.extend({
   silenceLevel: silenceLevelSchema,
 });
 
+export const possibleDuplicateSchema = applicationSchema
+  .pick({ id: true, company: true, position: true, appliedAt: true })
+  .extend({ stage: stageSchema });
+
+export const createApplicationResponseSchema = applicationResponseSchema.extend({
+  possibleDuplicates: z.array(possibleDuplicateSchema),
+});
+
 export const applicationIdSchema = z.uuid();
 
 export type Application = z.infer<typeof applicationSchema>;
 export type CreateApplicationInput = z.infer<typeof createApplicationInputSchema>;
 export type UpdateApplicationInput = z.infer<typeof updateApplicationInputSchema>;
 export type ApplicationResponse = z.infer<typeof applicationResponseSchema>;
+export type PossibleDuplicate = z.infer<typeof possibleDuplicateSchema>;
+export type CreateApplicationResponse = z.infer<typeof createApplicationResponseSchema>;

@@ -1,4 +1,9 @@
-import { applicationResponseSchema, errorResponseSchema, STAGE_CHANGE_HINT } from '@jobflow/shared';
+import {
+  applicationResponseSchema,
+  createApplicationResponseSchema,
+  errorResponseSchema,
+  STAGE_CHANGE_HINT,
+} from '@jobflow/shared';
 import { beforeEach, describe, expect, it } from 'vitest';
 
 import { Clock } from '../../common/clock.js';
@@ -77,7 +82,7 @@ describe('the applications routes', () => {
     });
 
     expect(response.status).toBe(201);
-    const application = applicationResponseSchema.parse(response.body);
+    const application = createApplicationResponseSchema.parse(response.body);
     expect(response.body).toEqual(application);
     expect(application).toMatchObject({
       searchId: await activeSearchId(olena.user.id),
@@ -94,6 +99,7 @@ describe('the applications routes', () => {
       daysInStage: 0,
       daysSinceLastEvent: 0,
       silenceLevel: 'none',
+      possibleDuplicates: [],
     });
     expect(await stageEventsOf(testApp.prisma, application.id)).toEqual([CREATION_EVENT_ROW]);
     expect(await outboxRows(testApp.prisma, { aggregate: 'application' })).toEqual([

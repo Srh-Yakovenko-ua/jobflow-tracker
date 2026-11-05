@@ -7,6 +7,7 @@ import {
   type ApplicationResponse,
   type CreateApplicationInput,
   createApplicationInputSchema,
+  type CreateApplicationResponse,
   type MoveApplicationInput,
   moveApplicationInputSchema,
   type RejectionReasonsSummary,
@@ -35,7 +36,7 @@ export class ApplicationsController {
   create(
     @CurrentUser() user: AccessUser,
     @Body({ schema: createApplicationInputSchema }) input: CreateApplicationInput,
-  ): Promise<ApplicationResponse> {
+  ): Promise<CreateApplicationResponse> {
     return this.applications.create(user.id, input);
   }
 

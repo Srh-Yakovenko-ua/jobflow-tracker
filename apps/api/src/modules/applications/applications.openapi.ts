@@ -4,6 +4,8 @@ import {
   type ApplicationResponse,
   applicationResponseSchema,
   createApplicationInputSchema,
+  type CreateApplicationResponse,
+  createApplicationResponseSchema,
   moveApplicationInputSchema,
   STAGE_CHANGE_HINT,
   STAGE_MOVE_LIMITS,
@@ -16,6 +18,7 @@ import {
   EXAMPLE_APPLICATION_ID,
   jsonContent,
 } from '../../openapi/route.js';
+import { DUPLICATE_LIMITS } from './application-duplicates.repository.js';
 import { APPLICATION_LIST_OPENAPI_PATHS } from './application-list.openapi.js';
 
 const NEW_APPLICATION = {
@@ -50,6 +53,19 @@ const APPLICATION = {
   silenceLevel: 'none',
 } satisfies ApplicationResponse;
 
+const CREATED_APPLICATION = {
+  ...APPLICATION,
+  possibleDuplicates: [
+    {
+      id: '0199f0a8-4c5d-7e6f-8a7b-9c0d1e2f3a4b',
+      company: 'ТОВ «Кавун Лабс»',
+      position: 'Node.js Engineer',
+      stage: 'rejected',
+      appliedAt: '2026-09-27T10:00:00.000Z',
+    },
+  ],
+} satisfies CreateApplicationResponse;
+
 const APPLICATION_PATCH = {
   position: 'Senior Node.js engineer',
   salaryMin: 4000,
@@ -82,12 +98,15 @@ export const APPLICATIONS_OPENAPI_PATHS: RouteConfig[] = [
     path: '/applications',
     tags: TAGS,
     summary: 'Create an Application',
-    description: 'Adds an Application to the active search at stage applied; 409 without one.',
+    description: `Adds an Application to the active search at stage applied; 409 without one. possibleDuplicates lists, newest first and at most ${String(DUPLICATE_LIMITS.maxItems)}, the user's other Applications with the same URL (without scheme, www, query, fragment and trailing slash), or with the same company (legal suffixes such as ТОВ, LLC and Inc ignored) and a position more than ${String(DUPLICATE_LIMITS.positionSimilarity)} trigram-similar within the last ${String(DUPLICATE_LIMITS.windowDays)} days. They never block the create.`,
     request: {
       body: { required: true, content: jsonContent(createApplicationInputSchema, NEW_APPLICATION) },
     },
     responses: {
-      201: { ...applicationReply, description: 'The created Application' },
+      201: {
+        description: 'The created Application and its possible duplicates',
+        content: jsonContent(createApplicationResponseSchema, CREATED_APPLICATION),
+      },
       ...errorResponses([400, 401, 403, 409, 422]),
     },
   },
