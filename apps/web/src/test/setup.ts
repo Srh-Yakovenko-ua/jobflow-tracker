@@ -3,6 +3,7 @@ import { MotionGlobalConfig } from 'motion/react';
 import { afterAll, afterEach, beforeAll, beforeEach } from 'vitest';
 
 import { installFakeLockManager } from './fake-lock-manager';
+import { releaseHeldLatches } from './latch';
 import { stubMotionPreference } from './motion-preference';
 import { server } from './server';
 
@@ -43,6 +44,7 @@ beforeEach(() => {
 });
 afterEach(() => {
   cleanup();
+  releaseHeldLatches();
   server.resetHandlers();
 });
 afterAll(() => {
