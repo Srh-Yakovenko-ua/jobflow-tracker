@@ -1,22 +1,28 @@
 import {
   DndContext,
   DragOverlay,
+  type KeyboardCodes,
+  KeyboardSensor,
   MouseSensor,
-  pointerWithin,
   TouchSensor,
+  type UniqueIdentifier,
   useDndContext,
   useSensor,
   useSensors,
 } from '@dnd-kit/core';
 import type { ApplicationBoardResponse } from '@jobflow/shared';
-import type { ReactNode } from 'react';
+import { type ReactNode, useEffect, useEffectEvent } from 'react';
 
 import { ApplicationCard, type ApplicationCardContext } from '@/entities/application';
 import { type RejectionFlow, RejectionReasonDialog } from '@/features/reject-with-reason';
 import { uk } from '@/shared/i18n';
+import { usePrefersReducedMotion } from '@/shared/lib/reduced-motion';
 
+import { boardCollisions } from '../model/board-collisions';
+import { columnCoordinates } from '../model/column-coordinates';
 import { dragAnnouncements } from '../model/drag-announcements';
 import { DragSourceContext } from '../model/drag-source';
+import { focusCardOrStrip } from '../model/focus-card-or-strip';
 import { useBoardDrag } from '../model/use-board-drag';
 
 export type BoardDndProps = Readonly<{
@@ -30,18 +36,30 @@ const ACTIVATION = {
   touch: { delay: 250, tolerance: 5 },
 } as const;
 
+const KEYBOARD_CODES: KeyboardCodes = {
+  start: ['Space'],
+  cancel: ['Escape', 'Tab'],
+  end: ['Space'],
+};
+
 const OVERLAY =
   'scale-[1.02] rotate-[-1.6deg] cursor-grabbing rounded-xl shadow-e2 ring-3 ring-accent/25';
 
 function useBoardSensors() {
+  const reduced = usePrefersReducedMotion();
   return useSensors(
     useSensor(MouseSensor, { activationConstraint: ACTIVATION.mouse }),
     useSensor(TouchSensor, { activationConstraint: ACTIVATION.touch }),
+    useSensor(KeyboardSensor, {
+      keyboardCodes: KEYBOARD_CODES,
+      coordinateGetter: columnCoordinates,
+      scrollBehavior: reduced ? 'instant' : 'smooth',
+    }),
   );
 }
 
 function RejectionPromptDialog({ rejection }: Readonly<{ rejection: RejectionFlow }>) {
-  const { draggableNodes, droppableContainers } = useDndContext();
+  const nodes = useDndContext();
   const { prompt, actions, focusBackRef } = rejection;
   return (
     <RejectionReasonDialog
@@ -51,26 +69,33 @@ function RejectionPromptDialog({ rejection }: Readonly<{ rejection: RejectionFlo
         onCloseAutoFocus: (event) => {
           event.preventDefault();
           const id = focusBackRef.current;
-          if (id === null) return;
-          setTimeout(() => {
-            const card = draggableNodes.get(id)?.node.current;
-            const strip = droppableContainers.get(id)?.node.current?.querySelector('button');
-            (card ?? strip)?.focus();
-          }, 0);
+          if (id !== null) focusCardOrStrip(nodes, id);
         },
       }}
     />
   );
 }
 
+function KeyboardDropFocus({ focusId }: Readonly<{ focusId: UniqueIdentifier | null }>) {
+  const nodes = useDndContext();
+  const focus = useEffectEvent((id: UniqueIdentifier) => {
+    focusCardOrStrip(nodes, id);
+  });
+  useEffect(() => {
+    if (focusId !== null) focus(focusId);
+  }, [focusId]);
+  return null;
+}
+
 export function BoardDnd({ board, context, children }: BoardDndProps) {
-  const { activeCard, landing, dropAnimation, handlers, rejection } = useBoardDrag(board);
+  const { activeCard, landing, dropAnimation, handlers, rejection, keyboardFocus } =
+    useBoardDrag(board);
   const sensors = useBoardSensors();
   const source = { from: activeCard?.currentStage ?? null, landing };
   return (
     <DndContext
       sensors={sensors}
-      collisionDetection={pointerWithin}
+      collisionDetection={boardCollisions}
       accessibility={{
         announcements: dragAnnouncements(board),
         screenReaderInstructions: { draggable: uk.board.move.a11y.instructions },
@@ -86,6 +111,7 @@ export function BoardDnd({ board, context, children }: BoardDndProps) {
         )}
       </DragOverlay>
       <RejectionPromptDialog rejection={rejection} />
+      <KeyboardDropFocus focusId={keyboardFocus} />
     </DndContext>
   );
 }

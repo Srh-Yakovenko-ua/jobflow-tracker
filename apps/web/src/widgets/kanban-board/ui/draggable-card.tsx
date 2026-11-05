@@ -6,6 +6,8 @@ import { canDragFrom } from '@/features/move-application';
 import { uk } from '@/shared/i18n';
 import { cn } from '@/shared/lib/cn';
 
+import { KeyboardHint } from './keyboard-hint';
+
 export type DraggableCardProps = Pick<ApplicationCardProps, 'application' | 'context'>;
 
 const CARD_LINK = 'block rounded-xl focus-visible:focus-ring';
@@ -18,25 +20,28 @@ function pageOf(application: DraggableCardProps['application']): string {
 }
 
 function DragHandle({ application, context }: DraggableCardProps) {
-  const { setNodeRef, attributes, listeners, isDragging } = useDraggable({
+  const { setNodeRef, attributes, listeners, isDragging, activatorEvent } = useDraggable({
     id: application.id,
     attributes: { roleDescription: uk.board.move.a11y.roleDescription },
   });
   return (
-    <Link
-      href={pageOf(application)}
-      scroll={false}
-      prefetch={false}
-      draggable={false}
-      ref={setNodeRef}
-      aria-roledescription={attributes['aria-roledescription']}
-      aria-describedby={attributes['aria-describedby']}
-      aria-disabled={attributes['aria-disabled']}
-      {...listeners}
-      className={cn(CARD_LINK, HANDLE, isDragging && 'opacity-40')}
-    >
-      <ApplicationCard application={application} context={context} />
-    </Link>
+    <>
+      <Link
+        href={pageOf(application)}
+        scroll={false}
+        prefetch={false}
+        draggable={false}
+        ref={setNodeRef}
+        aria-roledescription={attributes['aria-roledescription']}
+        aria-describedby={attributes['aria-describedby']}
+        aria-disabled={attributes['aria-disabled']}
+        {...listeners}
+        className={cn(CARD_LINK, HANDLE, isDragging && 'opacity-40')}
+      >
+        <ApplicationCard application={application} context={context} />
+      </Link>
+      {isDragging && activatorEvent instanceof KeyboardEvent && <KeyboardHint />}
+    </>
   );
 }
 

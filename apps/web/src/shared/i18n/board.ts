@@ -12,6 +12,15 @@ type DropNames = { position: string; stage: string | undefined };
 
 const move = {
   dropHere: 'відпустити тут',
+  keyboardHint: {
+    chip: 'SPACE',
+    picked: 'Картку взято з клавіатури.',
+    keys: [
+      { key: '←/→', action: 'етап' },
+      { key: 'SPACE', action: 'відпустити' },
+      { key: 'ESC', action: 'скасувати' },
+    ],
+  },
   failed: {
     title: 'Не вдалося перенести',
     description: 'Картка повернулася на місце. Спробуй ще раз.',
@@ -28,7 +37,7 @@ const move = {
   a11y: {
     roleDescription: 'картка для перетягування',
     instructions:
-      'Щоб змінити етап, перетягни картку мишею або довгим дотиком в іншу колонку. ESC скасовує.',
+      'Щоб змінити етап, натисни пробіл і стрілками вліво чи вправо обери колонку. Етапи, куди картка не може перейти, пропускаються. Пробіл відпускає картку, ESC скасовує. Мишею або довгим дотиком картку можна перетягнути.',
     pickedUp: (position: string) => `Картку «${position}» взято.`,
     over: ({ position, stage }: DropNames) =>
       stage === undefined
