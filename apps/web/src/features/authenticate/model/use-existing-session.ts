@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 
@@ -11,14 +11,18 @@ const SIGNED_IN = 'signed-in';
 
 export function useExistingSession({ returnTo, enabled }: UseExistingSessionOptions): void {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const { isSuccess } = useQuery({
     queryKey: userKeys.cookieSession(),
     queryFn: () => refreshAccessToken().then(() => SIGNED_IN),
-    gcTime: 0,
+    staleTime: 'static',
     retry: false,
+    retryOnMount: false,
     enabled,
   });
   useEffect(() => {
-    if (isSuccess) router.replace(returnTo);
-  }, [isSuccess, returnTo, router]);
+    if (!isSuccess) return;
+    queryClient.removeQueries({ queryKey: userKeys.cookieSession() });
+    router.replace(returnTo);
+  }, [isSuccess, queryClient, returnTo, router]);
 }
