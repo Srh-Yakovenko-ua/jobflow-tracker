@@ -10,6 +10,7 @@ import { Toaster } from 'sonner';
 
 import { uk } from '@/shared/i18n';
 import { ThemeProvider, useTheme } from '@/shared/lib/theme';
+import { MotionProvider } from '@/shared/ui/motion-provider';
 
 import { createQueryClient } from './query-client';
 
@@ -34,7 +35,7 @@ export function Providers({ children, theme }: ProvidersProps) {
     <QueryClientProvider client={queryClient}>
       <ThemeProvider initialTheme={theme}>
         <LucideProvider strokeWidth={1.9} size={16}>
-          {children}
+          <MotionProvider>{children}</MotionProvider>
           <ThemedToaster />
         </LucideProvider>
       </ThemeProvider>

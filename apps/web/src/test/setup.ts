@@ -1,8 +1,12 @@
 import { cleanup } from '@testing-library/react';
+import { MotionGlobalConfig } from 'motion/react';
 import { afterAll, afterEach, beforeAll, beforeEach } from 'vitest';
 
 import { installFakeLockManager } from './fake-lock-manager';
+import { stubMotionPreference } from './motion-preference';
 import { server } from './server';
+
+MotionGlobalConfig.skipAnimations = true;
 
 class SilentResizeObserver {
   observe(): void {}
@@ -33,7 +37,10 @@ if (!('ResizeObserver' in globalThis)) {
 beforeAll(() => {
   server.listen({ onUnhandledFrame: 'error' });
 });
-beforeEach(installFakeLockManager);
+beforeEach(() => {
+  installFakeLockManager();
+  stubMotionPreference('no-preference');
+});
 afterEach(() => {
   cleanup();
   server.resetHandlers();

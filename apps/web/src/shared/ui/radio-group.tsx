@@ -22,7 +22,7 @@ export function RadioGroup({ options, ...props }: RadioGroupProps) {
             value={option.value}
             className="touch-target flex size-4.5 flex-none items-center justify-center rounded-pill bg-surface inset-ring-[1.5px] inset-ring-ink-3/30 transition-shadow duration-(--duration-instant) ease-standard data-[state=checked]:inset-ring-accent"
           >
-            <RadioGroupPrimitive.Indicator className="size-2 rounded-pill bg-accent" />
+            <RadioGroupPrimitive.Indicator className="size-2 animate-check-in rounded-pill bg-accent data-[state=unchecked]:animate-check-out" />
           </RadioGroupPrimitive.Item>
           {option.label}
         </label>

@@ -1,4 +1,4 @@
-import { act, screen, within } from '@testing-library/react';
+import { act, screen, waitFor, within } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { rateLimitedReply } from '@/test/api-handlers';
@@ -97,7 +97,9 @@ describe('the sign-in and sign-up screen', () => {
     act(() => {
       vi.advanceTimersByTime(1000);
     });
-    expect(screen.queryByRole('alert')).toBeNull();
+    await waitFor(() => {
+      expect(screen.queryByRole('alert')).toBeNull();
+    });
     expect(form.submit).toHaveProperty('disabled', false);
   });
 

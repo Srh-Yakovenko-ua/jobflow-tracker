@@ -28,7 +28,7 @@ export function BoardColumn({ column, children }: BoardColumnProps) {
       <h2 className={COLUMN_FRAME.header}>
         <ColumnTitle column={column} />
       </h2>
-      {drop === 'over' && <DropPlaceholder />}
+      <DropPlaceholder shown={drop === 'over'} />
       {children}
     </section>
   );

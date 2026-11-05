@@ -2,7 +2,7 @@
 
 import { X } from 'lucide-react';
 import { Dialog as DialogPrimitive } from 'radix-ui';
-import type { KeyboardEvent, ReactNode } from 'react';
+import type { ComponentProps, KeyboardEvent, ReactNode } from 'react';
 
 import { uk } from '@/shared/i18n';
 import { cn } from '@/shared/lib/cn';
@@ -70,9 +70,17 @@ export function DialogFooter({ children, className }: DialogFooterProps) {
   );
 }
 
-export function DialogOverlay() {
+export type DialogOverlayProps = ComponentProps<typeof DialogPrimitive.Overlay>;
+
+export function DialogOverlay({ className, ...props }: DialogOverlayProps) {
   return (
-    <DialogPrimitive.Overlay className="fixed inset-0 z-50 bg-scrim/34 backdrop-blur-[2px] transition-opacity duration-(--duration-base) ease-standard starting:opacity-0" />
+    <DialogPrimitive.Overlay
+      {...props}
+      className={cn(
+        'fixed inset-0 z-50 animate-fade-in bg-scrim/34 backdrop-blur-[2px] data-[state=closed]:animate-fade-out',
+        className,
+      )}
+    />
   );
 }
 
@@ -85,7 +93,7 @@ export function DialogContent({ header, children, className, handlers }: DialogC
         {...describedBy}
         {...handlers}
         className={cn(
-          'fixed top-1/2 left-1/2 z-50 flex max-h-[calc(100dvh-32px)] w-[calc(100vw-32px)] max-w-130 -translate-1/2 animate-spring-in flex-col gap-4.5 overflow-y-auto rounded-3xl bg-surface p-6 font-ui text-ink shadow-e3',
+          'fixed top-1/2 left-1/2 z-50 flex max-h-[calc(100dvh-32px)] w-[calc(100vw-32px)] max-w-130 -translate-1/2 animate-spring-in flex-col gap-4.5 overflow-y-auto rounded-3xl bg-surface p-6 font-ui text-ink shadow-e3 data-[state=closed]:animate-spring-out',
           className,
         )}
       >

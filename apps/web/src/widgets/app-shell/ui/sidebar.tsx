@@ -26,7 +26,7 @@ export function Sidebar({ nav }: SidebarProps) {
     >
       <div className={cn('flex h-9 items-center', collapsed ? 'justify-center' : 'ps-3')}>
         {!collapsed && (
-          <span className="min-w-0 flex-1 truncate font-display text-[17px] font-semibold tracking-[-0.035em] text-ink">
+          <span className="min-w-0 flex-1 animate-fade-in truncate font-display text-[17px] font-semibold tracking-[-0.035em] text-ink">
             {uk.app.brand}
           </span>
         )}

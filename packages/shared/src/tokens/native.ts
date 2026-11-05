@@ -1,3 +1,5 @@
+import { z } from 'zod';
+
 import type { ColorToken, Tokens } from './schema.js';
 
 type HexMap = Record<string, string>;
@@ -31,12 +33,40 @@ function constModule(name: string, value: object): string {
   return `export const ${name} = ${JSON.stringify(value, null, 2)} as const;\n`;
 }
 
+const bezierPointSchema = z
+  .string()
+  .regex(/^\s*-?\d*\.?\d+\s*$/)
+  .transform(Number);
+
+const bezierSchema = z.tuple([
+  bezierPointSchema,
+  bezierPointSchema,
+  bezierPointSchema,
+  bezierPointSchema,
+]);
+
+export function bezierOf(easing: string): z.infer<typeof bezierSchema> {
+  return bezierSchema.parse(/^cubic-bezier\((.*)\)$/.exec(easing)?.[1]?.split(','));
+}
+
+function webMotion({ instant, fast, base, spring, easing }: Tokens['motion']) {
+  return {
+    instant: instant.duration,
+    fast: fast.duration,
+    base: base.duration,
+    spring: spring.duration,
+    easing: bezierOf(easing),
+    springEasing: bezierOf(spring.easing),
+  };
+}
+
 export function renderChartTheme(tokens: Tokens): string {
   const { duration, easing, stagger } = tokens.motion.data;
   return constModule('CHART_THEME', {
     ...palettes(tokens),
     font: { display: tokens.font.display.family, ui: tokens.font.ui.family },
     animation: { duration, easing, stagger },
+    motion: webMotion(tokens.motion),
   });
 }
 

@@ -21,7 +21,7 @@ export type SelectOption = { value: string; label: string; meta?: string; detail
 export type SelectOptionGroup = { label?: string; options: readonly SelectOption[] };
 
 export const OVERLAY_SURFACE =
-  'z-50 rounded-lg bg-surface font-ui text-ink shadow-e2 inset-ring inset-ring-line-soft animate-pop-in';
+  'z-50 rounded-lg bg-surface font-ui text-ink shadow-e2 inset-ring inset-ring-line-soft animate-pop-in data-[state=closed]:animate-pop-out';
 
 export const MENU_SURFACE = cn(OVERLAY_SURFACE, 'flex flex-col gap-px overflow-y-auto p-1.5');
 

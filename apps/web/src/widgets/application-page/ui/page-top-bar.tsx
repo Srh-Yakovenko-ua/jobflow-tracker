@@ -3,10 +3,10 @@
 import type { ApplicationResponse } from '@jobflow/shared';
 import { ChevronLeft } from 'lucide-react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 
 import { uk } from '@/shared/i18n';
 import { formatDayMonth } from '@/shared/lib/state-format';
+import { SheetClose } from '@/shared/ui/sheet';
 
 export type ApplicationPageMode = 'page' | 'sheet';
 
@@ -21,7 +21,6 @@ const BACK =
   'touch-target inline-flex min-h-10 items-center gap-2 rounded-sm text-[13.5px] text-ink-3 transition-colors duration-(--duration-fast) ease-standard hover:text-ink';
 
 function BackToBoard({ mode }: Readonly<{ mode: ApplicationPageMode }>) {
-  const router = useRouter();
   const label = (
     <>
       <ChevronLeft aria-hidden size={16} strokeWidth={1.9} />
@@ -30,15 +29,11 @@ function BackToBoard({ mode }: Readonly<{ mode: ApplicationPageMode }>) {
   );
   if (mode === 'sheet') {
     return (
-      <button
-        type="button"
-        className={BACK}
-        onClick={() => {
-          router.back();
-        }}
-      >
-        {label}
-      </button>
+      <SheetClose asChild>
+        <button type="button" className={BACK}>
+          {label}
+        </button>
+      </SheetClose>
     );
   }
   return (

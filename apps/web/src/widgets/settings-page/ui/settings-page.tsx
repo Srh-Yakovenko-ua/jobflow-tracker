@@ -20,7 +20,7 @@ const ITEMS = visibleSettingsItems(FEATURE_FLAGS);
 
 function SettingsContent({ me }: Readonly<{ me: MeResponse }>) {
   return (
-    <div className="grid items-start gap-6 md:grid-cols-[minmax(0,200px)_minmax(0,1fr)] md:gap-8">
+    <div className="grid animate-fade-in items-start gap-6 md:grid-cols-[minmax(0,200px)_minmax(0,1fr)] md:gap-8">
       <SectionNav />
       <div className="flex min-w-0 flex-col gap-14">
         <SearchSection settings={me.settings} />

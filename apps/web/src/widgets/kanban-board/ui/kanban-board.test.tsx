@@ -1,5 +1,5 @@
 import { focusManager, type QueryStatus } from '@tanstack/react-query';
-import { act, screen, waitFor, within } from '@testing-library/react';
+import { act, fireEvent, screen, waitFor, within } from '@testing-library/react';
 import { http } from 'msw/http';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
@@ -127,8 +127,24 @@ describe('KanbanBoard', () => {
     await user.keyboard(' ');
 
     expect(strip.getAttribute('aria-expanded')).toBe('false');
-    expect(screen.queryByText('Middle QA Engineer')).toBeNull();
+    await waitFor(() => {
+      expect(screen.queryByText('Middle QA Engineer')).toBeNull();
+    });
     expect(document.activeElement).toBe(strip);
+  });
+
+  it('folding відмова fades its cards out: they stay, out of reach, until the fade ends', async () => {
+    const { user } = renderBoard(DESIGN_BOARD);
+    const strip = await screen.findByRole('button', { name: 'відмова 32' });
+    await user.click(strip);
+    await screen.findByText('Middle QA Engineer');
+
+    fireEvent.click(strip);
+
+    expect(screen.getByText('Middle QA Engineer').closest('[inert]')).toBeInstanceOf(HTMLElement);
+    await waitFor(() => {
+      expect(screen.queryByText('Middle QA Engineer')).toBeNull();
+    });
   });
 
   it('when opening відмова fails the board stays, the lane offers a retry, and a second click folds it with focus kept', async () => {
@@ -141,7 +157,9 @@ describe('KanbanBoard', () => {
     await user.click(strip);
 
     expect(strip.getAttribute('aria-expanded')).toBe('false');
-    expect(lane.queryByRole('button', { name: RETRY })).toBeNull();
+    await waitFor(() => {
+      expect(lane.queryByRole('button', { name: RETRY })).toBeNull();
+    });
     expect(document.activeElement).toBe(strip);
   });
 

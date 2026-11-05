@@ -64,8 +64,9 @@ function RejectionPromptDialog({ rejection }: Readonly<{ rejection: RejectionFlo
 }
 
 export function BoardDnd({ board, context, children }: BoardDndProps) {
-  const { activeCard, handlers, rejection } = useBoardDrag(board);
+  const { activeCard, landing, dropAnimation, handlers, rejection } = useBoardDrag(board);
   const sensors = useBoardSensors();
+  const source = { from: activeCard?.currentStage ?? null, landing };
   return (
     <DndContext
       sensors={sensors}
@@ -76,8 +77,8 @@ export function BoardDnd({ board, context, children }: BoardDndProps) {
       }}
       {...handlers}
     >
-      <DragSourceContext value={activeCard?.currentStage ?? null}>{children}</DragSourceContext>
-      <DragOverlay dropAnimation={null}>
+      <DragSourceContext value={source}>{children}</DragSourceContext>
+      <DragOverlay dropAnimation={dropAnimation}>
         {activeCard && (
           <div className={OVERLAY}>
             <ApplicationCard application={activeCard} context={context} />

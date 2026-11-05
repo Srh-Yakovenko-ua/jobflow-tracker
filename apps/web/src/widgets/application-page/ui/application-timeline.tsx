@@ -1,4 +1,5 @@
 import type { ApplicationResponse } from '@jobflow/shared';
+import { AnimatePresence } from 'motion/react';
 import { useId } from 'react';
 
 import { formatTimelineDate } from '@/entities/application';
@@ -43,12 +44,16 @@ function TimelineBody({ timeline }: TimelineBodyProps) {
   if (load.pending) return <TextSkeleton />;
   if (load.failed) return <LoadFailedPanel onRetry={load.onRetry} />;
   const entries = entriesOf(timeline);
-  if (entries.length === 0) return <p className="text-[13px] text-ink-3">{COPY.empty}</p>;
+  if (entries.length === 0) {
+    return <p className="animate-fade-in text-[13px] text-ink-3">{COPY.empty}</p>;
+  }
   return (
-    <ol className="flex flex-col">
-      {entries.map((entry) => (
-        <TimelineEntryRow key={entry.id} entry={entry} />
-      ))}
+    <ol className="relative flex animate-fade-in flex-col">
+      <AnimatePresence mode="popLayout" initial={false}>
+        {entries.map((entry) => (
+          <TimelineEntryRow key={entry.id} entry={entry} />
+        ))}
+      </AnimatePresence>
     </ol>
   );
 }
@@ -64,8 +69,14 @@ export function ApplicationTimeline({ application }: ApplicationTimelineProps) {
       className="flex flex-col gap-5 pt-5 shadow-[inset_0_1px_0_var(--line-soft)]"
     >
       <div className="flex flex-col gap-1">
-        {!pending && !failed && (
-          <p className={cn(STATE_TEXT.eyebrow, 'text-ink-3 tabular-nums')}>
+        {!failed && (
+          <p
+            className={cn(
+              STATE_TEXT.eyebrow,
+              'text-ink-3 tabular-nums',
+              pending ? 'invisible' : 'animate-fade-in',
+            )}
+          >
             {COPY.kicker(timeline.count)}
           </p>
         )}

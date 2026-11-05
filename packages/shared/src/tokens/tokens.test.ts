@@ -4,7 +4,7 @@ import { CHART_THEME } from '../../tokens/generated/chart-theme.js';
 import source from '../../tokens/tokens.json';
 import { THRESHOLDS } from '../thresholds.js';
 import { renderThemeCss, renderTokensCss } from './css.js';
-import { renderChartTheme, renderRnTheme } from './native.js';
+import { bezierOf, renderChartTheme, renderRnTheme } from './native.js';
 import { type ColorToken, parseTokens, type Tokens } from './schema.js';
 
 const tokens = parseTokens(source);
@@ -154,6 +154,25 @@ describe('native themes', () => {
     expect(CHART_THEME.animation).toEqual({ duration: 820, easing: 'easeOutQuart', stagger: 45 });
     expect(CHART_THEME.dark.colors.accent).toBe('#6AA9EE');
     expect(CHART_THEME.dark.stage.tech).toBe('#499B9B');
+  });
+
+  it('gives the web the motion durations in ms and both easings as bezier tuples', () => {
+    expect(CHART_THEME.motion).toEqual({
+      instant: 140,
+      fast: 180,
+      base: 200,
+      spring: 260,
+      easing: [0.2, 0.8, 0.3, 1],
+      springEasing: [0.34, 1.56, 0.64, 1],
+    });
+  });
+
+  it('reads spaced cubic-bezier points and refuses an easing that is not four numbers', () => {
+    expect(bezierOf('cubic-bezier( .4, 0 , -0.2,1 )')).toEqual([0.4, 0, -0.2, 1]);
+    expect(() => bezierOf('easeOutQuart')).toThrow();
+    expect(() => bezierOf('cubic-bezier(.2,.8,.3)')).toThrow();
+    expect(() => bezierOf('cubic-bezier(.2,.8,x,1)')).toThrow();
+    expect(() => bezierOf('cubic-bezier(.2,,.3,1)')).toThrow();
   });
 
   it('falls back to the light hex where dark has no value', () => {

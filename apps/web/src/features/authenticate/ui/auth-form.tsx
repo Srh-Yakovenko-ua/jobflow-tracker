@@ -12,6 +12,7 @@ import { Button } from '@/shared/ui/button';
 import { Field } from '@/shared/ui/field';
 import { Input } from '@/shared/ui/input';
 import { PasswordInput } from '@/shared/ui/password-input';
+import { Reveal } from '@/shared/ui/reveal';
 
 import { type AuthAlert, authAlertOf } from '../lib/auth-alert';
 import {
@@ -64,12 +65,24 @@ function CredentialFields({ form, spec }: CredentialFieldsProps) {
   );
 }
 
-function AlertSlot({ alert, secondsLeft }: AlertSlotProps) {
-  if (alert === undefined) return null;
+function AlertBanner({ alert, secondsLeft }: Readonly<{ alert: AuthAlert; secondsLeft: number }>) {
   if (alert.kind === 'rateLimited') {
     return <RateLimitAlert secondsLeft={alert.deadline === undefined ? undefined : secondsLeft} />;
   }
   return <Banner tone="error" content={COPY.alerts[alert.kind]} />;
+}
+
+function AlertSlot({ alert, secondsLeft }: AlertSlotProps) {
+  const counted = alert?.kind === 'rateLimited' && alert.deadline !== undefined;
+  return (
+    <Reveal shown={alert !== undefined && !(counted && secondsLeft === 0)} className="-mt-5.5">
+      {alert !== undefined && (
+        <div className="pt-5.5">
+          <AlertBanner alert={alert} secondsLeft={secondsLeft} />
+        </div>
+      )}
+    </Reveal>
+  );
 }
 
 function OrDivider() {

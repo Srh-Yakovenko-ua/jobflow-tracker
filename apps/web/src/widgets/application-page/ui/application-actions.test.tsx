@@ -80,7 +80,7 @@ describe('ApplicationActions', () => {
     { mode: 'page', left: replace, to: ['/board'] },
     { mode: 'sheet', left: back, to: [] },
   ] as const)(
-    'Видалити in the $mode asks first, deletes once and leaves for the board',
+    'Видалити in the $mode asks first, deletes once, closes what is open and leaves for the board',
     async ({ mode, left, to }) => {
       const { user, deletes } = renderApplicationPage({ mode });
 
@@ -92,6 +92,10 @@ describe('ApplicationActions', () => {
       await waitFor(() => {
         expect(left).toHaveBeenCalledWith(...to);
       });
+      await waitFor(() => {
+        expect(screen.queryByRole('dialog')).toBeNull();
+      });
+      expect(left).toHaveBeenCalledTimes(1);
       expect(deletes).toEqual([ACME_APPLICATION.id]);
     },
   );

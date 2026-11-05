@@ -87,5 +87,23 @@ export const CHART_THEME = {
     "duration": 820,
     "easing": "easeOutQuart",
     "stagger": 45
+  },
+  "motion": {
+    "instant": 140,
+    "fast": 180,
+    "base": 200,
+    "spring": 260,
+    "easing": [
+      0.2,
+      0.8,
+      0.3,
+      1
+    ],
+    "springEasing": [
+      0.34,
+      1.56,
+      0.64,
+      1
+    ]
   }
 } as const;
