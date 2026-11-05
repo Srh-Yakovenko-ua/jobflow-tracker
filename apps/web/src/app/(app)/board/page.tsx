@@ -1,10 +1,12 @@
 import type { Metadata } from 'next';
+import { cookies } from 'next/headers';
 
 import { uk } from '@/shared/i18n';
-import { KanbanBoard } from '@/widgets/kanban-board';
+import { BOARD_DENSITY_COOKIE, boardDensityFromCookie, KanbanBoard } from '@/widgets/kanban-board';
 
 export const metadata: Metadata = { title: uk.board.title };
 
-export default function BoardPage() {
-  return <KanbanBoard />;
+export default async function BoardPage() {
+  const value = (await cookies()).get(BOARD_DENSITY_COOKIE)?.value;
+  return <KanbanBoard initial={boardDensityFromCookie(value)} />;
 }

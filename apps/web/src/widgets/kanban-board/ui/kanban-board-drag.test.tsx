@@ -451,9 +451,10 @@ describe('KanbanBoard drag and drop', () => {
     });
   });
 
-  it('Tab walks the cards column by column, then the outcome strips', async () => {
+  it('Tab walks the density switch, then the cards column by column, then the outcome strips', async () => {
     const { user } = await boardReadyToDrag();
     const stops = [
+      screen.getByRole('radio', { name: uk.board.density.full }),
       ...[
         DRAGGED,
         'Product Designer',

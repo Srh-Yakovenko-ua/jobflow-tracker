@@ -1,7 +1,6 @@
 'use client';
 
 import {
-  ACTIVE_STAGES,
   type ApplicationBoardResponse,
   OPEN_STAGES,
   type OpenStage,
@@ -18,17 +17,18 @@ import { cn } from '@/shared/lib/cn';
 import { LoadFailedPanel } from '@/shared/ui/error-panel';
 import { ColumnSkeleton } from '@/shared/ui/skeleton';
 
+import type { BoardDensityState } from '../model/board-density-cookie';
+import { BoardDensityProvider } from '../model/board-density-store';
 import { type BoardLoad, useKanbanBoard } from '../model/use-kanban-board';
 import { BoardColumn } from './board-column';
 import { BoardDnd } from './board-dnd';
+import { BoardToolbar } from './board-toolbar';
 import { ColumnCards } from './column-cards';
-import { STRIP_LOOK } from './column-frame';
+import { BOARD_FRAME, STRIP_LOOK } from './column-frame';
 import { FirstRunState } from './first-run-state';
 import { OutcomeLane } from './outcome-lane';
 
 const FOOTNOTES: Partial<Record<OpenStage, readonly string[]>> = { final: uk.board.finalNote };
-
-const BOARD_WIDTH = 'mx-auto max-w-[1388px]';
 
 type BoardColumnsProps = Readonly<{
   board: ApplicationBoardResponse;
@@ -40,18 +40,9 @@ type BoardColumnsProps = Readonly<{
   };
 }>;
 
-function InWorkEyebrow({ board }: Readonly<{ board: ApplicationBoardResponse }>) {
-  const inWork = ACTIVE_STAGES.reduce((sum, stage) => sum + board.columns[stage].count, 0);
-  return (
-    <p className={cn(BOARD_WIDTH, 'eyebrow px-1 pb-2 text-ink-3 tabular-nums')}>
-      {uk.board.eyebrow(inWork)}
-    </p>
-  );
-}
-
 function BoardFrame({ children }: Readonly<{ children: ReactNode }>) {
   return (
-    <motion.div layoutScroll className={cn(BOARD_WIDTH, 'overflow-x-auto p-1')}>
+    <motion.div layoutScroll className={cn(BOARD_FRAME.width, 'overflow-x-auto p-1')}>
       <div className="flex items-stretch gap-3">{children}</div>
     </motion.div>
   );
@@ -63,7 +54,7 @@ function BoardSkeleton() {
       <p role="status" className="sr-only">
         {uk.ui.loading}
       </p>
-      <p aria-hidden className={cn(BOARD_WIDTH, 'eyebrow px-1 pb-2')}>
+      <p aria-hidden className={cn(BOARD_FRAME.width, BOARD_FRAME.toolbar, 'eyebrow')}>
         <span className="inline-block h-2.25 w-28 rounded-[7px] bg-line-soft align-middle" />
       </p>
       <BoardFrame>
@@ -100,7 +91,7 @@ function BoardColumns({ board, context, outcomes }: BoardColumnsProps) {
   const { columns } = board;
   return (
     <LayoutGroup>
-      <InWorkEyebrow board={board} />
+      <BoardToolbar board={board} />
       <BoardFrame>
         <BoardDnd board={board} context={context}>
           {OPEN_STAGES.map((stage) => (
@@ -133,7 +124,7 @@ function BoardColumns({ board, context, outcomes }: BoardColumnsProps) {
   );
 }
 
-export function KanbanBoard() {
+function BoardContent() {
   const { data, context, expanded, onToggle, load } = useKanbanBoard();
   if (data === undefined) {
     if (!load.failed) {
@@ -152,5 +143,15 @@ export function KanbanBoard() {
     <div className="animate-fade-in">
       <BoardColumns board={data} context={context} outcomes={{ expanded, onToggle, load }} />
     </div>
+  );
+}
+
+export type KanbanBoardProps = Readonly<{ initial: BoardDensityState }>;
+
+export function KanbanBoard({ initial }: KanbanBoardProps) {
+  return (
+    <BoardDensityProvider initial={initial}>
+      <BoardContent />
+    </BoardDensityProvider>
   );
 }

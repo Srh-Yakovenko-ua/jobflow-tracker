@@ -9,6 +9,8 @@ export type BoardDrag = {
 
 const COLUMN_BOX = { pitch: 300, width: 280, height: 600 } as const;
 
+const VIRTUAL_BOX = { row: 110, scroller: 600 } as const;
+
 const DROP_SECTION = 'section[data-drop]';
 
 const ACTIVATION_STEP_PX = 10;
@@ -30,12 +32,26 @@ function pointerAt(element: Element) {
   return { clientX: box.x + box.width / 2, clientY: box.y + box.height / 2 };
 }
 
+function heightOf(element: HTMLElement): number {
+  if (element.matches('[data-index]')) {
+    return VIRTUAL_BOX.row;
+  }
+  return element.matches('[data-column-scroll]') ? VIRTUAL_BOX.scroller : 0;
+}
+
 export function layOutColumns() {
   vi.spyOn(Element.prototype, 'getBoundingClientRect').mockImplementation(function boxOf(
     this: Element,
   ) {
     return columnBoxOf(this);
   });
+  for (const side of ['offsetHeight', 'clientHeight'] as const) {
+    vi.spyOn(HTMLElement.prototype, side, 'get').mockImplementation(function sizeOf(
+      this: HTMLElement,
+    ) {
+      return heightOf(this);
+    });
+  }
 }
 
 export function startDrag(card: HTMLElement): BoardDrag {

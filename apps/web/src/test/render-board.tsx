@@ -31,7 +31,7 @@ export function renderBoard(route: BoardRouteOptions, settings?: BoardSettings) 
   server.use(meRoute(settings), board.handler, reasonsSummaryRoute().handler);
   const user = renderInApp(
     <>
-      <KanbanBoard />
+      <KanbanBoard initial={{ density: 'full' }} />
       <QueryProbe queryKey={userKeys.me()} />
     </>,
   );

@@ -6,6 +6,12 @@ const CARDS_IN_WORK = {
   other: 'карток у роботі',
 } as const satisfies PluralForms;
 
+const CARDS_BELOW = {
+  one: 'картка нижче',
+  few: 'картки нижче',
+  other: 'карток нижче',
+} as const satisfies PluralForms;
+
 type StageNames = { from: string; to: string };
 
 type DropNames = { position: string; stage: string | undefined };
@@ -101,6 +107,8 @@ export const board = {
     hint: 'Почни з однієї вакансії, на яку вже відгукнувся цього тижня. Далі буде швидко: букмарклет додає картку одним кліком зі сторінки вакансії.',
     footnote: "колонки «відмова» і «ghosted» з'являться, коли будуть потрібні",
   },
+  density: { label: 'Вигляд карток', full: 'Повні', compact: 'Щільні' },
+  moreBelow: (count: number) => `ще ${countedUk(count, CARDS_BELOW)}`,
   finalNote: ['Тут буває тісно рідко.', 'Це нормально.'],
   columnEmpty: ['тут поки порожньо'],
   move,

@@ -19,6 +19,7 @@ import { uk } from '@/shared/i18n';
 import { usePrefersReducedMotion } from '@/shared/lib/reduced-motion';
 
 import { boardCollisions } from '../model/board-collisions';
+import { useBoardDensity } from '../model/board-density-store';
 import { columnCoordinates } from '../model/column-coordinates';
 import { dragAnnouncements } from '../model/drag-announcements';
 import { DragSourceContext } from '../model/drag-source';
@@ -91,7 +92,13 @@ export function BoardDnd({ board, context, children }: BoardDndProps) {
   const { activeCard, landing, dropAnimation, handlers, rejection, keyboardFocus } =
     useBoardDrag(board);
   const sensors = useBoardSensors();
-  const source = { from: activeCard?.currentStage ?? null, landing };
+  const density = useBoardDensity((store) => store.density);
+  const source = {
+    from: activeCard?.currentStage ?? null,
+    landing,
+    activeId: activeCard?.id ?? null,
+    focusId: keyboardFocus,
+  };
   return (
     <DndContext
       sensors={sensors}
@@ -106,7 +113,7 @@ export function BoardDnd({ board, context, children }: BoardDndProps) {
       <DragOverlay dropAnimation={dropAnimation}>
         {activeCard && (
           <div className={OVERLAY}>
-            <ApplicationCard application={activeCard} context={context} />
+            <ApplicationCard application={activeCard} context={context} view={{ density }} />
           </div>
         )}
       </DragOverlay>

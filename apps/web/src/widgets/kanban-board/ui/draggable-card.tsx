@@ -8,7 +8,7 @@ import { cn } from '@/shared/lib/cn';
 
 import { KeyboardHint } from './keyboard-hint';
 
-export type DraggableCardProps = Pick<ApplicationCardProps, 'application' | 'context'>;
+export type DraggableCardProps = Pick<ApplicationCardProps, 'application' | 'context' | 'view'>;
 
 const CARD_LINK = 'block rounded-xl focus-visible:focus-ring';
 
@@ -19,7 +19,8 @@ function pageOf(application: DraggableCardProps['application']): string {
   return `/applications/${application.id}`;
 }
 
-function DragHandle({ application, context }: DraggableCardProps) {
+function DragHandle(card: DraggableCardProps) {
+  const { application } = card;
   const { setNodeRef, attributes, listeners, isDragging, activatorEvent } = useDraggable({
     id: application.id,
     attributes: { roleDescription: uk.board.move.a11y.roleDescription },
@@ -38,20 +39,21 @@ function DragHandle({ application, context }: DraggableCardProps) {
         {...listeners}
         className={cn(CARD_LINK, HANDLE, isDragging && 'opacity-40')}
       >
-        <ApplicationCard application={application} context={context} />
+        <ApplicationCard {...card} />
       </Link>
       {isDragging && activatorEvent instanceof KeyboardEvent && <KeyboardHint />}
     </>
   );
 }
 
-export function DraggableCard({ application, context }: DraggableCardProps) {
+export function DraggableCard(card: DraggableCardProps) {
+  const { application } = card;
   if (!canDragFrom(application.currentStage)) {
     return (
       <Link href={pageOf(application)} scroll={false} prefetch={false} className={CARD_LINK}>
-        <ApplicationCard application={application} context={context} />
+        <ApplicationCard {...card} />
       </Link>
     );
   }
-  return <DragHandle application={application} context={context} />;
+  return <DragHandle {...card} />;
 }

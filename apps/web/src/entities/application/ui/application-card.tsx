@@ -13,6 +13,7 @@ import { formatDaysInStage } from '../lib/days-in-stage';
 import { formatNextEvent, type ScheduledEventSlot } from '../lib/next-event';
 import { formatSalaryRange } from '../lib/salary';
 import type { ApplicationCardContext } from '../model/card-context';
+import type { CardDensity } from '../model/card-density';
 import { CARD_FRAME } from './card-frame';
 import { CardHeading } from './card-heading';
 import { OfferCard } from './offer-card';
@@ -24,7 +25,7 @@ const COPY = uk.application;
 
 export type ApplicationCardProps = Readonly<{
   application: ApplicationCardData;
-  view?: { density?: 'full' | 'compact' };
+  view?: { density?: CardDensity };
   context: ApplicationCardContext;
 }>;
 
