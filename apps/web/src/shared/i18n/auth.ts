@@ -46,5 +46,15 @@ export const auth = {
       title: 'Вхід через Google або GitHub скасовано',
       description: 'Увійди поштою або спробуй ще раз.',
     },
+    oauthUnavailable: {
+      google: {
+        title: 'Вхід через Google зараз недоступний',
+        description: 'Увійди поштою або спробуй пізніше.',
+      },
+      github: {
+        title: 'Вхід через GitHub зараз недоступний',
+        description: 'Увійди поштою або спробуй пізніше.',
+      },
+    } satisfies Record<OAuthProvider, { title: string; description: string }>,
   },
 } as const;

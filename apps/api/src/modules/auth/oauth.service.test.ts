@@ -31,7 +31,7 @@ class FakeAccounts {
   }
 }
 
-async function oauthServiceWith() {
+async function oauthServiceWith(enabled?: readonly OAuthProvider[]) {
   const accounts = new FakeAccounts();
   const moduleRef = await Test.createTestingModule({
     providers: [
@@ -39,7 +39,7 @@ async function oauthServiceWith() {
       OAuthStates,
       { provide: JwtKeys, useValue: testJwtKeys },
       { provide: ConfigService, useValue: new ConfigService(validateEnv(exampleEnv)) },
-      { provide: OAuthClient, useValue: fakeOAuthClient({ 'olena-code': GITHUB_OLENA }) },
+      { provide: OAuthClient, useValue: fakeOAuthClient({ 'olena-code': GITHUB_OLENA }, enabled) },
       { provide: AuthService, useValue: accounts },
     ],
   }).compile();
@@ -69,6 +69,14 @@ describe('OAuthService.start', () => {
     });
   });
 
+  it('sends the user to the sign-in page of WEB_ORIGIN with oauth=unavailable and no state token when the provider is not set up', async () => {
+    const { service } = await oauthServiceWith(['github']);
+
+    expect(await service.start('google')).toStrictEqual({
+      url: 'http://localhost:3000/login?oauth=unavailable&provider=google',
+    });
+  });
+
   it('lands on the board of WEB_ORIGIN, and on its sign-in page when the user declined', async () => {
     const { service } = await oauthServiceWith();
 
@@ -76,6 +84,14 @@ describe('OAuthService.start', () => {
       'http://localhost:3000/board',
       'http://localhost:3000/login?oauth=denied',
     ]);
+  });
+});
+
+describe('OAuthService.providers', () => {
+  it('lists only the providers the client has set up', async () => {
+    const { service } = await oauthServiceWith(['github']);
+
+    expect(service.providers()).toEqual(['github']);
   });
 });
 

@@ -1,5 +1,6 @@
 import { z } from 'zod';
 
+import { oauthProviderSchema } from '../oauth-providers.js';
 import { userSettingsSchema } from './user-settings.js';
 
 export const PASSWORD_MIN_LENGTH = 10;
@@ -78,6 +79,8 @@ export const oauthCallbackQuerySchema = z.union([oauthErrorQuerySchema, oauthCod
   error: 'Expected code and state, or error',
 });
 
+export const oauthProvidersResponseSchema = z.object({ items: z.array(oauthProviderSchema) });
+
 export type RegisterInput = z.infer<typeof registerInputSchema>;
 export type LoginInput = z.infer<typeof loginInputSchema>;
 export type ChangePasswordInput = z.infer<typeof changePasswordInputSchema>;
@@ -91,3 +94,4 @@ export type PublicJwk = z.infer<typeof publicJwkSchema>;
 export type JwksResponse = z.infer<typeof jwksResponseSchema>;
 export type OAuthCodeQuery = z.infer<typeof oauthCodeQuerySchema>;
 export type OAuthCallbackQuery = z.infer<typeof oauthCallbackQuerySchema>;
+export type OAuthProvidersResponse = z.infer<typeof oauthProvidersResponseSchema>;

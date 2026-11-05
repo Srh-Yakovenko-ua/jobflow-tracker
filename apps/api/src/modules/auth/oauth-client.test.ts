@@ -1,5 +1,6 @@
 import { createHash } from 'node:crypto';
 
+import type { OAuthProvider } from '@jobflow/shared';
 import { ConfigService } from '@nestjs/config';
 import { SignJWT } from 'jose';
 import { afterEach, describe, expect, it, vi } from 'vitest';
@@ -27,6 +28,11 @@ const CREDENTIALS = {
   OAUTH_GITHUB_CLIENT_SECRET: 'github-client-secret',
   OAUTH_GOOGLE_CLIENT_ID: 'google-client-id',
   OAUTH_GOOGLE_CLIENT_SECRET: 'google-client-secret',
+};
+
+const GITHUB_CREDENTIALS = {
+  OAUTH_GITHUB_CLIENT_ID: CREDENTIALS.OAUTH_GITHUB_CLIENT_ID,
+  OAUTH_GITHUB_CLIENT_SECRET: CREDENTIALS.OAUTH_GITHUB_CLIENT_SECRET,
 };
 
 const GITHUB_CALLBACK: OAuthCallback = {
@@ -123,14 +129,21 @@ describe('OAuthClient.begin', () => {
   });
 
   it('answers 404 for a provider without credentials', async () => {
-    const githubOnly = clientWith({
-      OAUTH_GITHUB_CLIENT_ID: CREDENTIALS.OAUTH_GITHUB_CLIENT_ID,
-      OAUTH_GITHUB_CLIENT_SECRET: CREDENTIALS.OAUTH_GITHUB_CLIENT_SECRET,
-    });
+    const githubOnly = clientWith(GITHUB_CREDENTIALS);
     const notConfigured = { body: { status: 404, detail: 'OAuth provider is not configured' } };
 
     await expect(githubOnly.begin('google')).rejects.toMatchObject(notConfigured);
     await expect(githubOnly.profile(GOOGLE_CALLBACK)).rejects.toMatchObject(notConfigured);
+  });
+});
+
+describe('OAuthClient.enabledProviders', () => {
+  it.each<{ setUp: string; credentials: Partial<typeof CREDENTIALS>; enabled: OAuthProvider[] }>([
+    { setUp: 'no credentials', credentials: {}, enabled: [] },
+    { setUp: 'GitHub credentials only', credentials: GITHUB_CREDENTIALS, enabled: ['github'] },
+    { setUp: 'both credentials', credentials: CREDENTIALS, enabled: ['google', 'github'] },
+  ])('lists the providers that are set up with $setUp', ({ credentials, enabled }) => {
+    expect(clientWith(credentials).enabledProviders()).toEqual(enabled);
   });
 });
 

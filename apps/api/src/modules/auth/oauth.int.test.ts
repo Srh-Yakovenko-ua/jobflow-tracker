@@ -27,6 +27,7 @@ import {
   fakeOAuthClient,
   GITHUB_BOHDAN,
   GITHUB_OLENA,
+  listOAuthProviders,
   signInWithOAuth,
   startOAuth,
 } from '../../test/oauth.js';
@@ -69,6 +70,12 @@ describe('sign in with Google and GitHub', () => {
       orderBy: { providerUserId: 'asc' },
       select: { provider: true, providerUserId: true, userId: true },
     });
+
+  it('lists Google and GitHub when both are set up', async () => {
+    const response = await listOAuthProviders(testApp.app);
+
+    expect([response.status, response.body]).toEqual([200, { items: ['google', 'github'] }]);
+  });
 
   it('redirects start to the provider with a ten minute oauth_state cookie on the OAuth path and no-store', async () => {
     const { response } = await startOAuth(testApp.app, 'github');

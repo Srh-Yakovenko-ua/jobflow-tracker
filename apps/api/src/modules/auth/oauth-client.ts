@@ -86,6 +86,10 @@ export class OAuthClient {
     );
   }
 
+  enabledProviders(): OAuthProvider[] {
+    return OAUTH_PROVIDERS.filter((provider) => this.configurations[provider] !== undefined);
+  }
+
   async begin(provider: OAuthProvider): Promise<OAuthStart> {
     const configuration = this.configurationOf(provider);
     const state = randomState();

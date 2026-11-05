@@ -1,8 +1,13 @@
 import type { RouteConfig } from '@asteasolutions/zod-to-openapi';
-import { oauthCodeQuerySchema, oauthErrorQuerySchema, oauthProviderSchema } from '@jobflow/shared';
+import {
+  oauthCodeQuerySchema,
+  oauthErrorQuerySchema,
+  oauthProviderSchema,
+  oauthProvidersResponseSchema,
+} from '@jobflow/shared';
 import { z } from 'zod';
 
-import { errorResponses, PUBLIC } from '../../openapi/route.js';
+import { errorResponses, jsonContent, PUBLIC } from '../../openapi/route.js';
 import { OAUTH_STATE_COOKIE } from './oauth-state-cookie.js';
 import { REFRESH_COOKIE } from './refresh-cookie.js';
 
@@ -23,22 +28,39 @@ const redirectHeaders = ({ location, cookies }: RedirectHeaders) =>
 export const OAUTH_OPENAPI_PATHS: RouteConfig[] = [
   {
     method: 'get',
+    path: '/auth/oauth/providers',
+    tags: TAGS,
+    summary: 'The sign-in providers that are set up',
+    description:
+      'Lists Google and GitHub, in that order, when both their OAUTH_* client id and secret are set.',
+    ...PUBLIC,
+    responses: {
+      200: {
+        description: 'The providers that are set up',
+        content: jsonContent(oauthProvidersResponseSchema, { items: ['google', 'github'] }),
+      },
+      ...errorResponses([]),
+    },
+  },
+  {
+    method: 'get',
     path: '/auth/oauth/{provider}/start',
     tags: TAGS,
     summary: 'Start a sign-in with Google or GitHub',
     description:
-      'Redirects to the provider with state and a PKCE challenge; 404 when the provider has no credentials.',
+      'Redirects to the provider with state and a PKCE challenge; when the provider has no credentials, redirects to the sign-in page of the web app with oauth=unavailable and the provider.',
     ...PUBLIC,
     request: { params: providerParams },
     responses: {
       302: {
-        description: 'Redirect to the provider',
+        description: 'Redirect to the provider, or to sign-in when the provider is not set up',
         headers: redirectHeaders({
-          location: "The provider's authorization URL",
-          cookies: `Sets the httpOnly ${OAUTH_STATE_COOKIE} cookie for ten minutes`,
+          location:
+            "The provider's authorization URL, or the web sign-in page with oauth=unavailable&provider=<provider>",
+          cookies: `Sets the httpOnly ${OAUTH_STATE_COOKIE} cookie for ten minutes, only when the provider is set up`,
         }),
       },
-      ...errorResponses([404, 422]),
+      ...errorResponses([422]),
     },
   },
   {

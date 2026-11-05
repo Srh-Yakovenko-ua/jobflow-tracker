@@ -1,23 +1,65 @@
+import type { OAuthProvider } from '@jobflow/shared';
 import { act, screen, waitFor, within } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { rateLimitedReply } from '@/test/api-handlers';
+import { OUTAGES, rateLimitedReply } from '@/test/api-handlers';
 import { CREDENTIALS, renderAuthForm, resetSignIn } from '@/test/auth-form';
 import { axeViolations } from '@/test/dev-ui';
+import { QueryProbe, waitForQuery } from '@/test/query-status';
 import { server } from '@/test/server';
-import { authRoute } from '@/test/session-fixtures';
+import { authRoute, oauthProvidersRoute } from '@/test/session-fixtures';
 
 import type { AuthMode } from '../model/auth-modes';
+import { authKeys } from '../model/keys';
 
 vi.mock('next/navigation', () => import('@/test/navigation'));
+
+type OAuthLinkSeen = { name: string | null; href: string | null };
+
+type ProvidersRow = {
+  enabled: readonly OAuthProvider[];
+  links: readonly OAuthLinkSeen[];
+  divider: boolean;
+};
 
 const MODES: readonly AuthMode[] = ['login', 'register'];
 
 const PRIVACY =
   'Твої відгуки, заметки й резюме видно тільки тобі. Тексти вакансій ідуть у модель для розбору; заметки — ніколи.';
 
+const PROVIDERS_KEY = authKeys.oauthProviders();
+
+const GITHUB_LINK: OAuthLinkSeen = {
+  name: 'Продовжити з GitHub',
+  href: 'http://localhost:4000/api/v1/auth/oauth/github/start',
+};
+
+const PROVIDER_ROWS: readonly ProvidersRow[] = [
+  { enabled: [], links: [], divider: false },
+  { enabled: ['github'], links: [GITHUB_LINK], divider: true },
+  {
+    enabled: ['google', 'github'],
+    links: [
+      {
+        name: 'Продовжити з Google',
+        href: 'http://localhost:4000/api/v1/auth/oauth/google/start',
+      },
+      GITHUB_LINK,
+    ],
+    divider: true,
+  },
+];
+
+const MODE_PROVIDER_ROWS = MODES.flatMap((mode) => PROVIDER_ROWS.map((row) => ({ mode, ...row })));
+
 function rateLimitedLogin(headers: Record<string, string>) {
   server.use(authRoute({ path: '/auth/login', reply: () => rateLimitedReply(headers) }));
+}
+
+function oauthLinks(): OAuthLinkSeen[] {
+  return screen
+    .queryAllByRole('link', { name: /^Продовжити з / })
+    .map((link) => ({ name: link.textContent, href: link.getAttribute('href') }));
 }
 
 function tabLinks() {
@@ -52,20 +94,30 @@ describe('the sign-in and sign-up screen', () => {
     expect(tabLinks().map((link) => link.current)).toEqual([null, 'page']);
   });
 
-  it.each(MODES)(
-    '%s shows the Google and GitHub links to the API start routes and the privacy note',
-    (mode) => {
-      renderAuthForm({ mode });
+  it.each(MODE_PROVIDER_ROWS)(
+    '$mode with $enabled set up links only those providers to their API start routes',
+    async ({ mode, enabled, links, divider }) => {
+      server.use(oauthProvidersRoute(enabled));
+      renderAuthForm({ mode }, <QueryProbe queryKey={PROVIDERS_KEY} />);
+      await waitForQuery({ queryKey: PROVIDERS_KEY, status: 'success' });
 
-      expect(
-        ['Продовжити з Google', 'Продовжити з GitHub'].map((name) =>
-          screen.getByRole('link', { name }).getAttribute('href'),
-        ),
-      ).toEqual([
-        'http://localhost:4000/api/v1/auth/oauth/google/start',
-        'http://localhost:4000/api/v1/auth/oauth/github/start',
-      ]);
+      expect(oauthLinks()).toEqual(links);
+      expect(screen.queryByText('АБО') !== null).toBe(divider);
       expect(screen.getByText(PRIVACY)).toBeDefined();
+    },
+  );
+
+  it.each(OUTAGES)(
+    'while the providers route $name the form shows no OAuth block and still takes an email',
+    async ({ reply, settled }) => {
+      server.use(oauthProvidersRoute(reply));
+      const form = renderAuthForm({ mode: 'login' }, <QueryProbe queryKey={PROVIDERS_KEY} />);
+      await waitForQuery({ queryKey: PROVIDERS_KEY, status: settled });
+
+      expect(oauthLinks()).toEqual([]);
+      expect(screen.queryByText('АБО')).toBeNull();
+      expect(form.email).toHaveProperty('disabled', false);
+      expect(form.submit).toHaveProperty('disabled', false);
     },
   );
 
@@ -118,6 +170,7 @@ describe('the sign-in and sign-up screen', () => {
 
   it.each(MODES)('%s has no axe violations', async (mode) => {
     renderAuthForm({ mode });
+    await screen.findAllByRole('link', { name: /^Продовжити з / });
 
     expect(await axeViolations()).toEqual([]);
   });

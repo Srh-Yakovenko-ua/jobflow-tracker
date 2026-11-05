@@ -6,6 +6,7 @@ import {
   jwksResponseSchema,
   loginInputSchema,
   oauthCallbackQuerySchema,
+  oauthProvidersResponseSchema,
   publicJwkSchema,
   refreshTokenBodySchema,
   registerInputSchema,
@@ -162,6 +163,20 @@ describe('oauthCallbackQuerySchema', () => {
       code: 'c'.repeat(512),
       state,
     });
+  });
+});
+
+describe('oauthProvidersResponseSchema', () => {
+  it.each([
+    ['no provider is set up', []],
+    ['only GitHub is set up', ['github']],
+    ['both providers are set up', ['google', 'github']],
+  ])('accepts the enabled providers when %s', (_label, items) => {
+    expect(oauthProvidersResponseSchema.parse({ items })).toEqual({ items });
+  });
+
+  it('refuses a provider outside the supported ones', () => {
+    expect(oauthProvidersResponseSchema.safeParse({ items: ['facebook'] }).success).toBe(false);
   });
 });
 

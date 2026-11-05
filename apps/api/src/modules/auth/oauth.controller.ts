@@ -3,6 +3,7 @@ import {
   oauthCallbackQuerySchema,
   type OAuthProvider,
   oauthProviderSchema,
+  type OAuthProvidersResponse,
 } from '@jobflow/shared';
 import { Controller, Get, Param, Query, Redirect, Req, Res } from '@nestjs/common';
 import type { Request, Response } from 'express';
@@ -23,6 +24,11 @@ export class OAuthController {
     private readonly sessions: SessionService,
   ) {}
 
+  @Get('providers')
+  providers(): OAuthProvidersResponse {
+    return { items: this.oauthService.providers() };
+  }
+
   @Get(':provider/start')
   @Redirect()
   async start(
@@ -30,7 +36,9 @@ export class OAuthController {
     @Res({ passthrough: true }) res: Response,
   ): Promise<RedirectTarget> {
     const { url, stateToken } = await this.oauthService.start(provider);
-    oauthStateCookie.set(res, stateToken);
+    if (stateToken !== undefined) {
+      oauthStateCookie.set(res, stateToken);
+    }
     res.set('Cache-Control', 'no-store');
     return { url };
   }
