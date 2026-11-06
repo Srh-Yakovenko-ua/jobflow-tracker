@@ -87,10 +87,17 @@ function silenceWindowWhere({ stages, lastEventAtOrBefore, lastEventAfter }: Sil
   };
 }
 
+function salaryFromWhere(salaryFrom: number): Where {
+  return {
+    OR: [{ salaryMax: { gte: salaryFrom } }, { salaryMax: null, salaryMin: { gte: salaryFrom } }],
+  };
+}
+
 function filterWhere({
   stage,
   source,
   hasScore,
+  salaryFrom,
   silenceWindows,
   applicationIds,
 }: ApplicationListFilter): Where[] {
@@ -99,6 +106,7 @@ function filterWhere({
     source && { source: { in: source } },
     applicationIds && { id: { in: [...applicationIds] } },
     hasScore === undefined ? undefined : { matchScore: hasScore ? { not: null } : null },
+    salaryFrom === undefined ? undefined : salaryFromWhere(salaryFrom),
     silenceWindows && { OR: silenceWindows.map(silenceWindowWhere) },
   ];
   return conditions.filter((condition) => condition !== undefined);

@@ -1,4 +1,4 @@
-import { countedUk, type PluralForms, STAGE_LABELS } from '@jobflow/shared';
+import { countedUk, type PluralForms, type SilenceLevel, STAGE_LABELS } from '@jobflow/shared';
 
 const CARDS_IN_WORK = {
   one: 'картка в роботі',
@@ -99,6 +99,39 @@ const reject = {
   },
 } as const;
 
+const filters = {
+  search: { label: 'Пошук по дошці', placeholder: 'компанія, посада або стек' },
+  source: { menu: 'Джерело', pill: (picked: string) => `Джерело: ${picked}`, all: 'усі' },
+  more: {
+    menu: 'Фільтри',
+    pill: (count: number) => (count === 0 ? 'Фільтри' : `Фільтри · ${String(count)}`),
+  },
+  stage: 'Етап',
+  hasScore: 'з Match Score',
+  silentOnly: 'лише в тиші',
+  salaryFrom: 'Зарплата від',
+  chips: {
+    label: 'Активні фільтри',
+    source: (name: string) => `джерело: ${name}`,
+    stage: (name: string) => `етап: ${name}`,
+    hasScore: { with: 'з Match Score', without: 'без Match Score' },
+    silence: {
+      none: 'без тиші',
+      warn: 'тиша близько',
+      silent: 'лише в тиші',
+    } satisfies Record<SilenceLevel, string>,
+    salaryFrom: (amount: string) => `зарплата від ${amount}`,
+  },
+  reset: 'Скинути фільтри',
+} as const;
+
+const emptySearch = {
+  eyebrow: 'Пошук · нічого не знайдено',
+  title: (query: string) => `Немає карток за «${query}»`,
+  filteredTitle: 'Немає карток за цими фільтрами',
+  hint: 'Пошук іде по компанії, позиції, стеку і нотатках. Спробуй частину слова або скинь фільтри.',
+} as const;
+
 export const board = {
   title: 'Дошка',
   eyebrow: (inWork: number) => `активний пошук · ${countedUk(inWork, CARDS_IN_WORK)}`,
@@ -111,6 +144,8 @@ export const board = {
   moreBelow: (count: number) => `ще ${countedUk(count, CARDS_BELOW)}`,
   finalNote: ['Тут буває тісно рідко.', 'Це нормально.'],
   columnEmpty: ['тут поки порожньо'],
+  filters,
+  emptySearch,
   move,
   reject,
 } as const;

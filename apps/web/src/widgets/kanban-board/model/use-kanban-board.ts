@@ -1,16 +1,43 @@
-import { type ApplicationBoardQuery, OUTCOME_STAGES, type OutcomeStage } from '@jobflow/shared';
-import { keepPreviousData, useQuery, useQueryClient } from '@tanstack/react-query';
+import {
+  type ApplicationBoardQuery,
+  type ApplicationFilters,
+  OUTCOME_STAGES,
+  type OutcomeStage,
+} from '@jobflow/shared';
+import { hashKey, keepPreviousData, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 
-import { type ApplicationCardContext, boardQueryOptions } from '@/entities/application';
+import {
+  type ApplicationCardContext,
+  applicationKeys,
+  boardQueryOptions,
+} from '@/entities/application';
 import { useUserTimeZone } from '@/entities/user';
+import { isSearchable, SEARCH_LIMITS } from '@/features/search-applications';
+import { useDebouncedValue } from '@/shared/lib/use-debounced-value';
 
-export type BoardLoad = Readonly<{ failed: boolean; onRetry: () => void }>;
+import { useBoardFilters } from './board-filters-store';
 
-type Outcomes = { expanded: OutcomeStage[]; settled: OutcomeStage[] };
+export type BoardLoad = Readonly<{ failed: boolean; filtersFailed: boolean; onRetry: () => void }>;
 
-function boardQueryOf(expanded: readonly OutcomeStage[]): ApplicationBoardQuery {
-  return expanded.length === 0 ? {} : { expand: [...expanded] };
+export type BoardSearch = Readonly<{ filtered: boolean; q: string | undefined }>;
+
+type BoardQueryInput = Readonly<{ expanded: readonly OutcomeStage[]; filters: ApplicationFilters }>;
+
+type ArrivalInput = Readonly<{ query: ApplicationBoardQuery; arrived: boolean }>;
+
+type SearchInput = Readonly<{ filters: ApplicationFilters; shown: ApplicationBoardQuery }>;
+
+function boardQueryOf({ expanded, filters }: BoardQueryInput): ApplicationBoardQuery {
+  const q = filters.q?.trim();
+  return {
+    source: filters.source,
+    q: q !== undefined && isSearchable(q) ? q : undefined,
+    hasScore: filters.hasScore,
+    silence: filters.silence,
+    salaryFrom: filters.salaryFrom,
+    expand: expanded.length === 0 ? undefined : [...expanded],
+  };
 }
 
 function toggled(expanded: readonly OutcomeStage[], stage: OutcomeStage): OutcomeStage[] {
@@ -20,33 +47,51 @@ function toggled(expanded: readonly OutcomeStage[], stage: OutcomeStage): Outcom
   return OUTCOME_STAGES.filter((outcome) => open.includes(outcome));
 }
 
+function filtersHashOf(query: ApplicationBoardQuery): string {
+  return hashKey(applicationKeys.board({ ...query, expand: undefined }));
+}
+
+function useLastArrived({ query, arrived }: ArrivalInput): ApplicationBoardQuery {
+  const [shown, setShown] = useState(query);
+  if (arrived && hashKey(applicationKeys.board(query)) !== hashKey(applicationKeys.board(shown))) {
+    setShown(query);
+  }
+  return shown;
+}
+
+function searchOf({ filters, shown }: SearchInput): BoardSearch {
+  const sent = Object.values({ ...shown, expand: undefined }).some((value) => value !== undefined);
+  return { filtered: filters.stage !== undefined || sent, q: shown.q };
+}
+
 export function useKanbanBoard() {
   const queryClient = useQueryClient();
-  const [outcomes, setOutcomes] = useState<Outcomes>({ expanded: [], settled: [] });
+  const filters = useBoardFilters((store) => store.filters);
+  const [expanded, setExpanded] = useState<OutcomeStage[]>([]);
   const [mountedAt] = useState(Date.now);
-  const board = useQuery({
-    ...boardQueryOptions(boardQueryOf(outcomes.expanded)),
-    placeholderData: keepPreviousData,
-  });
-  const settledKey = boardQueryOptions(boardQueryOf(outcomes.settled)).queryKey;
+  const q = useDebouncedValue(filters.q, SEARCH_LIMITS.debounceMs);
+  const salaryFrom = useDebouncedValue(filters.salaryFrom, SEARCH_LIMITS.debounceMs);
+  const query = boardQueryOf({ expanded, filters: { ...filters, q, salaryFrom } });
+  const board = useQuery({ ...boardQueryOptions(query), placeholderData: keepPreviousData });
+  const arrived = board.data !== undefined && !board.isPlaceholderData;
+  const shown = useLastArrived({ query, arrived });
   const timeZone = useUserTimeZone();
   const context: ApplicationCardContext = {
     now: new Date(Math.max(board.dataUpdatedAt, mountedAt)),
     timeZone,
   };
-  const onToggle = (stage: OutcomeStage) => {
-    const arrived = board.data !== undefined && !board.isPlaceholderData;
-    setOutcomes({
-      expanded: toggled(outcomes.expanded, stage),
-      settled: arrived ? outcomes.expanded : outcomes.settled,
-    });
-  };
+  const failed = board.isError && !board.isFetching;
   const load: BoardLoad = {
-    failed: board.isError && !board.isFetching,
+    failed,
+    filtersFailed: failed && filtersHashOf(query) !== filtersHashOf(shown),
     onRetry: () => {
       void board.refetch();
     },
   };
-  const data = board.data ?? queryClient.getQueryData(settledKey);
-  return { data, context, expanded: outcomes.expanded, onToggle, load };
+  const onToggle = (stage: OutcomeStage) => {
+    setExpanded(toggled(expanded, stage));
+  };
+  const data = board.data ?? queryClient.getQueryData(boardQueryOptions(shown).queryKey);
+  const search = searchOf({ filters, shown });
+  return { data, context, outcomes: { expanded, onToggle, load }, search };
 }

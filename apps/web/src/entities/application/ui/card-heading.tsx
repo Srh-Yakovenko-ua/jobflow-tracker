@@ -1,7 +1,9 @@
-import type { ApplicationCard } from '@jobflow/shared';
+import type { BoardCard } from '@jobflow/shared';
 import type { ReactNode } from 'react';
 
-export type CardHeadingProps = Readonly<{ application: ApplicationCard; badge: ReactNode }>;
+import { SearchSnippet } from './search-snippet';
+
+export type CardHeadingProps = Readonly<{ application: BoardCard; badge: ReactNode }>;
 
 export function CardHeading({ application, badge }: CardHeadingProps) {
   return (
@@ -13,6 +15,7 @@ export function CardHeading({ application, badge }: CardHeadingProps) {
         <span title={application.company} className="truncate text-[12.5px] text-ink-3">
           {application.company}
         </span>
+        {application.snippet && <SearchSnippet snippet={application.snippet} />}
       </div>
       {badge}
     </div>

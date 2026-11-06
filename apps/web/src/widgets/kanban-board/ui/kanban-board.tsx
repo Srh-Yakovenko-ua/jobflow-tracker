@@ -2,11 +2,12 @@
 
 import {
   type ApplicationBoardResponse,
+  type ApplicationFilters,
   OPEN_STAGES,
   type OpenStage,
   OUTCOME_STAGES,
   type OutcomeStage,
-  STAGES,
+  type Stage,
 } from '@jobflow/shared';
 import { LayoutGroup, motion } from 'motion/react';
 import type { ReactNode } from 'react';
@@ -19,9 +20,12 @@ import { ColumnSkeleton } from '@/shared/ui/skeleton';
 
 import type { BoardDensityState } from '../model/board-density-cookie';
 import { BoardDensityProvider } from '../model/board-density-store';
+import { shownStagesOf } from '../model/board-filters';
+import { BoardFiltersProvider, useBoardFilters } from '../model/board-filters-store';
 import { type BoardLoad, useKanbanBoard } from '../model/use-kanban-board';
 import { BoardColumn } from './board-column';
 import { BoardDnd } from './board-dnd';
+import { BoardEmptySearch } from './board-empty-search';
 import { BoardToolbar } from './board-toolbar';
 import { ColumnCards } from './column-cards';
 import { BOARD_FRAME, STRIP_LOOK } from './column-frame';
@@ -38,6 +42,7 @@ type BoardColumnsProps = Readonly<{
     onToggle: (stage: OutcomeStage) => void;
     load: BoardLoad;
   };
+  stages: readonly Stage[];
 }>;
 
 function BoardFrame({ children }: Readonly<{ children: ReactNode }>) {
@@ -87,71 +92,83 @@ function FirstRunBoard() {
   );
 }
 
-function BoardColumns({ board, context, outcomes }: BoardColumnsProps) {
+function BoardColumns({ board, context, outcomes, stages }: BoardColumnsProps) {
   const { columns } = board;
+  const shown = (stage: Stage) => stages.includes(stage);
   return (
-    <LayoutGroup>
-      <BoardToolbar board={board} />
-      <BoardFrame>
-        <BoardDnd board={board} context={context}>
-          {OPEN_STAGES.map((stage) => (
-            <BoardColumn key={stage} column={{ stage, count: columns[stage].count }}>
-              <ColumnCards
-                stage={stage}
-                items={columns[stage].items ?? []}
-                context={context}
-                footnote={FOOTNOTES[stage]}
-              />
-            </BoardColumn>
-          ))}
-          {OUTCOME_STAGES.map((stage) => (
-            <OutcomeLane
-              key={stage}
-              column={{ stage, ...columns[stage] }}
+    <BoardFrame>
+      <BoardDnd board={board} context={context}>
+        {OPEN_STAGES.filter(shown).map((stage) => (
+          <BoardColumn key={stage} column={{ stage, count: columns[stage].count }}>
+            <ColumnCards
+              stage={stage}
+              items={columns[stage].items ?? []}
               context={context}
-              load={outcomes.load}
-              disclosure={{
-                expanded: outcomes.expanded.includes(stage),
-                onToggle: () => {
-                  outcomes.onToggle(stage);
-                },
-              }}
+              footnote={FOOTNOTES[stage]}
             />
-          ))}
-        </BoardDnd>
-      </BoardFrame>
-    </LayoutGroup>
+          </BoardColumn>
+        ))}
+        {OUTCOME_STAGES.filter(shown).map((stage) => (
+          <OutcomeLane
+            key={stage}
+            column={{ stage, ...columns[stage] }}
+            context={context}
+            load={outcomes.load}
+            disclosure={{
+              expanded: outcomes.expanded.includes(stage),
+              onToggle: () => {
+                outcomes.onToggle(stage);
+              },
+            }}
+          />
+        ))}
+      </BoardDnd>
+    </BoardFrame>
   );
 }
 
 function BoardContent() {
-  const { data, context, expanded, onToggle, load } = useKanbanBoard();
+  const { data, context, outcomes, search } = useKanbanBoard();
+  const filters = useBoardFilters((store) => store.filters);
   if (data === undefined) {
-    if (!load.failed) {
+    if (!outcomes.load.failed) {
       return <BoardSkeleton />;
     }
     return (
       <div className="max-w-120 animate-fade-in">
-        <LoadFailedPanel onRetry={load.onRetry} />
+        <LoadFailedPanel onRetry={outcomes.load.onRetry} />
       </div>
     );
   }
-  if (STAGES.every((stage) => data.columns[stage].count === 0)) {
+  const stages = shownStagesOf(filters);
+  const empty = stages.every((stage) => data.columns[stage].count === 0);
+  if (empty && !search.filtered) {
     return <FirstRunBoard />;
   }
   return (
     <div className="animate-fade-in">
-      <BoardColumns board={data} context={context} outcomes={{ expanded, onToggle, load }} />
+      <LayoutGroup>
+        <BoardToolbar board={data} load={outcomes.load} view={{ cards: !empty }} />
+        {empty ? (
+          <BoardEmptySearch q={search.q} />
+        ) : (
+          <BoardColumns board={data} context={context} outcomes={outcomes} stages={stages} />
+        )}
+      </LayoutGroup>
     </div>
   );
 }
 
-export type KanbanBoardProps = Readonly<{ initial: BoardDensityState }>;
+export type KanbanBoardProps = Readonly<{
+  initial: BoardDensityState & { filters?: ApplicationFilters };
+}>;
 
 export function KanbanBoard({ initial }: KanbanBoardProps) {
   return (
-    <BoardDensityProvider initial={initial}>
-      <BoardContent />
+    <BoardDensityProvider initial={{ density: initial.density }}>
+      <BoardFiltersProvider initial={initial.filters ?? {}}>
+        <BoardContent />
+      </BoardFiltersProvider>
     </BoardDensityProvider>
   );
 }

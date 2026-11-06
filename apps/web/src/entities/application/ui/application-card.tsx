@@ -1,5 +1,6 @@
 import {
   type ApplicationCard as ApplicationCardData,
+  type BoardCard,
   isActiveStage,
   type ScheduledEventKind,
   SOURCE_LABELS,
@@ -24,7 +25,7 @@ import { STAGE_COLOR_CLASS } from './stage-color';
 const COPY = uk.application;
 
 export type ApplicationCardProps = Readonly<{
-  application: ApplicationCardData;
+  application: BoardCard;
   view?: { density?: CardDensity };
   context: ApplicationCardContext;
 }>;

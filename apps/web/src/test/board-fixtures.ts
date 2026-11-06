@@ -2,15 +2,16 @@ import {
   applicationBoardQuerySchema,
   type ApplicationBoardResponse,
   applicationBoardResponseSchema,
-  type ApplicationCard,
   type ApplicationResponse,
   applicationResponseSchema,
+  type BoardCard,
   moveApplicationInputSchema,
   type Note,
   noteInputSchema,
   OPEN_STAGES,
   type RejectionReasonsSummary,
   rejectionReasonsSummaryQuerySchema,
+  type SearchSnippet,
   type Stage,
   STAGES,
 } from '@jobflow/shared';
@@ -19,35 +20,50 @@ import { http, HttpResponse } from 'msw/http';
 
 import { FULL_CARD } from '@/entities/application';
 
-import { apiUrl } from './api-handlers';
+import { apiUrl, errorReply } from './api-handlers';
 import type { Latch } from './latch';
 
 export type ColumnCounts = Partial<Record<Stage, number>>;
 
 export type CardSeed = { serial: number; stage: Stage; position: string };
 
+export const KAFKA_SNIPPET: SearchSnippet = [
+  { text: 'Queues on ', match: false },
+  { text: 'Kafka', match: true },
+  { text: ' and Postgres', match: false },
+];
+
 export function fixtureIdOf(serial: number): string {
   return `0b6f3c1e-5d2a-4c8e-9f10-${String(serial).padStart(12, '0')}`;
 }
 
-export function cardIn({ serial, stage, position }: CardSeed): ApplicationCard {
+export function cardIn({ serial, stage, position }: CardSeed): BoardCard {
   return { ...FULL_CARD, id: fixtureIdOf(serial), position, currentStage: stage };
+}
+
+export function snippetCardIn(seed: CardSeed): BoardCard {
+  return { ...cardIn(seed), snippet: KAFKA_SNIPPET };
 }
 
 export type CardRun = { stage: Stage; count: number; from: number };
 
-export function cardsIn({ stage, count, from }: CardRun): ApplicationCard[] {
+export function cardsIn({ stage, count, from }: CardRun): BoardCard[] {
   return Array.from({ length: count }, (_, offset) => {
     const serial = from + offset;
     return cardIn({ serial, stage, position: `Vacancy ${String(serial)}` });
   });
 }
 
-export type ShownCards = { cards: readonly ApplicationCard[]; stages: readonly Stage[] };
+export type ShownCards = { cards: readonly BoardCard[]; stages: readonly Stage[] };
 
-export type BoardRouteOptions = { counts: ColumnCounts; cards?: readonly ApplicationCard[] };
+export type BoardRouteOptions = {
+  counts: ColumnCounts;
+  cards?: readonly BoardCard[];
+  emptyFor?: readonly string[];
+  failFor?: readonly string[];
+};
 
-function itemsOf(stage: Stage, shown: ShownCards | undefined): ApplicationCard[] | null {
+function itemsOf(stage: Stage, shown: ShownCards | undefined): BoardCard[] | null {
   if (shown === undefined || !shown.stages.includes(stage)) {
     return null;
   }
@@ -180,13 +196,19 @@ export function noteRoute(control: MoveRouteOptions = {}) {
   return { handler, sent };
 }
 
-export function boardRoute({ counts, cards = [] }: BoardRouteOptions) {
+export function boardRoute({ counts, cards = [], emptyFor = [], failFor = [] }: BoardRouteOptions) {
   const sent: string[] = [];
   const handler = http.get(apiUrl('/applications/board'), ({ request }) => {
     const { searchParams } = new URL(request.url);
     sent.push(searchParams.toString());
+    const asked = (names: readonly string[]) => names.some((name) => searchParams.has(name));
+    if (asked(failFor)) {
+      return errorReply({ status: 500, type: 'internal_error' });
+    }
     const { expand = [] } = applicationBoardQuerySchema.parse(Object.fromEntries(searchParams));
-    return HttpResponse.json(boardOf(counts, { cards, stages: [...OPEN_STAGES, ...expand] }));
+    const stages = [...OPEN_STAGES, ...expand];
+    const board = asked(emptyFor) ? boardOf({}) : boardOf(counts, { cards, stages });
+    return HttpResponse.json(board);
   });
   return { handler, sent };
 }

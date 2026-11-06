@@ -6,6 +6,10 @@ const COPY = uk.application.salary;
 
 const AMOUNT_FORMAT = new Intl.NumberFormat(uk.locale, { maximumFractionDigits: 0 });
 
+export function formatAmount(value: number): string {
+  return AMOUNT_FORMAT.format(value);
+}
+
 export type SalarySource = Pick<ApplicationCard, 'salaryMin' | 'salaryMax' | 'currency'>;
 
 function currencySymbolOf(currency: string | null): string {
@@ -22,11 +26,11 @@ function currencySymbolOf(currency: string | null): string {
 
 export function formatSalaryRange({ salaryMin, salaryMax, currency }: SalarySource): string | null {
   const symbol = currencySymbolOf(currency);
-  const amount = (value: number) => `${symbol}${AMOUNT_FORMAT.format(value)}`;
+  const amount = (value: number) => `${symbol}${formatAmount(value)}`;
   if (salaryMin !== null && salaryMax !== null) {
     return salaryMin === salaryMax
       ? amount(salaryMin)
-      : COPY.range(amount(salaryMin), AMOUNT_FORMAT.format(salaryMax));
+      : COPY.range(amount(salaryMin), formatAmount(salaryMax));
   }
   if (salaryMin !== null) {
     return COPY.from(amount(salaryMin));

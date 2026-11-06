@@ -5,7 +5,7 @@ import { useDebouncedValue } from './use-debounced-value';
 
 const DELAY_MS = 250;
 
-function debounced(initial: string) {
+function debounced(initial: string | undefined) {
   return renderHook(({ value }) => useDebouncedValue(value, DELAY_MS), {
     initialProps: { value: initial },
   });
@@ -50,5 +50,19 @@ describe('useDebouncedValue', () => {
       vi.advanceTimersByTime(50);
     });
     expect(result.current).toBe('trid');
+  });
+
+  it('a cleared value is handed on at once, so text typed right after it never brings the old one back', () => {
+    vi.useFakeTimers();
+    const { result, rerender } = debounced('kafka');
+
+    rerender({ value: undefined });
+    expect(result.current).toBeUndefined();
+
+    rerender({ value: 'r' });
+    act(() => {
+      vi.advanceTimersByTime(DELAY_MS - 1);
+    });
+    expect(result.current).toBeUndefined();
   });
 });
