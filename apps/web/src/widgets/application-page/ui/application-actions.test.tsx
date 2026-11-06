@@ -16,6 +16,15 @@ afterEach(() => {
 
 const SETTLED_STAGES: readonly Stage[] = ['offer', 'rejected', 'ghosted', 'withdrawn'];
 
+const SCHEDULE_OFFERED: readonly { stage: Stage; offered: boolean }[] = [
+  { stage: 'applied', offered: true },
+  { stage: 'tech_interview', offered: true },
+  { stage: 'offer', offered: true },
+  { stage: 'ghosted', offered: true },
+  { stage: 'rejected', offered: false },
+  { stage: 'withdrawn', offered: false },
+];
+
 describe('ApplicationActions', () => {
   it('the primary moves the application to the next stage once and the chip follows', async () => {
     const { user, moves } = renderApplicationPage();
@@ -56,6 +65,30 @@ describe('ApplicationActions', () => {
       expect(screen.queryByRole('button', { name: 'Відмова' })).toBeNull();
     },
   );
+
+  it.each(SCHEDULE_OFFERED)(
+    'an application in $stage offers Запланувати: $offered',
+    async ({ stage, offered }) => {
+      renderApplicationPage({ application: { ...ACME_APPLICATION, currentStage: stage } });
+
+      await findApplicationTitle();
+      expect(screen.queryByRole('button', { name: 'Запланувати' }) !== null).toBe(offered);
+    },
+  );
+
+  it('Запланувати opens the dialog, and Скасувати sends nothing and returns focus to the title', async () => {
+    const { user, scheduledEvents } = renderApplicationPage();
+
+    await user.click(await screen.findByRole('button', { name: 'Запланувати' }));
+    const dialog = await screen.findByRole('dialog', { name: 'Запланувати подію' });
+    await user.click(within(dialog).getByRole('button', { name: 'Скасувати' }));
+
+    const heading = await findApplicationTitle();
+    await waitFor(() => {
+      expect(document.activeElement).toBe(heading);
+    });
+    expect(scheduledEvents.created).toEqual([]);
+  });
 
   it('opens the vacancy link in a new tab without handing it the page', async () => {
     renderApplicationPage();

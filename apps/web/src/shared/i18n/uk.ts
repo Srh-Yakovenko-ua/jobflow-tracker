@@ -4,6 +4,7 @@ import { application } from './application';
 import { applicationPage } from './application-page';
 import { auth } from './auth';
 import { board } from './board';
+import { calendar } from './calendar';
 import { devUi } from './dev-ui';
 import { settings } from './settings';
 import { shell } from './shell';
@@ -35,6 +36,7 @@ export const uk = {
     showPassword: 'Показати пароль',
   },
   theme: { light: 'Світла', dark: 'Темна', system: 'Системна' } satisfies Record<Theme, string>,
+  calendar,
   devUi,
   application,
   applicationPage,

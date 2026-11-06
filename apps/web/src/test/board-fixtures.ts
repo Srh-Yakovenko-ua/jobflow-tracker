@@ -59,6 +59,7 @@ export type BoardRouteOptions = {
   cards?: readonly BoardCard[];
   emptyFor?: readonly string[];
   failFor?: readonly string[];
+  liveCard?: (card: BoardCard) => BoardCard;
 };
 
 function itemsOf(stage: Stage, shown: ShownCards | undefined): BoardCard[] | null {
@@ -172,7 +173,13 @@ export function reasonsSummaryRoute({ reasons = [], ...control }: ReasonsSummary
   return { handler, sent };
 }
 
-export function boardRoute({ counts, cards = [], emptyFor = [], failFor = [] }: BoardRouteOptions) {
+export function boardRoute({
+  counts,
+  cards = [],
+  emptyFor = [],
+  failFor = [],
+  liveCard = (card) => card,
+}: BoardRouteOptions) {
   const sent: string[] = [];
   const handler = http.get(apiUrl('/applications/board'), ({ request }) => {
     const { searchParams } = new URL(request.url);
@@ -183,7 +190,8 @@ export function boardRoute({ counts, cards = [], emptyFor = [], failFor = [] }: 
     }
     const { expand = [] } = applicationBoardQuerySchema.parse(Object.fromEntries(searchParams));
     const stages = [...OPEN_STAGES, ...expand];
-    const board = asked(emptyFor) ? boardOf({}) : boardOf(counts, { cards, stages });
+    const shown = { cards: cards.map(liveCard), stages };
+    const board = asked(emptyFor) ? boardOf({}) : boardOf(counts, shown);
     return HttpResponse.json(board);
   });
   return { handler, sent };

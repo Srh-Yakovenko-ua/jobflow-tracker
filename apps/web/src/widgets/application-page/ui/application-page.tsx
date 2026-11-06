@@ -1,11 +1,12 @@
 'use client';
 
-import type { Application } from '@jobflow/shared';
+import type { Application, ApplicationResponse, Stage } from '@jobflow/shared';
 import { useRouter } from 'next/navigation';
-import { useRef } from 'react';
+import { type RefObject, useRef } from 'react';
 
 import { DeleteApplicationDialog } from '@/features/delete-application';
 import { ApplicationEditForm } from '@/features/edit-application';
+import { ScheduleEventDialog, type SchedulePlan } from '@/features/schedule-event';
 import { AUTH_ROUTES } from '@/shared/lib/return-to';
 import { LoadFailedPanel } from '@/shared/ui/error-panel';
 import { NotFoundState } from '@/shared/ui/not-found-state';
@@ -13,10 +14,15 @@ import { Reveal } from '@/shared/ui/reveal';
 import { useSheetClose } from '@/shared/ui/sheet';
 import { PageSkeleton } from '@/shared/ui/skeleton';
 
-import { useApplicationPage } from '../model/use-application-page';
+import {
+  type ApplicationPageActions,
+  type ApplicationPanel,
+  useApplicationPage,
+} from '../model/use-application-page';
 import { ApplicationActions } from './application-actions';
 import { ApplicationHeader } from './application-header';
 import { ApplicationNotes } from './application-notes';
+import { ApplicationSchedule } from './application-schedule';
 import { ApplicationTimeline } from './application-timeline';
 import { type ApplicationPageMode, PageTopBar } from './page-top-bar';
 
@@ -37,6 +43,32 @@ function useLeaveAfterDelete(): () => void {
   return () => {
     router.replace(AUTH_ROUTES.home);
   };
+}
+
+function schedulePlanOf(panel: ApplicationPanel | null): SchedulePlan | null {
+  if (panel?.kind === 'schedule' || panel?.kind === 'reschedule') return panel;
+  return null;
+}
+
+type PageActionsProps = Readonly<{
+  application: ApplicationResponse;
+  page: Readonly<{ actions: ApplicationPageActions; suggestion: Stage | null }>;
+  focusTarget: RefObject<HTMLHeadingElement | null>;
+}>;
+
+function PageActions({ application, page, focusTarget }: PageActionsProps) {
+  const { actions, suggestion } = page;
+  return (
+    <div className="flex flex-col gap-4">
+      <ApplicationSchedule application={application} actions={actions} suggestion={suggestion} />
+      <ApplicationActions
+        application={application}
+        actions={actions}
+        focusTarget={focusTarget}
+        suggestion={suggestion}
+      />
+    </div>
+  );
 }
 
 function PageContent({ id, view }: ApplicationPageProps) {
@@ -60,6 +92,12 @@ function PageContent({ id, view }: ApplicationPageProps) {
     page.actions.onClose();
     focusTitle();
   };
+  const returnFocus = {
+    onCloseAutoFocus: (event: Event) => {
+      event.preventDefault();
+      focusTitle();
+    },
+  };
   return (
     <div className="animate-fade-in">
       <PageTopBar application={application} view={{ mode: view.mode, timeZone: page.timeZone }} />
@@ -72,11 +110,7 @@ function PageContent({ id, view }: ApplicationPageProps) {
           >
             <div>
               <Reveal shown={editing === null}>
-                <ApplicationActions
-                  application={application}
-                  actions={page.actions}
-                  focusTarget={titleRef}
-                />
+                <PageActions application={application} page={page} focusTarget={titleRef} />
               </Reveal>
               <Reveal shown={editing !== null}>
                 {editing !== null && (
@@ -97,12 +131,13 @@ function PageContent({ id, view }: ApplicationPageProps) {
       <DeleteApplicationDialog
         application={panel?.kind === 'delete' ? application : null}
         actions={{ onCancel: page.actions.onClose, onDeleted }}
-        handlers={{
-          onCloseAutoFocus: (event) => {
-            event.preventDefault();
-            focusTitle();
-          },
-        }}
+        handlers={returnFocus}
+      />
+      <ScheduleEventDialog
+        application={application}
+        plan={schedulePlanOf(panel)}
+        actions={{ onClose: page.actions.onClose }}
+        handlers={returnFocus}
       />
     </div>
   );

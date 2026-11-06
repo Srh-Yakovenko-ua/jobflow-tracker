@@ -68,6 +68,18 @@
   --animate-check-in: check-in var(--duration-spring) var(--easing-spring);
   --animate-check-out: check-out var(--duration-spring) var(--easing-spring);
   --animate-shimmer: shimmer 1600ms linear infinite;
+  --animate-cal-in: cal-in var(--duration-fast) var(--easing);
+
+  @keyframes cal-in {
+    from {
+      opacity: 0;
+      transform: translateY(-6px) scale(0.99);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
 
   @keyframes shimmer {
     from {

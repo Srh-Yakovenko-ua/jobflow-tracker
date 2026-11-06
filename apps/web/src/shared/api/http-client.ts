@@ -3,7 +3,7 @@ import type { z } from 'zod';
 import { ApiError } from './api-error';
 import { parseResponse } from './parse-response';
 import { getAccessToken, refreshAfter } from './session';
-import { send } from './transport';
+import { type ResponseMode, send } from './transport';
 
 export const HTTP_METHODS = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'] as const;
 
@@ -21,19 +21,28 @@ export type HttpRequestOptions<T> = {
   body?: unknown;
   signal?: AbortSignal;
   keepalive?: boolean;
+  response?: ResponseMode;
 };
 
 export type HttpClient = {
   request<T>(options: HttpRequestOptions<T>): Promise<T>;
 };
 
+const ACCEPTED_TYPE: Record<ResponseMode, string> = {
+  json: 'application/json',
+  text: 'text/calendar',
+};
+
 function isTokenExpired(error: unknown): boolean {
   return error instanceof ApiError && error.status === 401 && error.body.type === 'token_expired';
 }
 
-function headersFor(body: unknown, token: string | undefined): Record<string, string> {
+function headersFor(
+  { body, response = 'json' }: HttpRequestOptions<unknown>,
+  token: string | undefined,
+): Record<string, string> {
   return {
-    Accept: 'application/json',
+    Accept: ACCEPTED_TYPE[response],
     ...(body === undefined ? {} : { 'Content-Type': 'application/json' }),
     ...(token === undefined ? {} : { Authorization: `Bearer ${token}` }),
   };
@@ -41,17 +50,18 @@ function headersFor(body: unknown, token: string | undefined): Record<string, st
 
 export function createHttpClient({ baseUrl, credentials }: HttpClientOptions): HttpClient {
   function sendWith(options: HttpRequestOptions<unknown>, token: string | undefined) {
-    const { path, method = 'GET', body, signal, keepalive } = options;
+    const { path, method = 'GET', body, signal, keepalive, response } = options;
     return send({
       url: `${baseUrl}${path}`,
       init: {
         method,
         credentials,
-        headers: headersFor(body, token),
+        headers: headersFor(options, token),
         ...(body === undefined ? {} : { body: JSON.stringify(body) }),
         ...(keepalive === undefined ? {} : { keepalive }),
       },
       signal,
+      response,
     });
   }
 

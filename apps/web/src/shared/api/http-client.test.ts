@@ -18,7 +18,13 @@ import {
   suggestionsSession,
   TOKEN_EXPIRED,
 } from '@/test/api-handlers';
+import { ACME_APPLICATION } from '@/test/application-fixtures';
 import { latch } from '@/test/latch';
+import {
+  SCHEDULED_EVENT_ICS,
+  SCHEDULED_EVENT_ID,
+  scheduledEventIcsRoute,
+} from '@/test/scheduled-event-fixtures';
 import { server } from '@/test/server';
 
 import {
@@ -33,6 +39,12 @@ import {
 
 const SUGGESTIONS_URL = apiUrl(SUGGESTIONS_REQUEST.path);
 const FUNNEL_URL = analyticsUrl('/funnel');
+
+const ICS_REQUEST = {
+  path: `/applications/${ACME_APPLICATION.id}/scheduled-events/${SCHEDULED_EVENT_ID}/ics`,
+  schema: z.string(),
+  response: 'text',
+} as const;
 
 function recordSentCredentials() {
   const sentRequests = recordSentRequests();
@@ -127,6 +139,37 @@ describe('apiClient', () => {
     const request = apiClient.request({ path: '/auth/logout', method: 'POST', schema: z.void() });
 
     await expect(request).resolves.toBeUndefined();
+  });
+
+  it('a text request asks for text/calendar and resolves the body as the string it got', async () => {
+    setAccessToken(SESSION_TOKENS.fresh);
+    const ics = scheduledEventIcsRoute();
+    server.use(ics.handler);
+
+    await expect(apiClient.request(ICS_REQUEST)).resolves.toBe(SCHEDULED_EVENT_ICS);
+    expect(ics.sent).toEqual([
+      {
+        eventId: SCHEDULED_EVENT_ID,
+        authorization: 'Bearer fresh-access-token',
+        accept: 'text/calendar',
+      },
+    ]);
+  });
+
+  it('a text request with an expired token refreshes once and retries with the new bearer', async () => {
+    const onRefresh = vi.fn();
+    const ics = scheduledEventIcsRoute();
+    server.use(
+      http.get(apiUrl(ICS_REQUEST.path), () => errorReply(TOKEN_EXPIRED), { once: true }),
+      refreshRoute({ token: SESSION_TOKENS.fresh, onCall: onRefresh }),
+      ics.handler,
+    );
+
+    await expect(apiClient.request(ICS_REQUEST)).resolves.toBe(SCHEDULED_EVENT_ICS);
+    expect(onRefresh).toHaveBeenCalledTimes(1);
+    expect(ics.sent.map(({ authorization }) => authorization)).toEqual([
+      'Bearer fresh-access-token',
+    ]);
   });
 
   it('a request marked keepalive asks fetch to outlive the page, and an unmarked one does not', async () => {
