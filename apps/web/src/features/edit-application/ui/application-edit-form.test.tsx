@@ -2,6 +2,7 @@ import { screen, waitFor } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
 import { errorReply } from '@/test/api-handlers';
+import { descriptionOf } from '@/test/field-description';
 import { findApplicationTitle, renderApplicationPage } from '@/test/render-application-page';
 
 vi.mock('next/navigation', () => import('@/test/navigation'));
@@ -16,11 +17,6 @@ const SALARY_ERROR = 'Ціле число від 0, не більше за су�
 async function editPosition(user: User): Promise<HTMLElement> {
   await user.click(await screen.findByRole('button', { name: 'Senior React Developer' }));
   return screen.getByRole('textbox', { name: 'Посада' });
-}
-
-function descriptionOf(control: HTMLElement): string | null | undefined {
-  const describedBy = control.getAttribute('aria-describedby') ?? '';
-  return document.getElementById(describedBy)?.textContent;
 }
 
 describe('ApplicationEditForm', () => {

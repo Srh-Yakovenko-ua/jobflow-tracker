@@ -6,6 +6,8 @@ import {
 } from '@jobflow/shared';
 import { z } from 'zod';
 
+import { textOrNull } from '@/shared/lib/text-or-null';
+
 export type EditFormValues = {
   position: string;
   company: string;
@@ -42,11 +44,6 @@ type FieldValue = ApplicationResponse[EditField];
 
 function amountText(amount: number | null): string {
   return amount === null ? '' : String(amount);
-}
-
-function textOrNull(text: string): string | null {
-  const trimmed = text.trim();
-  return trimmed === '' ? null : trimmed;
 }
 
 function amountOrNull(text: string): number | null {

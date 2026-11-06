@@ -7,17 +7,16 @@ import {
   type UpdateApplicationInput,
   WORK_MODES,
 } from '@jobflow/shared';
-import type { ComponentProps, KeyboardEvent } from 'react';
-import { Controller, useForm, type UseFormReturn, useFormState } from 'react-hook-form';
+import type { ComponentProps } from 'react';
+import { Controller, useForm, type UseFormReturn } from 'react-hook-form';
 
 import { uk } from '@/shared/i18n';
-import { Banner } from '@/shared/ui/banner';
-import { Button } from '@/shared/ui/button';
+import { useFieldError } from '@/shared/lib/use-field-error';
 import { Field } from '@/shared/ui/field';
+import { InlineEditorForm } from '@/shared/ui/inline-editor-form';
 import { Input } from '@/shared/ui/input';
 import type { ChoiceOption } from '@/shared/ui/radio-group';
 import { SegmentedControl } from '@/shared/ui/segmented-control';
-import { OWNS_ESCAPE } from '@/shared/ui/sheet';
 import { TagInput } from '@/shared/ui/tag-input';
 
 import {
@@ -65,13 +64,8 @@ const WORK_MODE_OPTIONS: readonly ChoiceOption<EditFormValues['workMode']>[] = [
 
 const AMOUNT = { inputMode: 'numeric' } as const;
 
-function useFieldError({ form, name }: Readonly<{ form: EditorForm; name: EditField }>) {
-  const { errors } = useFormState({ control: form.methods.control, name });
-  return errors[name] === undefined ? undefined : ERRORS[name];
-}
-
 function TextField({ form, name, input }: TextFieldProps) {
-  const error = useFieldError({ form, name });
+  const error = useFieldError({ control: form.methods.control, name, messages: ERRORS });
   return (
     <Field label={LABELS[name]} footer={{ error }}>
       <Input {...input} autoFocus={form.focusField === name} {...form.methods.register(name)} />
@@ -102,7 +96,7 @@ function WorkModeField({ form }: EditorPartProps) {
 }
 
 function StackField({ form }: EditorPartProps) {
-  const error = useFieldError({ form, name: 'stack' });
+  const error = useFieldError({ control: form.methods.control, name: 'stack', messages: ERRORS });
   return (
     <Field label={LABELS.stack} footer={{ error }}>
       <Controller
@@ -119,12 +113,6 @@ function StackField({ form }: EditorPartProps) {
       />
     </Field>
   );
-}
-
-function FormError({ form }: EditorPartProps) {
-  const { errors } = useFormState({ control: form.methods.control });
-  if (errors.root?.server === undefined) return null;
-  return <Banner tone="error" content={COPY.invalid} />;
 }
 
 function EditorFields({ form }: EditorPartProps) {
@@ -171,31 +159,13 @@ export function ApplicationEditForm({
     if (patch === null) actions.onDone();
     else mutation.mutate(patch, { onSuccess: actions.onDone });
   });
-  const onKeyDown = (event: KeyboardEvent<HTMLFormElement>) => {
-    if (event.key !== 'Escape') return;
-    event.preventDefault();
-    actions.onDone();
-  };
   return (
-    <form
-      {...OWNS_ESCAPE}
-      noValidate
-      onSubmit={(event) => {
-        void submit(event);
-      }}
-      onKeyDown={onKeyDown}
-      className="flex flex-col gap-4.5 rounded-xl bg-surface p-5 inset-ring inset-ring-line-soft"
+    <InlineEditorForm
+      form={{ control: methods.control, onSubmit: submit, pending: mutation.isPending }}
+      actions={{ onCancel: actions.onDone }}
+      className="gap-4.5 rounded-xl bg-surface p-5 inset-ring inset-ring-line-soft"
     >
-      <FormError form={{ methods, focusField }} />
       <EditorFields form={{ methods, focusField }} />
-      <div className="flex flex-wrap gap-2.5">
-        <Button type="submit" loading={mutation.isPending}>
-          {COPY.save}
-        </Button>
-        <Button variant="outline" onClick={actions.onDone}>
-          {COPY.cancel}
-        </Button>
-      </div>
-    </form>
+    </InlineEditorForm>
   );
 }

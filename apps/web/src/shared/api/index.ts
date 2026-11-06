@@ -13,3 +13,5 @@ export {
   setAccessToken,
 } from './session';
 export { API_CLIENT_LIMITS } from './transport';
+export type { GuardedSave, GuardedSaveOptions } from './use-guarded-save';
+export { useGuardedSave } from './use-guarded-save';

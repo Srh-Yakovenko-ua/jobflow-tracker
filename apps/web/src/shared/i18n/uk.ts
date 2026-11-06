@@ -5,6 +5,7 @@ import { applicationPage } from './application-page';
 import { auth } from './auth';
 import { board } from './board';
 import { calendar } from './calendar';
+import { contact } from './contact';
 import { devUi } from './dev-ui';
 import { settings } from './settings';
 import { shell } from './shell';
@@ -34,12 +35,23 @@ export const uk = {
     keys: { navigate: '↑↓', select: '↵' },
     theme: 'Тема',
     showPassword: 'Показати пароль',
+    copied: 'Скопійовано',
+    copyFailed: 'Не вдалося скопіювати',
+    editor: {
+      save: 'Зберегти',
+      cancel: 'Скасувати',
+      invalid: {
+        title: 'Не вдалося зберегти',
+        description: 'Перевір поля й спробуй ще раз.',
+      },
+    },
   },
   theme: { light: 'Світла', dark: 'Темна', system: 'Системна' } satisfies Record<Theme, string>,
   calendar,
   devUi,
   application,
   applicationPage,
+  contact,
   timeline,
   states,
   shell,

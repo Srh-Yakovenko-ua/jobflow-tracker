@@ -198,7 +198,7 @@ describe('ApplicationSchedule', () => {
       expect(screen.queryByRole('group', { name: 'Записано в історію' })).toBeNull();
     });
     expect(scheduledEvents.updated).toEqual([
-      { eventId: PAST_EVENT.id, body: { status: 'done', durationMin: 60 } },
+      { itemId: PAST_EVENT.id, body: { status: 'done', durationMin: 60 } },
     ]);
     expect(moves).toEqual([{ fromStage: 'tech_interview', toStage: 'final' }]);
     expect(screen.queryByRole('region', { name: 'Як пройшло?' })).toBeNull();
@@ -244,7 +244,7 @@ describe('ApplicationSchedule', () => {
       expect(screen.queryByRole('region', { name: 'Як пройшло?' })).toBeNull();
     });
     expect(scheduledEvents.updated).toEqual([
-      { eventId: PAST_EVENT.id, body: { status: 'cancelled' } },
+      { itemId: PAST_EVENT.id, body: { status: 'cancelled' } },
     ]);
     expect(screen.queryByRole('group', { name: 'Записано в історію' })).toBeNull();
   });

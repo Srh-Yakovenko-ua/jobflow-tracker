@@ -4,14 +4,13 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import type { Application, ApplicationResponse, ScheduledEvent } from '@jobflow/shared';
 import { useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
-import { useForm, useFormState } from 'react-hook-form';
+import { useForm } from 'react-hook-form';
 
 import { scheduledEventsQueryOptions } from '@/entities/scheduled-event';
 import { useUserTimeZone } from '@/entities/user';
 import { uk } from '@/shared/i18n';
 import { useLastPresent } from '@/shared/lib/use-last-present';
 import { dayKeyOf } from '@/shared/lib/zoned-time';
-import { Banner } from '@/shared/ui/banner';
 import { Button } from '@/shared/ui/button';
 import type { CalendarDays } from '@/shared/ui/calendar';
 import {
@@ -21,6 +20,7 @@ import {
   type DialogContentHandlers,
   DialogFooter,
 } from '@/shared/ui/dialog';
+import { FormServerError } from '@/shared/ui/form-server-error';
 
 import { eventDaysOf } from '../lib/event-days';
 import {
@@ -30,7 +30,7 @@ import {
   type ScheduleFormValues,
 } from '../model/schedule-form';
 import { useScheduleEventMutation } from '../model/use-schedule-event-mutation';
-import { ScheduleFormFields, type ScheduleFormMethods } from './schedule-form-fields';
+import { ScheduleFormFields } from './schedule-form-fields';
 
 export type SchedulePlan = { kind: 'schedule' } | { kind: 'reschedule'; event: ScheduledEvent };
 
@@ -69,12 +69,6 @@ function useCalendarDays({ applicationId, today, timeZone }: CalendarDaysInput):
   return { today, min: today, ...(Object.keys(marked).length > 0 && { marked }) };
 }
 
-function FormError({ methods }: Readonly<{ methods: ScheduleFormMethods }>) {
-  const { errors } = useFormState({ control: methods.control });
-  if (errors.root?.server === undefined) return null;
-  return <Banner tone="error" content={uk.applicationPage.editor.invalid} />;
-}
-
 function ScheduleForm({ application, plan, actions }: ScheduleFormProps) {
   const timeZone = useUserTimeZone();
   const [openedAt] = useState(Date.now);
@@ -89,12 +83,11 @@ function ScheduleForm({ application, plan, actions }: ScheduleFormProps) {
     target: { applicationId: application.id, event },
     timeZone,
     setError: methods.setError,
+    onSaved: actions.onClose,
   });
   const today = dayKeyOf(now, timeZone);
   const days = useCalendarDays({ applicationId: application.id, today, timeZone });
-  const submit = methods.handleSubmit((values) => {
-    mutation.save({ values, onSaved: actions.onClose });
-  });
+  const submit = methods.handleSubmit(mutation.save);
   return (
     <form
       noValidate
@@ -103,7 +96,7 @@ function ScheduleForm({ application, plan, actions }: ScheduleFormProps) {
       }}
       className="flex flex-col gap-4.5"
     >
-      <FormError methods={methods} />
+      <FormServerError control={methods.control} />
       <ScheduleFormFields form={{ methods, days }} />
       <DialogFooter className="justify-end">
         <DialogClose asChild>

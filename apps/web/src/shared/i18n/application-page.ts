@@ -32,14 +32,8 @@ export const applicationPage = {
       workMode: 'Обери один із форматів',
     },
     stackLimit: (max: number) => `Не більше ${String(max)} технологій, кожна коротким словом`,
-    invalid: {
-      title: 'Не вдалося зберегти',
-      description: 'Перевір поля й спробуй ще раз.',
-    },
     noWorkMode: 'немає',
     stackPlaceholder: 'Технологія і Enter',
-    save: 'Зберегти',
-    cancel: 'Скасувати',
   },
   notes: {
     kicker: 'Нотатки',
@@ -51,6 +45,15 @@ export const applicationPage = {
     saved: 'збережено',
     failed: 'не збережено, спробуємо ще',
     finishHint: 'Ctrl+Enter, щоб завершити',
+  },
+  context: {
+    kicker: 'Контекст',
+    source: 'джерело',
+    inFunnel: 'у воронці',
+    medianToOffer: 'твоя медіана до офера',
+    inStage: 'на етапі',
+    lowData: 'мало даних',
+    afterValue: (hint: string) => `· ${hint}`,
   },
   schedule: {
     action: 'Запланувати',

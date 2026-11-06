@@ -8,10 +8,13 @@ const COPY = uk.application;
 
 export type DaysInFunnelInput = { appliedAt: string; now: Date; timeZone: string };
 
-export function formatDaysInFunnel({ appliedAt, now, timeZone }: DaysInFunnelInput): string {
-  const days = wholeDaysBetween(
+export function daysInFunnelOf({ appliedAt, now, timeZone }: DaysInFunnelInput): number {
+  return wholeDaysBetween(
     calendarDateOf(new Date(appliedAt), timeZone),
     calendarDateOf(now, timeZone),
   );
-  return COPY.inFunnel(countedUk(days, DAY_FORMS_UK));
+}
+
+export function formatDaysInFunnel(input: DaysInFunnelInput): string {
+  return COPY.inFunnel(countedUk(daysInFunnelOf(input), DAY_FORMS_UK));
 }

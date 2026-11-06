@@ -7,10 +7,9 @@ import { NoteEditor } from '@/features/write-note';
 import { uk } from '@/shared/i18n';
 import { cn } from '@/shared/lib/cn';
 import { LoadFailedPanel } from '@/shared/ui/error-panel';
-import { ICON_ACTION } from '@/shared/ui/field-surface';
+import { IconAction } from '@/shared/ui/icon-action';
 import { TextSkeleton } from '@/shared/ui/skeleton';
 import { STATE_TEXT } from '@/shared/ui/state-text';
-import { Tooltip } from '@/shared/ui/tooltip';
 
 import {
   type ApplicationNotes as Notes,
@@ -42,20 +41,6 @@ function NoteList({ notes }: NoteListProps) {
   );
 }
 
-function PrivacyLock() {
-  return (
-    <Tooltip content={COPY.privacy}>
-      <button
-        type="button"
-        aria-label={COPY.privacy}
-        className={cn(ICON_ACTION, 'size-6 active:bg-surface-3 active:text-ink')}
-      >
-        <Lock aria-hidden size={16} strokeWidth={1.9} />
-      </button>
-    </Tooltip>
-  );
-}
-
 export function ApplicationNotes({ application }: ApplicationNotesProps) {
   const notes = useApplicationNotes(application);
   const headingId = useId();
@@ -69,7 +54,7 @@ export function ApplicationNotes({ application }: ApplicationNotesProps) {
         <h2 id={headingId} className={cn(STATE_TEXT.eyebrow, 'text-ink-3')}>
           {COPY.kicker}
         </h2>
-        <PrivacyLock />
+        <IconAction label={COPY.privacy} icon={Lock} />
       </div>
       <div className="flex flex-col gap-3">
         <NoteList notes={notes} />

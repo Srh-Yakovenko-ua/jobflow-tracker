@@ -55,7 +55,7 @@ describe('EventOutcomePrompt', () => {
       expect(actions.onCompleted).toHaveBeenCalledWith('final');
     });
     expect(sent.updated).toEqual([
-      { eventId: PAST_EVENT.id, body: { status: 'done', durationMin: 75 } },
+      { itemId: PAST_EVENT.id, body: { status: 'done', durationMin: 75 } },
     ]);
   });
 
@@ -65,7 +65,7 @@ describe('EventOutcomePrompt', () => {
     await user.click(prompt.getByRole('button', { name: 'Скасували' }));
 
     await waitFor(() => {
-      expect(sent.updated).toEqual([{ eventId: PAST_EVENT.id, body: { status: 'cancelled' } }]);
+      expect(sent.updated).toEqual([{ itemId: PAST_EVENT.id, body: { status: 'cancelled' } }]);
     });
     expect(actions.onCompleted).not.toHaveBeenCalled();
   });
