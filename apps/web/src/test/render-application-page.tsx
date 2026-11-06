@@ -25,6 +25,7 @@ import {
   reasonsSummaryRoute,
   undoRoute,
 } from './board-fixtures';
+import { contactRoutes, type ContactRoutesOptions } from './contact-fixtures';
 import {
   noteDeleteRoute,
   noteRoute,
@@ -52,6 +53,7 @@ export type ApplicationPageSetup = Partial<Pick<ApplicationRouteOptions, 'reply'
   timeline?: ApplicationTimelineResponse;
   scheduledEvents?: ScheduledEventRoutesOptions;
   board?: BoardRouteOptions;
+  contacts?: ContactRoutesOptions;
 };
 
 function noteRoutes(notes: NotesRouteOptions) {
@@ -92,6 +94,7 @@ export function renderApplicationPage({
   timeline = EMPTY_TIMELINE,
   scheduledEvents,
   board,
+  contacts,
 }: ApplicationPageSetup = {}) {
   const move = moveRoute();
   const undo = undoRoute();
@@ -101,6 +104,7 @@ export function renderApplicationPage({
   const page = applicationRoute({ application, moves: move.sent, ...(reply && { reply }) });
   const events = scheduledEventRoutes(scheduledEvents);
   const beside = boardBeside({ board, id, store: events.store });
+  const people = contactRoutes(contacts);
   server.use(
     meRoute(),
     page.handler,
@@ -113,6 +117,7 @@ export function renderApplicationPage({
     ...written.handlers,
     ...events.handlers,
     ...beside.handlers,
+    ...people.handlers,
   );
   const ui = beside.wrap(
     mode === 'sheet' ? <ApplicationSheet id={id} /> : <ApplicationPage id={id} view={{ mode }} />,
@@ -132,6 +137,7 @@ export function renderApplicationPage({
     notes: written.sent,
     scheduledEvents: events.sent,
     board: beside.sent,
+    contacts: people.sent,
   };
 }
 

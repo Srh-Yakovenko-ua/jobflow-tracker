@@ -2,6 +2,7 @@ export { applicationQueryOptions } from './api/application';
 export { boardQueryOptions } from './api/board';
 export { applicationListQueryOptions } from './api/list';
 export { timelineQueryOptions } from './api/timeline';
+export { daysInFunnelOf } from './lib/days-in-funnel';
 export { formatAmount, formatSalaryRange } from './lib/salary';
 export { silentCountOf } from './lib/silent-count';
 export { formatTimelineDate, type TimelineDateInput } from './lib/timeline-date';

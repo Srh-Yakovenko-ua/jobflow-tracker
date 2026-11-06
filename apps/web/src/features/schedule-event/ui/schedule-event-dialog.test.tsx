@@ -139,7 +139,7 @@ describe('ScheduleEventDialog', () => {
     expect(sent.created).toEqual([]);
     expect(sent.updated).toEqual([
       {
-        eventId: PAST_EVENT.id,
+        itemId: PAST_EVENT.id,
         body: {
           kind: 'tech_interview',
           startsAt: '2026-11-07T14:00:00.000Z',

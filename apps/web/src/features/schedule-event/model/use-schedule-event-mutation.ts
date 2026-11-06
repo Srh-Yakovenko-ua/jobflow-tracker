@@ -4,13 +4,12 @@ import {
   SCHEDULED_EVENT_LIMITS,
   type ScheduledEvent,
 } from '@jobflow/shared';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQueryClient } from '@tanstack/react-query';
 import type { UseFormSetError } from 'react-hook-form';
 
 import { createScheduledEvent, updateScheduledEvent } from '@/entities/scheduled-event';
-import { ApiError, applyFieldErrors } from '@/shared/api';
+import { type GuardedSave, useGuardedSave } from '@/shared/api';
 import { uk } from '@/shared/i18n';
-import { showErrorToast } from '@/shared/ui/error-toast';
 
 import { invalidateAfterSchedule } from './invalidate-after-schedule';
 import {
@@ -28,11 +27,10 @@ export type UseScheduleEventMutationOptions = Readonly<{
   target: ScheduleTarget;
   timeZone: string;
   setError: UseFormSetError<ScheduleFormValues>;
+  onSaved: () => void;
 }>;
 
 type SaveEventRequest = Readonly<{ target: ScheduleTarget; body: CreateScheduledEventInput }>;
-
-type ScheduleSave = Readonly<{ values: ScheduleFormOutput; onSaved: () => void }>;
 
 const SAVE_KEY = ['scheduled-event', 'save'] as const;
 
@@ -59,28 +57,17 @@ export function useScheduleEventMutation({
   target,
   timeZone,
   setError,
-}: UseScheduleEventMutationOptions) {
+  onSaved,
+}: UseScheduleEventMutationOptions): GuardedSave<ScheduleFormOutput> {
   const queryClient = useQueryClient();
-  const mutation = useMutation({
+  return useGuardedSave({
     mutationKey: SAVE_KEY,
-    mutationFn: (values: ScheduleFormOutput) =>
+    request: (values: ScheduleFormOutput) =>
       saveEvent({ target, body: toScheduledEventInput({ values, timeZone }) }),
+    form: { fields: SERVER_FIELDS, setError, messages: SERVER_MESSAGES },
     onSuccess: () => {
       void invalidateAfterSchedule({ queryClient, applicationId: target.applicationId });
-    },
-    onError: (error) => {
-      if (error instanceof ApiError && error.status === 422) {
-        applyFieldErrors({ error, fields: SERVER_FIELDS, setError, messages: SERVER_MESSAGES });
-        return;
-      }
-      showErrorToast(uk.errors.saveFailed);
+      onSaved();
     },
   });
-  return {
-    isPending: mutation.isPending,
-    save: ({ values, onSaved }: ScheduleSave) => {
-      if (queryClient.isMutating({ mutationKey: SAVE_KEY }) > 0) return;
-      mutation.mutate(values, { onSuccess: onSaved });
-    },
-  };
 }

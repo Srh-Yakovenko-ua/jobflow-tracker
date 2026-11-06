@@ -12,22 +12,24 @@ import {
 } from '@jobflow/shared';
 import { http, HttpResponse } from 'msw/http';
 
-import { apiUrl, errorReply } from './api-handlers';
+import { apiUrl } from './api-handlers';
 import { ACME_APPLICATION } from './application-fixtures';
 import { fixtureIdOf, heldReply, type MoveRouteOptions } from './board-fixtures';
+import {
+  storedListRoute,
+  type StoredRouteOptions,
+  storedRoutes,
+  type StoredRoutesSetup,
+  type StoredRoutesSpec,
+} from './stored-routes';
 
 export type ScheduledEventSeed = Pick<ScheduledEvent, 'startsAt'> & Partial<ScheduledEvent>;
 
 export type ScheduledEventStore = ScheduledEvent[];
 
-export type StoredRouteOptions = MoveRouteOptions & { store: ScheduledEventStore };
-
 export type ScheduledEventUpdateOptions = MoveRouteOptions & { suggestedStage?: Stage | null };
 
-export type ScheduledEventRoutesOptions = {
-  items?: readonly ScheduledEvent[];
-  list?: MoveRouteOptions;
-  create?: MoveRouteOptions;
+export type ScheduledEventRoutesOptions = StoredRoutesSetup<ScheduledEvent> & {
   update?: ScheduledEventUpdateOptions;
   ics?: MoveRouteOptions;
 };
@@ -36,9 +38,10 @@ type EventParams = { id: string; eventId: string };
 
 const EVENTS_PATH = '/applications/:id/scheduled-events';
 
-const EVENT_PATH = `${EVENTS_PATH}/:eventId`;
-
-const CREATED_SERIAL_FROM = 520;
+const EVENTS_LISTING = {
+  path: EVENTS_PATH,
+  pageOf: (items: ScheduledEvent[]): ScheduledEventListResponse => ({ items }),
+};
 
 const SLOT_DEFAULTS = { durationMin: 60, locationOrLink: null } as const;
 
@@ -97,69 +100,40 @@ export function liveCardOf({
       : { ...card, nextScheduledEvent: nextSlotOf(store) };
 }
 
-export function scheduledEventsRoute({ store, ...control }: StoredRouteOptions) {
-  const sent: string[] = [];
-  const handler = http.get<{ id: string }>(apiUrl(EVENTS_PATH), (info) => {
-    sent.push(info.params.id);
-    const list = (): Response => {
-      const response: ScheduledEventListResponse = { items: [...store] };
-      return HttpResponse.json(response);
-    };
-    return heldReply({ ...control, info, fallback: list });
-  });
-  return { handler, sent };
+export function scheduledEventsRoute(options: StoredRouteOptions<ScheduledEvent>) {
+  return storedListRoute({ ...EVENTS_LISTING, ...options });
 }
 
-export function scheduledEventCreateRoute({ store, ...control }: StoredRouteOptions) {
-  const sent: { id: string; body: CreateScheduledEventInput }[] = [];
-  const handler = http.post<{ id: string }>(apiUrl(EVENTS_PATH), async (info) => {
-    const body = createScheduledEventInputSchema.parse(await info.request.json());
-    sent.push({ id: info.params.id, body });
-    const created = () => {
-      const event = scheduledEventOf({
-        id: fixtureIdOf(CREATED_SERIAL_FROM + store.length),
-        applicationId: info.params.id,
-        kind: body.kind,
-        startsAt: utcOf(body.startsAt),
-        durationMin: body.durationMin ?? SLOT_DEFAULTS.durationMin,
-        locationOrLink: body.locationOrLink ?? SLOT_DEFAULTS.locationOrLink,
-      });
-      store.push(event);
-      return HttpResponse.json(event, { status: 201 });
-    };
-    return heldReply({ ...control, info, fallback: created });
-  });
-  return { handler, sent };
-}
-
-export function scheduledEventUpdateRoute({
-  store,
-  suggestedStage = null,
-  ...control
-}: StoredRouteOptions & ScheduledEventUpdateOptions) {
-  const sent: { eventId: string; body: UpdateScheduledEventInput }[] = [];
-  const handler = http.patch<EventParams>(apiUrl(EVENT_PATH), async (info) => {
-    const body = updateScheduledEventInputSchema.parse(await info.request.json());
-    const { eventId } = info.params;
-    sent.push({ eventId, body });
-    const updated = () => {
-      const index = store.findIndex((event) => event.id === eventId);
-      const stored = store[index];
-      if (stored === undefined) return errorReply({ status: 404, type: 'not_found' });
-      const startsAt = body.startsAt === undefined ? stored.startsAt : utcOf(body.startsAt);
-      const event = scheduledEventSchema.parse({ ...stored, ...body, startsAt });
-      store.splice(index, 1, event);
-      const response: ScheduledEventUpdateResponse = { ...event, suggestedStage };
-      return HttpResponse.json(response);
-    };
-    return heldReply({ ...control, info, fallback: updated });
-  });
-  return { handler, sent };
+function eventsSpec(
+  suggestedStage: Stage | null,
+): StoredRoutesSpec<ScheduledEvent, CreateScheduledEventInput, UpdateScheduledEventInput> {
+  return {
+    ...EVENTS_LISTING,
+    creating: {
+      schema: createScheduledEventInputSchema,
+      build: ({ body, ...ids }) =>
+        scheduledEventOf({
+          ...ids,
+          kind: body.kind,
+          startsAt: utcOf(body.startsAt),
+          durationMin: body.durationMin ?? SLOT_DEFAULTS.durationMin,
+          locationOrLink: body.locationOrLink ?? SLOT_DEFAULTS.locationOrLink,
+        }),
+    },
+    updating: {
+      schema: updateScheduledEventInputSchema,
+      merge: ({ before, patch }) => {
+        const startsAt = patch.startsAt === undefined ? before.startsAt : utcOf(patch.startsAt);
+        return scheduledEventSchema.parse({ ...before, ...patch, startsAt });
+      },
+      replyOf: (event): ScheduledEventUpdateResponse => ({ ...event, suggestedStage }),
+    },
+  };
 }
 
 export function scheduledEventIcsRoute(control: MoveRouteOptions = {}) {
   const sent: { eventId: string; authorization: string | null; accept: string | null }[] = [];
-  const handler = http.get<EventParams>(apiUrl(`${EVENT_PATH}/ics`), (info) => {
+  const handler = http.get<EventParams>(apiUrl(`${EVENTS_PATH}/:eventId/ics`), (info) => {
     sent.push({
       eventId: info.params.eventId,
       authorization: info.request.headers.get('authorization'),
@@ -175,25 +149,15 @@ export function scheduledEventIcsRoute(control: MoveRouteOptions = {}) {
 }
 
 export function scheduledEventRoutes({
-  items = [],
-  list = {},
-  create = {},
-  update = {},
+  update: { suggestedStage = null, ...update } = {},
   ics = {},
+  ...options
 }: ScheduledEventRoutesOptions = {}) {
-  const store: ScheduledEventStore = [...items];
-  const listed = scheduledEventsRoute({ store, ...list });
-  const created = scheduledEventCreateRoute({ store, ...create });
-  const updated = scheduledEventUpdateRoute({ store, ...update });
+  const stored = storedRoutes(eventsSpec(suggestedStage), { ...options, update });
   const downloaded = scheduledEventIcsRoute(ics);
   return {
-    store,
-    handlers: [listed.handler, created.handler, updated.handler, downloaded.handler],
-    sent: {
-      listed: listed.sent,
-      created: created.sent,
-      updated: updated.sent,
-      downloaded: downloaded.sent,
-    },
+    store: stored.store,
+    handlers: [...stored.handlers, downloaded.handler],
+    sent: { ...stored.sent, downloaded: downloaded.sent },
   };
 }

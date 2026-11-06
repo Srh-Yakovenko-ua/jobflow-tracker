@@ -20,8 +20,10 @@ import {
   useApplicationPage,
 } from '../model/use-application-page';
 import { ApplicationActions } from './application-actions';
+import { ApplicationContext } from './application-context';
 import { ApplicationHeader } from './application-header';
 import { ApplicationNotes } from './application-notes';
+import { ApplicationRecruiter } from './application-recruiter';
 import { ApplicationSchedule } from './application-schedule';
 import { ApplicationTimeline } from './application-timeline';
 import { type ApplicationPageMode, PageTopBar } from './page-top-bar';
@@ -126,7 +128,10 @@ function PageContent({ id, view }: ApplicationPageProps) {
           <ApplicationTimeline application={application} />
           <ApplicationNotes key={application.id} application={application} />
         </div>
-        <div />
+        <div className="flex min-w-0 flex-col gap-6">
+          <ApplicationRecruiter key={application.id} application={application} />
+          <ApplicationContext application={application} />
+        </div>
       </div>
       <DeleteApplicationDialog
         application={panel?.kind === 'delete' ? application : null}

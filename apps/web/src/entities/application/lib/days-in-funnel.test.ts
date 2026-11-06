@@ -1,8 +1,18 @@
 import { describe, expect, it } from 'vitest';
 
-import { formatDaysInFunnel } from './days-in-funnel';
+import { daysInFunnelOf, formatDaysInFunnel } from './days-in-funnel';
 
 const NOW = new Date('2026-10-30T09:00:00.000Z');
+
+describe('daysInFunnelOf', () => {
+  it.each([
+    { appliedAt: '2026-10-04T09:00:00.000Z', days: 26 },
+    { appliedAt: '2026-10-29T22:30:00.000Z', days: 0 },
+    { appliedAt: '2026-10-29T21:30:00.000Z', days: 1 },
+  ])('counts $days whole Kyiv calendar days from $appliedAt', ({ appliedAt, days }) => {
+    expect(daysInFunnelOf({ appliedAt, now: NOW, timeZone: 'Europe/Kyiv' })).toBe(days);
+  });
+});
 
 describe('formatDaysInFunnel', () => {
   it.each([
