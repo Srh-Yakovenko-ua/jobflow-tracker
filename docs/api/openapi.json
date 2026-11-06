@@ -29,6 +29,10 @@
       "description": "The preferences of the signed-in user"
     },
     {
+      "name": "searches",
+      "description": "The job searches of the signed-in user and their totals"
+    },
+    {
       "name": "applications",
       "description": "The Applications of the signed-in user"
     },
@@ -2663,6 +2667,617 @@
                   "type": "forbidden",
                   "title": "Forbidden",
                   "status": 403,
+                  "requestId": "0199f0c4-5d2e-7b31-8c4f-6a7b8c9d0e1f"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too many requests: 300 per 60 s by default (RATE_LIMIT_API_PER_MINUTE)",
+            "headers": {
+              "Retry-After": {
+                "schema": {
+                  "type": "integer",
+                  "exclusiveMinimum": 0,
+                  "description": "Seconds until the limit window resets"
+                },
+                "required": true,
+                "description": "Seconds until the limit window resets"
+              }
+            },
+            "content": {
+              "application/json": {
+                "example": {
+                  "type": "rate_limited",
+                  "title": "Too many requests",
+                  "status": 429,
+                  "requestId": "0199f0c4-5d2e-7b31-8c4f-6a7b8c9d0e1f"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal error",
+            "content": {
+              "application/json": {
+                "example": {
+                  "type": "internal_error",
+                  "title": "Internal error",
+                  "status": 500,
+                  "requestId": "0199f0c4-5d2e-7b31-8c4f-6a7b8c9d0e1f"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/searches": {
+      "get": {
+        "tags": [
+          "searches"
+        ],
+        "summary": "List the job searches of the signed-in user with their totals",
+        "description": "Every search, newest first, in one list without pages. applications counts the applications now in the search, leaving out drafts and deleted ones; interviews counts the stage events into tech_interview or final since the search started, each round once; offers counts the applications that reached offer; days runs from the start to the finish, or to today for the active search; daysToOffer runs from the start to the first offer, or is null. Undone moves are left out.",
+        "responses": {
+          "200": {
+            "description": "The searches",
+            "content": {
+              "application/json": {
+                "example": {
+                  "items": [
+                    {
+                      "id": "0199f2c0-4d5e-7f60-8a71-9b0c1d2e3f4a",
+                      "title": "Мій пошук",
+                      "status": "active",
+                      "outcome": null,
+                      "startedAt": "2026-10-24T07:40:00.000Z",
+                      "finishedAt": null,
+                      "days": 0,
+                      "applications": 0,
+                      "interviews": 0,
+                      "offers": 0,
+                      "daysToOffer": null
+                    },
+                    {
+                      "id": "0199f0b2-1a2b-7c3d-8e4f-5a6b7c8d9e0f",
+                      "title": "Мій пошук",
+                      "status": "archived",
+                      "outcome": "offer_accepted",
+                      "startedAt": "2026-09-13T07:40:00.000Z",
+                      "finishedAt": "2026-10-24T07:40:00.000Z",
+                      "days": 41,
+                      "applications": 54,
+                      "interviews": 9,
+                      "offers": 1,
+                      "daysToOffer": 38
+                    }
+                  ]
+                },
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string",
+                            "format": "uuid"
+                          },
+                          "title": {
+                            "type": "string"
+                          },
+                          "status": {
+                            "type": "string",
+                            "enum": [
+                              "active",
+                              "archived"
+                            ]
+                          },
+                          "outcome": {
+                            "type": [
+                              "string",
+                              "null"
+                            ],
+                            "enum": [
+                              "offer_accepted",
+                              "paused",
+                              "other",
+                              null
+                            ]
+                          },
+                          "startedAt": {
+                            "type": "string",
+                            "format": "date-time"
+                          },
+                          "finishedAt": {
+                            "type": [
+                              "string",
+                              "null"
+                            ],
+                            "format": "date-time"
+                          },
+                          "days": {
+                            "type": "number",
+                            "minimum": 0
+                          },
+                          "applications": {
+                            "type": "number",
+                            "minimum": 0
+                          },
+                          "interviews": {
+                            "type": "number",
+                            "minimum": 0
+                          },
+                          "offers": {
+                            "type": "number",
+                            "minimum": 0
+                          },
+                          "daysToOffer": {
+                            "type": [
+                              "number",
+                              "null"
+                            ],
+                            "minimum": 0
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "title",
+                          "status",
+                          "outcome",
+                          "startedAt",
+                          "finishedAt",
+                          "days",
+                          "applications",
+                          "interviews",
+                          "offers",
+                          "daysToOffer"
+                        ]
+                      }
+                    }
+                  },
+                  "required": [
+                    "items"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "example": {
+                  "type": "unauthorized",
+                  "title": "Unauthorized",
+                  "status": 401,
+                  "requestId": "0199f0c4-5d2e-7b31-8c4f-6a7b8c9d0e1f"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "example": {
+                  "type": "forbidden",
+                  "title": "Forbidden",
+                  "status": 403,
+                  "requestId": "0199f0c4-5d2e-7b31-8c4f-6a7b8c9d0e1f"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too many requests: 300 per 60 s by default (RATE_LIMIT_API_PER_MINUTE)",
+            "headers": {
+              "Retry-After": {
+                "schema": {
+                  "type": "integer",
+                  "exclusiveMinimum": 0,
+                  "description": "Seconds until the limit window resets"
+                },
+                "required": true,
+                "description": "Seconds until the limit window resets"
+              }
+            },
+            "content": {
+              "application/json": {
+                "example": {
+                  "type": "rate_limited",
+                  "title": "Too many requests",
+                  "status": 429,
+                  "requestId": "0199f0c4-5d2e-7b31-8c4f-6a7b8c9d0e1f"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal error",
+            "content": {
+              "application/json": {
+                "example": {
+                  "type": "internal_error",
+                  "title": "Internal error",
+                  "status": 500,
+                  "requestId": "0199f0c4-5d2e-7b31-8c4f-6a7b8c9d0e1f"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/searches/current/finish": {
+      "post": {
+        "tags": [
+          "searches"
+        ],
+        "summary": "Finish the active search and start a new one",
+        "description": "Archives the active search named by searchId with its outcome and starts a new active search titled Мій пошук, in one transaction, so the board starts empty. openApplications decides the applications still in applied, screening, tech_interview, final: move takes them with their whole history into the new search (one application.updated each), withdraw closes each with a withdrawn stage event (one application.stage_changed each). Offers and closed applications stay in the finished search, which stays readable by its searchId. Without an active search, or with the user's own already finished searchId, the answer is 409; another user's or a missing searchId answers 404.",
+        "requestBody": {
+          "required": true,
+          "description": "The search being finished, its outcome and the choice for its open applications.",
+          "content": {
+            "application/json": {
+              "example": {
+                "searchId": "0199f0b2-1a2b-7c3d-8e4f-5a6b7c8d9e0f",
+                "outcome": "offer_accepted",
+                "openApplications": "withdraw"
+              },
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "searchId": {
+                    "type": "string",
+                    "format": "uuid"
+                  },
+                  "outcome": {
+                    "type": "string",
+                    "enum": [
+                      "offer_accepted",
+                      "paused",
+                      "other"
+                    ]
+                  },
+                  "openApplications": {
+                    "type": "string",
+                    "enum": [
+                      "move",
+                      "withdraw"
+                    ]
+                  }
+                },
+                "required": [
+                  "searchId",
+                  "outcome",
+                  "openApplications"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The finished search and the new active search with their totals",
+            "content": {
+              "application/json": {
+                "example": {
+                  "finished": {
+                    "id": "0199f0b2-1a2b-7c3d-8e4f-5a6b7c8d9e0f",
+                    "title": "Мій пошук",
+                    "status": "archived",
+                    "outcome": "offer_accepted",
+                    "startedAt": "2026-09-13T07:40:00.000Z",
+                    "finishedAt": "2026-10-24T07:40:00.000Z",
+                    "days": 41,
+                    "applications": 54,
+                    "interviews": 9,
+                    "offers": 1,
+                    "daysToOffer": 38
+                  },
+                  "current": {
+                    "id": "0199f2c0-4d5e-7f60-8a71-9b0c1d2e3f4a",
+                    "title": "Мій пошук",
+                    "status": "active",
+                    "outcome": null,
+                    "startedAt": "2026-10-24T07:40:00.000Z",
+                    "finishedAt": null,
+                    "days": 0,
+                    "applications": 0,
+                    "interviews": 0,
+                    "offers": 0,
+                    "daysToOffer": null
+                  }
+                },
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "finished": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "format": "uuid"
+                        },
+                        "title": {
+                          "type": "string"
+                        },
+                        "status": {
+                          "type": "string",
+                          "enum": [
+                            "active",
+                            "archived"
+                          ]
+                        },
+                        "outcome": {
+                          "type": [
+                            "string",
+                            "null"
+                          ],
+                          "enum": [
+                            "offer_accepted",
+                            "paused",
+                            "other",
+                            null
+                          ]
+                        },
+                        "startedAt": {
+                          "type": "string",
+                          "format": "date-time"
+                        },
+                        "finishedAt": {
+                          "type": [
+                            "string",
+                            "null"
+                          ],
+                          "format": "date-time"
+                        },
+                        "days": {
+                          "type": "number",
+                          "minimum": 0
+                        },
+                        "applications": {
+                          "type": "number",
+                          "minimum": 0
+                        },
+                        "interviews": {
+                          "type": "number",
+                          "minimum": 0
+                        },
+                        "offers": {
+                          "type": "number",
+                          "minimum": 0
+                        },
+                        "daysToOffer": {
+                          "type": [
+                            "number",
+                            "null"
+                          ],
+                          "minimum": 0
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "title",
+                        "status",
+                        "outcome",
+                        "startedAt",
+                        "finishedAt",
+                        "days",
+                        "applications",
+                        "interviews",
+                        "offers",
+                        "daysToOffer"
+                      ]
+                    },
+                    "current": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "format": "uuid"
+                        },
+                        "title": {
+                          "type": "string"
+                        },
+                        "status": {
+                          "type": "string",
+                          "enum": [
+                            "active",
+                            "archived"
+                          ]
+                        },
+                        "outcome": {
+                          "type": [
+                            "string",
+                            "null"
+                          ],
+                          "enum": [
+                            "offer_accepted",
+                            "paused",
+                            "other",
+                            null
+                          ]
+                        },
+                        "startedAt": {
+                          "type": "string",
+                          "format": "date-time"
+                        },
+                        "finishedAt": {
+                          "type": [
+                            "string",
+                            "null"
+                          ],
+                          "format": "date-time"
+                        },
+                        "days": {
+                          "type": "number",
+                          "minimum": 0
+                        },
+                        "applications": {
+                          "type": "number",
+                          "minimum": 0
+                        },
+                        "interviews": {
+                          "type": "number",
+                          "minimum": 0
+                        },
+                        "offers": {
+                          "type": "number",
+                          "minimum": 0
+                        },
+                        "daysToOffer": {
+                          "type": [
+                            "number",
+                            "null"
+                          ],
+                          "minimum": 0
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "title",
+                        "status",
+                        "outcome",
+                        "startedAt",
+                        "finishedAt",
+                        "days",
+                        "applications",
+                        "interviews",
+                        "offers",
+                        "daysToOffer"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "finished",
+                    "current"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "example": {
+                  "type": "bad_request",
+                  "title": "Bad request",
+                  "status": 400,
+                  "detail": "Unexpected end of JSON input",
+                  "requestId": "0199f0c4-5d2e-7b31-8c4f-6a7b8c9d0e1f"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "example": {
+                  "type": "unauthorized",
+                  "title": "Unauthorized",
+                  "status": 401,
+                  "requestId": "0199f0c4-5d2e-7b31-8c4f-6a7b8c9d0e1f"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "example": {
+                  "type": "forbidden",
+                  "title": "Forbidden",
+                  "status": 403,
+                  "requestId": "0199f0c4-5d2e-7b31-8c4f-6a7b8c9d0e1f"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "example": {
+                  "type": "not_found",
+                  "title": "Not found",
+                  "status": 404,
+                  "requestId": "0199f0c4-5d2e-7b31-8c4f-6a7b8c9d0e1f"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "example": {
+                  "type": "conflict",
+                  "title": "Conflict",
+                  "status": 409,
+                  "requestId": "0199f0c4-5d2e-7b31-8c4f-6a7b8c9d0e1f"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Invalid request",
+            "content": {
+              "application/json": {
+                "example": {
+                  "type": "validation_error",
+                  "title": "Invalid request",
+                  "status": 422,
+                  "errors": [
+                    {
+                      "path": "email",
+                      "message": "Invalid input: expected string, received undefined"
+                    }
+                  ],
                   "requestId": "0199f0c4-5d2e-7b31-8c4f-6a7b8c9d0e1f"
                 },
                 "schema": {
@@ -7533,7 +8148,7 @@
           "applications"
         ],
         "summary": "Count the rejection reasons of moves from one stage into rejected",
-        "description": "Counts the stage events from stage into rejected of the active search, leaving out undone moves and deleted applications. A missing reason counts as unspecified; reasons are sorted by count, then by the taxonomy order.",
+        "description": "Counts the stage events from stage into rejected of the search named by searchId, leaving out undone moves and deleted applications. Without searchId only the active search is read; another user's or a missing searchId answers 404. A missing reason counts as unspecified; reasons are sorted by count, then by the taxonomy order.",
         "parameters": [
           {
             "schema": {
@@ -7551,6 +8166,15 @@
             },
             "required": true,
             "name": "stage",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": false,
+            "name": "searchId",
             "in": "query"
           }
         ],
@@ -7660,6 +8284,22 @@
                   "type": "forbidden",
                   "title": "Forbidden",
                   "status": 403,
+                  "requestId": "0199f0c4-5d2e-7b31-8c4f-6a7b8c9d0e1f"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "example": {
+                  "type": "not_found",
+                  "title": "Not found",
+                  "status": 404,
                   "requestId": "0199f0c4-5d2e-7b31-8c4f-6a7b8c9d0e1f"
                 },
                 "schema": {

@@ -65,6 +65,8 @@ export type InsertApplication = InTransaction & {
 
 export type RecordApplicationEvent = InTransaction & { event: ApplicationEvent };
 
+export type RecordApplicationEvents = InTransaction & { events: readonly ApplicationEvent[] };
+
 export type ApplicationById = InTransaction & { id: string };
 
 export type UpdateApplicationById = ApplicationById & { data: ApplicationChanges };
@@ -108,6 +110,15 @@ export class ApplicationsRepository {
     { event, tx = this.prisma }: RecordApplicationEvent,
   ): Promise<void> {
     await tx.outboxEvent.create({ data: applicationEvent(userId, event), select: { id: true } });
+  }
+
+  async recordEvents(
+    userId: string,
+    { events, tx = this.prisma }: RecordApplicationEvents,
+  ): Promise<void> {
+    await tx.outboxEvent.createMany({
+      data: events.map((event) => applicationEvent(userId, event)),
+    });
   }
 
   findOwned(

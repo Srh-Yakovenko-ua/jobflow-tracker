@@ -18,6 +18,8 @@ export const EXAMPLE_REQUEST_ID = '0199f0c4-5d2e-7b31-8c4f-6a7b8c9d0e1f';
 
 export const EXAMPLE_APPLICATION_ID = '0199f0c4-6e3f-7c42-9d50-7b8c9d0e1f2a';
 
+export const EXAMPLE_SEARCH_ID = '0199f0b2-1a2b-7c3d-8e4f-5a6b7c8d9e0f';
+
 export const EXAMPLE_CHILD_ROW = {
   applicationId: EXAMPLE_APPLICATION_ID,
   createdAt: '2026-10-23T18:05:00.000Z',

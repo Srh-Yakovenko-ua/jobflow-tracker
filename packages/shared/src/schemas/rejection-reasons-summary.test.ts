@@ -22,11 +22,21 @@ describe('rejectionReasonsSummaryQuerySchema', () => {
     });
   });
 
+  it('keeps the search id of a finished search', () => {
+    const query = { stage: 'tech_interview', searchId: '0199f1a0-3c4d-7e5f-8a6b-7c8d9e0f1a2b' };
+    expect(rejectionReasonsSummaryQuerySchema.parse(query)).toEqual(query);
+  });
+
   it.for([
-    { label: 'a missing stage', query: {} },
-    { label: 'an unknown stage', query: { stage: 'hired' } },
-  ])('refuses $label at stage', ({ query }) => {
-    expect(issuePathsOf(rejectionReasonsSummaryQuerySchema.safeParse(query))).toEqual(['stage']);
+    { label: 'a missing stage', query: {}, path: 'stage' },
+    { label: 'an unknown stage', query: { stage: 'hired' }, path: 'stage' },
+    {
+      label: 'a search id that is not a uuid',
+      query: { stage: 'screening', searchId: '42' },
+      path: 'searchId',
+    },
+  ])('refuses $label at $path', ({ query, path }) => {
+    expect(issuePathsOf(rejectionReasonsSummaryQuerySchema.safeParse(query))).toEqual([path]);
   });
 });
 

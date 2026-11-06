@@ -21,9 +21,9 @@ type StageTransition = { id: string; plan: (context: UndoContext) => StageEventP
 
 type LockedApplication = { id: string; tx: Prisma.TransactionClient };
 
-type AppliedStageEvent = Pick<StageEventPlan, 'event'> & { id: string };
+export type AppliedStageEvent = Pick<StageEventPlan, 'event'> & { id: string };
 
-function stageChanged({ id, event }: AppliedStageEvent): ApplicationEvent {
+export function stageChanged({ id, event }: AppliedStageEvent): ApplicationEvent {
   const { fromStage, toStage, reasonCode, compensatesEventId } = event;
   return {
     eventType: APPLICATION_EVENTS.stageChanged,

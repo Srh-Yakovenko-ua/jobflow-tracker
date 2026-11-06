@@ -16,6 +16,7 @@ import {
   applicationIdParams,
   errorResponses,
   EXAMPLE_APPLICATION_ID,
+  EXAMPLE_SEARCH_ID,
   jsonContent,
 } from '../../openapi/route.js';
 import { DUPLICATE_LIMITS } from './application-duplicates.repository.js';
@@ -37,7 +38,7 @@ const NEW_APPLICATION = {
 const APPLICATION = {
   ...NEW_APPLICATION,
   id: EXAMPLE_APPLICATION_ID,
-  searchId: '0199f0b2-1a2b-7c3d-8e4f-5a6b7c8d9e0f',
+  searchId: EXAMPLE_SEARCH_ID,
   currentStage: 'applied',
   isDraft: false,
   resumeVersionId: '0199f0b3-2b3c-7d4e-9f50-6b7c8d9e0f1a',

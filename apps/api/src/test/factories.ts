@@ -20,7 +20,7 @@ import { minutesBefore } from './time.js';
 
 export type OwnedApplication = { userId: string; searchId: string; applicationId: string };
 
-export type NewSearch = { userId: string; status?: SearchStatus };
+export type NewSearch = { userId: string; status?: SearchStatus; startedAt?: Date; title?: string };
 
 export type ApplicationRowInput = Omit<
   Partial<Prisma.ApplicationCreateManyInput>,
@@ -114,10 +114,10 @@ export function createUser(
 
 export async function createSearch(
   prisma: PrismaService,
-  { userId, status = 'active' }: NewSearch,
+  { status = 'active', ...fields }: NewSearch,
 ): Promise<string> {
   const search = await prisma.search.create({
-    data: { userId, status, title: faker.lorem.words(2) },
+    data: { title: faker.lorem.words(2), ...fields, status },
   });
   return search.id;
 }

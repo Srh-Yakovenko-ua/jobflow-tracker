@@ -3,6 +3,7 @@ import { Injectable } from '@nestjs/common';
 
 import { withoutUndefined } from '../../common/without-undefined.js';
 import type { Prisma } from '../../generated/prisma/client.js';
+import { EFFECTIVE_STAGE_EVENT_SQL } from '../../prisma/effective-stage-events.js';
 import { PrismaService } from '../../prisma/prisma.service.js';
 import { USER_SETTINGS_SELECT, type UserSettingsRow } from '../../prisma/user-settings-row.js';
 import { settingsChangedEvent, type SettingsEvent } from './settings.events.js';
@@ -63,11 +64,7 @@ export class SettingsRepository {
           AND a.deleted_at IS NULL
           AND a.is_draft = false
           AND a.applied_at IS NOT NULL
-          AND e.compensates_event_id IS NULL
-          AND NOT EXISTS (
-            SELECT 1 FROM stage_events c
-            WHERE c.compensates_event_id = e.id AND c.application_id = e.application_id
-          )
+          AND ${EFFECTIVE_STAGE_EVENT_SQL}
           AND e.to_stage = ANY(${[...RESPONSE_STAGES]}::stage[])
           AND r.side IS DISTINCT FROM 'candidate'
         GROUP BY a.id

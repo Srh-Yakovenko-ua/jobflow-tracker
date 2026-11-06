@@ -3,7 +3,10 @@ import { z } from 'zod';
 import { rejectionReasonCodeSchema } from '../rejection-reasons.js';
 import { stageSchema } from '../stages.js';
 
-export const rejectionReasonsSummaryQuerySchema = z.object({ stage: stageSchema });
+export const rejectionReasonsSummaryQuerySchema = z.object({
+  stage: stageSchema,
+  searchId: z.uuid().optional(),
+});
 
 export const rejectionReasonsSummarySchema = z.object({
   stage: stageSchema,

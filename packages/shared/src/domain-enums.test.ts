@@ -21,7 +21,14 @@ import {
   scheduledEventKindSchema,
   scheduledEventStatusSchema,
 } from './scheduled-events.js';
-import { SEARCH_STATUSES, searchStatusSchema } from './searches.js';
+import {
+  OPEN_APPLICATION_CHOICES,
+  openApplicationChoiceSchema,
+  SEARCH_OUTCOMES,
+  SEARCH_STATUSES,
+  searchOutcomeSchema,
+  searchStatusSchema,
+} from './searches.js';
 import { TIMELINE_EVENT_KINDS, timelineEventKindSchema } from './timeline-events.js';
 import { TOKEN_SCOPES, tokenScopeSchema } from './token-scopes.js';
 
@@ -29,6 +36,12 @@ type DomainEnumCase = { name: string; values: readonly string[]; schema: z.ZodTy
 
 const DOMAIN_ENUMS: DomainEnumCase[] = [
   { name: 'search status', values: SEARCH_STATUSES, schema: searchStatusSchema },
+  { name: 'search outcome', values: SEARCH_OUTCOMES, schema: searchOutcomeSchema },
+  {
+    name: 'open application choice',
+    values: OPEN_APPLICATION_CHOICES,
+    schema: openApplicationChoiceSchema,
+  },
   { name: 'scheduled event kind', values: SCHEDULED_EVENT_KINDS, schema: scheduledEventKindSchema },
   {
     name: 'scheduled event status',

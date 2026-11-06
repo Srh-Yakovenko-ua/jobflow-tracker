@@ -62,6 +62,11 @@ export const MOVED_TO_SCREENING_STATE: StageState = {
 
 export const TO_SCREENING: MoveApplicationInput = { fromStage: 'applied', toStage: 'screening' };
 
+export const TO_TECH_INTERVIEW: MoveApplicationInput = {
+  fromStage: 'applied',
+  toStage: 'tech_interview',
+};
+
 export const MOVE_TO_SCREENING_PLAN: StageEventPlan = {
   event: {
     fromStage: 'applied',
