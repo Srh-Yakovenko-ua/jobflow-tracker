@@ -20,6 +20,7 @@
     "@jobflow/shared": "workspace:*",
     "@tailwind-merge/next": "0.0.0-dev.ab12ab17b7fbc861f04300973065b9f1cff9863b",
     "@tanstack/react-query": "5.104.4",
+    "@tanstack/react-table": "9.3.1",
     "@tanstack/react-virtual": "3.14.26",
     "clsx": "2.1.1",
     "cmdk": "1.1.1",

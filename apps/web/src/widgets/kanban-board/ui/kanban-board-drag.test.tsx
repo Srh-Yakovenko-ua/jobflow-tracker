@@ -30,6 +30,7 @@ import { server } from '@/test/server';
 import { DROP_GLIDE } from '../model/drop-glide';
 
 vi.mock('next/link', () => import('@/test/link'));
+vi.mock('next/navigation', () => import('@/test/navigation'));
 
 const MOVE = uk.board.move;
 
@@ -451,7 +452,7 @@ describe('KanbanBoard drag and drop', () => {
     });
   });
 
-  it('Tab walks the search, the filter pills and the density switch, then the cards column by column, then the outcome strips', async () => {
+  it('Tab walks the search, the filter pills, the density switch and the view switch, then the cards column by column, then the outcome strips', async () => {
     const { user } = await boardReadyToDrag();
     const stops = [
       screen.getByRole('textbox', { name: uk.board.filters.search.label }),
@@ -460,6 +461,7 @@ describe('KanbanBoard drag and drop', () => {
       }),
       screen.getByRole('button', { name: uk.board.filters.more.menu }),
       screen.getByRole('radio', { name: uk.board.density.full }),
+      screen.getByRole('radio', { name: uk.board.views.board }),
       ...[
         DRAGGED,
         'Product Designer',

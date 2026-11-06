@@ -1,5 +1,11 @@
 import { ACTIVE_STAGES, type ApplicationBoardResponse } from '@jobflow/shared';
 
+import {
+  FilterChipsRow,
+  FilterMenus,
+  FilterSearch,
+  ViewSwitch,
+} from '@/features/filter-applications';
 import { uk } from '@/shared/i18n';
 import { LoadFailedAlert } from '@/shared/ui/banner';
 import { SegmentedControl } from '@/shared/ui/segmented-control';
@@ -7,10 +13,7 @@ import { SegmentedControl } from '@/shared/ui/segmented-control';
 import { useBoardDensity } from '../model/board-density-store';
 import { BOARD_DENSITY_OPTIONS } from '../model/density-options';
 import type { BoardLoad } from '../model/use-kanban-board';
-import { BoardFilterMenus } from './board-filter-menus';
-import { BoardSearch } from './board-search';
 import { BOARD_FRAME } from './column-frame';
-import { FilterChipsRow } from './filter-chips';
 
 export type BoardToolbarProps = Readonly<{
   board: ApplicationBoardResponse;
@@ -38,9 +41,10 @@ export function BoardToolbar({ board, load, view }: BoardToolbarProps) {
       <div className={BOARD_FRAME.toolbar}>
         <p className="eyebrow text-ink-3 tabular-nums">{uk.board.eyebrow(inWork)}</p>
         <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto">
-          <BoardSearch />
-          <BoardFilterMenus />
+          <FilterSearch />
+          <FilterMenus />
           {view.cards && <DensitySwitch />}
+          <ViewSwitch current="board" />
         </div>
       </div>
       {load.filtersFailed && <LoadFailedAlert className="px-1 pb-2" onRetry={load.onRetry} />}

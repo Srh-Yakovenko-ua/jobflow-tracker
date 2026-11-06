@@ -14,6 +14,7 @@ import { BOARD_DENSITY_COOKIE } from '../model/board-density-cookie';
 import { KanbanBoard } from './kanban-board';
 
 vi.mock('next/link', () => import('@/test/link'));
+vi.mock('next/navigation', () => import('@/test/navigation'));
 
 const DENSITY = uk.board.density;
 

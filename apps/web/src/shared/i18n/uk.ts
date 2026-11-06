@@ -2,6 +2,7 @@ import type { Theme } from '@jobflow/shared';
 
 import { application } from './application';
 import { applicationPage } from './application-page';
+import { applicationsTable } from './applications-table';
 import { auth } from './auth';
 import { board } from './board';
 import { calendar } from './calendar';
@@ -64,6 +65,7 @@ export const uk = {
   },
   auth,
   board,
+  applicationsTable,
   calendarPage,
   settings,
   designSystem: {

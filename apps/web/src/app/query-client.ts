@@ -37,5 +37,6 @@ export function createQueryClient(): QueryClient {
     },
   });
   queryClient.setQueryDefaults(applicationKeys.boards(), { refetchOnWindowFocus: true });
+  queryClient.setQueryDefaults(applicationKeys.tables(), { refetchOnWindowFocus: true });
   return queryClient;
 }

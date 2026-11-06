@@ -12,7 +12,8 @@ import {
 import { LayoutGroup, motion } from 'motion/react';
 import type { ReactNode } from 'react';
 
-import type { ApplicationCardContext } from '@/entities/application';
+import { type ApplicationCardContext, FirstRunState } from '@/entities/application';
+import { ApplicationFiltersProvider, useApplicationFilters } from '@/features/filter-applications';
 import { uk } from '@/shared/i18n';
 import { cn } from '@/shared/lib/cn';
 import { LoadFailedPanel } from '@/shared/ui/error-panel';
@@ -20,8 +21,7 @@ import { ColumnSkeleton } from '@/shared/ui/skeleton';
 
 import type { BoardDensityState } from '../model/board-density-cookie';
 import { BoardDensityProvider } from '../model/board-density-store';
-import { shownStagesOf } from '../model/board-filters';
-import { BoardFiltersProvider, useBoardFilters } from '../model/board-filters-store';
+import { shownStagesOf } from '../model/shown-stages';
 import { type BoardLoad, useKanbanBoard } from '../model/use-kanban-board';
 import { BoardColumn } from './board-column';
 import { BoardDnd } from './board-dnd';
@@ -29,7 +29,6 @@ import { BoardEmptySearch } from './board-empty-search';
 import { BoardToolbar } from './board-toolbar';
 import { ColumnCards } from './column-cards';
 import { BOARD_FRAME, STRIP_LOOK } from './column-frame';
-import { FirstRunState } from './first-run-state';
 import { OutcomeLane } from './outcome-lane';
 
 const FOOTNOTES: Partial<Record<OpenStage, readonly string[]>> = { final: uk.board.finalNote };
@@ -129,7 +128,7 @@ function BoardColumns({ board, context, outcomes, stages }: BoardColumnsProps) {
 
 function BoardContent() {
   const { data, context, outcomes, search } = useKanbanBoard();
-  const filters = useBoardFilters((store) => store.filters);
+  const filters = useApplicationFilters((store) => store.filters);
   if (data === undefined) {
     if (!outcomes.load.failed) {
       return <BoardSkeleton />;
@@ -166,9 +165,9 @@ export type KanbanBoardProps = Readonly<{
 export function KanbanBoard({ initial }: KanbanBoardProps) {
   return (
     <BoardDensityProvider initial={{ density: initial.density }}>
-      <BoardFiltersProvider initial={initial.filters ?? {}}>
+      <ApplicationFiltersProvider initial={initial.filters ?? {}}>
         <BoardContent />
-      </BoardFiltersProvider>
+      </ApplicationFiltersProvider>
     </BoardDensityProvider>
   );
 }

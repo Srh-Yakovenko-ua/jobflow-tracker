@@ -2,9 +2,7 @@ import {
   type ApplicationFilters,
   applicationFiltersSchema,
   SOURCE_LABELS,
-  type Stage,
   STAGE_LABELS,
-  STAGES,
 } from '@jobflow/shared';
 
 import { formatAmount } from '@/entities/application';
@@ -15,9 +13,9 @@ const COPY = uk.board.filters.chips;
 
 const FILTER_KEYS = applicationFiltersSchema.keyof().options;
 
-export type BoardSearchParams = Readonly<Record<string, string | string[] | undefined>>;
+export type FilterSearchParams = Readonly<Record<string, string | string[] | undefined>>;
 
-export type BoardFilterChip = Readonly<{ id: string; label: string; removal: ApplicationFilters }>;
+export type FilterChip = Readonly<{ id: string; label: string; removal: ApplicationFilters }>;
 
 type ListChips<Value> = {
   values: readonly Value[] | undefined;
@@ -25,7 +23,7 @@ type ListChips<Value> = {
   removalOf: (rest: Value[] | undefined) => ApplicationFilters;
 };
 
-export function boardFiltersOf(params: BoardSearchParams): ApplicationFilters {
+export function applicationFiltersOf(params: FilterSearchParams): ApplicationFilters {
   const readable = FILTER_KEYS.flatMap((key) => {
     const value = params[key];
     const valid =
@@ -43,7 +41,7 @@ export function toggledIn<Value>(values: readonly Value[] | undefined, value: Va
   return next.length === 0 ? undefined : next;
 }
 
-function chipOf(label: string, removal: ApplicationFilters): BoardFilterChip {
+function chipOf(label: string, removal: ApplicationFilters): FilterChip {
   return { id: label, label, removal };
 }
 
@@ -51,20 +49,20 @@ function listChips<Value>({ values = [], labelOf, removalOf }: ListChips<Value>)
   return values.map((value) => chipOf(labelOf(value), removalOf(toggledIn(values, value))));
 }
 
-function scoreChips({ hasScore }: ApplicationFilters): BoardFilterChip[] {
+function scoreChips({ hasScore }: ApplicationFilters): FilterChip[] {
   if (hasScore === undefined) {
     return [];
   }
   return [chipOf(hasScore ? COPY.hasScore.with : COPY.hasScore.without, { hasScore: undefined })];
 }
 
-function salaryChips({ salaryFrom }: ApplicationFilters): BoardFilterChip[] {
+function salaryChips({ salaryFrom }: ApplicationFilters): FilterChip[] {
   return salaryFrom === undefined
     ? []
     : [chipOf(COPY.salaryFrom(formatAmount(salaryFrom)), { salaryFrom: undefined })];
 }
 
-export function chipsOf(filters: ApplicationFilters): BoardFilterChip[] {
+export function chipsOf(filters: ApplicationFilters): FilterChip[] {
   return [
     ...listChips({
       values: filters.source,
@@ -84,10 +82,6 @@ export function chipsOf(filters: ApplicationFilters): BoardFilterChip[] {
     }),
     ...salaryChips(filters),
   ];
-}
-
-export function shownStagesOf({ stage }: ApplicationFilters): Stage[] {
-  return STAGES.filter((shown) => stage?.includes(shown) ?? true);
 }
 
 export function writeFiltersToUrl(filters: ApplicationFilters): void {

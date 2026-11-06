@@ -13,10 +13,7 @@ import {
   boardQueryOptions,
 } from '@/entities/application';
 import { useUserTimeZone } from '@/entities/user';
-import { isSearchable, SEARCH_LIMITS } from '@/features/search-applications';
-import { useDebouncedValue } from '@/shared/lib/use-debounced-value';
-
-import { useBoardFilters } from './board-filters-store';
+import { useSentFilters } from '@/features/filter-applications';
 
 export type BoardLoad = Readonly<{ failed: boolean; filtersFailed: boolean; onRetry: () => void }>;
 
@@ -29,10 +26,9 @@ type ArrivalInput = Readonly<{ query: ApplicationBoardQuery; arrived: boolean }>
 type SearchInput = Readonly<{ filters: ApplicationFilters; shown: ApplicationBoardQuery }>;
 
 function boardQueryOf({ expanded, filters }: BoardQueryInput): ApplicationBoardQuery {
-  const q = filters.q?.trim();
   return {
     source: filters.source,
-    q: q !== undefined && isSearchable(q) ? q : undefined,
+    q: filters.q,
     hasScore: filters.hasScore,
     silence: filters.silence,
     salaryFrom: filters.salaryFrom,
@@ -66,12 +62,10 @@ function searchOf({ filters, shown }: SearchInput): BoardSearch {
 
 export function useKanbanBoard() {
   const queryClient = useQueryClient();
-  const filters = useBoardFilters((store) => store.filters);
+  const filters = useSentFilters();
   const [expanded, setExpanded] = useState<OutcomeStage[]>([]);
   const [mountedAt] = useState(Date.now);
-  const q = useDebouncedValue(filters.q, SEARCH_LIMITS.debounceMs);
-  const salaryFrom = useDebouncedValue(filters.salaryFrom, SEARCH_LIMITS.debounceMs);
-  const query = boardQueryOf({ expanded, filters: { ...filters, q, salaryFrom } });
+  const query = boardQueryOf({ expanded, filters });
   const board = useQuery({ ...boardQueryOptions(query), placeholderData: keepPreviousData });
   const arrived = board.data !== undefined && !board.isPlaceholderData;
   const shown = useLastArrived({ query, arrived });

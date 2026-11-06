@@ -21,6 +21,7 @@ export type NavItem = Readonly<{
   icon: LucideIcon;
   flag?: FeatureFlag;
   badge?: NavBadge;
+  aliases?: readonly string[];
 }>;
 
 export type ShellNav = Readonly<{
@@ -30,7 +31,13 @@ export type ShellNav = Readonly<{
 }>;
 
 export const NAV_ITEMS: readonly NavItem[] = [
-  { id: 'board', href: '/board', icon: SquareKanban, badge: 'silent' },
+  {
+    id: 'board',
+    href: '/board',
+    icon: SquareKanban,
+    badge: 'silent',
+    aliases: ['/applications'],
+  },
   { id: 'analytics', href: '/analytics', icon: ChartColumn, flag: 'analytics' },
   { id: 'calendar', href: '/calendar', icon: CalendarDays, flag: 'calendar' },
   { id: 'resumes', href: '/resumes', icon: FileText, flag: 'resumes' },
@@ -42,8 +49,16 @@ export function visibleNavItems(flags: FeatureFlags): readonly NavItem[] {
   return NAV_ITEMS.filter((item) => item.flag === undefined || flags[item.flag]);
 }
 
+function isActiveAt(item: NavItem, pathname: string): boolean {
+  return (
+    pathname === item.href ||
+    pathname.startsWith(`${item.href}/`) ||
+    (item.aliases?.includes(pathname) ?? false)
+  );
+}
+
 export function activeHrefOf(pathname: string, items: readonly NavItem[]): string | undefined {
-  return items.find((item) => pathname === item.href || pathname.startsWith(`${item.href}/`))?.href;
+  return items.find((item) => isActiveAt(item, pathname))?.href;
 }
 
 export function navStatusOf(nav: ShellNav, item: NavItem) {

@@ -7,6 +7,7 @@ import { scheduledEventKeys } from '@/entities/scheduled-event';
 export async function invalidateAfterMove(queryClient: QueryClient): Promise<void> {
   await Promise.all([
     queryClient.invalidateQueries({ queryKey: applicationKeys.boards() }),
+    queryClient.invalidateQueries({ queryKey: applicationKeys.lists() }),
     queryClient.invalidateQueries({ queryKey: applicationKeys.details() }),
     queryClient.invalidateQueries({ queryKey: applicationKeys.reasonsSummaries() }),
     queryClient.invalidateQueries({ queryKey: timelineKeys.all }),

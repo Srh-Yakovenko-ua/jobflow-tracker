@@ -1,17 +1,17 @@
 import { act, screen, waitFor, within } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
+import { applicationFiltersOf } from '@/features/filter-applications';
 import { layOutColumns } from '@/test/board-drag';
 import { boardRoute, cardsIn, DESIGN_BOARD, snippetCardIn } from '@/test/board-fixtures';
 import { fakeTimeouts } from '@/test/fake-timeouts';
 import { columnNamed, renderBoard } from '@/test/render-board';
 import { server } from '@/test/server';
 
-import { boardFiltersOf } from '../model/board-filters';
-
 vi.mock('next/link', () => import('@/test/link'));
+vi.mock('next/navigation', () => import('@/test/navigation'));
 
-const SEARCH_NAME = 'Пошук по дошці';
+const SEARCH_NAME = 'Пошук по картках';
 
 const CHIPS_NAME = 'Активні фільтри';
 
@@ -42,7 +42,7 @@ afterEach(() => {
 
 describe('KanbanBoard search and filters', () => {
   it('a reload with filters in the URL asks for them, keeps the stage in the browser, refills the search and shows each chip', async () => {
-    const filters = boardFiltersOf({
+    const filters = applicationFiltersOf({
       source: 'djinni',
       q: 'kafka',
       salaryFrom: '3000',

@@ -3,7 +3,10 @@ import { web } from '@jobflow/config/eslint';
 export default [
   ...web(import.meta.dirname),
   {
-    files: ['src/widgets/kanban-board/model/use-column-virtualizer.ts'],
+    files: [
+      'src/widgets/kanban-board/model/use-column-virtualizer.ts',
+      'src/widgets/applications-table/model/use-table-virtualizer.ts',
+    ],
     rules: { 'react-hooks/incompatible-library': 'off' },
   },
 ];

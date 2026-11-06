@@ -1,6 +1,7 @@
 import type {
   Application,
   ApplicationBoardQuery,
+  ApplicationFilters,
   ApplicationListQuery,
   Stage,
 } from '@jobflow/shared';
@@ -9,6 +10,8 @@ export const applicationKeys = {
   all: ['applications'] as const,
   lists: () => [...applicationKeys.all, 'list'] as const,
   list: (query: ApplicationListQuery) => [...applicationKeys.lists(), query] as const,
+  tables: () => [...applicationKeys.lists(), 'table'] as const,
+  table: (filters: ApplicationFilters) => [...applicationKeys.tables(), filters] as const,
   boards: () => [...applicationKeys.all, 'board'] as const,
   board: (query: ApplicationBoardQuery) => [...applicationKeys.boards(), query] as const,
   details: () => [...applicationKeys.all, 'detail'] as const,

@@ -14,6 +14,7 @@ import {
   DESIGN_BOARD,
   DESIGN_BOARD_HEADINGS,
 } from '@/test/board-fixtures';
+import { push } from '@/test/navigation';
 import { QueryProbe, waitForQuery } from '@/test/query-status';
 import { columnNamed, renderBoard } from '@/test/render-board';
 import { renderInApp } from '@/test/render-in-app';
@@ -21,6 +22,8 @@ import { server } from '@/test/server';
 import { meRoute } from '@/test/session-fixtures';
 
 import { KanbanBoard } from './kanban-board';
+
+vi.mock('next/navigation', () => import('@/test/navigation'));
 
 const BOARD = uk.board;
 
@@ -70,6 +73,7 @@ function skeletonStripClasses(): string[][] {
 afterEach(() => {
   focusManager.setFocused(undefined);
   vi.useRealTimers();
+  push.mockClear();
 });
 
 describe('KanbanBoard', () => {
@@ -189,6 +193,16 @@ describe('KanbanBoard', () => {
     );
     expect(screen.queryByRole('button')).toBeNull();
     expect(screen.queryByText(/активний пошук/)).toBeNull();
+  });
+
+  it('the view switch marks Дошка and opens Таблиця with the filters of the board', async () => {
+    const { user } = renderBoard(DESIGN_BOARD, { filters: { source: ['djinni'], q: 'kafka' } });
+    const views = within(await screen.findByRole('radiogroup', { name: 'Подання' }));
+
+    expect(views.getByRole('radio', { name: 'Дошка' }).getAttribute('aria-checked')).toBe('true');
+    await user.click(views.getByRole('radio', { name: 'Таблиця' }));
+
+    expect(push).toHaveBeenCalledExactlyOnceWith('/applications?source=djinni&q=kafka');
   });
 
   it('the фінал column ends with its note under its cards, and an empty open column says it is empty for now', async () => {
