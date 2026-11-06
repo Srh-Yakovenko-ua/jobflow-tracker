@@ -3,8 +3,16 @@
 import { RadioGroup as RadioGroupPrimitive } from 'radix-ui';
 import { useId } from 'react';
 
+import { cn } from '@/shared/lib/cn';
+
 import { ActiveIndicator } from './active-indicator';
 import type { ChoiceOption } from './radio-group';
+import { TOUCH_HEIGHT } from './touch-height';
+
+const ITEM = cn(
+  'touch-target h-7.5 min-w-11 rounded-[7px] px-3.25 font-ui text-[12.5px] font-semibold whitespace-nowrap text-ink-2 transition-colors duration-(--duration-fast) ease-standard hover:text-ink data-[state=checked]:text-ink',
+  TOUCH_HEIGHT,
+);
 
 export type SegmentedControlProps<Value extends string> = Readonly<{
   'aria-label': string;
@@ -30,11 +38,7 @@ export function SegmentedControl<Value extends string>({
       className="isolate inline-flex w-fit gap-0.5 rounded-md bg-surface-3 p-0.75 inset-ring inset-ring-line-soft"
     >
       {options.map((option) => (
-        <RadioGroupPrimitive.Item
-          key={option.value}
-          value={option.value}
-          className="touch-target h-7.5 min-w-11 rounded-[7px] px-3.25 font-ui text-[12.5px] font-semibold whitespace-nowrap text-ink-2 transition-colors duration-(--duration-fast) ease-standard hover:text-ink data-[state=checked]:text-ink"
-        >
+        <RadioGroupPrimitive.Item key={option.value} value={option.value} className={ITEM}>
           {option.value === props.value && <ActiveIndicator group={groupId} />}
           {option.label}
         </RadioGroupPrimitive.Item>

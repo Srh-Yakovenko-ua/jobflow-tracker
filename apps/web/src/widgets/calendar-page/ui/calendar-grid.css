@@ -1,0 +1,33 @@
+@import '@fullcalendar/react/skeleton.css' layer(fullcalendar);
+@import '@fullcalendar/react/themes/classic/theme.css' layer(fullcalendar);
+
+:root {
+  --fc-classic-button: var(--surface-2);
+  --fc-classic-button-border: var(--line);
+  --fc-classic-button-strong: var(--surface-3);
+  --fc-classic-button-strong-border: var(--line);
+  --fc-classic-button-outline: var(--accent);
+  --fc-classic-button-foreground: var(--ink);
+  --fc-classic-primary: var(--accent);
+  --fc-classic-primary-foreground: var(--surface);
+  --fc-classic-event: var(--accent-tint);
+  --fc-classic-event-contrast: var(--accent-ink);
+  --fc-classic-background-event: var(--accent);
+  --fc-classic-background-event-opacity: 15%;
+  --fc-classic-background-event-foreground-opacity: 50%;
+  --fc-classic-highlight: var(--accent-tint);
+  --fc-classic-today: color-mix(in oklab, var(--accent-tint) 60%, var(--surface));
+  --fc-classic-now: var(--accent);
+  --fc-classic-small-dot-width: 8px;
+  --fc-classic-large-dot-width: 10px;
+  --fc-classic-background: var(--surface);
+  --fc-classic-faint: var(--surface-2);
+  --fc-classic-muted: var(--surface-2);
+  --fc-classic-strong: var(--surface-3);
+  --fc-classic-foreground: var(--ink);
+  --fc-classic-faint-foreground: var(--ink-3);
+  --fc-classic-muted-foreground: var(--ink-3);
+  --fc-classic-border: var(--line-soft);
+  --fc-classic-strong-border: var(--line);
+  --fc-classic-ring-color: var(--accent);
+}

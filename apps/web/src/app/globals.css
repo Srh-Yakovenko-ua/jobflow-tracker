@@ -1,3 +1,5 @@
+@layer theme, base, fullcalendar, components, utilities;
+
 @import 'tailwindcss';
 @import '@jobflow/shared/tokens.css';
 @import '@jobflow/shared/theme.css';

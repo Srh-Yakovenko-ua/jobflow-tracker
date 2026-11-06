@@ -1,4 +1,9 @@
 export {
+  type EventReschedule,
+  type RescheduleDrop,
+  useRescheduleEventMutation,
+} from './model/use-reschedule-event-mutation';
+export {
   type EventOutcomeActions,
   EventOutcomePrompt,
   type EventOutcomePromptProps,

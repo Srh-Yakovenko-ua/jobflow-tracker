@@ -6,8 +6,12 @@ import { EVERY_FLAG_ON } from '@/test/feature-flags';
 import { activeHrefOf, NAV_ITEMS, visibleNavItems } from './nav-items';
 
 describe('visibleNavItems', () => {
-  it('shows the board and settings while no other page has shipped', () => {
-    expect(visibleNavItems(FEATURE_FLAGS).map((item) => item.id)).toEqual(['board', 'settings']);
+  it('shows the board, the calendar and settings while no other page has shipped', () => {
+    expect(visibleNavItems(FEATURE_FLAGS).map((item) => item.id)).toEqual([
+      'board',
+      'calendar',
+      'settings',
+    ]);
   });
 
   it('shows all six pages in order once every flag is on', () => {

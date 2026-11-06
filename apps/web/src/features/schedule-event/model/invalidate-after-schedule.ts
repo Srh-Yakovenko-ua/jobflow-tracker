@@ -15,6 +15,7 @@ export async function invalidateAfterSchedule({
 }: ScheduleInvalidation): Promise<void> {
   await Promise.all([
     queryClient.invalidateQueries({ queryKey: scheduledEventKeys.list(applicationId) }),
+    queryClient.invalidateQueries({ queryKey: scheduledEventKeys.calendars() }),
     queryClient.invalidateQueries({ queryKey: timelineKeys.detail(applicationId) }),
     queryClient.invalidateQueries({ queryKey: applicationKeys.boards() }),
     queryClient.invalidateQueries({ queryKey: applicationKeys.lists() }),

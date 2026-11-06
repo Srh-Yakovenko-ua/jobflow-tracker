@@ -5,6 +5,7 @@ import { applicationPage } from './application-page';
 import { auth } from './auth';
 import { board } from './board';
 import { calendar } from './calendar';
+import { calendarPage } from './calendar-page';
 import { contact } from './contact';
 import { devUi } from './dev-ui';
 import { settings } from './settings';
@@ -63,6 +64,7 @@ export const uk = {
   },
   auth,
   board,
+  calendarPage,
   settings,
   designSystem: {
     pageTitle: 'Дизайн-система',

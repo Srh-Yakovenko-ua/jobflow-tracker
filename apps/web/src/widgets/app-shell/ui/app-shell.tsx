@@ -3,6 +3,7 @@
 import { usePathname } from 'next/navigation';
 import type { ReactNode } from 'react';
 
+import { useSilentCount } from '@/entities/application';
 import { FEATURE_FLAGS } from '@/shared/config';
 import { uk } from '@/shared/i18n';
 import { cn } from '@/shared/lib/cn';
@@ -10,7 +11,6 @@ import { cn } from '@/shared/lib/cn';
 import { activeHrefOf, type ShellNav, visibleNavItems } from '../model/nav-items';
 import type { SidebarState } from '../model/sidebar-cookie';
 import { SidebarStoreProvider } from '../model/sidebar-store';
-import { useSilentCount } from '../model/use-silent-count';
 import { BottomBar } from './bottom-bar';
 import { SHELL_FRAME } from './shell-frame';
 import { ShellHeader } from './shell-header';

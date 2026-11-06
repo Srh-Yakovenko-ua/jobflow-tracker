@@ -3,6 +3,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 
 import { analyticsKeys } from '@/entities/analytics';
 import { applicationKeys } from '@/entities/application';
+import { scheduledEventKeys } from '@/entities/scheduled-event';
 import { uk } from '@/shared/i18n';
 import { showErrorToast } from '@/shared/ui/error-toast';
 
@@ -17,6 +18,7 @@ export function useDeleteApplicationMutation() {
       return Promise.all([
         queryClient.invalidateQueries({ queryKey: applicationKeys.all }),
         queryClient.invalidateQueries({ queryKey: analyticsKeys.summary() }),
+        queryClient.invalidateQueries({ queryKey: scheduledEventKeys.calendars() }),
       ]);
     },
     onError: () => {

@@ -1,8 +1,7 @@
 import { ACTIVE_STAGES, type ApplicationBoardResponse } from '@jobflow/shared';
 
 import { uk } from '@/shared/i18n';
-import { Banner } from '@/shared/ui/banner';
-import { Button } from '@/shared/ui/button';
+import { LoadFailedAlert } from '@/shared/ui/banner';
 import { SegmentedControl } from '@/shared/ui/segmented-control';
 
 import { useBoardDensity } from '../model/board-density-store';
@@ -12,8 +11,6 @@ import { BoardFilterMenus } from './board-filter-menus';
 import { BoardSearch } from './board-search';
 import { BOARD_FRAME } from './column-frame';
 import { FilterChipsRow } from './filter-chips';
-
-const LOAD_FAILED = uk.states.errors.loadFailed;
 
 export type BoardToolbarProps = Readonly<{
   board: ApplicationBoardResponse;
@@ -34,17 +31,6 @@ function DensitySwitch() {
   );
 }
 
-function FilterLoadAlert({ onRetry }: Readonly<{ onRetry: () => void }>) {
-  return (
-    <div className="flex flex-wrap items-center gap-2 px-1 pb-2">
-      <Banner tone="error" content={{ title: LOAD_FAILED.title, description: LOAD_FAILED.body }} />
-      <Button variant="secondary" size="sm" onClick={onRetry}>
-        {LOAD_FAILED.action}
-      </Button>
-    </div>
-  );
-}
-
 export function BoardToolbar({ board, load, view }: BoardToolbarProps) {
   const inWork = ACTIVE_STAGES.reduce((sum, stage) => sum + board.columns[stage].count, 0);
   return (
@@ -57,7 +43,7 @@ export function BoardToolbar({ board, load, view }: BoardToolbarProps) {
           {view.cards && <DensitySwitch />}
         </div>
       </div>
-      {load.filtersFailed && <FilterLoadAlert onRetry={load.onRetry} />}
+      {load.filtersFailed && <LoadFailedAlert className="px-1 pb-2" onRetry={load.onRetry} />}
       {view.cards && <FilterChipsRow />}
     </div>
   );
