@@ -47,7 +47,7 @@ const LIST_ITEM = {
 const TAGS = ['applications'];
 
 const FILTERS =
-  'Filters are comma lists (stage, source, silence), q searches company, position, stack, vacancy text and notes by word prefix in web search syntax (quotes, or, -), hasScore is true or false. Without searchId only the active search is read.';
+  'Filters are comma lists (stage, source, silence), q searches company, position, stack, vacancy text and notes by word prefix in web search syntax (quotes, or, -), hasScore is true or false. salaryFrom is a whole amount that keeps applications whose salaryMax reaches it, or whose salaryMin does when salaryMax is empty; applications without a salary drop out and currencies are not converted. Without searchId only the active search is read.';
 
 const LIST =
   'sort=relevance orders by rank and needs q, and its cursor pages only that sort. With q each item carries snippet, the matched words of its stack, vacancy text and notes, or null when only company or position matched; without q snippet is null.';
@@ -86,7 +86,7 @@ export const APPLICATION_LIST_OPENAPI_PATHS: RouteConfig[] = [
     path: '/applications/board',
     tags: TAGS,
     summary: 'Read the kanban board of the active search',
-    description: `${FILTERS} Every stage has its count; rejected, ghosted and withdrawn carry items only when named in expand.`,
+    description: `${FILTERS} Every stage has its count; rejected, ghosted and withdrawn carry items only when named in expand. A card carries snippet only with q and only when its stack, vacancy text or notes matched; otherwise the key is left out.`,
     request: { query: applicationBoardQuerySchema },
     responses: {
       200: {

@@ -1,4 +1,4 @@
-import type { MeResponse } from '@jobflow/shared';
+import type { ApplicationFilters, MeResponse } from '@jobflow/shared';
 import { screen } from '@testing-library/react';
 
 import { userKeys } from '@/entities/user';
@@ -26,12 +26,20 @@ export type DragSetup = {
   settings?: BoardSettings;
 };
 
-export function renderBoard(route: BoardRouteOptions, settings?: BoardSettings) {
+export type BoardRenderOptions = {
+  settings?: BoardSettings | undefined;
+  filters?: ApplicationFilters;
+};
+
+export function renderBoard(
+  route: BoardRouteOptions,
+  { settings, filters = {} }: BoardRenderOptions = {},
+) {
   const board = boardRoute(route);
   server.use(meRoute(settings), board.handler, reasonsSummaryRoute().handler);
   const user = renderInApp(
     <>
-      <KanbanBoard initial={{ density: 'full' }} />
+      <KanbanBoard initial={{ density: 'full', filters }} />
       <QueryProbe queryKey={userKeys.me()} />
     </>,
   );
@@ -41,7 +49,7 @@ export function renderBoard(route: BoardRouteOptions, settings?: BoardSettings) 
 export async function boardReadyToDrag({ board = DESIGN_BOARD, move, settings }: DragSetup = {}) {
   const moves = moveRoute(move);
   server.use(moves.handler);
-  const { user, sent } = renderBoard(board, settings);
+  const { user, sent } = renderBoard(board, { settings });
   await screen.findAllByRole('heading');
   await waitForQuery({ queryKey: userKeys.me(), status: 'success' });
   layOutColumns();

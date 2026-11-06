@@ -156,6 +156,7 @@ describe('KanbanBoard', () => {
   it('when opening відмова fails the board stays, the lane offers a retry, and a second click folds it with focus kept', async () => {
     const { user, strip, lane } = await openFailingRejectedLane();
 
+    expect(screen.getAllByRole('alert')).toEqual([lane.getByRole('alert')]);
     expect(screen.getAllByRole('heading', { level: 2 })).toEqual(
       headingsNamed(DESIGN_BOARD_HEADINGS),
     );

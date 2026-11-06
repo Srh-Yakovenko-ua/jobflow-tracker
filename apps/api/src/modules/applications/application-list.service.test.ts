@@ -1,7 +1,9 @@
 import type {
   ApplicationCard,
   ApplicationListItem,
+  BoardCard,
   RejectionReasonsSummaryQuery,
+  SearchSnippet,
   Stage,
 } from '@jobflow/shared';
 import { Test } from '@nestjs/testing';
@@ -93,6 +95,22 @@ const RANKED_MATCHES: SearchMatch[] = [
 ];
 
 const KAFKA_PAGE: ApplicationListRequest = { q: 'kafka', sort: 'relevance', limit: 2 };
+
+const KAFKA_HEADLINES: SearchHeadline[] = [
+  {
+    id: '0199f0a0-0000-7000-8000-000000000103',
+    headline: `Go, ${HEADLINE_MARKS.start}Kafka${HEADLINE_MARKS.stop} і Redis`,
+  },
+  { id: '0199f0a0-0000-7000-8000-000000000101', headline: 'Go, Redis' },
+];
+
+const KAFKA_PARTS: SearchSnippet = [
+  { text: 'Go, ', match: false },
+  { text: 'Kafka', match: true },
+  { text: ' і Redis', match: false },
+];
+
+const snippetKeyOf = (card: BoardCard) => ('snippet' in card ? card.snippet : 'no snippet key');
 
 const rowsWithin = (rows: CardRow[], ids: readonly string[] | undefined) =>
   ids === undefined ? rows : rows.filter(({ id }) => ids.includes(id));
@@ -330,25 +348,12 @@ describe('ApplicationListService.list', () => {
     const { search, service } = await serviceWith({
       cards: ROWS_BY_DATE,
       matches: RANKED_MATCHES,
-      headlines: [
-        {
-          id: '0199f0a0-0000-7000-8000-000000000103',
-          headline: `Go, ${HEADLINE_MARKS.start}Kafka${HEADLINE_MARKS.stop} і Redis`,
-        },
-        { id: '0199f0a0-0000-7000-8000-000000000101', headline: 'Go, Redis' },
-      ],
+      headlines: KAFKA_HEADLINES,
     });
 
     const page = await service.list(OLENA_ID, KAFKA_PAGE);
 
-    expect(page.items.map(({ snippet }) => snippet)).toEqual([
-      [
-        { text: 'Go, ', match: false },
-        { text: 'Kafka', match: true },
-        { text: ' і Redis', match: false },
-      ],
-      null,
-    ]);
+    expect(page.items.map(({ snippet }) => snippet)).toEqual([KAFKA_PARTS, null]);
     expect(search.headlineQueries).toEqual([
       {
         userId: OLENA_ID,
@@ -507,6 +512,49 @@ describe('ApplicationListService.board', () => {
     expect(search.matchQueries).toEqual([{ userId: OLENA_ID, q: 'kafka' }]);
     expect(repository.countQueries).toEqual([{ userId: OLENA_ID, filter }]);
     expect(repository.cardQueries.map((query) => query.filter)).toEqual([filter]);
+  });
+
+  it('gives a board card matched in its stack its snippet parts, leaves the key out of a card matched only by company, and reads headlines for the board rows', async () => {
+    const { search, service } = await serviceWith({
+      cards: ROWS_BY_DATE,
+      matches: RANKED_MATCHES,
+      headlines: KAFKA_HEADLINES,
+    });
+
+    const board = await service.board(OLENA_ID, { q: 'kafka' });
+
+    expect(board.columns.applied.items?.map(snippetKeyOf)).toEqual([
+      'no snippet key',
+      'no snippet key',
+      KAFKA_PARTS,
+    ]);
+    expect(search.headlineQueries).toEqual([
+      {
+        userId: OLENA_ID,
+        q: 'kafka',
+        applicationIds: [
+          '0199f0a0-0000-7000-8000-000000000101',
+          '0199f0a0-0000-7000-8000-000000000102',
+          '0199f0a0-0000-7000-8000-000000000103',
+        ],
+      },
+    ]);
+  });
+
+  it('leaves the snippet key out of every board card and reads no headlines without q', async () => {
+    const { search, service } = await serviceWith({
+      cards: ROWS_BY_DATE,
+      headlines: KAFKA_HEADLINES,
+    });
+
+    const board = await service.board(OLENA_ID, {});
+
+    expect(board.columns.applied.items?.map(snippetKeyOf)).toEqual([
+      'no snippet key',
+      'no snippet key',
+      'no snippet key',
+    ]);
+    expect(search.headlineQueries).toEqual([]);
   });
 });
 

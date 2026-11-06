@@ -3,7 +3,7 @@
 import { type ApplicationCard, isActiveStage, type Stage } from '@jobflow/shared';
 import { Command } from 'cmdk';
 
-import { OutcomeBadge, StageChip } from '@/entities/application';
+import { OutcomeBadge, SearchSnippet, StageChip } from '@/entities/application';
 import { uk } from '@/shared/i18n';
 import { cn } from '@/shared/lib/cn';
 import { COMMAND_ITEM } from '@/shared/ui/field-surface';
@@ -12,7 +12,6 @@ import { OptionContent } from '@/shared/ui/option-content';
 import { Spinner } from '@/shared/ui/spinner';
 
 import type { ApplicationSearch } from '../model/use-application-search';
-import { SearchSnippet } from './search-snippet';
 
 const SEARCH = uk.shell.search;
 

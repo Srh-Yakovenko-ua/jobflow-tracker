@@ -34,6 +34,7 @@ export const applicationFiltersSchema = z.object({
     .transform((value) => value === 'true')
     .optional(),
   silence: csvListOf(silenceLevelSchema).optional(),
+  salaryFrom: z.coerce.number().int().positive().max(2147483647).optional(),
 });
 
 export const applicationListQuerySchema = applicationFiltersSchema
@@ -88,9 +89,13 @@ export const applicationListItemSchema = applicationCardSchema.extend({
 
 export const applicationListResponseSchema = paginatedSchema(applicationListItemSchema);
 
+export const boardCardSchema = applicationCardSchema.extend({
+  snippet: searchSnippetSchema.optional(),
+});
+
 export const boardColumnSchema = z.object({
   count: z.int32().min(0),
-  items: z.array(applicationCardSchema).nullable(),
+  items: z.array(boardCardSchema).nullable(),
 });
 
 export const applicationBoardResponseSchema = z.object({
@@ -104,4 +109,5 @@ export type ApplicationCard = z.infer<typeof applicationCardSchema>;
 export type SearchSnippet = z.infer<typeof searchSnippetSchema>;
 export type ApplicationListItem = z.infer<typeof applicationListItemSchema>;
 export type ApplicationListResponse = z.infer<typeof applicationListResponseSchema>;
+export type BoardCard = z.infer<typeof boardCardSchema>;
 export type ApplicationBoardResponse = z.infer<typeof applicationBoardResponseSchema>;

@@ -451,9 +451,14 @@ describe('KanbanBoard drag and drop', () => {
     });
   });
 
-  it('Tab walks the density switch, then the cards column by column, then the outcome strips', async () => {
+  it('Tab walks the search, the filter pills and the density switch, then the cards column by column, then the outcome strips', async () => {
     const { user } = await boardReadyToDrag();
     const stops = [
+      screen.getByRole('textbox', { name: uk.board.filters.search.label }),
+      screen.getByRole('button', {
+        name: uk.board.filters.source.pill(uk.board.filters.source.all),
+      }),
+      screen.getByRole('button', { name: uk.board.filters.more.menu }),
       screen.getByRole('radio', { name: uk.board.density.full }),
       ...[
         DRAGGED,

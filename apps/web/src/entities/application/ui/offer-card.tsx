@@ -1,4 +1,4 @@
-import { type ApplicationCard, STAGE_LABELS } from '@jobflow/shared';
+import { type BoardCard, STAGE_LABELS } from '@jobflow/shared';
 
 import { uk } from '@/shared/i18n';
 import { cn } from '@/shared/lib/cn';
@@ -10,7 +10,7 @@ import { CARD_FRAME } from './card-frame';
 import { CardHeading } from './card-heading';
 
 export type OfferCardProps = Readonly<{
-  application: ApplicationCard;
+  application: BoardCard;
   context: ApplicationCardContext;
 }>;
 

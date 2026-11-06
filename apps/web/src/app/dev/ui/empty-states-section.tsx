@@ -5,7 +5,7 @@ import { useState } from 'react';
 import { uk } from '@/shared/i18n';
 import { cn } from '@/shared/lib/cn';
 import { Button } from '@/shared/ui/button';
-import { Chip } from '@/shared/ui/chip';
+import { ChipList } from '@/shared/ui/chip-list';
 import { EmptyState } from '@/shared/ui/empty-state';
 import { TOUCH_HEIGHT } from '@/shared/ui/touch-height';
 import { FirstRunState } from '@/widgets/kanban-board';
@@ -42,18 +42,16 @@ function FirstRunBoard() {
 function SearchFilters() {
   const [filters, setFilters] = useState<readonly string[]>(SCREENS.search.filters);
   return (
-    <div className="flex flex-wrap gap-2">
-      {filters.map((filter) => (
-        <Chip
-          key={filter}
-          label={filter}
-          tone="neutral"
-          onRemove={() => {
-            setFilters((current) => current.filter((kept) => kept !== filter));
-          }}
-        />
-      ))}
-    </div>
+    <ChipList
+      label={uk.board.filters.chips.label}
+      items={filters.map((filter) => ({
+        id: filter,
+        label: filter,
+        onRemove: () => {
+          setFilters((current) => current.filter((kept) => kept !== filter));
+        },
+      }))}
+    />
   );
 }
 

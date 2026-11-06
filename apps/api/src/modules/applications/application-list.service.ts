@@ -133,8 +133,12 @@ export class ApplicationListService {
       this.repository.countByStage(userId, filter),
       this.repository.findCards(userId, { filter, stages, sort: '-lastEventAt', now: context.now }),
     ]);
+    const snippets = await this.snippetsOf(userId, { q: filters.q, rows });
     const countOf = new Map(counts.map(({ stage, count }) => [stage, count]));
-    const cards = rows.map((row) => toApplicationCard(row, context));
+    const cards = rows.map((row) => {
+      const snippet = snippets.get(row.id);
+      return { ...toApplicationCard(row, context), ...(snippet ? { snippet } : {}) };
+    });
     return {
       columns: columnsOf((stage) => ({
         count: countOf.get(stage) ?? 0,

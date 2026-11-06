@@ -62,6 +62,8 @@ const FILTER_ROWS = [
     source: 'djinni',
     currentStage: 'applied',
     matchScore: 80,
+    salaryMin: 3000,
+    salaryMax: 4000,
     lastEventAt: daysBefore(8),
   },
   {
@@ -70,6 +72,7 @@ const FILTER_ROWS = [
     source: 'dou',
     currentStage: 'applied',
     matchScore: null,
+    salaryMin: 3600,
     lastEventAt: daysBefore(4),
   },
   {
@@ -78,6 +81,8 @@ const FILTER_ROWS = [
     source: 'linkedin',
     currentStage: 'applied',
     matchScore: 55,
+    salaryMin: 2000,
+    salaryMax: 3000,
     lastEventAt: daysBefore(3),
   },
   {
@@ -94,6 +99,7 @@ const FILTER_ROWS = [
     source: 'djinni',
     currentStage: 'final',
     matchScore: 91,
+    salaryMin: 3000,
     lastEventAt: daysBefore(14),
   },
   {
@@ -102,6 +108,7 @@ const FILTER_ROWS = [
     source: 'referral',
     currentStage: 'offer',
     matchScore: 70,
+    salaryMax: 3500,
     lastEventAt: daysBefore(30),
   },
   {
@@ -318,6 +325,8 @@ describe('the application list and board routes', () => {
       companies: ['Smereka Soft', 'Kavun Labs', 'Dub Data', 'Buk Cloud'],
     },
     { query: { source: 'dou', hasScore: 'false', stage: 'final' }, companies: ['Dub Data'] },
+    { query: { salaryFrom: '3500' }, companies: ['Smereka Soft', 'Kavun Labs', 'Lypa Pay'] },
+    { query: { salaryFrom: '3500', source: 'djinni' }, companies: ['Kavun Labs'] },
   ])('lists $companies for $query', async ({ query, companies }) => {
     const olena = await signedInWithSearch(testApp.prisma);
     await rowsFor(olena, FILTER_ROWS);
@@ -346,6 +355,14 @@ describe('the application list and board routes', () => {
         applied: { count: 1, companies: ['Smereka Soft'] },
         final: { count: 1, companies: ['Dub Data'] },
         rejected: { count: 1, companies: ['Klen Games'] },
+      },
+    },
+    {
+      query: { salaryFrom: '3500', expand: 'rejected' },
+      columns: {
+        applied: { count: 2, companies: ['Smereka Soft', 'Kavun Labs'] },
+        offer: { count: 1, companies: ['Lypa Pay'] },
+        rejected: { count: 0, companies: [] },
       },
     },
   ])(
@@ -495,8 +512,10 @@ describe('the application list and board routes', () => {
     { path: APPLICATIONS_PATH, query: { hasScore: 'yes' }, error: 'hasScore' },
     { path: APPLICATIONS_PATH, query: { searchId: '42' }, error: 'searchId' },
     { path: APPLICATIONS_PATH, query: { q: 'a\u0000b' }, error: 'q' },
+    { path: APPLICATIONS_PATH, query: { salaryFrom: '' }, error: 'salaryFrom' },
     { path: APPLICATIONS_BOARD_PATH, query: { expand: 'offer' }, error: 'expand.0' },
     { path: APPLICATIONS_BOARD_PATH, query: { q: 'a\u0000b' }, error: 'q' },
+    { path: APPLICATIONS_BOARD_PATH, query: { salaryFrom: '' }, error: 'salaryFrom' },
     { path: REASONS_SUMMARY_PATH, query: {}, error: 'stage' },
     { path: REASONS_SUMMARY_PATH, query: { stage: 'hired' }, error: 'stage' },
   ])('answers GET $path with $query by 422 at $error', async ({ path, query, error }) => {

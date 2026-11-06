@@ -35,6 +35,11 @@ const CARD = {
   aiStatus: 'done',
 } satisfies ApplicationCard;
 
+const SNIPPET = [
+  { text: 'Черги на ', match: false },
+  { text: 'Kafka', match: true },
+];
+
 const columnsOf = (stages: readonly Stage[]) =>
   Object.fromEntries(stages.map((stage) => [stage, { count: 0, items: [] }]));
 
@@ -56,6 +61,7 @@ describe('applicationListQuerySchema', () => {
       q: '  Смерека ',
       hasScore: 'false',
       silence: 'warn,silent',
+      salaryFrom: '3000',
       sort: 'lastEventAt',
       limit: '20',
       cursor: 'opaque',
@@ -66,6 +72,7 @@ describe('applicationListQuerySchema', () => {
       q: 'Смерека',
       hasScore: false,
       silence: ['warn', 'silent'],
+      salaryFrom: 3000,
       sort: 'lastEventAt',
       limit: 20,
       cursor: 'opaque',
@@ -96,6 +103,16 @@ describe('applicationListQuerySchema', () => {
     { label: 'a blank q', query: { q: '   ' }, path: 'q' },
     { label: 'a q past 200 characters', query: { q: 'q'.repeat(201) }, path: 'q' },
     { label: 'a q with a NUL character', query: { q: 'a\u0000b' }, path: 'q' },
+    { label: 'an empty salaryFrom', query: { salaryFrom: '' }, path: 'salaryFrom' },
+    { label: 'salaryFrom 0', query: { salaryFrom: '0' }, path: 'salaryFrom' },
+    { label: 'salaryFrom -1', query: { salaryFrom: '-1' }, path: 'salaryFrom' },
+    { label: 'salaryFrom 1.5', query: { salaryFrom: '1.5' }, path: 'salaryFrom' },
+    { label: 'salaryFrom abc', query: { salaryFrom: 'abc' }, path: 'salaryFrom' },
+    {
+      label: 'a salaryFrom past the INTEGER column',
+      query: { salaryFrom: '2147483648' },
+      path: 'salaryFrom',
+    },
     { label: 'a sort by createdAt', query: { sort: 'createdAt' }, path: 'sort' },
     { label: 'sort relevance without q', query: { sort: 'relevance' }, path: 'sort' },
     { label: 'limit 0', query: { limit: '0' }, path: 'limit' },
@@ -111,6 +128,10 @@ describe('applicationBoardQuerySchema', () => {
     expect(applicationBoardQuerySchema.parse({ expand: 'rejected,ghosted' })).toEqual({
       expand: ['rejected', 'ghosted'],
     });
+  });
+
+  it('reads salaryFrom 3000 as the number 3000', () => {
+    expect(applicationBoardQuerySchema.parse({ salaryFrom: '3000' })).toEqual({ salaryFrom: 3000 });
   });
 
   it('strips stage, sort, limit, cursor and searchId', () => {
@@ -137,11 +158,8 @@ describe('applicationCardSchema', () => {
 
 describe('applicationListItemSchema', () => {
   it('accepts a card with a snippet split into plain and matched parts', () => {
-    const snippet = [
-      { text: 'Черги на ', match: false },
-      { text: 'Kafka', match: true },
-    ];
-    expect(applicationListItemSchema.parse({ ...CARD, snippet })).toEqual({ ...CARD, snippet });
+    const item = { ...CARD, snippet: SNIPPET };
+    expect(applicationListItemSchema.parse(item)).toEqual(item);
   });
 
   it('refuses an empty snippet, which must be null instead', () => {
@@ -156,6 +174,22 @@ describe('applicationBoardResponseSchema', () => {
     const columns = { ...columnsOf(STAGES), screening: { count: 1, items: [CARD] } };
     const board = { columns: { ...columns, rejected: { count: 4, items: null } } };
     expect(applicationBoardResponseSchema.parse(board)).toEqual(board);
+  });
+
+  it('keeps the snippet on a matched card next to a card without one', () => {
+    const matched = { ...CARD, id: '0199f1a3-5e6f-7071-8c8d-9e0f1a2b3c4d', snippet: SNIPPET };
+    const board = {
+      columns: { ...columnsOf(STAGES), screening: { count: 2, items: [CARD, matched] } },
+    };
+    expect(applicationBoardResponseSchema.parse(board)).toEqual(board);
+  });
+
+  it('refuses an empty snippet on a board card', () => {
+    const items = [{ ...CARD, snippet: [] }];
+    const board = { columns: { ...columnsOf(STAGES), screening: { count: 1, items } } };
+    expect(issuePathsOf(applicationBoardResponseSchema.safeParse(board))).toEqual([
+      'columns.screening.items.0.snippet',
+    ]);
   });
 
   it('refuses a board without the withdrawn column', () => {

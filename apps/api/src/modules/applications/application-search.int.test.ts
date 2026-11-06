@@ -65,7 +65,7 @@ describe('the full text search of the list and the board', () => {
     return { ...olena, ids, kavunId, noteId };
   }
 
-  it('finds an application whose only Kafka is in a note, with the Kafka of the note as a matched snippet part, and counts it on the board', async () => {
+  it('finds an application whose only Kafka is in a note, with the Kafka of the note as a matched snippet part on the list and the board card, and counts it on the board', async () => {
     const { accessToken } = await olenaWithKafkaNote();
 
     const list = await listApplications(testApp.app, { accessToken, query: { q: 'kafka' } });
@@ -78,6 +78,9 @@ describe('the full text search of the list and the board', () => {
       'Kavun Labs',
       'Kafka Systems',
     ]);
+    const [kavun, kafkaSystems] = board.columns.applied.items ?? [];
+    expect(kavun?.snippet).toContainEqual(KAFKA_HIT);
+    expect(kafkaSystems).not.toHaveProperty('snippet');
   });
 
   it.each([
@@ -135,6 +138,14 @@ describe('the full text search of the list and the board', () => {
       accessToken: bohdan.accessToken,
       query: { q: 'kafka' },
     });
+    const olenaBoard = await getApplicationBoard(testApp.app, {
+      accessToken: olena.accessToken,
+      query: { q: 'kafka' },
+    });
+    const bohdanBoard = await getApplicationBoard(testApp.app, {
+      accessToken: bohdan.accessToken,
+      query: { q: 'kafka' },
+    });
     const matches = await search.findMatches(olena.userId, { q: 'kafka' });
     const headlines = await search.findSnippets(olena.userId, {
       q: 'kafka',
@@ -143,6 +154,12 @@ describe('the full text search of the list and the board', () => {
 
     expect(companiesOf(olenaList)).toEqual(['Kafka Systems', 'Kavun Labs']);
     expect(companiesOf(bohdanList)).toEqual(['Dub Data']);
+    expect(olenaBoard.columns.applied.items?.map(({ company }) => company)).toEqual([
+      'Kavun Labs',
+      'Kafka Systems',
+    ]);
+    expect(bohdanBoard.columns.applied.items?.map(({ id }) => id)).toEqual([bohdanId]);
+    expect(bohdanBoard.columns.applied.items?.[0]?.snippet).toContainEqual(KAFKA_HIT);
     expect(matches.map(({ id }) => id).sort()).toEqual([olena.ids[0], olena.ids[4]].sort());
     expect(headlines).toEqual([]);
   });

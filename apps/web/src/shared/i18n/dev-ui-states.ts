@@ -1,3 +1,7 @@
+import { board } from './board';
+
+const { emptySearch, filters } = board;
+
 export const devUiStates = {
   firstRun: {
     index: '01',
@@ -33,11 +37,11 @@ export const devUiStates = {
     },
     search: {
       content: {
-        eyebrow: 'Пошук · нічого не знайдено',
-        title: 'Немає карток за «kafka»',
-        hint: 'Пошук іде по компанії, позиції, стеку і нотатках. Спробуй частину слова або скинь фільтри.',
+        eyebrow: emptySearch.eyebrow,
+        title: emptySearch.title('kafka'),
+        hint: emptySearch.hint,
       },
-      filters: ['джерело: Djinni', 'етап: фінал'],
+      filters: [filters.chips.source('Djinni'), filters.chips.stage('фінал')],
     },
     ghosted: {
       content: {
