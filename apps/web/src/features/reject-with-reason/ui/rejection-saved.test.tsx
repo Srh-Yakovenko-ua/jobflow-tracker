@@ -3,17 +3,17 @@ import {
   type RejectionReasonsSummary,
   STAGE_MOVE_LIMITS,
 } from '@jobflow/shared';
+import { useQuery } from '@tanstack/react-query';
 import { screen, waitFor, within } from '@testing-library/react';
+import type { ReactNode } from 'react';
 import { toast } from 'sonner';
 import { afterEach, describe, expect, it } from 'vitest';
 
 import { applicationKeys } from '@/entities/application';
+import { notesQueryOptions } from '@/entities/note';
 import { errorReply, OUTAGES } from '@/test/api-handlers';
-import {
-  noteRoute,
-  reasonsSummaryRoute,
-  type ReasonsSummaryRouteOptions,
-} from '@/test/board-fixtures';
+import { reasonsSummaryRoute, type ReasonsSummaryRouteOptions } from '@/test/board-fixtures';
+import { noteRoute, notesRoute } from '@/test/note-fixtures';
 import { QueryProbe, StaleQuery, waitForQuery } from '@/test/query-status';
 import { ACME_TECH_INTERVIEW, recordedRejectionActions } from '@/test/rejection-fixtures';
 import { renderInApp } from '@/test/render-in-app';
@@ -38,6 +38,7 @@ const EARLIER_SUMMARY: RejectionReasonsSummary = {
 type StepSetup = {
   summary?: ReasonsSummaryRouteOptions | undefined;
   cached?: RejectionReasonsSummary | undefined;
+  beside?: ReactNode;
 };
 
 type SavedSetup = StepSetup & {
@@ -90,7 +91,12 @@ const INSIGHT_CASES: readonly InsightCase[] = [
   },
 ];
 
-function renderStep(step: RejectionStep, { summary, cached }: StepSetup = {}) {
+function ShownNotes() {
+  useQuery(notesQueryOptions(ACME_TECH_INTERVIEW.id));
+  return null;
+}
+
+function renderStep(step: RejectionStep, { summary, cached, beside }: StepSetup = {}) {
   const route = reasonsSummaryRoute(summary);
   server.use(route.handler);
   const { actions, ...recorded } = recordedRejectionActions();
@@ -102,6 +108,7 @@ function renderStep(step: RejectionStep, { summary, cached }: StepSetup = {}) {
         actions={actions}
       />
       <QueryProbe queryKey={SUMMARY_KEY} />
+      {beside}
     </>,
   );
   return { user, ...recorded, asked: route.sent };
@@ -229,6 +236,23 @@ describe('RejectionReasonDialog, note step', () => {
       { id: ACME_TECH_INTERVIEW.id, body: { body: 'Попросили live coding 3' } },
     ]);
     expect(finished).toEqual(['done']);
+  });
+
+  it('a saved note reloads the notes list the vacancy card shows', async () => {
+    const notes = noteRoute();
+    const shown = notesRoute();
+    server.use(notes.handler, shown.handler);
+    const { user } = renderStep({ kind: 'note' }, { beside: <ShownNotes /> });
+    await waitFor(() => {
+      expect(shown.sent).toEqual([ACME_TECH_INTERVIEW.id]);
+    });
+
+    await user.type(screen.getByLabelText("Що варто запам'ятати"), 'Попросили live coding 3');
+    await user.click(screen.getByRole('button', { name: 'Зберегти' }));
+
+    await waitFor(() => {
+      expect(shown.sent).toEqual([ACME_TECH_INTERVIEW.id, ACME_TECH_INTERVIEW.id]);
+    });
   });
 
   it('an empty note is refused at its field and nothing is sent', async () => {

@@ -20,6 +20,7 @@ export type HttpRequestOptions<T> = {
   method?: HttpMethod;
   body?: unknown;
   signal?: AbortSignal;
+  keepalive?: boolean;
 };
 
 export type HttpClient = {
@@ -40,7 +41,7 @@ function headersFor(body: unknown, token: string | undefined): Record<string, st
 
 export function createHttpClient({ baseUrl, credentials }: HttpClientOptions): HttpClient {
   function sendWith(options: HttpRequestOptions<unknown>, token: string | undefined) {
-    const { path, method = 'GET', body, signal } = options;
+    const { path, method = 'GET', body, signal, keepalive } = options;
     return send({
       url: `${baseUrl}${path}`,
       init: {
@@ -48,6 +49,7 @@ export function createHttpClient({ baseUrl, credentials }: HttpClientOptions): H
         credentials,
         headers: headersFor(body, token),
         ...(body === undefined ? {} : { body: JSON.stringify(body) }),
+        ...(keepalive === undefined ? {} : { keepalive }),
       },
       signal,
     });

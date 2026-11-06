@@ -65,7 +65,7 @@ const ringed = () => RING;
 
 const noMeta = () => null;
 
-function stageOf(value: MetaValue): Stage | null {
+export function stageOf(value: MetaValue): Stage | null {
   const parsed = stageSchema.safeParse(value);
   return parsed.success ? parsed.data : null;
 }

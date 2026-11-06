@@ -107,6 +107,7 @@ export function recordSentRequests() {
       url,
       method: init?.method,
       credentials: init?.credentials,
+      keepalive: init?.keepalive,
       body: typeof init?.body === 'string' ? (JSON.parse(init.body) as unknown) : init?.body,
     }));
 }
