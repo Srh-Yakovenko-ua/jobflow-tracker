@@ -1,52 +1,36 @@
-import type { AiCompletion, AiKind } from '@jobflow/shared';
 import { OnWorkerEvent, Processor, WorkerHost } from '@nestjs/bullmq';
 import { Logger } from '@nestjs/common';
 import { UnrecoverableError } from 'bullmq';
 
 import { failedJobFields, jobFields, type ProcessedJob } from '../../queues/processed-job.js';
-import { QUEUES } from '../../queues/queues.js';
+import { DEFAULT_JOB_OPTIONS, QUEUES } from '../../queues/queues.js';
 import { AI_JOBS, type AiCompleteJob, aiCompleteJobSchema } from './ai.jobs.js';
-import { AiClient } from './ai-client.js';
-import { AiServiceError } from './ai-service-error.js';
+import { type AiOutcome, AiService } from './ai.service.js';
 
-const failedJobSchema = aiCompleteJobSchema.pick({ kind: true, requestId: true }).partial();
-
-function isFinal(error: unknown): error is AiServiceError {
-  return (
-    error instanceof AiServiceError &&
-    error.status >= 400 &&
-    error.status < 500 &&
-    error.status !== 429
-  );
-}
+const failedJobSchema = aiCompleteJobSchema
+  .pick({ aiJobId: true, kind: true, requestId: true })
+  .partial();
 
 @Processor(QUEUES.ai.name, { concurrency: QUEUES.ai.concurrency })
 export class AiProcessor extends WorkerHost {
   private readonly logger = new Logger(AiProcessor.name);
 
-  constructor(private readonly ai: AiClient) {
+  constructor(private readonly ai: AiService) {
     super();
   }
 
-  async process(job: ProcessedJob): Promise<AiCompletion<AiKind>> {
-    const { kind, input, requestId } = this.parse(job);
-    const completion = await this.ai
-      .complete({ kind, input, requestId })
-      .catch((error: unknown) => {
-        throw isFinal(error) ? new UnrecoverableError(error.message) : error;
-      });
-    const { model, promptVersion, tokensIn, tokensOut, latencyMs } = completion;
-    this.logger.log(
-      { requestId, ...jobFields(job), kind, model, promptVersion, tokensIn, tokensOut, latencyMs },
-      'ai completion done',
-    );
-    return completion;
+  async process(job: ProcessedJob): Promise<AiOutcome | null> {
+    return this.ai.complete({
+      job: this.parse(job),
+      finalAttempt: job.attemptsMade + 1 >= DEFAULT_JOB_OPTIONS.attempts,
+      logFields: jobFields(job),
+    });
   }
 
   @OnWorkerEvent('failed')
   onFailed(job: ProcessedJob | undefined, error: Error): void {
-    const { kind, requestId } = failedJobSchema.safeParse(job?.data).data ?? {};
-    this.logger.warn({ requestId, kind, ...failedJobFields(job, error) }, 'ai job failed');
+    const { aiJobId, kind, requestId } = failedJobSchema.safeParse(job?.data).data ?? {};
+    this.logger.warn({ requestId, aiJobId, kind, ...failedJobFields(job, error) }, 'ai job failed');
   }
 
   @OnWorkerEvent('error')

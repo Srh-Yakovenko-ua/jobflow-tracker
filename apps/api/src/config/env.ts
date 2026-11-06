@@ -4,6 +4,7 @@ import { z } from 'zod';
 const httpUrl = z.url({ protocol: /^https?$/ });
 const requiredText = z.string().min(1);
 const positiveCount = z.coerce.number().int().positive();
+const usdPrice = z.coerce.number().nonnegative().default(0);
 
 export const OAUTH_CREDENTIAL_KEYS = {
   github: { clientId: 'OAUTH_GITHUB_CLIENT_ID', clientSecret: 'OAUTH_GITHUB_CLIENT_SECRET' },
@@ -45,6 +46,9 @@ const envFields = z.object({
   WEB_ORIGIN: httpUrl,
   AI_SERVICE_URL: httpUrl.default('http://localhost:8001'),
   AI_DAILY_LIMIT: positiveCount.default(50),
+  AI_MONTHLY_TOKEN_CAP: positiveCount.default(1_000_000),
+  AI_USD_PER_MILLION_TOKENS_IN: usdPrice,
+  AI_USD_PER_MILLION_TOKENS_OUT: usdPrice,
   RATE_LIMIT_LOGIN_PER_MINUTE: positiveCount.default(5),
   RATE_LIMIT_REGISTER_PER_HOUR: positiveCount.default(3),
   RATE_LIMIT_AI_PER_HOUR: positiveCount.default(30),

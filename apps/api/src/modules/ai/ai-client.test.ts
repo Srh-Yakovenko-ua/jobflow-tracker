@@ -4,7 +4,7 @@ import { jwtVerify } from 'jose';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { validateEnv } from '../../config/env.js';
-import { VACANCY_COMPLETION, VACANCY_TEXT } from '../../test/ai.js';
+import { VACANCY_CALL, VACANCY_COMPLETION, VACANCY_TEXT } from '../../test/ai.js';
 import { testJwtKeys } from '../../test/auth.js';
 import { exampleEnv } from '../../test/example-env.js';
 import {
@@ -15,22 +15,16 @@ import {
   stalled,
   timeOutAtOnce,
 } from '../../test/fetch.js';
-import { AiClient, type AiCompleteCall } from './ai-client.js';
+import { AiClient } from './ai-client.js';
 
 const AI_SERVICE_URL = 'http://ai.test:8001';
-
-const VACANCY_CALL: AiCompleteCall = {
-  kind: 'vacancy_parse',
-  input: { text: VACANCY_TEXT },
-  requestId: 'req-ai-1',
-};
 
 const DOC_04_UNAUTHORIZED = {
   type: 'unauthorized',
   title: 'Unauthorized',
   status: 401,
   detail: 'Missing service token',
-  requestId: 'req-ai-1',
+  requestId: 'req-ai-7',
 } satisfies ErrorResponse;
 
 const aiClient = new AiClient(
@@ -61,7 +55,7 @@ describe('AiClient.complete', () => {
     expect(await aiClient.complete(VACANCY_CALL)).toEqual(VACANCY_COMPLETION);
 
     expect(calls.map(({ url }) => url)).toEqual(['http://ai.test:8001/v1/complete/vacancy_parse']);
-    expect(calls[0]?.headers.get('x-request-id')).toBe('req-ai-1');
+    expect(calls[0]?.headers.get('x-request-id')).toBe('req-ai-7');
     const { payload } = await jwtVerify(bearerOf(calls[0]), testJwtKeys.publicKey, {
       audience: 'jobflow-ai',
       issuer: 'jobflow-api',
@@ -94,10 +88,12 @@ describe('AiClient.complete', () => {
     expect(calls).toEqual([]);
   });
 
-  it('refuses a 200 whose body is not a vacancy_parse completion', async () => {
+  it('refuses a 200 whose body is not a vacancy_parse completion with a final 422 ai_invalid_output', async () => {
     replyWith(() => Response.json({ ...VACANCY_COMPLETION, output: { company: 'Acme' } }));
 
-    await expect(aiClient.complete(VACANCY_CALL)).rejects.toMatchObject({ name: 'ZodError' });
+    await expect(aiClient.complete(VACANCY_CALL)).rejects.toMatchObject(
+      aiServiceError(422, 'ai_invalid_output'),
+    );
   });
 
   it.each([

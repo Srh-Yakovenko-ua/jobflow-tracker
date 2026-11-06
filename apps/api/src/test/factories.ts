@@ -1,5 +1,6 @@
 import { fakerUK as faker } from '@faker-js/faker';
 import { SOURCES, type Stage, STAGES } from '@jobflow/shared';
+import { buildVacancyCompletion } from '@jobflow/shared/testing';
 
 import type {
   AiJobStatus,
@@ -46,7 +47,16 @@ export type NewReminder = {
   scheduledEventId?: string;
 };
 
-export type NewAiJob = { userId: string; applicationId: string; status: AiJobStatus };
+export type NewAiJob = {
+  userId: string;
+  applicationId: string;
+  status: AiJobStatus;
+  kind?: string;
+  createdAt?: Date;
+};
+
+export type NewAiResult = Pick<Prisma.AiResultUncheckedCreateInput, 'userId'> &
+  Partial<Prisma.AiResultUncheckedCreateInput>;
 
 export type NewNote = { applicationId: string; body: string };
 
@@ -173,8 +183,24 @@ export async function createNotes(prisma: PrismaService, notes: NewNote[]): Prom
   return created.map(({ id }) => id);
 }
 
-export async function createAiJob(prisma: PrismaService, job: NewAiJob): Promise<string> {
-  const created = await prisma.aiJob.create({ data: { ...job, kind: 'parse_vacancy' } });
+export async function createAiJob(
+  prisma: PrismaService,
+  { kind = 'vacancy_parse', ...job }: NewAiJob,
+): Promise<string> {
+  const created = await prisma.aiJob.create({ data: { ...job, kind } });
+  return created.id;
+}
+
+export async function createAiResult(prisma: PrismaService, fields: NewAiResult): Promise<string> {
+  const created = await prisma.aiResult.create({
+    data: {
+      kind: 'vacancy_parse',
+      inputHash: faker.string.hexadecimal({ length: 64, casing: 'lower', prefix: '' }),
+      status: 'succeeded',
+      ...buildVacancyCompletion(),
+      ...fields,
+    },
+  });
   return created.id;
 }
 
