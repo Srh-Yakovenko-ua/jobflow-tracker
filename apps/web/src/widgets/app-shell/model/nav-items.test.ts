@@ -32,7 +32,9 @@ describe('activeHrefOf', () => {
     ['/board/archive', '/board'],
     ['/settings', '/settings'],
     ['/boardroom', undefined],
+    ['/applications', '/board'],
     ['/applications/1', undefined],
+    ['/applications/table', undefined],
   ])('marks %s as %s', (pathname, active) => {
     expect(activeHrefOf(pathname, NAV_ITEMS)).toBe(active);
   });

@@ -2,13 +2,13 @@
 
 import { useState } from 'react';
 
+import { FirstRunState } from '@/entities/application';
 import { uk } from '@/shared/i18n';
 import { cn } from '@/shared/lib/cn';
 import { Button } from '@/shared/ui/button';
 import { ChipList } from '@/shared/ui/chip-list';
 import { EmptyState } from '@/shared/ui/empty-state';
 import { TOUCH_HEIGHT } from '@/shared/ui/touch-height';
-import { FirstRunState } from '@/widgets/kanban-board';
 
 import { GallerySection, STATE_GRID, StateRule } from './gallery';
 import { ANALYTICS_PROGRESS } from './state-specimens';

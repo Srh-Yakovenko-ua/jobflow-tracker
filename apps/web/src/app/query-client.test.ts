@@ -53,15 +53,19 @@ describe('createQueryClient', () => {
     expect(mutationFn).toHaveBeenCalledTimes(1);
   });
 
-  it('keeps a query fresh for 30 s and refetches on window focus only for the board', () => {
+  it('keeps a query fresh for 30 s and refetches on window focus only for the board and the table', () => {
     const queryClient = createQueryClient();
+    const focusRefetchOf = (queryKey: readonly unknown[]) =>
+      queryClient.defaultQueryOptions({ queryKey }).refetchOnWindowFocus;
 
-    const board = queryClient.defaultQueryOptions({ queryKey: applicationKeys.board({}) });
-    const detail = queryClient.defaultQueryOptions({
-      queryKey: applicationKeys.detail(APPLICATION_ID),
+    expect(queryClient.defaultQueryOptions({ queryKey: applicationKeys.board({}) })).toMatchObject({
+      staleTime: 30_000,
+      refetchOnWindowFocus: true,
     });
-
-    expect(board).toMatchObject({ staleTime: 30_000, refetchOnWindowFocus: true });
-    expect(detail).toMatchObject({ staleTime: 30_000, refetchOnWindowFocus: false });
+    expect(focusRefetchOf(applicationKeys.table({ q: 'react' }))).toBe(true);
+    expect(focusRefetchOf(applicationKeys.list({ limit: 8, sort: '-lastEventAt' }))).toBe(false);
+    expect(
+      queryClient.defaultQueryOptions({ queryKey: applicationKeys.detail(APPLICATION_ID) }),
+    ).toMatchObject({ staleTime: 30_000, refetchOnWindowFocus: false });
   });
 });

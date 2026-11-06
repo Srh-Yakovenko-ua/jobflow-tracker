@@ -6,30 +6,30 @@ import { createStore } from 'zustand/vanilla';
 import { createStoreContext } from '@/shared/lib/store-context';
 
 import {
-  type BoardFilterChip,
-  boardFiltersOf,
+  applicationFiltersOf,
+  type FilterChip,
   toggledIn,
   writeFiltersToUrl,
-} from './board-filters';
+} from './application-filters';
 
-export type BoardFiltersActions = Readonly<{
+export type ApplicationFiltersActions = Readonly<{
   setQuery: (text: string) => void;
   toggleSource: (source: Source) => void;
   toggleStage: (stage: Stage) => void;
   toggleHasScore: () => void;
   toggleSilentOnly: () => void;
   setSalaryFrom: (text: string) => void;
-  remove: (chip: BoardFilterChip) => void;
+  remove: (chip: FilterChip) => void;
   reset: () => void;
 }>;
 
-export type BoardFiltersStore = Readonly<{
+export type ApplicationFiltersStore = Readonly<{
   filters: ApplicationFilters;
-  actions: BoardFiltersActions;
+  actions: ApplicationFiltersActions;
 }>;
 
-export function createBoardFiltersStore(initial: ApplicationFilters) {
-  return createStore<BoardFiltersStore>()((set, get) => {
+export function createApplicationFiltersStore(initial: ApplicationFilters) {
+  return createStore<ApplicationFiltersStore>()((set, get) => {
     const current = () => get().filters;
     const commit = (filters: ApplicationFilters) => {
       writeFiltersToUrl(filters);
@@ -57,7 +57,7 @@ export function createBoardFiltersStore(initial: ApplicationFilters) {
           patch({ silence: toggledIn(current().silence, 'silent') });
         },
         setSalaryFrom: (text) => {
-          patch({ salaryFrom: boardFiltersOf({ salaryFrom: text }).salaryFrom });
+          patch({ salaryFrom: applicationFiltersOf({ salaryFrom: text }).salaryFrom });
         },
         remove: (chip) => {
           patch(chip.removal);
@@ -71,8 +71,8 @@ export function createBoardFiltersStore(initial: ApplicationFilters) {
 }
 
 const { Provider, useStoreSelector } = createStoreContext({
-  name: 'BoardFilters',
-  create: createBoardFiltersStore,
+  name: 'ApplicationFilters',
+  create: createApplicationFiltersStore,
 });
 
-export { Provider as BoardFiltersProvider, useStoreSelector as useBoardFilters };
+export { Provider as ApplicationFiltersProvider, useStoreSelector as useApplicationFilters };

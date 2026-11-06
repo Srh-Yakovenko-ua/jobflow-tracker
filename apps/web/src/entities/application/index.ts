@@ -1,9 +1,15 @@
 export { applicationQueryOptions } from './api/application';
 export { boardQueryOptions } from './api/board';
-export { applicationListQueryOptions } from './api/list';
+export {
+  applicationListQueryOptions,
+  type ApplicationPageRequest,
+  fetchApplicationPage,
+} from './api/list';
+export { applicationTableQueryOptions } from './api/table';
 export { timelineQueryOptions } from './api/timeline';
 export { daysInFunnelOf } from './lib/days-in-funnel';
 export { formatAmount, formatSalaryRange } from './lib/salary';
+export { isSearchable, SEARCH_LIMITS } from './lib/search-limits';
 export { silentCountOf } from './lib/silent-count';
 export { formatTimelineDate, type TimelineDateInput } from './lib/timeline-date';
 export type { ApplicationMove, MovingApplication } from './model/application-move';
@@ -14,6 +20,7 @@ export { applicationKeys, timelineKeys } from './model/keys';
 export { useSilentCount } from './model/use-silent-count';
 export { ApplicationCard, type ApplicationCardProps } from './ui/application-card';
 export { SCHEDULED_EVENT_ICON } from './ui/event-icon';
+export { FirstRunState, type FirstRunStateProps } from './ui/first-run-state';
 export { NextEventChip, type NextEventChipProps } from './ui/next-event-chip';
 export { OutcomeBadge, type OutcomeBadgeProps } from './ui/outcome-badge';
 export { ScoreBadge, type ScoreBadgeProps } from './ui/score-badge';

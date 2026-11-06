@@ -118,6 +118,21 @@ export function TextSkeleton() {
   );
 }
 
+export function TableSkeleton() {
+  const motion = useSkeletonMotion();
+  return (
+    <div aria-hidden className="flex flex-col">
+      {PLOT_BARS.map((row) => (
+        <div key={row} className="flex h-11.5 items-center gap-3 border-b border-line-soft px-4">
+          <Bar motion="static" className="size-4.5" />
+          <Bar motion={motion} className="h-3.25 w-[34%]" />
+          <Bar motion="static" className="ml-auto h-2.5 w-[18%]" />
+        </div>
+      ))}
+    </div>
+  );
+}
+
 export type PageSkeletonProps = Readonly<{ className?: string }>;
 
 export function PageSkeleton({ className }: PageSkeletonProps) {

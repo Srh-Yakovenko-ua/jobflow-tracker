@@ -3,20 +3,20 @@
 import { Search } from 'lucide-react';
 import { useRef } from 'react';
 
-import { SEARCH_LIMITS } from '@/features/search-applications';
+import { SEARCH_LIMITS } from '@/entities/application';
 import { uk } from '@/shared/i18n';
 import { ClearButton } from '@/shared/ui/clear-button';
 import { Input } from '@/shared/ui/input';
 
-import { useBoardFilters } from '../model/board-filters-store';
+import { useApplicationFilters } from '../model/filters-store';
 
 const COPY = uk.board.filters.search;
 
-export const BOARD_SEARCH_ID = 'board-search';
+export const FILTER_SEARCH_ID = 'filter-search';
 
-export function BoardSearch() {
-  const text = useBoardFilters((store) => store.filters.q ?? '');
-  const { setQuery } = useBoardFilters((store) => store.actions);
+export function FilterSearch() {
+  const text = useApplicationFilters((store) => store.filters.q ?? '');
+  const { setQuery } = useApplicationFilters((store) => store.actions);
   const inputRef = useRef<HTMLInputElement>(null);
   const clear = () => {
     setQuery('');
@@ -25,7 +25,7 @@ export function BoardSearch() {
   return (
     <Input
       ref={inputRef}
-      id={BOARD_SEARCH_ID}
+      id={FILTER_SEARCH_ID}
       value={text}
       onChange={(event) => {
         setQuery(event.target.value);

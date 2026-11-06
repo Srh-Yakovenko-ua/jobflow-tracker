@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { boardFiltersOf, chipsOf } from './board-filters';
+import { applicationFiltersOf, chipsOf } from './application-filters';
 
 const EVERY_FILTER = {
   source: 'djinni',
@@ -11,9 +11,9 @@ const EVERY_FILTER = {
   q: 'kafka',
 };
 
-describe('boardFiltersOf', () => {
-  it('reads every board filter back from the URL of a reload', () => {
-    expect(boardFiltersOf(EVERY_FILTER)).toEqual({
+describe('applicationFiltersOf', () => {
+  it('reads every filter back from the URL of a reload', () => {
+    expect(applicationFiltersOf(EVERY_FILTER)).toEqual({
       source: ['djinni'],
       stage: ['final'],
       hasScore: true,
@@ -25,7 +25,7 @@ describe('boardFiltersOf', () => {
 
   it('drops a hand-edited value it cannot read and keeps the rest', () => {
     expect(
-      boardFiltersOf({
+      applicationFiltersOf({
         stage: 'bogus',
         salaryFrom: 'abc',
         hasScore: 'yes',
@@ -38,7 +38,7 @@ describe('boardFiltersOf', () => {
   });
 
   it('reads comma lists of sources and stages', () => {
-    expect(boardFiltersOf({ source: 'djinni,dou', stage: 'screening,final' })).toEqual({
+    expect(applicationFiltersOf({ source: 'djinni,dou', stage: 'screening,final' })).toEqual({
       source: ['djinni', 'dou'],
       stage: ['screening', 'final'],
     });
@@ -48,7 +48,7 @@ describe('boardFiltersOf', () => {
 describe('chipsOf', () => {
   it('names one chip per source, per stage, then Match Score, silence and salary', () => {
     expect(
-      chipsOf({ ...boardFiltersOf(EVERY_FILTER), source: ['djinni', 'dou'] }).map(
+      chipsOf({ ...applicationFiltersOf(EVERY_FILTER), source: ['djinni', 'dou'] }).map(
         (chip) => chip.label,
       ),
     ).toEqual([
@@ -61,7 +61,7 @@ describe('chipsOf', () => {
     ]);
   });
 
-  it('a board without Match Score is named as such', () => {
+  it('a filter for applications without Match Score is named as such', () => {
     expect(chipsOf({ hasScore: false }).map((chip) => chip.label)).toEqual(['без Match Score']);
   });
 

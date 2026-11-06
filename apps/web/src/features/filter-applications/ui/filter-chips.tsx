@@ -4,15 +4,15 @@ import { uk } from '@/shared/i18n';
 import { Button, type ButtonLinkLook } from '@/shared/ui/button';
 import { ChipList } from '@/shared/ui/chip-list';
 
-import { chipsOf } from '../model/board-filters';
-import { useBoardFilters } from '../model/board-filters-store';
-import { BOARD_SEARCH_ID } from './board-search';
+import { chipsOf } from '../model/application-filters';
+import { useApplicationFilters } from '../model/filters-store';
+import { FILTER_SEARCH_ID } from './filter-search';
 
 const COPY = uk.board.filters;
 
 export function FilterChips() {
-  const filters = useBoardFilters((store) => store.filters);
-  const { remove } = useBoardFilters((store) => store.actions);
+  const filters = useApplicationFilters((store) => store.filters);
+  const { remove } = useApplicationFilters((store) => store.actions);
   const chips = chipsOf(filters);
   if (chips.length === 0) {
     return null;
@@ -30,14 +30,14 @@ export function FilterChips() {
 export type ResetFiltersButtonProps = Readonly<{ look: ButtonLinkLook }>;
 
 export function ResetFiltersButton({ look }: ResetFiltersButtonProps) {
-  const { reset } = useBoardFilters((store) => store.actions);
+  const { reset } = useApplicationFilters((store) => store.actions);
   return (
     <Button
       variant={look.variant}
       size={look.size}
       onClick={() => {
         reset();
-        document.getElementById(BOARD_SEARCH_ID)?.focus();
+        document.getElementById(FILTER_SEARCH_ID)?.focus();
       }}
     >
       {COPY.reset}
@@ -46,7 +46,7 @@ export function ResetFiltersButton({ look }: ResetFiltersButtonProps) {
 }
 
 export function FilterChipsRow() {
-  const active = useBoardFilters((store) => chipsOf(store.filters).length > 0);
+  const active = useApplicationFilters((store) => chipsOf(store.filters).length > 0);
   if (!active) {
     return null;
   }

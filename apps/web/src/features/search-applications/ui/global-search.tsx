@@ -6,6 +6,7 @@ import { Search } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 
+import { isSearchable, SEARCH_LIMITS } from '@/entities/application';
 import { uk } from '@/shared/i18n';
 import { cn } from '@/shared/lib/cn';
 import { ClearButton } from '@/shared/ui/clear-button';
@@ -13,7 +14,7 @@ import { FIELD_SURFACE } from '@/shared/ui/field-surface';
 import { Kbd } from '@/shared/ui/kbd';
 import { Popover, PopoverAnchor, PopoverContent } from '@/shared/ui/popover';
 
-import { isSearchable, SEARCH_LIMITS, useApplicationSearch } from '../model/use-application-search';
+import { useApplicationSearch } from '../model/use-application-search';
 import { SEARCH_SHORTCUT, useSlashShortcut } from '../model/use-slash-shortcut';
 import { SearchResults } from './search-results';
 

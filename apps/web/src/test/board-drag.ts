@@ -36,7 +36,7 @@ function heightOf(element: HTMLElement): number {
   if (element.matches('[data-index]')) {
     return VIRTUAL_BOX.row;
   }
-  return element.matches('[data-column-scroll]') ? VIRTUAL_BOX.scroller : 0;
+  return element.matches('[data-column-scroll], [data-table-scroll]') ? VIRTUAL_BOX.scroller : 0;
 }
 
 export function layOutColumns() {

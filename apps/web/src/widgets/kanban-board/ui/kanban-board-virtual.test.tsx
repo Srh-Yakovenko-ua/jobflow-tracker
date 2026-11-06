@@ -10,6 +10,7 @@ import { boardReadyToDrag, columnNamed } from '@/test/render-board';
 import { DROP_GLIDE } from '../model/drop-glide';
 
 vi.mock('next/link', () => import('@/test/link'));
+vi.mock('next/navigation', () => import('@/test/navigation'));
 
 const PICKED = 'Senior Frontend Engineer';
 

@@ -12,6 +12,12 @@ const CARDS_BELOW = {
   other: 'карток нижче',
 } as const satisfies PluralForms;
 
+const VACANCIES = {
+  one: 'вакансію',
+  few: 'вакансії',
+  other: 'вакансій',
+} as const satisfies PluralForms;
+
 type StageNames = { from: string; to: string };
 
 type DropNames = { position: string; stage: string | undefined };
@@ -40,6 +46,13 @@ const move = {
     title: 'Такий перехід неможливий',
     description: `З «${from}» картка не переходить у «${to}». Вона повернулася на місце.`,
   }),
+  bulk: {
+    moved: (count: number) =>
+      count === 0 ? 'Нічого не перенесено' : `Перенесено ${countedUk(count, VACANCIES)}`,
+    failed: (count: number) => `Не вдалося перенести ${countedUk(count, VACANCIES)}.`,
+    skipped: (count: number) =>
+      `Пропущено ${countedUk(count, VACANCIES)}: для них такого переходу немає.`,
+  },
   a11y: {
     roleDescription: 'картка для перетягування',
     instructions:
@@ -100,7 +113,7 @@ const reject = {
 } as const;
 
 const filters = {
-  search: { label: 'Пошук по дошці', placeholder: 'компанія, посада або стек' },
+  search: { label: 'Пошук по картках', placeholder: 'компанія, посада або стек' },
   source: { menu: 'Джерело', pill: (picked: string) => `Джерело: ${picked}`, all: 'усі' },
   more: {
     menu: 'Фільтри',
@@ -141,6 +154,7 @@ export const board = {
     footnote: "колонки «відмова» і «ghosted» з'являться, коли будуть потрібні",
   },
   density: { label: 'Вигляд карток', full: 'Повні', compact: 'Щільні' },
+  views: { label: 'Подання', board: 'Дошка', table: 'Таблиця' },
   moreBelow: (count: number) => `ще ${countedUk(count, CARDS_BELOW)}`,
   finalNote: ['Тут буває тісно рідко.', 'Це нормально.'],
   columnEmpty: ['тут поки порожньо'],

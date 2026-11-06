@@ -20,8 +20,8 @@ import { Input } from '@/shared/ui/input';
 import { Popover, PopoverContent, PopoverTrigger } from '@/shared/ui/popover';
 import type { ChoiceOption } from '@/shared/ui/radio-group';
 
-import { chipsOf } from '../model/board-filters';
-import { useBoardFilters } from '../model/board-filters-store';
+import { chipsOf } from '../model/application-filters';
+import { useApplicationFilters } from '../model/filters-store';
 
 const COPY = uk.board.filters;
 
@@ -109,8 +109,8 @@ function ChoiceChecks<Value extends string>({
 }
 
 function SourceMenu() {
-  const sources = useBoardFilters((store) => store.filters.source);
-  const { toggleSource } = useBoardFilters((store) => store.actions);
+  const sources = useApplicationFilters((store) => store.filters.source);
+  const { toggleSource } = useApplicationFilters((store) => store.actions);
   const pill = { label: sourcePillOf(sources), picked: sources !== undefined };
   return (
     <FilterPill pill={pill} menu={COPY.source.menu}>
@@ -125,8 +125,8 @@ function SourceMenu() {
 }
 
 function MoreFiltersMenu() {
-  const filters = useBoardFilters((store) => store.filters);
-  const actions = useBoardFilters((store) => store.actions);
+  const filters = useApplicationFilters((store) => store.filters);
+  const actions = useApplicationFilters((store) => store.actions);
   const count = chipsOf({ ...filters, source: undefined }).length;
   const salary = filters.salaryFrom === undefined ? '' : String(filters.salaryFrom);
   return (
@@ -164,7 +164,7 @@ function MoreFiltersMenu() {
   );
 }
 
-export function BoardFilterMenus() {
+export function FilterMenus() {
   return (
     <>
       <SourceMenu />
