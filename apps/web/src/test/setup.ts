@@ -4,7 +4,7 @@ import { afterAll, afterEach, beforeAll, beforeEach } from 'vitest';
 
 import { installFakeLockManager } from './fake-lock-manager';
 import { releaseHeldLatches } from './latch';
-import { stubMotionPreference } from './motion-preference';
+import { resetMediaQueries } from './media-query';
 import { server } from './server';
 
 MotionGlobalConfig.skipAnimations = true;
@@ -40,7 +40,7 @@ beforeAll(() => {
 });
 beforeEach(() => {
   installFakeLockManager();
-  stubMotionPreference('no-preference');
+  resetMediaQueries();
 });
 afterEach(() => {
   cleanup();

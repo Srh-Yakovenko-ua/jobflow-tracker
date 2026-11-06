@@ -1,7 +1,8 @@
 import type { ApplicationBoardQuery } from '@jobflow/shared';
 import { useQuery } from '@tanstack/react-query';
 
-import { boardQueryOptions, silentCountOf } from '@/entities/application';
+import { boardQueryOptions } from '../api/board';
+import { silentCountOf } from '../lib/silent-count';
 
 const SILENT_ONLY: ApplicationBoardQuery = { silence: ['silent'] };
 

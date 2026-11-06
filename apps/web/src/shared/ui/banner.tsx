@@ -1,6 +1,11 @@
 import type { ReactNode } from 'react';
 
+import { uk } from '@/shared/i18n';
 import { cn } from '@/shared/lib/cn';
+
+import { Button } from './button';
+
+const LOAD_FAILED = uk.states.errors.loadFailed;
 
 export type BannerTone = 'info' | 'error';
 
@@ -30,6 +35,19 @@ export function Banner({ tone, content }: BannerProps) {
         <p className="text-[13px] leading-[1.35] font-semibold text-ink">{content.title}</p>
         <p className="text-[12px] leading-[1.45] text-ink-2">{content.description}</p>
       </div>
+    </div>
+  );
+}
+
+export type LoadFailedAlertProps = Readonly<{ onRetry: () => void; className?: string }>;
+
+export function LoadFailedAlert({ onRetry, className }: LoadFailedAlertProps) {
+  return (
+    <div className={cn('flex flex-wrap items-center gap-2', className)}>
+      <Banner tone="error" content={{ title: LOAD_FAILED.title, description: LOAD_FAILED.body }} />
+      <Button variant="secondary" size="sm" onClick={onRetry}>
+        {LOAD_FAILED.action}
+      </Button>
     </div>
   );
 }

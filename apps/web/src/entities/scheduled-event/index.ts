@@ -1,3 +1,4 @@
+export { calendarQueryOptions } from './api/calendar';
 export {
   createScheduledEvent,
   type CreateScheduledEventRequest,

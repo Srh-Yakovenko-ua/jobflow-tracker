@@ -6,6 +6,8 @@ import { analyticsKeys } from '@/entities/analytics';
 import { applicationKeys, timelineKeys } from '@/entities/application';
 import { notificationKeys } from '@/entities/notification';
 import { resumeKeys } from '@/entities/resume';
+import { scheduledEventKeys } from '@/entities/scheduled-event';
+import { KYIV_WEEK } from '@/test/calendar-fixtures';
 
 import { invalidateAfterMove } from './invalidate-after-move';
 
@@ -23,6 +25,8 @@ function clientWithOneQueryPerKey() {
     resumeKeys.list(),
     analyticsKeys.summary(),
     notificationKeys.list(),
+    scheduledEventKeys.calendar(KYIV_WEEK),
+    scheduledEventKeys.list(APPLICATION_ID),
   ];
   queryKeys.forEach((queryKey) => queryClient.setQueryData(queryKey, {}));
   return queryClient;
@@ -37,7 +41,7 @@ function invalidatedKeysOf(queryClient: QueryClient) {
 }
 
 describe('invalidateAfterMove', () => {
-  it('invalidates every board, every application detail, the reasons summaries, every timeline and the analytics summary and nothing else', async () => {
+  it('invalidates every board, every application detail, the reasons summaries, every timeline, the analytics summary and every calendar range and nothing else', async () => {
     const queryClient = clientWithOneQueryPerKey();
 
     await invalidateAfterMove(queryClient);
@@ -49,6 +53,7 @@ describe('invalidateAfterMove', () => {
       ['applications', 'reasons-summary', 'tech_interview'],
       ['timeline', APPLICATION_ID],
       ['analytics', 'summary'],
+      ['scheduled-events', 'calendar', KYIV_WEEK],
     ]);
   });
 });
