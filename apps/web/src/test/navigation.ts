@@ -6,12 +6,14 @@ export const replace = vi.fn<(href: string) => void>();
 
 export const back = vi.fn<() => void>();
 
-function boardPathname(): string {
-  return '/board';
+export const route = { pathname: '/board' };
+
+function currentPathname(): string {
+  return route.pathname;
 }
 
 function stubRouter() {
   return { push, replace, prefetch: vi.fn(), back, forward: vi.fn() };
 }
 
-export { boardPathname as usePathname, stubRouter as useRouter };
+export { currentPathname as usePathname, stubRouter as useRouter };

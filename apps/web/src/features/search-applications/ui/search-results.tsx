@@ -1,7 +1,13 @@
 'use client';
 
-import { type ApplicationCard, isActiveStage, type Stage } from '@jobflow/shared';
+import {
+  type ApplicationCard,
+  type ApplicationListItem,
+  isActiveStage,
+  type Stage,
+} from '@jobflow/shared';
 import { Command } from 'cmdk';
+import type { ReactNode } from 'react';
 
 import { OutcomeBadge, SearchSnippet, StageChip } from '@/entities/application';
 import { uk } from '@/shared/i18n';
@@ -20,9 +26,23 @@ export type SearchResultsProps = Readonly<{
   onPick: (application: ApplicationCard) => void;
 }>;
 
+export type ApplicationResultItemProps = Readonly<{
+  application: ApplicationListItem;
+  onPick: (application: ApplicationCard) => void;
+}>;
+
+export type ApplicationOptionContentProps = Readonly<{
+  application: Pick<ApplicationCard, 'id' | 'company' | 'position'>;
+  footnote?: ReactNode;
+}>;
+
+export type SearchStatusProps = Readonly<{ search: ApplicationSearch }>;
+
+export type SearchRetryItemProps = SearchStatusProps & Readonly<{ forceMount?: boolean }>;
+
 const STATUS_ROW = 'caption flex items-center gap-2 px-2.5 py-3';
 
-function SearchStatus({ search }: Readonly<{ search: ApplicationSearch }>) {
+export function SearchStatus({ search }: SearchStatusProps) {
   if (search.isPending) {
     return (
       <div role="status" className={cn(STATUS_ROW, 'text-ink-3')}>
@@ -45,8 +65,48 @@ function StageMark({ stage }: Readonly<{ stage: Stage }>) {
   return isActiveStage(stage) ? <StageChip stage={stage} /> : <OutcomeBadge outcome={stage} />;
 }
 
-function optionOf(application: ApplicationCard) {
-  return { value: application.id, label: application.position, detail: application.company };
+export function ApplicationOptionContent({ application, footnote }: ApplicationOptionContentProps) {
+  return (
+    <OptionContent
+      option={{ value: application.id, label: application.position, detail: application.company }}
+      label={application.position}
+      footnote={footnote}
+    />
+  );
+}
+
+export function ApplicationResultItem({ application, onPick }: ApplicationResultItemProps) {
+  return (
+    <Command.Item
+      value={application.id}
+      onSelect={() => {
+        onPick(application);
+      }}
+      className={COMMAND_ITEM}
+    >
+      <ApplicationOptionContent
+        application={application}
+        footnote={application.snippet && <SearchSnippet snippet={application.snippet} />}
+      />
+      <StageMark stage={application.currentStage} />
+    </Command.Item>
+  );
+}
+
+export function SearchRetryItem({ search, forceMount = false }: SearchRetryItemProps) {
+  if (!search.isError) return null;
+  return (
+    <Command.Item
+      value="retry"
+      forceMount={forceMount}
+      onSelect={() => {
+        void search.refetch();
+      }}
+      className={cn(COMMAND_ITEM, 'font-semibold text-link')}
+    >
+      {SEARCH.retry}
+    </Command.Item>
+  );
 }
 
 export function SearchResults({ search, onPick }: SearchResultsProps) {
@@ -55,33 +115,9 @@ export function SearchResults({ search, onPick }: SearchResultsProps) {
       <SearchStatus search={search} />
       <Command.List label={SEARCH.results} className="max-h-80 overflow-y-auto">
         {search.data?.items.map((application) => (
-          <Command.Item
-            key={application.id}
-            value={application.id}
-            onSelect={() => {
-              onPick(application);
-            }}
-            className={COMMAND_ITEM}
-          >
-            <OptionContent
-              option={optionOf(application)}
-              label={application.position}
-              footnote={application.snippet && <SearchSnippet snippet={application.snippet} />}
-            />
-            <StageMark stage={application.currentStage} />
-          </Command.Item>
+          <ApplicationResultItem key={application.id} application={application} onPick={onPick} />
         ))}
-        {search.isError && (
-          <Command.Item
-            value="retry"
-            onSelect={() => {
-              void search.refetch();
-            }}
-            className={cn(COMMAND_ITEM, 'font-semibold text-link')}
-          >
-            {SEARCH.retry}
-          </Command.Item>
-        )}
+        <SearchRetryItem search={search} />
       </Command.List>
     </>
   );

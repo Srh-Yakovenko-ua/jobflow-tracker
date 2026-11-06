@@ -1,7 +1,7 @@
 import type { ApplicationFilters, ApplicationListItem } from '@jobflow/shared';
 import { act, fireEvent, screen, waitFor, within } from '@testing-library/react';
 import type { RequestHandler } from 'msw';
-import { http, HttpResponse } from 'msw/http';
+import { http } from 'msw/http';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { FULL_CARD } from '@/entities/application';
@@ -117,16 +117,6 @@ async function hideColumns(user: ReturnType<typeof renderInApp>, names: readonly
     await user.click(checkboxNamed(name));
   }
   await user.keyboard('{Escape}');
-}
-
-function queryAwareRoute(items: readonly ApplicationListItem[]) {
-  const sent: string[] = [];
-  const handler = http.get(apiUrl('/applications'), ({ request }) => {
-    const { searchParams } = new URL(request.url);
-    sent.push(searchParams.toString());
-    return HttpResponse.json({ items: searchParams.has('q') ? [] : items, nextCursor: null });
-  });
-  return { handler, sent };
 }
 
 function sentQueryOf(query: string | undefined): Record<string, string> {
@@ -329,7 +319,7 @@ describe('ApplicationsTable bulk actions', () => {
 describe('ApplicationsTable filters', () => {
   it('stage, source and a typed query go to /applications after the pause, a cleared query shows every card at once, and the view switch keeps the filters', async () => {
     fakeTimeouts();
-    const route = queryAwareRoute(SCORED);
+    const route = pagedListRoute({ items: (params) => (params.has('q') ? [] : SCORED) });
     const filters = applicationFiltersOf({ stage: 'screening', source: 'djinni' });
     const user = renderTableOver({ handlers: [route.handler], filters });
     await screen.findByRole('link', { name: 'Альфа' });

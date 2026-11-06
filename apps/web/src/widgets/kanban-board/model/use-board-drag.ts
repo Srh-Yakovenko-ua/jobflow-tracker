@@ -80,11 +80,7 @@ function useMoveSender() {
   const { mutate } = useMoveApplicationMutation();
   const { mutate: undo } = useUndoMoveMutation();
   const rejection = useRejectionPrompt({ send: mutate, undo });
-  const sent = (move: ApplicationMove): boolean => {
-    if (move.toStage === 'rejected') return rejection.ask(move) === 'sent';
-    mutate(move);
-    return true;
-  };
+  const sent = (move: ApplicationMove) => rejection.sendOrAsk(move) === 'sent';
   return { rejection, sent };
 }
 

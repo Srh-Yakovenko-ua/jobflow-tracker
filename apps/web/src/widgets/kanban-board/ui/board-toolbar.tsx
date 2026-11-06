@@ -7,6 +7,7 @@ import {
   ViewSwitch,
 } from '@/features/filter-applications';
 import { uk } from '@/shared/i18n';
+import { useRegisterPageCommand } from '@/shared/lib/page-commands';
 import { LoadFailedAlert } from '@/shared/ui/banner';
 import { SegmentedControl } from '@/shared/ui/segmented-control';
 
@@ -21,9 +22,19 @@ export type BoardToolbarProps = Readonly<{
   view: { cards: boolean };
 }>;
 
+const DENSITY_COMMAND = uk.shell.palette.density;
+
 function DensitySwitch() {
   const density = useBoardDensity((store) => store.density);
   const setDensity = useBoardDensity((store) => store.setDensity);
+  useRegisterPageCommand({
+    id: 'density',
+    label: density === 'full' ? DENSITY_COMMAND.compactOn : DENSITY_COMMAND.fullOn,
+    keywords: [uk.board.density.label],
+    run: () => {
+      setDensity(density === 'full' ? 'compact' : 'full');
+    },
+  });
   return (
     <SegmentedControl
       aria-label={uk.board.density.label}

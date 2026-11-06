@@ -45,8 +45,12 @@ export const NAV_ITEMS: readonly NavItem[] = [
   { id: 'settings', href: '/settings', icon: Settings, flag: 'settings' },
 ];
 
+export function isFlagOn(flags: FeatureFlags, flag: FeatureFlag | undefined): boolean {
+  return flag === undefined || flags[flag];
+}
+
 export function visibleNavItems(flags: FeatureFlags): readonly NavItem[] {
-  return NAV_ITEMS.filter((item) => item.flag === undefined || flags[item.flag]);
+  return NAV_ITEMS.filter((item) => isFlagOn(flags, item.flag));
 }
 
 function isActiveAt(item: NavItem, pathname: string): boolean {

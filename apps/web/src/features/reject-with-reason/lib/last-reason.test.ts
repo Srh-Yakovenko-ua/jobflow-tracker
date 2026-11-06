@@ -1,17 +1,8 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { logger } from '@/shared/lib/logger';
+import { refuseStorage } from '@/test/refusing-storage';
 
 import { LAST_REASON_KEY, readLastReason, rememberLastReason } from './last-reason';
-
-function storageRefuses() {
-  const refuse = () => {
-    throw new DOMException('The operation is insecure.', 'SecurityError');
-  };
-  vi.spyOn(Storage.prototype, 'getItem').mockImplementation(refuse);
-  vi.spyOn(Storage.prototype, 'setItem').mockImplementation(refuse);
-  vi.spyOn(logger, 'warn').mockImplementation(() => undefined);
-}
 
 afterEach(() => {
   vi.restoreAllMocks();
@@ -37,7 +28,7 @@ describe('last rejection reason', () => {
   });
 
   it('a storage that refuses reads as none and remembering does not throw', () => {
-    storageRefuses();
+    refuseStorage();
 
     expect(() => {
       rememberLastReason('skills_gap');
