@@ -11,6 +11,7 @@ export { CARD_DENSITIES, type CardDensity } from './model/card-density';
 export { FULL_CARD } from './model/card-specimens';
 export { applicationKeys, timelineKeys } from './model/keys';
 export { ApplicationCard, type ApplicationCardProps } from './ui/application-card';
+export { NextEventChip, type NextEventChipProps } from './ui/next-event-chip';
 export { OutcomeBadge, type OutcomeBadgeProps } from './ui/outcome-badge';
 export { ScoreBadge, type ScoreBadgeProps } from './ui/score-badge';
 export { SearchSnippet, type SearchSnippetProps } from './ui/search-snippet';

@@ -52,6 +52,45 @@ export const applicationPage = {
     failed: 'не збережено, спробуємо ще',
     finishHint: 'Ctrl+Enter, щоб завершити',
   },
+  schedule: {
+    action: 'Запланувати',
+    titles: { schedule: 'Запланувати подію', reschedule: 'Перенести подію' },
+    fields: {
+      kind: 'Тип',
+      date: 'Дата',
+      time: 'Час',
+      duration: 'Тривалість',
+      location: 'Посилання або місце',
+    },
+    minutes: 'хв',
+    errors: {
+      startsInPast: 'Цей час уже минув',
+      time: 'Вкажи час',
+      kind: 'Обери тип події',
+      durationMin: (min: number, max: number) => `Від ${String(min)} до ${String(max)} хвилин`,
+      locationOrLink: (max: number) => `Не довше ${String(max)} символів`,
+    },
+    save: { schedule: 'Запланувати', reschedule: 'Перенести' },
+    cancel: 'Скасувати',
+    outcome: {
+      question: 'Як пройшло?',
+      done: 'Пройдено',
+      rescheduled: 'Перенесли',
+      cancelled: 'Скасували',
+      recorded: 'Записано в історію',
+    },
+    conflict: {
+      title: 'Подію вже змінено',
+      description:
+        'Її змінили в іншій вкладці чи на іншому пристрої. Показуємо, як вона виглядає зараз.',
+    },
+    downloadFailed: {
+      title: 'Не вдалося завантажити',
+      description: 'Файл не прийшов. Спробуй ще раз за хвилину.',
+    },
+    later: 'Не зараз',
+    downloadIcs: 'Завантажити .ics',
+  },
   deletion: {
     title: 'Видалити картку?',
     body: (position: string) => `Картка «${position}» зникне з дошки. Відновити її не вийде.`,

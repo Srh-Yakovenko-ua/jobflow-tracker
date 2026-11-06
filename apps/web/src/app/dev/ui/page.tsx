@@ -4,6 +4,7 @@ import { ThemeSwitcher } from '@/features/switch-theme';
 import { uk } from '@/shared/i18n';
 
 import { ButtonsSection } from './buttons-section';
+import { CalendarSection } from './calendar-section';
 import { CardsSection } from './cards-section';
 import { ChoiceSection } from './choice-section';
 import { EmptyStatesSection } from './empty-states-section';
@@ -33,6 +34,7 @@ export default function DevUiPage() {
       <ButtonsSection />
       <FieldsSection />
       <SelectsSection />
+      <CalendarSection />
       <ChoiceSection />
       <NavigationSection />
       <FeedbackSection />

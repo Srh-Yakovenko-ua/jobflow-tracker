@@ -81,6 +81,28 @@ describe('/dev/ui gallery', () => {
   });
 });
 
+describe('/dev/ui calendar', () => {
+  it('the past-only calendar blocks the days after today and keeps today pickable', () => {
+    renderGallery();
+    const past = specimenOf(COPY.calendar.pastEyebrow);
+
+    const tomorrow = past.getByRole('gridcell', { name: 'вівторок, 8 вересня 2026 р.' });
+    expect(tomorrow.getAttribute('aria-disabled')).toBe('true');
+    const today = past.getByRole('gridcell', { name: 'понеділок, 7 вересня 2026 р.' });
+    expect(today.getAttribute('aria-current')).toBe('date');
+    expect(today.hasAttribute('aria-disabled')).toBe(false);
+  });
+
+  it('has no axe violations with the date field popover open', async () => {
+    const user = renderGallery();
+
+    await user.click(specimenOf(COPY.calendar.fieldEyebrow).getByRole('button'));
+    await screen.findByRole('dialog', { name: uk.calendar.label });
+
+    expect(await axeViolations()).toEqual([]);
+  });
+});
+
 describe('/dev/ui application cards', () => {
   it('a long company is one truncated line titled in full, and the long position wraps whole', () => {
     renderGallery();

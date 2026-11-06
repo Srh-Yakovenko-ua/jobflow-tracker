@@ -2,21 +2,19 @@ import {
   type ApplicationCard as ApplicationCardData,
   type BoardCard,
   isActiveStage,
-  type ScheduledEventKind,
   SOURCE_LABELS,
 } from '@jobflow/shared';
-import { CalendarClock, type LucideIcon, PhoneCall } from 'lucide-react';
 
 import { uk } from '@/shared/i18n';
 import { cn } from '@/shared/lib/cn';
 
 import { formatDaysInStage } from '../lib/days-in-stage';
-import { formatNextEvent, type ScheduledEventSlot } from '../lib/next-event';
 import { formatSalaryRange } from '../lib/salary';
 import type { ApplicationCardContext } from '../model/card-context';
 import type { CardDensity } from '../model/card-density';
 import { CARD_FRAME } from './card-frame';
 import { CardHeading } from './card-heading';
+import { NextEventChip } from './next-event-chip';
 import { OfferCard } from './offer-card';
 import { ScoreBadge } from './score-badge';
 import { SilenceIndicator } from './silence-indicator';
@@ -31,14 +29,6 @@ export type ApplicationCardProps = Readonly<{
 }>;
 
 type CardPartProps = Readonly<{ application: ApplicationCardData; silent: boolean }>;
-
-const EVENT_ICON: Record<ScheduledEventKind, LucideIcon> = {
-  screening_call: PhoneCall,
-  tech_interview: CalendarClock,
-  final_interview: CalendarClock,
-  offer_call: PhoneCall,
-  other: CalendarClock,
-};
 
 const CARD_LOOK = {
   live: 'bg-surface text-ink shadow-e1 duration-(--duration-base) ease-standard hover:shadow-e2 active:shadow-e1 motion-safe:transition-[translate,box-shadow] motion-safe:hover:-translate-y-0.75 motion-safe:active:translate-y-0',
@@ -61,19 +51,6 @@ function StackTags({ application }: Readonly<{ application: ApplicationCardData 
         <span className="px-0.75 py-0.5 text-ink-3 tabular-nums">{COPY.stackMore(hidden)}</span>
       )}
     </div>
-  );
-}
-
-function NextEventChip({
-  event,
-  context,
-}: Readonly<{ event: ScheduledEventSlot; context: ApplicationCardContext }>) {
-  const Icon = EVENT_ICON[event.kind];
-  return (
-    <span className="flex items-center gap-2 rounded-sm bg-accent-tint px-2.25 py-1.5 text-[12px] font-medium text-accent-ink tabular-nums">
-      <Icon aria-hidden size={14} className="flex-none" />
-      {formatNextEvent({ event, now: context.now, timeZone: context.timeZone })}
-    </span>
   );
 }
 

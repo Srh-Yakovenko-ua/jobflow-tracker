@@ -1,12 +1,14 @@
 import type { ApplicationResponse, ApplicationTimelineResponse } from '@jobflow/shared';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import type { ReactNode } from 'react';
 
 import {
   ApplicationPage,
   type ApplicationPageMode,
   ApplicationSheet,
 } from '@/widgets/application-page';
+import { KanbanBoard } from '@/widgets/kanban-board';
 
 import {
   ACME_APPLICATION,
@@ -15,7 +17,14 @@ import {
   deleteRoute,
   updateRoute,
 } from './application-fixtures';
-import { moveRoute, type MoveRouteOptions, reasonsSummaryRoute, undoRoute } from './board-fixtures';
+import {
+  boardRoute,
+  type BoardRouteOptions,
+  moveRoute,
+  type MoveRouteOptions,
+  reasonsSummaryRoute,
+  undoRoute,
+} from './board-fixtures';
 import {
   noteDeleteRoute,
   noteRoute,
@@ -24,6 +33,12 @@ import {
   noteUpdateRoute,
 } from './note-fixtures';
 import { InApp } from './render-in-app';
+import {
+  liveCardOf,
+  scheduledEventRoutes,
+  type ScheduledEventRoutesOptions,
+  type ScheduledEventStore,
+} from './scheduled-event-fixtures';
 import { server } from './server';
 import { meRoute } from './session-fixtures';
 import { EMPTY_TIMELINE, timelineRoute } from './timeline-fixtures';
@@ -35,6 +50,8 @@ export type ApplicationPageSetup = Partial<Pick<ApplicationRouteOptions, 'reply'
   update?: MoveRouteOptions;
   notes?: NotesRouteOptions;
   timeline?: ApplicationTimelineResponse;
+  scheduledEvents?: ScheduledEventRoutesOptions;
+  board?: BoardRouteOptions;
 };
 
 function noteRoutes(notes: NotesRouteOptions) {
@@ -48,6 +65,23 @@ function noteRoutes(notes: NotesRouteOptions) {
   };
 }
 
+type BoardBeside = { board: BoardRouteOptions | undefined; id: string; store: ScheduledEventStore };
+
+function boardBeside({ board, id, store }: BoardBeside) {
+  if (board === undefined) return { handlers: [], sent: [], wrap: (ui: ReactNode) => ui };
+  const route = boardRoute({ ...board, liveCard: liveCardOf({ applicationId: id, store }) });
+  return {
+    handlers: [route.handler],
+    sent: route.sent,
+    wrap: (ui: ReactNode) => (
+      <>
+        <KanbanBoard initial={{ density: 'full', filters: {} }} />
+        {ui}
+      </>
+    ),
+  };
+}
+
 export function renderApplicationPage({
   application = ACME_APPLICATION,
   id = application.id,
@@ -56,6 +90,8 @@ export function renderApplicationPage({
   update = {},
   notes = {},
   timeline = EMPTY_TIMELINE,
+  scheduledEvents,
+  board,
 }: ApplicationPageSetup = {}) {
   const move = moveRoute();
   const undo = undoRoute();
@@ -63,6 +99,8 @@ export function renderApplicationPage({
   const removal = deleteRoute();
   const written = noteRoutes(notes);
   const page = applicationRoute({ application, moves: move.sent, ...(reply && { reply }) });
+  const events = scheduledEventRoutes(scheduledEvents);
+  const beside = boardBeside({ board, id, store: events.store });
   server.use(
     meRoute(),
     page.handler,
@@ -73,9 +111,12 @@ export function renderApplicationPage({
     reasonsSummaryRoute().handler,
     timelineRoute({ timeline }),
     ...written.handlers,
+    ...events.handlers,
+    ...beside.handlers,
   );
-  const ui =
-    mode === 'sheet' ? <ApplicationSheet id={id} /> : <ApplicationPage id={id} view={{ mode }} />;
+  const ui = beside.wrap(
+    mode === 'sheet' ? <ApplicationSheet id={id} /> : <ApplicationPage id={id} view={{ mode }} />,
+  );
   const view = render(ui, { wrapper: InApp });
   return {
     user: userEvent.setup(),
@@ -89,6 +130,8 @@ export function renderApplicationPage({
     updates: patch.sent,
     deletes: removal.sent,
     notes: written.sent,
+    scheduledEvents: events.sent,
+    board: beside.sent,
   };
 }
 
