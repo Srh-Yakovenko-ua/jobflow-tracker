@@ -33,6 +33,11 @@ describe('loadEnv', () => {
 
     expect(env.SENTRY_DSN).toBeUndefined();
     expect(env.AI_DAILY_LIMIT).toBe(50);
+    expect([
+      env.AI_MONTHLY_TOKEN_CAP,
+      env.AI_USD_PER_MILLION_TOKENS_IN,
+      env.AI_USD_PER_MILLION_TOKENS_OUT,
+    ]).toEqual([1_000_000, 0, 0]);
     expect(Object.isFrozen(env)).toBe(true);
   });
 
@@ -107,6 +112,9 @@ describe('validateEnv', () => {
     { key: 'RATE_LIMIT_AI_PER_HOUR', fallback: 30 },
     { key: 'RATE_LIMIT_CAPTURE_PER_HOUR', fallback: 60 },
     { key: 'RATE_LIMIT_API_PER_MINUTE', fallback: 300 },
+    { key: 'AI_MONTHLY_TOKEN_CAP', fallback: 1_000_000 },
+    { key: 'AI_USD_PER_MILLION_TOKENS_IN', fallback: 0 },
+    { key: 'AI_USD_PER_MILLION_TOKENS_OUT', fallback: 0 },
   ] as const)(
     'defaults $key to $fallback when it is empty and reads it as a number',
     ({ key, fallback }) => {
@@ -134,6 +142,12 @@ describe('parseEnv', () => {
   it('refuses a rate limit of 0', () => {
     expect(failedPaths({ ...exampleEnv, RATE_LIMIT_LOGIN_PER_MINUTE: '0' })).toEqual([
       'RATE_LIMIT_LOGIN_PER_MINUTE',
+    ]);
+  });
+
+  it('refuses a negative price per million tokens', () => {
+    expect(failedPaths({ ...exampleEnv, AI_USD_PER_MILLION_TOKENS_OUT: '-0.5' })).toEqual([
+      'AI_USD_PER_MILLION_TOKENS_OUT',
     ]);
   });
 

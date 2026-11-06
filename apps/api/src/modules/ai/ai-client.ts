@@ -29,12 +29,18 @@ export type AiCompleteCall = {
 
 type AiServicePost = { path: string; body: unknown; requestId?: string | undefined };
 
-function allowedBody<Body>(schema: z.ZodType<Body>, value: unknown): Body {
+type Checked = { value: unknown; refusal: 'validation_error' | 'ai_invalid_output' };
+
+function checked<Body>(schema: z.ZodType<Body>, { value, refusal }: Checked): Body {
   const parsed = schema.safeParse(value);
   if (!parsed.success) {
-    throw new AiServiceError({ status: 422, type: 'validation_error', cause: parsed.error });
+    throw new AiServiceError({ status: 422, type: refusal, cause: parsed.error });
   }
   return parsed.data;
+}
+
+function allowedBody<Body>(schema: z.ZodType<Body>, value: unknown): Body {
+  return checked(schema, { value, refusal: 'validation_error' });
 }
 
 async function readBody(response: Response): Promise<unknown> {
@@ -74,7 +80,7 @@ export class AiClient {
   }: AiCompleteCall): Promise<AiCompletion<AiKind>> {
     const body = allowedBody(aiCompleteRequestSchemas[kind], { ...options, input });
     const completion = await this.post({ path: `/v1/complete/${kind}`, body, requestId });
-    return aiCompletionSchemas[kind].parse(completion);
+    return checked(aiCompletionSchemas[kind], { value: completion, refusal: 'ai_invalid_output' });
   }
 
   async embed(request: AiEmbedRequest, requestId?: string): Promise<AiEmbedding> {
