@@ -10,5 +10,6 @@ export function addNote({ applicationId, body }: AddNoteRequest): Promise<Note> 
     method: 'POST',
     body,
     schema: noteSchema,
+    keepalive: true,
   });
 }

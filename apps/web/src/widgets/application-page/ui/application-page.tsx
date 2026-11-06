@@ -16,6 +16,7 @@ import { PageSkeleton } from '@/shared/ui/skeleton';
 import { useApplicationPage } from '../model/use-application-page';
 import { ApplicationActions } from './application-actions';
 import { ApplicationHeader } from './application-header';
+import { ApplicationNotes } from './application-notes';
 import { ApplicationTimeline } from './application-timeline';
 import { type ApplicationPageMode, PageTopBar } from './page-top-bar';
 
@@ -89,6 +90,7 @@ function PageContent({ id, view }: ApplicationPageProps) {
             </div>
           </ApplicationHeader>
           <ApplicationTimeline application={application} />
+          <ApplicationNotes key={application.id} application={application} />
         </div>
         <div />
       </div>

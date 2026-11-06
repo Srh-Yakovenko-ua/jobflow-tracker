@@ -129,6 +129,21 @@ describe('apiClient', () => {
     await expect(request).resolves.toBeUndefined();
   });
 
+  it('a request marked keepalive asks fetch to outlive the page, and an unmarked one does not', async () => {
+    const sentRequests = recordSentRequests();
+    server.use(http.post(apiUrl('/auth/logout'), () => new HttpResponse(null, { status: 204 })));
+
+    await apiClient.request({
+      path: '/auth/logout',
+      method: 'POST',
+      schema: z.void(),
+      keepalive: true,
+    });
+    await apiClient.request({ path: '/auth/logout', method: 'POST', schema: z.void() });
+
+    expect(sentRequests().map(({ keepalive }) => keepalive)).toEqual([true, undefined]);
+  });
+
   it('a refused connection rejects with TypeError and calls no refresh', async () => {
     const onRefresh = vi.fn();
     server.use(

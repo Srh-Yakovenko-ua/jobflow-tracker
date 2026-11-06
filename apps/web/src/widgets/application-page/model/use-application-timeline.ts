@@ -7,8 +7,7 @@ import { meQueryOptions, useUserTimeZone } from '@/entities/user';
 
 import { timelineRowsOf } from '../lib/timeline-rows';
 import { waitingRowOf } from '../lib/waiting-row';
-
-export type TimelineLoad = Readonly<{ pending: boolean; failed: boolean; onRetry: () => void }>;
+import { sectionLoadOf } from './section-load';
 
 function useSilenceDays(): number {
   const { data = DEFAULT_SILENCE_DAYS } = useQuery({
@@ -24,14 +23,7 @@ export function useApplicationTimeline(application: ApplicationResponse) {
   const timeZone = useUserTimeZone();
   const [mountedAt] = useState(Date.now);
   const items = timeline.data?.items ?? [];
-  const failed = timeline.isError && timeline.data === undefined && !timeline.isFetching;
-  const load: TimelineLoad = {
-    pending: timeline.data === undefined && !failed,
-    failed,
-    onRetry: () => {
-      void timeline.refetch();
-    },
-  };
+  const load = sectionLoadOf(timeline);
   return {
     rows: timelineRowsOf({ items, application }),
     waiting: waitingRowOf({ application, silenceDays, timeZone }),

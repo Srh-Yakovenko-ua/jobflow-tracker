@@ -6,8 +6,6 @@ import {
   applicationResponseSchema,
   type BoardCard,
   moveApplicationInputSchema,
-  type Note,
-  noteInputSchema,
   OPEN_STAGES,
   type RejectionReasonsSummary,
   rejectionReasonsSummaryQuerySchema,
@@ -170,28 +168,6 @@ export function reasonsSummaryRoute({ reasons = [], ...control }: ReasonsSummary
     const total = reasons.reduce((sum, reason) => sum + reason.count, 0);
     const summary: RejectionReasonsSummary = { stage, total, reasons };
     return heldReply({ ...control, info, fallback: () => HttpResponse.json(summary) });
-  });
-  return { handler, sent };
-}
-
-export function noteRoute(control: MoveRouteOptions = {}) {
-  const sent: { id: string; body: unknown }[] = [];
-  const handler = http.post<{ id: string }>(apiUrl('/applications/:id/notes'), async (info) => {
-    const body = noteInputSchema.parse(await info.request.json());
-    sent.push({ id: info.params.id, body });
-    const at = FULL_CARD.lastEventAt;
-    const note: Note = {
-      id: '0b6f3c1e-5d2a-4c8e-9f10-0000000000ee',
-      applicationId: info.params.id,
-      body: body.body,
-      createdAt: at,
-      updatedAt: at,
-    };
-    return heldReply({
-      ...control,
-      info,
-      fallback: () => HttpResponse.json(note, { status: 201 }),
-    });
   });
   return { handler, sent };
 }

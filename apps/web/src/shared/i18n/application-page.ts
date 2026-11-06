@@ -41,6 +41,17 @@ export const applicationPage = {
     save: 'Зберегти',
     cancel: 'Скасувати',
   },
+  notes: {
+    kicker: 'Нотатки',
+    label: 'Нова нотатка',
+    placeholder: 'Додати нотатку…',
+    privacy: 'Нотатки ніколи не йдуть у модель',
+    context: (date: string, stageGenitive: string) => `${date}, після ${stageGenitive}`,
+    saving: 'зберігаю…',
+    saved: 'збережено',
+    failed: 'не збережено, спробуємо ще',
+    finishHint: 'Ctrl+Enter, щоб завершити',
+  },
   deletion: {
     title: 'Видалити картку?',
     body: (position: string) => `Картка «${position}» зникне з дошки. Відновити її не вийде.`,
