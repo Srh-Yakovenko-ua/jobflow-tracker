@@ -4,9 +4,6 @@ import {
   type ApplicationFilters,
   type ApplicationListResponse,
   OUTCOME_STAGES,
-  REJECTION_REASONS,
-  type RejectionReasonCode,
-  rejectionReasonCodeSchema,
   type RejectionReasonsSummary,
   type RejectionReasonsSummaryQuery,
   type SearchSnippet,
@@ -32,14 +29,12 @@ import {
   ApplicationListRepository,
   type CardRow,
   type DateSort,
-  type ReasonCount,
 } from './application-list.repository.js';
 import { inRankOrder, rankedPage, type SearchMatch, snippetPartsOf } from './application-search.js';
 import { ApplicationSearchRepository } from './application-search.repository.js';
+import { reasonTalliesOf } from './rejection-reason-tallies.js';
 
 type BoardColumns = ApplicationBoardResponse['columns'];
-
-type ReasonTally = RejectionReasonsSummary['reasons'][number];
 
 type FilterInput = { filters: ApplicationFilters; context: CardContext };
 
@@ -77,21 +72,6 @@ function columnsOf(columnOf: (stage: Stage) => BoardColumns[Stage]): BoardColumn
   return Object.fromEntries(STAGES.map((stage) => [stage, columnOf(stage)])) as BoardColumns;
 }
 
-function byCountThenSortOrder(left: ReasonTally, right: ReasonTally): number {
-  return right.count === left.count
-    ? REJECTION_REASONS[left.code].sortOrder - REJECTION_REASONS[right.code].sortOrder
-    : right.count - left.count;
-}
-
-function reasonTalliesOf(rows: ReasonCount[]): ReasonTally[] {
-  const counts = new Map<RejectionReasonCode, number>();
-  for (const { reasonCode, count } of rows) {
-    const code = rejectionReasonCodeSchema.parse(reasonCode ?? 'unspecified');
-    counts.set(code, (counts.get(code) ?? 0) + count);
-  }
-  return [...counts].map(([code, count]) => ({ code, count })).sort(byCountThenSortOrder);
-}
-
 @Injectable()
 export class ApplicationListService {
   constructor(
@@ -102,9 +82,7 @@ export class ApplicationListService {
 
   async list(userId: string, query: ApplicationListRequest): Promise<ApplicationListResponse> {
     const { searchId, sort, limit, cursor, ...filters } = query;
-    if (searchId !== undefined && !(await this.repository.searchExists(userId, searchId))) {
-      throw notFound('Search not found');
-    }
+    await this.refuseUnreadableSearch(userId, searchId);
     const context = await this.cardContext(userId);
     const searched = await this.searchFilter(userId, { filters, context });
     const paging = { cursor, limit, now: context.now };
@@ -151,10 +129,18 @@ export class ApplicationListService {
 
   async reasonsSummary(
     userId: string,
-    { stage }: RejectionReasonsSummaryQuery,
+    query: RejectionReasonsSummaryQuery,
   ): Promise<RejectionReasonsSummary> {
-    const reasons = reasonTalliesOf(await this.repository.countRejectionReasons(userId, { stage }));
-    return { stage, total: reasons.reduce((sum, { count }) => sum + count, 0), reasons };
+    await this.refuseUnreadableSearch(userId, query.searchId);
+    const reasons = reasonTalliesOf(await this.repository.countRejectionReasons(userId, query));
+    const total = reasons.reduce((sum, { count }) => sum + count, 0);
+    return { stage: query.stage, total, reasons };
+  }
+
+  private async refuseUnreadableSearch(userId: string, searchId: string | undefined) {
+    if (searchId !== undefined && !(await this.repository.searchExists(userId, searchId))) {
+      throw notFound('Search not found');
+    }
   }
 
   private async cardContext(userId: string): Promise<CardContext> {

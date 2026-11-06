@@ -3,26 +3,23 @@ import { describe, expect, it } from 'vitest';
 
 import {
   applicationPath,
-  createApplication,
+  createMovedApplication,
   getWithQuery,
-  postStageMove,
+  type QueryString,
   REASONS_SUMMARY_PATH,
-  ROMASHKA,
   type SignedInSearcher,
   signedInWithSearch,
   undoLastMove,
   useStageMoveTestApp,
 } from '../../test/applications.js';
 import { createApplicationRows, createSearch, createStageEvents } from '../../test/factories.js';
-import { callRoute } from '../../test/http.js';
-import { TO_SCREENING } from '../../test/service-fixtures.js';
-import { daysBefore, NOW, settableClock } from '../../test/time.js';
+import { callRoute, statusAndDetail } from '../../test/http.js';
+import { TO_SCREENING, TO_TECH_INTERVIEW } from '../../test/service-fixtures.js';
+import { NOW, settableClock } from '../../test/time.js';
 
 type MovedApplication = { accessToken: string; moves: MoveApplicationInput[] };
 
 const clock = settableClock(NOW);
-
-const TO_TECH_INTERVIEW: MoveApplicationInput = { fromStage: 'applied', toStage: 'tech_interview' };
 
 const rejectedAfterTechInterview = (reasonCode: RejectionReasonCode): MoveApplicationInput[] => [
   TO_TECH_INTERVIEW,
@@ -32,20 +29,13 @@ const rejectedAfterTechInterview = (reasonCode: RejectionReasonCode): MoveApplic
 describe('the rejection reasons summary route', () => {
   const testApp = useStageMoveTestApp(clock);
 
-  async function movedThrough({ accessToken, moves }: MovedApplication): Promise<string> {
-    clock.at(daysBefore(moves.length));
-    const { id } = await createApplication(testApp.app, { accessToken, input: ROMASHKA });
-    for (const [index, input] of moves.entries()) {
-      clock.at(daysBefore(moves.length - 1 - index));
-      expect((await postStageMove(testApp.app, { accessToken, id, input })).status).toBe(201);
-    }
-    return id;
-  }
+  const movedThrough = (moved: MovedApplication) =>
+    createMovedApplication(testApp.app, { ...moved, clock });
 
   const rejectedBy = ({ accessToken }: SignedInSearcher, reasonCode: RejectionReasonCode) =>
     movedThrough({ accessToken, moves: rejectedAfterTechInterview(reasonCode) });
 
-  async function rejectedInArchivedSearch(userId: string): Promise<void> {
+  async function rejectedInArchivedSearch(userId: string): Promise<string> {
     const searchId = await createSearch(testApp.prisma, { userId, status: 'archived' });
     const [applicationId = ''] = await createApplicationRows(testApp.prisma, {
       userId,
@@ -55,6 +45,7 @@ describe('the rejection reasons summary route', () => {
     await createStageEvents(testApp.prisma, [
       { applicationId, fromStage: 'tech_interview', toStage: 'rejected', reasonCode: 'skills_gap' },
     ]);
+    return searchId;
   }
 
   async function olenaWithNoise(olena: SignedInSearcher): Promise<void> {
@@ -85,11 +76,11 @@ describe('the rejection reasons summary route', () => {
     await rejectedInArchivedSearch(olena.userId);
   }
 
-  const summaryAt = (accessToken: string) =>
+  const summaryAt = (accessToken: string, query: QueryString = {}) =>
     getWithQuery(testApp.app, {
       path: REASONS_SUMMARY_PATH,
       accessToken,
-      query: { stage: 'tech_interview' },
+      query: { stage: 'tech_interview', ...query },
     });
 
   it("counts only OLENA's effective rejections from tech_interview in her active search, and BOHDAN only his own", async () => {
@@ -119,5 +110,22 @@ describe('the rejection reasons summary route', () => {
       200,
       { stage: 'tech_interview', total: 1, reasons: [{ code: 'skills_gap', count: 1 }] },
     ]);
+  });
+
+  it("reads OLENA's archived search by its searchId, and answers BOHDAN's searchId with 404", async () => {
+    const olena = await signedInWithSearch(testApp.prisma);
+    const bohdan = await signedInWithSearch(testApp.prisma);
+    const archivedId = await rejectedInArchivedSearch(olena.userId);
+    await rejectedBy(olena, 'chose_other');
+    await rejectedBy(bohdan, 'skills_gap');
+
+    const archived = await summaryAt(olena.accessToken, { searchId: archivedId });
+    const foreign = await summaryAt(olena.accessToken, { searchId: bohdan.searchId });
+
+    expect([archived.status, archived.body]).toEqual([
+      200,
+      { stage: 'tech_interview', total: 1, reasons: [{ code: 'skills_gap', count: 1 }] },
+    ]);
+    expect(statusAndDetail(foreign)).toEqual([404, 'Search not found']);
   });
 });

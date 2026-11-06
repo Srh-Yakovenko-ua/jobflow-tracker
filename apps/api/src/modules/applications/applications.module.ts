@@ -8,6 +8,8 @@ import { ApplicationSearchRepository } from './application-search.repository.js'
 import { ApplicationsController } from './applications.controller.js';
 import { ApplicationsRepository } from './applications.repository.js';
 import { ApplicationsService } from './applications.service.js';
+import { SearchApplicationsRepository } from './search-applications.repository.js';
+import { SearchApplicationsService } from './search-applications.service.js';
 import { StageTransitionRepository } from './stage-transition.repository.js';
 import { StageTransitionService } from './stage-transition.service.js';
 
@@ -22,8 +24,10 @@ import { StageTransitionService } from './stage-transition.service.js';
     ApplicationSearchRepository,
     StageTransitionService,
     StageTransitionRepository,
+    SearchApplicationsService,
+    SearchApplicationsRepository,
     Clock,
   ],
-  exports: [ApplicationsService],
+  exports: [ApplicationsService, SearchApplicationsService],
 })
 export class ApplicationsModule {}

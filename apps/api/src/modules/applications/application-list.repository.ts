@@ -153,7 +153,7 @@ export class ApplicationListRepository {
 
   async countRejectionReasons(
     userId: string,
-    { stage }: RejectionReasonsSummaryQuery,
+    { stage, searchId }: RejectionReasonsSummaryQuery,
   ): Promise<ReasonCount[]> {
     const groups = await this.prisma.stageEvent.groupBy({
       by: ['reasonCode'],
@@ -161,7 +161,7 @@ export class ApplicationListRepository {
         ...EFFECTIVE_STAGE_EVENTS.where,
         toStage: 'rejected',
         fromStage: stage,
-        application: listWhere(userId, { filter: {} }),
+        application: listWhere(userId, { filter: { searchId } }),
       },
       _count: { _all: true },
     });

@@ -54,6 +54,13 @@ type HeadlineQuery = SnippetQuery & { userId: string };
 
 const MISSING_SEARCH_ID = '0199f0a0-0000-7000-8000-0000000000a2';
 
+const UNREADABLE_SEARCHES = [
+  { case: "another user's search", userId: BOHDAN_ID, searchId: SEARCH_ID },
+  { case: 'a missing search', userId: OLENA_ID, searchId: MISSING_SEARCH_ID },
+];
+
+const SEARCH_NOT_FOUND = { body: { status: 404, type: 'not_found', detail: 'Search not found' } };
+
 const FIRST_PAGE: ApplicationListRequest = { sort: '-lastEventAt', limit: 2 };
 
 const CARD_ROW: CardRow = {
@@ -228,17 +235,17 @@ const itemsByStage = (columns: Record<Stage, { items: ApplicationCard[] | null }
   );
 
 describe('ApplicationListService.list', () => {
-  it.each([
-    { case: "another user's search", userId: BOHDAN_ID, searchId: SEARCH_ID },
-    { case: 'a missing search', userId: OLENA_ID, searchId: MISSING_SEARCH_ID },
-  ])('answers $case with 404 and reads no cards', async ({ userId, searchId }) => {
-    const { repository, service } = await serviceWith();
+  it.each(UNREADABLE_SEARCHES)(
+    'answers $case with 404 and reads no cards',
+    async ({ userId, searchId }) => {
+      const { repository, service } = await serviceWith();
 
-    await expect(service.list(userId, { ...FIRST_PAGE, searchId })).rejects.toMatchObject({
-      body: { status: 404, type: 'not_found', detail: 'Search not found' },
-    });
-    expect(repository.cardQueries).toEqual([]);
-  });
+      await expect(service.list(userId, { ...FIRST_PAGE, searchId })).rejects.toMatchObject(
+        SEARCH_NOT_FOUND,
+      );
+      expect(repository.cardQueries).toEqual([]);
+    },
+  );
 
   it("reads the owner's search by its id", async () => {
     const { repository, service } = await serviceWith();
@@ -583,6 +590,28 @@ describe('ApplicationListService.reasonsSummary', () => {
       ],
     });
     expect(repository.reasonQueries).toEqual([{ userId: OLENA_ID, stage: 'tech_interview' }]);
+  });
+
+  it.each(UNREADABLE_SEARCHES)(
+    'answers $case with 404 and counts no reasons',
+    async ({ userId, searchId }) => {
+      const { repository, service } = await serviceWith();
+
+      await expect(
+        service.reasonsSummary(userId, { stage: 'tech_interview', searchId }),
+      ).rejects.toMatchObject(SEARCH_NOT_FOUND);
+      expect(repository.reasonQueries).toEqual([]);
+    },
+  );
+
+  it("counts the reasons of the owner's search named by its id", async () => {
+    const { repository, service } = await serviceWith();
+
+    await service.reasonsSummary(OLENA_ID, { stage: 'tech_interview', searchId: SEARCH_ID });
+
+    expect(repository.reasonQueries).toEqual([
+      { userId: OLENA_ID, stage: 'tech_interview', searchId: SEARCH_ID },
+    ]);
   });
 
   it('answers a stage without rejections with total 0 and no reasons', async () => {

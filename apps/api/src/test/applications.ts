@@ -6,9 +6,10 @@ import {
   type ApplicationResponse,
   applicationResponseSchema,
   type createApplicationInputSchema,
+  type MoveApplicationInput,
 } from '@jobflow/shared';
 import type { NestExpressApplication } from '@nestjs/platform-express';
-import { beforeAll, beforeEach } from 'vitest';
+import { beforeAll, beforeEach, expect } from 'vitest';
 import type { z } from 'zod';
 
 import { Clock } from '../common/clock.js';
@@ -16,9 +17,9 @@ import type { ApplicationEvent } from '../modules/applications/index.js';
 import type { PrismaService } from '../prisma/prisma.service.js';
 import { appTestingModule, type TestApp, useTestApp } from './app.js';
 import { accessTokenFor, BOHDAN, OLENA, signUp, type SignUpInput } from './auth.js';
-import { createSearch, createUser, seedRejectionReasons } from './factories.js';
+import { createSearch, createUser, type NewSearch, seedRejectionReasons } from './factories.js';
 import { callRoute } from './http.js';
-import { NOW, type SettableClock } from './time.js';
+import { daysBefore, NOW, type SettableClock } from './time.js';
 
 export const APPLICATIONS_PATH = '/api/v1/applications';
 
@@ -37,6 +38,13 @@ export type QueryRequest = { accessToken?: string | undefined; query?: QueryStri
 export type PathQueryRequest = QueryRequest & { path: string };
 
 export type SignedInSearcher = { userId: string; searchId: string; accessToken: string };
+
+export type MovedApplication = {
+  clock: SettableClock;
+  accessToken: string;
+  moves: readonly MoveApplicationInput[];
+  daysAgo?: number;
+};
 
 export type StageMoveRequest = ApplicationRequest<object> & { id: string };
 
@@ -189,10 +197,27 @@ export async function getApplicationBoard(
   return applicationBoardResponseSchema.parse(response.body);
 }
 
-export async function signedInWithSearch(prisma: PrismaService): Promise<SignedInSearcher> {
+export async function signedInWithSearch(
+  prisma: PrismaService,
+  search: Omit<NewSearch, 'userId'> = {},
+): Promise<SignedInSearcher> {
   const user = await createUser(prisma);
-  const searchId = await createSearch(prisma, { userId: user.id });
+  const searchId = await createSearch(prisma, { ...search, userId: user.id });
   return { userId: user.id, searchId, accessToken: await accessTokenFor(user) };
+}
+
+export async function createMovedApplication(
+  app: NestExpressApplication,
+  { clock, accessToken, moves, daysAgo = moves.length }: MovedApplication,
+): Promise<string> {
+  clock.at(daysBefore(daysAgo));
+  const { id } = await createApplication(app, { accessToken, input: ROMASHKA });
+  for (const [index, input] of moves.entries()) {
+    clock.at(daysBefore(daysAgo - 1 - index));
+    expect((await postStageMove(app, { accessToken, id, input })).status).toBe(201);
+  }
+  clock.at(NOW);
+  return id;
 }
 
 export function useStageMoveTestApp(clock: SettableClock): TestApp {

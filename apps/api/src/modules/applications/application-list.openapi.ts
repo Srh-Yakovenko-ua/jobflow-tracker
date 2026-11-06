@@ -113,7 +113,7 @@ export const APPLICATION_LIST_OPENAPI_PATHS: RouteConfig[] = [
     tags: TAGS,
     summary: 'Count the rejection reasons of moves from one stage into rejected',
     description:
-      'Counts the stage events from stage into rejected of the active search, leaving out undone moves and deleted applications. A missing reason counts as unspecified; reasons are sorted by count, then by the taxonomy order.',
+      "Counts the stage events from stage into rejected of the search named by searchId, leaving out undone moves and deleted applications. Without searchId only the active search is read; another user's or a missing searchId answers 404. A missing reason counts as unspecified; reasons are sorted by count, then by the taxonomy order.",
     request: { query: rejectionReasonsSummaryQuerySchema },
     responses: {
       200: {
@@ -127,7 +127,7 @@ export const APPLICATION_LIST_OPENAPI_PATHS: RouteConfig[] = [
           ],
         }),
       },
-      ...errorResponses([401, 403, 422]),
+      ...errorResponses([401, 403, 404, 422]),
     },
   },
 ];

@@ -14,7 +14,7 @@ export type UndoContext = { state: StageState; now: Date };
 
 export type MoveContext = UndoContext & { input: MoveApplicationInput };
 
-type Transition = { from: Stage; to: Stage; stageBeforeGhosted: Stage | null | undefined };
+export type Transition = { from: Stage; to: Stage; stageBeforeGhosted: Stage | null | undefined };
 
 function refusalOf({ from, to, stageBeforeGhosted }: Transition): TransitionRefusalReason | null {
   const result = canTransition(from, to);
@@ -24,7 +24,7 @@ function refusalOf({ from, to, stageBeforeGhosted }: Transition): TransitionRefu
   return from === 'ghosted' && to !== stageBeforeGhosted ? 'not_allowed' : null;
 }
 
-function refuseIllegalTransition(transition: Transition): void {
+export function refuseIllegalTransition(transition: Transition): void {
   const reason = refusalOf(transition);
   if (reason !== null) {
     throw illegalTransition(`${transition.from} -> ${transition.to}: ${reason}`);
