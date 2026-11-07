@@ -6,12 +6,12 @@ import { EVERY_FLAG_ON } from '@/test/feature-flags';
 import { recommendedPreset, visibleSettingsItems } from './settings-items';
 
 describe('visibleSettingsItems', () => {
-  it('hides push, email, the capture token and both deletions while their backends are missing', () => {
+  it('shows the AI results deletion and hides push, email, the capture token and the account deletion while their backends are missing', () => {
     expect(visibleSettingsItems(FEATURE_FLAGS)).toEqual({
       notifyPush: false,
       notifyEmail: false,
       captureToken: false,
-      aiDataDeletion: false,
+      aiDataDeletion: true,
       accountDeletion: false,
     });
   });
@@ -21,7 +21,7 @@ describe('visibleSettingsItems', () => {
       notifyPush: false,
       notifyEmail: true,
       captureToken: false,
-      aiDataDeletion: false,
+      aiDataDeletion: true,
       accountDeletion: false,
     });
     expect(Object.values(visibleSettingsItems(EVERY_FLAG_ON))).toEqual([

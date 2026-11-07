@@ -1,6 +1,7 @@
 import { OpenApiGeneratorV31, OpenAPIRegistry } from '@asteasolutions/zod-to-openapi';
 
 import { API_PREFIX } from '../common/api-prefix.middleware.js';
+import { AI_OPENAPI_PATHS } from '../modules/ai/index.js';
 import { APPLICATIONS_OPENAPI_PATHS } from '../modules/applications/index.js';
 import { AUTH_OPENAPI_PATHS, REFRESH_COOKIE } from '../modules/auth/index.js';
 import { CONTACTS_OPENAPI_PATHS } from '../modules/contacts/index.js';
@@ -24,6 +25,7 @@ export const API_OPENAPI_PATHS = [
   ...NOTES_OPENAPI_PATHS,
   ...CONTACTS_OPENAPI_PATHS,
   ...SCHEDULE_OPENAPI_PATHS,
+  ...AI_OPENAPI_PATHS,
   ...MAINTENANCE_OPENAPI_PATHS,
 ];
 
@@ -34,6 +36,7 @@ const TAGS = [
   { name: 'searches', description: 'The job searches of the signed-in user and their totals' },
   { name: 'applications', description: 'The Applications of the signed-in user' },
   { name: 'calendar', description: 'Scheduled events and follow-ups across Applications' },
+  { name: 'ai', description: 'The AI results of the signed-in user' },
   { name: 'dev', description: 'Development and test only' },
 ];
 

@@ -16,6 +16,7 @@ import { AiRepository } from './ai.repository.js';
 import { type AiQueuePosition, budgetWindow, queueEstimate } from './ai-budget.js';
 import { AiClient } from './ai-client.js';
 import { aiInputHash } from './ai-input-hash.js';
+import { AiPayloadError, privatePayloadPaths } from './ai-payload-guard.js';
 import { AiServiceError } from './ai-service-error.js';
 
 export type AiCompleteAttempt = {
@@ -52,6 +53,8 @@ export class AiService {
 
   private readonly budget: { dailyCalls: number; monthlyTokens: number };
 
+  private readonly inProduction: boolean;
+
   constructor(
     private readonly repository: AiRepository,
     private readonly ai: AiClient,
@@ -62,6 +65,7 @@ export class AiService {
       dailyCalls: config.get('AI_DAILY_LIMIT', { infer: true }),
       monthlyTokens: config.get('AI_MONTHLY_TOKEN_CAP', { infer: true }),
     };
+    this.inProduction = config.get('NODE_ENV', { infer: true }) === 'production';
   }
 
   async complete(attempt: AiCompleteAttempt): Promise<AiOutcome | null> {
@@ -78,6 +82,10 @@ export class AiService {
   async queuePosition({ userId, aiJobId }: AiJobOfUser): Promise<AiQueuePosition | null> {
     const sample = await this.repository.queueSample(userId, aiJobId);
     return sample === null ? null : queueEstimate(sample);
+  }
+
+  deleteResults(userId: string): Promise<void> {
+    return this.repository.deleteResults(userId);
   }
 
   private async fromCache(run: AiRun): Promise<AiOutcome | null> {
@@ -110,6 +118,7 @@ export class AiService {
   private async call(run: AiRun): Promise<AiOutcome> {
     const { job, inputHash, now } = run;
     const { aiJobId: id, userId, kind, input, requestId } = job;
+    this.guardPayload(run);
     const { output, ...meta } = await this.ai
       .complete({ kind, input, requestId })
       .catch((error: unknown) => this.refuse(run, error));
@@ -125,6 +134,18 @@ export class AiService {
     await this.repository.finishJob(userId, { id, aiResultId, now });
     this.logger.log({ ...traceOf(run), ...meta }, 'ai completion done');
     return { aiResultId, output, cached: false };
+  }
+
+  private guardPayload(run: AiRun): void {
+    const paths = privatePayloadPaths(run.job.input);
+    if (paths.length === 0) {
+      return;
+    }
+    if (!this.inProduction) {
+      throw new AiPayloadError(paths);
+    }
+    const warning = { ...traceOf(run), securityEvent: 'ai_payload_private_field', paths };
+    this.logger.warn(warning, 'ai payload carried private fields');
   }
 
   private async refuse(run: AiRun, error: unknown): Promise<never> {

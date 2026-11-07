@@ -4,14 +4,8 @@ import type { ApplicationResponse } from '@jobflow/shared';
 
 import { uk } from '@/shared/i18n';
 import { useLastPresent } from '@/shared/lib/use-last-present';
-import { Button } from '@/shared/ui/button';
-import {
-  Dialog,
-  DialogClose,
-  DialogContent,
-  type DialogContentHandlers,
-  DialogFooter,
-} from '@/shared/ui/dialog';
+import { ConfirmFooter } from '@/shared/ui/confirm-footer';
+import { Dialog, DialogContent, type DialogContentHandlers } from '@/shared/ui/dialog';
 
 import { useDeleteApplicationMutation } from '../model/use-delete-application-mutation';
 
@@ -44,21 +38,16 @@ export function DeleteApplicationDialog({
           header={{ title: COPY.title, description: COPY.body(shown.position) }}
           handlers={{ ...handlers }}
         >
-          <DialogFooter className="justify-end">
-            <DialogClose asChild>
-              <Button variant="outline">{COPY.cancel}</Button>
-            </DialogClose>
-            <Button
-              variant="danger"
-              loading={mutation.isPending}
-              onClick={() => {
+          <ConfirmFooter
+            copy={COPY}
+            action={{
+              pending: mutation.isPending,
+              onConfirm: () => {
                 if (application === null) return;
                 mutation.mutate(application.id, { onSuccess: actions.onDeleted });
-              }}
-            >
-              {COPY.confirm}
-            </Button>
-          </DialogFooter>
+              },
+            }}
+          />
         </DialogContent>
       )}
     </Dialog>

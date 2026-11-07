@@ -5,13 +5,8 @@ import { useState } from 'react';
 import { type BulkMoveTarget, useBulkMoveMutation } from '@/features/move-application';
 import { uk } from '@/shared/i18n';
 import { Button } from '@/shared/ui/button';
-import {
-  Dialog,
-  DialogClose,
-  DialogContent,
-  DialogFooter,
-  DialogTrigger,
-} from '@/shared/ui/dialog';
+import { ConfirmFooter } from '@/shared/ui/confirm-footer';
+import { Dialog, DialogContent, DialogTrigger } from '@/shared/ui/dialog';
 
 import { SELECT_ALL_ID } from './table-head';
 
@@ -82,20 +77,15 @@ export function BulkBar({ picked, actions }: BulkBarProps) {
             description: COPY.confirm.description,
           }}
         >
-          <DialogFooter className="justify-end">
-            <DialogClose asChild>
-              <Button variant="outline">{COPY.confirm.cancel}</Button>
-            </DialogClose>
-            <Button
-              variant="danger"
-              loading={bulk.isPending}
-              onClick={() => {
+          <ConfirmFooter
+            copy={COPY.confirm}
+            action={{
+              pending: bulk.isPending,
+              onConfirm: () => {
                 move('withdrawn');
-              }}
-            >
-              {COPY.confirm.confirm}
-            </Button>
-          </DialogFooter>
+              },
+            }}
+          />
         </DialogContent>
       </Dialog>
       <Button variant="ghost" size="xs" disabled={bulk.isPending} onClick={done}>

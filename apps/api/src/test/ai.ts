@@ -1,4 +1,4 @@
-import type { AiCompletion, AiJobStatus, AiKind } from '@jobflow/shared';
+import type { AiCompletion, AiJobStatus, AiKind, Contact, NoteInput } from '@jobflow/shared';
 import { buildVacancyCompletion } from '@jobflow/shared/testing';
 
 import type { AiUsageRow } from '../ai-usage/ai-usage.repository.js';
@@ -35,6 +35,16 @@ export const VACANCY_CALL: AiCompleteCall = {
   kind: VACANCY_JOB.kind,
   input: VACANCY_JOB.input,
   requestId: VACANCY_JOB.requestId,
+};
+
+export const PRIVATE_NOTE: NoteInput = {
+  body: 'Рекрутерка просила не згадувати мою поточну зарплату',
+};
+
+export const RECRUITER_CHANNELS: Pick<Contact, 'email' | 'phone' | 'telegram'> = {
+  email: 'hr@acme.test',
+  phone: '+380 67 123 45 67',
+  telegram: '@acme_hr',
 };
 
 export const NVIDIA_MODEL = 'meta/llama-3.3-70b-instruct';
