@@ -1,4 +1,4 @@
-import { clearCookie, writeCookie } from './cookie';
+import { clearCookie, hasCookie, writeCookie } from './cookie';
 
 export const SESSION_COOKIE = 'jobflow_session';
 
@@ -8,4 +8,8 @@ export function writeSessionCookie(): void {
 
 export function clearSessionCookie(): void {
   clearCookie(SESSION_COOKIE);
+}
+
+export function hasSessionCookie(): boolean {
+  return hasCookie(SESSION_COOKIE);
 }
