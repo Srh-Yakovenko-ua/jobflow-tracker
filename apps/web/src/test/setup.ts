@@ -36,6 +36,25 @@ for (const [name, stub] of Object.entries(ELEMENT_STUBS)) {
   }
 }
 
+function insertTextInFocusedField(command: string, ...args: readonly unknown[]): boolean {
+  const [, text] = args;
+  const field = document.activeElement;
+  if (command !== 'insertText' || typeof text !== 'string') return false;
+  if (!(field instanceof HTMLTextAreaElement)) return false;
+  field.setRangeText(text, field.selectionStart, field.selectionEnd, 'end');
+  field.dispatchEvent(
+    new InputEvent('input', { bubbles: true, inputType: 'insertText', data: text }),
+  );
+  return true;
+}
+
+if (!('execCommand' in document)) {
+  Object.defineProperty(document, 'execCommand', {
+    value: insertTextInFocusedField,
+    configurable: true,
+  });
+}
+
 if (!('ResizeObserver' in globalThis)) {
   Object.defineProperty(globalThis, 'ResizeObserver', {
     value: SilentResizeObserver,

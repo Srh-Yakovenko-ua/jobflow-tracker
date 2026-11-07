@@ -4,6 +4,8 @@ import type { RequestHandler } from 'msw';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { errorReply } from '@/test/api-handlers';
+import { fixtureIdOf } from '@/test/board-fixtures';
+import { notesRoute } from '@/test/note-fixtures';
 import { renderInApp } from '@/test/render-in-app';
 import { server } from '@/test/server';
 import { meRoute } from '@/test/session-fixtures';
@@ -12,7 +14,7 @@ import {
   DESIGN_TIMELINE_APPLICATION,
   EMPTY_TIMELINE,
   LONG_COMMENT,
-  timelineItemOf,
+  noteAddedOf,
   timelineRoute,
 } from '@/test/timeline-fixtures';
 
@@ -44,22 +46,16 @@ const DESIGN_ROWS = [
   ['12.08', 'Картку створено букмарклетом', 'AI розібрав опис за 6 секунд'],
 ] as const;
 
-const LONG_COMMENT_TIMELINE = {
-  items: [
-    timelineItemOf({
-      serial: 401,
-      type: 'note_added',
-      occurredAt: '2026-09-06T09:00:00Z',
-      title: 'Нотатка',
-      meta: { body: LONG_COMMENT },
-    }),
-  ],
-};
+function noteTimelineOf(body: string) {
+  return {
+    items: [noteAddedOf({ id: fixtureIdOf(401), body, createdAt: '2026-09-06T09:00:00Z' })],
+  };
+}
 
 const NOT_FOUND = () => errorReply({ status: 404, type: 'not_found' });
 
 function renderTimeline({ route, application = DESIGN_TIMELINE_APPLICATION }: TimelineSetup) {
-  server.use(meRoute({ silenceDays: 7, timezone: 'Europe/Kyiv' }), route);
+  server.use(meRoute({ silenceDays: 7, timezone: 'Europe/Kyiv' }), notesRoute().handler, route);
   const user = renderInApp(<ApplicationTimeline application={application} />);
   return { user, section: screen.getByRole('region', { name: HEADING }) };
 }
@@ -101,13 +97,24 @@ describe('ApplicationTimeline', () => {
   });
 
   it('keeps a long unbroken comment whole and lets its text column wrap it', async () => {
-    renderTimeline({ route: timelineRoute({ timeline: LONG_COMMENT_TIMELINE }) });
+    renderTimeline({ route: timelineRoute({ timeline: noteTimelineOf(LONG_COMMENT) }) });
 
     const comment = await screen.findByText(LONG_COMMENT);
 
     expect(comment.textContent).toHaveLength(1000);
     expect(comment.parentElement?.classList).toContain('min-w-0');
     expect(comment.parentElement?.classList).toContain('wrap-anywhere');
+  });
+
+  it('a note with **bold** shows no asterisks in the timeline', async () => {
+    const { section } = renderTimeline({
+      route: timelineRoute({ timeline: noteTimelineOf('Треба **повторити DP**') }),
+    });
+
+    const row = (await within(section).findByText('Нотатка')).closest('li');
+
+    expect(row?.textContent).toContain('повторити DP');
+    expect(row?.textContent).not.toContain('*');
   });
 
   it('a timeline that fails to load offers a retry inside the section that loads the journal', async () => {

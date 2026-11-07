@@ -1,10 +1,13 @@
-import type { TimelineItem } from '@jobflow/shared';
+import type { Note, TimelineItem } from '@jobflow/shared';
 import { describe, expect, it } from 'vitest';
 
+import { fixtureIdOf } from '@/test/board-fixtures';
+import { NOTE_ID, noteOf } from '@/test/note-fixtures';
 import {
   DESIGN_NOTE,
   DESIGN_TIMELINE,
   DESIGN_TIMELINE_APPLICATION,
+  noteAddedOf,
   stageMoveOf,
   timelineItemOf,
 } from '@/test/timeline-fixtures';
@@ -22,6 +25,21 @@ function looksOf(items: readonly TimelineItem[]) {
 
 function itemOf(fields: Pick<TimelineItem, 'type' | 'meta'> & Partial<TimelineItem>) {
   return timelineItemOf({ serial: 900, occurredAt: AT, title: 'подія', ...fields });
+}
+
+function noteMetaOf(listed: Pick<Note, 'id' | 'body'>) {
+  const draft = noteAddedOf({ id: NOTE_ID, body: 'Друга з', createdAt: AT });
+  const move = itemOf({
+    type: 'stage_changed',
+    meta: stageMoveOf({ fromStage: 'applied', toStage: 'screening', daysInPreviousStage: 2 }),
+  });
+  const notes = [noteOf({ applicationId: DESIGN_TIMELINE_APPLICATION.id, ...listed })];
+  const rows = timelineRowsOf({
+    items: [draft, move],
+    application: DESIGN_TIMELINE_APPLICATION,
+    notes,
+  });
+  return rows.map(({ meta, metaFormat }) => ({ meta, metaFormat }));
 }
 
 describe('timelineRowsOf', () => {
@@ -130,6 +148,20 @@ describe('timelineRowsOf', () => {
     expect(looksOf([odd, bodiless])).toEqual([
       { title: 'подія', meta: 'Перенесено вручну.', marker: RING, tone: 'strong' },
       { title: 'подія', meta: null, marker: RING, tone: 'strong' },
+    ]);
+  });
+
+  it('a note row takes the body from the notes list by id', () => {
+    expect(noteMetaOf({ id: NOTE_ID, body: 'Друга задача' })).toEqual([
+      { meta: 'Друга задача', metaFormat: 'note' },
+      { meta: 'Перенесено вручну. 2 дні на етапі відгуку.', metaFormat: 'text' },
+    ]);
+  });
+
+  it('the fallback to meta.body when the note is not listed', () => {
+    expect(noteMetaOf({ id: fixtureIdOf(902), body: 'Інша нотатка' })).toEqual([
+      { meta: 'Друга з', metaFormat: 'note' },
+      { meta: 'Перенесено вручну. 2 дні на етапі відгуку.', metaFormat: 'text' },
     ]);
   });
 });

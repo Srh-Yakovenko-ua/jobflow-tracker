@@ -12,7 +12,7 @@ import { type ApplicationCardContext, NextEventChip } from '@/entities/applicati
 import { useMoveApplicationMutation } from '@/features/move-application';
 import { EventOutcomePrompt, IcsDownloadButton } from '@/features/schedule-event';
 import { uk } from '@/shared/i18n';
-import { webUrlOf } from '@/shared/lib/web-url';
+import { NEW_TAB, webUrlOf } from '@/shared/lib/web-url';
 import { Button } from '@/shared/ui/button';
 import { LoadFailedPanel } from '@/shared/ui/error-panel';
 
@@ -42,8 +42,7 @@ function EventLocation({ location }: Readonly<{ location: string | null }>) {
   return (
     <a
       href={href}
-      target="_blank"
-      rel="noopener noreferrer"
+      {...NEW_TAB}
       className="min-w-0 truncate text-[13px] text-link underline-offset-2 hover:underline"
     >
       {location}

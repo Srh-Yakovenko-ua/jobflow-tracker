@@ -10,20 +10,20 @@ import { TextSkeleton } from '@/shared/ui/skeleton';
 import { STATE_TEXT } from '@/shared/ui/state-text';
 
 import {
-  type ApplicationTimeline as Timeline,
+  type ApplicationTimelineState,
   useApplicationTimeline,
 } from '../model/use-application-timeline';
 import { type TimelineEntry, TimelineEntryRow } from './timeline-row';
 
 export type ApplicationTimelineProps = Readonly<{ application: ApplicationResponse }>;
 
-type TimelineBodyProps = Readonly<{ timeline: Timeline }>;
+type TimelineBodyProps = Readonly<{ timeline: ApplicationTimelineState }>;
 
 const COPY = uk.timeline;
 
 const WAITING_ID = 'waiting';
 
-function entriesOf({ rows, waiting, now, timeZone }: Timeline): TimelineEntry[] {
+function entriesOf({ rows, waiting, now, timeZone }: ApplicationTimelineState): TimelineEntry[] {
   const dated = rows.map((row) => ({
     ...row,
     when: { label: formatTimelineDate({ at: row.at, now, timeZone }), at: row.at },
@@ -32,6 +32,7 @@ function entriesOf({ rows, waiting, now, timeZone }: Timeline): TimelineEntry[] 
   const today: TimelineEntry = {
     id: WAITING_ID,
     ...waiting,
+    metaFormat: 'text',
     tone: 'strong',
     marker: { kind: 'waiting' },
     when: { label: COPY.today, at: now },

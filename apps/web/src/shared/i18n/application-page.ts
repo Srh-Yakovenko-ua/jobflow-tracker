@@ -40,6 +40,7 @@ export const applicationPage = {
     label: 'Нова нотатка',
     placeholder: 'Додати нотатку…',
     privacy: 'Нотатки ніколи не йдуть у модель',
+    privacyLabel: 'Приватність нотаток',
     context: (date: string, stageGenitive: string) => `${date}, після ${stageGenitive}`,
     saving: 'зберігаю…',
     saved: 'збережено',

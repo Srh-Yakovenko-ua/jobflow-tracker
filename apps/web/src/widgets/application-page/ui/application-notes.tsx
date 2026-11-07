@@ -1,5 +1,4 @@
 import type { ApplicationResponse } from '@jobflow/shared';
-import { Lock } from 'lucide-react';
 import { useId } from 'react';
 
 import { NoteMarkdown } from '@/entities/note';
@@ -7,18 +6,15 @@ import { NoteEditor } from '@/features/write-note';
 import { uk } from '@/shared/i18n';
 import { cn } from '@/shared/lib/cn';
 import { LoadFailedPanel } from '@/shared/ui/error-panel';
-import { IconAction } from '@/shared/ui/icon-action';
 import { TextSkeleton } from '@/shared/ui/skeleton';
 import { STATE_TEXT } from '@/shared/ui/state-text';
 
-import {
-  type ApplicationNotes as Notes,
-  useApplicationNotes,
-} from '../model/use-application-notes';
+import { type ApplicationNotesState, useApplicationNotes } from '../model/use-application-notes';
+import { NotesPrivacy } from './notes-privacy';
 
 export type ApplicationNotesProps = Readonly<{ application: ApplicationResponse }>;
 
-type NoteListProps = Readonly<{ notes: Notes }>;
+type NoteListProps = Readonly<{ notes: ApplicationNotesState }>;
 
 const COPY = uk.applicationPage.notes;
 
@@ -54,7 +50,7 @@ export function ApplicationNotes({ application }: ApplicationNotesProps) {
         <h2 id={headingId} className={cn(STATE_TEXT.eyebrow, 'text-ink-3')}>
           {COPY.kicker}
         </h2>
-        <IconAction label={COPY.privacy} icon={Lock} />
+        <NotesPrivacy />
       </div>
       <div className="flex flex-col gap-3">
         <NoteList notes={notes} />

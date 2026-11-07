@@ -17,7 +17,7 @@ import {
 } from '@/features/move-application';
 import { RejectionReasonDialog, useRejectionPrompt } from '@/features/reject-with-reason';
 import { uk } from '@/shared/i18n';
-import { webUrlOf } from '@/shared/lib/web-url';
+import { NEW_TAB, webUrlOf } from '@/shared/lib/web-url';
 import { Button, buttonLinkClasses } from '@/shared/ui/button';
 import { DANGER_MENU_ITEM, Menu, MenuContent, MenuItem, MenuTrigger } from '@/shared/ui/menu';
 
@@ -72,12 +72,7 @@ function VacancyLink({ url }: Readonly<{ url: string | null }>) {
   const href = webUrlOf(url);
   if (href === null) return null;
   return (
-    <a
-      href={href}
-      target="_blank"
-      rel="noopener noreferrer"
-      className={buttonLinkClasses({ variant: 'outline', size: 'md' })}
-    >
+    <a href={href} {...NEW_TAB} className={buttonLinkClasses({ variant: 'outline', size: 'md' })}>
       {COPY.openVacancy}
     </a>
   );
@@ -90,9 +85,8 @@ export function ApplicationActions({
   suggestion,
 }: ApplicationActionsProps) {
   const move = useMoveApplicationMutation();
-  const { mutate: send } = useMoveApplicationMutation();
   const { mutate: undo } = useUndoMoveMutation();
-  const rejection = useRejectionPrompt({ send, undo });
+  const rejection = useRejectionPrompt({ send: move.mutate, undo });
   const next = suggestion === null ? nextStageOf(application.currentStage) : null;
   return (
     <div className="flex flex-wrap gap-2.5 pt-1">

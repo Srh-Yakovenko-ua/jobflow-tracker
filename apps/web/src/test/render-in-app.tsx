@@ -8,9 +8,13 @@ export function InApp({ children }: Readonly<{ children: ReactNode }>) {
   return <Providers theme="light">{children}</Providers>;
 }
 
+export function renderViewInApp(ui: ReactNode) {
+  const view = render(ui, { wrapper: InApp });
+  return { user: userEvent.setup(), view };
+}
+
 export function renderInApp(ui: ReactNode) {
-  render(<InApp>{ui}</InApp>);
-  return userEvent.setup();
+  return renderViewInApp(ui).user;
 }
 
 export function renderHookInApp<T>(hook: () => T) {

@@ -1,6 +1,6 @@
 import type { Note } from '@jobflow/shared';
-import Markdown from 'react-markdown';
-import rehypeSanitize from 'rehype-sanitize';
+import Markdown, { type Options } from 'react-markdown';
+import rehypeSanitize, { defaultSchema } from 'rehype-sanitize';
 
 export type NoteMarkdownProps = Readonly<{ note: Pick<Note, 'body'> }>;
 
@@ -17,7 +17,16 @@ function remarkHtmlAsText() {
   return htmlAsText;
 }
 
-const NOTE_ELEMENTS = ['p', 'strong', 'em', 'ul', 'ol', 'li', 'br', 'code'];
+function keepingOnly(tagNames: string[]): Options {
+  return {
+    remarkPlugins: [remarkHtmlAsText],
+    rehypePlugins: [[rehypeSanitize, { ...defaultSchema, tagNames }]],
+  };
+}
+
+const AS_NOTE = keepingOnly(['p', 'strong', 'em', 'ul', 'ol', 'li', 'br', 'code']);
+
+const AS_TEXT = keepingOnly([]);
 
 const NOTE_PROSE =
   'flex flex-col gap-2 text-body-l text-ink wrap-anywhere [&_code]:rounded-sm [&_code]:bg-surface-2 [&_code]:px-1 [&_ol]:list-decimal [&_ol]:ps-5 [&_p]:whitespace-pre-line [&_strong]:font-semibold [&_ul]:list-disc [&_ul]:ps-5';
@@ -25,14 +34,11 @@ const NOTE_PROSE =
 export function NoteMarkdown({ note }: NoteMarkdownProps) {
   return (
     <div className={NOTE_PROSE}>
-      <Markdown
-        remarkPlugins={[remarkHtmlAsText]}
-        rehypePlugins={[rehypeSanitize]}
-        allowedElements={NOTE_ELEMENTS}
-        unwrapDisallowed
-      >
-        {note.body}
-      </Markdown>
+      <Markdown {...AS_NOTE}>{note.body}</Markdown>
     </div>
   );
+}
+
+export function NotePlainText({ note }: NoteMarkdownProps) {
+  return <Markdown {...AS_TEXT}>{note.body}</Markdown>;
 }
