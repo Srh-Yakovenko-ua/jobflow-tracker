@@ -7,21 +7,25 @@ import { showErrorToast } from '@/shared/ui/error-toast';
 import { ApiError } from './api-error';
 import { applyFieldErrors, type ApplyFieldErrorsOptions } from './field-errors';
 
-export type GuardedSaveOptions<Body, Values extends FieldValues> = Readonly<{
+type GuardedSaveOptions<Body, Values extends FieldValues, Result> = Readonly<{
   mutationKey: MutationKey;
-  request: (body: Body) => Promise<unknown>;
+  request: (body: Body) => Promise<Result>;
   form: Omit<ApplyFieldErrorsOptions<Values>, 'error'>;
-  onSuccess: () => unknown;
+  onSuccess: (result: Result) => unknown;
 }>;
 
-export type GuardedSave<Body> = Readonly<{ isPending: boolean; save: (body: Body) => void }>;
+export type GuardedSave<Body> = Readonly<{
+  isPending: boolean;
+  isSuccess: boolean;
+  save: (body: Body) => void;
+}>;
 
-export function useGuardedSave<Body, Values extends FieldValues>({
+export function useGuardedSave<Body, Values extends FieldValues, Result>({
   mutationKey,
   request,
   form,
   onSuccess,
-}: GuardedSaveOptions<Body, Values>): GuardedSave<Body> {
+}: GuardedSaveOptions<Body, Values, Result>): GuardedSave<Body> {
   const queryClient = useQueryClient();
   const mutation = useMutation({
     mutationKey,
@@ -37,6 +41,7 @@ export function useGuardedSave<Body, Values extends FieldValues>({
   });
   return {
     isPending: mutation.isPending,
+    isSuccess: mutation.isSuccess,
     save: (body) => {
       if (queryClient.isMutating({ mutationKey }) > 0) return;
       mutation.mutate(body);

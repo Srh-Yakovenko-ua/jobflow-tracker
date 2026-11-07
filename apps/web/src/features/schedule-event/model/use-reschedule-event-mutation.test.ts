@@ -68,7 +68,7 @@ describe('useRescheduleEventMutation', () => {
     });
   });
 
-  it('marks the calendar and the card schedule stale once the move is saved, and keeps the drop', async () => {
+  it('marks the calendar and the application schedule stale once the move is saved, and keeps the drop', async () => {
     const { result, sent, drop } = renderReschedule();
     const listKey = scheduledEventKeys.list(ACME_APPLICATION.id);
     act(() => {

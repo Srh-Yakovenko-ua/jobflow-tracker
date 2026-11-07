@@ -43,6 +43,14 @@ function editButton(): HTMLElement {
   return screen.getByRole('button', { name: EDIT });
 }
 
+async function openRecruiterEditor() {
+  const page = renderRecruiter();
+  const section = await findRecruiter();
+  await within(section).findByText('Оксана Левченко');
+  await page.user.click(editButton());
+  return { ...page, section };
+}
+
 describe('ApplicationRecruiter', () => {
   beforeEach(() => {
     back.mockClear();
@@ -107,7 +115,7 @@ describe('ApplicationRecruiter', () => {
     ]);
   });
 
-  it('other applications offer their recruiters only while this card has none', async () => {
+  it('other applications offer their recruiters only while this application has none', async () => {
     renderRecruiter({ items: [DESIGN_CONTACT], suggestions: [OTHER_RECRUITER] });
     const section = await findRecruiter();
 
@@ -117,11 +125,8 @@ describe('ApplicationRecruiter', () => {
   });
 
   it('a cleared role is saved as null and focus returns to the edit button', async () => {
-    const { user, contacts } = renderRecruiter();
-    const section = await findRecruiter();
-    await within(section).findByText('Оксана Левченко');
+    const { user, contacts, section } = await openRecruiterEditor();
 
-    await user.click(editButton());
     await user.clear(within(section).getByRole('textbox', { name: 'Роль' }));
     await user.click(within(section).getByRole('button', { name: 'Зберегти' }));
 
@@ -130,6 +135,18 @@ describe('ApplicationRecruiter', () => {
     });
     expect(await within(section).findByText('Acme Technologies')).toBeDefined();
     expect(contacts.updated.map(({ body }) => body.role)).toEqual([null]);
+  });
+
+  it('Скасувати in the recruiter editor closes it with nothing sent and returns focus to the edit button', async () => {
+    const { user, contacts, section } = await openRecruiterEditor();
+
+    await user.click(within(section).getByRole('button', { name: 'Скасувати' }));
+
+    await waitFor(() => {
+      expect(document.activeElement).toBe(editButton());
+    });
+    expect(within(section).queryByRole('textbox', { name: 'Роль' })).toBeNull();
+    expect(contacts.updated).toEqual([]);
   });
 
   it('Escape in the recruiter editor closes only the editor and keeps the sheet open', async () => {

@@ -64,7 +64,7 @@ function SuggestionList({ suggestions, creation }: SuggestionListProps) {
 
 export function AddContactForm({ application, suggestions, actions }: AddContactFormProps) {
   const methods = useForm({
-    mode: 'onBlur',
+    mode: 'onTouched',
     defaultValues: EMPTY_CONTACT,
     resolver: zodResolver(newContactSchema),
   });

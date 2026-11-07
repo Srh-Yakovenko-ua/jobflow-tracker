@@ -103,7 +103,7 @@ export function renderApplicationPage({
   const page = applicationRoute({ application, moves: move.sent, ...(reply && { reply }) });
   const events = scheduledEventRoutes(scheduledEvents);
   const beside = boardBeside({ board, id, store: events.store });
-  const people = contactRoutes(contacts);
+  const recruiters = contactRoutes(contacts);
   server.use(
     meRoute(),
     page.handler,
@@ -116,7 +116,7 @@ export function renderApplicationPage({
     ...written.handlers,
     ...events.handlers,
     ...beside.handlers,
-    ...people.handlers,
+    ...recruiters.handlers,
   );
   const ui = beside.wrap(
     mode === 'sheet' ? <ApplicationSheet id={id} /> : <ApplicationPage id={id} view={{ mode }} />,
@@ -136,7 +136,7 @@ export function renderApplicationPage({
     notes: written.sent,
     scheduledEvents: events.sent,
     board: beside.sent,
-    contacts: people.sent,
+    contacts: recruiters.sent,
   };
 }
 

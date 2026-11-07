@@ -33,7 +33,7 @@ describe('contextRowsOf', () => {
     ]);
   });
 
-  it('counts the funnel from the day the card was created when it has no applied date', () => {
+  it('counts the funnel from the day the application was created when it has no applied date', () => {
     const captured = { ...DJINNI_APPLICATION, appliedAt: null };
 
     expect(rowsOf(captured)[1]).toEqual(['у воронці', '34 дні', null]);

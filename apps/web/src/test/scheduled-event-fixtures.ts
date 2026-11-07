@@ -122,9 +122,9 @@ function eventsSpec(
     },
     updating: {
       schema: updateScheduledEventInputSchema,
-      merge: ({ before, patch }) => {
-        const startsAt = patch.startsAt === undefined ? before.startsAt : utcOf(patch.startsAt);
-        return scheduledEventSchema.parse({ ...before, ...patch, startsAt });
+      merge: ({ stored, patch }) => {
+        const startsAt = patch.startsAt === undefined ? stored.startsAt : utcOf(patch.startsAt);
+        return scheduledEventSchema.parse({ ...stored, ...patch, startsAt });
       },
       replyOf: (event): ScheduledEventUpdateResponse => ({ ...event, suggestedStage }),
     },

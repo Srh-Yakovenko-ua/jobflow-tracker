@@ -6,7 +6,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { FULL_CARD } from '@/entities/application';
 import { uk } from '@/shared/i18n';
-import { apiUrl, errorReply } from '@/test/api-handlers';
+import { apiUrl, validationReply } from '@/test/api-handlers';
 import { push } from '@/test/navigation';
 import { renderInApp } from '@/test/render-in-app';
 import { server } from '@/test/server';
@@ -140,11 +140,7 @@ describe('GlobalSearch', () => {
 
   it('a failed search is announced and retried from the keyboard', async () => {
     answerWith(HITS);
-    server.use(
-      http.get(LIST_URL, () => errorReply({ status: 422, type: 'validation_error' }), {
-        once: true,
-      }),
-    );
+    server.use(http.get(LIST_URL, () => validationReply(), { once: true }));
     const { user } = await typeQuery('tri');
 
     expect((await screen.findByRole('alert')).textContent).toBe(SEARCH.error);

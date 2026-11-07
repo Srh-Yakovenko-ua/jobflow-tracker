@@ -25,7 +25,7 @@ type StoredCreating<Item, Body> = {
 
 type StoredUpdating<Item, Patch> = {
   schema: z.ZodType<Patch>;
-  merge: (change: { before: Item; patch: Patch }) => Item;
+  merge: (change: { stored: Item; patch: Patch }) => Item;
   replyOf?: (item: Item) => JsonBodyType;
 };
 
@@ -90,11 +90,11 @@ function storedUpdateRoute<Item extends Stored, Patch>({
     const { itemId } = info.params;
     sent.push({ itemId, body: patch });
     const saved = () => {
-      const at = store.findIndex((item) => item.id === itemId);
-      const before = store[at];
-      if (before === undefined) return errorReply({ status: 404, type: 'not_found' });
-      const item = merge({ before, patch });
-      store.splice(at, 1, item);
+      const index = store.findIndex((item) => item.id === itemId);
+      const stored = store[index];
+      if (stored === undefined) return errorReply({ status: 404, type: 'not_found' });
+      const item = merge({ stored, patch });
+      store.splice(index, 1, item);
       return HttpResponse.json(replyOf(item));
     };
     return heldReply({ ...control, info, fallback: saved });
