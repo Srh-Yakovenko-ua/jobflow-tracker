@@ -15,6 +15,7 @@ import { EventsModule } from './modules/events/index.js';
 import { HealthModule } from './modules/health/index.js';
 import { MaintenanceModule } from './modules/maintenance/index.js';
 import { NotesModule } from './modules/notes/index.js';
+import { ResumesModule } from './modules/resumes/index.js';
 import { ScheduleModule } from './modules/schedule/index.js';
 import { SearchesModule } from './modules/searches/index.js';
 import { SettingsModule } from './modules/settings/index.js';
@@ -43,6 +44,7 @@ import { RedisModule } from './redis/redis.module.js';
     SettingsModule,
     SearchesModule,
     AiModule,
+    ResumesModule,
   ],
   providers: [
     { provide: APP_FILTER, useClass: AppExceptionFilter },

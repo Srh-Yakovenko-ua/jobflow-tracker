@@ -4,6 +4,7 @@ x-api-environment: &api-environment
   DATABASE_URL: postgresql://jobflow_app:${POSTGRES_APP_PASSWORD:-jobflow_app}@postgres:5432/jobflow
   REDIS_URL: redis://redis:6379
   S3_ENDPOINT: http://minio:9000
+  S3_PUBLIC_ENDPOINT: http://localhost:9000
   SMTP_URL: smtp://mailpit:1025
   JWT_PRIVATE_KEY_PATH: /app/.secrets/jwt-private.pem
   JWT_PUBLIC_KEY_PATH: /app/.secrets/jwt-public.pem

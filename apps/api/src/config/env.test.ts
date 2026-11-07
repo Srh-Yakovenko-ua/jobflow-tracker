@@ -106,6 +106,20 @@ describe('validateEnv', () => {
     expect(validateEnv({ ...exampleEnv, NODE_ENV: 'production' }).NODE_ENV).toBe('production');
   });
 
+  it('defaults S3_REGION to us-east-1 when it is empty', () => {
+    expect(validateEnv({ ...exampleEnv, S3_REGION: '' }).S3_REGION).toBe('us-east-1');
+  });
+
+  it('leaves S3_PUBLIC_ENDPOINT unset when it is empty and reads it when given', () => {
+    const unset = validateEnv({ ...exampleEnv, S3_PUBLIC_ENDPOINT: '' });
+    const given = validateEnv({ ...exampleEnv, S3_PUBLIC_ENDPOINT: 'http://localhost:9000' });
+
+    expect([unset.S3_PUBLIC_ENDPOINT, given.S3_PUBLIC_ENDPOINT]).toEqual([
+      undefined,
+      'http://localhost:9000',
+    ]);
+  });
+
   it.each([
     { key: 'RATE_LIMIT_LOGIN_PER_MINUTE', fallback: 5 },
     { key: 'RATE_LIMIT_REGISTER_PER_HOUR', fallback: 3 },
@@ -148,6 +162,12 @@ describe('parseEnv', () => {
   it('refuses a negative price per million tokens', () => {
     expect(failedPaths({ ...exampleEnv, AI_USD_PER_MILLION_TOKENS_OUT: '-0.5' })).toEqual([
       'AI_USD_PER_MILLION_TOKENS_OUT',
+    ]);
+  });
+
+  it('refuses an S3_PUBLIC_ENDPOINT with a scheme other than http or https', () => {
+    expect(failedPaths({ ...exampleEnv, S3_PUBLIC_ENDPOINT: 'ftp://localhost:9000' })).toEqual([
+      'S3_PUBLIC_ENDPOINT',
     ]);
   });
 

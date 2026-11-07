@@ -4,6 +4,7 @@ export const DEPENDENCY_LIMITS = {
   connectTimeoutMs: 2000,
   pingTimeoutMs: 1000,
   queryTimeoutMs: 3000,
+  storageTimeoutMs: 3000,
   providerTimeoutMs: 5000,
   aiServiceTimeoutMs: 65_000,
 } as const;

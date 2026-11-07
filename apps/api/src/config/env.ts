@@ -35,6 +35,8 @@ const envFields = z.object({
   DATABASE_URL: z.url({ protocol: /^postgres(ql)?$/ }),
   REDIS_URL: z.url({ protocol: /^rediss?$/ }),
   S3_ENDPOINT: z.url(),
+  S3_PUBLIC_ENDPOINT: httpUrl.optional(),
+  S3_REGION: requiredText.default('us-east-1'),
   S3_BUCKET: requiredText,
   S3_ACCESS_KEY: requiredText,
   S3_SECRET_KEY: requiredText,
