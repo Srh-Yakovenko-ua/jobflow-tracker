@@ -435,6 +435,7 @@ model ResumeVersion {
   id             String         @id @default(dbgenerated("uuidv7()")) @db.Uuid
   userId         String         @map("user_id") @db.Uuid
   resumeId       String         @map("resume_id") @db.Uuid
+  number         Int
   storageKey     String         @unique @map("storage_key")
   filename       String
   mime           String
@@ -454,6 +455,7 @@ model ResumeVersion {
   aiJobs         AiJob[]
 
   @@unique([id, userId])
+  @@unique([resumeId, number])
   @@index([userId, resumeId])
   @@map("resume_versions")
 }

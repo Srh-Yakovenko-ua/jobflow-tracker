@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
+import { issuePathsOf } from '../test/zod-issues.js';
 import { applicationSchema } from './application.js';
 import { contactSchema } from './contact.js';
 import { errorResponseSchema } from './error-response.js';
@@ -164,18 +165,18 @@ describe('resumeVersionSchema', () => {
   it('refuses a fractional file size', () => {
     const resumeVersion = {
       id: '01920000-0000-7000-8000-000000000040',
-      resumeId: '01920000-0000-7000-8000-000000000041',
+      number: 1,
       filename: 'cv.pdf',
       mime: 'application/pdf',
       sizeBytes: 1024.5,
       title: 'Backend',
       note: null,
-      aiProfile: null,
       isArchived: false,
       uploadedAt: '2026-10-01T09:00:00Z',
-      ...timestamps,
+      aiProfileStatus: 'queued',
+      applicationsCount: 0,
     };
-    expect(resumeVersionSchema.safeParse(resumeVersion).success).toBe(false);
+    expect(issuePathsOf(resumeVersionSchema.safeParse(resumeVersion))).toEqual(['sizeBytes']);
   });
 });
 

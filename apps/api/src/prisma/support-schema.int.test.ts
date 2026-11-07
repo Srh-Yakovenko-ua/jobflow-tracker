@@ -300,14 +300,17 @@ describe('the supporting tables in Postgres', () => {
     ]);
   });
 
-  it('lets the analytics role read the owner of a resume version but not its text', async () => {
-    const rows = await database.prisma.$queryRaw<{ owner: boolean; extracted_text: boolean }[]>`
+  it('lets the analytics role read the owner and number of a resume version but not its text', async () => {
+    const rows = await database.prisma.$queryRaw<
+      { owner: boolean; number: boolean; extracted_text: boolean }[]
+    >`
       SELECT
         has_column_privilege('jobflow_analytics', 'resume_versions', 'user_id', 'SELECT') AS owner,
+        has_column_privilege('jobflow_analytics', 'resume_versions', 'number', 'SELECT') AS number,
         has_column_privilege('jobflow_analytics', 'resume_versions', 'text_extracted', 'SELECT')
           AS extracted_text`;
 
-    expect(rows).toEqual([{ owner: true, extracted_text: false }]);
+    expect(rows).toEqual([{ owner: true, number: true, extracted_text: false }]);
   });
 
   it('lets the analytics role into the public schema and read exactly the analytics tables', async () => {
