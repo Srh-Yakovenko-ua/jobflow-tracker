@@ -223,4 +223,24 @@ describe('KanbanBoard long columns', () => {
       expect({ before, after: columnView(applied) }).toEqual({ before: full, after: compact });
     },
   );
+
+  it('«Щільні» on a 500-card відгук scrolled to its end keeps the last card mounted, says no card is below and leaves no card with its stack', async () => {
+    const { user } = await longBoardReady(appliedBoard(500));
+    const applied = columnNamed('відгук 500');
+    const view = () => ({
+      ...columnView(applied),
+      last: cardLinkIn(applied, 'Vacancy 1499') !== null,
+      stacks: within(applied).queryAllByText('React').length,
+    });
+    scrollToEnd(applied);
+    await within(applied).findByText('Vacancy 1499');
+
+    const before = view();
+    await user.click(screen.getByRole('radio', { name: uk.board.density.compact }));
+
+    expect({ before, after: view() }).toEqual({
+      before: { mounted: 11, hint: null, scrollTop: 100_000, last: true, stacks: 11 },
+      after: { mounted: 12, hint: null, scrollTop: 100_000, last: true, stacks: 0 },
+    });
+  });
 });

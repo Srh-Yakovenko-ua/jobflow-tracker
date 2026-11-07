@@ -1,11 +1,24 @@
 import { fileURLToPath } from 'node:url';
 
+import babel from '@rolldown/plugin-babel';
 import tailwindMerge from '@tailwind-merge/vite';
 import tailwindcss from '@tailwindcss/vite';
 import { defineConfig } from 'vitest/config';
 
 export default defineConfig({
-  plugins: [tailwindcss(), tailwindMerge()],
+  plugins: [
+    babel({
+      exclude: [
+        /[/\\]node_modules[/\\]/,
+        /^\0rolldown\/runtime\.js$/,
+        /\.test\.tsx?$/,
+        /[/\\]src[/\\]test[/\\]/,
+      ],
+      plugins: [[fileURLToPath(import.meta.resolve('babel-plugin-react-compiler')), {}]],
+    }),
+    tailwindcss(),
+    tailwindMerge(),
+  ],
   resolve: {
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url)),
