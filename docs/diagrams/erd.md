@@ -331,6 +331,7 @@ failed failed
     String id "🗝️"
     String user_id 
     String resume_id 
+    Int number 
     String storage_key 
     String filename 
     String mime 

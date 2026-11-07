@@ -10,6 +10,7 @@ import type {
   StageEventPlan,
   StageState,
 } from '../modules/applications/index.js';
+import type { ResumeVersionRow } from '../modules/resumes/index.js';
 import { daysBefore, NOW, UNDO_WINDOW_END } from './time.js';
 
 export const OLENA_ID = '0199f0a0-0000-7000-8000-000000000001';
@@ -17,6 +18,7 @@ export const BOHDAN_ID = '0199f0a0-0000-7000-8000-000000000002';
 export const SEARCH_ID = '0199f0a0-0000-7000-8000-0000000000a1';
 export const CURRENT_SEARCH_ID = '0199f0a0-0000-7000-8000-0000000000a3';
 export const RESUME_VERSION_ID = '0199f0a0-0000-7000-8000-0000000000b1';
+export const UPLOAD_ID = '6f1c2b9e-3d4a-4f5b-8c6d-7e8f9a0b1c2d';
 export const APPLICATION_ID = '0199f0a0-0000-7000-8000-0000000000c1';
 export const MISSING_ID = '0199f0a0-0000-7000-8000-0000000000c2';
 export const CREATION_EVENT_ID = '0199f0a0-0000-7000-8000-0000000000d0';
@@ -152,4 +154,20 @@ export const APPLICATION_ROW: ApplicationRow = {
   updatedAt: daysBefore(1),
   stageEvents: [{ occurredAt: daysBefore(10) }],
   user: { settings: { silenceDays: 7 } },
+};
+
+export const RESUME_VERSION_ROW: ResumeVersionRow = {
+  id: RESUME_VERSION_ID,
+  number: 1,
+  title: 'для продуктових',
+  note: null,
+  filename: 'Olena CV.pdf',
+  mime: 'application/pdf',
+  sizeBytes: 9,
+  isArchived: false,
+  uploadedAt: NOW,
+  storageKey: `users/${OLENA_ID}/resumes/${UPLOAD_ID}.pdf`,
+  aiProfile: null,
+  aiJobs: [],
+  _count: { applications: 0 },
 };

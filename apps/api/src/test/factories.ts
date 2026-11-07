@@ -256,6 +256,7 @@ export async function createResume(prisma: PrismaService, userId: string): Promi
 export function resumeVersionData(owner: ResumeOwner): Prisma.ResumeVersionUncheckedCreateInput {
   return {
     ...owner,
+    number: 1,
     storageKey: `resumes/${owner.resumeId}/v1.pdf`,
     filename: 'cv.pdf',
     mime: 'application/pdf',

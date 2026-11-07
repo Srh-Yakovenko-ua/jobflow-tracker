@@ -13,13 +13,12 @@ import {
 } from '@jobflow/shared';
 import { z } from 'zod';
 
-import { errorResponses, jsonContent } from '../../openapi/route.js';
+import { errorResponses, EXAMPLE_UPLOAD_ID, jsonContent } from '../../openapi/route.js';
+import { RESUME_VERSIONS_OPENAPI_PATHS } from './resume-versions.openapi.js';
 
 const UPLOADS_PATH = '/uploads/resume';
 
 const TAGS = ['resumes'];
-
-const EXAMPLE_UPLOAD_ID = '6f1c2b9e-3d4a-4f5b-8c6d-7e8f9a0b1c2d';
 
 const uploadIdParams = z.object({ uploadId: uploadIdSchema.meta({ example: EXAMPLE_UPLOAD_ID }) });
 
@@ -39,7 +38,7 @@ const SIGNED_QUERY = [
 
 const TICKET = {
   uploadId: EXAMPLE_UPLOAD_ID,
-  url: `http://localhost:9000/resumes/users/0199f0a0-0000-7000-8000-000000000001/resumes/${EXAMPLE_UPLOAD_ID}.pdf?${SIGNED_QUERY}`,
+  url: `http://localhost:9000/resumes/pending/users/0199f0a0-0000-7000-8000-000000000001/resumes/${EXAMPLE_UPLOAD_ID}.pdf?${SIGNED_QUERY}`,
   method: 'PUT',
   headers: { 'Content-Type': 'application/pdf' },
   expiresAt: '2026-11-07T10:10:00.000Z',
@@ -63,7 +62,7 @@ export const RESUMES_OPENAPI_PATHS: RouteConfig[] = [
     path: UPLOADS_PATH,
     tags: TAGS,
     summary: 'A presigned URL to upload one resume file straight to storage',
-    description: `Takes a PDF or DOCX of at most ${MAX_BYTES} bytes; a larger sizeBytes answers 422 and signs nothing. The URL is valid ${UPLOAD_TTL_MINUTES} minutes and only for a PUT with the returned Content-Type and a body of exactly sizeBytes. Nothing is kept until the upload is confirmed.`,
+    description: `Takes a PDF or DOCX of at most ${MAX_BYTES} bytes; a larger sizeBytes answers 422 and signs nothing. The URL is valid ${UPLOAD_TTL_MINUTES} minutes and only for a PUT with the returned Content-Type and a body of exactly sizeBytes. The file waits under the pending prefix until a resume version is created from it and expires there after one day.`,
     request: {
       body: {
         required: true,
@@ -101,4 +100,5 @@ export const RESUMES_OPENAPI_PATHS: RouteConfig[] = [
       ...errorResponses([400, 401, 403, 404, 422, 503]),
     },
   },
+  ...RESUME_VERSIONS_OPENAPI_PATHS,
 ];

@@ -71,7 +71,12 @@ services:
 
   minio-init:
     image: pgsty/mc:RELEASE.2026-09-16T00-00-00Z
-    command: ['mb', '--ignore-existing', 'jobflow/resumes']
+    entrypoint: ['/bin/sh', '-c']
+    command:
+      - >-
+        mc mb --ignore-existing jobflow/resumes &&
+        echo '{"Rules":[{"ID":"expire-pending-uploads","Status":"Enabled","Filter":{"Prefix":"pending/"},"Expiration":{"Days":1}}]}' |
+        mc ilm rule import jobflow/resumes
     environment:
       MC_HOST_jobflow: http://${MINIO_ROOT_USER:-jobflow}:${MINIO_ROOT_PASSWORD:-jobflow-minio}@minio:9000
     depends_on:

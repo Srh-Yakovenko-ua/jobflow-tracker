@@ -10,6 +10,7 @@ import { Injectable } from '@nestjs/common';
 
 import type { Prisma } from '../../generated/prisma/client.js';
 import { EFFECTIVE_STAGE_EVENTS } from '../../prisma/effective-stage-events.js';
+import { LATEST_AI_JOB_SELECT } from '../../prisma/latest-ai-job.js';
 import { PrismaService } from '../../prisma/prisma.service.js';
 import type { DateCursor } from './application-cursor.js';
 import { LATEST_STAGE_EVENT_SELECT } from './applications.repository.js';
@@ -68,11 +69,7 @@ function cardSelectAt(now: Date) {
       take: 1,
       select: { kind: true, startsAt: true },
     },
-    aiJobs: {
-      orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
-      take: 1,
-      select: { status: true },
-    },
+    aiJobs: LATEST_AI_JOB_SELECT,
   } satisfies Prisma.ApplicationSelect;
 }
 
