@@ -4,12 +4,9 @@ import {
   moveApplicationInputSchema,
 } from '@jobflow/shared';
 import { act, screen, waitFor, within } from '@testing-library/react';
-import type { UserEvent } from '@testing-library/user-event';
-import type { ReactNode } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { applicationKeys } from '@/entities/application';
-import { userKeys } from '@/entities/user';
 import { uk } from '@/shared/i18n';
 import { ACME_APPLICATION, applicationRoute } from '@/test/application-fixtures';
 import { axeViolations } from '@/test/axe';
@@ -27,7 +24,13 @@ import { push, route } from '@/test/navigation';
 import { QueryProbe, waitForQuery } from '@/test/query-status';
 import { refuseStorage } from '@/test/refusing-storage';
 import { renderApplicationPage } from '@/test/render-application-page';
-import { renderBoardInShell, renderInShell, type ShellSetup } from '@/test/render-in-shell';
+import {
+  choose,
+  openPalette,
+  renderBoardInShell,
+  renderSignedIn,
+  type ShellSetup,
+} from '@/test/render-in-shell';
 import { server } from '@/test/server';
 import { ME_RESPONSE } from '@/test/session-fixtures';
 
@@ -96,18 +99,6 @@ function cardLink(): HTMLElement {
   return link;
 }
 
-async function renderSignedIn(page: ReactNode, shell: ShellSetup = {}) {
-  const user = renderInShell(
-    <>
-      {page}
-      <QueryProbe queryKey={userKeys.me()} />
-    </>,
-    shell,
-  );
-  await waitForQuery({ queryKey: userKeys.me(), status: 'success' });
-  return user;
-}
-
 async function renderWithFocusedCard(shell: ShellSetup = {}) {
   const user = await renderSignedIn(<a href={CARD_PAGE}>{CARD.position}</a>, shell);
   const card = cardLink();
@@ -115,11 +106,6 @@ async function renderWithFocusedCard(shell: ShellSetup = {}) {
     card.focus();
   });
   return { user, card };
-}
-
-async function openPalette(user: UserEvent) {
-  await user.keyboard('{Control>}k{/Control}');
-  return screen.findByRole('dialog', { name: 'Палітра команд' });
 }
 
 async function findRoku(found: Found) {
@@ -131,13 +117,6 @@ async function findRoku(found: Found) {
     'option',
   );
   return user;
-}
-
-async function choose(user: UserEvent, label: string) {
-  await openPalette(user);
-  await user.keyboard(label);
-  await screen.findByRole('option', { name: label });
-  await user.keyboard('{Enter}');
 }
 
 function optionNames(): (string | null)[] {

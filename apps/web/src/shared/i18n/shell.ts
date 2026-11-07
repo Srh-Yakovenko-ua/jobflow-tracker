@@ -72,6 +72,8 @@ export const shell = {
   shortcuts: {
     title: PALETTE_ACTIONS.shortcuts,
     then: 'потім',
+    off: 'вимкнено',
+    offNote: 'Гарячі клавіші з однієї літери вимкнено в налаштуваннях, розділ «Вигляд і тема».',
     palette: PALETTE_TITLE,
     search: SEARCH_LABEL,
     items: {

@@ -41,9 +41,16 @@ const CHANGE = {
   autoGhostDays: null,
   timezone: 'America/New_York',
   quietHoursStart: '21:15',
+  singleKeyShortcuts: false,
 };
 
-const CHANGED_FIELDS = ['silenceDays', 'autoGhostDays', 'timezone', 'quietHoursStart'];
+const CHANGED_FIELDS = [
+  'silenceDays',
+  'autoGhostDays',
+  'timezone',
+  'quietHoursStart',
+  'singleKeyShortcuts',
+];
 
 const ANSWERED_FOUR: AnsweredApplication[] = [
   { answers: [{ toStage: 'screening', waitDays: 2 }] },
@@ -207,9 +214,10 @@ describe('the settings routes', () => {
     const olena = await signedInWithSearch(testApp.prisma);
     const bohdan = await signedInWithSearch(testApp.prisma);
 
-    const response = await patchSettings(bohdan, { silenceDays: 30 });
+    const response = await patchSettings(bohdan, { silenceDays: 30, singleKeyShortcuts: false });
 
     expect(userSettingsSchema.parse(response.body).silenceDays).toBe(30);
+    expect(userSettingsSchema.parse(response.body).singleKeyShortcuts).toBe(false);
     expect(await storedRow(olena)).toEqual(NEW_USER_SETTINGS_ROW);
     expect(await settingsOf(olena)).toEqual(NEW_USER_SETTINGS);
   });

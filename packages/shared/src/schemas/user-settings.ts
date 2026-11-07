@@ -38,6 +38,7 @@ export const userSettingsSchema = z.object({
   notifyPush: z.boolean(),
   notifyEmail: z.boolean(),
   analyticsOptOut: z.boolean(),
+  singleKeyShortcuts: z.boolean(),
   activeResumeVersionId: z.uuid().nullable(),
 });
 

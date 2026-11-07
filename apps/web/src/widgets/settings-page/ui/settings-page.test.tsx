@@ -142,6 +142,21 @@ describe('SettingsPage', () => {
     expect(within(regionOf('Вигляд і тема')).getByRole('status').textContent).toBe('Збережено');
   });
 
+  it('«Гарячі клавіші з однієї літери» is on by default and turning it off saves only that field', async () => {
+    const { user, routes } = await renderLoadedSettings();
+    const singleKeys = within(regionOf('Вигляд і тема')).getByRole('switch', {
+      name: /Гарячі клавіші з однієї літери/,
+    });
+    expect(singleKeys.getAttribute('aria-checked')).toBe('true');
+
+    await user.click(singleKeys);
+
+    await waitFor(() => {
+      expect(routes.patches).toEqual([{ singleKeyShortcuts: false }]);
+    });
+    expect(singleKeys.getAttribute('aria-checked')).toBe('false');
+  });
+
   it('«Вийти на всіх пристроях» ends every session and goes to the login page', async () => {
     const { user } = await renderLoadedSettings();
     server.use(
