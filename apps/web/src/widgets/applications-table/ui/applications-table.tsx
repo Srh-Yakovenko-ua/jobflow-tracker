@@ -8,6 +8,7 @@ import { ApplicationFiltersProvider, FiltersEmptyState } from '@/features/filter
 import { uk } from '@/shared/i18n';
 import { LoadFailedAlert } from '@/shared/ui/banner';
 import { LoadFailedPanel } from '@/shared/ui/error-panel';
+import { LoadingRegion } from '@/shared/ui/loading-region';
 import { TableSkeleton } from '@/shared/ui/skeleton';
 
 import { useApplicationsTable } from '../model/use-applications-table';
@@ -31,12 +32,9 @@ function TableLoading({ failed, onRetry }: Readonly<{ failed: boolean; onRetry: 
     );
   }
   return (
-    <div aria-busy="true">
-      <p role="status" className="sr-only">
-        {uk.ui.loading}
-      </p>
+    <LoadingRegion>
       <TableSkeleton />
-    </div>
+    </LoadingRegion>
   );
 }
 
@@ -58,7 +56,7 @@ function TableContent() {
       </div>
     );
   }
-  const picked = table.getSelectedRowModel().rows.map((row) => row.original);
+  const picked = rows.filter((row) => row.getIsSelected()).map((row) => row.original);
   return (
     <TableFrame>
       <TableToolbar table={table} timeZone={timeZone} view={{ rows: rows.length > 0 }} />

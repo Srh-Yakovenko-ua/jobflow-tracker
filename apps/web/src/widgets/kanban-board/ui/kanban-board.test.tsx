@@ -196,6 +196,15 @@ describe('KanbanBoard', () => {
     expect(screen.queryByText(/активний пошук/)).toBeNull();
   });
 
+  it('with no cards the view switch still opens Таблиця', async () => {
+    const { user } = renderBoard({ counts: {} });
+    const views = within(await screen.findByRole('radiogroup', { name: 'Подання' }));
+
+    await user.click(views.getByRole('radio', { name: 'Таблиця' }));
+
+    expect(push).toHaveBeenCalledExactlyOnceWith('/applications');
+  });
+
   it('the view switch marks Дошка and opens Таблиця with the filters of the board', async () => {
     const { user } = renderBoard(DESIGN_BOARD, { filters: { source: ['djinni'], q: 'kafka' } });
     const views = within(await screen.findByRole('radiogroup', { name: 'Подання' }));

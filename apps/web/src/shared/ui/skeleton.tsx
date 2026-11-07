@@ -2,9 +2,9 @@
 
 import type { ComponentType } from 'react';
 
-import { uk } from '@/shared/i18n';
 import { cn } from '@/shared/lib/cn';
 
+import { LoadingRegion } from './loading-region';
 import { SHIMMER } from './shimmer';
 import { type SkeletonMotion, useSkeletonMotion } from './skeleton-motion';
 
@@ -137,12 +137,9 @@ export type PageSkeletonProps = Readonly<{ className?: string }>;
 
 export function PageSkeleton({ className }: PageSkeletonProps) {
   return (
-    <div aria-busy="true" className={cn('flex flex-col gap-8', className)}>
-      <p role="status" className="sr-only">
-        {uk.ui.loading}
-      </p>
+    <LoadingRegion className={cn('flex flex-col gap-8', className)}>
       <HeadingSkeleton />
       <TextSkeleton />
-    </div>
+    </LoadingRegion>
   );
 }

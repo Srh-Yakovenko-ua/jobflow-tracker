@@ -5,6 +5,7 @@ import type { AriaAttributes } from 'react';
 import { uk } from '@/shared/i18n';
 import { cn } from '@/shared/lib/cn';
 import { Checkbox } from '@/shared/ui/checkbox';
+import { TOUCH_HEIGHT } from '@/shared/ui/touch-height';
 
 import type { DataColumnId } from '../model/columns';
 import { COLUMN_LOOK, TABLE_LOOK } from './table-look';
@@ -67,6 +68,7 @@ export function SortHeader({ id, sort }: SortHeaderProps) {
         onClick={sort.onToggle}
         className={cn(
           'touch-target flex w-full items-center gap-1.5 rounded-xs uppercase select-none hover:text-ink focus-visible:focus-ring',
+          TOUCH_HEIGHT,
           look.align === 'end' && 'justify-end',
           sort.direction !== false && 'text-ink-2',
         )}

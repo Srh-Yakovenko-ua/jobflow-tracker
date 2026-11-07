@@ -7,6 +7,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/shared/ui/popover';
 
 import { DATA_COLUMN_IDS } from '../model/columns';
 import type { ApplicationsTableInstance } from '../model/use-applications-table';
+import { TOOLBAR_BUTTON } from './table-look';
 
 const COPY = uk.applicationsTable;
 
@@ -25,7 +26,7 @@ export function ColumnsMenu({ table }: ColumnsMenuProps) {
   return (
     <Popover>
       <PopoverTrigger asChild>
-        <Button variant="secondary" size="sm" icon={<Columns3 aria-hidden size={15} />}>
+        <Button {...TOOLBAR_BUTTON} icon={<Columns3 aria-hidden size={15} />}>
           {COPY.columnsMenu.trigger}
         </Button>
       </PopoverTrigger>

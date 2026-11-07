@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import { toCsv } from './csv';
 
-const BOM = '﻿';
+const BOM = '\uFEFF';
 
 describe('toCsv', () => {
   it('starts with the byte order mark, splits cells with a semicolon and ends every line with CRLF, Cyrillic kept as it is', () => {

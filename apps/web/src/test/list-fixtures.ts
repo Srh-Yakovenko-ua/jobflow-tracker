@@ -1,4 +1,8 @@
-import type { ApplicationListItem, ApplicationListResponse } from '@jobflow/shared';
+import {
+  type ApplicationListItem,
+  type ApplicationListResponse,
+  PAGINATION_LIMITS,
+} from '@jobflow/shared';
 import { http, HttpResponse } from 'msw/http';
 
 import { apiUrl } from './api-handlers';
@@ -24,7 +28,11 @@ function pageOf({ items, from, to }: PageSlice): ApplicationListResponse {
   };
 }
 
-export function pagedListRoute({ items, pageSize = 100, ...control }: PagedListRouteOptions) {
+export function pagedListRoute({
+  items,
+  pageSize = PAGINATION_LIMITS.maxLimit,
+  ...control
+}: PagedListRouteOptions) {
   const sent: string[] = [];
   const handler = http.get(apiUrl('/applications'), (info) => {
     const { searchParams } = new URL(info.request.url);

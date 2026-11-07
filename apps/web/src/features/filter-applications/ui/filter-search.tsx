@@ -10,7 +10,9 @@ import { Input } from '@/shared/ui/input';
 
 import { useApplicationFilters } from '../model/filters-store';
 
-const COPY = uk.board.filters.search;
+export type FilterSearchCopy = Readonly<{ label: string; placeholder: string }>;
+
+export type FilterSearchProps = Readonly<{ copy: FilterSearchCopy }>;
 
 export const FILTER_SEARCH_ID = 'filter-search';
 
@@ -18,7 +20,7 @@ export function focusFilterSearch(): void {
   document.getElementById(FILTER_SEARCH_ID)?.focus();
 }
 
-export function FilterSearch() {
+export function FilterSearch({ copy }: FilterSearchProps) {
   const text = useApplicationFilters((store) => store.filters.q ?? '');
   const { setQuery } = useApplicationFilters((store) => store.actions);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -37,8 +39,8 @@ export function FilterSearch() {
       maxLength={SEARCH_LIMITS.maxLength}
       enterKeyHint="search"
       autoComplete="off"
-      aria-label={COPY.label}
-      placeholder={COPY.placeholder}
+      aria-label={copy.label}
+      placeholder={copy.placeholder}
       className="w-full sm:w-60"
       adornments={{
         start: <Search aria-hidden size={15} className="flex-none text-ink-3" />,

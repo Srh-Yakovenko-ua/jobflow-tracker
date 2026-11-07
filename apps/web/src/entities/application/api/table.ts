@@ -1,10 +1,14 @@
-import type { ApplicationFilters, ApplicationListItem } from '@jobflow/shared';
+import {
+  type ApplicationFilters,
+  type ApplicationListItem,
+  PAGINATION_LIMITS,
+} from '@jobflow/shared';
 import { queryOptions } from '@tanstack/react-query';
 
 import { applicationKeys } from '../model/keys';
 import { type ApplicationPageRequest, fetchApplicationPage } from './list';
 
-const TABLE_PAGE = { limit: 100, sort: '-lastEventAt' } as const;
+const TABLE_PAGE = { limit: PAGINATION_LIMITS.maxLimit, sort: '-lastEventAt' } as const;
 
 async function rowsFrom(
   request: ApplicationPageRequest,

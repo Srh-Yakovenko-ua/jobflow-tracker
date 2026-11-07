@@ -1,9 +1,9 @@
 'use client';
 
-import { uk } from '@/shared/i18n';
 import { cn } from '@/shared/lib/cn';
 import { LoadFailedAlert } from '@/shared/ui/banner';
 import { LoadFailedPanel } from '@/shared/ui/error-panel';
+import { LoadingRegion } from '@/shared/ui/loading-region';
 
 import { useCalendarPage } from '../model/use-calendar-page';
 import { CalendarEmpty } from './calendar-empty';
@@ -15,14 +15,9 @@ const GRID_HEIGHT = 'min-h-115';
 
 function GridSkeleton() {
   return (
-    <div
-      aria-busy="true"
+    <LoadingRegion
       className={cn(GRID_HEIGHT, 'rounded-lg bg-surface-2 inset-ring inset-ring-line-soft')}
-    >
-      <p role="status" className="sr-only">
-        {uk.ui.loading}
-      </p>
-    </div>
+    />
   );
 }
 
