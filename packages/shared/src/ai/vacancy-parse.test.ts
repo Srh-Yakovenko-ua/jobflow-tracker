@@ -1,9 +1,10 @@
 import { describe, expect, it } from 'vitest';
 
-import { buildVacancyParseOutput } from '../../testing/index.js';
+import { buildVacancyParseOutput, vacancyFieldOf } from '../../testing/index.js';
 import { issuePathsOf } from '../test/zod-issues.js';
 import {
   VACANCY_PARSE_LIMITS,
+  vacancyParseFailure,
   vacancyParseInputSchema,
   vacancyParseOutputSchema,
 } from './vacancy-parse.js';
@@ -28,42 +29,103 @@ describe('vacancyParseInputSchema', () => {
   });
 });
 
+const MISSING = vacancyFieldOf(null, null);
+
+const NOTHING_STATED = buildVacancyParseOutput({
+  company: MISSING,
+  position: MISSING,
+  seniority: MISSING,
+  salaryMin: MISSING,
+  salaryMax: MISSING,
+  currency: MISSING,
+  workMode: MISSING,
+  stack: vacancyFieldOf([], null),
+});
+
+const itemsOf = (count: number) => Array.from({ length: count }, () => 'React');
+
 describe('vacancyParseOutputSchema', () => {
-  it('accepts a parsed vacancy', () => {
+  it('accepts a parsed vacancy with a value, a confidence and a quote on every field', () => {
     const parsedVacancy = buildVacancyParseOutput();
     expect(vacancyParseOutputSchema.parse(parsedVacancy)).toEqual(parsedVacancy);
   });
 
-  it('accepts null for every field the vacancy does not state', () => {
-    const unstated = {
-      company: null,
-      position: null,
-      location: null,
-      workMode: null,
-      salaryMin: null,
-      salaryMax: null,
-      currency: null,
-      stack: [],
-    };
-    expect(vacancyParseOutputSchema.parse(unstated)).toEqual(unstated);
+  it('accepts a missing value and a missing quote on every field the vacancy does not state', () => {
+    expect(vacancyParseOutputSchema.parse(NOTHING_STATED)).toEqual(NOTHING_STATED);
   });
 
-  it('accepts a stack of exactly 20 items', () => {
-    const stack = Array.from({ length: 20 }, () => 'TypeScript');
-    expect(vacancyParseOutputSchema.parse(buildVacancyParseOutput({ stack })).stack).toHaveLength(
-      20,
-    );
+  it('accepts a quote of exactly 300 characters and a stack of exactly 20 items', () => {
+    const stack = vacancyFieldOf(itemsOf(20), 'в'.repeat(300));
+    expect(vacancyParseOutputSchema.parse(buildVacancyParseOutput({ stack })).stack).toEqual(stack);
   });
 
   it.for([
-    { label: 'a stack of 21 items', patch: { stack: Array.from({ length: 21 }, () => 'React') } },
-    { label: 'a lowercase currency', patch: { currency: 'usd' } },
-    { label: 'a negative salary', patch: { salaryMin: -1 } },
-    { label: 'a fractional salary', patch: { salaryMax: 4500.5 } },
-    { label: 'an unknown work mode', patch: { workMode: 'onsite' } },
-  ])('refuses $label', ({ patch }) => {
-    const [field] = Object.keys(patch);
+    {
+      label: 'a currency outside USD, UAH and EUR',
+      patch: { currency: vacancyFieldOf('GBP', 'GBP') },
+      path: 'currency.value',
+    },
+    {
+      label: 'a lowercase currency',
+      patch: { currency: vacancyFieldOf('usd', 'usd') },
+      path: 'currency.value',
+    },
+    {
+      label: 'a quote of 301 characters',
+      patch: { company: vacancyFieldOf('Acme', 'в'.repeat(301)) },
+      path: 'company.evidence',
+    },
+    {
+      label: 'an empty quote',
+      patch: { position: vacancyFieldOf('React developer', '') },
+      path: 'position.evidence',
+    },
+    {
+      label: 'a stack of 21 items',
+      patch: { stack: vacancyFieldOf(itemsOf(21), 'React') },
+      path: 'stack.value',
+    },
+    {
+      label: 'nine requirements',
+      patch: { requirements: vacancyFieldOf(itemsOf(9), 'React') },
+      path: 'requirements.value',
+    },
+    {
+      label: 'an unknown confidence',
+      patch: { salaryTax: { ...MISSING, confidence: 'unsure' } },
+      path: 'salaryTax.confidence',
+    },
+    {
+      label: 'a fractional salary',
+      patch: { salaryMax: vacancyFieldOf(4500.5, '4500.5') },
+      path: 'salaryMax.value',
+    },
+    {
+      label: 'a negative salary',
+      patch: { salaryMin: vacancyFieldOf(-1, '-1') },
+      path: 'salaryMin.value',
+    },
+    {
+      label: 'an unknown work mode',
+      patch: { workMode: vacancyFieldOf('onsite', 'onsite') },
+      path: 'workMode.value',
+    },
+  ])('refuses $label', ({ patch, path }) => {
     const result = vacancyParseOutputSchema.safeParse({ ...buildVacancyParseOutput(), ...patch });
-    expect(issuePathsOf(result)).toEqual([field]);
+    expect(issuePathsOf(result)).toEqual([path]);
+  });
+});
+
+describe('vacancyParseFailure', () => {
+  it('names no_company_no_position when neither the company nor the position is found', () => {
+    expect(vacancyParseFailure(NOTHING_STATED)).toBe('no_company_no_position');
+  });
+
+  it.for([
+    { label: 'both are found', patch: {} },
+    { label: 'only the company is found', patch: { position: MISSING } },
+    { label: 'only the position is found', patch: { company: MISSING } },
+  ])('names no failure when $label', ({ patch }) => {
+    expect(vacancyParseFailure(buildVacancyParseOutput(patch))).toBeNull();
   });
 });

@@ -70,7 +70,7 @@ describe('AiProcessor', () => {
         jobId: '71',
         kind: 'vacancy_parse',
         model: 'fake',
-        promptVersion: 'v1',
+        promptVersion: 'v2',
         tokensIn: 120,
         tokensOut: 40,
         latencyMs: 15,

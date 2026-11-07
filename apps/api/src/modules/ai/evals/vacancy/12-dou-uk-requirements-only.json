@@ -1,0 +1,29 @@
+{
+  "source": "dou",
+  "language": "uk",
+  "text": "Вимоги:\n- 3+ роки комерційного досвіду з Python\n- впевнене знання Django та Django REST Framework\n- PostgreSQL, Celery, Redis\n- досвід написання тестів на pytest\n- англійська — Intermediate\n\nБуде плюсом:\n- досвід з AWS",
+  "expected": {
+    "company": null,
+    "position": null,
+    "seniority": null,
+    "salaryMin": null,
+    "salaryMax": null,
+    "currency": null,
+    "salaryTax": null,
+    "location": null,
+    "workMode": null,
+    "stack": [
+      "Python",
+      "Django",
+      "Django REST Framework",
+      "PostgreSQL",
+      "Celery",
+      "Redis",
+      "pytest",
+      "AWS"
+    ],
+    "englishLevel": "intermediate",
+    "sourceGuess": null,
+    "failure": "no_company_no_position"
+  }
+}

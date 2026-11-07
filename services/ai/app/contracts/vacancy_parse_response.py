@@ -7,44 +7,210 @@ from typing import Annotated
 from pydantic import BaseModel, ConfigDict, Field, RootModel
 
 
-class Company(RootModel[str]):
+class Value(RootModel[str]):
     root: Annotated[str, Field(min_length=1)]
 
 
-class Position(RootModel[str]):
-    root: Annotated[str, Field(min_length=1)]
+class Confidence(StrEnum):
+    exact = 'exact'
+    check = 'check'
+    missing = 'missing'
 
 
-class WorkMode(StrEnum):
+class Evidence(RootModel[str]):
+    root: Annotated[str, Field(max_length=300, min_length=1)]
+
+
+class Company(BaseModel):
+    model_config = ConfigDict(
+        populate_by_name=True,
+    )
+    value: Value | None
+    confidence: Confidence
+    evidence: Evidence | None
+
+
+class Position(BaseModel):
+    model_config = ConfigDict(
+        populate_by_name=True,
+    )
+    value: Value | None
+    confidence: Confidence
+    evidence: Evidence | None
+
+
+class Value12(StrEnum):
+    intern = 'intern'
+    junior = 'junior'
+    middle = 'middle'
+    senior = 'senior'
+    lead = 'lead'
+
+
+class Seniority(BaseModel):
+    model_config = ConfigDict(
+        populate_by_name=True,
+    )
+    value: Value12 | None
+    confidence: Confidence
+    evidence: Evidence | None
+
+
+class Value13(RootModel[int]):
+    root: Annotated[int, Field(ge=0, le=9007199254740991)]
+
+
+class SalaryMin(BaseModel):
+    model_config = ConfigDict(
+        populate_by_name=True,
+    )
+    value: Value13 | None
+    confidence: Confidence
+    evidence: Evidence | None
+
+
+class SalaryMax(BaseModel):
+    model_config = ConfigDict(
+        populate_by_name=True,
+    )
+    value: Value13 | None
+    confidence: Confidence
+    evidence: Evidence | None
+
+
+class Value15(StrEnum):
+    usd = 'USD'
+    uah = 'UAH'
+    eur = 'EUR'
+
+
+class Currency(BaseModel):
+    model_config = ConfigDict(
+        populate_by_name=True,
+    )
+    value: Value15 | None
+    confidence: Confidence
+    evidence: Evidence | None
+
+
+class Value16(StrEnum):
+    net = 'net'
+    gross = 'gross'
+
+
+class SalaryTax(BaseModel):
+    model_config = ConfigDict(
+        populate_by_name=True,
+    )
+    value: Value16 | None
+    confidence: Confidence
+    evidence: Evidence | None
+
+
+class Location(BaseModel):
+    model_config = ConfigDict(
+        populate_by_name=True,
+    )
+    value: str | None
+    confidence: Confidence
+    evidence: Evidence | None
+
+
+class Value17(StrEnum):
     remote = 'remote'
     hybrid = 'hybrid'
     office = 'office'
 
 
-class SalaryMin(RootModel[int]):
-    root: Annotated[int, Field(ge=0, le=9007199254740991)]
+class WorkMode(BaseModel):
+    model_config = ConfigDict(
+        populate_by_name=True,
+    )
+    value: Value17 | None
+    confidence: Confidence
+    evidence: Evidence | None
 
 
-class SalaryMax(RootModel[int]):
-    root: Annotated[int, Field(ge=0, le=9007199254740991)]
+class ValueItem(RootModel[str]):
+    root: Annotated[str, Field(min_length=1)]
 
 
-class Currency(RootModel[str]):
-    root: Annotated[str, Field(pattern='^[A-Z]{3}$')]
+class Stack(BaseModel):
+    model_config = ConfigDict(
+        populate_by_name=True,
+    )
+    value: Annotated[list[ValueItem], Field(max_length=20)]
+    confidence: Confidence
+    evidence: Evidence | None
+
+
+class ValueItem3(RootModel[str]):
+    root: Annotated[str, Field(max_length=200, min_length=1)]
+
+
+class Requirements(BaseModel):
+    model_config = ConfigDict(
+        populate_by_name=True,
+    )
+    value: Annotated[list[ValueItem3], Field(max_length=8)]
+    confidence: Confidence
+    evidence: Evidence | None
+
+
+class Value18(StrEnum):
+    beginner = 'beginner'
+    pre_intermediate = 'pre_intermediate'
+    intermediate = 'intermediate'
+    upper_intermediate = 'upper_intermediate'
+    advanced = 'advanced'
+
+
+class EnglishLevel(BaseModel):
+    model_config = ConfigDict(
+        populate_by_name=True,
+    )
+    value: Value18 | None
+    confidence: Confidence
+    evidence: Evidence | None
+
+
+class Value19(StrEnum):
+    djinni = 'djinni'
+    dou = 'dou'
+    robota = 'robota'
+    workua = 'workua'
+    linkedin = 'linkedin'
+    referral = 'referral'
+    company_site = 'company_site'
+    other = 'other'
+
+
+class SourceGuess(BaseModel):
+    model_config = ConfigDict(
+        populate_by_name=True,
+    )
+    value: Value19 | None
+    confidence: Confidence
+    evidence: Evidence | None
 
 
 class Output(BaseModel):
     model_config = ConfigDict(
         populate_by_name=True,
     )
-    company: Company | None
-    position: Position | None
-    location: str | None
-    work_mode: Annotated[WorkMode | None, Field(alias='workMode')]
-    salary_min: Annotated[SalaryMin | None, Field(alias='salaryMin')]
-    salary_max: Annotated[SalaryMax | None, Field(alias='salaryMax')]
-    currency: Currency | None
-    stack: Annotated[list[str], Field(max_length=20)]
+    company: Company
+    position: Position
+    seniority: Seniority
+    salary_min: Annotated[SalaryMin, Field(alias='salaryMin')]
+    salary_max: Annotated[SalaryMax, Field(alias='salaryMax')]
+    currency: Currency
+    salary_tax: Annotated[SalaryTax, Field(alias='salaryTax')]
+    location: Location
+    work_mode: Annotated[WorkMode, Field(alias='workMode')]
+    stack: Stack
+    requirements: Requirements
+    english_level: Annotated[EnglishLevel, Field(alias='englishLevel')]
+    source_guess: Annotated[SourceGuess, Field(alias='sourceGuess')]
 
 
 class VacancyParseResponse(BaseModel):

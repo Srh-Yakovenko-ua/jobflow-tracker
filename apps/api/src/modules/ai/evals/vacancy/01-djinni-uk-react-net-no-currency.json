@@ -1,0 +1,29 @@
+{
+  "source": "djinni",
+  "language": "uk",
+  "text": "Senior Frontend Developer (React)\nLarkwave\n\nЗарплата: від 4700 до 5900 net\n\nLarkwave — продуктова компанія, що будує платформу онлайн-запису до приватних клінік. Шукаємо Senior Frontend Developer у команду з шести інженерів.\n\nВимоги:\n- 5+ років комерційного досвіду у frontend-розробці\n- глибоке знання React, TypeScript та Redux Toolkit\n- досвід з Next.js\n- досвід роботи з GraphQL (Apollo Client)\n- англійська — Upper-Intermediate\n\nБуде плюсом:\n- Storybook, Playwright\n\nМи пропонуємо:\n- повністю віддалену роботу\n- 20 робочих днів відпустки\n- компенсацію навчання\n\nТільки віддалено · Продуктова компанія",
+  "expected": {
+    "company": "Larkwave",
+    "position": ["Senior Frontend Developer (React)", "Senior Frontend Developer"],
+    "seniority": "senior",
+    "salaryMin": 4700,
+    "salaryMax": 5900,
+    "currency": null,
+    "salaryTax": "net",
+    "location": null,
+    "workMode": "remote",
+    "stack": [
+      "React",
+      "TypeScript",
+      "Redux Toolkit",
+      "Next.js",
+      "GraphQL",
+      "Apollo Client",
+      "Storybook",
+      "Playwright"
+    ],
+    "englishLevel": "upper_intermediate",
+    "sourceGuess": null,
+    "failure": null
+  }
+}

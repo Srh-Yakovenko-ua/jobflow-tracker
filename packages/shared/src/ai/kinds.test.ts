@@ -1,20 +1,36 @@
 import { describe, expect, it } from 'vitest';
 
-import { buildVacancyCompletion } from '../../testing/index.js';
+import { buildVacancyCompletion, VACANCY_SAMPLE_TEXT } from '../../testing/index.js';
 import { issuePathsOf } from '../test/zod-issues.js';
 import { aiCompleteRequestSchemas, aiCompletionSchemas } from './completion.js';
 import { aiContractJsonSchemas } from './contracts.js';
 import { aiEmbedRequestSchema } from './embed.js';
 import { AI_KINDS, AI_PROMPT_VERSIONS } from './kinds.js';
 
-const VACANCY_INPUT = { text: 'Senior React developer, Acme, remote, 4000-5000 USD' };
+const VACANCY_INPUT = { text: VACANCY_SAMPLE_TEXT };
 
 const COMPLETION = buildVacancyCompletion();
+
+const VACANCY_OUTPUT_FIELDS = [
+  'company',
+  'position',
+  'seniority',
+  'salaryMin',
+  'salaryMax',
+  'currency',
+  'salaryTax',
+  'location',
+  'workMode',
+  'stack',
+  'requirements',
+  'englishLevel',
+  'sourceGuess',
+];
 
 describe('AI_PROMPT_VERSIONS', () => {
   it('pins one prompt version for exactly the AI kinds', () => {
     expect(Object.keys(AI_PROMPT_VERSIONS)).toEqual([...AI_KINDS]);
-    expect(AI_PROMPT_VERSIONS).toEqual({ vacancy_parse: 'v1' });
+    expect(AI_PROMPT_VERSIONS).toEqual({ vacancy_parse: 'v2' });
   });
 });
 
@@ -34,18 +50,18 @@ describe('aiContractJsonSchemas', () => {
       $schema: 'https://json-schema.org/draft/2020-12/schema',
       title: 'VacancyParseOutput',
       type: 'object',
-      required: [
-        'company',
-        'position',
-        'location',
-        'workMode',
-        'salaryMin',
-        'salaryMax',
-        'currency',
-        'stack',
-      ],
+      required: VACANCY_OUTPUT_FIELDS,
     });
   });
+
+  it.for(VACANCY_OUTPUT_FIELDS)(
+    'requires a value, a confidence and a quote in the %s field',
+    (field) => {
+      expect(aiContractJsonSchemas()['vacancy_parse_output']).toMatchObject({
+        properties: { [field]: { type: 'object', required: ['value', 'confidence', 'evidence'] } },
+      });
+    },
+  );
 
   it('requires only the input in a completion request', () => {
     expect(aiContractJsonSchemas()['vacancy_parse_request']).toMatchObject({

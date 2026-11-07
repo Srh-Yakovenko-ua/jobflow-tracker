@@ -1,0 +1,20 @@
+{
+  "source": "djinni",
+  "language": "uk",
+  "text": "Middle Product Designer\nSinytsia Labs · Віддалено\nЗарплата: 2000–2800 USD\n\nSinytsia Labs — студія, що створює вебзастосунки для стартапів у сфері охорони здоров'я.\n\nЩо потрібно:\n- 2+ роки досвіду в дизайні цифрових продуктів\n- впевнене володіння Figma\n- досвід створення дизайн-систем\n- базове розуміння HTML та CSS\n- портфоліо з кейсами\n- англійська Upper-Intermediate\n\nЩо пропонуємо:\n- роботу з міжнародними клієнтами\n- 18 робочих днів відпустки\n- оплату курсів",
+  "expected": {
+    "company": "Sinytsia Labs",
+    "position": ["Middle Product Designer", "Product Designer"],
+    "seniority": "middle",
+    "salaryMin": 2000,
+    "salaryMax": 2800,
+    "currency": "USD",
+    "salaryTax": null,
+    "location": null,
+    "workMode": "remote",
+    "stack": ["Figma", "HTML", "CSS"],
+    "englishLevel": "upper_intermediate",
+    "sourceGuess": null,
+    "failure": null
+  }
+}

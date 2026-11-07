@@ -1,6 +1,11 @@
+import json
+from pathlib import Path
+
 import pytest
 
 from app.core.pii import scrub
+
+VACANCY_CASES = Path(__file__).parents[4] / "apps/api/src/modules/ai/evals/vacancy"
 
 
 @pytest.mark.parametrize(
@@ -47,4 +52,13 @@ def test_replaces_contacts_and_addresses_with_placeholders(
     ],
 )
 def test_keeps_salary_ranges_years_and_tech_names(text: str) -> None:
+    assert scrub(text) == text
+
+
+@pytest.mark.parametrize(
+    "case_file", sorted(VACANCY_CASES.glob("*.json")), ids=lambda path: path.name
+)
+def test_keeps_every_vacancy_eval_case_unchanged(case_file: Path) -> None:
+    text = json.loads(case_file.read_text())["text"]
+
     assert scrub(text) == text
