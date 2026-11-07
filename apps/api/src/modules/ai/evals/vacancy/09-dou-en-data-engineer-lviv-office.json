@@ -1,0 +1,20 @@
+{
+  "source": "dou",
+  "language": "en",
+  "text": "Data Engineer (Strong Middle)\nQuillstack · Office in Lviv\nSalary range: $3800 – $4800\n\nQuillstack helps European retailers forecast demand. Our data team of 12 runs pipelines over 2 TB of sales data a day.\n\nResponsibilities\n- Build and maintain batch and streaming pipelines in Spark and Airflow\n- Model data in Snowflake with dbt\n- Keep data quality checks green\n\nRequirements\n- 3+ years as a Data Engineer\n- Strong Python and SQL\n- Spark, Airflow, dbt, Snowflake\n- Experience with GCP\n- English B2\n\nBenefits\n- Modern office in the city center\n- Medical insurance\n- Learning budget",
+  "expected": {
+    "company": "Quillstack",
+    "position": ["Data Engineer (Strong Middle)", "Data Engineer"],
+    "seniority": "middle",
+    "salaryMin": 3800,
+    "salaryMax": 4800,
+    "currency": "USD",
+    "salaryTax": null,
+    "location": ["Lviv", "Львів"],
+    "workMode": "office",
+    "stack": ["Python", "SQL", "Spark", "Airflow", "dbt", "Snowflake", "GCP"],
+    "englishLevel": "upper_intermediate",
+    "sourceGuess": null,
+    "failure": null
+  }
+}

@@ -29,11 +29,13 @@ async def complete(
     prompt = PROMPTS.get(kind)
     if prompt is None:
         raise AppError(404, detail="Unknown AI kind")
-    built = prompt.build(parsed_body(prompt.REQUEST_MODEL, await request.body()))
+    parsed = parsed_body(prompt.REQUEST_MODEL, await request.body())
+    built = prompt.build(parsed)
     result = await complete_structured(
         StructuredCall(kind=kind, prompt=built, output_model=prompt.OUTPUT_MODEL),
         runtime,
     )
+    output = prompt.checked(parsed, result.output)
     meta = {
         "model": result.model,
         "promptVersion": prompt.PROMPT_VERSION,
@@ -42,7 +44,7 @@ async def complete(
         "latencyMs": result.latency_ms,
     }
     response = prompt.RESPONSE_MODEL.model_validate(
-        {**meta, "output": result.output.model_dump(by_alias=True)}
+        {**meta, "output": output.model_dump(by_alias=True)}
     )
     logger.info(
         "completion", kind=kind, status=200, requestId=request_id_of(request), **meta

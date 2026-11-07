@@ -1,0 +1,20 @@
+{
+  "source": "dou",
+  "language": "en",
+  "text": "Senior Java Engineer\nNordquill\nRemote\nSalary: 4500–5500 EUR per month\n\nAbout Nordquill\nNordquill builds payment reconciliation software for mid-sized European banks.\n\nYour role\n- Design and build services in Java and Spring Boot\n- Own the Kafka event pipelines between core services\n- Work with PostgreSQL on AWS\n\nYou have\n- 5+ years of backend development in Java\n- Hands-on experience with Spring Boot, Kafka and PostgreSQL\n- Kubernetes and Terraform are a plus\n- Upper-Intermediate English or higher\n\nWe offer\n- Fully remote work\n- 24 paid vacation days\n- Equipment of your choice",
+  "expected": {
+    "company": "Nordquill",
+    "position": "Senior Java Engineer",
+    "seniority": "senior",
+    "salaryMin": 4500,
+    "salaryMax": 5500,
+    "currency": "EUR",
+    "salaryTax": null,
+    "location": null,
+    "workMode": "remote",
+    "stack": ["Java", "Spring Boot", "Kafka", "PostgreSQL", "AWS", "Kubernetes", "Terraform"],
+    "englishLevel": "upper_intermediate",
+    "sourceGuess": null,
+    "failure": null
+  }
+}

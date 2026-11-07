@@ -1,0 +1,31 @@
+{
+  "source": "djinni",
+  "language": "en",
+  "text": "DevOps Engineer\nPinecraft Software\nSalary: $4000–5000 gross\nFully remote\n\nPinecraft Software is a product company building a SaaS platform for construction project management, used by 900+ construction companies.\n\nWhat you will do\n- Run our Kubernetes clusters on AWS with Terraform and Helm\n- Keep our GitLab CI pipelines fast and reliable\n- Set up monitoring with Prometheus, Grafana and Loki\n\nWhat we expect\n- 3+ years in a DevOps role\n- Kubernetes, Helm, Terraform\n- AWS\n- Bash and Python scripting\n- English: Upper-Intermediate\n\nWhat we offer\n- 25 paid days off\n- Home office budget",
+  "expected": {
+    "company": "Pinecraft Software",
+    "position": "DevOps Engineer",
+    "seniority": null,
+    "salaryMin": 4000,
+    "salaryMax": 5000,
+    "currency": "USD",
+    "salaryTax": "gross",
+    "location": null,
+    "workMode": "remote",
+    "stack": [
+      "Kubernetes",
+      "AWS",
+      "Terraform",
+      "Helm",
+      "GitLab CI",
+      "Prometheus",
+      "Grafana",
+      "Loki",
+      "Bash",
+      "Python"
+    ],
+    "englishLevel": "upper_intermediate",
+    "sourceGuess": null,
+    "failure": null
+  }
+}

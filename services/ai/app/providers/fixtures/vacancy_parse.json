@@ -1,10 +1,19 @@
 {
-  "company": "Acme",
-  "position": "Senior React Developer",
-  "location": null,
-  "workMode": "remote",
-  "salaryMin": 4000,
-  "salaryMax": 5000,
-  "currency": "USD",
-  "stack": ["React", "TypeScript"]
+  "company": { "value": "Acme", "confidence": "exact", "evidence": "Acme" },
+  "position": {
+    "value": "Senior React developer",
+    "confidence": "exact",
+    "evidence": "Senior React developer"
+  },
+  "seniority": { "value": "senior", "confidence": "exact", "evidence": "Senior" },
+  "salaryMin": { "value": 4000, "confidence": "exact", "evidence": "4000-5000 USD" },
+  "salaryMax": { "value": 5000, "confidence": "exact", "evidence": "4000-5000 USD" },
+  "currency": { "value": "USD", "confidence": "exact", "evidence": "USD" },
+  "salaryTax": { "value": null, "confidence": "missing", "evidence": null },
+  "location": { "value": null, "confidence": "missing", "evidence": null },
+  "workMode": { "value": "remote", "confidence": "exact", "evidence": "remote" },
+  "stack": { "value": ["React"], "confidence": "exact", "evidence": "React" },
+  "requirements": { "value": [], "confidence": "missing", "evidence": null },
+  "englishLevel": { "value": null, "confidence": "missing", "evidence": null },
+  "sourceGuess": { "value": null, "confidence": "missing", "evidence": null }
 }

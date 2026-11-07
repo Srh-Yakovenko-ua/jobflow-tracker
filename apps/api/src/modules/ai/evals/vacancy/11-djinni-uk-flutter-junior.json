@@ -1,0 +1,20 @@
+{
+  "source": "djinni",
+  "language": "uk",
+  "text": "Djinni › Вакансії › Flutter\n\nJunior Flutter Developer\nKvitka Mobile\nЗарплата: $1000–1500\nВіддалено\n\nKvitka Mobile розробляє мобільні застосунки для мереж кав'ярень і пекарень: програми лояльності, передзамовлення, доставку.\n\nВимоги:\n- від 6 місяців досвіду з Flutter та Dart\n- розуміння Bloc або Provider\n- робота з Firebase\n- Git\n- англійська від Pre-Intermediate\n\nМи пропонуємо:\n- ментора на весь випробувальний термін\n- гнучкий графік\n- оплачувані лікарняні",
+  "expected": {
+    "company": "Kvitka Mobile",
+    "position": "Junior Flutter Developer",
+    "seniority": "junior",
+    "salaryMin": 1000,
+    "salaryMax": 1500,
+    "currency": "USD",
+    "salaryTax": null,
+    "location": null,
+    "workMode": "remote",
+    "stack": ["Flutter", "Dart", "Bloc", "Provider", "Firebase", "Git"],
+    "englishLevel": "pre_intermediate",
+    "sourceGuess": "djinni",
+    "failure": null
+  }
+}

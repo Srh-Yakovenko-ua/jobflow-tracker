@@ -1,0 +1,20 @@
+{
+  "source": "dou",
+  "language": "en",
+  "text": "Senior Full Stack Engineer\nVoronka Systems\nKyiv · Hybrid\n$5000–6000\n\nVoronka Systems builds a logistics marketplace that connects 4,000 carriers across Eastern Europe.\n\nWhat you'll do\n- Ship features end to end in React and Node.js\n- Design PostgreSQL schemas and write efficient queries\n- Review code and mentor two engineers\n\nWhat we look for\n- 5+ years of full stack development\n- TypeScript, React, Node.js, Express\n- PostgreSQL, Redis\n- Docker\n- Fluent English\n\nMore jobs at Voronka Systems on DOU",
+  "expected": {
+    "company": "Voronka Systems",
+    "position": "Senior Full Stack Engineer",
+    "seniority": "senior",
+    "salaryMin": 5000,
+    "salaryMax": 6000,
+    "currency": "USD",
+    "salaryTax": null,
+    "location": ["Kyiv", "Київ"],
+    "workMode": "hybrid",
+    "stack": ["TypeScript", "React", "Node.js", "Express", "PostgreSQL", "Redis", "Docker"],
+    "englishLevel": "advanced",
+    "sourceGuess": "dou",
+    "failure": null
+  }
+}

@@ -1,6 +1,7 @@
 import type { AiCompletion, AiJobStatus, AiKind } from '@jobflow/shared';
-import { buildVacancyCompletion } from '@jobflow/shared/testing';
+import { buildVacancyCompletion, VACANCY_SAMPLE_TEXT } from '@jobflow/shared/testing';
 
+import type { VacancyEvalCaseFile, VacancyExpected } from '../ai-eval/vacancy-cases.js';
 import type { AiUsageRow } from '../ai-usage/ai-usage.repository.js';
 import type {
   AiCompleteCall,
@@ -17,9 +18,32 @@ import type {
 } from '../modules/ai/index.js';
 import { OLENA_ID } from './service-fixtures.js';
 
-export const VACANCY_TEXT = 'Senior React developer, Acme, remote, 4000-5000 USD';
+export const VACANCY_TEXT = VACANCY_SAMPLE_TEXT;
 
 export const VACANCY_COMPLETION = buildVacancyCompletion();
+
+export const VACANCY_EXPECTED: VacancyExpected = {
+  company: 'Acme',
+  position: 'Senior React developer',
+  seniority: 'senior',
+  salaryMin: 4000,
+  salaryMax: 5000,
+  currency: 'USD',
+  salaryTax: null,
+  location: null,
+  workMode: 'remote',
+  stack: ['React'],
+  englishLevel: null,
+  sourceGuess: null,
+  failure: null,
+};
+
+export const VACANCY_EVAL_CASE: VacancyEvalCaseFile = {
+  source: 'djinni',
+  language: 'en',
+  text: VACANCY_TEXT,
+  expected: VACANCY_EXPECTED,
+};
 
 export const AI_JOB_ID = '0199f0a0-0000-7000-8000-000000000201';
 
