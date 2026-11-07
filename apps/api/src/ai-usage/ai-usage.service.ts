@@ -6,20 +6,19 @@ import { AiUsageRepository, type AiUsageRow } from './ai-usage.repository.js';
 
 type UsageTotals = Pick<AiUsageRow, 'calls' | 'tokensIn' | 'tokensOut'>;
 
-const TOTAL_COLUMNS = ['calls', 'tokens_in', 'tokens_out', 'cost_usd'];
+const AI_USAGE_REPORT = {
+  usageColumns: ['day', 'kind', 'status', 'model', 'calls', 'tokens_in', 'tokens_out'],
+  totalColumns: ['calls', 'tokens_in', 'tokens_out', 'cost_usd'],
+  noUsage: { calls: 0, tokensIn: 0, tokensOut: 0 },
+  tokensPerPrice: 1_000_000,
+} as const;
 
-const USAGE_COLUMNS = ['day', 'kind', 'model', 'calls', 'tokens_in', 'tokens_out'];
-
-const NO_USAGE: UsageTotals = { calls: 0, tokensIn: 0, tokensOut: 0 };
-
-const TOKENS_PER_PRICE = 1_000_000;
-
-const tsv = (cells: (string | number)[]) => cells.join('\t');
+const tsv = (cells: readonly (string | number)[]) => cells.join('\t');
 
 function addUp(rows: AiUsageRow[], keyOf: (row: AiUsageRow) => string): Map<string, UsageTotals> {
   const totals = new Map<string, UsageTotals>();
   for (const row of rows) {
-    const sum = totals.get(keyOf(row)) ?? NO_USAGE;
+    const sum = totals.get(keyOf(row)) ?? AI_USAGE_REPORT.noUsage;
     totals.set(keyOf(row), {
       calls: sum.calls + row.calls,
       tokensIn: sum.tokensIn + row.tokensIn,
@@ -46,11 +45,12 @@ export class AiUsageService {
   async report(): Promise<string[]> {
     const rows = await this.repository.dailyUsage();
     return [
-      tsv([...USAGE_COLUMNS, 'avg_latency_ms', 'cost_usd']),
-      ...rows.map(({ day, kind, model, avgLatencyMs, ...usage }) =>
+      tsv([...AI_USAGE_REPORT.usageColumns, 'avg_latency_ms', 'cost_usd']),
+      ...rows.map(({ day, kind, status, model, avgLatencyMs, ...usage }) =>
         tsv([
           day,
           kind,
+          status,
           model,
           usage.calls,
           usage.tokensIn,
@@ -75,7 +75,7 @@ export class AiUsageService {
   private totals(keyColumn: string, totals: Map<string, UsageTotals>): string[] {
     const sorted = [...totals].sort(([left], [right]) => (left < right ? -1 : 1));
     return [
-      tsv([keyColumn, ...TOTAL_COLUMNS]),
+      tsv([keyColumn, ...AI_USAGE_REPORT.totalColumns]),
       ...sorted.map(([key, sum]) =>
         tsv([key, sum.calls, sum.tokensIn, sum.tokensOut, this.cost(sum)]),
       ),
@@ -85,7 +85,7 @@ export class AiUsageService {
   private cost({ tokensIn, tokensOut }: UsageTotals): string {
     const usd =
       (tokensIn * this.pricePerMillion.tokensIn + tokensOut * this.pricePerMillion.tokensOut) /
-      TOKENS_PER_PRICE;
+      AI_USAGE_REPORT.tokensPerPrice;
     return usd.toFixed(4);
   }
 }

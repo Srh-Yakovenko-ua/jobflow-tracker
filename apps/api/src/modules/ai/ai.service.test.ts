@@ -72,6 +72,13 @@ const failedJob = (errorType: string): FakeAiJob => ({
   finishedAt: NOW,
 });
 
+const doneJob = (aiResultId: string): FakeAiJob => ({
+  userId: OLENA_ID,
+  status: 'done',
+  aiResultId,
+  finishedAt: NOW,
+});
+
 beforeEach(() => {
   log.lines.length = 0;
 });
@@ -101,12 +108,7 @@ describe('AiService.complete', () => {
         latencyMs: 15,
       }),
     ]);
-    expect(repository.jobs.get(AI_JOB_ID)).toEqual({
-      userId: OLENA_ID,
-      status: 'done',
-      aiResultId: 'ai-result-1',
-      finishedAt: NOW,
-    });
+    expect(repository.jobs.get(AI_JOB_ID)).toEqual(doneJob('ai-result-1'));
   });
 
   it('counts the daily calls from 00:00 UTC and the monthly tokens from the 1st of the UTC month', async () => {
@@ -142,12 +144,7 @@ describe('AiService.complete', () => {
 
     expect(ai.calls).toEqual([VACANCY_CALL]);
     expect(repository.budgetQueries).toHaveLength(1);
-    expect(repository.jobs.get(PASTED_AGAIN_JOB_ID)).toEqual({
-      userId: OLENA_ID,
-      status: 'done',
-      aiResultId: 'ai-result-1',
-      finishedAt: NOW,
-    });
+    expect(repository.jobs.get(PASTED_AGAIN_JOB_ID)).toEqual(doneJob('ai-result-1'));
     expect(log.parsed()).toContainEqual(
       expect.objectContaining({ msg: 'ai cache hit', aiJobId: PASTED_AGAIN_JOB_ID }),
     );
@@ -217,6 +214,30 @@ describe('AiService.complete', () => {
         latencyMs: 0,
       }),
     ]);
+    expect(repository.jobs.get(AI_JOB_ID)).toEqual(failedJob('ai_invalid_output'));
+  });
+
+  it('keeps the succeeded result of an identical job when a final failure comes after it', async () => {
+    const { repository, ai, service } = await serviceWithFakes();
+    repository.queueJob(OLENA_ID, PASTED_AGAIN_JOB_ID);
+    const identical = { ...VACANCY_JOB, aiJobId: PASTED_AGAIN_JOB_ID };
+    ai.answer = async () => {
+      ai.answer = () => Promise.resolve(VACANCY_COMPLETION);
+      await service.complete(attemptOf({ job: identical }));
+      throw new AiServiceError({ status: 422, type: 'ai_invalid_output' });
+    };
+
+    await expect(service.complete(attemptOf())).rejects.toBeInstanceOf(UnrecoverableError);
+
+    expect([...repository.results.values()]).toEqual([
+      expect.objectContaining({
+        id: 'ai-result-1',
+        status: 'succeeded',
+        error: null,
+        output: VACANCY_COMPLETION.output,
+      }),
+    ]);
+    expect(repository.jobs.get(PASTED_AGAIN_JOB_ID)).toEqual(doneJob('ai-result-1'));
     expect(repository.jobs.get(AI_JOB_ID)).toEqual(failedJob('ai_invalid_output'));
   });
 

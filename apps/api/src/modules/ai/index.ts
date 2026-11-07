@@ -11,10 +11,11 @@ export type {
   FailAiJob,
   FinishAiJob,
   QueueSample,
+  SaveAiFailure,
   SaveAiResult,
 } from './ai.repository.js';
 export { type AiJobOfUser, type AiOutcome, AiService } from './ai.service.js';
-export type { AiQueuePosition } from './ai-budget.js';
 export { AiClient, type AiCompleteCall } from './ai-client.js';
 export { AI_PAYLOAD_BUILDERS, type VacancySource } from './ai-payloads.js';
+export type { AiQueuePosition } from './ai-queue-estimate.js';
 export { AiServiceError } from './ai-service-error.js';

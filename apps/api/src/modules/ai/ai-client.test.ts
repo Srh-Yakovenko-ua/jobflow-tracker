@@ -145,4 +145,13 @@ describe('AiClient.embed', () => {
       ['http://ai.test:8001/v1/embed', { texts: ['Node.js'], inputType: 'query' }],
     ]);
   });
+
+  it('refuses a 200 whose body is not an embedding with a final 422 ai_invalid_output after one call', async () => {
+    const calls = replyWith(() => Response.json({ vectors: 'nope' }));
+
+    await expect(aiClient.embed({ texts: ['Node.js'], inputType: 'query' })).rejects.toMatchObject(
+      aiServiceError(422, 'ai_invalid_output'),
+    );
+    expect(calls).toHaveLength(1);
+  });
 });

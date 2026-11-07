@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { useTestDatabase } from '../test/database.js';
 import {
   compensationOf,
+  createAiResult,
   createOwnedApplication,
   createResume,
   createResumeVersion,
@@ -50,11 +51,6 @@ type OwnerCheckedRow = {
   target: string;
   create: (prisma: PrismaService, owners: OwnerPairs) => Promise<unknown>;
 };
-
-async function createAiResult(prisma: PrismaService, userId: string): Promise<string> {
-  const aiResult = await prisma.aiResult.create({ data: { ...AI_RESULT, userId } });
-  return aiResult.id;
-}
 
 const OWNER_CHECKED_ROWS: OwnerCheckedRow[] = [
   {
@@ -106,7 +102,7 @@ const OWNER_CHECKED_ROWS: OwnerCheckedRow[] = [
         data: {
           userId: mine.userId,
           kind: AI_RESULT.kind,
-          aiResultId: await createAiResult(prisma, theirs.userId),
+          aiResultId: await createAiResult(prisma, { userId: theirs.userId }),
         },
       }),
   },
@@ -117,7 +113,7 @@ const OWNER_CHECKED_ROWS: OwnerCheckedRow[] = [
       prisma.plan.create({
         data: {
           userId: mine.userId,
-          aiResultId: await createAiResult(prisma, theirs.userId),
+          aiResultId: await createAiResult(prisma, { userId: theirs.userId }),
           ...PLAN,
         },
       }),
@@ -202,7 +198,7 @@ async function attachResumeVersion(
 async function fillUserOwnedTables(prisma: PrismaService, owned: OwnedApplication): Promise<void> {
   const { userId, applicationId } = owned;
   const resumeVersionId = await attachResumeVersion(prisma, owned);
-  const aiResultId = await createAiResult(prisma, userId);
+  const aiResultId = await createAiResult(prisma, { userId });
   await prisma.aiJob.create({
     data: { userId, kind: AI_RESULT.kind, aiResultId, applicationId, resumeVersionId },
   });
@@ -288,7 +284,7 @@ describe('the supporting tables in Postgres', () => {
   it('deleting an AI result detaches it from the AI job and the plan and keeps their owner', async () => {
     const { prisma } = database;
     const { id: userId } = await createUser(prisma);
-    const aiResultId = await createAiResult(prisma, userId);
+    const aiResultId = await createAiResult(prisma, { userId });
     const job = await prisma.aiJob.create({ data: { userId, kind: AI_RESULT.kind, aiResultId } });
     const plan = await prisma.plan.create({ data: { userId, aiResultId, ...PLAN } });
 
