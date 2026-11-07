@@ -55,7 +55,9 @@ describe('AddContactForm', () => {
     await waitFor(() => {
       expect(onDone).toHaveBeenCalledTimes(1);
     });
-    expect(sent.created).toEqual([{ id: ACME_APPLICATION.id, body: { name: 'Оксана Левченко' } }]);
+    expect(sent.created).toEqual([
+      { id: ACME_APPLICATION.id, body: { name: 'Оксана Левченко' }, idempotencyKey: null },
+    ]);
   });
 
   it('a double click while the first add is on its way posts one recruiter', async () => {
@@ -88,6 +90,7 @@ describe('AddContactForm', () => {
       {
         id: ACME_APPLICATION.id,
         body: { name: 'Ігор Савчук', role: 'Engineering Manager', telegram: 'ihor_em' },
+        idempotencyKey: null,
       },
     ]);
   });

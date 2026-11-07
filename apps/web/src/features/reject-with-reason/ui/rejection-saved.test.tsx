@@ -11,8 +11,12 @@ import { afterEach, describe, expect, it } from 'vitest';
 
 import { applicationKeys } from '@/entities/application';
 import { notesQueryOptions } from '@/entities/note';
-import { errorReply, OUTAGES } from '@/test/api-handlers';
-import { reasonsSummaryRoute, type ReasonsSummaryRouteOptions } from '@/test/board-fixtures';
+import { ANY_IDEMPOTENCY_KEY, errorReply, OUTAGES } from '@/test/api-handlers';
+import {
+  type MoveRouteOptions,
+  reasonsSummaryRoute,
+  type ReasonsSummaryRouteOptions,
+} from '@/test/board-fixtures';
 import { noteRoute, notesRoute } from '@/test/note-fixtures';
 import { QueryProbe, StaleQuery, waitForQuery } from '@/test/query-status';
 import { ACME_TECH_INTERVIEW, recordedRejectionActions } from '@/test/rejection-fixtures';
@@ -25,6 +29,12 @@ import { RejectionReasonDialog } from './rejection-reason-dialog';
 const SUMMARY_KEY = applicationKeys.reasonsSummary('tech_interview');
 
 const SAVED_TITLE = 'Acme Technologies → відмова: не вистачає скілів';
+
+const LIVE_CODING_NOTE = {
+  id: ACME_TECH_INTERVIEW.id,
+  body: { body: 'Попросили live coding 3' },
+  idempotencyKey: ANY_IDEMPOTENCY_KEY,
+};
 
 const EARLIER_SUMMARY: RejectionReasonsSummary = {
   stage: 'tech_interview',
@@ -117,6 +127,15 @@ function renderStep(step: RejectionStep, { summary, cached, beside }: StepSetup 
 function renderSaved({ reasonCode = 'skills_gap', undoUntil, ...setup }: SavedSetup = {}) {
   const until = undoUntil ?? Date.now() + STAGE_MOVE_LIMITS.undoWindowMs;
   return renderStep({ kind: 'saved', reasonCode, undoUntil: until }, setup);
+}
+
+async function submitNote(control: MoveRouteOptions = {}) {
+  const notes = noteRoute(control);
+  server.use(notes.handler);
+  const step = renderStep({ kind: 'note' });
+  await step.user.type(screen.getByLabelText("Що варто запам'ятати"), 'Попросили live coding 3');
+  await step.user.click(screen.getByRole('button', { name: 'Зберегти' }));
+  return { ...step, sent: notes.sent };
 }
 
 function barRows(): string[] {
@@ -224,18 +243,27 @@ describe('RejectionReasonDialog, saved step', () => {
 
 describe('RejectionReasonDialog, note step', () => {
   it('a note is saved for the application, then the dialog closes with a success toast', async () => {
-    const notes = noteRoute();
-    server.use(notes.handler);
-    const { user, finished } = renderStep({ kind: 'note' });
-
-    await user.type(screen.getByLabelText("Що варто запам'ятати"), 'Попросили live coding 3');
-    await user.click(screen.getByRole('button', { name: 'Зберегти' }));
+    const { finished, sent } = await submitNote();
 
     expect(await screen.findByText('Нотатку збережено')).toBeDefined();
-    expect(notes.sent).toEqual([
-      { id: ACME_TECH_INTERVIEW.id, body: { body: 'Попросили live coding 3' } },
-    ]);
+    expect(sent).toEqual([LIVE_CODING_NOTE]);
     expect(finished).toEqual(['done']);
+  });
+
+  it('a save that failed and is sent again with the same text carries the key of the first try', async () => {
+    const failed = await submitNote({
+      reply: () => errorReply({ status: 500, type: 'internal_error' }),
+    });
+    expect(await screen.findByText('Не вдалося зберегти')).toBeDefined();
+    const retried = noteRoute();
+    server.use(retried.handler);
+
+    await failed.user.click(screen.getByRole('button', { name: 'Зберегти' }));
+
+    expect(await screen.findByText('Нотатку збережено')).toBeDefined();
+    expect(failed.sent).toEqual([LIVE_CODING_NOTE]);
+    expect(retried.sent).toEqual(failed.sent);
+    expect(failed.finished).toEqual(['done']);
   });
 
   it('a saved note reloads the notes list the vacancy card shows', async () => {

@@ -10,6 +10,7 @@ import {
 } from '@jobflow/shared';
 import { Body, Controller, Delete, Get, HttpCode, Param, Patch, Post } from '@nestjs/common';
 
+import { Idempotent } from '../../common/idempotency/idempotent.decorator.js';
 import { type AccessUser, CurrentUser } from '../auth/index.js';
 import { ContactsService } from './contacts.service.js';
 
@@ -18,6 +19,7 @@ export class ContactsController {
   constructor(private readonly contacts: ContactsService) {}
 
   @Post(':id/contacts')
+  @Idempotent()
   create(
     @CurrentUser() user: AccessUser,
     @Param('id', { schema: applicationIdSchema }) applicationId: string,

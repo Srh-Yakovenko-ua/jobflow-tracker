@@ -23,6 +23,7 @@ import {
 } from '../../test/applications.js';
 import { BOHDAN } from '../../test/auth.js';
 import { callRoute, errorPathsOf, type RouteCall, statusAndDetail } from '../../test/http.js';
+import { expectReplayedCreate } from '../../test/idempotency.js';
 import { hoursLater } from '../../test/response-history.js';
 import { minutesAfter, NOW, settableClock } from '../../test/time.js';
 import { CONTACT_SELECT } from './contacts.repository.js';
@@ -106,6 +107,16 @@ describe('the contacts routes', () => {
     const { items } = await contactsOf(application);
     return items.map(({ avgResponseHours }) => avgResponseHours);
   }
+
+  it('POST twice with one Idempotency-Key stores one contact and replays the first answer', async () => {
+    const { accessToken, id } = await signUpWithApplication(testApp.app);
+
+    await expectReplayedCreate({
+      app: testApp.app,
+      call: { method: 'post', path: contactsPath(id), body: OKSANA, accessToken },
+      countRows: () => Promise.all([testApp.prisma.contact.count()]),
+    });
+  });
 
   it('POST answers 201 with the contact as sent, stamped with the clock time', async () => {
     const application = await signUpWithApplication(testApp.app);

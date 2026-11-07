@@ -145,6 +145,20 @@ describe('the OpenAPI document', () => {
     },
   );
 
+  it.each([
+    '/applications',
+    '/applications/{id}/notes',
+    '/applications/{id}/contacts',
+    '/applications/{id}/scheduled-events',
+  ])('documents the optional Idempotency-Key header and its 409 on POST %s', (path) => {
+    const post = buildOpenApiDocument().paths?.[path]?.post;
+
+    expect(post?.parameters).toContainEqual(
+      expect.objectContaining({ in: 'header', name: 'Idempotency-Key', required: false }),
+    );
+    expect(Object.keys(post?.responses ?? {})).toContain('409');
+  });
+
   it('files every route under a tag the document lists, and lists no unused tag', () => {
     const tags = buildOpenApiDocument().tags?.map(({ name }) => name);
 

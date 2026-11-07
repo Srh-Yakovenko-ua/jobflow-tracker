@@ -19,6 +19,7 @@ import {
   timelinePath,
 } from '../../test/applications.js';
 import { callRoute, errorPathsOf, type RouteCall, statusAndDetail } from '../../test/http.js';
+import { expectReplayedCreate } from '../../test/idempotency.js';
 import { minutesAfter, NOW, settableClock } from '../../test/time.js';
 import { NOTE_SELECT } from './notes.repository.js';
 
@@ -109,6 +110,17 @@ describe('the notes routes', () => {
       updatedAt: NOW_ISO,
     });
     expect((await storedNote(id)).body).toBe(NOTE_BODY);
+  });
+
+  it('POST twice with one Idempotency-Key stores one note and its journal row and replays the first answer', async () => {
+    const { accessToken, id } = await signUpWithApplication(testApp.app);
+    const { note, timelineEvent } = testApp.prisma;
+
+    await expectReplayedCreate({
+      app: testApp.app,
+      call: { method: 'post', path: notesPath(id), body: { body: NOTE_BODY }, accessToken },
+      countRows: () => Promise.all([note.count(), timelineEvent.count()]),
+    });
   });
 
   it('POST records one note_added journal row with the note id at the clock time', async () => {

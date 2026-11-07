@@ -3,7 +3,13 @@ import type { RefObject } from 'react';
 
 import { addNote, deleteNote, updateNote } from '@/entities/note';
 
-export type DraftRecord = { noteId: Note['id'] | null; savedBody: string };
+export type PendingCreate = Readonly<{ key: string; body: string }>;
+
+export type DraftRecord = {
+  noteId: Note['id'] | null;
+  savedBody: string;
+  pendingCreate: PendingCreate | null;
+};
 
 export type DraftSaved =
   | { kind: 'unchanged' }
@@ -16,15 +22,30 @@ export type SaveDraftInput = Readonly<{
   body: string;
 }>;
 
-export const EMPTY_DRAFT: DraftRecord = { noteId: null, savedBody: '' };
+export const EMPTY_DRAFT: DraftRecord = { noteId: null, savedBody: '', pendingCreate: null };
 
 const UNCHANGED: DraftSaved = { kind: 'unchanged' };
 
-async function writeDraft({ applicationId, draft, body }: SaveDraftInput): Promise<DraftSaved> {
+async function createDraft({ applicationId, draft, body }: SaveDraftInput): Promise<Note> {
+  const create = draft.current.pendingCreate ?? { key: crypto.randomUUID(), body };
+  draft.current = { ...draft.current, pendingCreate: create };
+  const created = await addNote({
+    applicationId,
+    body: { body: create.body },
+    idempotencyKey: create.key,
+  });
+  if (body === create.body) return created;
+  return updateNote({ applicationId, noteId: created.id, body: { body } });
+}
+
+async function writeDraft(input: SaveDraftInput): Promise<DraftSaved> {
+  const { applicationId, draft, body } = input;
   const { noteId } = draft.current;
-  const input = { applicationId, body: { body } };
-  const note = noteId === null ? await addNote(input) : await updateNote({ ...input, noteId });
-  draft.current = { noteId: note.id, savedBody: body };
+  const note =
+    noteId === null
+      ? await createDraft(input)
+      : await updateNote({ applicationId, noteId, body: { body } });
+  draft.current = { noteId: note.id, savedBody: body, pendingCreate: null };
   return { kind: 'written', note, created: noteId === null };
 }
 

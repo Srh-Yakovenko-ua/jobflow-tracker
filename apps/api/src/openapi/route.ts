@@ -3,6 +3,11 @@ import { applicationIdSchema, errorResponseSchema, type UserSettings } from '@jo
 import { z } from 'zod';
 
 import { ERROR_TYPES, type ErrorBody, type ErrorStatus } from '../common/app-error.js';
+import {
+  IDEMPOTENCY_HEADER,
+  IDEMPOTENCY_LIMITS,
+  idempotencyKeySchema,
+} from '../common/idempotency/idempotency-request.js';
 import { envSchema } from '../config/env.js';
 import {
   DEFAULT_RATE_LIMIT_POLICY,
@@ -46,6 +51,15 @@ export const EXAMPLE_USER_SETTINGS = {
 
 export const applicationIdParams = z.object({
   id: applicationIdSchema.meta({ example: EXAMPLE_APPLICATION_ID }),
+});
+
+const REPLAY_WINDOW_HOURS = IDEMPOTENCY_LIMITS.replayWindowMinutes / 60;
+
+export const idempotencyHeaders = z.object({
+  [IDEMPOTENCY_HEADER]: idempotencyKeySchema.optional().meta({
+    description: `One key per submit, kept on its retries, 1 to ${String(IDEMPOTENCY_LIMITS.keyMaxLength)} characters. The same key with the same request within ${String(REPLAY_WINDOW_HOURS)} hours answers the first reply again and creates nothing; with another request, or while the first one still runs, it answers 409. A request that fails keeps nothing, so its retry runs again.`,
+    example: '0199f3a0-1b2c-7d3e-8f40-5a6b7c8d9e0f',
+  }),
 });
 
 const errorResponse = errorResponseSchema.meta({ id: 'ErrorResponse' });

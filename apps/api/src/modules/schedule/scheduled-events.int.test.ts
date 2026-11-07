@@ -23,6 +23,7 @@ import {
 } from '../../test/applications.js';
 import { callRoute, errorPathsOf, type RouteCall, statusAndDetail } from '../../test/http.js';
 import { icsEventFieldsOf } from '../../test/ics.js';
+import { expectReplayedCreate } from '../../test/idempotency.js';
 import { minutesAfter, NOW, settableClock } from '../../test/time.js';
 
 type SignedInEvent = SignedInApplication & ScheduledEventTarget;
@@ -129,6 +130,17 @@ describe('the scheduled events routes', () => {
     expect((await postStageMove(testApp.app, { ...event, input })).status).toBe(201);
     return event;
   }
+
+  it('POST twice with one Idempotency-Key plans one event with one reminder and replays the first answer', async () => {
+    const { accessToken, id } = await signUpWithApplication(testApp.app);
+    const { scheduledEvent, reminder } = testApp.prisma;
+
+    await expectReplayedCreate({
+      app: testApp.app,
+      call: { method: 'post', path: scheduledEventsPath(id), body: TECH_INTERVIEW, accessToken },
+      countRows: () => Promise.all([scheduledEvent.count(), reminder.count()]),
+    });
+  });
 
   it('POST answers 201 with the planned event in UTC and journals interview_scheduled at the clock time', async () => {
     const application = await signUpWithApplication(testApp.app);

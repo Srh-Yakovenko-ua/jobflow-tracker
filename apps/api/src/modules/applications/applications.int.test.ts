@@ -21,6 +21,7 @@ import {
 import { accessTokenFor, BOHDAN, OLENA, signUp } from '../../test/auth.js';
 import { createResumeVersion, createUser } from '../../test/factories.js';
 import { callRoute, errorPathsOf, type RouteCall } from '../../test/http.js';
+import { expectReplayedCreate } from '../../test/idempotency.js';
 import { outboxRows } from '../../test/outbox.js';
 import { MISSING_ID } from '../../test/service-fixtures.js';
 import { daysAfter, NOW, settableClock } from '../../test/time.js';
@@ -72,6 +73,17 @@ describe('the applications routes', () => {
   }
 
   const updatedEvents = () => outboxRows(testApp.prisma, { eventType: 'application.updated' });
+
+  it('POST twice with one Idempotency-Key stores one application with one stage event and replays the first answer', async () => {
+    const { accessToken } = await signUp(testApp.app, OLENA);
+    const { application, stageEvent } = testApp.prisma;
+
+    await expectReplayedCreate({
+      app: testApp.app,
+      call: { method: 'post', path: APPLICATIONS_PATH, body: ROMASHKA, accessToken },
+      countRows: () => Promise.all([application.count(), stageEvent.count()]),
+    });
+  });
 
   it('POST creates an application from company and position alone in applied with one stage event and the created event', async () => {
     const olena = await signUp(testApp.app, OLENA);

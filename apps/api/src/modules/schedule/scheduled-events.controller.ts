@@ -12,6 +12,7 @@ import {
 import { Body, Controller, Delete, Get, HttpCode, Param, Patch, Post, Res } from '@nestjs/common';
 import type { Response } from 'express';
 
+import { Idempotent } from '../../common/idempotency/idempotent.decorator.js';
 import { type AccessUser, CurrentUser } from '../auth/index.js';
 import { ScheduledEventsService } from './scheduled-events.service.js';
 
@@ -25,6 +26,7 @@ export class ScheduledEventsController {
   constructor(private readonly scheduledEvents: ScheduledEventsService) {}
 
   @Post(':id/scheduled-events')
+  @Idempotent()
   create(
     @CurrentUser() user: AccessUser,
     @Param('id', { schema: applicationIdSchema }) applicationId: string,

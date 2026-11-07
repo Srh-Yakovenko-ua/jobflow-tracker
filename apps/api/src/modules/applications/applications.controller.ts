@@ -18,6 +18,7 @@ import {
 } from '@jobflow/shared';
 import { Body, Controller, Delete, Get, HttpCode, Param, Patch, Post, Query } from '@nestjs/common';
 
+import { Idempotent } from '../../common/idempotency/idempotent.decorator.js';
 import { type AccessUser, CurrentUser } from '../auth/index.js';
 import { type ApplicationListRequest, applicationListRequestSchema } from './application-cursor.js';
 import { ApplicationListService } from './application-list.service.js';
@@ -33,6 +34,7 @@ export class ApplicationsController {
   ) {}
 
   @Post()
+  @Idempotent()
   create(
     @CurrentUser() user: AccessUser,
     @Body({ schema: createApplicationInputSchema }) input: CreateApplicationInput,

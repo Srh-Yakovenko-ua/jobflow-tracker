@@ -9,7 +9,7 @@ import { http, HttpResponse } from 'msw/http';
 
 import { FULL_CARD } from '@/entities/application';
 
-import { apiUrl } from './api-handlers';
+import { apiUrl, idempotencyKeyOf, type SentCreate } from './api-handlers';
 import { heldReply, type MoveRouteOptions } from './board-fixtures';
 
 export type NoteSeed = Pick<Note, 'applicationId' | 'body'> & Partial<Note>;
@@ -28,10 +28,10 @@ export function noteOf(seed: NoteSeed): Note {
 }
 
 export function noteRoute(control: MoveRouteOptions = {}) {
-  const sent: { id: string; body: NoteInput }[] = [];
+  const sent: SentCreate<NoteInput>[] = [];
   const handler = http.post<{ id: string }>(apiUrl('/applications/:id/notes'), async (info) => {
     const body = noteInputSchema.parse(await info.request.json());
-    sent.push({ id: info.params.id, body });
+    sent.push({ id: info.params.id, body, idempotencyKey: idempotencyKeyOf(info.request.headers) });
     const note = noteOf({ applicationId: info.params.id, body: body.body });
     return heldReply({
       ...control,

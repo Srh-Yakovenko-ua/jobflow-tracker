@@ -8,6 +8,7 @@ import {
 } from '@jobflow/shared';
 import { Body, Controller, Delete, Get, HttpCode, Param, Patch, Post } from '@nestjs/common';
 
+import { Idempotent } from '../../common/idempotency/idempotent.decorator.js';
 import { type AccessUser, CurrentUser } from '../auth/index.js';
 import { NotesService } from './notes.service.js';
 
@@ -16,6 +17,7 @@ export class NotesController {
   constructor(private readonly notes: NotesService) {}
 
   @Post(':id/notes')
+  @Idempotent()
   create(
     @CurrentUser() user: AccessUser,
     @Param('id', { schema: applicationIdSchema }) applicationId: string,

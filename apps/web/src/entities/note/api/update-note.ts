@@ -4,7 +4,8 @@ import { apiClient } from '@/shared/api';
 
 import type { AddNoteRequest } from './add-note';
 
-export type UpdateNoteRequest = AddNoteRequest & Readonly<{ noteId: Note['id'] }>;
+export type UpdateNoteRequest = Omit<AddNoteRequest, 'idempotencyKey'> &
+  Readonly<{ noteId: Note['id'] }>;
 
 export function updateNote({ applicationId, noteId, body }: UpdateNoteRequest): Promise<Note> {
   return apiClient.request({

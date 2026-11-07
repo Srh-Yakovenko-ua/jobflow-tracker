@@ -15,6 +15,7 @@ import {
   errorResponses,
   EXAMPLE_CHILD_ROW,
   EXAMPLE_EDITED_AT,
+  idempotencyHeaders,
   jsonContent,
 } from '../../openapi/route.js';
 
@@ -75,12 +76,13 @@ export const CONTACTS_OPENAPI_PATHS: RouteConfig[] = [
     summary: 'Add a recruiter contact to an Application',
     description: `Only name is required. ${FIELDS_RULE} To link a suggested contact, post its fields here.`,
     request: {
+      headers: idempotencyHeaders,
       params: applicationIdParams,
       body: { required: true, content: jsonContent(createContactInputSchema, CONTACT_INPUT) },
     },
     responses: {
       201: { description: 'The created contact', content: jsonContent(contactSchema, CONTACT) },
-      ...bodyErrors,
+      ...errorResponses([400, 401, 403, 404, 409, 422]),
     },
   },
   {

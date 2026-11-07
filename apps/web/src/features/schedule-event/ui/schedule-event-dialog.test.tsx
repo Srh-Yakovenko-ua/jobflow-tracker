@@ -2,7 +2,7 @@ import { screen, waitFor } from '@testing-library/react';
 import { toast } from 'sonner';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { errorReply } from '@/test/api-handlers';
+import { ANY_IDEMPOTENCY_KEY, errorReply } from '@/test/api-handlers';
 import { ACME_APPLICATION } from '@/test/application-fixtures';
 import { renderInApp } from '@/test/render-in-app';
 import {
@@ -32,6 +32,17 @@ const PAST_EVENT = scheduledEventOf({
   locationOrLink: 'https://meet.example.com/acme',
 });
 
+const TOMORROW_CREATE = {
+  id: ACME_APPLICATION.id,
+  body: {
+    kind: 'tech_interview',
+    startsAt: '2026-11-08T08:00:00.000Z',
+    durationMin: 60,
+    locationOrLink: null,
+  },
+  idempotencyKey: ANY_IDEMPOTENCY_KEY,
+};
+
 function renderDialog({ plan = { kind: 'schedule' }, routes = {} }: DialogSetup = {}) {
   const events = scheduledEventRoutes(routes);
   server.use(meRoute(), ...events.handlers);
@@ -39,7 +50,13 @@ function renderDialog({ plan = { kind: 'schedule' }, routes = {} }: DialogSetup 
   const user = renderInApp(
     <ScheduleEventDialog application={ACME_APPLICATION} plan={plan} actions={{ onClose }} />,
   );
-  return { user, onClose, sent: events.sent };
+  const scheduleUntilClosed = async () => {
+    await user.click(screen.getByRole('button', { name: 'Запланувати' }));
+    await waitFor(() => {
+      expect(onClose).toHaveBeenCalledTimes(1);
+    });
+  };
+  return { user, onClose, sent: events.sent, scheduleUntilClosed };
 }
 
 beforeEach(pinScheduleClock);
@@ -51,7 +68,7 @@ afterEach(() => {
 
 describe('ScheduleEventDialog', () => {
   it('opens on tomorrow 10:00 in the user zone for 60 minutes and sends that start as UTC', async () => {
-    const { user, onClose, sent } = renderDialog();
+    const { sent, scheduleUntilClosed } = renderDialog();
     const dialog = await findScheduleDialog();
     await waitForDate(KYIV_TOMORROW);
 
@@ -60,22 +77,26 @@ describe('ScheduleEventDialog', () => {
     expect(
       dialog.getByRole('spinbutton', { name: 'Тривалість' }).getAttribute('aria-valuenow'),
     ).toBe('60');
-    await user.click(dialog.getByRole('button', { name: 'Запланувати' }));
+    await scheduleUntilClosed();
 
-    await waitFor(() => {
-      expect(onClose).toHaveBeenCalledTimes(1);
+    expect(sent.created).toEqual([TOMORROW_CREATE]);
+  });
+
+  it('a create that failed and is sent again unchanged carries the key of the first try', async () => {
+    const { user, sent, scheduleUntilClosed } = renderDialog({
+      routes: { create: { reply: () => errorReply({ status: 500, type: 'internal_error' }) } },
     });
-    expect(sent.created).toEqual([
-      {
-        id: ACME_APPLICATION.id,
-        body: {
-          kind: 'tech_interview',
-          startsAt: '2026-11-08T08:00:00.000Z',
-          durationMin: 60,
-          locationOrLink: null,
-        },
-      },
-    ]);
+    const dialog = await findScheduleDialog();
+    await waitForDate(KYIV_TOMORROW);
+    await user.click(dialog.getByRole('button', { name: 'Запланувати' }));
+    expect(await screen.findByText('Не вдалося зберегти')).toBeDefined();
+    const retried = scheduledEventRoutes();
+    server.use(...retried.handlers);
+
+    await scheduleUntilClosed();
+
+    expect(sent.created).toEqual([TOMORROW_CREATE]);
+    expect(retried.sent.created).toEqual(sent.created);
   });
 
   it('a start that already passed today stays open with the reason on the time field and sends nothing', async () => {

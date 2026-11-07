@@ -8,7 +8,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import type { UseFormSetError } from 'react-hook-form';
 
 import { createScheduledEvent, updateScheduledEvent } from '@/entities/scheduled-event';
-import { type GuardedSave, useGuardedSave } from '@/shared/api';
+import { type GuardedSave, useGuardedSave, useSubmitKey } from '@/shared/api';
 import { uk } from '@/shared/i18n';
 
 import { invalidateAfterSchedule } from './invalidate-after-schedule';
@@ -30,7 +30,11 @@ export type UseScheduleEventMutationOptions = Readonly<{
   onSaved: () => void;
 }>;
 
-type SaveEventRequest = Readonly<{ target: ScheduleTarget; body: CreateScheduledEventInput }>;
+type SaveEventRequest = Readonly<{
+  target: ScheduleTarget;
+  body: CreateScheduledEventInput;
+  idempotencyKey: string;
+}>;
 
 const SAVE_KEY = ['scheduled-event', 'save'] as const;
 
@@ -47,9 +51,9 @@ const SERVER_MESSAGES = {
   locationOrLink: ERRORS.locationOrLink(SCHEDULED_EVENT_LIMITS.locationOrLinkMaxLength),
 } as const;
 
-function saveEvent({ target: { applicationId, event }, body }: SaveEventRequest) {
+function saveEvent({ target: { applicationId, event }, body, idempotencyKey }: SaveEventRequest) {
   return event === undefined
-    ? createScheduledEvent({ applicationId, body })
+    ? createScheduledEvent({ applicationId, body, idempotencyKey })
     : updateScheduledEvent({ applicationId, eventId: event.id, body });
 }
 
@@ -60,12 +64,16 @@ export function useScheduleEventMutation({
   onSaved,
 }: UseScheduleEventMutationOptions): GuardedSave<ScheduleFormOutput> {
   const queryClient = useQueryClient();
+  const submitKey = useSubmitKey();
   return useGuardedSave({
     mutationKey: SAVE_KEY,
-    request: (values: ScheduleFormOutput) =>
-      saveEvent({ target, body: toScheduledEventInput({ values, timeZone }) }),
+    request: (values: ScheduleFormOutput) => {
+      const body = toScheduledEventInput({ values, timeZone });
+      return saveEvent({ target, body, idempotencyKey: submitKey.keyFor(body) });
+    },
     form: { fields: SERVER_FIELDS, setError, messages: SERVER_MESSAGES },
     onSuccess: () => {
+      submitKey.reset();
       void invalidateAfterSchedule({ queryClient, applicationId: target.applicationId });
       onSaved();
     },

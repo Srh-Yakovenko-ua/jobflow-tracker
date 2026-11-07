@@ -22,6 +22,7 @@ export type HttpRequestOptions<T> = {
   signal?: AbortSignal;
   keepalive?: boolean;
   response?: ResponseMode;
+  idempotencyKey?: string;
 };
 
 export type HttpClient = {
@@ -38,13 +39,14 @@ function isTokenExpired(error: unknown): boolean {
 }
 
 function headersFor(
-  { body, response = 'json' }: HttpRequestOptions<unknown>,
+  { body, response = 'json', idempotencyKey }: HttpRequestOptions<unknown>,
   token: string | undefined,
 ): Record<string, string> {
   return {
     Accept: ACCEPTED_TYPE[response],
     ...(body === undefined ? {} : { 'Content-Type': 'application/json' }),
     ...(token === undefined ? {} : { Authorization: `Bearer ${token}` }),
+    ...(idempotencyKey === undefined ? {} : { 'Idempotency-Key': idempotencyKey }),
   };
 }
 
