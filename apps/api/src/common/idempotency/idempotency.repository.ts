@@ -17,7 +17,7 @@ export type ClaimOutcome = { claimed: true } | { claimed: false; holder: Idempot
 
 export type KeyClaim = { key: string; requestHash: string };
 
-export type KeyClaimInWindow = KeyClaim & { now: Date; windowStart: Date };
+export type KeyClaimInWindow = KeyClaim & { now: Date; windowStart: Date; leaseStart: Date };
 
 export type KeyReply<Reply> = { key: string; reply: Reply };
 
@@ -27,10 +27,17 @@ export class IdempotencyRepository {
 
   async claim(
     userId: string,
-    { key, requestHash, now, windowStart }: KeyClaimInWindow,
+    { key, requestHash, now, windowStart, leaseStart }: KeyClaimInWindow,
   ): Promise<ClaimOutcome> {
     await this.prisma.idempotencyKey.deleteMany({
-      where: { userId, key, createdAt: { lt: windowStart } },
+      where: {
+        userId,
+        key,
+        OR: [
+          { createdAt: { lt: windowStart } },
+          { createdAt: { lt: leaseStart }, response: { equals: Prisma.DbNull } },
+        ],
+      },
     });
     const { count } = await this.prisma.idempotencyKey.createMany({
       data: [{ userId, key, requestHash, createdAt: now, updatedAt: now }],
