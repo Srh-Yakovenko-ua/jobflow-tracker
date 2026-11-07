@@ -5,7 +5,6 @@ import {
   KeyboardSensor,
   MouseSensor,
   TouchSensor,
-  type UniqueIdentifier,
   useDndContext,
   useSensor,
   useSensors,
@@ -16,7 +15,6 @@ import { type ReactNode, useEffect, useEffectEvent } from 'react';
 import { ApplicationCard, type ApplicationCardContext } from '@/entities/application';
 import { type RejectionFlow, RejectionReasonDialog } from '@/features/reject-with-reason';
 import { uk } from '@/shared/i18n';
-import { usePrefersReducedMotion } from '@/shared/lib/reduced-motion';
 
 import { boardCollisions } from '../model/board-collisions';
 import { useBoardDensity } from '../model/board-density-store';
@@ -24,7 +22,7 @@ import { columnCoordinates } from '../model/column-coordinates';
 import { dragAnnouncements } from '../model/drag-announcements';
 import { DragSourceContext } from '../model/drag-source';
 import { focusCardOrStrip } from '../model/focus-card-or-strip';
-import { useBoardDrag } from '../model/use-board-drag';
+import { type FocusRequest, useBoardDrag } from '../model/use-board-drag';
 
 export type BoardDndProps = Readonly<{
   board: ApplicationBoardResponse;
@@ -47,14 +45,13 @@ const OVERLAY =
   'scale-[1.02] rotate-[-1.6deg] cursor-grabbing rounded-xl shadow-e2 ring-3 ring-accent/25';
 
 function useBoardSensors() {
-  const reduced = usePrefersReducedMotion();
   return useSensors(
     useSensor(MouseSensor, { activationConstraint: ACTIVATION.mouse }),
     useSensor(TouchSensor, { activationConstraint: ACTIVATION.touch }),
     useSensor(KeyboardSensor, {
       keyboardCodes: KEYBOARD_CODES,
       coordinateGetter: columnCoordinates,
-      scrollBehavior: reduced ? 'instant' : 'smooth',
+      scrollBehavior: 'instant',
     }),
   );
 }
@@ -77,14 +74,14 @@ function RejectionPromptDialog({ rejection }: Readonly<{ rejection: RejectionFlo
   );
 }
 
-function KeyboardDropFocus({ focusId }: Readonly<{ focusId: UniqueIdentifier | null }>) {
+function KeyboardDropFocus({ request }: Readonly<{ request: FocusRequest | null }>) {
   const nodes = useDndContext();
-  const focus = useEffectEvent((id: UniqueIdentifier) => {
+  const focus = useEffectEvent(({ id }: FocusRequest) => {
     focusCardOrStrip(nodes, id);
   });
   useEffect(() => {
-    if (focusId !== null) focus(focusId);
-  }, [focusId]);
+    if (request !== null) focus(request);
+  }, [request]);
   return null;
 }
 
@@ -97,7 +94,7 @@ export function BoardDnd({ board, context, children }: BoardDndProps) {
     from: activeCard?.currentStage ?? null,
     landing,
     activeId: activeCard?.id ?? null,
-    focusId: keyboardFocus,
+    focusId: keyboardFocus?.id ?? null,
   };
   return (
     <DndContext
@@ -118,7 +115,7 @@ export function BoardDnd({ board, context, children }: BoardDndProps) {
         )}
       </DragOverlay>
       <RejectionPromptDialog rejection={rejection} />
-      <KeyboardDropFocus focusId={keyboardFocus} />
+      <KeyboardDropFocus request={keyboardFocus} />
     </DndContext>
   );
 }
