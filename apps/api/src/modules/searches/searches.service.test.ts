@@ -1,12 +1,21 @@
 import type { FinishSearchInput } from '@jobflow/shared';
 import { describe, expect, it } from 'vitest';
 
+import type { InTransaction } from '../../prisma/in-transaction.js';
 import { FAKE_TRANSACTION, fakeTransactionModule } from '../../test/fake-prisma.js';
 import type { ByUser } from '../../test/recorded-events.js';
-import { BOHDAN_ID, MISSING_ID, OLENA_ID, SEARCH_ID } from '../../test/service-fixtures.js';
+import {
+  BOHDAN_ID,
+  CURRENT_SEARCH_ID,
+  MISSING_ID,
+  OLENA_ID,
+  SEARCH_ID,
+} from '../../test/service-fixtures.js';
 import { daysBefore, NOW } from '../../test/time.js';
 import {
   type HandOver,
+  type InSearch,
+  NO_TOTALS,
   SearchApplicationsService,
   type SearchTotals,
   type SearchTotalsOf,
@@ -15,8 +24,6 @@ import {
   type ActiveSearch,
   type ArchiveSearch,
   type CreateActiveSearch,
-  type InTransaction,
-  type SearchById,
   SearchesRepository,
   type SearchRow,
 } from './searches.repository.js';
@@ -26,13 +33,12 @@ type StoredSearch = { userId: string; row: SearchRow };
 
 type FakeData = { searches?: StoredSearch[]; totals?: Record<string, SearchTotals> };
 
-const CURRENT_SEARCH_ID = '0199f0a0-0000-7000-8000-0000000000a3';
-
 const ARCHIVED_ID = '0199f0a0-0000-7000-8000-0000000000a4';
 
 const BOHDAN_SEARCH_ID = '0199f0a0-0000-7000-8000-0000000000a5';
 
-const NO_TOTALS: SearchTotals = { applications: 0, interviews: 0, offers: 0, firstOfferAt: null };
+const rowsOf = (searches: StoredSearch[], userId: string): SearchRow[] =>
+  searches.filter((search) => search.userId === userId).map(({ row }) => row);
 
 const activeRow = (id: string): SearchRow => ({
   id,
@@ -76,14 +82,14 @@ class FakeSearchesRepository {
 
   lockActive(userId: string, inTransaction: InTransaction): Promise<ActiveSearch | null> {
     this.locks.push({ userId, ...inTransaction });
-    const active = this.rowsOf(userId).find(({ status }) => status === 'active');
+    const active = rowsOf(this.searches, userId).find(({ status }) => status === 'active');
     return Promise.resolve(active ? { id: active.id } : null);
   }
 
   archive(userId: string, input: ArchiveSearch): Promise<SearchRow> {
     this.archived.push({ userId, ...input });
     const { outcome, finishedAt } = input;
-    const row = this.rowsOf(userId).find(({ id }) => id === input.id);
+    const row = rowsOf(this.searches, userId).find(({ id }) => id === input.id);
     return row
       ? Promise.resolve({ ...row, status: 'archived', outcome, finishedAt })
       : Promise.reject(new Error(`No search ${input.id} to archive`));
@@ -95,15 +101,7 @@ class FakeSearchesRepository {
   }
 
   findAll(userId: string): Promise<SearchRow[]> {
-    return Promise.resolve(this.rowsOf(userId));
-  }
-
-  exists(userId: string, { id }: SearchById): Promise<boolean> {
-    return Promise.resolve(this.rowsOf(userId).some((row) => row.id === id));
-  }
-
-  private rowsOf(userId: string): SearchRow[] {
-    return this.searches.filter((search) => search.userId === userId).map(({ row }) => row);
+    return Promise.resolve(rowsOf(this.searches, userId));
   }
 }
 
@@ -112,7 +110,11 @@ class FakeSearchApplications {
 
   readonly totalsQueries: ByUser<{ searchIds: readonly string[] }>[] = [];
 
-  constructor(private readonly totals: Record<string, SearchTotals>) {}
+  constructor(private readonly data: Required<FakeData>) {}
+
+  searchExists(userId: string, { searchId }: InSearch): Promise<boolean> {
+    return Promise.resolve(rowsOf(this.data.searches, userId).some(({ id }) => id === searchId));
+  }
 
   handOver(userId: string, handOver: HandOver): Promise<void> {
     this.handOvers.push({ userId, ...handOver });
@@ -121,7 +123,7 @@ class FakeSearchApplications {
 
   totalsOf(userId: string, searchIds: readonly string[]): Promise<SearchTotalsOf> {
     this.totalsQueries.push({ userId, searchIds });
-    return Promise.resolve((searchId) => this.totals[searchId] ?? NO_TOTALS);
+    return Promise.resolve((searchId) => this.data.totals[searchId] ?? NO_TOTALS);
   }
 }
 
@@ -130,7 +132,7 @@ async function serviceWith({
   totals = {},
 }: FakeData = {}) {
   const repository = new FakeSearchesRepository(searches);
-  const searchApplications = new FakeSearchApplications(totals);
+  const searchApplications = new FakeSearchApplications({ searches, totals });
   const moduleRef = await fakeTransactionModule({
     providers: [SearchesService, SearchesRepository, SearchApplicationsService],
     now: NOW,
@@ -221,7 +223,7 @@ describe('SearchesService.finish', () => {
       case: 'no active search',
       searches: [OLENA_ARCHIVED, BOHDAN_ACTIVE],
       searchId: ARCHIVED_ID,
-      error: { status: 409, type: 'conflict', detail: 'No active search' },
+      error: { status: 409, type: 'conflict', detail: 'The search is already finished' },
     },
     {
       case: 'her already finished search',

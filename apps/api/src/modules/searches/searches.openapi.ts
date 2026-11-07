@@ -5,6 +5,7 @@ import {
   type FinishSearchInput,
   finishSearchInputSchema,
   finishSearchResponseSchema,
+  INTERVIEW_STAGES,
   searchListResponseSchema,
   type SearchSummary,
 } from '@jobflow/shared';
@@ -54,8 +55,7 @@ const FINISH = {
   openApplications: 'withdraw',
 } satisfies FinishSearchInput;
 
-const TOTALS =
-  'applications counts the applications now in the search, leaving out drafts and deleted ones; interviews counts the stage events into tech_interview or final since the search started, each round once; offers counts the applications that reached offer; days runs from the start to the finish, or to today for the active search; daysToOffer runs from the start to the first offer, or is null. Undone moves are left out.';
+const TOTALS = `applications counts the applications now in the search, leaving out drafts and deleted ones; interviews counts the stage events into ${INTERVIEW_STAGES.join(' or ')} since the search started, each round once; offers counts the applications that reached offer; days runs from the start to the finish, or to today for the active search; daysToOffer runs from the start to the first offer, or is null. Undone moves are left out.`;
 
 const HANDED_OVER_STAGES = ACTIVE_STAGES.join(', ');
 
@@ -79,7 +79,7 @@ export const SEARCHES_OPENAPI_PATHS: RouteConfig[] = [
     path: `${SEARCHES_PATH}/current/finish`,
     tags: TAGS,
     summary: 'Finish the active search and start a new one',
-    description: `Archives the active search named by searchId with its outcome and starts a new active search titled ${DEFAULT_SEARCH_TITLE}, in one transaction, so the board starts empty. openApplications decides the applications still in ${HANDED_OVER_STAGES}: move takes them with their whole history into the new search (one application.updated each), withdraw closes each with a withdrawn stage event (one application.stage_changed each). Offers and closed applications stay in the finished search, which stays readable by its searchId. Without an active search, or with the user's own already finished searchId, the answer is 409; another user's or a missing searchId answers 404.`,
+    description: `Archives the active search named by searchId with its outcome and starts a new active search titled ${DEFAULT_SEARCH_TITLE}, in one transaction, so the board starts empty. openApplications decides the applications still in ${HANDED_OVER_STAGES}: move takes them with their whole history into the new search (one application.updated each), withdraw closes each with a withdrawn stage event (one application.stage_changed each). Offers and closed applications stay in the finished search, which stays readable by its searchId. The user's own searchId that is no longer active (a repeat, or the loser of two concurrent finishes) answers 409 'The search is already finished'; another user's or a missing searchId answers 404.`,
     request: {
       body: {
         required: true,

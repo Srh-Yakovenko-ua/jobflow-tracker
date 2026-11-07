@@ -2,6 +2,7 @@ import { rejectionReasonCodeSchema, stageSchema } from '@jobflow/shared';
 import { z } from 'zod';
 
 import type { Prisma } from '../../generated/prisma/client.js';
+import type { StageEventPlan } from './stage-transition.repository.js';
 
 export const APPLICATION_EVENTS = {
   created: 'application.created',
@@ -38,6 +39,20 @@ export type ApplicationEvent =
       ApplicationStageChangedPayload,
       'userId'
     >);
+
+export type AppliedStageEvent = Pick<StageEventPlan, 'event'> & { id: string };
+
+export function stageChanged({ id, event }: AppliedStageEvent): ApplicationEvent {
+  const { fromStage, toStage, reasonCode, compensatesEventId } = event;
+  return {
+    eventType: APPLICATION_EVENTS.stageChanged,
+    applicationId: id,
+    fromStage,
+    toStage,
+    reasonCode,
+    compensatesEventId,
+  };
+}
 
 export function applicationEvent(
   userId: string,

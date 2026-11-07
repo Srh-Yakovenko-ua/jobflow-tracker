@@ -29,6 +29,7 @@ import {
   type SearchQuery,
   type SnippetQuery,
 } from './application-search.repository.js';
+import type { InSearch } from './search-applications.repository.js';
 
 type OwnedSearch = { userId: string; id: string };
 
@@ -157,7 +158,7 @@ class FakeApplicationListRepository {
     return Promise.resolve(this.data.silenceDays);
   }
 
-  searchExists(userId: string, searchId: string): Promise<boolean> {
+  searchExists(userId: string, { searchId }: InSearch): Promise<boolean> {
     return Promise.resolve(
       this.data.searches.some((search) => search.userId === userId && search.id === searchId),
     );

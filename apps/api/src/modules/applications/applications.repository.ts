@@ -4,6 +4,7 @@ import { Injectable } from '@nestjs/common';
 import { withoutUndefined } from '../../common/without-undefined.js';
 import type { Prisma } from '../../generated/prisma/client.js';
 import { EFFECTIVE_STAGE_EVENTS } from '../../prisma/effective-stage-events.js';
+import type { InTransaction } from '../../prisma/in-transaction.js';
 import { PrismaService } from '../../prisma/prisma.service.js';
 import { type ApplicationEvent, applicationEvent } from './applications.events.js';
 
@@ -55,8 +56,6 @@ export type NewApplication = CreateApplicationInput & {
 export type FirstStageEvent = { fromStage: null; toStage: Stage; occurredAt: Date };
 
 export type ApplicationChanges = Omit<UpdateApplicationInput, 'currentStage'>;
-
-export type InTransaction = { tx?: Prisma.TransactionClient };
 
 export type InsertApplication = InTransaction & {
   application: NewApplication;

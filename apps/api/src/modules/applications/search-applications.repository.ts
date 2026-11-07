@@ -1,14 +1,14 @@
-import { ACTIVE_STAGES, type Stage } from '@jobflow/shared';
+import { ACTIVE_STAGES, INTERVIEW_STAGES, type Stage } from '@jobflow/shared';
 import { Injectable } from '@nestjs/common';
 
-import { EFFECTIVE_STAGE_EVENT_SQL } from '../../prisma/effective-stage-events.js';
+import { EFFECTIVE_STAGE_EVENT_AS_E_SQL } from '../../prisma/effective-stage-events.js';
+import type { InTransaction } from '../../prisma/in-transaction.js';
 import { PrismaService } from '../../prisma/prisma.service.js';
-import type { InTransaction } from './applications.repository.js';
 import type { NewStageEvent } from './stage-transition.repository.js';
 
 export type OpenApplication = { id: string; currentStage: Stage };
 
-export type OpenInSearch = InTransaction & { searchId: string };
+export type InSearch = InTransaction & { searchId: string };
 
 export type WithdrawalEvent = NewStageEvent & { applicationId: string };
 
@@ -31,16 +31,11 @@ export type SearchTotalsRow = {
   firstOfferAt: Date | null;
 };
 
-const INTERVIEW_STAGES = ['tech_interview', 'final'] as const satisfies readonly Stage[];
-
 @Injectable()
 export class SearchApplicationsRepository {
   constructor(private readonly prisma: PrismaService) {}
 
-  lockOpen(
-    userId: string,
-    { searchId, tx = this.prisma }: OpenInSearch,
-  ): Promise<OpenApplication[]> {
+  lockOpen(userId: string, { searchId, tx = this.prisma }: InSearch): Promise<OpenApplication[]> {
     return tx.$queryRaw<OpenApplication[]>`
       SELECT id, current_stage AS "currentStage" FROM applications
       WHERE user_id = ${userId}::uuid AND search_id = ${searchId}::uuid AND deleted_at IS NULL
@@ -89,7 +84,7 @@ export class SearchApplicationsRepository {
         ) AS "firstOfferAt"
       FROM applications a
       JOIN searches s ON s.id = a.search_id
-      LEFT JOIN stage_events e ON e.application_id = a.id AND ${EFFECTIVE_STAGE_EVENT_SQL}
+      LEFT JOIN stage_events e ON e.application_id = a.id AND ${EFFECTIVE_STAGE_EVENT_AS_E_SQL}
       WHERE a.user_id = ${userId}::uuid
         AND a.search_id = ANY(${[...searchIds]}::uuid[])
         AND a.is_draft = false

@@ -8,6 +8,7 @@ import {
 } from '@jobflow/shared';
 import { describe, expect, it } from 'vitest';
 
+import { Prisma } from '../../generated/prisma/client.js';
 import {
   applicationPath,
   foreignReaches,
@@ -21,6 +22,7 @@ import {
   timelinePath,
   useStageMoveTestApp,
 } from '../../test/applications.js';
+import { queuedBehindRowLock } from '../../test/database.js';
 import { callRoute, errorPathsOf, type RouteCall, statusAndDetail } from '../../test/http.js';
 import { icsEventFieldsOf } from '../../test/ics.js';
 import { expectReplayedCreate } from '../../test/idempotency.js';
@@ -110,13 +112,6 @@ describe('the scheduled events routes', () => {
       orderBy: { dueAt: 'asc' },
       select: { type: true, status: true, dueAt: true, scheduledEventId: true },
     });
-
-  async function lockWaiters(): Promise<number | undefined> {
-    const [row] = await testApp.prisma.$queryRaw<{ waiting: number }[]>`
-      SELECT count(*)::int AS waiting FROM pg_stat_activity
-      WHERE datname = current_database() AND wait_event_type = 'Lock'`;
-    return row?.waiting;
-  }
 
   async function olenaWithEvent(body: object = TECH_INTERVIEW): Promise<SignedInEvent> {
     const application = await signUpWithApplication(testApp.app);
@@ -268,14 +263,13 @@ describe('the scheduled events routes', () => {
   it('two overlapping PATCHes to done answer one 200 and one 409 and journal interview_done once', async () => {
     const event = await olenaWithEvent();
 
-    const { both } = await testApp.prisma.$transaction(async (tx) => {
-      await tx.$queryRaw`SELECT id FROM scheduled_events WHERE id = ${event.eventId}::uuid FOR UPDATE`;
-      const patches = Promise.all([patchEvent(event, DONE), patchEvent(event, DONE)]);
-      await expect.poll(lockWaiters).toBe(2);
-      return { both: patches };
+    const patchToDone = () => patchEvent(event, DONE);
+
+    const responses = await queuedBehindRowLock(testApp.prisma, {
+      lock: Prisma.sql`SELECT id FROM scheduled_events WHERE id = ${event.eventId}::uuid FOR UPDATE`,
+      calls: [patchToDone, patchToDone],
     });
 
-    const responses = await both;
     expect(responses.map(statusAndDetail).sort()).toEqual([[200, undefined], CHANGED_MEANWHILE]);
     expect(await journalRowsOf(event.id)).toMatchObject([
       { kind: 'interview_scheduled' },

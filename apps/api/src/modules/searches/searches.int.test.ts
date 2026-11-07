@@ -13,7 +13,7 @@ import {
 } from '@jobflow/shared';
 import { describe, expect, it } from 'vitest';
 
-import type { Prisma } from '../../generated/prisma/client.js';
+import { Prisma } from '../../generated/prisma/client.js';
 import {
   applicationEventRow,
   applicationPath,
@@ -27,6 +27,7 @@ import {
   timelinePath,
   useStageMoveTestApp,
 } from '../../test/applications.js';
+import { queuedBehindRowLock } from '../../test/database.js';
 import {
   type ApplicationRowInput,
   createApplicationRows,
@@ -35,7 +36,12 @@ import {
 import { callRoute, errorPathsOf, statusAndDetail } from '../../test/http.js';
 import { outboxRows } from '../../test/outbox.js';
 import { FINISH_SEARCH_PATH, finishSearch, SEARCHES_PATH } from '../../test/searches.js';
-import { TO_SCREENING, TO_TECH_INTERVIEW } from '../../test/service-fixtures.js';
+import {
+  rejectedAfterTechInterview,
+  SCREENING_TO_TECH_INTERVIEW,
+  TO_SCREENING,
+  TO_TECH_INTERVIEW,
+} from '../../test/service-fixtures.js';
 import { daysBefore, NOW, settableClock } from '../../test/time.js';
 
 type CardMoves = { moves: MoveApplicationInput[]; daysAgo: number };
@@ -57,19 +63,11 @@ const clock = settableClock(NOW);
 
 const FIRST_SEARCH = { startedAt: daysBefore(41), title: 'Перший пошук' };
 
-const TECH_INTERVIEW_MOVES: MoveApplicationInput[] = [
-  TO_SCREENING,
-  { fromStage: 'screening', toStage: 'tech_interview' },
-];
+const TECH_INTERVIEW_MOVES: MoveApplicationInput[] = [TO_SCREENING, SCREENING_TO_TECH_INTERVIEW];
 
 const OFFER_MOVES: MoveApplicationInput[] = [
   TO_TECH_INTERVIEW,
   { fromStage: 'tech_interview', toStage: 'offer' },
-];
-
-const REJECTED_MOVES: MoveApplicationInput[] = [
-  TO_TECH_INTERVIEW,
-  { fromStage: 'tech_interview', toStage: 'rejected', reasonCode: 'skills_gap' },
 ];
 
 const OFFER_PATH: DatedEvent[] = [
@@ -220,7 +218,10 @@ describe('the search routes', () => {
     const screening = await cardOf(olena, { moves: [TO_SCREENING], daysAgo: 40 });
     const techInterview = await cardOf(olena, { moves: TECH_INTERVIEW_MOVES, daysAgo: 30 });
     const offer = await cardOf(olena, { moves: OFFER_MOVES, daysAgo: 5 });
-    const rejected = await cardOf(olena, { moves: REJECTED_MOVES, daysAgo: 10 });
+    const rejected = await cardOf(olena, {
+      moves: rejectedAfterTechInterview('skills_gap'),
+      daysAgo: 10,
+    });
     const bohdansCard = await cardOf(bohdan, { moves: TECH_INTERVIEW_MOVES, daysAgo: 30 });
 
     const { finished, current } = await finishedAs(olena);
@@ -393,28 +394,32 @@ describe('the search routes', () => {
     ]);
   });
 
-  it('answers one of two concurrent finishes of the same search with 409 and a repeat with the finished id with 409, keeping one active search', async () => {
+  it('answers the loser of two concurrent finishes of the same search and a repeat with the finished id with the same 409, keeping one active search', async () => {
     const olena = await signedInWithSearch(testApp.prisma);
-    const input = finishOf(olena.searchId);
+    const finish = () => finishAs(olena, finishOf(olena.searchId));
 
-    const pair = await Promise.all([finishAs(olena, input), finishAs(olena, input)]);
+    const pair = await queuedBehindRowLock(testApp.prisma, {
+      lock: Prisma.sql`SELECT id FROM searches WHERE id = ${olena.searchId}::uuid FOR UPDATE`,
+      calls: [finish, finish],
+    });
 
     expect(pair.map(({ status }) => status).sort((left, right) => left - right)).toEqual([
       200, 409,
     ]);
     expect(await activeSearchIds(olena)).toHaveLength(1);
-    const repeat = await finishAs(olena, input);
+    const repeat = await finish();
+    expect(pair.map(statusAndDetail)).toContainEqual([409, 'The search is already finished']);
     expect(statusAndDetail(repeat)).toEqual([409, 'The search is already finished']);
     expect(await activeSearchIds(olena)).toHaveLength(1);
   });
 
-  it("answers 409 when OLENA has no active search, even while BOHDAN's is active, and starts none", async () => {
+  it("answers 409 'The search is already finished' when OLENA has no active search, even while BOHDAN's is active, and starts none", async () => {
     const olena = await signedInWithSearch(testApp.prisma, { status: 'archived' });
     const bohdan = await signedInWithSearch(testApp.prisma);
 
     const response = await finishAs(olena, finishOf(olena.searchId));
 
-    expect(statusAndDetail(response)).toEqual([409, 'No active search']);
+    expect(statusAndDetail(response)).toEqual([409, 'The search is already finished']);
     expect([await activeSearchIds(olena), await activeSearchIds(bohdan)]).toEqual([
       [],
       [bohdan.searchId],

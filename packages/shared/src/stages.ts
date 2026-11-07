@@ -39,6 +39,11 @@ export const ACTIVE_STAGES = [
 
 export type ActiveStage = (typeof ACTIVE_STAGES)[number];
 
+export const INTERVIEW_STAGES = [
+  'tech_interview',
+  'final',
+] as const satisfies readonly ActiveStage[];
+
 const ACTIVE_STAGE_LIST: readonly Stage[] = ACTIVE_STAGES;
 
 export function isActiveStage(stage: Stage): stage is ActiveStage {

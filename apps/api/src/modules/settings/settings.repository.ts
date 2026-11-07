@@ -2,13 +2,11 @@ import { RESPONSE_STAGES, type UpdateUserSettingsInput } from '@jobflow/shared';
 import { Injectable } from '@nestjs/common';
 
 import { withoutUndefined } from '../../common/without-undefined.js';
-import type { Prisma } from '../../generated/prisma/client.js';
-import { EFFECTIVE_STAGE_EVENT_SQL } from '../../prisma/effective-stage-events.js';
+import { EFFECTIVE_STAGE_EVENT_AS_E_SQL } from '../../prisma/effective-stage-events.js';
+import type { InTransaction } from '../../prisma/in-transaction.js';
 import { PrismaService } from '../../prisma/prisma.service.js';
 import { USER_SETTINGS_SELECT, type UserSettingsRow } from '../../prisma/user-settings-row.js';
 import { settingsChangedEvent, type SettingsEvent } from './settings.events.js';
-
-type InTransaction = { tx?: Prisma.TransactionClient };
 
 export type SettingsChanges = Omit<UpdateUserSettingsInput, 'quietHoursStart' | 'quietHoursEnd'> & {
   quietHoursStart?: Date;
@@ -64,7 +62,7 @@ export class SettingsRepository {
           AND a.deleted_at IS NULL
           AND a.is_draft = false
           AND a.applied_at IS NOT NULL
-          AND ${EFFECTIVE_STAGE_EVENT_SQL}
+          AND ${EFFECTIVE_STAGE_EVENT_AS_E_SQL}
           AND e.to_stage = ANY(${[...RESPONSE_STAGES]}::stage[])
           AND r.side IS DISTINCT FROM 'candidate'
         GROUP BY a.id

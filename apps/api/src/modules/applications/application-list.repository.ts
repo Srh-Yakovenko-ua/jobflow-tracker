@@ -13,6 +13,7 @@ import { EFFECTIVE_STAGE_EVENTS } from '../../prisma/effective-stage-events.js';
 import { PrismaService } from '../../prisma/prisma.service.js';
 import type { DateCursor } from './application-cursor.js';
 import { LATEST_STAGE_EVENT_SELECT } from './applications.repository.js';
+import type { InSearch } from './search-applications.repository.js';
 
 export type ApplicationListFilter = Omit<ApplicationFilters, 'silence' | 'q'> & {
   searchId?: string | undefined;
@@ -137,8 +138,8 @@ export class ApplicationListRepository {
     return settings?.silenceDays ?? DEFAULT_SILENCE_DAYS;
   }
 
-  async searchExists(userId: string, searchId: string): Promise<boolean> {
-    const count = await this.prisma.search.count({ where: { id: searchId, userId } });
+  async searchExists(userId: string, { searchId, tx = this.prisma }: InSearch): Promise<boolean> {
+    const count = await tx.search.count({ where: { id: searchId, userId } });
     return count > 0;
   }
 
