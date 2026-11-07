@@ -75,7 +75,7 @@ function ScheduleForm({ application, plan, actions }: ScheduleFormProps) {
   const now = new Date(openedAt);
   const event = eventOf(plan);
   const methods = useForm<ScheduleFormValues, unknown, ScheduleFormOutput>({
-    mode: 'onBlur',
+    mode: 'onTouched',
     defaultValues: scheduleDefaultsOf({ stage: application.currentStage, event, now, timeZone }),
     resolver: zodResolver(scheduleFormSchemaOf({ timeZone, clock: () => new Date() })),
   });

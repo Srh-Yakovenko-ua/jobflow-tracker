@@ -207,7 +207,7 @@ describe('ApplicationNotes', () => {
     expect(within(timelineSection()).queryByText(FIRST_SECOND)).toBeNull();
   });
 
-  it('closing the card with an open draft shows its last saved body in the timeline when it opens again', async () => {
+  it('closing the application with an open draft shows its last saved body in the timeline when it opens again', async () => {
     const { user, editor, notes, reopen } = await renderWithStoredTimeline();
     await autosaveTwice({ user, editor, notes });
 

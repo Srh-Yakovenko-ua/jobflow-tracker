@@ -2,7 +2,7 @@ import { screen, waitFor } from '@testing-library/react';
 import { toast } from 'sonner';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { ANY_IDEMPOTENCY_KEY, errorReply } from '@/test/api-handlers';
+import { ANY_IDEMPOTENCY_KEY, errorReply, validationReply } from '@/test/api-handlers';
 import { ACME_APPLICATION } from '@/test/application-fixtures';
 import { renderInApp } from '@/test/render-in-app';
 import {
@@ -175,12 +175,7 @@ describe('ScheduleEventDialog', () => {
     const { user, onClose } = renderDialog({
       routes: {
         create: {
-          reply: () =>
-            errorReply({
-              status: 422,
-              type: 'validation_error',
-              errors: [{ path: 'durationMin', message: 'Too big' }],
-            }),
+          reply: () => validationReply([{ path: 'durationMin', message: 'Too big' }]),
         },
       },
     });

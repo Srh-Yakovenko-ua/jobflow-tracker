@@ -2,10 +2,11 @@ import type { Contact } from '@jobflow/shared';
 import { screen, waitFor } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
-import { errorReply } from '@/test/api-handlers';
+import { validationReply } from '@/test/api-handlers';
 import { ACME_APPLICATION } from '@/test/application-fixtures';
 import { fixtureIdOf } from '@/test/board-fixtures';
 import { contactOf, contactRoutes, type ContactRoutesOptions } from '@/test/contact-fixtures';
+import { doubleClickWhileHeld } from '@/test/double-click-while-held';
 import { descriptionOf } from '@/test/field-description';
 import { latch } from '@/test/latch';
 import { renderInApp } from '@/test/render-in-app';
@@ -23,6 +24,14 @@ const IHOR = contactOf({
   name: 'Ігор Савчук',
   role: 'Engineering Manager',
   telegram: 'ihor_em',
+});
+
+const IHOR_LABEL = 'Ігор Савчук, Engineering Manager';
+
+const MARTA = contactOf({
+  id: fixtureIdOf(703),
+  applicationId: fixtureIdOf(202),
+  name: 'Марта Гнатюк',
 });
 
 type AddFormSetup = Readonly<{
@@ -65,12 +74,34 @@ describe('AddContactForm', () => {
     const { user, sent, onDone } = renderAddForm({ create: { latch: held } });
     await user.type(screen.getByRole('textbox', { name: NAME }), 'Оксана Левченко');
 
-    await user.dblClick(screen.getByRole('button', { name: ADD }));
-    await waitFor(() => {
-      expect(sent.created).toHaveLength(1);
+    await doubleClickWhileHeld({
+      user,
+      held,
+      click: ADD,
+      sent: sent.created,
+      disabledWhileHeld: [ADD],
     });
-    expect(screen.getByRole<HTMLButtonElement>('button', { name: ADD }).disabled).toBe(true);
-    held.release();
+
+    await waitFor(() => {
+      expect(onDone).toHaveBeenCalledTimes(1);
+    });
+    expect(sent.created).toHaveLength(1);
+  });
+
+  it('a double click on a suggestion while its add is on its way posts one recruiter and keeps every add button disabled', async () => {
+    const held = latch();
+    const { user, sent, onDone } = renderAddForm({
+      suggestions: [IHOR, MARTA],
+      create: { latch: held },
+    });
+
+    await doubleClickWhileHeld({
+      user,
+      held,
+      click: IHOR_LABEL,
+      sent: sent.created,
+      disabledWhileHeld: [ADD, IHOR_LABEL, 'Марта Гнатюк'],
+    });
 
     await waitFor(() => {
       expect(onDone).toHaveBeenCalledTimes(1);
@@ -81,7 +112,7 @@ describe('AddContactForm', () => {
   it('a contact from another application of the company is added with the fields it has', async () => {
     const { user, sent, onDone } = renderAddForm({ suggestions: [IHOR] });
 
-    await user.click(screen.getByRole('button', { name: 'Ігор Савчук, Engineering Manager' }));
+    await user.click(screen.getByRole('button', { name: IHOR_LABEL }));
 
     await waitFor(() => {
       expect(onDone).toHaveBeenCalledTimes(1);
@@ -97,11 +128,7 @@ describe('AddContactForm', () => {
 
   it('a 422 on the name shows under the field and keeps the form', async () => {
     const refused = () =>
-      errorReply({
-        status: 422,
-        type: 'validation_error',
-        errors: [{ path: 'name', message: 'name must not contain NUL characters' }],
-      });
+      validationReply([{ path: 'name', message: 'name must not contain NUL characters' }]);
     const { user, sent, onDone } = renderAddForm({ create: { reply: refused } });
     const name = screen.getByRole('textbox', { name: NAME });
 

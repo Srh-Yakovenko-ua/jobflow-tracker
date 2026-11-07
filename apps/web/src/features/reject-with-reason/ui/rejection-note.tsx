@@ -36,15 +36,15 @@ export function RejectionNote({ application, actions }: RejectionNoteProps) {
     defaultValues: EMPTY_NOTE,
     resolver: zodResolver(noteInputSchema),
   });
-  const mutation = useAddNoteMutation({ applicationId: application.id, setError: form.setError });
-  const submit = form.handleSubmit((note) => {
-    mutation.mutate(note, {
-      onSuccess: () => {
-        showToast({ tone: 'success', title: COPY.saved });
-        actions.onDone();
-      },
-    });
+  const mutation = useAddNoteMutation({
+    applicationId: application.id,
+    setError: form.setError,
+    onSaved: () => {
+      showToast({ tone: 'success', title: COPY.saved });
+      actions.onDone();
+    },
   });
+  const submit = form.handleSubmit(mutation.save);
   return (
     <form
       noValidate

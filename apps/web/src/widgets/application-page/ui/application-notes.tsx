@@ -1,15 +1,13 @@
 import type { ApplicationResponse } from '@jobflow/shared';
-import { useId } from 'react';
 
 import { NoteMarkdown } from '@/entities/note';
 import { NoteEditor } from '@/features/write-note';
 import { uk } from '@/shared/i18n';
-import { cn } from '@/shared/lib/cn';
 import { LoadFailedPanel } from '@/shared/ui/error-panel';
 import { TextSkeleton } from '@/shared/ui/skeleton';
-import { STATE_TEXT } from '@/shared/ui/state-text';
 
 import { type ApplicationNotesState, useApplicationNotes } from '../model/use-application-notes';
+import { ApplicationSection } from './application-section';
 import { NotesPrivacy } from './notes-privacy';
 
 export type ApplicationNotesProps = Readonly<{ application: ApplicationResponse }>;
@@ -39,23 +37,19 @@ function NoteList({ notes }: NoteListProps) {
 
 export function ApplicationNotes({ application }: ApplicationNotesProps) {
   const notes = useApplicationNotes(application);
-  const headingId = useId();
   return (
-    <section
-      aria-labelledby={headingId}
-      aria-busy={notes.load.pending || undefined}
-      className="flex flex-col gap-4 pt-5 shadow-[inset_0_1px_0_var(--line-soft)]"
+    <ApplicationSection
+      title={{ text: COPY.kicker, look: 'eyebrow' }}
+      header={{ after: <NotesPrivacy />, className: 'flex items-center gap-1' }}
+      view={{
+        className: 'flex flex-col gap-4 pt-5 shadow-[inset_0_1px_0_var(--line-soft)]',
+        busy: notes.load.pending,
+      }}
     >
-      <div className="flex items-center gap-1">
-        <h2 id={headingId} className={cn(STATE_TEXT.eyebrow, 'text-ink-3')}>
-          {COPY.kicker}
-        </h2>
-        <NotesPrivacy />
-      </div>
       <div className="flex flex-col gap-3">
         <NoteList notes={notes} />
         <NoteEditor application={application} actions={{ onDraftChange: notes.onDraftChange }} />
       </div>
-    </section>
+    </ApplicationSection>
   );
 }

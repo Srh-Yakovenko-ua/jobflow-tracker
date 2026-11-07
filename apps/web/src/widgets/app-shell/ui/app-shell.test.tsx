@@ -5,7 +5,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { applicationKeys } from '@/entities/application';
 import { userKeys } from '@/entities/user';
 import { uk } from '@/shared/i18n';
-import { apiUrl, errorReply, OUTAGES } from '@/test/api-handlers';
+import { apiUrl, OUTAGES, validationReply } from '@/test/api-handlers';
 import { boardOf, type ColumnCounts } from '@/test/board-fixtures';
 import { axeViolations } from '@/test/dev-ui';
 import { QueryProbe, waitForQuery } from '@/test/query-status';
@@ -25,7 +25,7 @@ function silentBoardRoute(counts: ColumnCounts) {
   return http.get(apiUrl('/applications/board'), ({ request }) =>
     new URL(request.url).searchParams.get('silence') === 'silent'
       ? HttpResponse.json(boardOf(counts))
-      : errorReply({ status: 422, type: 'validation_error' }),
+      : validationReply(),
   );
 }
 

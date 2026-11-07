@@ -5,9 +5,9 @@ import { type ChangePasswordInput, changePasswordInputSchema } from '@jobflow/sh
 import { useForm, type UseFormReturn, useFormState } from 'react-hook-form';
 
 import { uk } from '@/shared/i18n';
-import { Banner } from '@/shared/ui/banner';
 import { Button } from '@/shared/ui/button';
 import { Field } from '@/shared/ui/field';
+import { FormServerError } from '@/shared/ui/form-server-error';
 import { PasswordInput } from '@/shared/ui/password-input';
 import { TOUCH_HEIGHT } from '@/shared/ui/touch-height';
 
@@ -48,22 +48,14 @@ function PasswordFields({ form }: PasswordFieldsProps) {
   );
 }
 
-function FormFailure({ form }: PasswordFieldsProps) {
-  const { errors } = useFormState({ control: form.control });
-  if (errors.root?.server === undefined) return null;
-  return <Banner tone="error" content={COPY.failed} />;
-}
-
 export function ChangePasswordForm() {
   const form = useForm<ChangePasswordInput>({
-    mode: 'onBlur',
+    mode: 'onTouched',
     defaultValues: EMPTY_PASSWORDS,
     resolver,
   });
   const mutation = useChangePasswordMutation(form);
-  const submit = form.handleSubmit((passwords) => {
-    mutation.mutate(passwords);
-  });
+  const submit = form.handleSubmit(mutation.save);
   return (
     <form
       method="post"
@@ -75,7 +67,7 @@ export function ChangePasswordForm() {
       className="flex flex-col gap-4"
     >
       <PasswordFields form={form} />
-      <FormFailure form={form} />
+      <FormServerError control={form.control} />
       <div className="flex flex-wrap items-center gap-3">
         <Button
           type="submit"
