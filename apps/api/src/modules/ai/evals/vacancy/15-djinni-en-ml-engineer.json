@@ -1,0 +1,29 @@
+{
+  "source": "djinni",
+  "language": "en",
+  "text": "Machine Learning Engineer (NLP)\nOrbitaly\nRemote · $4500–6000\n\nOrbitaly builds a customer support assistant used by online stores in 30 countries.\n\nResponsibilities\n- Fine-tune and evaluate language models for intent detection\n- Serve models with FastAPI and Triton\n- Track experiments in MLflow\n\nRequirements\n- 3+ years in ML engineering\n- Python, PyTorch, Hugging Face\n- Experience with Docker and SageMaker\n- Upper-Intermediate English\n\nWe offer\n- Fully remote work\n- GPU budget for experiments",
+  "expected": {
+    "company": "Orbitaly",
+    "position": ["Machine Learning Engineer (NLP)", "Machine Learning Engineer"],
+    "seniority": null,
+    "salaryMin": 4500,
+    "salaryMax": 6000,
+    "currency": "USD",
+    "salaryTax": null,
+    "location": null,
+    "workMode": "remote",
+    "stack": [
+      "Python",
+      "PyTorch",
+      "Hugging Face",
+      "FastAPI",
+      "Triton",
+      "MLflow",
+      "Docker",
+      "SageMaker"
+    ],
+    "englishLevel": "upper_intermediate",
+    "sourceGuess": null,
+    "failure": null
+  }
+}

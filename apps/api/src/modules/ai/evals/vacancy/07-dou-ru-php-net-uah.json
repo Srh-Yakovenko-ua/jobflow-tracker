@@ -1,0 +1,20 @@
+{
+  "source": "dou",
+  "language": "ru",
+  "text": "PHP-разработчик (Laravel)\nКомпания: Moxwell\nГород: Харьков\nФормат: офис\nЗП: 45 000 - 60 000 грн на руки\n\nMoxwell — веб-студия, которая делает интернет-магазины и CRM для малого бизнеса.\n\nТребования:\n- от полутора лет опыта с PHP и Laravel\n- MySQL\n- базовые знания Vue.js\n- Git\n- английский не ниже Pre-Intermediate\n\nМы предлагаем:\n- уютный офис возле метро\n- оплачиваемый отпуск и больничные\n- обучение за счёт компании",
+  "expected": {
+    "company": "Moxwell",
+    "position": ["PHP-разработчик (Laravel)", "PHP-разработчик"],
+    "seniority": null,
+    "salaryMin": 45000,
+    "salaryMax": 60000,
+    "currency": "UAH",
+    "salaryTax": "net",
+    "location": ["Харьков", "Харків", "Kharkiv"],
+    "workMode": "office",
+    "stack": ["PHP", "Laravel", "MySQL", "Vue.js", "Git"],
+    "englishLevel": "pre_intermediate",
+    "sourceGuess": null,
+    "failure": null
+  }
+}

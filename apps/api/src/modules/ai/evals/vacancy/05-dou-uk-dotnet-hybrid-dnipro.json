@@ -1,0 +1,28 @@
+{
+  "source": "dou",
+  "language": "uk",
+  "text": "DOU · Вакансії · Kalyna Pay\n\nMiddle .NET Developer\nКомпанія: Kalyna Pay\nМісто: Дніпро\nФормат роботи: гібрид (3 дні в офісі, 2 дні вдома)\nЗарплатна вилка: 2500–3500 $\n\nKalyna Pay — фінтех-компанія, що розробляє платіжний шлюз для українського e-commerce.\n\nЧим займатимешся:\n- розробкою мікросервісів на C# та .NET\n- інтеграціями з банками-партнерами\n- код-рев'ю у команді з п'яти розробників\n\nМи очікуємо:\n- 3+ роки досвіду з C# та ASP.NET Core\n- Entity Framework Core, MS SQL Server\n- RabbitMQ\n- Azure DevOps\n- англійська — Pre-Intermediate і вище\n\nПропонуємо:\n- офіс у центрі Дніпра\n- компенсацію спорту",
+  "expected": {
+    "company": "Kalyna Pay",
+    "position": ["Middle .NET Developer", ".NET Developer"],
+    "seniority": "middle",
+    "salaryMin": 2500,
+    "salaryMax": 3500,
+    "currency": "USD",
+    "salaryTax": null,
+    "location": ["Дніпро", "Dnipro"],
+    "workMode": "hybrid",
+    "stack": [
+      "C#",
+      ".NET",
+      "ASP.NET Core",
+      "Entity Framework Core",
+      "MS SQL Server",
+      "RabbitMQ",
+      "Azure DevOps"
+    ],
+    "englishLevel": "pre_intermediate",
+    "sourceGuess": "dou",
+    "failure": null
+  }
+}

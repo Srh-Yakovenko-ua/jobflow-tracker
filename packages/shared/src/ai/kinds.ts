@@ -6,4 +6,4 @@ export const aiKindSchema = z.enum(AI_KINDS);
 
 export type AiKind = z.infer<typeof aiKindSchema>;
 
-export const AI_PROMPT_VERSIONS = { vacancy_parse: 'v1' } satisfies Record<AiKind, string>;
+export const AI_PROMPT_VERSIONS = { vacancy_parse: 'v2' } satisfies Record<AiKind, string>;

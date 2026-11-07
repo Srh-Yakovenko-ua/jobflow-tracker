@@ -1,0 +1,20 @@
+{
+  "source": "djinni",
+  "language": "ru",
+  "text": "Team Lead Node.js\nDriftmoor\n$6000–7500\nТолько удалённо\n\nDriftmoor — продуктовая компания в онлайн-образовании: наши курсы проходят 200 тысяч студентов в месяц.\n\nЧто нужно:\n- 6+ лет в backend-разработке, из них 2 года в роли тимлида\n- Node.js, TypeScript, NestJS\n- MongoDB, Redis\n- опыт с AWS\n- английский Advanced\n\nЧем предстоит заниматься:\n- руководить командой из 7 разработчиков\n- проектировать архитектуру новых сервисов\n- участвовать в найме",
+  "expected": {
+    "company": "Driftmoor",
+    "position": "Team Lead Node.js",
+    "seniority": "lead",
+    "salaryMin": 6000,
+    "salaryMax": 7500,
+    "currency": "USD",
+    "salaryTax": null,
+    "location": null,
+    "workMode": "remote",
+    "stack": ["Node.js", "TypeScript", "NestJS", "MongoDB", "Redis", "AWS"],
+    "englishLevel": "advanced",
+    "sourceGuess": null,
+    "failure": null
+  }
+}

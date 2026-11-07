@@ -1,0 +1,20 @@
+{
+  "source": "djinni",
+  "language": "uk",
+  "text": "Python Developer (Middle)\nКомпанія: Stepova Data\nЛокація: Київ, офіс на Подолі\nФормат роботи: офіс\nЗарплата: 70 000 – 95 000 грн gross\n\nStepova Data — українська аналітична компанія, яка допомагає агробізнесу прогнозувати врожайність за супутниковими знімками.\n\nОбов'язки:\n- розробка та підтримка бекенд-сервісів на Python\n- побудова пайплайнів обробки даних\n- оптимізація запитів до PostgreSQL\n\nВимоги:\n- від 2 років досвіду з Python\n- FastAPI або Django\n- PostgreSQL, Redis\n- досвід з Docker\n- англійська на рівні Intermediate\n\nПропонуємо:\n- офіційне працевлаштування\n- медичне страхування\n- офіс біля метро Контрактова площа",
+  "expected": {
+    "company": "Stepova Data",
+    "position": ["Python Developer (Middle)", "Python Developer"],
+    "seniority": "middle",
+    "salaryMin": 70000,
+    "salaryMax": 95000,
+    "currency": "UAH",
+    "salaryTax": "gross",
+    "location": ["Київ", "Київ, офіс на Подолі", "Kyiv"],
+    "workMode": "office",
+    "stack": ["Python", "FastAPI", "Django", "PostgreSQL", "Redis", "Docker"],
+    "englishLevel": "intermediate",
+    "sourceGuess": null,
+    "failure": null
+  }
+}

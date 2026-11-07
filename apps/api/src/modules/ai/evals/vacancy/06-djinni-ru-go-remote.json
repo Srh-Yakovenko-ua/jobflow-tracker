@@ -1,0 +1,30 @@
+{
+  "source": "djinni",
+  "language": "ru",
+  "text": "Senior Go Developer\nКомпания: Tumanna Tech\nЗарплата: $5000–6500\nУдалённо\n\nTumanna Tech разрабатывает облачную платформу для мониторинга грузоперевозок.\n\nТребования:\n- опыт коммерческой разработки на Go от 4 лет\n- уверенное знание PostgreSQL и ClickHouse\n- опыт с gRPC и Kafka\n- Docker, Kubernetes\n- английский на уровне Upper-Intermediate\n\nБудет плюсом:\n- опыт с Prometheus и Grafana\n\nМы предлагаем:\n- полностью удалённую работу\n- 20 рабочих дней отпуска\n- оплату профильных конференций",
+  "expected": {
+    "company": "Tumanna Tech",
+    "position": "Senior Go Developer",
+    "seniority": "senior",
+    "salaryMin": 5000,
+    "salaryMax": 6500,
+    "currency": "USD",
+    "salaryTax": null,
+    "location": null,
+    "workMode": "remote",
+    "stack": [
+      "Go",
+      "PostgreSQL",
+      "ClickHouse",
+      "gRPC",
+      "Kafka",
+      "Docker",
+      "Kubernetes",
+      "Prometheus",
+      "Grafana"
+    ],
+    "englishLevel": "upper_intermediate",
+    "sourceGuess": null,
+    "failure": null
+  }
+}

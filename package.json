@@ -15,6 +15,7 @@
     "test": "turbo run test",
     "gen:keys": "pnpm --filter @jobflow/api gen:keys",
     "ai:usage": "pnpm --filter @jobflow/api ai:usage",
+    "ai:eval": "pnpm --filter @jobflow/api ai:eval",
     "tokens:build": "pnpm --filter @jobflow/shared tokens:build",
     "api:openapi": "turbo run build --filter=@jobflow/api && pnpm --filter @jobflow/api openapi",
     "gen:vapid": "node packages/config/bin/run-task.js gen:vapid BE-36",

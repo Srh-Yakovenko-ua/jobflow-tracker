@@ -1,3 +1,5 @@
+import json
+
 import pytest
 
 from app.providers.fake import FIXTURES, FakeAiProvider
@@ -29,10 +31,22 @@ async def test_returns_the_fixture_output_with_model_and_prompt_version() -> Non
     assert body == {
         "output": PARSED_VACANCY,
         "model": "fake",
-        "promptVersion": "v1",
+        "promptVersion": "v2",
         "tokensIn": 100,
         "tokensOut": 50,
     }
+
+
+async def test_marks_an_invented_company_check_when_the_text_lacks_its_quote() -> None:
+    invented = {"value": "Globex", "confidence": "exact", "evidence": "Globex"}
+    fake = FakeAiProvider(replies=[json.dumps({**PARSED_VACANCY, "company": invented})])
+
+    response = await post_completion(app=build_app(provider=fake))
+
+    assert (response.status_code, response.json()["output"]) == (
+        200,
+        {**PARSED_VACANCY, "company": {**invented, "confidence": "check"}},
+    )
 
 
 async def test_repairs_invalid_json_with_one_more_call_and_sums_the_tokens() -> None:
@@ -57,7 +71,8 @@ async def test_repairs_invalid_json_with_one_more_call_and_sums_the_tokens() -> 
 
 
 async def test_answers_422_when_the_repaired_output_is_still_invalid() -> None:
-    fake = FakeAiProvider(replies=["not json", '{"company": "Acme"}'])
+    only_company = json.dumps({"company": PARSED_VACANCY["company"]})
+    fake = FakeAiProvider(replies=["not json", only_company])
 
     response = await post_completion(app=build_app(provider=fake))
 
@@ -71,12 +86,17 @@ async def test_answers_422_when_the_repaired_output_is_still_invalid() -> None:
             {"path": path, "message": "Field required"}
             for path in (
                 "position",
-                "location",
-                "workMode",
+                "seniority",
                 "salaryMin",
                 "salaryMax",
                 "currency",
+                "salaryTax",
+                "location",
+                "workMode",
                 "stack",
+                "requirements",
+                "englishLevel",
+                "sourceGuess",
             )
         ],
         "requestId": "req-test",

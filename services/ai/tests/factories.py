@@ -27,19 +27,29 @@ SIGNING_JWK = jwt.PyJWK(
 )
 
 COMPLETE_PATH = "/v1/complete/vacancy_parse"
-VACANCY_BODY = {
-    "input": {"text": "Senior React developer, Acme, remote, 4000-5000 USD"}
-}
+VACANCY_TEXT = "Senior React developer, Acme, remote, 4000-5000 USD"
+VACANCY_BODY = {"input": {"text": VACANCY_TEXT}}
+
+
+def vacancy_field(value: Any, evidence: str | None) -> dict[str, Any]:
+    confidence = "missing" if evidence is None else "exact"
+    return {"value": value, "confidence": confidence, "evidence": evidence}
+
 
 PARSED_VACANCY = {
-    "company": "Acme",
-    "position": "Senior React Developer",
-    "location": None,
-    "workMode": "remote",
-    "salaryMin": 4000,
-    "salaryMax": 5000,
-    "currency": "USD",
-    "stack": ["React", "TypeScript"],
+    "company": vacancy_field("Acme", "Acme"),
+    "position": vacancy_field("Senior React developer", "Senior React developer"),
+    "seniority": vacancy_field("senior", "Senior"),
+    "salaryMin": vacancy_field(4000, "4000-5000 USD"),
+    "salaryMax": vacancy_field(5000, "4000-5000 USD"),
+    "currency": vacancy_field("USD", "USD"),
+    "salaryTax": vacancy_field(None, None),
+    "location": vacancy_field(None, None),
+    "workMode": vacancy_field("remote", "remote"),
+    "stack": vacancy_field(["React"], "React"),
+    "requirements": vacancy_field([], None),
+    "englishLevel": vacancy_field(None, None),
+    "sourceGuess": vacancy_field(None, None),
 }
 
 

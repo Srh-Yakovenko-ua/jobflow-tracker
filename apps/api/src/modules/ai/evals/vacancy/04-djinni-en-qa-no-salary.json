@@ -1,0 +1,28 @@
+{
+  "source": "djinni",
+  "language": "en",
+  "text": "Middle QA Automation Engineer\nHearthbyte\n\nHearthbyte is an outsourcing company with 300+ engineers. We are looking for a QA Automation Engineer for a long-term e-commerce project.\n\nRequirements:\n- 2+ years in test automation\n- Strong knowledge of JavaScript or TypeScript\n- Experience with Playwright or Cypress\n- API testing with Postman\n- Running tests in GitHub Actions\n- English: Intermediate\n\nNice to have:\n- k6 for load testing\n\nWe offer:\n- Remote work\n- Paid sick leave and vacation\n- Corporate English classes",
+  "expected": {
+    "company": "Hearthbyte",
+    "position": ["Middle QA Automation Engineer", "QA Automation Engineer"],
+    "seniority": "middle",
+    "salaryMin": null,
+    "salaryMax": null,
+    "currency": null,
+    "salaryTax": null,
+    "location": null,
+    "workMode": "remote",
+    "stack": [
+      "JavaScript",
+      "TypeScript",
+      "Playwright",
+      "Cypress",
+      "Postman",
+      "GitHub Actions",
+      "k6"
+    ],
+    "englishLevel": "intermediate",
+    "sourceGuess": null,
+    "failure": null
+  }
+}
