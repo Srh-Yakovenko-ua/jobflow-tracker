@@ -29,8 +29,8 @@ const CHORD_MS = 1000;
 const LAYERS = '[role="dialog"], [role="alertdialog"], [role="menu"]';
 
 function isPaletteKey(event: KeyboardEvent): boolean {
-  const k = event.key.toLowerCase() === 'k' || event.code === 'KeyK';
-  return k && (event.ctrlKey || event.metaKey) && !event.altKey && !event.shiftKey;
+  const namesK = event.key.toLowerCase() === 'k' || event.code === 'KeyK';
+  return namesK && (event.ctrlKey || event.metaKey) && !event.altKey && !event.shiftKey;
 }
 
 function isInsideLayer(target: EventTarget | null): boolean {
@@ -90,8 +90,8 @@ export function useGlobalShortcuts({ flags, actions }: GlobalShortcutsInput): vo
     actions.onShortcut(fired.target);
   });
   useEffect(() => {
-    const listener = (event: KeyboardEvent) => {
-      onKeyDown(event);
+    const listener = (event: Event) => {
+      if (event instanceof KeyboardEvent) onKeyDown(event);
     };
     document.addEventListener('keydown', listener);
     return () => {

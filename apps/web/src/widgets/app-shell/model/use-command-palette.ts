@@ -69,13 +69,27 @@ function usePalettePage(surfaces: ShellSurfaces) {
   return { page, text, setText, goTo, onKeyDown, dialog };
 }
 
+type RecentsRead = Readonly<{
+  readFor: string | undefined;
+  recents: readonly RecentApplication[];
+}>;
+
+function useRecentsReadFor(readFor: string | undefined): readonly RecentApplication[] {
+  const [read, setRead] = useState<RecentsRead>({ readFor: undefined, recents: [] });
+  if (read.readFor !== readFor) {
+    setRead({ readFor, recents: readFor === undefined ? [] : readRecentApplications(readFor) });
+  }
+  return read.recents;
+}
+
 function useRootView({ open, text, search, target }: RootViewInput): PaletteRootView {
   const userId = useUserId();
+  const recents = useRecentsReadFor(open ? userId : undefined);
   const commands = usePageCommands();
   return {
     text,
     search,
-    recents: open && userId !== undefined ? readRecentApplications(userId) : [],
+    recents,
     pages: palettePagesOf(FEATURE_FLAGS),
     actions: paletteActionsOf(FEATURE_FLAGS, target),
     commands,

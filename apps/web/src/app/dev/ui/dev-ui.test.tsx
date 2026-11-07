@@ -3,7 +3,8 @@ import { toast } from 'sonner';
 import { afterEach, describe, expect, it } from 'vitest';
 
 import { uk } from '@/shared/i18n';
-import { axeViolations, findLiveToaster, renderGallery, specimenOf } from '@/test/dev-ui';
+import { axeViolations } from '@/test/axe';
+import { findLiveToaster, renderGallery, specimenOf } from '@/test/dev-ui';
 
 import { LONG_TEXT_CARD } from './card-specimens';
 

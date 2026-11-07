@@ -154,4 +154,17 @@ describe('global shortcuts', () => {
 
     expect(actions.onShortcut).toHaveBeenCalledWith({ kind: 'navigate', href: '/board' });
   });
+
+  it('a keydown with no key, as autofill sends, throws nothing and runs nothing', () => {
+    const actions = listen();
+    const thrown = vi.fn();
+    window.addEventListener('error', thrown);
+
+    document.dispatchEvent(new Event('keydown', { bubbles: true }));
+    window.removeEventListener('error', thrown);
+
+    expect(thrown).not.toHaveBeenCalled();
+    expect(actions.onPalette).not.toHaveBeenCalled();
+    expect(actions.onShortcut).not.toHaveBeenCalled();
+  });
 });

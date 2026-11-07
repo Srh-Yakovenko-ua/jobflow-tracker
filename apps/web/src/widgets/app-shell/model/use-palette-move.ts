@@ -9,7 +9,8 @@ export function usePaletteMove(opener: HTMLElement | null) {
   const send: RejectionMutations['send'] = (move, options) => {
     mutate(move, {
       ...options,
-      onSettled: () => {
+      onSettled: (...settled) => {
+        options?.onSettled?.(...settled);
         if (document.activeElement === document.body) focusBack(opener);
       },
     });

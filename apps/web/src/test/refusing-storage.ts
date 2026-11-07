@@ -8,5 +8,6 @@ export function refuseStorage() {
   };
   vi.spyOn(Storage.prototype, 'getItem').mockImplementation(refuse);
   vi.spyOn(Storage.prototype, 'setItem').mockImplementation(refuse);
+  vi.spyOn(Storage.prototype, 'removeItem').mockImplementation(refuse);
   return vi.spyOn(logger, 'warn').mockImplementation(() => undefined);
 }
