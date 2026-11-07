@@ -27,3 +27,14 @@ export function settableClock(start: Date) {
     },
   };
 }
+
+export function tickingClock(start: Date, stepMinutes: number) {
+  let instant = start;
+  return {
+    now: () => {
+      const current = instant;
+      instant = new Date(current.getTime() + stepMinutes * MINUTE_MS);
+      return current;
+    },
+  };
+}

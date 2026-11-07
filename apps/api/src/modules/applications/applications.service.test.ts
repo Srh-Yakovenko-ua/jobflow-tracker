@@ -1,6 +1,7 @@
 import type { ApplicationResponse, CreateApplicationInput } from '@jobflow/shared';
 import { describe, expect, it } from 'vitest';
 
+import { Clock } from '../../common/clock.js';
 import { FAKE_TRANSACTION, fakeTransactionModule } from '../../test/fake-prisma.js';
 import { type ByUser, RecordedEvents } from '../../test/recorded-events.js';
 import {
@@ -14,7 +15,7 @@ import {
   SEARCH_ID,
   type Target,
 } from '../../test/service-fixtures.js';
-import { daysBefore, NOW } from '../../test/time.js';
+import { daysBefore, NOW, tickingClock } from '../../test/time.js';
 import {
   ApplicationDuplicatesRepository,
   type DuplicateQuery,
@@ -36,7 +37,7 @@ type OwnedRow = { userId: string; row: ApplicationRow };
 
 type FakeData = { owned?: OwnedRow[]; defaults?: CreateDefaults };
 
-type ServiceFakes = FakeData & { duplicates?: DuplicateRow[] };
+type ServiceFakes = FakeData & { duplicates?: DuplicateRow[]; clock?: Pick<Clock, 'now'> };
 
 const ACTIVE_DEFAULTS: CreateDefaults = { searchId: SEARCH_ID, resumeVersionId: RESUME_VERSION_ID };
 
@@ -98,6 +99,7 @@ async function serviceWith({
   owned = [OLENAS_ROW],
   defaults = ACTIVE_DEFAULTS,
   duplicates = [],
+  clock = { now: () => NOW },
 }: ServiceFakes = {}) {
   const repository = new FakeApplicationsRepository({ owned, defaults });
   const duplicatesRepository = new FakeApplicationDuplicatesRepository(duplicates);
@@ -109,6 +111,8 @@ async function serviceWith({
     .useValue(repository)
     .overrideProvider(ApplicationDuplicatesRepository)
     .useValue(duplicatesRepository)
+    .overrideProvider(Clock)
+    .useValue(clock)
     .compile();
   return { repository, duplicatesRepository, service: moduleRef.get(ApplicationsService) };
 }
@@ -229,6 +233,23 @@ describe('ApplicationsService.create', () => {
     expect(duplicatesRepository.queries).toEqual([
       { userId: OLENA_ID, ...input, since: new Date('2026-07-24T09:00:00.000Z') },
     ]);
+  });
+
+  it('reads the clock once, so the duplicate window and the first event share one now', async () => {
+    const { repository, duplicatesRepository, service } = await serviceWith({
+      clock: tickingClock(NOW, 1),
+    });
+
+    await service.create(OLENA_ID, input);
+
+    const [query] = duplicatesRepository.queries;
+    const [inserted] = repository.inserted;
+    expect([
+      query?.since,
+      inserted?.application.appliedAt,
+      inserted?.application.lastEventAt,
+      inserted?.firstEvent.occurredAt,
+    ]).toEqual([new Date('2026-07-24T09:00:00.000Z'), NOW, NOW, NOW]);
   });
 });
 

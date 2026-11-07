@@ -41,6 +41,11 @@ const OLD_URL_ROW = {
   lastEventAt: daysBefore(200),
 } satisfies ApplicationRowInput;
 
+const LINKEDIN_SEARCH_URL =
+  'https://www.linkedin.com/jobs/search/?keywords=react&currentJobId=4012345678&geoId=1';
+
+const LINKEDIN_ROW = { ...OLD_URL_ROW, url: LINKEDIN_SEARCH_URL } satisfies ApplicationRowInput;
+
 const INITECH_PROBE = {
   company: 'Initech',
   position: 'Backend developer',
@@ -137,6 +142,27 @@ describe('the possible duplicates of a new application', () => {
       flagged: false,
     },
     {
+      case: 'a LinkedIn search URL with the same currentJobId among other params in another order',
+      row: LINKEDIN_ROW,
+      probe: {
+        ...INITECH_PROBE,
+        url: 'https://linkedin.com/jobs/search?geoId=1&currentJobId=4012345678&keywords=vue',
+      },
+      flagged: true,
+    },
+    {
+      case: 'a LinkedIn search URL with another currentJobId',
+      row: LINKEDIN_ROW,
+      probe: { ...INITECH_PROBE, url: LINKEDIN_SEARCH_URL.replace('4012345678', '4012345679') },
+      flagged: false,
+    },
+    {
+      case: 'another bare host of the same site',
+      row: { ...OLD_URL_ROW, url: 'https://djinni.co/' },
+      probe: { ...INITECH_PROBE, url: 'https://www.djinni.co' },
+      flagged: false,
+    },
+    {
       case: 'the same company and position applied 89 days ago',
       row: { ...ACME_ROW, appliedAt: daysBefore(89) },
       probe: ACME_PROBE,
@@ -157,6 +183,18 @@ describe('the possible duplicates of a new application', () => {
     {
       case: 'the same company with position QA Engineer',
       row: { ...ACME_ROW, position: 'QA Engineer', appliedAt: daysBefore(1) },
+      probe: ACME_PROBE,
+      flagged: false,
+    },
+    {
+      case: 'the same company with position Middle React Developer, 0.533 similar',
+      row: { ...ACME_ROW, position: 'Middle React Developer', appliedAt: daysBefore(1) },
+      probe: ACME_PROBE,
+      flagged: false,
+    },
+    {
+      case: 'the same company with position Lead React Developer, 0.571 similar',
+      row: { ...ACME_ROW, position: 'Lead React Developer', appliedAt: daysBefore(1) },
       probe: ACME_PROBE,
       flagged: false,
     },
@@ -274,6 +312,43 @@ describe('the possible duplicates of a new application', () => {
       url: 'https://www.work.ua/jobs/123/',
       urlKey: 'work.ua/jobs/123',
     },
+    {
+      company: 'Zinc Incode LLC',
+      companyKey: 'zinc incode',
+      url: LINKEDIN_SEARCH_URL,
+      urlKey: 'linkedin.com/jobs/search?currentjobid=4012345678',
+    },
+    {
+      company: 'ТОВ Патерн',
+      companyKey: 'патерн',
+      url: 'https://ua.indeed.com/viewjob?jk=a1B2c3d4e5f6&from=serp',
+      urlKey: 'ua.indeed.com/viewjob?jk=a1b2c3d4e5f6',
+    },
+    {
+      company: 'Globex',
+      companyKey: 'globex',
+      url: 'https://careers.example.com/#/jobs/42/',
+      urlKey: 'careers.example.com#/jobs/42',
+    },
+    {
+      company: 'Globex',
+      companyKey: 'globex',
+      url: 'https://careers.example.com/#/jobs/42/?jk=7',
+      urlKey: 'careers.example.com#/jobs/42',
+    },
+    {
+      company: 'Globex',
+      companyKey: 'globex',
+      url: 'https://ua.indeed.com/jobs?vjk=b2c3&q=react&jk=a1b2',
+      urlKey: 'ua.indeed.com/jobs?jk=a1b2&vjk=b2c3',
+    },
+    {
+      company: 'Globex',
+      companyKey: 'globex',
+      url: 'https://careers.example.com/#/',
+      urlKey: null,
+    },
+    { company: 'Initech Corp', companyKey: 'initech', url: 'https://djinni.co/', urlKey: null },
     { company: 'ТОВ', companyKey: null, url: 'https://', urlKey: null },
   ])(
     'keys the company $company as $companyKey and the URL $url as $urlKey',
