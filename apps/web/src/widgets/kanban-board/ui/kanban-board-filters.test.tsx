@@ -3,6 +3,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { applicationFiltersOf } from '@/features/filter-applications';
 import { layOutColumns } from '@/test/board-drag';
+import { chipNames, CHIPS_NAME, pickSource, searchField } from '@/test/board-filters';
 import { boardRoute, cardsIn, DESIGN_BOARD, snippetCardIn } from '@/test/board-fixtures';
 import { fakeTimeouts } from '@/test/fake-timeouts';
 import { columnNamed, renderBoard } from '@/test/render-board';
@@ -11,27 +12,8 @@ import { server } from '@/test/server';
 vi.mock('next/link', () => import('@/test/link'));
 vi.mock('next/navigation', () => import('@/test/navigation'));
 
-const SEARCH_NAME = 'Пошук по картках';
-
-const CHIPS_NAME = 'Активні фільтри';
-
-function searchField(): HTMLInputElement {
-  return screen.getByRole<HTMLInputElement>('textbox', { name: SEARCH_NAME });
-}
-
-function chipNames(): (string | null)[] {
-  const chips = within(screen.getByRole('list', { name: CHIPS_NAME }));
-  return chips.getAllByRole('listitem').map((chip) => chip.textContent);
-}
-
 function sentWith(sent: readonly string[], name: string): string[] {
   return sent.filter((query) => query.includes(name));
-}
-
-async function pickSource(user: ReturnType<typeof renderBoard>['user']) {
-  await user.click(await screen.findByRole('button', { name: 'Джерело: усі' }));
-  await user.click(screen.getByRole('checkbox', { name: 'Djinni' }));
-  await user.keyboard('{Escape}');
 }
 
 afterEach(() => {
@@ -74,6 +56,7 @@ describe('KanbanBoard search and filters', () => {
     expect(window.location.search).toBe('');
     expect(screen.queryByRole('list', { name: CHIPS_NAME })).toBeNull();
     expect(screen.getByRole('button', { name: 'Джерело: усі' })).toBeDefined();
+    expect(document.activeElement).toBe(searchField());
   });
 
   it('opening a strip under a source filter keeps the filter in the request', async () => {
@@ -191,6 +174,10 @@ describe('KanbanBoard search and filters', () => {
       'зарплата від 3 000',
     ]);
     expect(screen.getByRole('button', { name: 'Фільтри · 4' })).toBeDefined();
+    expect(screen.getByText('зарплата від 3 000').classList).toContain('tabular-nums');
+    expect(
+      screen.getByRole('textbox', { name: 'Зарплата від' }).parentElement?.classList,
+    ).toContain('tabular-nums');
     await waitFor(() => {
       expect(sentWith(sent, 'salaryFrom')).toEqual([
         'hasScore=true&silence=silent&salaryFrom=3000',

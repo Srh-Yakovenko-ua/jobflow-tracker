@@ -2,6 +2,7 @@ import type { ApplicationFilters, MeResponse } from '@jobflow/shared';
 import { screen } from '@testing-library/react';
 
 import { userKeys } from '@/entities/user';
+import { withSearchParams } from '@/shared/api';
 import { KanbanBoard } from '@/widgets/kanban-board';
 
 import { type BoardCardRouteOptions, boardCardRoutes } from './application-fixtures';
@@ -29,11 +30,16 @@ export type DragSetup = {
 export type BoardRenderOptions = {
   settings?: BoardSettings | undefined;
   filters?: ApplicationFilters;
+  url?: string;
 };
 
 export function renderBoard(
   route: BoardCardRouteOptions,
-  { settings, filters = {} }: BoardRenderOptions = {},
+  {
+    settings,
+    filters = {},
+    url = withSearchParams(window.location.pathname, filters),
+  }: BoardRenderOptions = {},
 ) {
   const board = boardRoute(route);
   server.use(
@@ -42,6 +48,7 @@ export function renderBoard(
     reasonsSummaryRoute().handler,
     ...boardCardRoutes(route),
   );
+  window.history.replaceState(null, '', url);
   const user = renderInApp(
     <>
       <KanbanBoard initial={{ density: 'full', filters }} />

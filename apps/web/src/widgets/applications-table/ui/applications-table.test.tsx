@@ -7,6 +7,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { FULL_CARD } from '@/entities/application';
 import { userKeys } from '@/entities/user';
 import { applicationFiltersOf } from '@/features/filter-applications';
+import { withSearchParams } from '@/shared/api';
 import { apiUrl, errorReply } from '@/test/api-handlers';
 import { layOutColumns } from '@/test/board-drag';
 import { fixtureIdOf, moveRoute } from '@/test/board-fixtures';
@@ -73,6 +74,7 @@ type TableRender = { handlers: readonly RequestHandler[]; filters?: ApplicationF
 function renderTableOver({ handlers, filters = {} }: TableRender) {
   server.use(meRoute(), ...handlers);
   layOutColumns();
+  window.history.replaceState(null, '', withSearchParams(window.location.pathname, filters));
   return renderInApp(
     <>
       <ApplicationsTable initial={{ filters }} />

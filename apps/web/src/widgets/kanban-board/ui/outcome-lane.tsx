@@ -62,6 +62,9 @@ function LaneBody({ column, context, load }: Omit<OutcomeLaneProps, 'disclosure'
   if (column.items !== null) {
     return <ColumnCards stage={column.stage} items={column.items} context={context} />;
   }
+  if (load.filtersFailed) {
+    return null;
+  }
   if (load.failed) {
     return <LoadFailedPanel onRetry={load.onRetry} />;
   }

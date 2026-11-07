@@ -46,9 +46,15 @@ type BoardColumnsProps = Readonly<{
   stages: readonly Stage[];
 }>;
 
-function BoardFrame({ children }: Readonly<{ children: ReactNode }>) {
+type BoardFrameProps = Readonly<{ children: ReactNode; busy?: boolean }>;
+
+function BoardFrame({ children, busy }: BoardFrameProps) {
   return (
-    <motion.div layoutScroll className={cn(BOARD_FRAME.width, 'overflow-x-auto p-1')}>
+    <motion.div
+      layoutScroll
+      aria-busy={busy}
+      className={cn(BOARD_FRAME.width, 'overflow-x-auto p-1')}
+    >
       <div className="flex items-stretch gap-3">{children}</div>
     </motion.div>
   );
@@ -97,7 +103,7 @@ function BoardColumns({ board, context, outcomes, stages }: BoardColumnsProps) {
   const { columns } = board;
   const shown = (stage: Stage) => stages.includes(stage);
   return (
-    <BoardFrame>
+    <BoardFrame busy={outcomes.load.filtersPending}>
       <BoardDnd board={board} context={context}>
         {OPEN_STAGES.filter(shown).map((stage) => (
           <BoardColumn key={stage} column={{ stage, count: columns[stage].count }}>

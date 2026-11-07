@@ -14,6 +14,10 @@ const COPY = uk.board.filters.search;
 
 export const FILTER_SEARCH_ID = 'filter-search';
 
+export function focusFilterSearch(): void {
+  document.getElementById(FILTER_SEARCH_ID)?.focus();
+}
+
 export function FilterSearch() {
   const text = useApplicationFilters((store) => store.filters.q ?? '');
   const { setQuery } = useApplicationFilters((store) => store.actions);

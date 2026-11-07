@@ -1,7 +1,8 @@
 import { uk } from '@/shared/i18n';
 import { EmptyState } from '@/shared/ui/empty-state';
 
-import { FilterChips, ResetFiltersButton } from './filter-chips';
+import { FilterChips } from './filter-chips';
+import { ResetFiltersButton } from './reset-filters-button';
 
 const COPY = uk.board.emptySearch;
 

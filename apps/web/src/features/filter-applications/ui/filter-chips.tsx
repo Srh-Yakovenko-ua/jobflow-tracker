@@ -1,12 +1,12 @@
 'use client';
 
 import { uk } from '@/shared/i18n';
-import { Button, type ButtonLinkLook } from '@/shared/ui/button';
 import { ChipList } from '@/shared/ui/chip-list';
 
 import { chipsOf } from '../model/application-filters';
 import { useApplicationFilters } from '../model/filters-store';
-import { FILTER_SEARCH_ID } from './filter-search';
+import { focusFilterSearch } from './filter-search';
+import { ResetFiltersButton } from './reset-filters-button';
 
 const COPY = uk.board.filters;
 
@@ -22,27 +22,12 @@ export function FilterChips() {
     label: chip.label,
     onRemove: () => {
       remove(chip);
+      if (chips.length === 1) {
+        focusFilterSearch();
+      }
     },
   }));
   return <ChipList label={COPY.chips.label} items={items} />;
-}
-
-export type ResetFiltersButtonProps = Readonly<{ look: ButtonLinkLook }>;
-
-export function ResetFiltersButton({ look }: ResetFiltersButtonProps) {
-  const { reset } = useApplicationFilters((store) => store.actions);
-  return (
-    <Button
-      variant={look.variant}
-      size={look.size}
-      onClick={() => {
-        reset();
-        document.getElementById(FILTER_SEARCH_ID)?.focus();
-      }}
-    >
-      {COPY.reset}
-    </Button>
-  );
 }
 
 export function FilterChipsRow() {
