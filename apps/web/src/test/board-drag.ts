@@ -1,7 +1,7 @@
 import { act, fireEvent } from '@testing-library/react';
 import { vi } from 'vitest';
 
-import { DROP_GLIDE } from '@/widgets/kanban-board';
+import { DROP_GLIDE } from '@/widgets/kanban-board/model/drop-glide';
 
 export type BoardDrag = {
   over: (section: HTMLElement) => void;
