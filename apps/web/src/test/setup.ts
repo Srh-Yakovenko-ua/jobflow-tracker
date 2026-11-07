@@ -15,11 +15,19 @@ class SilentResizeObserver {
   disconnect(): void {}
 }
 
+function scrollTo(this: Element, options?: ScrollToOptions) {
+  const top = Math.max(0, options?.top ?? this.scrollTop);
+  if (top === this.scrollTop) return;
+  this.scrollTop = top;
+  this.dispatchEvent(new Event('scroll'));
+}
+
 const ELEMENT_STUBS = {
   hasPointerCapture: () => false,
   setPointerCapture: () => undefined,
   releasePointerCapture: () => undefined,
   scrollIntoView: () => undefined,
+  scrollTo,
 };
 
 for (const [name, stub] of Object.entries(ELEMENT_STUBS)) {

@@ -1,13 +1,14 @@
 import { act, fireEvent, screen, waitFor, within } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { layOutColumns, startDrag } from '@/test/board-drag';
+import { uk } from '@/shared/i18n';
+import { layOutColumns, settleLanding, startDrag } from '@/test/board-drag';
 import { type BoardRouteOptions, cardIn, cardsIn } from '@/test/board-fixtures';
 import { fakeTimeouts } from '@/test/fake-timeouts';
 import { latch } from '@/test/latch';
+import { type MotionPreference, stubMotionPreference } from '@/test/motion-preference';
+import { stubOverlayGlide } from '@/test/overlay-glide';
 import { boardReadyToDrag, columnNamed } from '@/test/render-board';
-
-import { DROP_GLIDE } from '../model/drop-glide';
 
 vi.mock('next/link', () => import('@/test/link'));
 vi.mock('next/navigation', () => import('@/test/navigation'));
@@ -37,13 +38,35 @@ function cardLinkIn(column: HTMLElement, position: string): HTMLAnchorElement | 
   return within(column).queryByText(position)?.closest('a') ?? null;
 }
 
-function scrollToEnd(column: HTMLElement) {
+function scrollerOf(column: HTMLElement): HTMLElement {
   const scroller = column.querySelector<HTMLElement>('[data-column-scroll]');
   if (scroller === null) {
     throw new Error('the column does not scroll');
   }
-  scroller.scrollTop = 100_000;
+  return scroller;
+}
+
+function scrollColumnTo(column: HTMLElement, top: number) {
+  const scroller = scrollerOf(column);
+  scroller.scrollTop = top;
   fireEvent.scroll(scroller);
+}
+
+function scrollToEnd(column: HTMLElement) {
+  scrollColumnTo(column, 100_000);
+}
+
+function rowTopOf(link: HTMLAnchorElement | null): number {
+  const row = link?.closest<HTMLElement>('[data-index]');
+  return Number(/translateY\((-?[\d.]+)px\)/.exec(row?.style.transform ?? '')?.[1] ?? Number.NaN);
+}
+
+function columnView(column: HTMLElement) {
+  return {
+    mounted: within(column).getAllByRole('link').length,
+    hint: within(column).queryByText(HINT)?.textContent ?? null,
+    scrollTop: scrollerOf(column).scrollTop,
+  };
 }
 
 afterEach(() => {
@@ -106,7 +129,7 @@ describe('KanbanBoard long columns', () => {
     await user.keyboard('{ArrowRight} ');
     await screen.findByRole('heading', { name: 'скринінг 41' });
     picked?.blur();
-    await act(() => vi.advanceTimersByTimeAsync(DROP_GLIDE.settleMs));
+    await settleLanding();
 
     const moved = cardLinkIn(columnNamed('скринінг 41'), PICKED);
     expect(moved).toBeInstanceOf(HTMLAnchorElement);
@@ -114,4 +137,90 @@ describe('KanbanBoard long columns', () => {
       expect(document.activeElement).toBe(moved);
     });
   });
+
+  it('Tab walks a 40-card відгук from its first card to its 30th without ever leaving the column', async () => {
+    const { user } = await longBoardReady(appliedBoard(40));
+    const applied = columnNamed('відгук 40');
+    act(() => {
+      cardLinkIn(applied, 'Vacancy 1000')?.focus();
+    });
+
+    const outside: string[] = [];
+    for (let press = 1; press < 30; press += 1) {
+      await user.tab();
+      if (!applied.contains(document.activeElement)) outside.push(`press ${String(press)}`);
+    }
+
+    expect(outside).toEqual([]);
+    expect(document.activeElement).toBe(cardLinkIn(applied, 'Vacancy 1029'));
+  });
+
+  it.each<MotionPreference>(['no-preference', 'reduce'])(
+    'with prefers-reduced-motion: %s, a pointer drop into a 40-card скринінг scrolled to its end scrolls it back to the moved card, which lands first and in view',
+    async (motion) => {
+      fakeTimeouts();
+      stubMotionPreference(motion);
+      stubOverlayGlide();
+      await longBoardReady(INTO_LONG_SCREENING);
+      scrollToEnd(columnNamed('скринінг 40'));
+
+      const drag = startDrag(within(columnNamed('відгук 1')).getByText(PICKED));
+      drag.over(columnNamed('скринінг 40'));
+      drag.drop();
+      await screen.findByRole('heading', { name: 'скринінг 41' });
+      await settleLanding();
+      const screening = columnNamed('скринінг 41');
+
+      const { scrollTop } = scrollerOf(screening);
+      expect(scrollTop).toBe(0);
+      const top = rowTopOf(cardLinkIn(screening, PICKED));
+      expect(top).toBeGreaterThanOrEqual(scrollTop);
+      expect(top).toBeLessThanOrEqual(scrollTop + 600);
+    },
+  );
+
+  it('Escape in the reason question after a drop from the end of a scrolled 40-card відгук focuses the dropped card, though the column scrolled back to its top', async () => {
+    fakeTimeouts();
+    const { user } = await longBoardReady(appliedBoard(40));
+    const applied = columnNamed('відгук 40');
+    scrollToEnd(applied);
+
+    const drag = startDrag(await within(applied).findByText('Vacancy 1039'));
+    drag.over(columnNamed('відмова 0'));
+    drag.drop();
+    const dialog = await screen.findByRole('dialog', { name: uk.board.reject.title });
+    await settleLanding();
+    scrollColumnTo(applied, 0);
+    expect(dialog.contains(document.activeElement)).toBe(true);
+    await user.keyboard('{Escape}');
+
+    await waitFor(() => {
+      expect(document.activeElement).toBe(cardLinkIn(applied, 'Vacancy 1039'));
+    });
+  });
+
+  it.each([
+    {
+      scrolledTo: 0,
+      full: { mounted: 12, hint: 'ще 34 картки нижче', scrollTop: 0 },
+      compact: { mounted: 12, hint: 'ще 34 картки нижче', scrollTop: 0 },
+    },
+    {
+      scrolledTo: 1200,
+      full: { mounted: 17, hint: 'ще 25 карток нижче', scrollTop: 1200 },
+      compact: { mounted: 19, hint: 'ще 22 картки нижче', scrollTop: 1200 },
+    },
+  ])(
+    '«Щільні» on a 40-card відгук scrolled to $scrolledTo measures its cards again and keeps the column scrolled',
+    async ({ scrolledTo, full, compact }) => {
+      const { user } = await longBoardReady(appliedBoard(40));
+      const applied = columnNamed('відгук 40');
+      if (scrolledTo > 0) scrollColumnTo(applied, scrolledTo);
+
+      const before = columnView(applied);
+      await user.click(screen.getByRole('radio', { name: uk.board.density.compact }));
+
+      expect({ before, after: columnView(applied) }).toEqual({ before: full, after: compact });
+    },
+  );
 });

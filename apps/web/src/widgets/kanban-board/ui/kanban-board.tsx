@@ -33,6 +33,8 @@ import { OutcomeLane } from './outcome-lane';
 
 const FOOTNOTES: Partial<Record<OpenStage, readonly string[]>> = { final: uk.board.finalNote };
 
+const SHORT_COLUMN = { noteUpTo: 2 } as const;
+
 type BoardColumnsProps = Readonly<{
   board: ApplicationBoardResponse;
   context: ApplicationCardContext;
@@ -103,7 +105,9 @@ function BoardColumns({ board, context, outcomes, stages }: BoardColumnsProps) {
               stage={stage}
               items={columns[stage].items ?? []}
               context={context}
-              footnote={FOOTNOTES[stage]}
+              footnote={
+                columns[stage].count <= SHORT_COLUMN.noteUpTo ? FOOTNOTES[stage] : undefined
+              }
             />
           </BoardColumn>
         ))}

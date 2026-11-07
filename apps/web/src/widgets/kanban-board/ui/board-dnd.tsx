@@ -57,7 +57,12 @@ function useBoardSensors() {
   );
 }
 
-function RejectionPromptDialog({ rejection }: Readonly<{ rejection: RejectionFlow }>) {
+type RejectionPromptDialogProps = Readonly<{
+  rejection: RejectionFlow;
+  onReturned: BoardFocus['onReturned'];
+}>;
+
+function RejectionPromptDialog({ rejection, onReturned }: RejectionPromptDialogProps) {
   const nodes = useDndContext();
   const { prompt, actions, focusBackRef } = rejection;
   return (
@@ -68,7 +73,7 @@ function RejectionPromptDialog({ rejection }: Readonly<{ rejection: RejectionFlo
         onCloseAutoFocus: (event) => {
           event.preventDefault();
           const id = focusBackRef.current;
-          if (id !== null) void focusCardOrStrip(nodes, id);
+          if (id !== null) void focusCardOrStrip(nodes, id).then(onReturned);
         },
       }}
     />
@@ -105,7 +110,7 @@ export function BoardDnd({ board, context, children }: BoardDndProps) {
     from: activeCard?.currentStage ?? null,
     landing,
     activeId: activeCard?.id ?? null,
-    focusId: focus.request?.id ?? null,
+    focusId: focus.request?.id ?? focus.returning ?? null,
   };
   return (
     <DndContext
@@ -125,7 +130,7 @@ export function BoardDnd({ board, context, children }: BoardDndProps) {
           </div>
         )}
       </DragOverlay>
-      <RejectionPromptDialog rejection={rejection} />
+      <RejectionPromptDialog rejection={rejection} onReturned={focus.onReturned} />
       <KeyboardDropFocus focus={focus} />
     </DndContext>
   );

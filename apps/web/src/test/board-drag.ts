@@ -1,6 +1,8 @@
 import { act, fireEvent } from '@testing-library/react';
 import { vi } from 'vitest';
 
+import { DROP_GLIDE } from '@/widgets/kanban-board';
+
 export type BoardDrag = {
   over: (section: HTMLElement) => void;
   drop: () => void;
@@ -69,6 +71,10 @@ export function startDrag(card: HTMLElement): BoardDrag {
       fireEvent.keyDown(document, { key: 'Escape', code: 'Escape' });
     },
   };
+}
+
+export async function settleLanding() {
+  await act(() => vi.advanceTimersByTimeAsync(DROP_GLIDE.settleMs));
 }
 
 export async function waitOutDropClickGuard() {
