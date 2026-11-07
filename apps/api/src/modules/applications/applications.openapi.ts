@@ -99,7 +99,7 @@ export const APPLICATIONS_OPENAPI_PATHS: RouteConfig[] = [
     path: '/applications',
     tags: TAGS,
     summary: 'Create an Application',
-    description: `Adds an Application to the active search at stage applied; 409 without one. possibleDuplicates lists, newest first and at most ${String(DUPLICATE_LIMITS.maxItems)}, the user's other Applications with the same URL (without scheme, www, query, fragment and trailing slash), or with the same company (legal suffixes such as ТОВ, LLC and Inc ignored) and a position more than ${String(DUPLICATE_LIMITS.positionSimilarity)} trigram-similar within the last ${String(DUPLICATE_LIMITS.windowDays)} days. They never block the create.`,
+    description: `Adds an Application to the active search at stage applied; 409 without one. possibleDuplicates lists, newest first and at most ${String(DUPLICATE_LIMITS.maxItems)}, the user's other Applications with the same URL (without scheme, www and trailing slash; of the query only the job id params currentJobId, jk and vjk are kept, of the fragment only a #/ route; a bare host never matches), or with the same company (legal suffixes such as ТОВ, LLC and Inc ignored) and a position more than ${String(DUPLICATE_LIMITS.positionSimilarity)} trigram-similar within the last ${String(DUPLICATE_LIMITS.windowDays)} days. They never block the create.`,
     request: {
       body: { required: true, content: jsonContent(createApplicationInputSchema, NEW_APPLICATION) },
     },

@@ -31,6 +31,8 @@ type RecordedChange = {
   tx: Prisma.TransactionClient;
 };
 
+type DuplicateCheck = { probe: DuplicateProbe; now: Date };
+
 const FIRST_STAGE = 'applied' satisfies Stage;
 
 const DAY_MINUTES = 24 * 60;
@@ -44,18 +46,13 @@ export class ApplicationsService {
     private readonly clock: Clock,
   ) {}
 
-  async possibleDuplicates(userId: string, probe: DuplicateProbe): Promise<PossibleDuplicate[]> {
-    const since = addMinutes(this.clock.now(), -DUPLICATE_LIMITS.windowDays * DAY_MINUTES);
-    const rows = await this.duplicates.findPossible(userId, { ...probe, since });
-    return rows.map(({ appliedAt, ...duplicate }) => ({
-      ...duplicate,
-      appliedAt: appliedAt?.toISOString() ?? null,
-    }));
+  possibleDuplicates(userId: string, probe: DuplicateProbe): Promise<PossibleDuplicate[]> {
+    return this.duplicatesAt(userId, { probe, now: this.clock.now() });
   }
 
   async create(userId: string, input: CreateApplicationInput): Promise<CreateApplicationResponse> {
-    const possibleDuplicates = await this.possibleDuplicates(userId, input);
     const now = this.clock.now();
+    const possibleDuplicates = await this.duplicatesAt(userId, { probe: input, now });
     const row = await this.prisma.$transaction(async (tx) => {
       const { searchId, resumeVersionId } = await this.repository.findCreateDefaults(userId, {
         tx,
@@ -102,6 +99,18 @@ export class ApplicationsService {
       const count = await this.repository.softDelete(userId, { id, deletedAt, tx });
       await this.recordChange(userId, { count, id, fields: ['deletedAt'], tx });
     });
+  }
+
+  private async duplicatesAt(
+    userId: string,
+    { probe, now }: DuplicateCheck,
+  ): Promise<PossibleDuplicate[]> {
+    const since = addMinutes(now, -DUPLICATE_LIMITS.windowDays * DAY_MINUTES);
+    const rows = await this.duplicates.findPossible(userId, { ...probe, since });
+    return rows.map(({ appliedAt, ...duplicate }) => ({
+      ...duplicate,
+      appliedAt: appliedAt?.toISOString() ?? null,
+    }));
   }
 
   private async recordChange(
