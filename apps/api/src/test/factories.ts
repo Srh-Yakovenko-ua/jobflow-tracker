@@ -84,6 +84,7 @@ export const NEW_USER_SETTINGS_ROW = {
   notifyPush: false,
   notifyEmail: true,
   analyticsOptOut: false,
+  singleKeyShortcuts: true,
   activeResumeVersionId: null,
 } satisfies Omit<UserSettings, 'userId' | 'createdAt' | 'updatedAt'>;
 

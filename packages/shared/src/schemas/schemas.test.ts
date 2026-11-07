@@ -193,6 +193,7 @@ describe('userSettingsSchema', () => {
     notifyPush: false,
     notifyEmail: true,
     analyticsOptOut: false,
+    singleKeyShortcuts: true,
     activeResumeVersionId: null,
   };
 

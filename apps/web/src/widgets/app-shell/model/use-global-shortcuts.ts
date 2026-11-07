@@ -17,6 +17,7 @@ export type GlobalShortcutActions = Readonly<{
 
 export type GlobalShortcutsInput = Readonly<{
   flags: FeatureFlags;
+  singleKeys: boolean;
   actions: GlobalShortcutActions;
 }>;
 
@@ -71,7 +72,7 @@ function chordStartOf({ shortcuts, event }: KeyPress): ShortcutKey | undefined {
     ?.at(0);
 }
 
-export function useGlobalShortcuts({ flags, actions }: GlobalShortcutsInput): void {
+export function useGlobalShortcuts({ flags, singleKeys, actions }: GlobalShortcutsInput): void {
   const chordRef = useRef<Chord | null>(null);
   const onKeyDown = useEffectEvent((event: KeyboardEvent) => {
     if (isPaletteKey(event)) {
@@ -80,7 +81,7 @@ export function useGlobalShortcuts({ flags, actions }: GlobalShortcutsInput): vo
       actions.onPalette();
       return;
     }
-    if (!isPlainKey(event)) return;
+    if (!singleKeys || !isPlainKey(event)) return;
     const press = { shortcuts: shortcutsOf(flags), event };
     const fired = chordEndedBy(press, chordRef.current) ?? singleKeyOf(press);
     const start = fired === undefined ? chordStartOf(press) : undefined;

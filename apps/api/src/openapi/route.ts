@@ -46,6 +46,7 @@ export const EXAMPLE_USER_SETTINGS = {
   notifyPush: true,
   notifyEmail: false,
   analyticsOptOut: true,
+  singleKeyShortcuts: false,
   activeResumeVersionId: '0199f0b3-2b3c-7d4e-9f50-6b7c8d9e0f1a',
 } satisfies UserSettings;
 

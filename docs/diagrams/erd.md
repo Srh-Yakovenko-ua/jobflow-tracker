@@ -164,6 +164,7 @@ failed failed
     Boolean notify_push 
     Boolean notify_email 
     Boolean analytics_opt_out 
+    Boolean single_key_shortcuts 
     String active_resume_version_id "❓"
     DateTime created_at 
     DateTime updated_at 

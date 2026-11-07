@@ -15,6 +15,7 @@ export const USER_SETTINGS_SELECT = {
   notifyPush: true,
   notifyEmail: true,
   analyticsOptOut: true,
+  singleKeyShortcuts: true,
   activeResumeVersionId: true,
 } as const satisfies Prisma.UserSettingsSelect;
 

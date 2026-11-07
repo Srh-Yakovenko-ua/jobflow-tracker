@@ -50,6 +50,12 @@ describe('updateUserSettingsInputSchema', () => {
     ]);
   });
 
+  it('refuses a single key shortcuts switch that is not a boolean', () => {
+    expect(
+      issuePathsOf(updateUserSettingsInputSchema.safeParse({ singleKeyShortcuts: 'off' })),
+    ).toEqual(['singleKeyShortcuts']);
+  });
+
   it.for(['Europe/Kyiv', 'UTC', 'America/Argentina/Buenos_Aires', 'Etc/GMT+3'])(
     'accepts the IANA time zone %s',
     (timezone) => {
