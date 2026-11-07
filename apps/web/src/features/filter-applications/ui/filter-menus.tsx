@@ -153,6 +153,7 @@ function MoreFiltersMenu() {
             inputMode="numeric"
             autoComplete="off"
             maxLength={SALARY_DIGITS}
+            className="tabular-nums"
             value={salary}
             onChange={(event) => {
               actions.setSalaryFrom(event.target.value.replace(/\D/g, ''));

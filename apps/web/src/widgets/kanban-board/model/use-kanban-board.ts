@@ -4,7 +4,7 @@ import {
   OUTCOME_STAGES,
   type OutcomeStage,
 } from '@jobflow/shared';
-import { hashKey, keepPreviousData, useQuery, useQueryClient } from '@tanstack/react-query';
+import { hashKey, keepPreviousData, useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
 
 import {
@@ -15,9 +15,14 @@ import {
 import { useUserTimeZone } from '@/entities/user';
 import { useSentFilters } from '@/features/filter-applications';
 
-export type BoardLoad = Readonly<{ failed: boolean; filtersFailed: boolean; onRetry: () => void }>;
+export type BoardLoad = Readonly<{
+  failed: boolean;
+  filtersFailed: boolean;
+  filtersPending: boolean;
+  onRetry: () => void;
+}>;
 
-export type BoardSearch = Readonly<{ filtered: boolean; q: string | undefined }>;
+export type BoardSearchState = Readonly<{ filtered: boolean; q: string | undefined }>;
 
 type BoardQueryInput = Readonly<{ expanded: readonly OutcomeStage[]; filters: ApplicationFilters }>;
 
@@ -55,13 +60,12 @@ function useLastArrived({ query, arrived }: ArrivalInput): ApplicationBoardQuery
   return shown;
 }
 
-function searchOf({ filters, shown }: SearchInput): BoardSearch {
+function searchOf({ filters, shown }: SearchInput): BoardSearchState {
   const sent = Object.values({ ...shown, expand: undefined }).some((value) => value !== undefined);
   return { filtered: filters.stage !== undefined || sent, q: shown.q };
 }
 
 export function useKanbanBoard() {
-  const queryClient = useQueryClient();
   const filters = useSentFilters();
   const [expanded, setExpanded] = useState<OutcomeStage[]>([]);
   const [mountedAt] = useState(Date.now);
@@ -69,15 +73,18 @@ export function useKanbanBoard() {
   const board = useQuery({ ...boardQueryOptions(query), placeholderData: keepPreviousData });
   const arrived = board.data !== undefined && !board.isPlaceholderData;
   const shown = useLastArrived({ query, arrived });
+  const fallback = useQuery({ ...boardQueryOptions(shown), enabled: false });
   const timeZone = useUserTimeZone();
   const context: ApplicationCardContext = {
     now: new Date(Math.max(board.dataUpdatedAt, mountedAt)),
     timeZone,
   };
   const failed = board.isError && !board.isFetching;
+  const filtersChanged = filtersHashOf(query) !== filtersHashOf(shown);
   const load: BoardLoad = {
     failed,
-    filtersFailed: failed && filtersHashOf(query) !== filtersHashOf(shown),
+    filtersFailed: failed && filtersChanged,
+    filtersPending: board.isFetching && filtersChanged,
     onRetry: () => {
       void board.refetch();
     },
@@ -85,7 +92,7 @@ export function useKanbanBoard() {
   const onToggle = (stage: OutcomeStage) => {
     setExpanded(toggled(expanded, stage));
   };
-  const data = board.data ?? queryClient.getQueryData(boardQueryOptions(shown).queryKey);
+  const data = board.data ?? fallback.data;
   const search = searchOf({ filters, shown });
   return { data, context, outcomes: { expanded, onToggle, load }, search };
 }
