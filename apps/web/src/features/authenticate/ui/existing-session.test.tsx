@@ -5,6 +5,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { userKeys } from '@/entities/user';
 import { API_CLIENT_LIMITS } from '@/shared/api';
+import { SESSION_COOKIE, writeSessionCookie } from '@/shared/lib/session-cookie';
 import {
   errorReply,
   type Outage,
@@ -104,6 +105,8 @@ afterEach(() => {
 });
 
 describe('the sign-in form with a refresh cookie', () => {
+  beforeEach(writeSessionCookie);
+
   it('a valid cookie sends the visitor on to the requested page, the form usable meanwhile', async () => {
     server.use(refreshRoute({ token: SESSION_TOKENS.fresh }));
     const form = renderAuthForm({ mode: 'login', returnTo: REQUESTED });
@@ -128,13 +131,46 @@ describe('the sign-in form with a refresh cookie', () => {
     expect(replace).not.toHaveBeenCalled();
     expect(form.submit).toHaveProperty('disabled', false);
   });
+
+  it('a refused cookie keeps the form and clears the session marker', async () => {
+    server.use(refusedRefreshRoute());
+    const form = renderAuthForm(
+      { mode: 'login', returnTo: REQUESTED },
+      <QueryProbe queryKey={userKeys.cookieSession()} />,
+    );
+
+    await waitForQuery({ queryKey: userKeys.cookieSession(), status: 'error' });
+
+    expect(document.cookie).not.toContain(`${SESSION_COOKIE}=1`);
+    expect(replace).not.toHaveBeenCalled();
+    expect(form.submit).toHaveProperty('disabled', false);
+  });
+});
+
+describe('the sign-in form for a new visitor without the session marker', () => {
+  beforeEach(fakeTimeouts);
+
+  it.each<AuthMode>(['login', 'register'])(
+    'the %s form sends no refresh and stays usable',
+    async (mode) => {
+      const sentRequests = recordSentRequests();
+      const form = renderAuthForm({ mode, returnTo: REQUESTED });
+
+      await act(() => vi.advanceTimersByTimeAsync(API_CLIENT_LIMITS.requestTimeoutMs));
+
+      expect(refreshesSent(sentRequests)).toHaveLength(0);
+      expect(replace).not.toHaveBeenCalled();
+      expect(form.submit).toHaveProperty('disabled', false);
+    },
+  );
 });
 
 describe('the sign-in form for a signed-out visitor', () => {
   beforeEach(fakeTimeouts);
+  beforeEach(writeSessionCookie);
 
-  it.each(TRIGGERS)('checks the session once when $name', async ({ run }) => {
-    server.use(refusedRefreshRoute());
+  it.each(TRIGGERS)('checks the session once on a server error when $name', async ({ run }) => {
+    server.use(http.post(REFRESH_URL, () => errorReply({ status: 500, type: 'internal_error' })));
     const sentRequests = recordSentRequests();
     const page = renderLoginPage();
     await waitForQuery({ queryKey: userKeys.cookieSession(), status: 'error' });
@@ -142,6 +178,7 @@ describe('the sign-in form for a signed-out visitor', () => {
     await run(page);
     await act(() => vi.advanceTimersByTimeAsync(0));
 
+    expect(document.cookie).toContain(`${SESSION_COOKIE}=1`);
     expect(refreshesSent(sentRequests)).toHaveLength(1);
     expect(replace).not.toHaveBeenCalled();
   });
