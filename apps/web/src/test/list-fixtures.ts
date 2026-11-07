@@ -11,7 +11,7 @@ export type PagedListRouteOptions = Pick<MoveRouteOptions, 'latch'> & {
   pageSize?: number;
 };
 
-type PageSlice = Readonly<{ items: readonly ApplicationListItem[]; from: number; to: number }>;
+type PageSlice = Readonly<{ items: ListItems; from: number; to: number }>;
 
 export function listItemsIn(run: CardRun): ApplicationListItem[] {
   return cardsIn(run).map((card) => ({ ...card, snippet: null }));

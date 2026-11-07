@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { describe, expect, it } from 'vitest';
 
 import { uk } from '@/shared/i18n';
-import { axeViolations } from '@/test/dev-ui';
+import { axeViolations } from '@/test/axe';
 
 import { Calendar, type CalendarDays, type CalendarDone } from './calendar';
 

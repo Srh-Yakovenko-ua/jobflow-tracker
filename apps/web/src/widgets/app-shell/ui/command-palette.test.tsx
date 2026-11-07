@@ -11,7 +11,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { applicationKeys } from '@/entities/application';
 import { userKeys } from '@/entities/user';
 import { uk } from '@/shared/i18n';
-import { applicationRoute } from '@/test/application-fixtures';
+import { ACME_APPLICATION, applicationRoute } from '@/test/application-fixtures';
 import { axeViolations } from '@/test/axe';
 import {
   applicationResponseOf,
@@ -21,14 +21,17 @@ import {
   reasonsSummaryRoute,
 } from '@/test/board-fixtures';
 import { flagSwitch } from '@/test/feature-flags';
+import { latch } from '@/test/latch';
 import { listItemsIn, pagedListRoute } from '@/test/list-fixtures';
 import { push, route } from '@/test/navigation';
 import { QueryProbe, waitForQuery } from '@/test/query-status';
-import { renderBoardInShell, renderInShell } from '@/test/render-in-shell';
+import { refuseStorage } from '@/test/refusing-storage';
+import { renderApplicationPage } from '@/test/render-application-page';
+import { renderBoardInShell, renderInShell, type ShellSetup } from '@/test/render-in-shell';
 import { server } from '@/test/server';
 import { ME_RESPONSE } from '@/test/session-fixtures';
 
-import { rememberRecentApplication } from '../model/recent-applications';
+import { type RecentApplication, rememberRecentApplication } from '../model/recent-applications';
 
 vi.mock('next/navigation', () => import('@/test/navigation'));
 vi.mock('next/link', () => import('@/test/link'));
@@ -53,12 +56,22 @@ const CARD = applicationResponseOf({
 
 const ROKU = { id: fixtureIdOf(301), company: 'Roku', position: 'Mobile Engineer' };
 
-const ROKU_FOUND = listItemsIn({ stage: 'screening', count: 1, from: 301 }).map((item) => ({
-  ...item,
-  ...ROKU,
-}));
+const ZETA = { id: fixtureIdOf(304), company: 'Zeta', position: 'QA Lead' };
+
+function foundAs(application: RecentApplication): ApplicationListItem[] {
+  return listItemsIn({ stage: 'screening', count: 1, from: 301 }).map((item) => ({
+    ...item,
+    ...application,
+  }));
+}
+
+const ROKU_FOUND = foundAs(ROKU);
 
 const SEARCH_WAIT = { timeout: 3000 };
+
+function rememberRecent(application: RecentApplication) {
+  rememberRecentApplication({ userId: ME_RESPONSE.user.id, application });
+}
 
 function paletteRoutes(found: Found = {}) {
   const moves = moveRoute();
@@ -83,19 +96,20 @@ function cardLink(): HTMLElement {
   return link;
 }
 
-async function renderSignedIn(page: ReactNode) {
+async function renderSignedIn(page: ReactNode, shell: ShellSetup = {}) {
   const user = renderInShell(
     <>
       {page}
       <QueryProbe queryKey={userKeys.me()} />
     </>,
+    shell,
   );
   await waitForQuery({ queryKey: userKeys.me(), status: 'success' });
   return user;
 }
 
-async function renderWithFocusedCard() {
-  const user = await renderSignedIn(<a href={CARD_PAGE}>{CARD.position}</a>);
+async function renderWithFocusedCard(shell: ShellSetup = {}) {
+  const user = await renderSignedIn(<a href={CARD_PAGE}>{CARD.position}</a>, shell);
   const card = cardLink();
   act(() => {
     card.focus();
@@ -106,6 +120,17 @@ async function renderWithFocusedCard() {
 async function openPalette(user: UserEvent) {
   await user.keyboard('{Control>}k{/Control}');
   return screen.findByRole('dialog', { name: 'Палітра команд' });
+}
+
+async function findRoku(found: Found) {
+  paletteRoutes(found);
+  const { user } = await renderWithFocusedCard();
+  await openPalette(user);
+  await user.keyboard('Roku');
+  await within(await screen.findByRole('group', { name: 'Вакансії' }, SEARCH_WAIT)).findByRole(
+    'option',
+  );
+  return user;
 }
 
 async function choose(user: UserEvent, label: string) {
@@ -130,6 +155,7 @@ function dialogClosed() {
 }
 
 afterEach(() => {
+  vi.restoreAllMocks();
   flagSwitch.everyFlagOn = false;
   route.pathname = '/board';
   push.mockClear();
@@ -155,10 +181,31 @@ describe('CommandPalette', () => {
     expect(await screen.findByRole('dialog', { name: 'Палітра команд' })).toBeDefined();
   });
 
+  it('Ctrl+K over an open application sheet, then Escape, closes only the palette with focus back inside the sheet', async () => {
+    route.pathname = `/applications/${ACME_APPLICATION.id}`;
+    const { user } = renderApplicationPage({ mode: 'sheet', board: DESIGN_BOARD, inShell: true });
+    const sheet = await screen.findByRole('dialog', { name: ACME_APPLICATION.position });
+    const focused = document.activeElement;
+    expect(sheet.contains(focused)).toBe(true);
+
+    await openPalette(user);
+    await user.keyboard('{Escape}');
+
+    await waitFor(() => {
+      expect(screen.queryByRole('dialog', { name: 'Палітра команд' })).toBeNull();
+    });
+    expect(screen.getByRole('dialog', { name: ACME_APPLICATION.position })).toBe(sheet);
+    await waitFor(() => {
+      expect(document.activeElement).toBe(focused);
+    });
+  });
+
   it.each([
     { typed: 'кален', href: '/calendar' },
     { typed: 'rfktyl', href: '/calendar' },
     { typed: 'табл', href: '/applications' },
+    { typed: 'дошк', href: '/board' },
+    { typed: 'налашт', href: '/settings' },
   ])('«$typed» and Enter go to $href', async ({ typed, href }) => {
     paletteRoutes();
     const { user } = await renderWithFocusedCard();
@@ -312,6 +359,23 @@ describe('CommandPalette', () => {
     expect(moves).toEqual([]);
   });
 
+  it('«відмова» with the reason prompt off in settings moves the card at once, asks nothing and puts focus back on the card', async () => {
+    const { moves } = paletteRoutes();
+    const { user, card } = await renderWithFocusedCard({ settings: { askRejectionReason: false } });
+
+    await choose(user, 'Перемістити в…');
+    await screen.findByPlaceholderText('Куди перемістити Trident Systems?');
+    await user.keyboard('відм{Enter}');
+
+    await waitFor(() => {
+      expect(moves).toEqual([{ fromStage: 'applied', toStage: 'rejected' }]);
+    });
+    expect(screen.queryByRole('dialog', { name: uk.board.reject.title })).toBeNull();
+    await waitFor(() => {
+      expect(document.activeElement).toBe(card);
+    });
+  });
+
   it('an application picked from «Вакансії» opens its page and comes back under «Недавні»', async () => {
     paletteRoutes({ Roku: ROKU_FOUND });
     const { user } = await renderWithFocusedCard();
@@ -344,7 +408,7 @@ describe('CommandPalette', () => {
   });
 
   it('«кщ» typed on the Ukrainian layout finds Roku under «Недавні»', async () => {
-    rememberRecentApplication({ userId: ME_RESPONSE.user.id, application: ROKU });
+    rememberRecent(ROKU);
     paletteRoutes();
     const { user } = await renderWithFocusedCard();
 
@@ -356,21 +420,71 @@ describe('CommandPalette', () => {
     );
   });
 
-  it('«тему» and Enter switch the theme, not open a recent «Frontend Developer» that «ntve» only spells in scattered letters', async () => {
-    rememberRecentApplication({
-      userId: ME_RESPONSE.user.id,
-      application: { id: fixtureIdOf(303), company: 'Acme', position: 'Frontend Developer' },
+  it.each([
+    { typed: 'тему', position: 'Frontend Developer' },
+    { typed: 'тем', position: 'Тестувальник мобільних' },
+  ])(
+    '«$typed» and Enter switch the theme, not open a recent «$position» that holds those letters only scattered',
+    async ({ typed, position }) => {
+      rememberRecent({ id: fixtureIdOf(303), company: 'Acme', position });
+      paletteRoutes();
+      const { user } = await renderWithFocusedCard();
+
+      await openPalette(user);
+      await user.keyboard(`${typed}{Enter}`);
+
+      await waitFor(() => {
+        expect(document.documentElement.dataset.theme).toBe('dark');
+      });
+      expect(push).not.toHaveBeenCalled();
+    },
+  );
+
+  it.each([
+    { moment: 'inside the debounce', asked: 0 },
+    { moment: 'while its request is held', asked: 1 },
+  ])('Enter on a new query $moment opens nothing the previous one found', async ({ asked }) => {
+    const user = await findRoku({ Roku: ROKU_FOUND });
+    const held = latch();
+    const next = pagedListRoute({ items: foundAs(ZETA), latch: held });
+    server.use(next.handler);
+
+    await user.keyboard('{Backspace>4/}Zeta');
+    await waitFor(() => {
+      expect(next.sent).toHaveLength(asked);
+    }, SEARCH_WAIT);
+    await user.keyboard('{Enter}');
+    held.release();
+    await within(groupNamed('Вакансії')).findByRole('option', { name: /QA Lead/ }, SEARCH_WAIT);
+
+    expect(push).not.toHaveBeenCalled();
+  });
+
+  it('a result the new query finds again opens on Enter once its answer arrives', async () => {
+    const user = await findRoku({ Roku: ROKU_FOUND, Mobile: ROKU_FOUND });
+
+    await user.keyboard('{Backspace>4/}Mobile');
+    await waitFor(() => {
+      expect(within(groupNamed('Вакансії')).getByRole('option').getAttribute('aria-disabled')).toBe(
+        'false',
+      );
+    }, SEARCH_WAIT);
+    await user.keyboard('{Enter}');
+
+    await waitFor(() => {
+      expect(push).toHaveBeenCalledWith(`/applications/${ROKU.id}`);
     });
+  });
+
+  it('reads «Недавні» once per opening, so a storage that refuses warns once while typing', async () => {
+    const warn = refuseStorage();
     paletteRoutes();
     const { user } = await renderWithFocusedCard();
 
     await openPalette(user);
-    await user.keyboard('тему{Enter}');
+    await user.keyboard('тем');
 
-    await waitFor(() => {
-      expect(document.documentElement.dataset.theme).toBe('dark');
-    });
-    expect(push).not.toHaveBeenCalled();
+    expect(warn).toHaveBeenCalledTimes(1);
   });
 
   it('«кщ» that the server finds nothing for is asked again as «ro», and Roku shows under «Вакансії»', async () => {
@@ -388,18 +502,9 @@ describe('CommandPalette', () => {
   });
 
   it('passes axe with results and recent applications, and on the move list', async () => {
-    rememberRecentApplication({
-      userId: ME_RESPONSE.user.id,
-      application: { id: fixtureIdOf(302), company: 'Roku', position: 'Data Engineer' },
-    });
-    paletteRoutes({ Roku: ROKU_FOUND });
-    const { user } = await renderWithFocusedCard();
+    rememberRecent({ id: fixtureIdOf(302), company: 'Roku', position: 'Data Engineer' });
 
-    await openPalette(user);
-    await user.keyboard('Roku');
-    await within(await screen.findByRole('group', { name: 'Вакансії' }, SEARCH_WAIT)).findByRole(
-      'option',
-    );
+    const user = await findRoku({ Roku: ROKU_FOUND });
     expect(await axeViolations()).toEqual([]);
     await user.keyboard('{Backspace>4/}Перемістити в…{Enter}');
     await screen.findByPlaceholderText('Куди перемістити Trident Systems?');

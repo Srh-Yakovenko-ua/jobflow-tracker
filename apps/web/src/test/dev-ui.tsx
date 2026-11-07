@@ -5,8 +5,6 @@ import { uk } from '@/shared/i18n';
 
 import { renderInApp } from './render-in-app';
 
-export { axeViolations } from './axe';
-
 export function renderGallery() {
   return renderInApp(<DevUiPage />);
 }

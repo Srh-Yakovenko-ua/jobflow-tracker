@@ -2,6 +2,7 @@ import type { ApplicationResponse, ApplicationTimelineResponse } from '@jobflow/
 import { screen } from '@testing-library/react';
 import type { ReactNode } from 'react';
 
+import { AppShell } from '@/widgets/app-shell';
 import {
   ApplicationPage,
   type ApplicationPageMode,
@@ -53,7 +54,22 @@ export type ApplicationPageSetup = Partial<Pick<ApplicationRouteOptions, 'reply'
   scheduledEvents?: ScheduledEventRoutesOptions;
   board?: BoardRouteOptions;
   contacts?: ContactRoutesOptions;
+  inShell?: boolean;
 };
+
+type ShownPage = Readonly<{
+  id: string;
+  mode: ApplicationPageMode;
+  inShell: boolean;
+  wrap: (ui: ReactNode) => ReactNode;
+}>;
+
+function shownPage({ id, mode, inShell, wrap }: ShownPage) {
+  const ui = wrap(
+    mode === 'sheet' ? <ApplicationSheet id={id} /> : <ApplicationPage id={id} view={{ mode }} />,
+  );
+  return inShell ? <AppShell initial={{ collapsed: false }}>{ui}</AppShell> : ui;
+}
 
 function noteRoutes(notes: NotesRouteOptions) {
   const listed = notesRoute(notes);
@@ -94,6 +110,7 @@ export function renderApplicationPage({
   scheduledEvents,
   board,
   contacts,
+  inShell = false,
 }: ApplicationPageSetup = {}) {
   const move = moveRoute();
   const undo = undoRoute();
@@ -118,9 +135,7 @@ export function renderApplicationPage({
     ...beside.handlers,
     ...recruiters.handlers,
   );
-  const ui = beside.wrap(
-    mode === 'sheet' ? <ApplicationSheet id={id} /> : <ApplicationPage id={id} view={{ mode }} />,
-  );
+  const ui = shownPage({ id, mode, inShell, wrap: beside.wrap });
   const { user, view } = renderViewInApp(ui);
   return {
     user,
