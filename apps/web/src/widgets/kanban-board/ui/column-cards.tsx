@@ -56,7 +56,7 @@ function GrowingColumnCards({ stage, items, context, footnote }: ColumnCardsProp
 
 export function ColumnCards({ stage, items, context, footnote }: ColumnCardsProps) {
   if (items.length > COLUMN_VIRTUAL.threshold) {
-    return <VirtualColumnCards items={items} context={context} footnote={footnote} />;
+    return <VirtualColumnCards items={items} context={context} />;
   }
   return <GrowingColumnCards stage={stage} items={items} context={context} footnote={footnote} />;
 }

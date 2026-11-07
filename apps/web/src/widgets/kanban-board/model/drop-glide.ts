@@ -95,8 +95,8 @@ export function createDropGlide({ landing, onLanded }: DropGlideOptions) {
   return async (start: GlideStart): Promise<void> => {
     try {
       const overlay = start.dragOverlay.node;
-      if (prefersReducedMotion() || !('animate' in overlay)) return;
       const keyframes = await keyframesOf(start, landing);
+      if (prefersReducedMotion() || !('animate' in overlay)) return;
       const animation = overlay.animate(keyframes, DROP_GLIDE.timing);
       void endWhenMovedAgain(start, { animation, node: registeredNode(start) });
       await animation.finished;

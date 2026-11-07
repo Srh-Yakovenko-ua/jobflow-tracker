@@ -11,6 +11,7 @@ import {
   boardRoute,
   type BoardRouteOptions,
   cardIn,
+  cardsIn,
   DESIGN_BOARD,
   DESIGN_BOARD_HEADINGS,
 } from '@/test/board-fixtures';
@@ -213,6 +214,18 @@ describe('KanbanBoard', () => {
     expect(final.getByText(BOARD.finalNote[0])).toBeDefined();
     expect(final.queryByText(BOARD.columnEmpty[0])).toBeNull();
     expect(within(columnNamed('відгук 0')).getByText(BOARD.columnEmpty[0])).toBeDefined();
+  });
+
+  it.each([
+    { count: 2, note: BOARD.finalNote[0] },
+    { count: 3, note: null },
+  ])('a фінал of $count cards shows its note: $note', async ({ count, note }) => {
+    renderBoard({ counts: { final: count }, cards: cardsIn({ stage: 'final', count, from: 107 }) });
+    await screen.findByText(`Vacancy ${String(106 + count)}`);
+
+    const final = within(columnNamed(`фінал ${String(count)}`));
+    expect(final.queryByText(BOARD.finalNote[0])?.textContent ?? null).toBe(note);
+    expect(final.queryByText(BOARD.columnEmpty[0])).toBeNull();
   });
 
   it('an empty фінал column on a busy board keeps only its own note', async () => {

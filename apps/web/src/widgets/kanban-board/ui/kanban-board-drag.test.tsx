@@ -12,7 +12,7 @@ import { API_CLIENT_LIMITS } from '@/shared/api';
 import { uk } from '@/shared/i18n';
 import type { ErrorToastContent } from '@/shared/ui/error-toast';
 import { apiUrl, errorReply } from '@/test/api-handlers';
-import { startDrag, waitOutDropClickGuard } from '@/test/board-drag';
+import { settleLanding, startDrag, waitOutDropClickGuard } from '@/test/board-drag';
 import {
   boardRoute,
   type BoardRouteOptions,
@@ -26,8 +26,6 @@ import { latch } from '@/test/latch';
 import { push } from '@/test/navigation';
 import { boardReadyToDrag, columnNamed } from '@/test/render-board';
 import { server } from '@/test/server';
-
-import { DROP_GLIDE } from '../model/drop-glide';
 
 vi.mock('next/link', () => import('@/test/link'));
 vi.mock('next/navigation', () => import('@/test/navigation'));
@@ -198,7 +196,7 @@ describe('KanbanBoard drag and drop', () => {
     await screen.findByRole('heading', { name: 'скринінг 2' });
     const landed = within(columnNamed('скринінг 2')).getByText(DRAGGED);
     expect(landed.closest('.invisible')).toBeInstanceOf(HTMLElement);
-    await act(() => vi.advanceTimersByTimeAsync(DROP_GLIDE.settleMs));
+    await settleLanding();
 
     expect(landed.closest('.invisible')).toBeNull();
   });

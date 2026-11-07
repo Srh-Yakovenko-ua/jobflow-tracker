@@ -34,8 +34,12 @@ export type FocusRequest = LandingCard;
 
 export type BoardFocus = Readonly<{
   request: FocusRequest | null;
+  returning: UniqueIdentifier | null;
   onFocused: (request: FocusRequest | null) => void;
+  onReturned: () => void;
 }>;
+
+type DropFocusOptions = Readonly<{ board: ApplicationBoardResponse; landing: Landing | null }>;
 
 type ServerStageLookup = Readonly<{ queryClient: QueryClient; application: MovingApplication }>;
 
@@ -127,10 +131,26 @@ function useMoveSender(onRefused: (request: FocusRequest) => void) {
   return { rejection, sent };
 }
 
+function useDropFocus({ board, landing }: DropFocusOptions) {
+  const [focusRequest, setFocusRequest] = useState<FocusRequest | null>(null);
+  const [returning, setReturning] = useState<UniqueIdentifier | null>(null);
+  const focus: BoardFocus = {
+    request: landing === null ? placedFocus(board, focusRequest) : null,
+    returning,
+    onFocused: (request) => {
+      setFocusRequest(settledFrom(request));
+    },
+    onReturned: () => {
+      setReturning(null);
+    },
+  };
+  return { focus, setFocusRequest, setReturning };
+}
+
 export function useBoardDrag(board: ApplicationBoardResponse) {
   const [activeId, setActiveId] = useState<UniqueIdentifier | null>(null);
-  const [focusRequest, setFocusRequest] = useState<FocusRequest | null>(null);
   const { landing, setLanding, dropAnimation } = useDropLanding();
+  const { focus, setFocusRequest, setReturning } = useDropFocus({ board, landing });
   const { rejection, sent } = useMoveSender(setFocusRequest);
   const activeCard = activeId === null ? undefined : findCard(board, activeId);
   const putBack = (event: DragCancelEvent) => {
@@ -149,20 +169,18 @@ export function useBoardDrag(board: ApplicationBoardResponse) {
     const landed = sent(move);
     setLanding(landed ? sentLandingOf(move) : sourceLandingOf(activeCard));
     setFocusRequest(landed ? keyboardOnly(event, focusTargetOf(move)) : null);
+    if (!landed) setReturning(move.application.id);
   };
   const handlers = {
     onDragStart: ({ active }: DragStartEvent) => {
       setActiveId(active.id);
       setLanding(null);
       setFocusRequest(null);
+      setReturning(null);
     },
     onDragEnd,
     onDragCancel: putBack,
   };
   const landingToHide = landing?.glide === 'in-place' ? null : landing;
-  const onFocused = (request: FocusRequest | null) => {
-    setFocusRequest(settledFrom(request));
-  };
-  const focus = { request: landing === null ? placedFocus(board, focusRequest) : null, onFocused };
   return { activeCard, landing: landingToHide, dropAnimation, handlers, rejection, focus };
 }

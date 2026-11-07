@@ -8,7 +8,7 @@ import { API_CLIENT_LIMITS } from '@/shared/api';
 import { uk } from '@/shared/i18n';
 import { errorReply, OUTAGES } from '@/test/api-handlers';
 import type { BoardCardRouteOptions } from '@/test/application-fixtures';
-import { startDrag } from '@/test/board-drag';
+import { settleLanding, startDrag } from '@/test/board-drag';
 import { type BoardRouteOptions, type ColumnCounts, DESIGN_BOARD } from '@/test/board-fixtures';
 import { fakeTimeouts, fakeTimeoutsAndClock, refocusTabOnceStale } from '@/test/fake-timeouts';
 import { type Latch, latch } from '@/test/latch';
@@ -16,8 +16,6 @@ import { stubMotionPreference } from '@/test/motion-preference';
 import { push } from '@/test/navigation';
 import { stubOverlayGlide } from '@/test/overlay-glide';
 import { boardReadyToDrag, columnNamed } from '@/test/render-board';
-
-import { DROP_GLIDE } from '../model/drop-glide';
 
 vi.mock('next/link', () => import('@/test/link'));
 vi.mock('next/navigation', () => import('@/test/navigation'));
@@ -82,10 +80,6 @@ async function pickUp(user: UserEvent, position: string) {
 
 function keyboardHint(): HTMLElement | null {
   return screen.queryByText(HINT.picked, { exact: false });
-}
-
-async function settleLanding() {
-  await act(() => vi.advanceTimersByTimeAsync(DROP_GLIDE.settleMs));
 }
 
 async function expectFocusBackOnceLanded(card: HTMLAnchorElement) {

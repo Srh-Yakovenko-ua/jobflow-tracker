@@ -153,11 +153,17 @@ describe('createDropGlide', () => {
     expect(board.onLanded).toHaveBeenCalledTimes(1);
   });
 
-  it('with reduced motion on the overlay lands at once with no animation', async () => {
+  it('with reduced motion on, a sent move lands with no animation once the card shows up in its new column', async () => {
+    vi.useFakeTimers({ toFake: ['requestAnimationFrame'] });
     stubMotionPreference('reduce');
     const board = fakeBoard();
 
-    await dropWith('to-card', board);
+    const landed = dropWith('to-card', board);
+    await vi.advanceTimersByTimeAsync(FRAME_MS * 3);
+    expect(board.onLanded).not.toHaveBeenCalled();
+    board.card.current = board.moved;
+    await vi.advanceTimersByTimeAsync(FRAME_MS);
+    await landed;
 
     expect(board.animate).not.toHaveBeenCalled();
     expect(board.onLanded).toHaveBeenCalledTimes(1);
