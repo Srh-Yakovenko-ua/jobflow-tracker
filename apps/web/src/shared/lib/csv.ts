@@ -8,7 +8,7 @@ export type CsvTable = Readonly<{
 export const CSV_FILE_TYPE = 'text/csv;charset=utf-8';
 
 const CSV = {
-  byteOrderMark: '﻿',
+  byteOrderMark: '\uFEFF',
   delimiter: ';',
   lineEnd: '\r\n',
   quoted: /[;"\r\n]/,

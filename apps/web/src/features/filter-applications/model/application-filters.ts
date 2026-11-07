@@ -87,3 +87,11 @@ export function chipsOf(filters: ApplicationFilters): FilterChip[] {
 export function writeFiltersToUrl(filters: ApplicationFilters): void {
   window.history.replaceState(null, '', withSearchParams(window.location.pathname, filters));
 }
+
+export function filtersInSearch(search: string): ApplicationFilters {
+  return applicationFiltersOf(Object.fromEntries(new URLSearchParams(search)));
+}
+
+export function filtersAsWritten(filters: ApplicationFilters): ApplicationFilters {
+  return filtersInSearch(withSearchParams('', filters));
+}

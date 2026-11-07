@@ -29,15 +29,9 @@ const csv = {
   header: {
     company: 'Компанія',
     position: 'Посада',
-    stage: 'Етап',
-    score: 'Match Score',
     salaryFrom: 'Зарплата від',
     salaryTo: 'Зарплата до',
     currency: 'Валюта',
-    source: 'Джерело',
-    appliedAt: 'Дата відгуку',
-    lastEventAt: 'Остання подія',
-    daysInStage: 'Днів на етапі',
   },
 } as const;
 
@@ -59,6 +53,7 @@ const bulk = {
 export const applicationsTable = {
   title: 'Таблиця',
   label: 'Вакансії в таблиці',
+  search: { label: 'Пошук у таблиці', placeholder: 'компанія, роль, стек…' },
   columns,
   columnsMenu: { trigger: 'Колонки', label: 'Видимі колонки' },
   select: {

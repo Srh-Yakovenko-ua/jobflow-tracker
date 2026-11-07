@@ -17,6 +17,7 @@ export type GlobalShortcutActions = Readonly<{
 
 export type GlobalShortcutsInput = Readonly<{
   flags: FeatureFlags;
+  singleKeys: boolean;
   actions: GlobalShortcutActions;
 }>;
 
@@ -29,8 +30,8 @@ const CHORD_MS = 1000;
 const LAYERS = '[role="dialog"], [role="alertdialog"], [role="menu"]';
 
 function isPaletteKey(event: KeyboardEvent): boolean {
-  const k = event.key.toLowerCase() === 'k' || event.code === 'KeyK';
-  return k && (event.ctrlKey || event.metaKey) && !event.altKey && !event.shiftKey;
+  const namesK = event.key.toLowerCase() === 'k' || event.code === 'KeyK';
+  return namesK && (event.ctrlKey || event.metaKey) && !event.altKey && !event.shiftKey;
 }
 
 function isInsideLayer(target: EventTarget | null): boolean {
@@ -71,7 +72,7 @@ function chordStartOf({ shortcuts, event }: KeyPress): ShortcutKey | undefined {
     ?.at(0);
 }
 
-export function useGlobalShortcuts({ flags, actions }: GlobalShortcutsInput): void {
+export function useGlobalShortcuts({ flags, singleKeys, actions }: GlobalShortcutsInput): void {
   const chordRef = useRef<Chord | null>(null);
   const onKeyDown = useEffectEvent((event: KeyboardEvent) => {
     if (isPaletteKey(event)) {
@@ -80,7 +81,7 @@ export function useGlobalShortcuts({ flags, actions }: GlobalShortcutsInput): vo
       actions.onPalette();
       return;
     }
-    if (!isPlainKey(event)) return;
+    if (!singleKeys || !isPlainKey(event)) return;
     const press = { shortcuts: shortcutsOf(flags), event };
     const fired = chordEndedBy(press, chordRef.current) ?? singleKeyOf(press);
     const start = fired === undefined ? chordStartOf(press) : undefined;
@@ -90,8 +91,8 @@ export function useGlobalShortcuts({ flags, actions }: GlobalShortcutsInput): vo
     actions.onShortcut(fired.target);
   });
   useEffect(() => {
-    const listener = (event: KeyboardEvent) => {
-      onKeyDown(event);
+    const listener = (event: Event) => {
+      if (event instanceof KeyboardEvent) onKeyDown(event);
     };
     document.addEventListener('keydown', listener);
     return () => {

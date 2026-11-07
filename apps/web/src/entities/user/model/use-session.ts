@@ -9,6 +9,7 @@ import { showErrorToast } from '@/shared/ui/error-toast';
 
 import { logout } from '../api/logout';
 import { meQueryOptions } from '../api/me';
+import { forgetRecentApplications } from '../lib/recent-applications-key';
 
 export type Session = {
   user: MeResponse['user'] | undefined;
@@ -23,6 +24,7 @@ export function useSession(): Session {
   const { mutate } = useMutation({
     mutationFn: logout,
     onSuccess: () => {
+      if (me !== undefined) forgetRecentApplications(me.user.id);
       clearAccessToken();
       router.replace(AUTH_ROUTES.login);
     },

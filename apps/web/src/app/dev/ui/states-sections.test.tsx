@@ -3,7 +3,8 @@ import { toast } from 'sonner';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { uk } from '@/shared/i18n';
-import { axeViolations, findLiveToaster, renderGallery, specimenOf } from '@/test/dev-ui';
+import { axeViolations } from '@/test/axe';
+import { findLiveToaster, renderGallery, specimenOf } from '@/test/dev-ui';
 import { quietLogs } from '@/test/quiet-logs';
 
 const DEMO = uk.devUi.errorPanels.crashDemo;

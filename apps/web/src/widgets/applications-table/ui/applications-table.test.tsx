@@ -7,6 +7,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { FULL_CARD } from '@/entities/application';
 import { userKeys } from '@/entities/user';
 import { applicationFiltersOf } from '@/features/filter-applications';
+import { withSearchParams } from '@/shared/api';
 import { apiUrl, errorReply } from '@/test/api-handlers';
 import { layOutColumns } from '@/test/board-drag';
 import { fixtureIdOf, moveRoute } from '@/test/board-fixtures';
@@ -27,10 +28,7 @@ vi.mock('next/navigation', () => import('@/test/navigation'));
 
 type ItemSeed = Partial<ApplicationListItem> & { serial: number };
 
-type TableSetup = Omit<PagedListRouteOptions, 'items'> & {
-  items: readonly ApplicationListItem[];
-  filters?: ApplicationFilters;
-};
+type TableSetup = PagedListRouteOptions & { filters?: ApplicationFilters };
 
 function itemOf({ serial, ...fields }: ItemSeed): ApplicationListItem {
   return { ...FULL_CARD, snippet: null, id: fixtureIdOf(serial), salaryMin: null, ...fields };
@@ -68,11 +66,23 @@ const COLUMN_NAMES = [
   'Днів на етапі',
 ] as const;
 
+const TOOLBAR_CONTROLS = [
+  { name: 'Джерело: усі', desktop: 'h-8.5' },
+  { name: 'Фільтри', desktop: 'h-8.5' },
+  { name: 'Колонки', desktop: 'h-control-sm' },
+  { name: 'Завантажити CSV з поточним поданням', desktop: 'h-control-sm' },
+] as const;
+
+const TOUCH_BOX = 'max-md:min-h-11';
+
+const RETRY_WAIT = { timeout: 2500 } as const;
+
 type TableRender = { handlers: readonly RequestHandler[]; filters?: ApplicationFilters };
 
 function renderTableOver({ handlers, filters = {} }: TableRender) {
   server.use(meRoute(), ...handlers);
   layOutColumns();
+  window.history.replaceState(null, '', withSearchParams(window.location.pathname, filters));
   return renderInApp(
     <>
       <ApplicationsTable initial={{ filters }} />
@@ -121,6 +131,14 @@ async function hideColumns(user: ReturnType<typeof renderInApp>, names: readonly
 
 function sentQueryOf(query: string | undefined): Record<string, string> {
   return Object.fromEntries(new URLSearchParams(query));
+}
+
+function findRetry(): Promise<HTMLElement> {
+  return screen.findByRole('button', { name: 'Спробувати ще раз' }, RETRY_WAIT);
+}
+
+function classesOf(element: HTMLElement): string[] {
+  return element.className.split(' ');
 }
 
 afterEach(() => {
@@ -174,16 +192,29 @@ describe('ApplicationsTable rows', () => {
       errorReply({ status: 500, type: 'internal_error' }),
     );
     const user = renderTableOver({ handlers: [failing] });
-    const retry = await screen.findByRole(
-      'button',
-      { name: 'Спробувати ще раз' },
-      { timeout: 2500 },
-    );
+    const retry = await findRetry();
 
     server.use(pagedListRoute({ items: SCORED }).handler);
     await user.click(retry);
 
     expect(await screen.findByRole('link', { name: 'Альфа' })).toBeDefined();
+  });
+
+  it('a later page that fails shows the load failed panel instead of a part of the rows, and the retry loads every page', async () => {
+    const laterPageFails = http.get(apiUrl('/applications'), ({ request }) =>
+      new URL(request.url).searchParams.has('cursor')
+        ? errorReply({ status: 500, type: 'internal_error' })
+        : undefined,
+    );
+    const list = pagedListRoute({ items: SCORED, pageSize: 2 });
+    const user = renderTableOver({ handlers: [laterPageFails, list.handler] });
+    const retry = await findRetry();
+    expect(screen.queryByRole('table')).toBeNull();
+
+    server.use(pagedListRoute({ items: SCORED, pageSize: 2 }).handler);
+    await user.click(retry);
+
+    expect(await screen.findByRole('link', { name: 'Епсилон' })).toBeDefined();
   });
 });
 
@@ -231,6 +262,35 @@ describe('ApplicationsTable sorting and columns', () => {
 
     expect(checkboxNamed('Вакансія').hasAttribute('disabled')).toBe(true);
     expect(checkboxNamed('Етап').hasAttribute('disabled')).toBe(false);
+  });
+
+  it('below md the toolbar menus, Колонки, CSV and every sort header grow to a 44 px box, above it the toolbar keeps its drawn height', async () => {
+    await tableReady({ items: SCORED });
+    const sortButtons = screen
+      .getAllByRole('columnheader')
+      .flatMap((header) => within(header).queryAllByRole('button'));
+
+    for (const { name, desktop } of TOOLBAR_CONTROLS) {
+      expect(classesOf(screen.getByRole('button', { name })), name).toEqual(
+        expect.arrayContaining([desktop, TOUCH_BOX]),
+      );
+    }
+    expect(sortButtons).toHaveLength(8);
+    for (const button of sortButtons) {
+      expect(classesOf(button), button.textContent).toContain(TOUCH_BOX);
+    }
+  });
+
+  it('below md every company link spans a 44 px box that is at least 44 px wide, inside the drawn row height', async () => {
+    await tableReady({ items: SCORED });
+
+    for (const link of screen.getAllByRole('link')) {
+      const box = link.parentElement;
+      expect(box === null ? [] : classesOf(box), link.textContent).toContain(TOUCH_BOX);
+      expect(classesOf(link), link.textContent).toEqual(
+        expect.arrayContaining(['row-span-full', 'max-md:min-w-11']),
+      );
+    }
   });
 
   it('CSV saves a UTF-8 file with a BOM, named by the day, with the shown columns in the shown order', async () => {
@@ -305,6 +365,47 @@ describe('ApplicationsTable bulk actions', () => {
     });
   });
 
+  it('Перенести далі moves the picked cards in the order the table is sorted, not the order the server sent', async () => {
+    const { user, moves } = await tableReady({ items: SCORED });
+    await user.click(screen.getByRole('button', { name: 'score' }));
+    await user.click(checkboxNamed('Обрати всі картки'));
+
+    await user.click(screen.getByRole('button', { name: 'Перенести далі' }));
+
+    await waitFor(() => {
+      expect(moves).toHaveLength(4);
+    });
+    expect(moves).toEqual([
+      { fromStage: 'applied', toStage: 'screening' },
+      { fromStage: 'final', toStage: 'offer' },
+      { fromStage: 'tech_interview', toStage: 'final' },
+      { fromStage: 'screening', toStage: 'tech_interview' },
+    ]);
+  });
+
+  it('picks a query hid are dropped: clearing it shows every row unpicked, the header box unchecked and no bulk bar', async () => {
+    fakeTimeouts();
+    const { user } = await tableReady({
+      items: (params) => (params.has('q') ? SCORED.slice(0, 1) : SCORED),
+    });
+    await user.click(checkboxNamed('Обрати «Альфа»'));
+    await user.click(checkboxNamed('Обрати «Бета»'));
+    const search = screen.getByRole('textbox', { name: 'Пошук у таблиці' });
+
+    await user.type(search, 'альфа');
+    await act(() => vi.advanceTimersByTimeAsync(250));
+    await waitFor(() => {
+      expect(screen.queryByRole('link', { name: 'Бета' })).toBeNull();
+    });
+    await user.clear(search);
+
+    expect(await screen.findByRole('link', { name: 'Бета' })).toBeDefined();
+    expect(checkboxNamed('Обрати «Альфа»').getAttribute('aria-checked')).toBe('false');
+    expect(checkboxNamed('Обрати «Бета»').getAttribute('aria-checked')).toBe('false');
+    expect(checkboxNamed('Обрати всі картки').getAttribute('aria-checked')).toBe('false');
+    expect(screen.queryByRole('group', { name: 'Дії з обраними картками' })).toBeNull();
+  });
+
   it('Скинути вибір clears the pick and hides the bar', async () => {
     const { user } = await tableReady({ items: SCORED });
     await user.click(checkboxNamed('Обрати «Альфа»'));
@@ -324,7 +425,7 @@ describe('ApplicationsTable filters', () => {
     const user = renderTableOver({ handlers: [route.handler], filters });
     await screen.findByRole('link', { name: 'Альфа' });
 
-    await user.type(screen.getByRole('textbox', { name: 'Пошук по картках' }), 'react');
+    await user.type(screen.getByRole('textbox', { name: 'Пошук у таблиці' }), 'react');
     await act(() => vi.advanceTimersByTimeAsync(250));
 
     expect(await screen.findByText('Немає карток за «react»')).toBeDefined();
@@ -348,14 +449,14 @@ describe('ApplicationsTable filters', () => {
     renderTable({ items: [] });
 
     expect(await screen.findByText('Тут буде твоя воронка')).toBeDefined();
-    expect(screen.queryByRole('textbox', { name: 'Пошук по картках' })).toBeNull();
+    expect(screen.queryByRole('textbox', { name: 'Пошук у таблиці' })).toBeNull();
   });
 
   it('no cards under a filter keeps the toolbar and shows the filtered empty state, whose reset asks again without the filter', async () => {
     const { user, sent } = renderTable({ items: [], filters: { source: ['djinni'] } });
 
     expect(await screen.findByText('Немає карток за цими фільтрами')).toBeDefined();
-    expect(screen.getByRole('textbox', { name: 'Пошук по картках' })).toBeDefined();
+    expect(screen.getByRole('textbox', { name: 'Пошук у таблиці' })).toBeDefined();
     await user.click(screen.getByRole('button', { name: 'Скинути фільтри' }));
 
     await waitFor(() => {

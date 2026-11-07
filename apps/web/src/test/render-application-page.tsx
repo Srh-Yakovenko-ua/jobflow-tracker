@@ -1,8 +1,8 @@
 import type { ApplicationResponse, ApplicationTimelineResponse } from '@jobflow/shared';
-import { render, screen } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
+import { screen } from '@testing-library/react';
 import type { ReactNode } from 'react';
 
+import { AppShell } from '@/widgets/app-shell';
 import {
   ApplicationPage,
   type ApplicationPageMode,
@@ -33,7 +33,7 @@ import {
   type NotesRouteOptions,
   noteUpdateRoute,
 } from './note-fixtures';
-import { InApp } from './render-in-app';
+import { renderViewInApp } from './render-in-app';
 import {
   liveCardOf,
   scheduledEventRoutes,
@@ -54,7 +54,22 @@ export type ApplicationPageSetup = Partial<Pick<ApplicationRouteOptions, 'reply'
   scheduledEvents?: ScheduledEventRoutesOptions;
   board?: BoardRouteOptions;
   contacts?: ContactRoutesOptions;
+  inShell?: boolean;
 };
+
+type ShownPage = Readonly<{
+  id: string;
+  mode: ApplicationPageMode;
+  inShell: boolean;
+  wrap: (ui: ReactNode) => ReactNode;
+}>;
+
+function shownPage({ id, mode, inShell, wrap }: ShownPage) {
+  const ui = wrap(
+    mode === 'sheet' ? <ApplicationSheet id={id} /> : <ApplicationPage id={id} view={{ mode }} />,
+  );
+  return inShell ? <AppShell initial={{ collapsed: false }}>{ui}</AppShell> : ui;
+}
 
 function noteRoutes(notes: NotesRouteOptions) {
   const listed = notesRoute(notes);
@@ -95,6 +110,7 @@ export function renderApplicationPage({
   scheduledEvents,
   board,
   contacts,
+  inShell = false,
 }: ApplicationPageSetup = {}) {
   const move = moveRoute();
   const undo = undoRoute();
@@ -104,7 +120,7 @@ export function renderApplicationPage({
   const page = applicationRoute({ application, moves: move.sent, ...(reply && { reply }) });
   const events = scheduledEventRoutes(scheduledEvents);
   const beside = boardBeside({ board, id, store: events.store });
-  const people = contactRoutes(contacts);
+  const recruiters = contactRoutes(contacts);
   server.use(
     meRoute(),
     page.handler,
@@ -117,14 +133,12 @@ export function renderApplicationPage({
     ...written.handlers,
     ...events.handlers,
     ...beside.handlers,
-    ...people.handlers,
+    ...recruiters.handlers,
   );
-  const ui = beside.wrap(
-    mode === 'sheet' ? <ApplicationSheet id={id} /> : <ApplicationPage id={id} view={{ mode }} />,
-  );
-  const view = render(ui, { wrapper: InApp });
+  const ui = shownPage({ id, mode, inShell, wrap: beside.wrap });
+  const { user, view } = renderViewInApp(ui);
   return {
-    user: userEvent.setup(),
+    user,
     reopen: () => {
       view.rerender(null);
       view.rerender(ui);
@@ -137,7 +151,7 @@ export function renderApplicationPage({
     notes: written.sent,
     scheduledEvents: events.sent,
     board: beside.sent,
-    contacts: people.sent,
+    contacts: recruiters.sent,
   };
 }
 

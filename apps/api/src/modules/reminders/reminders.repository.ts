@@ -1,7 +1,8 @@
-import type { ReminderStatus } from '@jobflow/shared';
+import { OPEN_STAGES, type ReminderStatus } from '@jobflow/shared';
 import { Injectable } from '@nestjs/common';
 
 import type { Prisma } from '../../generated/prisma/client.js';
+import type { InTransaction } from '../../prisma/in-transaction.js';
 import { PrismaService } from '../../prisma/prisma.service.js';
 
 const ACTIVE_STATUSES: ReminderStatus[] = ['pending', 'snoozed'];
@@ -16,8 +17,6 @@ const FOLLOWUP_SELECT = {
 } satisfies Prisma.ReminderSelect;
 
 export type FollowupRow = Prisma.ReminderGetPayload<{ select: typeof FOLLOWUP_SELECT }>;
-
-type InTransaction = { tx?: Prisma.TransactionClient };
 
 export type InterviewOfApplication = InTransaction & {
   applicationId: string;
@@ -69,7 +68,7 @@ export class RemindersRepository {
       where: {
         userId,
         type: 'followup',
-        application: { userId, deletedAt: null },
+        application: { userId, deletedAt: null, currentStage: { in: [...OPEN_STAGES] } },
         OR: [
           { status: 'pending', dueAt: within },
           { status: 'snoozed', snoozedUntil: within },

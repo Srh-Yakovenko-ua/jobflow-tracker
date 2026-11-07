@@ -3,12 +3,13 @@ import { UnrecoverableError } from 'bullmq';
 import { beforeEach, describe, expect, it } from 'vitest';
 
 import { Clock } from '../../common/clock.js';
-import { validateEnv } from '../../config/env.js';
+import { type Env, validateEnv } from '../../config/env.js';
 import {
   AI_JOB_ID,
   FakeAiClient,
   type FakeAiJob,
   FakeAiRepository,
+  PRIVATE_NOTE,
   VACANCY_CALL,
   VACANCY_COMPLETION,
   VACANCY_JOB,
@@ -18,11 +19,12 @@ import { exampleEnv } from '../../test/example-env.js';
 import { memoryLog } from '../../test/memory-log.js';
 import { compileProcessorModule } from '../../test/processor.js';
 import { BOHDAN_ID, OLENA_ID } from '../../test/service-fixtures.js';
-import { NOW } from '../../test/time.js';
+import { fixedClock, NOW } from '../../test/time.js';
 import type { AiCompleteJob } from './ai.jobs.js';
 import { AiRepository } from './ai.repository.js';
 import { type AiCompleteAttempt, AiService } from './ai.service.js';
 import { AiClient } from './ai-client.js';
+import { AiPayloadError } from './ai-payload-guard.js';
 import { AiServiceError } from './ai-service-error.js';
 
 const log = memoryLog();
@@ -32,6 +34,8 @@ const BUDGET = { AI_DAILY_LIMIT: '3', AI_MONTHLY_TOKEN_CAP: '5000' };
 const PASTED_AGAIN_JOB_ID = '0199f0a0-0000-7000-8000-000000000202';
 
 const NOT_READY = new AiServiceError({ status: 503, type: 'not_ready' });
+
+const NOTE_JOB: AiCompleteJob = { ...VACANCY_JOB, input: { text: VACANCY_TEXT, ...PRIVATE_NOTE } };
 
 type AttemptOptions = { job?: AiCompleteJob; finalAttempt?: boolean };
 
@@ -46,15 +50,15 @@ function attemptOf({
   };
 }
 
-async function serviceWithFakes() {
+async function serviceWithFakes(nodeEnv: Env['NODE_ENV'] = 'development') {
   const repository = new FakeAiRepository();
   const ai = new FakeAiClient();
-  const config = new ConfigService(validateEnv({ ...exampleEnv, ...BUDGET }));
+  const config = new ConfigService(validateEnv({ ...exampleEnv, ...BUDGET, NODE_ENV: nodeEnv }));
   const moduleRef = await compileProcessorModule(log.sink, [
     AiService,
     { provide: AiRepository, useValue: repository },
     { provide: AiClient, useValue: ai },
-    { provide: Clock, useValue: { now: () => NOW } },
+    { provide: Clock, useValue: fixedClock(NOW) },
     { provide: ConfigService, useValue: config },
   ]);
   repository.queueJob(OLENA_ID);
@@ -65,6 +69,13 @@ const failedJob = (errorType: string): FakeAiJob => ({
   userId: OLENA_ID,
   status: 'failed',
   errorType,
+  finishedAt: NOW,
+});
+
+const doneJob = (aiResultId: string): FakeAiJob => ({
+  userId: OLENA_ID,
+  status: 'done',
+  aiResultId,
   finishedAt: NOW,
 });
 
@@ -97,12 +108,7 @@ describe('AiService.complete', () => {
         latencyMs: 15,
       }),
     ]);
-    expect(repository.jobs.get(AI_JOB_ID)).toEqual({
-      userId: OLENA_ID,
-      status: 'done',
-      aiResultId: 'ai-result-1',
-      finishedAt: NOW,
-    });
+    expect(repository.jobs.get(AI_JOB_ID)).toEqual(doneJob('ai-result-1'));
   });
 
   it('counts the daily calls from 00:00 UTC and the monthly tokens from the 1st of the UTC month', async () => {
@@ -138,12 +144,7 @@ describe('AiService.complete', () => {
 
     expect(ai.calls).toEqual([VACANCY_CALL]);
     expect(repository.budgetQueries).toHaveLength(1);
-    expect(repository.jobs.get(PASTED_AGAIN_JOB_ID)).toEqual({
-      userId: OLENA_ID,
-      status: 'done',
-      aiResultId: 'ai-result-1',
-      finishedAt: NOW,
-    });
+    expect(repository.jobs.get(PASTED_AGAIN_JOB_ID)).toEqual(doneJob('ai-result-1'));
     expect(log.parsed()).toContainEqual(
       expect.objectContaining({ msg: 'ai cache hit', aiJobId: PASTED_AGAIN_JOB_ID }),
     );
@@ -216,6 +217,30 @@ describe('AiService.complete', () => {
     expect(repository.jobs.get(AI_JOB_ID)).toEqual(failedJob('ai_invalid_output'));
   });
 
+  it('keeps the succeeded result of an identical job when a final failure comes after it', async () => {
+    const { repository, ai, service } = await serviceWithFakes();
+    repository.queueJob(OLENA_ID, PASTED_AGAIN_JOB_ID);
+    const identical = { ...VACANCY_JOB, aiJobId: PASTED_AGAIN_JOB_ID };
+    ai.answer = async () => {
+      ai.answer = () => Promise.resolve(VACANCY_COMPLETION);
+      await service.complete(attemptOf({ job: identical }));
+      throw new AiServiceError({ status: 422, type: 'ai_invalid_output' });
+    };
+
+    await expect(service.complete(attemptOf())).rejects.toBeInstanceOf(UnrecoverableError);
+
+    expect([...repository.results.values()]).toEqual([
+      expect.objectContaining({
+        id: 'ai-result-1',
+        status: 'succeeded',
+        error: null,
+        output: VACANCY_COMPLETION.output,
+      }),
+    ]);
+    expect(repository.jobs.get(PASTED_AGAIN_JOB_ID)).toEqual(doneJob('ai-result-1'));
+    expect(repository.jobs.get(AI_JOB_ID)).toEqual(failedJob('ai_invalid_output'));
+  });
+
   it('rethrows a 503 before the last attempt so BullMQ retries it, writing nothing', async () => {
     const { repository, ai, service } = await serviceWithFakes();
     ai.answer = () => Promise.reject(NOT_READY);
@@ -246,6 +271,44 @@ describe('AiService.complete', () => {
     await expect(service.complete(attemptOf({ finalAttempt: true }))).rejects.toBe(refused);
 
     expect(ai.calls).toEqual([]);
+  });
+
+  it.each(['development', 'test'] as const)(
+    'refuses under %s config a job whose input carries a note body, naming only its path and calling nothing',
+    async (nodeEnv) => {
+      const { repository, ai, service } = await serviceWithFakes(nodeEnv);
+
+      const error = await service
+        .complete(attemptOf({ job: NOTE_JOB }))
+        .catch((thrown: unknown) => thrown);
+
+      expect(error).toBeInstanceOf(AiPayloadError);
+      expect(error).toHaveProperty('message', 'ai payload carries private fields at body');
+      expect(ai.calls).toEqual([]);
+      expect(repository.results.size).toBe(0);
+    },
+  );
+
+  it('logs a security warning under production config with the paths and no note text, and the call goes on', async () => {
+    const { ai, service } = await serviceWithFakes('production');
+
+    await expect(service.complete(attemptOf({ job: NOTE_JOB }))).resolves.toHaveProperty(
+      'cached',
+      false,
+    );
+
+    expect(ai.calls).toHaveLength(1);
+    expect(log.parsed()).toContainEqual(
+      expect.objectContaining({
+        level: 40,
+        msg: 'ai payload carried private fields',
+        securityEvent: 'ai_payload_private_field',
+        paths: ['body'],
+        kind: 'vacancy_parse',
+        requestId: 'req-ai-7',
+      }),
+    );
+    expect(log.lines.join('\n')).not.toContain(PRIVATE_NOTE.body);
   });
 
   it.each<{ job: string; stored: FakeAiJob[] }>([

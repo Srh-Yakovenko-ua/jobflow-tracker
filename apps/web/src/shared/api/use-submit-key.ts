@@ -2,7 +2,7 @@
 
 import { useRef } from 'react';
 
-export type SubmitKey = Readonly<{ keyFor: (body: unknown) => string; reset: () => void }>;
+type SubmitKey = Readonly<{ keyFor: (body: unknown) => string; reset: () => void }>;
 
 type KeyedSubmit = Readonly<{ json: string; key: string }>;
 

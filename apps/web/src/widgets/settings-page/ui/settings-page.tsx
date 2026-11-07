@@ -26,7 +26,7 @@ function SettingsContent({ me }: Readonly<{ me: MeResponse }>) {
         <SearchSection settings={me.settings} />
         <NotificationsSection settings={me.settings} items={ITEMS} />
         <AiPrivacySection items={ITEMS} />
-        <AppearanceSection />
+        <AppearanceSection settings={me.settings} />
         <AccountSection me={me} items={ITEMS} />
       </div>
     </div>

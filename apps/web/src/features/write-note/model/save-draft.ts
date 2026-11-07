@@ -24,16 +24,18 @@ export type SaveDraftInput = Readonly<{
 
 export const EMPTY_DRAFT: DraftRecord = { noteId: null, savedBody: '', pendingCreate: null };
 
+type PendingPost = Readonly<{ applicationId: Note['applicationId']; create: PendingCreate }>;
+
 const UNCHANGED: DraftSaved = { kind: 'unchanged' };
+
+function postPending({ applicationId, create }: PendingPost): Promise<Note> {
+  return addNote({ applicationId, body: { body: create.body }, idempotencyKey: create.key });
+}
 
 async function createDraft({ applicationId, draft, body }: SaveDraftInput): Promise<Note> {
   const create = draft.current.pendingCreate ?? { key: crypto.randomUUID(), body };
   draft.current = { ...draft.current, pendingCreate: create };
-  const created = await addNote({
-    applicationId,
-    body: { body: create.body },
-    idempotencyKey: create.key,
-  });
+  const created = await postPending({ applicationId, create });
   if (body === create.body) return created;
   return updateNote({ applicationId, noteId: created.id, body: { body } });
 }
@@ -45,12 +47,19 @@ async function writeDraft(input: SaveDraftInput): Promise<DraftSaved> {
     noteId === null
       ? await createDraft(input)
       : await updateNote({ applicationId, noteId, body: { body } });
-  draft.current = { noteId: note.id, savedBody: body, pendingCreate: null };
+  if (draft.current.noteId === noteId) {
+    draft.current = { noteId: note.id, savedBody: body, pendingCreate: null };
+  }
   return { kind: 'written', note, created: noteId === null };
 }
 
 async function removeDraft({ applicationId, draft }: SaveDraftInput): Promise<DraftSaved> {
-  const { noteId } = draft.current;
+  const { pendingCreate } = draft.current;
+  const noteId =
+    draft.current.noteId ??
+    (pendingCreate === null
+      ? null
+      : (await postPending({ applicationId, create: pendingCreate })).id);
   if (noteId === null) return UNCHANGED;
   await deleteNote({ applicationId, noteId });
   draft.current = EMPTY_DRAFT;
@@ -58,7 +67,8 @@ async function removeDraft({ applicationId, draft }: SaveDraftInput): Promise<Dr
 }
 
 export function saveDraft(input: SaveDraftInput): Promise<DraftSaved> {
-  if (input.body === input.draft.current.savedBody) return Promise.resolve(UNCHANGED);
+  const { savedBody, pendingCreate } = input.draft.current;
+  if (input.body === savedBody && pendingCreate === null) return Promise.resolve(UNCHANGED);
   return input.body.trim() === '' ? removeDraft(input) : writeDraft(input);
 }
 

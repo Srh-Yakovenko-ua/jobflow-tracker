@@ -10,9 +10,11 @@ import { Injectable } from '@nestjs/common';
 
 import type { Prisma } from '../../generated/prisma/client.js';
 import { EFFECTIVE_STAGE_EVENTS } from '../../prisma/effective-stage-events.js';
+import { LATEST_AI_JOB_SELECT } from '../../prisma/latest-ai-job.js';
 import { PrismaService } from '../../prisma/prisma.service.js';
 import type { DateCursor } from './application-cursor.js';
 import { LATEST_STAGE_EVENT_SELECT } from './applications.repository.js';
+import type { InSearch } from './search-applications.repository.js';
 
 export type ApplicationListFilter = Omit<ApplicationFilters, 'silence' | 'q'> & {
   searchId?: string | undefined;
@@ -67,11 +69,7 @@ function cardSelectAt(now: Date) {
       take: 1,
       select: { kind: true, startsAt: true },
     },
-    aiJobs: {
-      orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
-      take: 1,
-      select: { status: true },
-    },
+    aiJobs: LATEST_AI_JOB_SELECT,
   } satisfies Prisma.ApplicationSelect;
 }
 
@@ -137,8 +135,8 @@ export class ApplicationListRepository {
     return settings?.silenceDays ?? DEFAULT_SILENCE_DAYS;
   }
 
-  async searchExists(userId: string, searchId: string): Promise<boolean> {
-    const count = await this.prisma.search.count({ where: { id: searchId, userId } });
+  async searchExists(userId: string, { searchId, tx = this.prisma }: InSearch): Promise<boolean> {
+    const count = await tx.search.count({ where: { id: searchId, userId } });
     return count > 0;
   }
 

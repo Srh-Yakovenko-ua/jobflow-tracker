@@ -2,7 +2,7 @@ import { screen, waitFor } from '@testing-library/react';
 import { toast } from 'sonner';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { ANY_IDEMPOTENCY_KEY, errorReply } from '@/test/api-handlers';
+import { ANY_IDEMPOTENCY_KEY, errorReply, validationReply } from '@/test/api-handlers';
 import { ACME_APPLICATION } from '@/test/application-fixtures';
 import { renderInApp } from '@/test/render-in-app';
 import {
@@ -99,6 +99,20 @@ describe('ScheduleEventDialog', () => {
     expect(retried.sent.created).toEqual(sent.created);
   });
 
+  it('a second create sent unchanged after a scheduled event carries a new key', async () => {
+    const { user, sent, scheduleUntilClosed } = renderDialog();
+    const dialog = await findScheduleDialog();
+    await waitForDate(KYIV_TOMORROW);
+    await scheduleUntilClosed();
+
+    await user.click(dialog.getByRole('button', { name: 'Запланувати' }));
+
+    await waitFor(() => {
+      expect(sent.created).toEqual([TOMORROW_CREATE, TOMORROW_CREATE]);
+    });
+    expect(new Set(sent.created.map(({ idempotencyKey }) => idempotencyKey)).size).toBe(2);
+  });
+
   it('a start that already passed today stays open with the reason on the time field and sends nothing', async () => {
     const { user, onClose, sent } = renderDialog();
     const dialog = await findScheduleDialog();
@@ -175,12 +189,7 @@ describe('ScheduleEventDialog', () => {
     const { user, onClose } = renderDialog({
       routes: {
         create: {
-          reply: () =>
-            errorReply({
-              status: 422,
-              type: 'validation_error',
-              errors: [{ path: 'durationMin', message: 'Too big' }],
-            }),
+          reply: () => validationReply([{ path: 'durationMin', message: 'Too big' }]),
         },
       },
     });

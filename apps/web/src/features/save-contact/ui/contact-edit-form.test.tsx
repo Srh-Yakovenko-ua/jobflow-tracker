@@ -1,7 +1,7 @@
 import { screen, waitFor } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
-import { errorReply } from '@/test/api-handlers';
+import { validationReply } from '@/test/api-handlers';
 import {
   CONTACT_ID,
   contactRoutes,
@@ -15,6 +15,8 @@ import { server } from '@/test/server';
 import { ContactEditForm } from './contact-edit-form';
 
 const LABELS = { name: "Ім'я", role: 'Роль', email: 'Email', telegram: 'Telegram' } as const;
+
+const TELEGRAM_ERROR = 'Нік із 5–32 латинських літер, цифр або _, без посилання';
 
 function renderEditor(update: ContactRoutesOptions['update'] = {}) {
   const routes = contactRoutes({ items: [DESIGN_CONTACT], update });
@@ -75,19 +77,13 @@ describe('ContactEditForm', () => {
 
   it('a 422 on telegram shows under that field and keeps the editor open', async () => {
     const refused = () =>
-      errorReply({
-        status: 422,
-        type: 'validation_error',
-        errors: [{ path: 'telegram', message: 'telegram must be a handle' }],
-      });
+      validationReply([{ path: 'telegram', message: 'telegram must be a handle' }]);
     const { user, sent, actions } = renderEditor({ reply: refused });
 
     await user.click(screen.getByRole('button', { name: 'Зберегти' }));
 
     await waitFor(() => {
-      expect(descriptionOf(fieldNamed(LABELS.telegram))).toBe(
-        'Нік із 5–32 латинських літер, цифр або _, без посилання',
-      );
+      expect(descriptionOf(fieldNamed(LABELS.telegram))).toBe(TELEGRAM_ERROR);
     });
     expect(sent.updated).toHaveLength(1);
     expect(actions.onDone).not.toHaveBeenCalled();
@@ -101,10 +97,31 @@ describe('ContactEditForm', () => {
     await user.type(telegram, 'https://t.me/oksana_hr{Enter}');
 
     await waitFor(() => {
-      expect(descriptionOf(telegram)).toBe(
-        'Нік із 5–32 латинських літер, цифр або _, без посилання',
-      );
+      expect(descriptionOf(telegram)).toBe(TELEGRAM_ERROR);
     });
     expect(sent.updated).toEqual([]);
+  });
+
+  it('a telegram fixed after its blur error loses the error while typing, and one click on Зберегти saves it', async () => {
+    const { user, sent, actions } = renderEditor();
+    const telegram = fieldNamed(LABELS.telegram);
+    await user.clear(telegram);
+    await user.type(telegram, 'https://t.me/oksana_hr');
+    await user.tab();
+    await waitFor(() => {
+      expect(descriptionOf(telegram)).toBe(TELEGRAM_ERROR);
+    });
+
+    await user.clear(telegram);
+    await user.type(telegram, 'oksana_lead');
+    await waitFor(() => {
+      expect(descriptionOf(telegram)).toBeUndefined();
+    });
+    await user.click(screen.getByRole('button', { name: 'Зберегти' }));
+
+    await waitFor(() => {
+      expect(actions.onDone).toHaveBeenCalledTimes(1);
+    });
+    expect(sent.updated.map(({ body }) => body.telegram)).toEqual(['oksana_lead']);
   });
 });

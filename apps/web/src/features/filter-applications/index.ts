@@ -4,14 +4,12 @@ export {
   type FilterChip,
   type FilterSearchParams,
 } from './model/application-filters';
-export {
-  ApplicationFiltersProvider,
-  type ApplicationFiltersStore,
-  useApplicationFilters,
-} from './model/filters-store';
+export { ApplicationFiltersProvider } from './model/application-filters-provider';
+export { type ApplicationFiltersStore, useApplicationFilters } from './model/filters-store';
 export { useSentFilters } from './model/use-sent-filters';
-export { FilterChips, FilterChipsRow, ResetFiltersButton } from './ui/filter-chips';
+export { FilterChips, FilterChipsRow } from './ui/filter-chips';
 export { FilterMenus } from './ui/filter-menus';
-export { FilterSearch } from './ui/filter-search';
+export { FilterSearch, type FilterSearchProps } from './ui/filter-search';
 export { FiltersEmptyState, type FiltersEmptyStateProps } from './ui/filters-empty-state';
+export { ResetFiltersButton } from './ui/reset-filters-button';
 export { type ApplicationsView, ViewSwitch, type ViewSwitchProps } from './ui/view-switch';

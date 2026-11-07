@@ -11,6 +11,7 @@ import {
   boardRoute,
   type BoardRouteOptions,
   cardIn,
+  cardsIn,
   DESIGN_BOARD,
   DESIGN_BOARD_HEADINGS,
 } from '@/test/board-fixtures';
@@ -195,6 +196,15 @@ describe('KanbanBoard', () => {
     expect(screen.queryByText(/активний пошук/)).toBeNull();
   });
 
+  it('with no cards the view switch still opens Таблиця', async () => {
+    const { user } = renderBoard({ counts: {} });
+    const views = within(await screen.findByRole('radiogroup', { name: 'Подання' }));
+
+    await user.click(views.getByRole('radio', { name: 'Таблиця' }));
+
+    expect(push).toHaveBeenCalledExactlyOnceWith('/applications');
+  });
+
   it('the view switch marks Дошка and opens Таблиця with the filters of the board', async () => {
     const { user } = renderBoard(DESIGN_BOARD, { filters: { source: ['djinni'], q: 'kafka' } });
     const views = within(await screen.findByRole('radiogroup', { name: 'Подання' }));
@@ -213,6 +223,18 @@ describe('KanbanBoard', () => {
     expect(final.getByText(BOARD.finalNote[0])).toBeDefined();
     expect(final.queryByText(BOARD.columnEmpty[0])).toBeNull();
     expect(within(columnNamed('відгук 0')).getByText(BOARD.columnEmpty[0])).toBeDefined();
+  });
+
+  it.each([
+    { count: 2, note: BOARD.finalNote[0] },
+    { count: 3, note: null },
+  ])('a фінал of $count cards shows its note: $note', async ({ count, note }) => {
+    renderBoard({ counts: { final: count }, cards: cardsIn({ stage: 'final', count, from: 107 }) });
+    await screen.findByText(`Vacancy ${String(106 + count)}`);
+
+    const final = within(columnNamed(`фінал ${String(count)}`));
+    expect(final.queryByText(BOARD.finalNote[0])?.textContent ?? null).toBe(note);
+    expect(final.queryByText(BOARD.columnEmpty[0])).toBeNull();
   });
 
   it('an empty фінал column on a busy board keeps only its own note', async () => {

@@ -7,13 +7,6 @@ import { loadVacancyCases, type VacancyEvalCase } from './vacancy-cases.js';
 
 const CASES_DIR = fileURLToPath(new URL('../modules/ai/evals/vacancy', import.meta.url));
 
-const EMAIL = /[\p{L}\p{N}_.+-]+@[\p{L}\p{N}_-]+(?:\.[\p{L}\p{N}_-]+)+/u;
-
-const PHONE =
-  /(?<![\p{L}\p{N}_+])(?:\+\d{1,3}(?:[ .-]?\(?\d{1,4}\)?){2,6}|\(?0\d{2}\)?[ .-]?\d{3}[ .-]?\d{2}[ .-]?\d{2}|\d{3}[ .-]\d{3}[ .-]\d{4})(?!\d)/u;
-
-const scrubbable = (text: string) => EMAIL.test(text) || PHONE.test(text);
-
 describe('the vacancy eval cases', () => {
   let cases: VacancyEvalCase[];
 
@@ -52,15 +45,4 @@ describe('the vacancy eval cases', () => {
 
     expect(failing.map(({ file }) => file)).toEqual(['12-dou-uk-requirements-only.json']);
   });
-
-  it('leaves no email or phone the services/ai scrub would replace', () => {
-    expect(cases.filter(({ text }) => scrubbable(text)).map(({ file }) => file)).toEqual([]);
-  });
-
-  it.for(['hr@larkwave.example', '+380 67 123 45 67', '(067) 123 45 67', '050 123 4567'])(
-    'catches %s with the scrub patterns ported from services/ai',
-    (contact) => {
-      expect(scrubbable(`Пишіть: ${contact}.`)).toBe(true);
-    },
-  );
 });

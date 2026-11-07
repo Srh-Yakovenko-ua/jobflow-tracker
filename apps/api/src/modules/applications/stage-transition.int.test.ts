@@ -16,7 +16,7 @@ import {
 import { OLENA, signUp } from '../../test/auth.js';
 import { callRoute, errorPathsOf, type RouteCall } from '../../test/http.js';
 import { outboxRows } from '../../test/outbox.js';
-import { MISSING_ID, TO_SCREENING } from '../../test/service-fixtures.js';
+import { MISSING_ID, TO_SCREENING, TO_TECH_INTERVIEW } from '../../test/service-fixtures.js';
 import {
   daysBefore,
   NOW,
@@ -26,8 +26,6 @@ import {
 } from '../../test/time.js';
 
 const clock = settableClock(NOW);
-
-const TO_TECH_INTERVIEW = { fromStage: 'applied', toStage: 'tech_interview' };
 
 const TO_REJECTED = { fromStage: 'applied', toStage: 'rejected', reasonCode: 'skills_gap' };
 

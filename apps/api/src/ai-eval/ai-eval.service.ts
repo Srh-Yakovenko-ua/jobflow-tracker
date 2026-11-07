@@ -1,7 +1,7 @@
 import { vacancyParseOutputSchema } from '@jobflow/shared';
 import { Injectable } from '@nestjs/common';
 
-import { AiClient, AiServiceError } from '../modules/ai/index.js';
+import { AI_PAYLOAD_BUILDERS, AiClient, AiServiceError } from '../modules/ai/index.js';
 import { loadVacancyCases, type VacancyEvalCase } from './vacancy-cases.js';
 import { type VacancyCaseAnswer, type VacancyEvalReport, vacancyReport } from './vacancy-score.js';
 
@@ -30,7 +30,8 @@ export class AiEvalService {
 
   private async answer({ file, text, expected }: VacancyEvalCase): Promise<CaseOutcome> {
     try {
-      const { output } = await this.ai.complete({ kind: 'vacancy_parse', input: { text } });
+      const input = AI_PAYLOAD_BUILDERS.vacancy_parse({ rawText: text });
+      const { output } = await this.ai.complete({ kind: 'vacancy_parse', input });
       return { file, expected, output: vacancyParseOutputSchema.parse(output) };
     } catch (error) {
       if (!(error instanceof AiServiceError)) {

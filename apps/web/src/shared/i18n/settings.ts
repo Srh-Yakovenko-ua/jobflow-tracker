@@ -1,4 +1,11 @@
-import { countedUk, DAY_FORMS_UK, type PluralForms, pluralUk } from '@jobflow/shared';
+import {
+  type AiKind,
+  type AiPayloadField,
+  countedUk,
+  DAY_FORMS_UK,
+  type PluralForms,
+  pluralUk,
+} from '@jobflow/shared';
 
 const DAY_GENITIVE_FORMS = {
   one: 'дня',
@@ -11,6 +18,8 @@ const daysOf = (count: number) => countedUk(count, DAY_FORMS_UK);
 const dayWordOf = (count: number) => pluralUk(count, DAY_FORMS_UK);
 
 type MedianCopy = { median: number; preset: number };
+
+type ModelDataCopy = { [Kind in AiKind]: Record<AiPayloadField<Kind>, string> };
 
 export const settings = {
   title: 'Налаштування',
@@ -87,16 +96,28 @@ export const settings = {
     description: 'Що саме йде в модель і навіщо.',
     modelData: {
       title: 'Що бачить модель',
-      items: [
-        'Текст вакансії: для розбору й Match Score.',
-        'Текст резюме або сторінки скану: для профілю резюме.',
-        'Підсумкові числа за місяць: для місячного саммарі.',
-      ],
+      fields: {
+        vacancy_parse: {
+          text: 'Текст вакансії: з нього модель дістає компанію, посаду, зарплату, формат роботи й стек.',
+        },
+      } satisfies ModelDataCopy,
     },
     dataDeletion: {
       title: 'Видалити всі AI-результати',
       description:
         'Розбори вакансій, Match Score і профілі резюме зникнуть, самі вакансії й резюме лишаться.',
+      action: 'Видалити всі AI-результати',
+      dialog: {
+        title: 'Видалити всі AI-результати?',
+        body: 'Розбори вакансій, Match Score і профілі резюме зникнуть назавжди. Самі вакансії й резюме лишаться.',
+        cancel: 'Скасувати',
+        confirm: 'Видалити',
+      },
+      deleted: 'AI-результати видалено',
+      failed: {
+        title: 'Не вдалося видалити AI-результати',
+        description: "Усе лишилось як було. Перевір з'єднання і спробуй ще раз.",
+      },
     },
     captureToken: {
       title: 'Токен букмарклета',
@@ -104,6 +125,11 @@ export const settings = {
     },
   },
   appearance: { title: 'Тема' },
+  singleKeyShortcuts: {
+    title: 'Гарячі клавіші з однієї літери',
+    description:
+      'N, G з другою літерою, ? і / спрацьовують одним натиском. Вимкни, якщо вводиш текст голосом або перемикачем. Палітра команд відкривається завжди.',
+  },
   account: {
     title: 'Акаунт',
     name: "Ім'я",
@@ -125,9 +151,5 @@ export const settings = {
     submit: 'Змінити пароль',
     changed: 'Пароль змінено. На інших пристроях треба увійти знову.',
     wrongCurrent: 'Поточний пароль не підходить',
-    failed: {
-      title: 'Не вдалося змінити пароль',
-      description: "Пароль лишився старим. Перевір з'єднання і спробуй ще раз.",
-    },
   },
 } as const;

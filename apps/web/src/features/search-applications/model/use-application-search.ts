@@ -4,10 +4,11 @@ import { applicationListQueryOptions, isSearchable, SEARCH_LIMITS } from '@/enti
 import { useDebouncedValue } from '@/shared/lib/use-debounced-value';
 
 export function useApplicationSearch(text: string) {
-  const q = useDebouncedValue(text.trim(), SEARCH_LIMITS.debounceMs);
+  const typed = text.trim();
+  const q = useDebouncedValue(typed, SEARCH_LIMITS.debounceMs);
   return useQuery({
-    ...applicationListQueryOptions({ q, limit: SEARCH_LIMITS.results, sort: 'relevance' }),
-    enabled: isSearchable(q),
+    ...applicationListQueryOptions({ q: typed, limit: SEARCH_LIMITS.results, sort: 'relevance' }),
+    enabled: isSearchable(q) && q === typed,
     placeholderData: keepPreviousData,
   });
 }

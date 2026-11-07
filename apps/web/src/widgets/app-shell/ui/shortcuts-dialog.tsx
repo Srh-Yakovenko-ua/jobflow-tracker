@@ -18,23 +18,38 @@ import { usePaletteKeys } from '../model/palette-keys';
 export type ShortcutsDialogProps = Readonly<{
   state: DialogState;
   shortcuts: readonly Shortcut[];
+  singleKeys: boolean;
   handlers?: Pick<DialogContentHandlers, 'onCloseAutoFocus'>;
 }>;
 
-type ShortcutRow = Readonly<{ id: string; label: string; keys: readonly string[]; chord: boolean }>;
+type ShortcutRow = Readonly<{
+  id: string;
+  label: string;
+  keys: readonly string[];
+  chord: boolean;
+  off: boolean;
+}>;
+
+type RowsInput = Readonly<{
+  shortcuts: readonly Shortcut[];
+  paletteKeys: readonly string[];
+  singleKeys: boolean;
+}>;
 
 const COPY = uk.shell.shortcuts;
 
-function rowsOf(shortcuts: readonly Shortcut[], paletteKeys: readonly string[]): ShortcutRow[] {
+function rowsOf({ shortcuts, paletteKeys, singleKeys }: RowsInput): ShortcutRow[] {
+  const off = !singleKeys;
   const listed = shortcuts.map((shortcut) => ({
     id: shortcut.id,
     label: COPY.items[shortcut.id],
     keys: shortcut.keys.map((key) => key.key.toUpperCase()),
     chord: true,
+    off,
   }));
   return [
-    { id: 'palette', label: COPY.palette, keys: paletteKeys, chord: false },
-    { id: 'search', label: COPY.search, keys: [SEARCH_SHORTCUT], chord: false },
+    { id: 'palette', label: COPY.palette, keys: paletteKeys, chord: false, off: false },
+    { id: 'search', label: COPY.search, keys: [SEARCH_SHORTCUT], chord: false, off },
     ...listed,
   ];
 }
@@ -48,15 +63,22 @@ function RowKeys({ row }: Readonly<{ row: ShortcutRow }>) {
           <Kbd>{key}</Kbd>
         </Fragment>
       ))}
+      {row.off && <span className="caption text-ink-3">{COPY.off}</span>}
     </dd>
   );
 }
 
-export function ShortcutsDialog({ state, shortcuts, handlers = {} }: ShortcutsDialogProps) {
-  const rows = rowsOf(shortcuts, usePaletteKeys());
+export function ShortcutsDialog({
+  state,
+  shortcuts,
+  singleKeys,
+  handlers = {},
+}: ShortcutsDialogProps) {
+  const rows = rowsOf({ shortcuts, paletteKeys: usePaletteKeys(), singleKeys });
+  const header = { title: COPY.title, description: singleKeys ? undefined : COPY.offNote };
   return (
     <Dialog open={state.open} onOpenChange={state.onOpenChange}>
-      <DialogContent header={{ title: COPY.title }} handlers={handlers}>
+      <DialogContent header={header} handlers={handlers}>
         <dl className="flex flex-col">
           {rows.map((row) => (
             <div

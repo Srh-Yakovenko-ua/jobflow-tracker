@@ -61,7 +61,7 @@ export function contactRoutes({ suggestions = [], ...options }: ContactRoutesOpt
     },
     updating: {
       schema: updateContactInputSchema,
-      merge: ({ before, patch }) => contactResponseSchema.parse({ ...before, ...patch }),
+      merge: ({ stored, patch }) => contactResponseSchema.parse({ ...stored, ...patch }),
     },
   };
   return storedRoutes(spec, options);

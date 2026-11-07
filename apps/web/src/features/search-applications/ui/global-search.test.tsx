@@ -1,15 +1,16 @@
-import type { ApplicationListItem, ApplicationListResponse } from '@jobflow/shared';
-import { screen, within } from '@testing-library/react';
+import type { ApplicationListItem, ApplicationListResponse, UserSettings } from '@jobflow/shared';
+import { screen, waitFor, within } from '@testing-library/react';
 import { http, HttpResponse } from 'msw/http';
 import { delay } from 'msw/utils/delay';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { FULL_CARD } from '@/entities/application';
 import { uk } from '@/shared/i18n';
-import { apiUrl, errorReply } from '@/test/api-handlers';
+import { apiUrl, validationReply } from '@/test/api-handlers';
 import { push } from '@/test/navigation';
 import { renderInApp } from '@/test/render-in-app';
 import { server } from '@/test/server';
+import { meRoute } from '@/test/session-fixtures';
 
 import { GlobalSearch } from './global-search';
 
@@ -47,7 +48,8 @@ function answerWith(body: ApplicationListResponse) {
   return asked;
 }
 
-function renderSearch() {
+function renderSearch(settings: Partial<UserSettings> = {}) {
+  server.use(meRoute(settings));
   const user = renderInApp(
     <>
       <GlobalSearch />
@@ -81,6 +83,18 @@ describe('GlobalSearch', () => {
 
     expect(notes).toHaveProperty('value', '/');
     expect(document.activeElement).toBe(notes);
+  });
+
+  it('with single key shortcuts off, a slash leaves focus where it was and no slash hint is shown', async () => {
+    const { user, field } = renderSearch({ singleKeyShortcuts: false });
+    await waitFor(() => {
+      expect(field.getAttribute('aria-keyshortcuts')).toBeNull();
+    });
+
+    await user.keyboard('/');
+
+    expect(document.activeElement).toBe(document.body);
+    expect(document.querySelector('kbd')).toBeNull();
   });
 
   it('asks for the 8 most relevant matches and opens the hit picked with the arrows and Enter', async () => {
@@ -140,11 +154,7 @@ describe('GlobalSearch', () => {
 
   it('a failed search is announced and retried from the keyboard', async () => {
     answerWith(HITS);
-    server.use(
-      http.get(LIST_URL, () => errorReply({ status: 422, type: 'validation_error' }), {
-        once: true,
-      }),
-    );
+    server.use(http.get(LIST_URL, () => validationReply(), { once: true }));
     const { user } = await typeQuery('tri');
 
     expect((await screen.findByRole('alert')).textContent).toBe(SEARCH.error);

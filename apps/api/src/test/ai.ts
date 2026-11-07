@@ -1,8 +1,9 @@
-import type { AiCompletion, AiJobStatus, AiKind } from '@jobflow/shared';
+import type { AiCompletion, AiJobStatus, AiKind, Contact, NoteInput } from '@jobflow/shared';
 import { buildVacancyCompletion, VACANCY_SAMPLE_TEXT } from '@jobflow/shared/testing';
 
 import type { VacancyEvalCaseFile, VacancyExpected } from '../ai-eval/vacancy-cases.js';
 import type { AiUsageRow } from '../ai-usage/ai-usage.repository.js';
+import { Prisma } from '../generated/prisma/client.js';
 import type {
   AiCompleteCall,
   AiCompleteJob,
@@ -14,8 +15,10 @@ import type {
   FailAiJob,
   FinishAiJob,
   QueueSample,
+  SaveAiFailure,
   SaveAiResult,
 } from '../modules/ai/index.js';
+import type { PrismaService } from '../prisma/prisma.service.js';
 import { OLENA_ID } from './service-fixtures.js';
 
 export const VACANCY_TEXT = VACANCY_SAMPLE_TEXT;
@@ -61,12 +64,38 @@ export const VACANCY_CALL: AiCompleteCall = {
   requestId: VACANCY_JOB.requestId,
 };
 
+export const PRIVATE_NOTE: NoteInput = {
+  body: 'Рекрутерка просила не згадувати мою поточну зарплату',
+};
+
+export const RECRUITER_CHANNELS: Pick<Contact, 'email' | 'phone' | 'telegram'> = {
+  email: 'hr@acme.test',
+  phone: '+380 67 123 45 67',
+  telegram: '@acme_hr',
+};
+
 export const NVIDIA_MODEL = 'meta/llama-3.3-70b-instruct';
+
+export const FAILED_AI_RESULT = {
+  status: 'failed',
+  output: Prisma.DbNull,
+  model: '',
+  tokensIn: 0,
+  tokensOut: 0,
+  latencyMs: 0,
+} satisfies Partial<Prisma.AiResultUncheckedCreateInput>;
+
+const AI_JOB_ROW = { status: true, errorType: true, aiResultId: true, finishedAt: true } as const;
+
+export function storedAiJob(prisma: PrismaService, id: string) {
+  return prisma.aiJob.findUniqueOrThrow({ where: { id }, select: AI_JOB_ROW });
+}
 
 export const AI_USAGE_ROWS: AiUsageRow[] = [
   {
     day: '2026-11-04',
     kind: 'vacancy_parse',
+    status: 'succeeded',
     model: 'fake',
     calls: 2,
     tokensIn: 400,
@@ -74,8 +103,19 @@ export const AI_USAGE_ROWS: AiUsageRow[] = [
     avgLatencyMs: 1500,
   },
   {
+    day: '2026-11-04',
+    kind: 'vacancy_parse',
+    status: 'failed',
+    model: '',
+    calls: 1,
+    tokensIn: 0,
+    tokensOut: 0,
+    avgLatencyMs: 0,
+  },
+  {
     day: '2026-11-05',
     kind: 'match',
+    status: 'succeeded',
     model: 'fake',
     calls: 1,
     tokensIn: 50,
@@ -85,6 +125,7 @@ export const AI_USAGE_ROWS: AiUsageRow[] = [
   {
     day: '2026-11-05',
     kind: 'vacancy_parse',
+    status: 'succeeded',
     model: NVIDIA_MODEL,
     calls: 1,
     tokensIn: 20,
@@ -112,7 +153,7 @@ export type FakeAiJob = {
   finishedAt?: Date;
 };
 
-export type StoredAiResult = SaveAiResult & { id: string; userId: string };
+type StoredAiResult = SaveAiResult & { id: string; userId: string };
 
 type JobMove = { id: string; from: AiJobStatus[]; to: Partial<FakeAiJob> };
 
@@ -165,11 +206,14 @@ export class FakeAiRepository {
   }
 
   saveResult(userId: string, result: SaveAiResult): Promise<string> {
+    return this.reached(() => this.store(userId, result));
+  }
+
+  saveFailure(userId: string, failure: SaveAiFailure): Promise<void> {
     return this.reached(() => {
-      const key = resultKey(userId, result);
-      const id = this.results.get(key)?.id ?? `ai-result-${String(this.results.size + 1)}`;
-      this.results.set(key, { ...result, id, userId });
-      return id;
+      if (this.results.get(resultKey(userId, failure))?.status !== 'succeeded') {
+        this.store(userId, { ...failure, status: 'failed' });
+      }
     });
   }
 
@@ -185,6 +229,13 @@ export class FakeAiRepository {
       const job = this.jobs.get(id);
       return job?.userId === userId && job.status === 'queued' ? this.queue : null;
     });
+  }
+
+  private store(userId: string, result: SaveAiResult): string {
+    const key = resultKey(userId, result);
+    const id = this.results.get(key)?.id ?? `ai-result-${String(this.results.size + 1)}`;
+    this.results.set(key, { ...result, id, userId });
+    return id;
   }
 
   private moveJob(userId: string, { id, from, to }: JobMove): number {

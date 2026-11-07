@@ -104,6 +104,16 @@ describe('UserMenu', () => {
     expect(document.activeElement).toBe(trigger);
   });
 
+  it('below md the avatar grows to a 44 px box', async () => {
+    server.use(meRoute());
+    const { trigger } = renderUserMenu();
+    await within(trigger).findByText('АК');
+
+    expect([...trigger.classList]).toEqual(
+      expect.arrayContaining(['max-md:min-h-11', 'max-md:min-w-11']),
+    );
+  });
+
   it('shows the person icon when the session is refused', async () => {
     server.use(
       http.get(apiUrl('/auth/me'), () => errorReply({ status: 401, type: 'unauthorized' })),

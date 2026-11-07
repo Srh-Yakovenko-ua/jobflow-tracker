@@ -34,13 +34,13 @@ import {
   createStageEvents,
 } from '../../test/factories.js';
 import { callRoute, errorPathsOf } from '../../test/http.js';
-import { daysBefore, minutesAfter, minutesBefore, NOW } from '../../test/time.js';
+import { daysBefore, fixedClock, minutesAfter, minutesBefore, NOW } from '../../test/time.js';
 
 type Owner = { userId: string; searchId: string };
 
 type BoardColumnView = { count: number; companies: string[] | null };
 
-const clock: Clock = { now: () => NOW };
+const clock: Clock = fixedClock(NOW);
 
 const OLENA_STAGE_COUNTS = {
   applied: 3,

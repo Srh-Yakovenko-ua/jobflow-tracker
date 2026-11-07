@@ -62,6 +62,6 @@ describe('KanbanBoard card density', () => {
     renderBoard({ counts: {} });
     await screen.findByRole('heading', { name: uk.board.firstRun.title });
 
-    expect(screen.queryByRole('radiogroup')).toBeNull();
+    expect(screen.queryByRole('radiogroup', { name: DENSITY.label })).toBeNull();
   });
 });

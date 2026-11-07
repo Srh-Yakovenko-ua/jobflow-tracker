@@ -24,6 +24,8 @@ type CsvColumn = Readonly<{
 
 const HEADER = uk.applicationsTable.csv.header;
 
+const COLUMN = uk.applicationsTable.columns;
+
 function blankOf(value: CsvCell | null): CsvCell {
   return value ?? '';
 }
@@ -38,10 +40,13 @@ const CSV_COLUMNS: Record<DataColumnId, CsvColumn> = {
     cells: ({ application }) => [application.company, application.position],
   },
   stage: {
-    header: [HEADER.stage],
+    header: [COLUMN.stage.menu],
     cells: ({ application }) => [STAGE_LABELS[application.currentStage].labelUk],
   },
-  score: { header: [HEADER.score], cells: ({ application }) => [blankOf(application.matchScore)] },
+  score: {
+    header: [COLUMN.score.menu],
+    cells: ({ application }) => [blankOf(application.matchScore)],
+  },
   salary: {
     header: [HEADER.salaryFrom, HEADER.salaryTo, HEADER.currency],
     cells: ({ application }) => [
@@ -51,19 +56,19 @@ const CSV_COLUMNS: Record<DataColumnId, CsvColumn> = {
     ],
   },
   source: {
-    header: [HEADER.source],
+    header: [COLUMN.source.menu],
     cells: ({ application }) => [SOURCE_LABELS[application.source].labelUk],
   },
   appliedAt: {
-    header: [HEADER.appliedAt],
+    header: [COLUMN.appliedAt.menu],
     cells: ({ application, timeZone }) => [dayOf({ iso: application.appliedAt, timeZone })],
   },
   lastEventAt: {
-    header: [HEADER.lastEventAt],
+    header: [COLUMN.lastEventAt.menu],
     cells: ({ application, timeZone }) => [dayOf({ iso: application.lastEventAt, timeZone })],
   },
   daysInStage: {
-    header: [HEADER.daysInStage],
+    header: [COLUMN.daysInStage.menu],
     cells: ({ application }) => [application.daysInStage],
   },
 };

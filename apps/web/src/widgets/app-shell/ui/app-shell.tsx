@@ -4,12 +4,13 @@ import { usePathname } from 'next/navigation';
 import type { ReactNode } from 'react';
 
 import { useSilentCount } from '@/entities/application';
+import { useSingleKeyShortcuts } from '@/entities/user';
 import { FEATURE_FLAGS } from '@/shared/config';
 import { uk } from '@/shared/i18n';
 import { cn } from '@/shared/lib/cn';
 import { PageCommandsProvider } from '@/shared/lib/page-commands';
 
-import { activeHrefOf, type ShellNav, visibleNavItems } from '../model/nav-items';
+import { activeHrefOf, type ShellNav, shellTitleOf, visibleNavItems } from '../model/nav-items';
 import { shortcutsOf } from '../model/palette-commands';
 import type { SidebarState } from '../model/sidebar-cookie';
 import { SidebarStoreProvider } from '../model/sidebar-store';
@@ -40,6 +41,7 @@ function ShellSurfacesLayer({ surfaces }: Readonly<{ surfaces: ShellSurfaces }>)
           },
         }}
         shortcuts={shortcutsOf(FEATURE_FLAGS)}
+        singleKeys={useSingleKeyShortcuts()}
         handlers={{ onCloseAutoFocus: surfaces.onCloseAutoFocus }}
       />
     </>
@@ -48,9 +50,12 @@ function ShellSurfacesLayer({ surfaces }: Readonly<{ surfaces: ShellSurfaces }>)
 
 export function AppShell({ initial, children }: AppShellProps) {
   const surfaces = useShellSurfaces();
-  const activeHref = activeHrefOf(usePathname(), ITEMS);
-  const nav: ShellNav = { items: ITEMS, activeHref, badges: { silent: useSilentCount() } };
-  const active = ITEMS.find((item) => item.href === activeHref);
+  const pathname = usePathname();
+  const nav: ShellNav = {
+    items: ITEMS,
+    activeHref: activeHrefOf(pathname, ITEMS),
+    badges: { silent: useSilentCount() },
+  };
   return (
     <SidebarStoreProvider initial={initial}>
       <PageCommandsProvider>
@@ -60,7 +65,7 @@ export function AppShell({ initial, children }: AppShellProps) {
           </a>
           <Sidebar nav={nav} />
           <div className="flex min-w-0 flex-1 flex-col">
-            <ShellHeader title={active && uk.shell.nav[active.id]} />
+            <ShellHeader title={shellTitleOf(pathname, ITEMS)} />
             <main
               id="main"
               tabIndex={-1}

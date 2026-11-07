@@ -40,7 +40,9 @@
     "zustand": "5.0.16"
   },
   "devDependencies": {
+    "@babel/core": "7.29.7",
     "@jobflow/config": "workspace:*",
+    "@rolldown/plugin-babel": "0.3.0",
     "@tailwind-merge/vite": "0.0.0-dev.ab12ab17b7fbc861f04300973065b9f1cff9863b",
     "@tailwindcss/postcss": "4.3.3",
     "@tailwindcss/vite": "4.3.3",

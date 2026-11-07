@@ -15,7 +15,7 @@ import {
   DESIGN_NOTE,
   DESIGN_TIMELINE,
   EMPTY_TIMELINE,
-  timelineItemOf,
+  noteAddedOf,
   timelineRoute,
 } from '@/test/timeline-fixtures';
 
@@ -23,6 +23,10 @@ vi.mock('next/navigation', () => import('@/test/navigation'));
 vi.mock('next/link', () => import('@/test/link'));
 
 const PRIVACY = 'Нотатки ніколи не йдуть у модель';
+
+const PRIVACY_LABEL = 'Приватність нотаток';
+
+const DRAFT_AT = '2026-10-20T10:00:00Z';
 
 const XSS_BODY = '<img src=x onerror=alert(1)>';
 
@@ -34,7 +38,12 @@ const SAVED_BODY = 'Друга задача';
 
 type PageNotes = ReturnType<typeof renderApplicationPage>['notes'];
 
-type AutosaveSetup = Readonly<{ user: UserEvent; editor: HTMLTextAreaElement; notes: PageNotes }>;
+type AutosaveSetup = Readonly<{
+  user: UserEvent;
+  editor: HTMLTextAreaElement;
+  notes: PageNotes;
+  between?: () => Promise<void>;
+}>;
 
 const DESIGN_NOTES = [
   noteOf({
@@ -77,18 +86,15 @@ function saveNow() {
   });
 }
 
+function draftTimelineOf(body: string) {
+  return { items: [noteAddedOf({ id: NOTE_ID, body, createdAt: DRAFT_AT })] };
+}
+
 function storedNoteTimeline({ added, updated }: PageNotes) {
   return () => {
     const stored = [...added, ...updated].at(-1);
     if (stored === undefined) return HttpResponse.json(EMPTY_TIMELINE);
-    const note = timelineItemOf({
-      serial: 601,
-      type: 'note_added',
-      occurredAt: '2026-10-20T10:00:00Z',
-      title: 'Нотатка',
-      meta: { body: stored.body.body },
-    });
-    return HttpResponse.json({ items: [note] });
+    return HttpResponse.json(draftTimelineOf(stored.body.body));
   };
 }
 
@@ -99,10 +105,11 @@ async function renderWithStoredTimeline() {
   return { ...page, editor: editorIn(await findNotesSection()) };
 }
 
-async function autosaveTwice({ user, editor, notes }: AutosaveSetup) {
+async function autosaveTwice({ user, editor, notes, between }: AutosaveSetup) {
   await user.type(editor, FIRST_SECOND);
   saveNow();
   await screen.findByText('збережено');
+  await between?.();
   await user.type(editor, 'адача');
   saveNow();
   await waitFor(() => {
@@ -141,16 +148,20 @@ describe('ApplicationNotes', () => {
     expect(section.querySelector('img, script, [onerror]')).toBeNull();
   });
 
-  it('the lock button says notes never go to the model, in its name and in a tooltip on focus', async () => {
-    renderApplicationPage();
+  it('the lock button opens the sentence that notes never go to the model on a tap, read once', async () => {
+    const { user } = renderApplicationPage();
     const section = await findNotesSection();
-    const lock = within(section).getByRole('button', { name: PRIVACY });
+    const lock = within(section).getByRole('button', { name: PRIVACY_LABEL });
+    expect(lock.hasAttribute('aria-describedby')).toBe(false);
 
-    act(() => {
-      lock.focus();
-    });
+    await user.click(lock);
 
-    expect((await screen.findByRole('tooltip')).textContent).toBe(PRIVACY);
+    const privacy = await screen.findByRole('dialog', { name: PRIVACY_LABEL });
+    expect(privacy.textContent).toBe(PRIVACY);
+    expect(screen.getAllByText(PRIVACY)).toHaveLength(1);
+    await user.keyboard('{Escape}');
+    expect(screen.queryByRole('dialog', { name: PRIVACY_LABEL })).toBeNull();
+    expect(document.activeElement).toBe(lock);
   });
 
   it('a saved draft stays out of the list while it is open, and Ctrl+Enter moves it into the list', async () => {
@@ -182,7 +193,21 @@ describe('ApplicationNotes', () => {
     expect(await within(timelineSection()).findByText(SAVED_BODY)).toBeDefined();
   });
 
-  it('closing the card with an open draft shows its last saved body in the timeline when it opens again', async () => {
+  it('a stage move brings the open draft into the timeline, and its row follows the next autosave while the timeline holds the older body', async () => {
+    const { user, editor, notes } = await renderWithStoredTimeline();
+    const moveOnce = async () => {
+      await user.click(screen.getByRole('button', { name: 'Перенести у «фінал»' }));
+      expect(await within(timelineSection()).findByText(FIRST_SECOND)).toBeDefined();
+      server.use(timelineRoute({ timeline: draftTimelineOf(FIRST_SECOND) }));
+    };
+
+    await autosaveTwice({ user, editor, notes, between: moveOnce });
+
+    expect(await within(timelineSection()).findByText(SAVED_BODY)).toBeDefined();
+    expect(within(timelineSection()).queryByText(FIRST_SECOND)).toBeNull();
+  });
+
+  it('closing the application with an open draft shows its last saved body in the timeline when it opens again', async () => {
     const { user, editor, notes, reopen } = await renderWithStoredTimeline();
     await autosaveTwice({ user, editor, notes });
 

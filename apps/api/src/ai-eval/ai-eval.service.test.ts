@@ -43,7 +43,7 @@ async function runTwoCases(answer: FakeAiClient['answer']) {
 }
 
 describe('AiEvalService.vacancy', () => {
-  it('sends the cases one at a time through AiClient as vacancy_parse and scores them all', async () => {
+  it('sends each case text alone as the vacancy_parse payload, one call at a time, and scores them all', async () => {
     let inFlight = 0;
     let mostInFlight = 0;
     const { ai, report } = await runTwoCases(async () => {

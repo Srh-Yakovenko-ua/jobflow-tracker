@@ -1,7 +1,14 @@
 import { z } from 'zod';
 
+export const PAGINATION_LIMITS = { defaultLimit: 50, maxLimit: 100 } as const;
+
 export const paginationQuerySchema = z.object({
-  limit: z.coerce.number().int().min(1).max(100).default(50),
+  limit: z.coerce
+    .number()
+    .int()
+    .min(1)
+    .max(PAGINATION_LIMITS.maxLimit)
+    .default(PAGINATION_LIMITS.defaultLimit),
   cursor: z.string().min(1).optional(),
 });
 

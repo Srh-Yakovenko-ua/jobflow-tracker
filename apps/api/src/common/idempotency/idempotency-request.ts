@@ -5,7 +5,11 @@ import { z } from 'zod';
 
 import { validation } from '../app-error.js';
 
-export const IDEMPOTENCY_LIMITS = { replayWindowMinutes: 24 * 60, keyMaxLength: 255 } as const;
+export const IDEMPOTENCY_LIMITS = {
+  replayWindowMinutes: 24 * 60,
+  leaseMinutes: 1,
+  keyMaxLength: 255,
+} as const;
 
 export const IDEMPOTENCY_HEADER = 'Idempotency-Key';
 
@@ -16,11 +20,11 @@ export const IDEMPOTENCY_CONFLICTS = {
 
 export const idempotencyKeySchema = z.string().min(1).max(IDEMPOTENCY_LIMITS.keyMaxLength);
 
-export const storedReplySchema = z.object({ status: z.int(), body: z.json() });
+export const storedReplySchema = z.object({ body: z.json() });
 
 export type StoredReply = z.infer<typeof storedReplySchema>;
 
-export type HandlerReply = { status: number; body: unknown };
+export type HandlerReply = { body: unknown };
 
 export type KeyedRequest = Pick<Request, 'headers'>;
 
@@ -42,7 +46,7 @@ export function requestHashOf({ method, originalUrl, body }: HashedRequest): str
     .digest('hex');
 }
 
-export function storedReplyOf({ status, body }: HandlerReply): StoredReply {
+export function storedReplyOf({ body }: HandlerReply): StoredReply {
   const sent: unknown = JSON.parse(JSON.stringify(body));
-  return storedReplySchema.parse({ status, body: sent });
+  return storedReplySchema.parse({ body: sent });
 }

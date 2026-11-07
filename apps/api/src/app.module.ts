@@ -7,6 +7,7 @@ import { IdempotencyModule } from './common/idempotency/idempotency.module.js';
 import { loggerParams } from './common/logger.js';
 import { toValidationError } from './common/validation.js';
 import { configModule } from './config/app-config.js';
+import { AiModule } from './modules/ai/index.js';
 import { ApplicationsModule } from './modules/applications/index.js';
 import { AuthModule } from './modules/auth/index.js';
 import { ContactsModule } from './modules/contacts/index.js';
@@ -14,6 +15,7 @@ import { EventsModule } from './modules/events/index.js';
 import { HealthModule } from './modules/health/index.js';
 import { MaintenanceModule } from './modules/maintenance/index.js';
 import { NotesModule } from './modules/notes/index.js';
+import { ResumesModule } from './modules/resumes/index.js';
 import { ScheduleModule } from './modules/schedule/index.js';
 import { SearchesModule } from './modules/searches/index.js';
 import { SettingsModule } from './modules/settings/index.js';
@@ -41,6 +43,8 @@ import { RedisModule } from './redis/redis.module.js';
     ScheduleModule,
     SettingsModule,
     SearchesModule,
+    AiModule,
+    ResumesModule,
   ],
   providers: [
     { provide: APP_FILTER, useClass: AppExceptionFilter },

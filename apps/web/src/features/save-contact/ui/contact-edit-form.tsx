@@ -17,7 +17,7 @@ export type ContactEditFormProps = Readonly<{
 
 export function ContactEditForm({ contact, actions }: ContactEditFormProps) {
   const methods = useForm({
-    mode: 'onBlur',
+    mode: 'onTouched',
     defaultValues: formValuesOf(contact),
     resolver: zodResolver(contactPatchSchema),
   });

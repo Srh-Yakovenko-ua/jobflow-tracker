@@ -40,7 +40,14 @@ export class IdempotencyService {
   async claim(userId: string, { key, requestHash }: KeyClaim): Promise<ClaimResult> {
     const now = this.clock.now();
     const windowStart = addMinutes(now, -IDEMPOTENCY_LIMITS.replayWindowMinutes);
-    const outcome = await this.keys.claim(userId, { key, requestHash, now, windowStart });
+    const leaseStart = addMinutes(now, -IDEMPOTENCY_LIMITS.leaseMinutes);
+    const outcome = await this.keys.claim(userId, {
+      key,
+      requestHash,
+      now,
+      windowStart,
+      leaseStart,
+    });
     if (outcome.claimed) return outcome;
     return { claimed: false, reply: replyOf(outcome.holder, requestHash) };
   }

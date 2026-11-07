@@ -4,6 +4,7 @@ x-api-environment: &api-environment
   DATABASE_URL: postgresql://jobflow_app:${POSTGRES_APP_PASSWORD:-jobflow_app}@postgres:5432/jobflow
   REDIS_URL: redis://redis:6379
   S3_ENDPOINT: http://minio:9000
+  S3_PUBLIC_ENDPOINT: http://localhost:9000
   SMTP_URL: smtp://mailpit:1025
   JWT_PRIVATE_KEY_PATH: /app/.secrets/jwt-private.pem
   JWT_PUBLIC_KEY_PATH: /app/.secrets/jwt-public.pem
@@ -70,7 +71,12 @@ services:
 
   minio-init:
     image: pgsty/mc:RELEASE.2026-09-16T00-00-00Z
-    command: ['mb', '--ignore-existing', 'jobflow/resumes']
+    entrypoint: ['/bin/sh', '-c']
+    command:
+      - >-
+        mc mb --ignore-existing jobflow/resumes &&
+        echo '{"Rules":[{"ID":"expire-pending-uploads","Status":"Enabled","Filter":{"Prefix":"pending/"},"Expiration":{"Days":1}}]}' |
+        mc ilm rule import jobflow/resumes
     environment:
       MC_HOST_jobflow: http://${MINIO_ROOT_USER:-jobflow}:${MINIO_ROOT_PASSWORD:-jobflow-minio}@minio:9000
     depends_on:

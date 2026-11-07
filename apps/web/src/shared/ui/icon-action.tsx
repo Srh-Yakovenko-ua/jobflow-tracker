@@ -15,17 +15,23 @@ export type IconActionProps = Readonly<
   }
 >;
 
-export function IconAction({ label, icon: Icon, className, ...props }: IconActionProps) {
+export function IconButton({ label, icon: Icon, className, ...props }: IconActionProps) {
   return (
-    <Tooltip content={label}>
-      <button
-        type="button"
-        {...props}
-        aria-label={label}
-        className={cn(ICON_ACTION, 'size-6 active:bg-surface-3 active:text-ink', className)}
-      >
-        <Icon aria-hidden size={16} strokeWidth={1.9} />
-      </button>
+    <button
+      type="button"
+      {...props}
+      aria-label={label}
+      className={cn(ICON_ACTION, 'size-6 active:bg-surface-3 active:text-ink', className)}
+    >
+      <Icon aria-hidden size={16} strokeWidth={1.9} />
+    </button>
+  );
+}
+
+export function IconAction(props: IconActionProps) {
+  return (
+    <Tooltip content={props.label}>
+      <IconButton {...props} />
     </Tooltip>
   );
 }

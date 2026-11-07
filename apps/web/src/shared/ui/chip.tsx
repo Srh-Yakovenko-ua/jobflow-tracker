@@ -22,7 +22,7 @@ export function Chip({ label, tone, onRemove }: ChipProps) {
   return (
     <span
       className={cn(
-        'relative z-10 flex items-center gap-1.25 rounded-[7px] py-0.75 pr-1 pl-2 text-[12px] text-ink inset-ring',
+        'relative z-10 flex items-center gap-1.25 rounded-[7px] py-0.75 pr-1 pl-2 text-[12px] text-ink tabular-nums inset-ring',
         TONES[tone].chip,
       )}
     >

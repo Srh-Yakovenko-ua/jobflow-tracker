@@ -15,17 +15,44 @@ class SilentResizeObserver {
   disconnect(): void {}
 }
 
+function scrollTo(this: Element, options?: ScrollToOptions) {
+  const top = Math.max(0, options?.top ?? this.scrollTop);
+  if (top === this.scrollTop) return;
+  this.scrollTop = top;
+  this.dispatchEvent(new Event('scroll'));
+}
+
 const ELEMENT_STUBS = {
   hasPointerCapture: () => false,
   setPointerCapture: () => undefined,
   releasePointerCapture: () => undefined,
   scrollIntoView: () => undefined,
+  scrollTo,
 };
 
 for (const [name, stub] of Object.entries(ELEMENT_STUBS)) {
   if (!(name in Element.prototype)) {
     Object.defineProperty(Element.prototype, name, { value: stub, configurable: true });
   }
+}
+
+function insertTextInFocusedField(command: string, ...args: readonly unknown[]): boolean {
+  const [, text] = args;
+  const field = document.activeElement;
+  if (command !== 'insertText' || typeof text !== 'string') return false;
+  if (!(field instanceof HTMLTextAreaElement)) return false;
+  field.setRangeText(text, field.selectionStart, field.selectionEnd, 'end');
+  field.dispatchEvent(
+    new InputEvent('input', { bubbles: true, inputType: 'insertText', data: text }),
+  );
+  return true;
+}
+
+if (!('execCommand' in document)) {
+  Object.defineProperty(document, 'execCommand', {
+    value: insertTextInFocusedField,
+    configurable: true,
+  });
 }
 
 if (!('ResizeObserver' in globalThis)) {

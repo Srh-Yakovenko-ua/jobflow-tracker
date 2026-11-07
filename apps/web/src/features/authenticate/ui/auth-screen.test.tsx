@@ -4,7 +4,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { OUTAGES, rateLimitedReply } from '@/test/api-handlers';
 import { CREDENTIALS, renderAuthForm, resetSignIn } from '@/test/auth-form';
-import { axeViolations } from '@/test/dev-ui';
+import { axeViolations } from '@/test/axe';
 import { QueryProbe, waitForQuery } from '@/test/query-status';
 import { server } from '@/test/server';
 import { authRoute, oauthProvidersRoute } from '@/test/session-fixtures';

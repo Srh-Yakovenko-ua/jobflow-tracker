@@ -147,17 +147,18 @@ export function ApplicationEditForm({
   actions,
 }: ApplicationEditFormProps) {
   const methods = useForm({
-    mode: 'onBlur',
+    mode: 'onTouched',
     defaultValues: formValuesOf(application),
     resolver: zodResolver(editFormSchemaOf(application)),
   });
   const mutation = useUpdateApplicationMutation({
     applicationId: application.id,
     setError: methods.setError,
+    onSaved: actions.onDone,
   });
   const submit = methods.handleSubmit((patch) => {
     if (patch === null) actions.onDone();
-    else mutation.mutate(patch, { onSuccess: actions.onDone });
+    else mutation.save(patch);
   });
   return (
     <InlineEditorForm

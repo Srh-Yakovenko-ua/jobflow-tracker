@@ -1,12 +1,13 @@
-import { render, screen, waitFor, within } from '@testing-library/react';
-import userEvent, { type UserEvent } from '@testing-library/user-event';
+import { screen, waitFor, within } from '@testing-library/react';
+import type { UserEvent } from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { ACME_APPLICATION, applicationRoute } from '@/test/application-fixtures';
 import { holdExitAnimations } from '@/test/held-exits';
 import { back } from '@/test/navigation';
+import { notesRoute } from '@/test/note-fixtures';
 import { renderApplicationPage } from '@/test/render-application-page';
-import { InApp, renderInApp } from '@/test/render-in-app';
+import { renderInApp, renderViewInApp } from '@/test/render-in-app';
 import { server } from '@/test/server';
 import { meRoute } from '@/test/session-fixtures';
 import { EMPTY_TIMELINE, timelineRoute } from '@/test/timeline-fixtures';
@@ -23,6 +24,7 @@ function serveSheet() {
     meRoute(),
     applicationRoute({ application: ACME_APPLICATION }).handler,
     timelineRoute({ timeline: EMPTY_TIMELINE }),
+    notesRoute().handler,
   );
 }
 
@@ -116,16 +118,15 @@ describe('ApplicationSheet', () => {
     'closing with $closer hands focus back to the board card that opened the sheet',
     async ({ close }) => {
       serveSheet();
-      const { rerender } = render(<BoardUnderSheet open={false} />, { wrapper: InApp });
-      const user = userEvent.setup();
+      const { user, view } = renderViewInApp(<BoardUnderSheet open={false} />);
       const card = screen.getByRole('link', { name: BOARD_CARD });
       card.focus();
-      rerender(<BoardUnderSheet open />);
+      view.rerender(<BoardUnderSheet open />);
       await screen.findByRole('heading', { level: 1, name: ACME_APPLICATION.position });
 
       await close(user);
       expect(back).toHaveBeenCalledTimes(1);
-      rerender(<BoardUnderSheet open={false} />);
+      view.rerender(<BoardUnderSheet open={false} />);
 
       await waitFor(() => {
         expect(document.activeElement).toBe(card);

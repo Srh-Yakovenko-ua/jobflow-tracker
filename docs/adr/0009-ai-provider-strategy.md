@@ -9,7 +9,7 @@ AI parses vacancies, profiles CVs, scores matches and drafts follow ups. Real mo
 
 ## Decision
 
-The Strategy lives inside `services/ai` (Python): an `AiProvider` interface with `AnthropicProvider`, `OpenAiProvider` (NVIDIA through `base_url`) and `FakeAiProvider`, picked by `AI_PROVIDER` (the `.env.example` default is `fake`). Each kind of call has its own structured output schema. Notes and CV files never go to a model: the Node worker allow lists the inputs before the call (AI-04). Node keeps the `ai_results` cache, token accounting and the daily budget (`AI_DAILY_LIMIT`, AI-02).
+The Strategy lives inside `services/ai` (Python): an `AiProvider` interface with `AnthropicProvider`, `OpenAiProvider` (NVIDIA through `base_url`) and `FakeAiProvider`, picked by `AI_PROVIDER` (the `.env.example` default is `fake`). Each kind of call has its own structured output schema. Notes and CV files never go to a model: the Node worker allow lists the inputs before the call (AI-04). Node keeps the `ai_results` cache, token accounting and the daily budget (`AI_DAILY_LIMIT`, AI-02). The daily limit counts succeeded results and failures after the request reached the vendor (`ai_invalid_output`, `ai_timeout`), while refusals before it (`not_ready`, `unauthorized`, `forbidden`, `not_found`, `validation_error`, `rate_limited`) and vendor errors (`ai_provider_error`) do not.
 
 ## Alternatives
 
@@ -24,4 +24,4 @@ The Strategy lives inside `services/ai` (Python): an `AiProvider` interface with
 
 ## Links
 
-AI-01, AI-02, AI-03, AI-04, AI-05, AI-06, AI-07. DOC-02. Related: [ADR-0007](0007-no-server-scraping.md), [ADR-0018](0018-ai-as-a-python-service.md).
+AI-01, AI-02, AI-03, AI-04, AI-05, AI-06, AI-07, BE-45. DOC-02. Related: [ADR-0007](0007-no-server-scraping.md), [ADR-0018](0018-ai-as-a-python-service.md).

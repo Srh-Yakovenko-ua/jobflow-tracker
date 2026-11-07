@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { describe, expect, it } from 'vitest';
 
 import { uk } from '@/shared/i18n';
-import { axeViolations } from '@/test/dev-ui';
+import { axeViolations } from '@/test/axe';
 
 import { Calendar, type CalendarDays, type CalendarDone } from './calendar';
 
@@ -74,6 +74,16 @@ describe('Calendar days', () => {
     expect(screen.getByText('03.09.2026').parentElement?.textContent).toBe(
       `${COPY.selected} 03.09.2026`,
     );
+  });
+
+  it('keeps every row in a rowgroup, the weekday header in the first', () => {
+    renderCalendar();
+
+    const groups = within(screen.getByRole('grid')).getAllByRole('rowgroup');
+
+    expect(groups).toHaveLength(2);
+    expect(within(groups[0] ?? document.body).getAllByRole('columnheader')).toHaveLength(7);
+    expect(within(groups[1] ?? document.body).getAllByRole('row')).toHaveLength(5);
   });
 
   it('grows to 42 cells for a month that needs a sixth row', () => {

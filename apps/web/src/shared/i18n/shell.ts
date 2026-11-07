@@ -16,6 +16,10 @@ const PALETTE_ACTIONS = {
   shortcuts: 'Гарячі клавіші',
 } as const;
 
+const PALETTE_TITLE = 'Палітра команд';
+
+const SEARCH_LABEL = 'Пошук вакансій';
+
 export const shell = {
   nav: {
     board: 'Дошка',
@@ -31,7 +35,7 @@ export const shell = {
   collapse: 'Згорнути меню',
   expand: 'Розгорнути меню',
   silentBadge: (count: number) => countedUk(count, SILENT_CARDS),
-  addApplication: 'Додати вакансію',
+  addApplication: PALETTE_ACTIONS.add,
   userMenu: 'Меню користувача',
   logout: {
     label: 'Вийти',
@@ -41,7 +45,7 @@ export const shell = {
     },
   },
   search: {
-    label: 'Пошук вакансій',
+    label: SEARCH_LABEL,
     results: 'Знайдені вакансії',
     placeholder: 'компанія або посада',
     loading: 'Шукаю…',
@@ -49,7 +53,7 @@ export const shell = {
     retry: 'Спробувати ще раз',
   },
   palette: {
-    title: 'Палітра команд',
+    title: PALETTE_TITLE,
     label: 'Вакансії, сторінки й дії',
     placeholder: 'Вакансія, сторінка або дія',
     movePlaceholder: (company: string) => `Куди перемістити ${company}?`,
@@ -68,8 +72,10 @@ export const shell = {
   shortcuts: {
     title: PALETTE_ACTIONS.shortcuts,
     then: 'потім',
-    palette: 'Палітра команд',
-    search: 'Пошук вакансій',
+    off: 'вимкнено',
+    offNote: 'Гарячі клавіші з однієї літери вимкнено в налаштуваннях, розділ «Вигляд і тема».',
+    palette: PALETTE_TITLE,
+    search: SEARCH_LABEL,
     items: {
       add: PALETTE_ACTIONS.add,
       board: 'Відкрити дошку',

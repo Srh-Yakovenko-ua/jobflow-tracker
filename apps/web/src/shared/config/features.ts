@@ -28,6 +28,6 @@ export const FEATURE_FLAGS: FeatureFlags = {
   browserPush: false,
   emailNotifications: false,
   captureToken: false,
-  aiDataDeletion: false,
+  aiDataDeletion: true,
   accountDeletion: false,
 };

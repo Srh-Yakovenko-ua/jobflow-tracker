@@ -9,6 +9,7 @@ import { Field } from '@/shared/ui/field';
 import { Textarea } from '@/shared/ui/textarea';
 
 import { type KeyPress, markdownShortcutOf } from '../lib/markdown-shortcuts';
+import { replaceFieldText } from '../lib/replace-field-text';
 import { type NoteDraft, type NoteDraftStatus, useNoteDraft } from '../model/use-note-draft';
 
 const COPY = uk.applicationPage.notes;
@@ -45,9 +46,7 @@ function keyHandlerOf(draft: NoteDraft) {
     const next = markdownShortcutOf({ field, press });
     if (next === null || next.value.length > NOTE_LIMITS.bodyMaxLength) return;
     event.preventDefault();
-    field.value = next.value;
-    field.setSelectionRange(next.selectionStart, next.selectionEnd);
-    draft.onChange(next.value);
+    replaceFieldText({ field, next, onFallback: draft.onChange });
   };
 }
 

@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
 
 import { timelineQueryOptions } from '@/entities/application';
+import { notesQueryOptions } from '@/entities/note';
 import { meQueryOptions, useUserTimeZone } from '@/entities/user';
 
 import { timelineRowsOf } from '../lib/timeline-rows';
@@ -19,13 +20,14 @@ function useSilenceDays(): number {
 
 export function useApplicationTimeline(application: ApplicationResponse) {
   const timeline = useQuery(timelineQueryOptions(application.id));
+  const notes = useQuery(notesQueryOptions(application.id));
   const silenceDays = useSilenceDays();
   const timeZone = useUserTimeZone();
   const [mountedAt] = useState(Date.now);
   const items = timeline.data?.items ?? [];
   const load = sectionLoadOf(timeline);
   return {
-    rows: timelineRowsOf({ items, application }),
+    rows: timelineRowsOf({ items, application, notes: notes.data?.items ?? [] }),
     waiting: waitingRowOf({ application, silenceDays, timeZone }),
     count: items.length,
     now: new Date(Math.max(timeline.dataUpdatedAt, mountedAt)),
@@ -34,4 +36,4 @@ export function useApplicationTimeline(application: ApplicationResponse) {
   };
 }
 
-export type ApplicationTimeline = ReturnType<typeof useApplicationTimeline>;
+export type ApplicationTimelineState = ReturnType<typeof useApplicationTimeline>;

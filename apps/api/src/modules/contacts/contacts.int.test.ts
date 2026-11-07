@@ -25,6 +25,7 @@ import { BOHDAN } from '../../test/auth.js';
 import { callRoute, errorPathsOf, type RouteCall, statusAndDetail } from '../../test/http.js';
 import { expectReplayedCreate } from '../../test/idempotency.js';
 import { hoursLater } from '../../test/response-history.js';
+import { SCREENING_TO_TECH_INTERVIEW, TO_SCREENING } from '../../test/service-fixtures.js';
 import { minutesAfter, NOW, settableClock } from '../../test/time.js';
 import { CONTACT_SELECT } from './contacts.repository.js';
 
@@ -46,13 +47,6 @@ const OKSANA = {
 } satisfies CreateContactInput;
 
 const EDITED = { role: 'Head of Talent', phone: null };
-
-const TO_SCREENING: MoveApplicationInput = { fromStage: 'applied', toStage: 'screening' };
-
-const TO_TECH_INTERVIEW: MoveApplicationInput = {
-  fromStage: 'screening',
-  toStage: 'tech_interview',
-};
 
 const MISSING_CONTACT = [404, 'Contact not found'];
 
@@ -282,7 +276,7 @@ describe('the contacts routes', () => {
     const contact = await olenaWithContact();
 
     await moveAt(contact, { hours: 10, input: TO_SCREENING });
-    await moveAt(contact, { hours: 28, input: TO_TECH_INTERVIEW });
+    await moveAt(contact, { hours: 28, input: SCREENING_TO_TECH_INTERVIEW });
 
     expect(await responseHoursOf(contact)).toEqual([14]);
   });
@@ -294,7 +288,7 @@ describe('the contacts routes', () => {
     expect((await undoLastMove(testApp.app, contact)).status).toBe(201);
 
     await moveAt(contact, { hours: 20, input: TO_SCREENING });
-    await moveAt(contact, { hours: 38, input: TO_TECH_INTERVIEW });
+    await moveAt(contact, { hours: 38, input: SCREENING_TO_TECH_INTERVIEW });
 
     expect(await responseHoursOf(contact)).toEqual([19]);
   });
@@ -313,7 +307,7 @@ describe('the contacts routes', () => {
       select: { id: true },
     });
 
-    await moveAt(contact, { hours: 28, input: TO_TECH_INTERVIEW });
+    await moveAt(contact, { hours: 28, input: SCREENING_TO_TECH_INTERVIEW });
 
     expect(await responseHoursOf(contact)).toEqual([9]);
   });

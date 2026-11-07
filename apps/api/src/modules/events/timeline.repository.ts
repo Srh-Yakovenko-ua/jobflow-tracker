@@ -3,6 +3,7 @@ import { Injectable } from '@nestjs/common';
 
 import type { Prisma } from '../../generated/prisma/client.js';
 import { EFFECTIVE_STAGE_EVENTS } from '../../prisma/effective-stage-events.js';
+import type { InTransaction } from '../../prisma/in-transaction.js';
 import { PrismaService } from '../../prisma/prisma.service.js';
 
 const TIMELINE_SELECT = {
@@ -40,10 +41,7 @@ export type OccurrencesQuery = { applicationIds: string[]; kinds: TimelineEventK
 
 export type TimelineOfApplication = { applicationId: string };
 
-export type TimelineWrite = TimelineOfApplication & {
-  occurredAt: Date;
-  tx?: Prisma.TransactionClient;
-};
+export type TimelineWrite = TimelineOfApplication & InTransaction & { occurredAt: Date };
 
 export type InsertTimelineEvent = TimelineWrite & { record: TimelineRecord };
 

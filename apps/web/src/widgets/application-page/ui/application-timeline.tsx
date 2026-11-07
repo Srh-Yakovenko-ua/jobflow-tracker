@@ -1,6 +1,5 @@
 import type { ApplicationResponse } from '@jobflow/shared';
 import { AnimatePresence } from 'motion/react';
-import { useId } from 'react';
 
 import { formatTimelineDate } from '@/entities/application';
 import { uk } from '@/shared/i18n';
@@ -10,20 +9,21 @@ import { TextSkeleton } from '@/shared/ui/skeleton';
 import { STATE_TEXT } from '@/shared/ui/state-text';
 
 import {
-  type ApplicationTimeline as Timeline,
+  type ApplicationTimelineState,
   useApplicationTimeline,
 } from '../model/use-application-timeline';
+import { ApplicationSection } from './application-section';
 import { type TimelineEntry, TimelineEntryRow } from './timeline-row';
 
 export type ApplicationTimelineProps = Readonly<{ application: ApplicationResponse }>;
 
-type TimelineBodyProps = Readonly<{ timeline: Timeline }>;
+type TimelineBodyProps = Readonly<{ timeline: ApplicationTimelineState }>;
 
 const COPY = uk.timeline;
 
 const WAITING_ID = 'waiting';
 
-function entriesOf({ rows, waiting, now, timeZone }: Timeline): TimelineEntry[] {
+function entriesOf({ rows, waiting, now, timeZone }: ApplicationTimelineState): TimelineEntry[] {
   const dated = rows.map((row) => ({
     ...row,
     when: { label: formatTimelineDate({ at: row.at, now, timeZone }), at: row.at },
@@ -32,6 +32,7 @@ function entriesOf({ rows, waiting, now, timeZone }: Timeline): TimelineEntry[] 
   const today: TimelineEntry = {
     id: WAITING_ID,
     ...waiting,
+    metaFormat: 'text',
     tone: 'strong',
     marker: { kind: 'waiting' },
     when: { label: COPY.today, at: now },
@@ -60,31 +61,28 @@ function TimelineBody({ timeline }: TimelineBodyProps) {
 
 export function ApplicationTimeline({ application }: ApplicationTimelineProps) {
   const timeline = useApplicationTimeline(application);
-  const headingId = useId();
   const { pending, failed } = timeline.load;
-  return (
-    <section
-      aria-labelledby={headingId}
-      aria-busy={pending || undefined}
-      className="flex flex-col gap-5 pt-5 shadow-[inset_0_1px_0_var(--line-soft)]"
+  const kicker = !failed && (
+    <p
+      className={cn(
+        STATE_TEXT.eyebrow,
+        'text-ink-3 tabular-nums',
+        pending ? 'invisible' : 'animate-fade-in',
+      )}
     >
-      <div className="flex flex-col gap-1">
-        {!failed && (
-          <p
-            className={cn(
-              STATE_TEXT.eyebrow,
-              'text-ink-3 tabular-nums',
-              pending ? 'invisible' : 'animate-fade-in',
-            )}
-          >
-            {COPY.kicker(timeline.count)}
-          </p>
-        )}
-        <h2 id={headingId} className="font-display text-[24px] leading-[1.2] font-medium">
-          {COPY.heading}
-        </h2>
-      </div>
+      {COPY.kicker(timeline.count)}
+    </p>
+  );
+  return (
+    <ApplicationSection
+      title={{ text: COPY.heading, look: 'display' }}
+      header={{ before: kicker, className: 'flex flex-col gap-1' }}
+      view={{
+        className: 'flex flex-col gap-5 pt-5 shadow-[inset_0_1px_0_var(--line-soft)]',
+        busy: pending,
+      }}
+    >
       <TimelineBody timeline={timeline} />
-    </section>
+    </ApplicationSection>
   );
 }

@@ -138,7 +138,7 @@ export class ApplicationListService {
   }
 
   private async refuseUnreadableSearch(userId: string, searchId: string | undefined) {
-    if (searchId !== undefined && !(await this.repository.searchExists(userId, searchId))) {
+    if (searchId !== undefined && !(await this.repository.searchExists(userId, { searchId }))) {
       throw notFound('Search not found');
     }
   }

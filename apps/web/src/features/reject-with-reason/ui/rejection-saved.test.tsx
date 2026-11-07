@@ -11,12 +11,13 @@ import { afterEach, describe, expect, it } from 'vitest';
 
 import { applicationKeys } from '@/entities/application';
 import { notesQueryOptions } from '@/entities/note';
-import { ANY_IDEMPOTENCY_KEY, errorReply, OUTAGES } from '@/test/api-handlers';
+import { ANY_IDEMPOTENCY_KEY, errorReply, OUTAGES, validationReply } from '@/test/api-handlers';
 import {
   type MoveRouteOptions,
   reasonsSummaryRoute,
   type ReasonsSummaryRouteOptions,
 } from '@/test/board-fixtures';
+import { descriptionOf } from '@/test/field-description';
 import { noteRoute, notesRoute } from '@/test/note-fixtures';
 import { QueryProbe, StaleQuery, waitForQuery } from '@/test/query-status';
 import { ACME_TECH_INTERVIEW, recordedRejectionActions } from '@/test/rejection-fixtures';
@@ -266,7 +267,34 @@ describe('RejectionReasonDialog, note step', () => {
     expect(failed.finished).toEqual(['done']);
   });
 
-  it('a saved note reloads the notes list the vacancy card shows', async () => {
+  it('a second save with the same text after a saved note carries a new key', async () => {
+    const { user, sent } = await submitNote();
+    expect(await screen.findByText('Нотатку збережено')).toBeDefined();
+
+    await user.click(screen.getByRole('button', { name: 'Зберегти' }));
+
+    await waitFor(() => {
+      expect(sent).toEqual([LIVE_CODING_NOTE, LIVE_CODING_NOTE]);
+    });
+    expect(new Set(sent.map(({ idempotencyKey }) => idempotencyKey)).size).toBe(2);
+  });
+
+  it('a note the server refuses shows the reason at its field and the dialog stays open', async () => {
+    const { finished, sent } = await submitNote({
+      reply: () => validationReply([{ path: 'body', message: 'Note must not be blank' }]),
+    });
+    const note = screen.getByLabelText("Що варто запам'ятати");
+
+    await waitFor(() => {
+      expect(note.getAttribute('aria-invalid')).toBe('true');
+    });
+    expect(descriptionOf(note)).toBe('Note must not be blank');
+    expect(screen.getByRole('dialog')).toBeDefined();
+    expect(sent).toEqual([LIVE_CODING_NOTE]);
+    expect(finished).toEqual([]);
+  });
+
+  it('a saved note reloads the notes list the application page shows', async () => {
     const notes = noteRoute();
     const shown = notesRoute();
     server.use(notes.handler, shown.handler);

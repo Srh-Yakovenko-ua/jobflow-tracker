@@ -3,6 +3,7 @@ import type { ApplicationResponse, ContactResponse } from '@jobflow/shared';
 import { mailtoOf, telegramHandleOf, telegramUrlOf } from '@/entities/contact';
 import { uk } from '@/shared/i18n';
 import { cn } from '@/shared/lib/cn';
+import { NEW_TAB } from '@/shared/lib/web-url';
 import { CopyButton } from '@/shared/ui/copy-button';
 import { TOUCH_HEIGHT } from '@/shared/ui/touch-height';
 
@@ -32,8 +33,6 @@ const VALUE = 'text-[12.5px] font-semibold';
 
 const LINK_VALUE =
   'min-w-0 text-right wrap-anywhere text-link group-hover:underline group-active:underline';
-
-const NEW_TAB = { target: '_blank', rel: 'noreferrer' } as const;
 
 function LinkRow({ kind, link }: LinkRowProps) {
   return (

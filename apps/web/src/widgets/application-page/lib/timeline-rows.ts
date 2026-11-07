@@ -1,6 +1,7 @@
 import {
   type ApplicationResponse,
   isActiveStage,
+  type Note,
   REJECTION_REASONS,
   rejectionReasonCodeSchema,
   type ScheduledEventKind,
@@ -19,11 +20,14 @@ export type TimelineMarker =
 
 export type TimelineTone = 'muted' | 'medium' | 'strong';
 
+export type TimelineMetaFormat = 'text' | 'note';
+
 export type TimelineRow = {
   id: TimelineItem['id'];
   at: Date;
   title: string;
   meta: string | null;
+  metaFormat: TimelineMetaFormat;
   marker: TimelineMarker;
   tone: TimelineTone;
 };
@@ -31,6 +35,7 @@ export type TimelineRow = {
 export type TimelineRowsInput = {
   items: readonly TimelineItem[];
   application: ApplicationResponse;
+  notes?: readonly Note[];
 };
 
 type Meta = TimelineItem['meta'];
@@ -41,6 +46,7 @@ type MetaContext = {
   meta: Meta;
   application: ApplicationResponse;
   parsed: TimelineItem | undefined;
+  note: Note | undefined;
 };
 
 type RowLook = {
@@ -126,7 +132,11 @@ const LOOKS: Record<TimelineItemType, RowLook> = {
   followup_sent: { marker: ringed, tone: 'strong', meta: noMeta },
   interview_scheduled: { marker: ringed, tone: 'strong', meta: noMeta },
   interview_done: { marker: interviewMarker, tone: 'strong', meta: noMeta },
-  note_added: { marker: ringed, tone: 'strong', meta: ({ meta }) => textOf(meta.body) },
+  note_added: {
+    marker: ringed,
+    tone: 'strong',
+    meta: ({ meta, note }) => textOf(note?.body ?? meta.body),
+  },
   resume_attached: { marker: ringed, tone: 'strong', meta: noMeta },
 };
 
@@ -137,17 +147,23 @@ function foldedParseOf(items: readonly TimelineItem[]): TimelineItem | undefined
   return items.filter((item) => item.type === 'ai_parsed').at(-1);
 }
 
-export function timelineRowsOf({ items, application }: TimelineRowsInput): TimelineRow[] {
+export function timelineRowsOf({
+  items,
+  application,
+  notes = [],
+}: TimelineRowsInput): TimelineRow[] {
   const parsed = foldedParseOf(items);
+  const notesById = new Map(notes.map((note) => [note.id, note]));
   return items
     .filter((item) => item !== parsed)
-    .map(({ id, type, occurredAt, title, meta }) => {
+    .map(({ id, type, occurredAt, title, meta }): TimelineRow => {
       const look = LOOKS[type];
       return {
         id,
         at: new Date(occurredAt),
         title,
-        meta: look.meta({ meta, application, parsed }),
+        meta: look.meta({ meta, application, parsed, note: notesById.get(id) }),
+        metaFormat: type === 'note_added' ? 'note' : 'text',
         marker: look.marker(meta),
         tone: look.tone,
       };

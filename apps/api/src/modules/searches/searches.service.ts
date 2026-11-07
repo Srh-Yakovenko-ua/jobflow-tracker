@@ -87,13 +87,9 @@ export class SearchesService {
 
   private async lockActive(userId: string, { searchId, tx }: ActiveSearchLock): Promise<void> {
     const active = await this.repository.lockActive(userId, { tx });
-    if (active === null) {
-      throw conflict('No active search');
-    }
-    if (active.id !== searchId) {
-      const owned = await this.repository.exists(userId, { id: searchId, tx });
-      throw owned ? conflict('The search is already finished') : notFound('Search not found');
-    }
+    if (active?.id === searchId) return;
+    const owned = await this.searchApplications.searchExists(userId, { searchId, tx });
+    throw owned ? conflict('The search is already finished') : notFound('Search not found');
   }
 
   private async summaries(userId: string, { rows, now }: SummaryRequest) {

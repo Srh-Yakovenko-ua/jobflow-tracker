@@ -85,7 +85,8 @@ export class AiClient {
 
   async embed(request: AiEmbedRequest, requestId?: string): Promise<AiEmbedding> {
     const body = allowedBody(aiEmbedRequestSchema, request);
-    return aiEmbeddingSchema.parse(await this.post({ path: '/v1/embed', body, requestId }));
+    const embedding = await this.post({ path: '/v1/embed', body, requestId });
+    return checked(aiEmbeddingSchema, { value: embedding, refusal: 'ai_invalid_output' });
   }
 
   private async post({ path, body, requestId }: AiServicePost): Promise<unknown> {

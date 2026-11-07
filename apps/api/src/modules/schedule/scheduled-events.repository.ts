@@ -1,13 +1,15 @@
-import type {
-  CreateScheduledEventInput,
-  ScheduledEventStatus,
-  Stage,
-  UpdateScheduledEventInput,
+import {
+  type CreateScheduledEventInput,
+  OPEN_STAGES,
+  type ScheduledEventStatus,
+  type Stage,
+  type UpdateScheduledEventInput,
 } from '@jobflow/shared';
 import { Injectable } from '@nestjs/common';
 
 import { withoutUndefined } from '../../common/without-undefined.js';
 import type { Prisma } from '../../generated/prisma/client.js';
+import type { InTransaction } from '../../prisma/in-transaction.js';
 import { ownedChildWhere } from '../../prisma/owned-child-where.js';
 import { PrismaService } from '../../prisma/prisma.service.js';
 import type { DateRange } from '../reminders/index.js';
@@ -58,8 +60,6 @@ export type CalendarEventRow = Omit<
   company: string;
   currentStage: Stage;
 };
-
-type InTransaction = { tx?: Prisma.TransactionClient };
 
 export type ScheduledEventsOfApplication = { applicationId: string };
 
@@ -159,6 +159,7 @@ export class ScheduledEventsRepository {
       JOIN applications a ON a.id = e.application_id
       WHERE a.user_id = ${userId}::uuid AND a.deleted_at IS NULL
         AND e.status IN ('planned', 'done')
+        AND (e.status = 'done' OR a.current_stage = ANY(${[...OPEN_STAGES]}::stage[]))
         AND e.starts_at < ${to.toISOString()}::timestamptz
         AND e.starts_at + make_interval(mins => e.duration_min) > ${from.toISOString()}::timestamptz
       ORDER BY e.starts_at, e.id`;

@@ -1,3 +1,5 @@
+import { TOUCH_HEIGHT } from '@/shared/ui/touch-height';
+
 import type { DataColumnId, SELECT_COLUMN_ID } from '../model/columns';
 
 export type TableColumnId = DataColumnId | typeof SELECT_COLUMN_ID;
@@ -27,4 +29,10 @@ export const TABLE_LOOK = {
   row: 'h-11.5 cursor-pointer text-[13px] transition-colors duration-(--duration-instant) ease-standard hover:bg-surface-2 data-[state=selected]:bg-accent-tint',
   end: 'text-right',
   muted: 'text-ink-3',
+} as const;
+
+export const TOOLBAR_BUTTON = {
+  variant: 'secondary',
+  size: 'sm',
+  className: TOUCH_HEIGHT,
 } as const;

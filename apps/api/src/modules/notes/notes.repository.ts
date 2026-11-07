@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 
 import type { Prisma } from '../../generated/prisma/client.js';
+import type { InTransaction } from '../../prisma/in-transaction.js';
 import { ownedChildWhere } from '../../prisma/owned-child-where.js';
 import { PrismaService } from '../../prisma/prisma.service.js';
 
@@ -21,8 +22,6 @@ export type NoteRow = Prisma.NoteGetPayload<{ select: typeof NOTE_SELECT }>;
 export type ApplicationNotes = Prisma.ApplicationGetPayload<{
   select: typeof APPLICATION_NOTES_SELECT;
 }>;
-
-type InTransaction = { tx?: Prisma.TransactionClient };
 
 export type NotesOfApplication = { applicationId: string };
 

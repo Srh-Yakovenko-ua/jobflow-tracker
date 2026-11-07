@@ -22,6 +22,7 @@ import {
 import { uk } from '@/shared/i18n';
 
 import type { PaletteActionId } from '../model/palette-commands';
+import { RECENT_VALUE_PREFIX } from '../model/palette-filter';
 import type { PaletteRootView } from '../model/use-command-palette';
 import type { PaletteRootActions } from '../model/use-palette-runs';
 import { PaletteGroup, PaletteRow } from './palette-row';
@@ -57,7 +58,7 @@ function RecentGroup({ view, actions }: PaletteRootPageProps) {
         <PaletteRow
           key={recent.id}
           item={{
-            value: `recent:${recent.id}`,
+            value: `${RECENT_VALUE_PREFIX}${recent.id}`,
             label: recent.position,
             keywords: [recent.company],
             icon: History,
@@ -77,13 +78,15 @@ function FoundGroup({ view, actions }: PaletteRootPageProps) {
   const search = foundBy(view);
   const items = search?.data?.items ?? [];
   if (search === undefined || (items.length === 0 && !search.isError)) return null;
+  const stale = search.isPlaceholderData;
   return (
     <PaletteGroup label={PALETTE.groups.applications} forceMount={items.length === 0}>
       {items.map((application) => (
         <ApplicationResultItem
-          key={application.id}
+          key={`${application.id}:${stale ? 'stale' : 'fresh'}`}
           application={application}
           onPick={actions.onOpenApplication}
+          disabled={stale}
         />
       ))}
       <SearchRetryItem search={search} forceMount />

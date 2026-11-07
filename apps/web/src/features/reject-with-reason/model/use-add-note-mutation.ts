@@ -1,39 +1,42 @@
 import type { ApplicationCard, NoteInput } from '@jobflow/shared';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQueryClient } from '@tanstack/react-query';
 import type { UseFormSetError } from 'react-hook-form';
 
 import { timelineKeys } from '@/entities/application';
 import { addNote, noteKeys } from '@/entities/note';
-import { ApiError, applyFieldErrors, useSubmitKey } from '@/shared/api';
-import { uk } from '@/shared/i18n';
-import { showErrorToast } from '@/shared/ui/error-toast';
+import { type GuardedSave, useGuardedSave, useSubmitKey } from '@/shared/api';
 
 export type UseAddNoteMutationOptions = Readonly<{
   applicationId: ApplicationCard['id'];
   setError: UseFormSetError<NoteInput>;
+  onSaved: () => void;
 }>;
 
 const NOTE_FIELDS = ['body'] as const;
 
-export function useAddNoteMutation({ applicationId, setError }: UseAddNoteMutationOptions) {
+function noteKeyOf(applicationId: ApplicationCard['id']) {
+  return ['rejection-note', applicationId] as const;
+}
+
+export function useAddNoteMutation({
+  applicationId,
+  setError,
+  onSaved,
+}: UseAddNoteMutationOptions): GuardedSave<NoteInput> {
   const queryClient = useQueryClient();
   const submitKey = useSubmitKey();
-  return useMutation({
-    mutationFn: (body: NoteInput) =>
+  return useGuardedSave({
+    mutationKey: noteKeyOf(applicationId),
+    request: (body: NoteInput) =>
       addNote({ applicationId, body, idempotencyKey: submitKey.keyFor(body) }),
-    onSuccess: () => {
+    form: { fields: NOTE_FIELDS, setError },
+    onSuccess: async () => {
       submitKey.reset();
-      return Promise.all([
+      await Promise.all([
         queryClient.invalidateQueries({ queryKey: timelineKeys.detail(applicationId) }),
         queryClient.invalidateQueries({ queryKey: noteKeys.list(applicationId) }),
       ]);
-    },
-    onError: (error) => {
-      if (error instanceof ApiError && error.status === 422) {
-        applyFieldErrors({ error, fields: NOTE_FIELDS, setError });
-        return;
-      }
-      showErrorToast(uk.errors.saveFailed);
+      onSaved();
     },
   });
 }

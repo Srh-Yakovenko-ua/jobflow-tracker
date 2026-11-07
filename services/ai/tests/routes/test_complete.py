@@ -70,7 +70,7 @@ async def test_repairs_invalid_json_with_one_more_call_and_sums_the_tokens() -> 
     ]
 
 
-async def test_answers_422_when_the_repaired_output_is_still_invalid() -> None:
+async def test_answers_invalid_output_when_the_repair_is_still_invalid() -> None:
     only_company = json.dumps({"company": PARSED_VACANCY["company"]})
     fake = FakeAiProvider(replies=["not json", only_company])
 
@@ -78,8 +78,8 @@ async def test_answers_422_when_the_repaired_output_is_still_invalid() -> None:
 
     assert (response.status_code, len(fake.requests)) == (422, 2)
     assert response.json() == {
-        "type": "validation_error",
-        "title": "Invalid request",
+        "type": "ai_invalid_output",
+        "title": "Invalid AI output",
         "status": 422,
         "detail": "The model output did not match the schema after one repair",
         "errors": [
@@ -141,8 +141,10 @@ async def test_answers_404_for_an_unknown_kind() -> None:
 async def test_answers_422_with_paths_for_an_invalid_kind_input() -> None:
     response = await post_completion({"input": {"text": "   "}, "maxTokens": 0})
 
-    assert (response.status_code, response.json()["errors"]) == (
+    body = response.json()
+    assert (response.status_code, body["type"], body["errors"]) == (
         422,
+        "validation_error",
         [
             {
                 "path": "maxTokens",
@@ -168,6 +170,30 @@ async def test_scrubs_emails_and_phones_from_every_message_sent_to_the_model() -
         "<vacancy_text>\nAcme hires. Write to [email] or call [phone]\n</vacancy_text>"
     )
     assert fake.requests[1].messages[1].content == "Mail [email]"
+
+
+async def test_scrubs_a_resume_before_the_model_sees_it() -> None:
+    fake = FakeAiProvider()
+    resume = (
+        "Olena Koval, React developer\n"
+        "olena.koval@example.com | +380 67 123 45 67 | @olena_dev\n"
+        "вул. Хрещатик, 22, кв. 5, Київ\n"
+        "5 years with React and Node.js"
+    )
+
+    response = await post_completion(
+        {"input": {"text": resume}}, app=build_app(provider=fake)
+    )
+
+    assert (response.status_code, fake.requests[0].messages[0].content) == (
+        200,
+        (
+            "<vacancy_text>\nOlena Koval, React developer\n"
+            "[email] | [phone] | [telegram]\n"
+            "[address], Київ\n"
+            "5 years with React and Node.js\n</vacancy_text>"
+        ),
+    )
 
 
 async def test_answers_429_once_the_service_limit_is_reached() -> None:

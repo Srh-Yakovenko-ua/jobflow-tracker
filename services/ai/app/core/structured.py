@@ -7,7 +7,7 @@ from pydantic import BaseModel, ValidationError
 
 from app.contracts.embed_request import EmbedRequest, Text
 from app.contracts.embed_response import EmbedResponse
-from app.core.errors import AppError, field_errors, timeout_error
+from app.core.errors import INVALID_OUTPUT, AppError, field_errors, timeout_error
 from app.core.limiter import RateLimiter
 from app.core.pii import scrub
 from app.prompts.base import BuiltPrompt
@@ -85,6 +85,7 @@ def repaired_output(model: type[BaseModel], answer: Completion) -> BaseModel:
     except ValidationError as error:
         raise AppError(
             422,
+            problem=INVALID_OUTPUT,
             detail="The model output did not match the schema after one repair",
             errors=field_errors(error.errors()),
         ) from error

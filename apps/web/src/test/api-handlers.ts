@@ -88,6 +88,10 @@ export function errorReply(options: ErrorBodyOptions) {
   return HttpResponse.json(errorBody(options), { status: options.status });
 }
 
+export function validationReply(errors?: ErrorResponse['errors']) {
+  return errorReply({ status: 422, type: 'validation_error', errors });
+}
+
 export const OUTAGES: readonly Outage[] = [
   {
     name: 'answers 500',

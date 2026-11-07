@@ -4,6 +4,7 @@ import { describe, expect, it } from 'vitest';
 
 import { timelineKeys } from '@/entities/application';
 import { errorReply } from '@/test/api-handlers';
+import { notesRoute } from '@/test/note-fixtures';
 import { renderHookInApp } from '@/test/render-in-app';
 import { server } from '@/test/server';
 import { meRoute } from '@/test/session-fixtures';
@@ -16,6 +17,7 @@ const TIMELINE_KEY = timelineKeys.detail(DESIGN_TIMELINE_APPLICATION.id);
 const NOT_FOUND = () => errorReply({ status: 404, type: 'not_found' });
 
 function renderTimeline() {
+  server.use(notesRoute().handler);
   const { result } = renderHookInApp(() => ({
     timeline: useApplicationTimeline(DESIGN_TIMELINE_APPLICATION),
     status: useQueryClient().getQueryState(TIMELINE_KEY)?.status,

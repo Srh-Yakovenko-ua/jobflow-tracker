@@ -23,4 +23,4 @@ export function useApplicationNotes(application: ApplicationResponse) {
   };
 }
 
-export type ApplicationNotes = ReturnType<typeof useApplicationNotes>;
+export type ApplicationNotesState = ReturnType<typeof useApplicationNotes>;

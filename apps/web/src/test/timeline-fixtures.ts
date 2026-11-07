@@ -2,6 +2,7 @@ import {
   type ApplicationResponse,
   type ApplicationTimelineResponse,
   applicationTimelineResponseSchema,
+  type Note,
   type RejectionReasonCode,
   type Stage,
   type TimelineItem,
@@ -43,6 +44,21 @@ export function stageMoveOf({ reasonCode, comment, ...move }: StageMoveSeed): Ti
   return { ...move, reasonCode: reasonCode ?? null, comment: comment ?? null };
 }
 
+export function noteAddedOf({
+  id,
+  body,
+  createdAt,
+}: Pick<Note, 'id' | 'body' | 'createdAt'>): TimelineItem {
+  return {
+    id,
+    type: 'note_added',
+    occurredAt: createdAt,
+    title: 'Нотатка',
+    meta: { body },
+    actor: 'user',
+  };
+}
+
 export const EMPTY_TIMELINE: ApplicationTimelineResponse = { items: [] };
 
 export const LONG_COMMENT = `https://jobs.example.com/${'x'.repeat(975)}`;
@@ -60,13 +76,7 @@ export const DESIGN_TIMELINE_APPLICATION: ApplicationResponse = {
 
 export const DESIGN_TIMELINE = applicationTimelineResponseSchema.parse({
   items: [
-    timelineItemOf({
-      serial: 309,
-      type: 'note_added',
-      occurredAt: '2026-09-03T12:40:00Z',
-      title: 'Нотатка',
-      meta: { body: DESIGN_NOTE },
-    }),
+    noteAddedOf({ id: fixtureIdOf(309), body: DESIGN_NOTE, createdAt: '2026-09-03T12:40:00Z' }),
     timelineItemOf({
       serial: 308,
       type: 'interview_done',

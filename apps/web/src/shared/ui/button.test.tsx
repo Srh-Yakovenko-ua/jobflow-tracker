@@ -39,6 +39,26 @@ describe('Button', () => {
     expect(onClick).not.toHaveBeenCalled();
   });
 
+  it('aria-disabled dims the button like disabled and keeps it in the tab order', async () => {
+    const user = userEvent.setup();
+    render(<Button aria-disabled>{LABELS.addVacancy}</Button>);
+
+    await user.tab();
+
+    const button = screen.getByRole('button', { name: LABELS.addVacancy });
+    expect(button.className.split(' ')).toEqual(
+      expect.arrayContaining([
+        'bg-surface-3',
+        'text-ink-3/60',
+        'shadow-none',
+        'inset-ring-line-soft',
+        'aria-disabled:cursor-not-allowed',
+      ]),
+    );
+    expect(button).toHaveProperty('disabled', false);
+    expect(document.activeElement).toBe(button);
+  });
+
   it('the primary hover switches its text to paper in dark, keeping 4.5:1 on accent-press', () => {
     render(<Button>{LABELS.addVacancy}</Button>);
 

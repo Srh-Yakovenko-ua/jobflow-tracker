@@ -4,8 +4,9 @@ export { ApplicationsModule } from './applications.module.js';
 export { APPLICATIONS_OPENAPI_PATHS } from './applications.openapi.js';
 export type { ApplicationRow } from './applications.repository.js';
 export { ApplicationsService } from './applications.service.js';
+export type { InSearch } from './search-applications.repository.js';
 export type { HandOver, SearchTotals, SearchTotalsOf } from './search-applications.service.js';
-export { SearchApplicationsService } from './search-applications.service.js';
+export { NO_TOTALS, SearchApplicationsService } from './search-applications.service.js';
 export type {
   EffectiveStageEvent,
   StageEventPlan,

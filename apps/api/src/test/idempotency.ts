@@ -3,6 +3,7 @@ import { randomUUID } from 'node:crypto';
 import type { NestExpressApplication } from '@nestjs/platform-express';
 import { expect } from 'vitest';
 
+import { IDEMPOTENCY_HEADER } from '../common/idempotency/idempotency-request.js';
 import { callRoute, type RouteCall } from './http.js';
 
 export type ReplayedCreate = {
@@ -11,7 +12,7 @@ export type ReplayedCreate = {
   countRows: () => Promise<number[]>;
 };
 
-export const keyHeaders = (key: string = randomUUID()) => ({ 'Idempotency-Key': key });
+export const keyHeaders = (key: string = randomUUID()) => ({ [IDEMPOTENCY_HEADER]: key });
 
 export async function expectReplayedCreate({
   app,

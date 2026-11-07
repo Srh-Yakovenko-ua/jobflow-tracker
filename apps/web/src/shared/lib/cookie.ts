@@ -9,3 +9,8 @@ export function writeCookie({ name, value }: CookieWrite): void {
 export function clearCookie(name: string): void {
   document.cookie = `${name}=; Path=/; Max-Age=0; SameSite=Lax`;
 }
+
+export function hasCookie(name: string): boolean {
+  if (typeof document === 'undefined') return false;
+  return document.cookie.split('; ').some((entry) => entry.startsWith(`${name}=`));
+}

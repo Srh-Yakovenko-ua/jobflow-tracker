@@ -1,8 +1,10 @@
-import { screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, screen, waitFor } from '@testing-library/react';
+import type { HttpResponseResolver } from 'msw';
 import { HttpResponse } from 'msw/http';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { errorReply } from '@/test/api-handlers';
+import { API_CLIENT_LIMITS } from '@/shared/api';
+import { errorReply, OUTAGES } from '@/test/api-handlers';
 import { ACME_APPLICATION } from '@/test/application-fixtures';
 import { boardRoute, type ColumnCounts } from '@/test/board-fixtures';
 import {
@@ -15,7 +17,7 @@ import {
 import { stubMediaQuery } from '@/test/media-query';
 import { push } from '@/test/navigation';
 import { renderInApp } from '@/test/render-in-app';
-import { pinScheduleClock } from '@/test/schedule-dialog';
+import { pinScheduleClock, pinScheduleClockWithTimeouts } from '@/test/schedule-dialog';
 import { server } from '@/test/server';
 import { meRoute } from '@/test/session-fixtures';
 
@@ -49,21 +51,25 @@ const NEXT_KYIV_WEEK = { from: '2026-11-08T22:00:00.000Z', to: '2026-11-15T22:00
 
 const TRANSIENT_RETRY_MS = 3000;
 
+const ME_ATTEMPTS = 2;
+
 type CalendarSetup = CalendarRouteOptions & {
   narrow?: boolean;
   silent?: ColumnCounts;
   timezone?: string;
+  me?: HttpResponseResolver;
 };
 
 function renderCalendar({
   narrow = false,
   silent = {},
   timezone = 'Europe/Kyiv',
+  me,
   ...route
 }: CalendarSetup = {}) {
   stubMediaQuery({ query: '(width < 48rem)', matches: narrow });
   const calendar = calendarRoute(route);
-  server.use(meRoute({ timezone }), calendar.handler, boardRoute({ counts: silent }).handler);
+  server.use(meRoute(me ?? { timezone }), calendar.handler, boardRoute({ counts: silent }).handler);
   const user = renderInApp(<CalendarPage />);
   return { user, sent: calendar.sent };
 }
@@ -104,9 +110,27 @@ describe('CalendarPage', () => {
     });
 
     await waitForAsked({ from: '2026-11-02T05:00:00.000Z', to: '2026-11-09T05:00:00.000Z' }, sent);
+    expect(sent).toEqual([{ from: '2026-11-02T05:00:00.000Z', to: '2026-11-09T05:00:00.000Z' }]);
     const pill = (await screen.findByText(INTERVIEW.title)).parentElement;
     expect(pill?.textContent).toContain('04:00');
   });
+
+  it.each(OUTAGES)(
+    'when the settings request $name, asks for the week once in the browser zone',
+    async ({ reply }) => {
+      pinScheduleClockWithTimeouts();
+      const { sent } = renderCalendar({ me: reply });
+      await act(() =>
+        vi.advanceTimersByTimeAsync(
+          ME_ATTEMPTS * API_CLIENT_LIMITS.requestTimeoutMs + TRANSIENT_RETRY_MS,
+        ),
+      );
+
+      await waitFor(() => {
+        expect(sent).toHaveLength(1);
+      });
+    },
+  );
 
   it('opens on the agenda list under 48rem', async () => {
     const { sent } = renderCalendar({ narrow: true });
@@ -125,6 +149,22 @@ describe('CalendarPage', () => {
     await user.click(viewRadio('Місяць'));
 
     await waitForAsked({ from: '2026-10-25T22:00:00.000Z', to: '2026-12-06T22:00:00.000Z' }, sent);
+  });
+
+  it('marks Сьогодні as already shown on this week, not on the next one or on October whose trailing week holds today', async () => {
+    const { user, sent } = renderCalendar();
+    await waitForAsked(KYIV_WEEK, sent);
+    const today = screen.getByRole('button', { name: 'Сьогодні' });
+    expect(today.getAttribute('aria-disabled')).toBe('true');
+
+    await user.click(screen.getByRole('button', { name: 'Наступний період' }));
+    await waitForAsked(NEXT_KYIV_WEEK, sent);
+    expect(today.getAttribute('aria-disabled')).toBe('false');
+    await user.click(viewRadio('Місяць'));
+    await user.click(screen.getByRole('button', { name: 'Попередній період' }));
+    await waitForAsked({ from: '2026-09-27T21:00:00.000Z', to: '2026-11-08T22:00:00.000Z' }, sent);
+
+    expect(today.getAttribute('aria-disabled')).toBe('false');
   });
 
   it.each([
@@ -160,6 +200,22 @@ describe('CalendarPage', () => {
     await user.click(await screen.findByText(INTERVIEW.title));
 
     expect(push).toHaveBeenCalledWith(`/applications/${ACME_APPLICATION.id}`);
+  });
+
+  it('focuses a week grid interview whose press the drag kept from focusing, before its card opens, so closing the card lands there', async () => {
+    renderCalendar({ items: [INTERVIEW] });
+    const title = await screen.findByText(INTERVIEW.title);
+    const event = title.closest<HTMLElement>('[tabindex]');
+    let opener: Element | null = null;
+    push.mockImplementationOnce(() => {
+      opener = document.activeElement;
+    });
+
+    fireEvent.click(title);
+
+    expect(event).not.toBeNull();
+    expect(opener).toBe(event);
+    expect(document.activeElement).toBe(event);
   });
 
   it('opens the vacancy card of an event reached with the keyboard', async () => {
@@ -221,6 +277,7 @@ describe('CalendarPage', () => {
 
     expect(await screen.findAllByText(INTERVIEW.title)).toHaveLength(1);
     expect(screen.getByTitle('ще 2').textContent).toBe('+2');
+    expect(screen.getByRole('button', { name: 'ще 2' })).toBeDefined();
   });
 
   it('names the timed rows of the week grid in Ukrainian for a screen reader', async () => {

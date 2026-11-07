@@ -11,7 +11,7 @@ import { describe, expect, it } from 'vitest';
 
 import { Clock } from '../../common/clock.js';
 import { BOHDAN_ID, OLENA_ID, SEARCH_ID } from '../../test/service-fixtures.js';
-import { daysBefore, NOW } from '../../test/time.js';
+import { daysBefore, fixedClock, NOW } from '../../test/time.js';
 import { applicationCursorSchema, type ApplicationListRequest } from './application-cursor.js';
 import {
   type ApplicationListFilter,
@@ -29,6 +29,7 @@ import {
   type SearchQuery,
   type SnippetQuery,
 } from './application-search.repository.js';
+import type { InSearch } from './search-applications.repository.js';
 
 type OwnedSearch = { userId: string; id: string };
 
@@ -157,7 +158,7 @@ class FakeApplicationListRepository {
     return Promise.resolve(this.data.silenceDays);
   }
 
-  searchExists(userId: string, searchId: string): Promise<boolean> {
+  searchExists(userId: string, { searchId }: InSearch): Promise<boolean> {
     return Promise.resolve(
       this.data.searches.some((search) => search.userId === userId && search.id === searchId),
     );
@@ -221,7 +222,7 @@ async function serviceWith({
     .overrideProvider(ApplicationSearchRepository)
     .useValue(search)
     .overrideProvider(Clock)
-    .useValue({ now: () => NOW })
+    .useValue(fixedClock(NOW))
     .compile();
   return { repository, search, service: moduleRef.get(ApplicationListService) };
 }

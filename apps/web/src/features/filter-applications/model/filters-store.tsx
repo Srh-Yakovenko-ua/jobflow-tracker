@@ -21,6 +21,7 @@ export type ApplicationFiltersActions = Readonly<{
   setSalaryFrom: (text: string) => void;
   remove: (chip: FilterChip) => void;
   reset: () => void;
+  follow: (filters: ApplicationFilters) => void;
 }>;
 
 export type ApplicationFiltersStore = Readonly<{
@@ -65,6 +66,9 @@ export function createApplicationFiltersStore(initial: ApplicationFilters) {
         reset: () => {
           commit({});
         },
+        follow: (filters) => {
+          set({ filters });
+        },
       },
     };
   });
@@ -75,4 +79,4 @@ const { Provider, useStoreSelector } = createStoreContext({
   create: createApplicationFiltersStore,
 });
 
-export { Provider as ApplicationFiltersProvider, useStoreSelector as useApplicationFilters };
+export { Provider as FiltersStoreProvider, useStoreSelector as useApplicationFilters };

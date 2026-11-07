@@ -22,13 +22,7 @@ vi.mock('next/navigation', () => import('@/test/navigation'));
 
 const SECTIONS = ['Пошук і тиша', 'Повідомлення', 'AI та приватність', 'Вигляд і тема', 'Акаунт'];
 
-const HIDDEN_ITEMS = [
-  'Пуші в браузері',
-  'Листи на пошту',
-  'Токен букмарклета',
-  'Видалити всі AI-результати',
-  'Видалити акаунт',
-];
+const HIDDEN_ITEMS = ['Пуші в браузері', 'Листи на пошту', 'Токен букмарклета', 'Видалити акаунт'];
 
 afterEach(() => {
   window.location.hash = '';
@@ -91,12 +85,27 @@ describe('SettingsPage', () => {
     }
   });
 
-  it('shows the name and the email read-only, and lists what the model sees', async () => {
+  it('shows the name and the email read-only', async () => {
     await renderLoadedSettings();
 
     expect(within(regionOf('Акаунт')).getByText('Андрій Ковальчук')).toBeDefined();
     expect(within(regionOf('Акаунт')).getByText('andrii@example.com')).toBeDefined();
-    expect(within(regionOf('AI та приватність')).getAllByRole('listitem')).toHaveLength(3);
+  });
+
+  it('lists only what the code sends to the model and offers to delete every AI result', async () => {
+    await renderLoadedSettings();
+    const aiPrivacy = regionOf('AI та приватність');
+
+    expect(
+      within(aiPrivacy)
+        .getAllByRole('listitem')
+        .map((item) => item.textContent),
+    ).toEqual([
+      'Текст вакансії: з нього модель дістає компанію, посаду, зарплату, формат роботи й стек.',
+    ]);
+    expect(
+      within(aiPrivacy).getByRole('button', { name: 'Видалити всі AI-результати' }),
+    ).toBeDefined();
   });
 
   it('asks only for the session and the suggestions on open', async () => {
@@ -131,6 +140,21 @@ describe('SettingsPage', () => {
       expect(routes.patches).toEqual([{ theme: 'dark' }]);
     });
     expect(within(regionOf('Вигляд і тема')).getByRole('status').textContent).toBe('Збережено');
+  });
+
+  it('«Гарячі клавіші з однієї літери» is on by default and turning it off saves only that field', async () => {
+    const { user, routes } = await renderLoadedSettings();
+    const singleKeys = within(regionOf('Вигляд і тема')).getByRole('switch', {
+      name: /Гарячі клавіші з однієї літери/,
+    });
+    expect(singleKeys.getAttribute('aria-checked')).toBe('true');
+
+    await user.click(singleKeys);
+
+    await waitFor(() => {
+      expect(routes.patches).toEqual([{ singleKeyShortcuts: false }]);
+    });
+    expect(singleKeys.getAttribute('aria-checked')).toBe('false');
   });
 
   it('«Вийти на всіх пристроях» ends every session and goes to the login page', async () => {
