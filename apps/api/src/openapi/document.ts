@@ -9,6 +9,7 @@ import { TIMELINE_OPENAPI_PATHS } from '../modules/events/index.js';
 import { HEALTH_OPENAPI_PATHS } from '../modules/health/index.js';
 import { MAINTENANCE_OPENAPI_PATHS } from '../modules/maintenance/index.js';
 import { NOTES_OPENAPI_PATHS } from '../modules/notes/index.js';
+import { RESUMES_OPENAPI_PATHS } from '../modules/resumes/index.js';
 import { SCHEDULE_OPENAPI_PATHS } from '../modules/schedule/index.js';
 import { SEARCHES_OPENAPI_PATHS } from '../modules/searches/index.js';
 import { SETTINGS_OPENAPI_PATHS } from '../modules/settings/index.js';
@@ -25,6 +26,7 @@ export const API_OPENAPI_PATHS = [
   ...NOTES_OPENAPI_PATHS,
   ...CONTACTS_OPENAPI_PATHS,
   ...SCHEDULE_OPENAPI_PATHS,
+  ...RESUMES_OPENAPI_PATHS,
   ...AI_OPENAPI_PATHS,
   ...MAINTENANCE_OPENAPI_PATHS,
 ];
@@ -36,6 +38,10 @@ const TAGS = [
   { name: 'searches', description: 'The job searches of the signed-in user and their totals' },
   { name: 'applications', description: 'The Applications of the signed-in user' },
   { name: 'calendar', description: 'Scheduled events and follow-ups across Applications' },
+  {
+    name: 'resumes',
+    description: 'Resume files of the signed-in user, uploaded straight to storage',
+  },
   { name: 'ai', description: 'The AI results of the signed-in user' },
   { name: 'dev', description: 'Development and test only' },
 ];

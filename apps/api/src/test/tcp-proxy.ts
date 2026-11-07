@@ -1,7 +1,16 @@
 import { once } from 'node:events';
 import { connect, createServer, type Server, type Socket } from 'node:net';
+import { setTimeout as delay } from 'node:timers/promises';
 
 export type TcpProxy = { readonly url: string; silence(): void; close(): Promise<void> };
+
+export function outcomeWithin(call: Promise<unknown>, limitMs: number): Promise<unknown> {
+  const settled = call.then(
+    () => 'answered',
+    (error: unknown) => error,
+  );
+  return Promise.race([settled, delay(limitMs, 'still pending', { ref: false })]);
+}
 
 const DEFAULT_PORTS: Partial<Record<string, number>> = {
   'redis:': 6379,
