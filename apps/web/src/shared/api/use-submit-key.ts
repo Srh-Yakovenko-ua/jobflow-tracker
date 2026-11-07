@@ -1,3 +1,5 @@
+'use client';
+
 import { useRef } from 'react';
 
 export type SubmitKey = Readonly<{ keyFor: (body: unknown) => string; reset: () => void }>;
