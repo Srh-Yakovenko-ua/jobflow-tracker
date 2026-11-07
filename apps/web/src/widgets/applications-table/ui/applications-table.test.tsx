@@ -66,6 +66,17 @@ const COLUMN_NAMES = [
   'Днів на етапі',
 ] as const;
 
+const TOOLBAR_CONTROLS = [
+  { name: 'Джерело: усі', desktop: 'h-8.5' },
+  { name: 'Фільтри', desktop: 'h-8.5' },
+  { name: 'Колонки', desktop: 'h-control-sm' },
+  { name: 'Завантажити CSV з поточним поданням', desktop: 'h-control-sm' },
+] as const;
+
+const TOUCH_BOX = 'max-md:min-h-11';
+
+const RETRY_WAIT = { timeout: 2500 } as const;
+
 type TableRender = { handlers: readonly RequestHandler[]; filters?: ApplicationFilters };
 
 function renderTableOver({ handlers, filters = {} }: TableRender) {
@@ -122,6 +133,14 @@ function sentQueryOf(query: string | undefined): Record<string, string> {
   return Object.fromEntries(new URLSearchParams(query));
 }
 
+function findRetry(): Promise<HTMLElement> {
+  return screen.findByRole('button', { name: 'Спробувати ще раз' }, RETRY_WAIT);
+}
+
+function classesOf(element: HTMLElement): string[] {
+  return element.className.split(' ');
+}
+
 afterEach(() => {
   window.history.replaceState(null, '', '/');
   vi.restoreAllMocks();
@@ -173,11 +192,7 @@ describe('ApplicationsTable rows', () => {
       errorReply({ status: 500, type: 'internal_error' }),
     );
     const user = renderTableOver({ handlers: [failing] });
-    const retry = await screen.findByRole(
-      'button',
-      { name: 'Спробувати ще раз' },
-      { timeout: 2500 },
-    );
+    const retry = await findRetry();
 
     server.use(pagedListRoute({ items: SCORED }).handler);
     await user.click(retry);
@@ -193,11 +208,7 @@ describe('ApplicationsTable rows', () => {
     );
     const list = pagedListRoute({ items: SCORED, pageSize: 2 });
     const user = renderTableOver({ handlers: [laterPageFails, list.handler] });
-    const retry = await screen.findByRole(
-      'button',
-      { name: 'Спробувати ще раз' },
-      { timeout: 2500 },
-    );
+    const retry = await findRetry();
     expect(screen.queryByRole('table')).toBeNull();
 
     server.use(pagedListRoute({ items: SCORED, pageSize: 2 }).handler);
@@ -251,6 +262,35 @@ describe('ApplicationsTable sorting and columns', () => {
 
     expect(checkboxNamed('Вакансія').hasAttribute('disabled')).toBe(true);
     expect(checkboxNamed('Етап').hasAttribute('disabled')).toBe(false);
+  });
+
+  it('below md the toolbar menus, Колонки, CSV and every sort header grow to a 44 px box, above it the toolbar keeps its drawn height', async () => {
+    await tableReady({ items: SCORED });
+    const sortButtons = screen
+      .getAllByRole('columnheader')
+      .flatMap((header) => within(header).queryAllByRole('button'));
+
+    for (const { name, desktop } of TOOLBAR_CONTROLS) {
+      expect(classesOf(screen.getByRole('button', { name })), name).toEqual(
+        expect.arrayContaining([desktop, TOUCH_BOX]),
+      );
+    }
+    expect(sortButtons).toHaveLength(8);
+    for (const button of sortButtons) {
+      expect(classesOf(button), button.textContent).toContain(TOUCH_BOX);
+    }
+  });
+
+  it('below md every company link spans a 44 px box that is at least 44 px wide, inside the drawn row height', async () => {
+    await tableReady({ items: SCORED });
+
+    for (const link of screen.getAllByRole('link')) {
+      const box = link.parentElement;
+      expect(box === null ? [] : classesOf(box), link.textContent).toContain(TOUCH_BOX);
+      expect(classesOf(link), link.textContent).toEqual(
+        expect.arrayContaining(['row-span-full', 'max-md:min-w-11']),
+      );
+    }
   });
 
   it('CSV saves a UTF-8 file with a BOM, named by the day, with the shown columns in the shown order', async () => {

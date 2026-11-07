@@ -25,7 +25,7 @@ export function ShellSkeleton({ initial }: ShellSkeletonProps) {
               'rounded-md',
             )}
           />
-          <span className={cn(PLACEHOLDER, 'size-8 rounded-pill')} />
+          <span className={cn(PLACEHOLDER, SHELL_FRAME.avatar)} />
         </div>
         <div className={SHELL_FRAME.main}>
           <div className="max-w-140 bg-surface p-5 shadow-e1">

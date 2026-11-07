@@ -14,6 +14,7 @@ import { tableCsvFileOf } from '../lib/table-csv';
 import { dataColumnIdsOf } from '../model/columns';
 import type { ApplicationsTableInstance } from '../model/use-applications-table';
 import { ColumnsMenu } from './columns-menu';
+import { TOOLBAR_BUTTON } from './table-look';
 
 const COPY = uk.applicationsTable.csv;
 
@@ -26,8 +27,7 @@ export type TableToolbarProps = Readonly<{
 function CsvButton({ table, timeZone }: Omit<TableToolbarProps, 'view'>) {
   return (
     <Button
-      variant="secondary"
-      size="sm"
+      {...TOOLBAR_BUTTON}
       aria-label={COPY.label}
       icon={<Download aria-hidden size={15} />}
       onClick={() => {

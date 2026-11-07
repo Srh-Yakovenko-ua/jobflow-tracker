@@ -11,6 +11,7 @@ import {
 import { uk } from '@/shared/i18n';
 import { cn } from '@/shared/lib/cn';
 import { formatDayMonthYear } from '@/shared/lib/state-format';
+import { TOUCH_HEIGHT } from '@/shared/ui/touch-height';
 
 import type { DataColumnId } from '../model/columns';
 import { TABLE_LOOK } from './table-look';
@@ -36,20 +37,24 @@ function DayCell({ iso, timeZone }: Readonly<{ iso: string | null; timeZone: str
 
 function VacancyCell({ application }: CellSource) {
   return (
-    <span className="flex min-w-0 flex-col gap-px">
+    <span
+      className={cn(
+        'grid min-w-0 grid-cols-1 grid-rows-[1fr_auto_auto_1fr] gap-y-px',
+        TOUCH_HEIGHT,
+      )}
+    >
       <Link
         href={`/applications/${application.id}`}
         scroll={false}
         prefetch={false}
         data-row-link
-        className={cn(
-          TRUNCATE,
-          'w-fit max-w-full rounded-xs font-medium text-ink focus-visible:focus-ring',
-        )}
+        className="col-start-1 row-span-full grid w-fit max-w-full grid-rows-subgrid rounded-xs font-medium text-ink focus-visible:focus-ring max-md:min-w-11"
       >
-        {application.company}
+        <span className={cn(TRUNCATE, 'row-start-2')}>{application.company}</span>
       </Link>
-      <span className={cn(TRUNCATE, 'text-[11.5px] text-ink-3')}>{application.position}</span>
+      <span className={cn(TRUNCATE, 'col-start-1 row-start-3 text-[11.5px] text-ink-3')}>
+        {application.position}
+      </span>
     </span>
   );
 }

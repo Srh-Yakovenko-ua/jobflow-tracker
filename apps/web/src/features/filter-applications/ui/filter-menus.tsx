@@ -19,6 +19,7 @@ import { MENU_LABEL } from '@/shared/ui/field-surface';
 import { Input } from '@/shared/ui/input';
 import { Popover, PopoverContent, PopoverTrigger } from '@/shared/ui/popover';
 import type { ChoiceOption } from '@/shared/ui/radio-group';
+import { TOUCH_HEIGHT } from '@/shared/ui/touch-height';
 
 import { chipsOf } from '../model/application-filters';
 import { useApplicationFilters } from '../model/filters-store';
@@ -28,7 +29,10 @@ const COPY = uk.board.filters;
 const SALARY_DIGITS = 9;
 
 const PILL = {
-  base: 'touch-target flex h-8.5 flex-none items-center gap-2 rounded-md px-3 text-[12.5px] transition-colors duration-(--duration-instant) ease-standard',
+  base: cn(
+    'touch-target flex h-8.5 flex-none items-center gap-2 rounded-md px-3 text-[12.5px] transition-colors duration-(--duration-instant) ease-standard',
+    TOUCH_HEIGHT,
+  ),
   idle: 'bg-surface text-ink-2 inset-ring inset-ring-line hover:bg-surface-2 active:bg-surface-3',
   picked: 'bg-accent-tint font-semibold text-accent-ink hover:bg-accent/15 active:bg-accent/20',
 } as const;

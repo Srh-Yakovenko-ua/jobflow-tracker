@@ -18,6 +18,8 @@ import {
   MenuTrigger,
 } from '@/shared/ui/menu';
 
+import { SHELL_FRAME } from './shell-frame';
+
 const AVATAR =
   'flex flex-none items-center justify-center rounded-pill bg-linear-140 from-accent to-accent-press font-semibold text-surface';
 
@@ -45,7 +47,11 @@ export function UserMenu() {
         <button
           type="button"
           aria-label={uk.shell.userMenu}
-          className={cn(AVATAR, 'touch-target size-8 text-[12px] data-[state=open]:shadow-focus')}
+          className={cn(
+            AVATAR,
+            SHELL_FRAME.avatar,
+            'touch-target text-[12px] data-[state=open]:shadow-focus',
+          )}
         >
           {user ? initialsOf(user) : <User aria-hidden />}
         </button>
