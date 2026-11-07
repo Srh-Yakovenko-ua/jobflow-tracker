@@ -17,6 +17,7 @@ import {
   errorResponses,
   EXAMPLE_CHILD_ROW,
   EXAMPLE_EDITED_AT,
+  idempotencyHeaders,
   jsonContent,
 } from '../../openapi/route.js';
 import { icsOf } from './ics.js';
@@ -62,8 +63,6 @@ const eventParams = applicationIdParams.extend({
 
 const ownedErrors = errorResponses([401, 403, 404, 422]);
 
-const bodyErrors = errorResponses([400, 401, 403, 404, 422]);
-
 const icsHeaders = z.object({
   'Content-Disposition': z.string().meta({ example: ICS_HEADERS['Content-Disposition'] }),
 });
@@ -77,6 +76,7 @@ const EVENT_ROUTES: RouteConfig[] = [
     description:
       'startsAt carries Z or an offset and is stored in UTC; durationMin defaults to 60. The event starts planned, interview_scheduled goes to the timeline, and an interview_soon reminder is armed 2 hours or 15 minutes ahead.',
     request: {
+      headers: idempotencyHeaders,
       params: applicationIdParams,
       body: { required: true, content: jsonContent(createScheduledEventInputSchema, EVENT_INPUT) },
     },
@@ -85,7 +85,7 @@ const EVENT_ROUTES: RouteConfig[] = [
         description: 'The planned event',
         content: jsonContent(scheduledEventSchema, SCHEDULED_EVENT),
       },
-      ...bodyErrors,
+      ...errorResponses([400, 401, 403, 404, 409, 422]),
     },
   },
   {

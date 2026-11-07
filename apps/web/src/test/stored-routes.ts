@@ -2,7 +2,7 @@ import type { JsonBodyType } from 'msw';
 import { http, HttpResponse } from 'msw/http';
 import type { z } from 'zod';
 
-import { apiUrl, errorReply } from './api-handlers';
+import { apiUrl, errorReply, idempotencyKeyOf, type SentCreate } from './api-handlers';
 import { fixtureIdOf, heldReply, type MoveRouteOptions } from './board-fixtures';
 
 export type StoredRouteOptions<Item> = MoveRouteOptions & { store: Item[] };
@@ -60,11 +60,11 @@ function storedCreateRoute<Item extends Stored, Body>({
   build,
   ...control
 }: StoredRouteOptions<Item> & StoredCreating<Item, Body> & { path: string }) {
-  const sent: { id: string; body: Body }[] = [];
+  const sent: SentCreate<Body>[] = [];
   const handler = http.post<{ id: string }>(apiUrl(path), async (info) => {
     const body = schema.parse(await info.request.json());
     const applicationId = info.params.id;
-    sent.push({ id: applicationId, body });
+    sent.push({ id: applicationId, body, idempotencyKey: idempotencyKeyOf(info.request.headers) });
     const created = () => {
       const id = fixtureIdOf(CREATED_SERIAL_FROM + store.length);
       const item = build({ body, id, applicationId });

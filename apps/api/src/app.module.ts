@@ -3,6 +3,7 @@ import { APP_FILTER, APP_PIPE } from '@nestjs/core';
 import { LoggerModule } from 'nestjs-pino';
 
 import { AppExceptionFilter } from './common/app-exception.filter.js';
+import { IdempotencyModule } from './common/idempotency/idempotency.module.js';
 import { loggerParams } from './common/logger.js';
 import { toValidationError } from './common/validation.js';
 import { configModule } from './config/app-config.js';
@@ -28,6 +29,7 @@ import { RedisModule } from './redis/redis.module.js';
     PrismaModule,
     RedisModule,
     RateLimitModule,
+    IdempotencyModule,
     HealthModule,
     QueuesModule,
     MaintenanceModule,

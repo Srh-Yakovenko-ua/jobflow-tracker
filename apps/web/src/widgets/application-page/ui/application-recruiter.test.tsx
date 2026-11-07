@@ -102,7 +102,9 @@ describe('ApplicationRecruiter', () => {
     });
     expect(within(section).getByText('Оксана')).toBeDefined();
     expect(within(section).queryByText('Контакти з інших відгуків')).toBeNull();
-    expect(contacts.created).toEqual([{ id: ACME_APPLICATION.id, body: { name: 'Оксана' } }]);
+    expect(contacts.created).toEqual([
+      { id: ACME_APPLICATION.id, body: { name: 'Оксана' }, idempotencyKey: null },
+    ]);
   });
 
   it('other applications offer their recruiters only while this card has none', async () => {

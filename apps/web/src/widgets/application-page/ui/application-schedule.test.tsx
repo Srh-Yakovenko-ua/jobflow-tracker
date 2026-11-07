@@ -4,7 +4,7 @@ import { toast } from 'sonner';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { API_CLIENT_LIMITS, clearAccessToken, setAccessToken } from '@/shared/api';
-import { errorReply, OUTAGES, SESSION_TOKENS } from '@/test/api-handlers';
+import { ANY_IDEMPOTENCY_KEY, errorReply, OUTAGES, SESSION_TOKENS } from '@/test/api-handlers';
 import { ACME_APPLICATION } from '@/test/application-fixtures';
 import { type BoardRouteOptions, cardIn } from '@/test/board-fixtures';
 import { stubFileDownload } from '@/test/file-download';
@@ -110,6 +110,7 @@ describe('ApplicationSchedule', () => {
           durationMin: 60,
           locationOrLink: null,
         },
+        idempotencyKey: ANY_IDEMPOTENCY_KEY,
       },
     ]);
     expect(boardLoads).toBe(1);

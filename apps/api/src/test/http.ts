@@ -7,13 +7,14 @@ export type RouteCall = {
   path: string;
   body?: object | undefined;
   accessToken?: string | undefined;
+  headers?: Record<string, string> | undefined;
 };
 
 export function callRoute(
   app: NestExpressApplication,
-  { method, path, body, accessToken }: RouteCall,
+  { method, path, body, accessToken, headers = {} }: RouteCall,
 ) {
-  const call = request(app.getHttpServer())[method](path);
+  const call = request(app.getHttpServer())[method](path).set(headers);
   const authorized =
     accessToken === undefined ? call : call.set('authorization', `Bearer ${accessToken}`);
   return body === undefined ? authorized : authorized.send(body);

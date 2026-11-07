@@ -7,7 +7,7 @@ import {
 import type { DelayMode, HttpResponseResolver, JsonBodyType } from 'msw';
 import { http, HttpResponse } from 'msw/http';
 import { delay } from 'msw/utils/delay';
-import { vi } from 'vitest';
+import { expect, vi } from 'vitest';
 
 import { ApiError } from '@/shared/api';
 import { config } from '@/shared/config';
@@ -25,9 +25,12 @@ export type ExpiringRouteOptions = {
   url: string;
   freshToken: string;
   body?: JsonBodyType;
+  method?: 'get' | 'post';
 };
 
 export type Outage = { name: string; reply: HttpResponseResolver; settled: 'error' | 'pending' };
+
+export type SentCreate<Body> = { id: string; body: Body; idempotencyKey: string | null };
 
 export const SESSION_TOKENS = {
   expired: 'expired-access-token',
@@ -56,6 +59,12 @@ export const SUGGESTIONS_REQUEST = {
   path: '/settings/suggestions',
   schema: settingsSuggestionsSchema,
 } as const;
+
+export const ANY_IDEMPOTENCY_KEY: unknown = expect.any(String);
+
+export function idempotencyKeyOf(headers: Headers): string | null {
+  return headers.get('Idempotency-Key');
+}
 
 export function apiUrl(path: string): string {
   return `${config.apiBaseUrl}${path}`;
@@ -108,6 +117,7 @@ export function recordSentRequests() {
       method: init?.method,
       credentials: init?.credentials,
       keepalive: init?.keepalive,
+      idempotencyKey: idempotencyKeyOf(new Headers(init?.headers)) ?? undefined,
       body: typeof init?.body === 'string' ? (JSON.parse(init.body) as unknown) : init?.body,
     }));
 }
@@ -129,8 +139,8 @@ export function refreshRoute({ token, onCall, hold }: RefreshRouteOptions) {
   });
 }
 
-export function expiringRoute({ url, freshToken, body }: ExpiringRouteOptions) {
-  return http.get(url, ({ request }) => {
+export function expiringRoute({ url, freshToken, body, method = 'get' }: ExpiringRouteOptions) {
+  return http[method](url, ({ request }) => {
     if (request.headers.get('authorization') !== `Bearer ${freshToken}`) {
       return errorReply(TOKEN_EXPIRED);
     }

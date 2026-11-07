@@ -6,7 +6,7 @@ import { toast } from 'sonner';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { API_CLIENT_LIMITS } from '@/shared/api';
-import { OUTAGES, recordSentRequests } from '@/test/api-handlers';
+import { ANY_IDEMPOTENCY_KEY, OUTAGES, recordSentRequests } from '@/test/api-handlers';
 import { ACME_APPLICATION } from '@/test/application-fixtures';
 import type { MoveRouteOptions } from '@/test/board-fixtures';
 import { fakeTimeouts } from '@/test/fake-timeouts';
@@ -50,7 +50,7 @@ function renderEditor(added: MoveRouteOptions = {}) {
 }
 
 function postOf(body: string) {
-  return { id: ACME_APPLICATION.id, body: { body } };
+  return { id: ACME_APPLICATION.id, body: { body }, idempotencyKey: ANY_IDEMPOTENCY_KEY };
 }
 
 function patchOf(body: string) {
@@ -150,9 +150,9 @@ describe('NoteEditor autosave', () => {
   });
 
   it.each(OUTAGES)(
-    'when the API $name the status says it was not saved, keeps the text and shows no toast',
+    'when the API $name the status says it was not saved, keeps the text, shows no toast, and closing resends that POST with its key',
     async ({ reply, settled }) => {
-      const { user, field } = renderEditor({ reply });
+      const { user, field, added, unmount } = renderEditor({ reply });
       await user.type(field, 'Друга задача');
       pass(1000);
       if (settled === 'pending') {
@@ -165,11 +165,19 @@ describe('NoteEditor autosave', () => {
       expect(await screen.findByText(FAILED)).toBeDefined();
       expect(field.value).toBe('Друга задача');
       expect(toast.getToasts()).toEqual([]);
+
+      unmount();
+
+      await waitFor(() => {
+        expect(added).toEqual([postOf('Друга задача'), added[0]]);
+      });
     },
   );
 
-  it('after a refused save the next change sends the whole text again', async () => {
-    const { user, field } = renderEditor({ reply: () => HttpResponse.error() });
+  it('after a refused first save the next autosave resends that POST with its key and text, then PATCHes the latest text', async () => {
+    const { user, field, added, updated, drafts } = renderEditor({
+      reply: () => HttpResponse.error(),
+    });
     await user.type(field, 'Друга задача');
     pass(1000);
     await screen.findByText(FAILED);
@@ -180,8 +188,11 @@ describe('NoteEditor autosave', () => {
     pass(1000);
 
     await waitFor(() => {
-      expect(retried.sent).toEqual([postOf('Друга задача і графи')]);
+      expect(updated).toEqual([patchOf('Друга задача і графи')]);
     });
+    expect(added).toEqual([postOf('Друга задача')]);
+    expect(retried.sent).toEqual(added);
+    expect(drafts).toEqual([NOTE_ID]);
     expect(await screen.findByText('збережено')).toBeDefined();
   });
 

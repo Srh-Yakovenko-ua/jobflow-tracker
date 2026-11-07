@@ -46,9 +46,22 @@ const ICS_REQUEST = {
   response: 'text',
 } as const;
 
+const NOTE_CREATE = {
+  path: `/applications/${ACME_APPLICATION.id}/notes`,
+  method: 'POST',
+  body: { body: 'Друга задача' },
+  schema: z.void(),
+  idempotencyKey: 'submit-key-1',
+} as const;
+
 function recordSentCredentials() {
   const sentRequests = recordSentRequests();
   return () => sentRequests().map(({ url, credentials }) => [url, credentials]);
+}
+
+function recordSentKeys() {
+  const sentRequests = recordSentRequests();
+  return () => sentRequests().map(({ url, idempotencyKey }) => [url, idempotencyKey ?? null]);
 }
 
 describe('apiClient', () => {
@@ -185,6 +198,23 @@ describe('apiClient', () => {
     await apiClient.request({ path: '/auth/logout', method: 'POST', schema: z.void() });
 
     expect(sentRequests().map(({ keepalive }) => keepalive)).toEqual([true, undefined]);
+  });
+
+  it('a create sends its Idempotency-Key, and the retry after a refresh sends the same key', async () => {
+    const sentKeys = recordSentKeys();
+    const createUrl = apiUrl(NOTE_CREATE.path);
+    server.use(
+      refreshRoute({ token: SESSION_TOKENS.fresh }),
+      expiringRoute({ url: createUrl, freshToken: SESSION_TOKENS.fresh, method: 'post' }),
+    );
+
+    await apiClient.request(NOTE_CREATE);
+
+    expect(sentKeys()).toEqual([
+      [createUrl, 'submit-key-1'],
+      [REFRESH_URL, null],
+      [createUrl, 'submit-key-1'],
+    ]);
   });
 
   it('a refused connection rejects with TypeError and calls no refresh', async () => {

@@ -3339,6 +3339,21 @@
         ],
         "summary": "Create an Application",
         "description": "Adds an Application to the active search at stage applied; 409 without one. possibleDuplicates lists, newest first and at most 5, the user's other Applications with the same URL (without scheme, www and trailing slash; of the query only the job id params currentJobId, jk and vjk are kept, of the fragment only a #/ route; a bare host never matches), or with the same company (legal suffixes such as ТОВ, LLC and Inc ignored) and a position more than 0.6 trigram-similar within the last 90 days. They never block the create.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 255,
+              "description": "One key per submit, kept on its retries, 1 to 255 characters. The same key with the same request within 24 hours answers the first reply again and creates nothing; with another request, or while the first one still runs, it answers 409. A request that fails keeps nothing, so its retry runs again.",
+              "example": "0199f3a0-1b2c-7d3e-8f40-5a6b7c8d9e0f"
+            },
+            "required": false,
+            "description": "One key per submit, kept on its retries, 1 to 255 characters. The same key with the same request within 24 hours answers the first reply again and creates nothing; with another request, or while the first one still runs, it answers 409. A request that fails keeps nothing, so its retry runs again.",
+            "name": "Idempotency-Key",
+            "in": "header"
+          }
+        ],
         "requestBody": {
           "required": true,
           "content": {
@@ -8641,6 +8656,19 @@
             "required": true,
             "name": "id",
             "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 255,
+              "description": "One key per submit, kept on its retries, 1 to 255 characters. The same key with the same request within 24 hours answers the first reply again and creates nothing; with another request, or while the first one still runs, it answers 409. A request that fails keeps nothing, so its retry runs again.",
+              "example": "0199f3a0-1b2c-7d3e-8f40-5a6b7c8d9e0f"
+            },
+            "required": false,
+            "description": "One key per submit, kept on its retries, 1 to 255 characters. The same key with the same request within 24 hours answers the first reply again and creates nothing; with another request, or while the first one still runs, it answers 409. A request that fails keeps nothing, so its retry runs again.",
+            "name": "Idempotency-Key",
+            "in": "header"
           }
         ],
         "requestBody": {
@@ -8772,6 +8800,22 @@
                   "type": "not_found",
                   "title": "Not found",
                   "status": 404,
+                  "requestId": "0199f0c4-5d2e-7b31-8c4f-6a7b8c9d0e1f"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "example": {
+                  "type": "conflict",
+                  "title": "Conflict",
+                  "status": 409,
                   "requestId": "0199f0c4-5d2e-7b31-8c4f-6a7b8c9d0e1f"
                 },
                 "schema": {
@@ -9440,6 +9484,19 @@
             "required": true,
             "name": "id",
             "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 255,
+              "description": "One key per submit, kept on its retries, 1 to 255 characters. The same key with the same request within 24 hours answers the first reply again and creates nothing; with another request, or while the first one still runs, it answers 409. A request that fails keeps nothing, so its retry runs again.",
+              "example": "0199f3a0-1b2c-7d3e-8f40-5a6b7c8d9e0f"
+            },
+            "required": false,
+            "description": "One key per submit, kept on its retries, 1 to 255 characters. The same key with the same request within 24 hours answers the first reply again and creates nothing; with another request, or while the first one still runs, it answers 409. A request that fails keeps nothing, so its retry runs again.",
+            "name": "Idempotency-Key",
+            "in": "header"
           }
         ],
         "requestBody": {
@@ -9653,6 +9710,22 @@
                   "type": "not_found",
                   "title": "Not found",
                   "status": 404,
+                  "requestId": "0199f0c4-5d2e-7b31-8c4f-6a7b8c9d0e1f"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "example": {
+                  "type": "conflict",
+                  "title": "Conflict",
+                  "status": 409,
                   "requestId": "0199f0c4-5d2e-7b31-8c4f-6a7b8c9d0e1f"
                 },
                 "schema": {
@@ -10532,6 +10605,19 @@
             "required": true,
             "name": "id",
             "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 255,
+              "description": "One key per submit, kept on its retries, 1 to 255 characters. The same key with the same request within 24 hours answers the first reply again and creates nothing; with another request, or while the first one still runs, it answers 409. A request that fails keeps nothing, so its retry runs again.",
+              "example": "0199f3a0-1b2c-7d3e-8f40-5a6b7c8d9e0f"
+            },
+            "required": false,
+            "description": "One key per submit, kept on its retries, 1 to 255 characters. The same key with the same request within 24 hours answers the first reply again and creates nothing; with another request, or while the first one still runs, it answers 409. A request that fails keeps nothing, so its retry runs again.",
+            "name": "Idempotency-Key",
+            "in": "header"
           }
         ],
         "requestBody": {
@@ -10731,6 +10817,22 @@
                   "type": "not_found",
                   "title": "Not found",
                   "status": 404,
+                  "requestId": "0199f0c4-5d2e-7b31-8c4f-6a7b8c9d0e1f"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "example": {
+                  "type": "conflict",
+                  "title": "Conflict",
+                  "status": 409,
                   "requestId": "0199f0c4-5d2e-7b31-8c4f-6a7b8c9d0e1f"
                 },
                 "schema": {

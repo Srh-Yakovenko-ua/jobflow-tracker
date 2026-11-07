@@ -14,6 +14,7 @@ import {
   errorResponses,
   EXAMPLE_CHILD_ROW,
   EXAMPLE_EDITED_AT,
+  idempotencyHeaders,
   jsonContent,
 } from '../../openapi/route.js';
 
@@ -52,10 +53,10 @@ export const NOTES_OPENAPI_PATHS: RouteConfig[] = [
     tags: TAGS,
     summary: 'Add a note to an Application',
     description: 'Stores the note and its note_added timeline row in one transaction.',
-    request: { params: applicationIdParams, body: noteBody },
+    request: { headers: idempotencyHeaders, params: applicationIdParams, body: noteBody },
     responses: {
       201: { description: 'The created note', content: jsonContent(noteSchema, NOTE) },
-      ...bodyErrors,
+      ...errorResponses([400, 401, 403, 404, 409, 422]),
     },
   },
   {
