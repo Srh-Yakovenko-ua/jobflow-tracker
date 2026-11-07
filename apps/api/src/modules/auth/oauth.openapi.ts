@@ -17,13 +17,15 @@ const providerParams = z.object({ provider: oauthProviderSchema.meta({ example: 
 
 const callbackQuery = oauthCodeQuerySchema.partial().extend(oauthErrorQuerySchema.partial().shape);
 
-type RedirectHeaders = { location: string; cookies: string };
+type RedirectHeaders = { location: string; cookies: string; cookiesOptional?: true };
 
-const redirectHeaders = ({ location, cookies }: RedirectHeaders) =>
-  z.object({
+const redirectHeaders = ({ location, cookies, cookiesOptional }: RedirectHeaders) => {
+  const cookie = { description: cookies };
+  return z.object({
     Location: z.string().meta({ description: location }),
-    'Set-Cookie': z.string().meta({ description: cookies }),
+    'Set-Cookie': cookiesOptional ? z.string().optional().meta(cookie) : z.string().meta(cookie),
   });
+};
 
 export const OAUTH_OPENAPI_PATHS: RouteConfig[] = [
   {
@@ -58,6 +60,7 @@ export const OAUTH_OPENAPI_PATHS: RouteConfig[] = [
           location:
             "The provider's authorization URL, or the web sign-in page with oauth=unavailable&provider=<provider>",
           cookies: `Sets the httpOnly ${OAUTH_STATE_COOKIE} cookie for ten minutes, only when the provider is set up`,
+          cookiesOptional: true,
         }),
       },
       ...errorResponses([422]),

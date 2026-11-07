@@ -1,5 +1,7 @@
 import { cn } from '@/shared/lib/cn';
 
+import { TOUCH_HEIGHT } from './touch-height';
+
 const BOX =
   'rounded-md bg-surface-2 text-body text-ink shadow-flat transition-[background-color,box-shadow] duration-(--duration-fast) ease-standard data-invalid:bg-danger/4 data-invalid:inset-ring data-invalid:inset-ring-danger/60 data-disabled:cursor-not-allowed data-disabled:border-[1.5px] data-disabled:border-dashed data-disabled:border-line data-disabled:bg-surface-3 data-disabled:text-ink-3 data-disabled:shadow-none';
 
@@ -13,7 +15,10 @@ export const FIELD_SURFACE = {
     'h-full min-w-0 flex-1 bg-transparent outline-hidden placeholder:text-ink-3 disabled:cursor-not-allowed',
   trigger:
     'flex h-full min-w-0 flex-1 items-center gap-2 text-left outline-hidden after:absolute after:inset-x-0 after:top-1/2 after:h-[max(100%,44px)] after:-translate-y-1/2 disabled:cursor-not-allowed',
-  height: { field: 'h-control-md', trigger: 'h-9.5 rounded-[10px]' },
+  height: {
+    field: cn('h-control-md', TOUCH_HEIGHT),
+    trigger: cn('h-9.5 rounded-[10px]', TOUCH_HEIGHT),
+  },
 } as const;
 
 export type SelectOption = { value: string; label: string; meta?: string; detail?: string };

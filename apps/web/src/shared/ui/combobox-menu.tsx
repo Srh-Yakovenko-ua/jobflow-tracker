@@ -19,6 +19,7 @@ import {
 import { ListKeyHints } from './kbd';
 import { NoMatches } from './no-matches';
 import { CheckSlot, OptionContent } from './option-content';
+import { TOUCH_HEIGHT } from './touch-height';
 
 export type ComboboxMode = 'single' | 'multi';
 
@@ -74,6 +75,7 @@ function SearchRow({ query, onQueryChange, placeholder }: SearchRowProps) {
       className={cn(
         FIELD_SURFACE.shell,
         'h-8.5 flex-none gap-2 px-2.5 shadow-none inset-ring inset-ring-line-soft',
+        TOUCH_HEIGHT,
       )}
     >
       <Search aria-hidden size={15} className="flex-none text-ink-3" />

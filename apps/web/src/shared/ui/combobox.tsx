@@ -14,6 +14,7 @@ import { useField } from './field';
 import { FIELD_SURFACE, type SelectOptionGroup } from './field-surface';
 import { Popover, PopoverAnchor, PopoverContent, PopoverTrigger } from './popover';
 import { SelectIndicators } from './select-indicators';
+import { TOUCH_HEIGHT } from './touch-height';
 
 export type { ComboboxView } from './combobox-menu';
 
@@ -101,6 +102,7 @@ export function Combobox({ groups, selection, view, onCreate }: ComboboxProps) {
           className={cn(
             FIELD_SURFACE.shell,
             'group min-h-9.5 flex-wrap gap-1.25 rounded-[10px] py-1.25 pr-1.5 pl-2.75',
+            TOUCH_HEIGHT,
           )}
         >
           {selection.mode === 'multi' && (
