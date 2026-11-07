@@ -41,6 +41,10 @@
       "description": "Scheduled events and follow-ups across Applications"
     },
     {
+      "name": "ai",
+      "description": "The AI results of the signed-in user"
+    },
+    {
       "name": "dev",
       "description": "Development and test only"
     }
@@ -12093,6 +12097,95 @@
                       "message": "Invalid input: expected string, received undefined"
                     }
                   ],
+                  "requestId": "0199f0c4-5d2e-7b31-8c4f-6a7b8c9d0e1f"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too many requests: 300 per 60 s by default (RATE_LIMIT_API_PER_MINUTE)",
+            "headers": {
+              "Retry-After": {
+                "schema": {
+                  "type": "integer",
+                  "exclusiveMinimum": 0,
+                  "description": "Seconds until the limit window resets"
+                },
+                "required": true,
+                "description": "Seconds until the limit window resets"
+              }
+            },
+            "content": {
+              "application/json": {
+                "example": {
+                  "type": "rate_limited",
+                  "title": "Too many requests",
+                  "status": 429,
+                  "requestId": "0199f0c4-5d2e-7b31-8c4f-6a7b8c9d0e1f"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal error",
+            "content": {
+              "application/json": {
+                "example": {
+                  "type": "internal_error",
+                  "title": "Internal error",
+                  "status": 500,
+                  "requestId": "0199f0c4-5d2e-7b31-8c4f-6a7b8c9d0e1f"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/ai-results": {
+      "delete": {
+        "tags": [
+          "ai"
+        ],
+        "summary": "Delete every AI result of the signed-in user",
+        "description": "In one transaction deletes the ai_results rows of the user and clears matchScore and aiParsed on their Applications and the AI profile of their resume versions. AI jobs stay, with aiResultId null. The timeline keeps its history.",
+        "responses": {
+          "204": {
+            "description": "The AI results are deleted"
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "example": {
+                  "type": "unauthorized",
+                  "title": "Unauthorized",
+                  "status": 401,
+                  "requestId": "0199f0c4-5d2e-7b31-8c4f-6a7b8c9d0e1f"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "example": {
+                  "type": "forbidden",
+                  "title": "Forbidden",
+                  "status": 403,
                   "requestId": "0199f0c4-5d2e-7b31-8c4f-6a7b8c9d0e1f"
                 },
                 "schema": {

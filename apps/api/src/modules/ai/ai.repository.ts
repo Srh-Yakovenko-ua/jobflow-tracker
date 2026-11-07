@@ -1,7 +1,7 @@
 import type { AiKind, AiResultStatus } from '@jobflow/shared';
 import { Injectable } from '@nestjs/common';
 
-import type { Prisma } from '../../generated/prisma/client.js';
+import { Prisma } from '../../generated/prisma/client.js';
 import { PrismaService } from '../../prisma/prisma.service.js';
 import { AI_QUEUE_ESTIMATE } from './ai-budget.js';
 
@@ -113,5 +113,22 @@ export class AiRepository {
       }),
     ]);
     return { ahead, latencies: recent.map((result) => result.latencyMs) };
+  }
+
+  async deleteResults(userId: string): Promise<void> {
+    await this.prisma.$transaction([
+      this.prisma.aiResult.deleteMany({ where: { userId } }),
+      this.prisma.application.updateMany({
+        where: {
+          userId,
+          OR: [{ matchScore: { not: null } }, { aiParsed: { not: Prisma.DbNull } }],
+        },
+        data: { matchScore: null, aiParsed: Prisma.DbNull },
+      }),
+      this.prisma.resumeVersion.updateMany({
+        where: { userId, aiProfile: { not: Prisma.DbNull } },
+        data: { aiProfile: Prisma.DbNull },
+      }),
+    ]);
   }
 }

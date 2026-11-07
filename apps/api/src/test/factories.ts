@@ -53,6 +53,7 @@ export type NewAiJob = {
   status: AiJobStatus;
   kind?: string;
   createdAt?: Date;
+  aiResultId?: string;
 };
 
 export type NewAiResult = Pick<Prisma.AiResultUncheckedCreateInput, 'userId'> &
