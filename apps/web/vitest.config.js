@@ -8,12 +8,8 @@ import { defineConfig } from 'vitest/config';
 export default defineConfig({
   plugins: [
     babel({
-      exclude: [
-        /[/\\]node_modules[/\\]/,
-        /^\0rolldown\/runtime\.js$/,
-        /\.test\.tsx?$/,
-        /[/\\]src[/\\]test[/\\]/,
-      ],
+      include: [/[/\\]apps[/\\]web[/\\]src[/\\][^?]+\.tsx?(?:$|\?)/],
+      exclude: [/\.test\.tsx?$/, /[/\\]src[/\\]test[/\\]/],
       plugins: [[fileURLToPath(import.meta.resolve('babel-plugin-react-compiler')), {}]],
     }),
     tailwindcss(),

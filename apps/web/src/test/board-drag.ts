@@ -11,7 +11,9 @@ export type BoardDrag = {
 
 const COLUMN_BOX = { pitch: 300, width: 280, height: 600 } as const;
 
-const VIRTUAL_BOX = { row: 110, scroller: 600 } as const;
+const VIRTUAL_BOX = { scroller: 600 } as const;
+
+const CARD_BOX = { padding: 20, part: 30 } as const;
 
 const DROP_SECTION = 'section[data-drop]';
 
@@ -36,7 +38,9 @@ function pointerAt(element: Element) {
 
 function heightOf(element: HTMLElement): number {
   if (element.matches('[data-index]')) {
-    return VIRTUAL_BOX.row;
+    return (
+      CARD_BOX.padding + CARD_BOX.part * (element.querySelector('article')?.childElementCount ?? 0)
+    );
   }
   return element.matches('[data-column-scroll], [data-table-scroll]') ? VIRTUAL_BOX.scroller : 0;
 }

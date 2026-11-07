@@ -203,7 +203,7 @@ describe('KanbanBoard long columns', () => {
     {
       scrolledTo: 0,
       full: { mounted: 12, hint: 'ще 34 картки нижче', scrollTop: 0 },
-      compact: { mounted: 12, hint: 'ще 34 картки нижче', scrollTop: 0 },
+      compact: { mounted: 13, hint: 'ще 33 картки нижче', scrollTop: 0 },
     },
     {
       scrolledTo: 1200,
@@ -223,6 +223,19 @@ describe('KanbanBoard long columns', () => {
       expect({ before, after: columnView(applied) }).toEqual({ before: full, after: compact });
     },
   );
+
+  it('«Щільні» on a 40-card відгук lays its cards out again at the compact card height', async () => {
+    const { user } = await longBoardReady(appliedBoard(40));
+    const applied = columnNamed('відгук 40');
+
+    const before = rowTopOf(cardLinkIn(applied, 'Vacancy 1002'));
+    await user.click(screen.getByRole('radio', { name: uk.board.density.compact }));
+
+    expect({ before, after: rowTopOf(cardLinkIn(applied, 'Vacancy 1002')) }).toEqual({
+      before: 240,
+      after: 180,
+    });
+  });
 
   it('«Щільні» on a 500-card відгук scrolled to its end keeps the last card mounted, says no card is below and leaves no card with its stack', async () => {
     const { user } = await longBoardReady(appliedBoard(500));
