@@ -23,7 +23,7 @@ import { columnCoordinates } from '../model/column-coordinates';
 import { dragAnnouncements } from '../model/drag-announcements';
 import { DragSourceContext } from '../model/drag-source';
 import { focusCardOrStrip } from '../model/focus-card-or-strip';
-import { type FocusRequest, useBoardDrag } from '../model/use-board-drag';
+import { type BoardFocus, useBoardDrag } from '../model/use-board-drag';
 
 export type BoardDndProps = Readonly<{
   board: ApplicationBoardResponse;
@@ -68,36 +68,44 @@ function RejectionPromptDialog({ rejection }: Readonly<{ rejection: RejectionFlo
         onCloseAutoFocus: (event) => {
           event.preventDefault();
           const id = focusBackRef.current;
-          if (id !== null) focusCardOrStrip(nodes, id);
+          if (id !== null) void focusCardOrStrip(nodes, id);
         },
       }}
     />
   );
 }
 
-function KeyboardDropFocus({ request }: Readonly<{ request: FocusRequest | null }>) {
+function KeyboardDropFocus({ focus }: Readonly<{ focus: BoardFocus }>) {
   const nodes = useDndContext();
-  const focus = useEffectEvent((id: UniqueIdentifier) => {
-    focusCardOrStrip(nodes, id);
+  const { request, onFocused } = focus;
+  const focusPlaced = useEffectEvent((id: UniqueIdentifier) => {
+    void focusCardOrStrip(nodes, id).then((focused) => {
+      focused?.addEventListener(
+        'focusout',
+        () => {
+          onFocused(request);
+        },
+        { once: true },
+      );
+    });
   });
   const id = request?.id ?? null;
   const stage = request?.stage ?? null;
   useEffect(() => {
-    if (id !== null) focus(id);
+    if (id !== null) focusPlaced(id);
   }, [id, stage]);
   return null;
 }
 
 export function BoardDnd({ board, context, children }: BoardDndProps) {
-  const { activeCard, landing, dropAnimation, handlers, rejection, keyboardFocus } =
-    useBoardDrag(board);
+  const { activeCard, landing, dropAnimation, handlers, rejection, focus } = useBoardDrag(board);
   const sensors = useBoardSensors();
   const density = useBoardDensity((store) => store.density);
   const source = {
     from: activeCard?.currentStage ?? null,
     landing,
     activeId: activeCard?.id ?? null,
-    focusId: keyboardFocus?.id ?? null,
+    focusId: focus.request?.id ?? null,
   };
   return (
     <DndContext
@@ -118,7 +126,7 @@ export function BoardDnd({ board, context, children }: BoardDndProps) {
         )}
       </DragOverlay>
       <RejectionPromptDialog rejection={rejection} />
-      <KeyboardDropFocus request={keyboardFocus} />
+      <KeyboardDropFocus focus={focus} />
     </DndContext>
   );
 }

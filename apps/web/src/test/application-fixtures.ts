@@ -8,7 +8,12 @@ import type { HttpResponseResolver } from 'msw';
 import { http, HttpResponse } from 'msw/http';
 
 import { apiUrl } from './api-handlers';
-import { applicationResponseOf, heldReply, type MoveRouteOptions } from './board-fixtures';
+import {
+  applicationResponseOf,
+  type BoardRouteOptions,
+  heldReply,
+  type MoveRouteOptions,
+} from './board-fixtures';
 
 export type ApplicationRouteOptions = {
   application: ApplicationResponse;
@@ -17,6 +22,8 @@ export type ApplicationRouteOptions = {
 };
 
 export type UpdateRouteOptions = MoveRouteOptions & { application: ApplicationResponse };
+
+export type BoardCardRouteOptions = BoardRouteOptions & { cardRead?: HttpResponseResolver };
 
 export const ACME_APPLICATION = applicationResponseOf({
   id: '0b6f3c1e-5d2a-4c8e-9f10-000000000201',
@@ -47,6 +54,20 @@ export function applicationRoute({ application, moves = [], reply }: Application
     return HttpResponse.json({ ...application, currentStage });
   });
   return { handler, sent };
+}
+
+export function boardCardRoutes({
+  cards = [],
+  liveCard = (card) => card,
+  cardRead,
+}: BoardCardRouteOptions) {
+  return cards.map((card) =>
+    http.get(apiUrl(`/applications/${card.id}`), (info) =>
+      cardRead === undefined
+        ? HttpResponse.json(applicationResponseOf(liveCard(card)))
+        : cardRead(info),
+    ),
+  );
 }
 
 export function updateRoute({ application, ...control }: UpdateRouteOptions) {

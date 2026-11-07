@@ -1,13 +1,16 @@
+import type { Stage } from '@jobflow/shared';
 import { QueryClient } from '@tanstack/react-query';
 import { act, fireEvent, screen, waitFor, within } from '@testing-library/react';
 import type { UserEvent } from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { API_CLIENT_LIMITS } from '@/shared/api';
 import { uk } from '@/shared/i18n';
-import { errorReply } from '@/test/api-handlers';
+import { errorReply, OUTAGES } from '@/test/api-handlers';
+import type { BoardCardRouteOptions } from '@/test/application-fixtures';
 import { startDrag } from '@/test/board-drag';
-import { type BoardRouteOptions, DESIGN_BOARD } from '@/test/board-fixtures';
-import { fakeTimeouts } from '@/test/fake-timeouts';
+import { type BoardRouteOptions, type ColumnCounts, DESIGN_BOARD } from '@/test/board-fixtures';
+import { fakeTimeouts, fakeTimeoutsAndClock, refocusTabOnceStale } from '@/test/fake-timeouts';
 import { type Latch, latch } from '@/test/latch';
 import { stubMotionPreference } from '@/test/motion-preference';
 import { push } from '@/test/navigation';
@@ -47,6 +50,10 @@ const MOTION_MODES = [
   { motion: 'no-preference', glides: 1 },
   { motion: 'reduce', glides: 0 },
 ] as const;
+
+type AnotherTab = { movedTo: Stage | null };
+
+type AnotherTabMove = { to: Stage; counts?: ColumnCounts };
 
 function cardLink(position: string): HTMLAnchorElement {
   const link = screen.getByText(position).closest('a');
@@ -106,8 +113,8 @@ function holdBoardPatch(patch: Latch) {
   });
 }
 
-async function keyboardDropRefused(board: BoardRouteOptions = DESIGN_BOARD) {
-  fakeTimeouts();
+async function keyboardDropRefused(board: BoardCardRouteOptions = DESIGN_BOARD) {
+  fakeTimeoutsAndClock();
   const answer = latch();
   const { user } = await boardReadyToDrag({
     board,
@@ -116,7 +123,38 @@ async function keyboardDropRefused(board: BoardRouteOptions = DESIGN_BOARD) {
   await pickUp(user, APPLIED_CARD);
   await user.keyboard('{ArrowRight} ');
   await screen.findByRole('heading', { name: 'скринінг 2' });
-  return answer;
+  return { answer, user };
+}
+
+function sharedWithAnotherTab(tab: AnotherTab, counts: ColumnCounts = {}): BoardRouteOptions {
+  return {
+    ...DESIGN_BOARD,
+    counts: { ...DESIGN_BOARD.counts, ...counts },
+    liveCard: (card) =>
+      tab.movedTo !== null && card.position === APPLIED_CARD
+        ? { ...card, currentStage: tab.movedTo }
+        : card,
+  };
+}
+
+async function refusedAfterAnotherTabMoved({ to, counts }: AnotherTabMove) {
+  stubOverlayGlide();
+  const tab: AnotherTab = { movedTo: null };
+  const { answer, user } = await keyboardDropRefused(sharedWithAnotherTab(tab, counts));
+  tab.movedTo = to;
+  await settleLanding();
+  answer.release();
+  return { tab, user };
+}
+
+function appliedCardIn(column: string): HTMLAnchorElement | null {
+  return within(columnNamed(column)).getByText(APPLIED_CARD).closest('a');
+}
+
+async function expectFocusOn(target: () => Element | null) {
+  await waitFor(() => {
+    expect(document.activeElement).toBe(target());
+  });
 }
 
 afterEach(() => {
@@ -290,7 +328,7 @@ describe.each(MOTION_MODES)(
       'a keyboard move to скринінг answered 409 $when puts focus back on the card in відгук',
       async ({ order }) => {
         const glide = stubOverlayGlide();
-        const answer = await keyboardDropRefused();
+        const { answer } = await keyboardDropRefused();
         const steps = {
           land: settleLanding,
           refuse: async () => {
@@ -312,7 +350,7 @@ describe.each(MOTION_MODES)(
     it("a keyboard move to скринінг answered 409 after another tab moved the card to техінтерв'ю puts focus on the card in техінтерв'ю once the board is fetched again", async () => {
       const glide = stubOverlayGlide();
       const anotherTab = { moved: false };
-      const answer = await keyboardDropRefused({
+      const { answer } = await keyboardDropRefused({
         ...DESIGN_BOARD,
         liveCard: (card) =>
           anotherTab.moved && card.position === APPLIED_CARD
@@ -330,6 +368,41 @@ describe.each(MOTION_MODES)(
       });
       await expectGlides(glide, glides);
     });
+
+    it("after a 409 has put focus on the card in скринінг, a later refetch that shows the card in техінтерв'ю leaves focus in the search field", async () => {
+      const { tab, user } = await refusedAfterAnotherTabMoved({ to: 'screening' });
+      await expectFocusOn(() => appliedCardIn('скринінг 1'));
+
+      const search = screen.getByRole('textbox', { name: uk.board.filters.search.label });
+      await user.click(search);
+      tab.movedTo = 'tech_interview';
+      refocusTabOnceStale();
+      await waitFor(() => {
+        expect(appliedCardIn("техінтерв'ю 1")).toBeInstanceOf(HTMLAnchorElement);
+      });
+      await settleLanding();
+
+      expect(document.activeElement).toBe(search);
+    });
+
+    it('a keyboard move to скринінг answered 409 after another tab moved the card to відкликав puts focus on the відкликав strip', async () => {
+      await refusedAfterAnotherTabMoved({ to: 'withdrawn', counts: { withdrawn: 1 } });
+
+      await expectFocusOn(() => screen.getByRole('button', { name: 'відкликав 1' }));
+    });
+
+    it.each(OUTAGES)(
+      'a keyboard move to скринінг answered 409 puts focus back on the card in відгук when the read of the card $name',
+      async ({ reply }) => {
+        stubOverlayGlide();
+        const { answer } = await keyboardDropRefused({ ...DESIGN_BOARD, cardRead: reply });
+        await settleLanding();
+        answer.release();
+        await act(() => vi.advanceTimersByTimeAsync(API_CLIENT_LIMITS.requestTimeoutMs));
+
+        await expectFocusOn(() => appliedCardIn('відгук 2'));
+      },
+    );
 
     it('after a keyboard drop on the folded ghosted strip the strip has focus', async () => {
       fakeTimeouts();

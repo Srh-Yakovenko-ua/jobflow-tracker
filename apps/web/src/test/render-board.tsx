@@ -4,10 +4,10 @@ import { screen } from '@testing-library/react';
 import { userKeys } from '@/entities/user';
 import { KanbanBoard } from '@/widgets/kanban-board';
 
+import { type BoardCardRouteOptions, boardCardRoutes } from './application-fixtures';
 import { layOutColumns } from './board-drag';
 import {
   boardRoute,
-  type BoardRouteOptions,
   DESIGN_BOARD,
   moveRoute,
   type MoveRouteOptions,
@@ -21,7 +21,7 @@ import { meRoute } from './session-fixtures';
 export type BoardSettings = Partial<MeResponse['settings']>;
 
 export type DragSetup = {
-  board?: BoardRouteOptions;
+  board?: BoardCardRouteOptions;
   move?: MoveRouteOptions;
   settings?: BoardSettings;
 };
@@ -32,11 +32,16 @@ export type BoardRenderOptions = {
 };
 
 export function renderBoard(
-  route: BoardRouteOptions,
+  route: BoardCardRouteOptions,
   { settings, filters = {} }: BoardRenderOptions = {},
 ) {
   const board = boardRoute(route);
-  server.use(meRoute(settings), board.handler, reasonsSummaryRoute().handler);
+  server.use(
+    meRoute(settings),
+    board.handler,
+    reasonsSummaryRoute().handler,
+    ...boardCardRoutes(route),
+  );
   const user = renderInApp(
     <>
       <KanbanBoard initial={{ density: 'full', filters }} />
