@@ -1,7 +1,7 @@
 import type { ApplicationResponse, CreateApplicationInput } from '@jobflow/shared';
 import { describe, expect, it } from 'vitest';
 
-import { Clock } from '../../common/clock.js';
+import type { Clock } from '../../common/clock.js';
 import { FAKE_TRANSACTION, fakeTransactionModule } from '../../test/fake-prisma.js';
 import { type ByUser, RecordedEvents } from '../../test/recorded-events.js';
 import {
@@ -15,7 +15,7 @@ import {
   SEARCH_ID,
   type Target,
 } from '../../test/service-fixtures.js';
-import { daysBefore, NOW, tickingClock } from '../../test/time.js';
+import { daysBefore, fixedClock, NOW, tickingClock } from '../../test/time.js';
 import {
   ApplicationDuplicatesRepository,
   type DuplicateQuery,
@@ -99,20 +99,18 @@ async function serviceWith({
   owned = [OLENAS_ROW],
   defaults = ACTIVE_DEFAULTS,
   duplicates = [],
-  clock = { now: () => NOW },
+  clock = fixedClock(NOW),
 }: ServiceFakes = {}) {
   const repository = new FakeApplicationsRepository({ owned, defaults });
   const duplicatesRepository = new FakeApplicationDuplicatesRepository(duplicates);
   const moduleRef = await fakeTransactionModule({
     providers: [ApplicationsService, ApplicationsRepository, ApplicationDuplicatesRepository],
-    now: NOW,
+    clock,
   })
     .overrideProvider(ApplicationsRepository)
     .useValue(repository)
     .overrideProvider(ApplicationDuplicatesRepository)
     .useValue(duplicatesRepository)
-    .overrideProvider(Clock)
-    .useValue(clock)
     .compile();
   return { repository, duplicatesRepository, service: moduleRef.get(ApplicationsService) };
 }
