@@ -34,7 +34,7 @@ export const uk = {
     navigate: 'навігація',
     select: 'обрати',
     ofTotal: 'із',
-    keys: { navigate: '↑↓', select: '↵' },
+    keys: { navigate: '↑↓', select: '↵', escape: 'Esc', ctrl: 'Ctrl', meta: '⌘' },
     theme: 'Тема',
     showPassword: 'Показати пароль',
     copied: 'Скопійовано',

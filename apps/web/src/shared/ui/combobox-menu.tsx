@@ -16,7 +16,7 @@ import {
   type SelectOption,
   type SelectOptionGroup,
 } from './field-surface';
-import { Kbd } from './kbd';
+import { ListKeyHints } from './kbd';
 import { NoMatches } from './no-matches';
 import { CheckSlot, OptionContent } from './option-content';
 
@@ -103,14 +103,7 @@ function MenuFooter({ count }: Readonly<{ count: { shown: number; total: number 
   return (
     <div className="caption mt-1 flex items-center justify-between gap-3 border-t border-line-soft px-2.5 pt-2 pb-1 text-ink-3">
       <span className="flex items-center gap-3">
-        <span className="flex items-center gap-1.5">
-          <Kbd>{uk.ui.keys.navigate}</Kbd>
-          {uk.ui.navigate}
-        </span>
-        <span className="flex items-center gap-1.5">
-          <Kbd>{uk.ui.keys.select}</Kbd>
-          {uk.ui.select}
-        </span>
+        <ListKeyHints />
       </span>
       <span className="tabular-nums">{`${String(count.shown)} ${uk.ui.ofTotal} ${String(count.total)}`}</span>
     </div>

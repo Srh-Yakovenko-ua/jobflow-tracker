@@ -17,6 +17,8 @@ export const DialogClose = DialogPrimitive.Close;
 
 export type DialogHeader = { eyebrow?: ReactNode; title: ReactNode; description?: ReactNode };
 
+export type DialogState = Readonly<{ open: boolean; onOpenChange: (open: boolean) => void }>;
+
 export type DialogContentHandlers = Readonly<{
   onOpenAutoFocus?: (event: Event) => void;
   onCloseAutoFocus?: (event: Event) => void;

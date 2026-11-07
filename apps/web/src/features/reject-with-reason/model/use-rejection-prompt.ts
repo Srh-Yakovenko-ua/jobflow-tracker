@@ -24,6 +24,8 @@ type PickContext = Readonly<{
 
 type ReasonChoice = Readonly<{ application: MovingApplication; reasonCode: RejectionReasonCode }>;
 
+type SendOutcome = 'sent' | 'asked';
+
 const REJECTED = 'rejected';
 
 function pickReason(context: PickContext, { application, reasonCode }: ReasonChoice) {
@@ -54,7 +56,7 @@ function useAskReason({ send, setPrompt }: Pick<PickContext, 'send' | 'setPrompt
     ...meQueryOptions(),
     select: (me) => me.settings.askRejectionReason,
   });
-  return ({ application }: Pick<ApplicationMove, 'application'>): 'sent' | 'asked' => {
+  return ({ application }: Pick<ApplicationMove, 'application'>): SendOutcome => {
     if (!askReason) {
       send({ application, toStage: REJECTED });
       return 'sent';
@@ -67,6 +69,11 @@ function useAskReason({ send, setPrompt }: Pick<PickContext, 'send' | 'setPrompt
 export function useRejectionPrompt({ send, undo }: RejectionMutations) {
   const [prompt, setPrompt] = useState<RejectionPrompt | null>(null);
   const ask = useAskReason({ send, setPrompt });
+  const sendOrAsk = (move: ApplicationMove): SendOutcome => {
+    if (move.toStage === REJECTED) return ask(move);
+    send(move);
+    return 'sent';
+  };
   const focusBackRef = useRef<string | null>(null);
   const close = (focusId: string) => {
     focusBackRef.current = focusId;
@@ -97,7 +104,7 @@ export function useRejectionPrompt({ send, undo }: RejectionMutations) {
       close(REJECTED);
     },
   };
-  return { prompt, actions, focusBackRef, ask };
+  return { prompt, actions, focusBackRef, ask, sendOrAsk };
 }
 
 export type RejectionFlow = ReturnType<typeof useRejectionPrompt>;

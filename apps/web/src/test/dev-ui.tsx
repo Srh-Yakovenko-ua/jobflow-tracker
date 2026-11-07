@@ -1,10 +1,11 @@
 import { screen, within } from '@testing-library/react';
-import axe from 'axe-core';
 
 import DevUiPage from '@/app/dev/ui/page';
 import { uk } from '@/shared/i18n';
 
 import { renderInApp } from './render-in-app';
+
+export { axeViolations } from './axe';
 
 export function renderGallery() {
   return renderInApp(<DevUiPage />);
@@ -15,11 +16,6 @@ export async function findLiveToaster() {
   const toaster = description.closest<HTMLElement>('[data-sonner-toaster]');
   if (toaster === null) throw new Error('the live toast is outside the sonner toaster');
   return within(toaster);
-}
-
-export async function axeViolations() {
-  const { violations } = await axe.run(document.body);
-  return violations;
 }
 
 export function specimenOf(eyebrow: string) {

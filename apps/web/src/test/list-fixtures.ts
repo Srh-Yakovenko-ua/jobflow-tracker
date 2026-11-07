@@ -4,8 +4,10 @@ import { http, HttpResponse } from 'msw/http';
 import { apiUrl } from './api-handlers';
 import { type CardRun, cardsIn, heldReply, type MoveRouteOptions } from './board-fixtures';
 
+type ListItems = readonly ApplicationListItem[];
+
 export type PagedListRouteOptions = Pick<MoveRouteOptions, 'latch'> & {
-  items: readonly ApplicationListItem[];
+  items: ListItems | ((params: URLSearchParams) => ListItems);
   pageSize?: number;
 };
 
@@ -28,7 +30,8 @@ export function pagedListRoute({ items, pageSize = 100, ...control }: PagedListR
     const { searchParams } = new URL(info.request.url);
     sent.push(searchParams.toString());
     const from = Number(searchParams.get('cursor') ?? 0);
-    const page = pageOf({ items, from, to: from + pageSize });
+    const asked = typeof items === 'function' ? items(searchParams) : items;
+    const page = pageOf({ items: asked, from, to: from + pageSize });
     return heldReply({ ...control, info, fallback: () => HttpResponse.json(page) });
   });
   return { handler, sent };
