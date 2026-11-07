@@ -4,6 +4,7 @@ import {
   calendarQuerySchema,
   type CalendarResponse,
   calendarResponseSchema,
+  OUTCOME_STAGES,
 } from '@jobflow/shared';
 
 import { errorResponses, EXAMPLE_APPLICATION_ID, jsonContent } from '../../openapi/route.js';
@@ -50,7 +51,7 @@ export const CALENDAR_OPENAPI_PATHS: RouteConfig[] = [
     path: '/calendar',
     tags: ['calendar'],
     summary: 'The scheduled events and follow-up reminders in a range, shaped for FullCalendar',
-    description: `from and to carry Z or an offset, to is later than from and at most ${String(CALENDAR_LIMITS.rangeMaxDays)} days on. An event is included when it overlaps [from, to) and is planned or done; start and end are UTC. A follow-up is an all-day item dated in the time zone of the user's settings.`,
+    description: `from and to carry Z or an offset, to is later than from and at most ${String(CALENDAR_LIMITS.rangeMaxDays)} days on. An event is included when it overlaps [from, to) and is planned or done; start and end are UTC. A follow-up is an all-day item dated in the time zone of the user's settings. A planned event and a follow-up are left out while their application's stage is one of ${OUTCOME_STAGES.join(', ')} and come back when it reopens (an undo, a late reply); a done event always stays.`,
     request: { query: calendarQuerySchema },
     responses: {
       200: {

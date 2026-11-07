@@ -1,20 +1,31 @@
-import { type CalendarItem, calendarResponseSchema } from '@jobflow/shared';
+import {
+  type CalendarItem,
+  calendarResponseSchema,
+  type MoveApplicationInput,
+} from '@jobflow/shared';
 import { describe, expect, it } from 'vitest';
 
 import { addMinutes } from '../../common/add-minutes.js';
-import { useTestApp } from '../../test/app.js';
 import {
   applicationPath,
   CALENDAR_PATH,
   createApplication,
+  createMovedApplication,
   getWithQuery,
+  postStageMove,
   ROMASHKA,
   type SignedInApplication,
+  signedInWithSearch,
   signUpWithApplication,
+  undoLastMove,
+  useStageMoveTestApp,
 } from '../../test/applications.js';
 import { BOHDAN } from '../../test/auth.js';
 import { createReminder, createScheduledEvent, type NewReminder } from '../../test/factories.js';
 import { callRoute, errorPathsOf } from '../../test/http.js';
+import { finishSearch } from '../../test/searches.js';
+import { TO_SCREENING } from '../../test/service-fixtures.js';
+import { NOW, settableClock } from '../../test/time.js';
 
 type CalendarRange = { from: string; to: string };
 
@@ -36,6 +47,27 @@ const NOVEMBER_FORTNIGHT = { from: '2026-11-02T00:00:00+02:00', to: '2026-11-16T
 
 const INSIDE_KYIV_WEEK = new Date('2026-10-21T09:00:00.000Z');
 
+const PLANNED_CALL_AT = new Date('2026-10-23T10:00:00.000Z');
+
+const SNOOZED_INTO_KYIV_WEEK: ReminderInput = {
+  status: 'snoozed',
+  dueAt: new Date('2026-10-17T09:00:00.000Z'),
+  snoozedUntil: new Date('2026-10-23T09:00:00.000Z'),
+};
+
+const TO_REJECTED: MoveApplicationInput = {
+  fromStage: 'applied',
+  toStage: 'rejected',
+  reasonCode: 'skills_gap',
+};
+
+const OFFER_MOVES: MoveApplicationInput[] = [
+  TO_SCREENING,
+  { fromStage: 'screening', toStage: 'offer' },
+];
+
+const clock = settableClock(NOW);
+
 const shifted = (at: string, minutes: number) => addMinutes(new Date(at), minutes).toISOString();
 
 const edgeEventsOf = ({ from, to }: CalendarRange): EdgeEvent[] => [
@@ -47,7 +79,7 @@ const edgeEventsOf = ({ from, to }: CalendarRange): EdgeEvent[] => [
 ];
 
 describe('GET /calendar', () => {
-  const testApp = useTestApp();
+  const testApp = useStageMoveTestApp(clock);
 
   const calendarOf = (accessToken: string, range: CalendarRange) =>
     getWithQuery(testApp.app, { path: CALENDAR_PATH, accessToken, query: range });
@@ -108,6 +140,108 @@ describe('GET /calendar', () => {
     }
     return ids;
   }
+
+  const plannedCallOf = (applicationId: string) =>
+    createScheduledEvent(testApp.prisma, {
+      applicationId,
+      kind: 'screening_call',
+      startsAt: PLANNED_CALL_AT,
+    });
+
+  const idsInKyivWeek = async (accessToken: string) =>
+    (await itemsOf(accessToken, KYIV_WEEK)).map(({ id }) => id);
+
+  async function offerCallOf(accessToken: string) {
+    const id = await createMovedApplication(testApp.app, {
+      clock,
+      accessToken,
+      moves: OFFER_MOVES,
+    });
+    return plannedCallOf(id);
+  }
+
+  async function openCalendarOf(application: SignedInApplication) {
+    const snoozing = await secondApplicationOf(application);
+    const ids = [
+      await reminderOf(application, { dueAt: INSIDE_KYIV_WEEK }),
+      await reminderOf(snoozing, SNOOZED_INTO_KYIV_WEEK),
+      await plannedCallOf(application.id),
+    ];
+    expect(await idsInKyivWeek(application.accessToken)).toEqual(ids);
+    return { ids, applications: [application, snoozing] };
+  }
+
+  async function allMovedTo(applications: SignedInApplication[], input: MoveApplicationInput) {
+    for (const application of applications) {
+      const response = await postStageMove(testApp.app, { ...application, input });
+      expect(response.status).toBe(201);
+    }
+  }
+
+  it.each<MoveApplicationInput>([
+    TO_REJECTED,
+    { fromStage: 'applied', toStage: 'ghosted' },
+    { fromStage: 'applied', toStage: 'withdrawn' },
+  ])(
+    'leaves out the planned event and the pending and snoozed follow-ups of applications moved to $toStage',
+    async (input) => {
+      const application = await signUpWithApplication(testApp.app);
+      const { applications } = await openCalendarOf(application);
+
+      await allMovedTo(applications, input);
+
+      expect(await idsInKyivWeek(application.accessToken)).toEqual([]);
+    },
+  );
+
+  it('brings the planned event and the follow-ups back at the applied stage once the rejections are undone', async () => {
+    const application = await signUpWithApplication(testApp.app);
+    const { ids, applications } = await openCalendarOf(application);
+    await allMovedTo(applications, TO_REJECTED);
+
+    for (const rejected of applications) {
+      expect((await undoLastMove(testApp.app, rejected)).status).toBe(201);
+    }
+
+    const items = await itemsOf(application.accessToken, KYIV_WEEK);
+    expect(items.map(({ id, extendedProps }) => [id, extendedProps.stage])).toEqual(
+      ids.map((id) => [id, 'applied']),
+    );
+  });
+
+  it("keeps a rejected application's done interview and an offer's planned call", async () => {
+    const rejected = await signUpWithApplication(testApp.app);
+    const doneInterview = await createScheduledEvent(testApp.prisma, {
+      applicationId: rejected.id,
+      kind: 'tech_interview',
+      startsAt: INSIDE_KYIV_WEEK,
+      status: 'done',
+    });
+    await allMovedTo([rejected], TO_REJECTED);
+    const offerCall = await offerCallOf(rejected.accessToken);
+
+    const items = await itemsOf(rejected.accessToken, KYIV_WEEK);
+
+    expect(items.map(({ id, extendedProps }) => [id, extendedProps])).toEqual([
+      [doneInterview, expect.objectContaining({ stage: 'rejected', status: 'done' })],
+      [offerCall, expect.objectContaining({ stage: 'offer', status: 'planned' })],
+    ]);
+  });
+
+  it("leaves only the offer's planned call once a search is finished with its open applications withdrawn", async () => {
+    const { accessToken, searchId } = await signedInWithSearch(testApp.prisma);
+    for (const moves of [[], [TO_SCREENING]]) {
+      const id = await createMovedApplication(testApp.app, { clock, accessToken, moves });
+      await plannedCallOf(id);
+      await reminderOf({ accessToken, id }, { dueAt: INSIDE_KYIV_WEEK });
+    }
+    const offerCall = await offerCallOf(accessToken);
+
+    const finish = { searchId, outcome: 'offer_accepted', openApplications: 'withdraw' };
+    expect((await finishSearch(testApp.app, { accessToken, input: finish })).status).toBe(200);
+
+    expect(await idsInKyivWeek(accessToken)).toEqual([offerCall]);
+  });
 
   it.each([
     { case: 'a Kyiv week across the switch to winter time', range: KYIV_WEEK },
@@ -217,11 +351,7 @@ describe('GET /calendar', () => {
     },
     {
       case: 'shows a follow-up due before the range on the day it is snoozed until inside it',
-      followup: {
-        status: 'snoozed',
-        dueAt: new Date('2026-10-17T09:00:00.000Z'),
-        snoozedUntil: new Date('2026-10-23T09:00:00.000Z'),
-      },
+      followup: SNOOZED_INTO_KYIV_WEEK,
       startsOn: ['2026-10-23'],
     },
     {
