@@ -6,10 +6,15 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 
 import { Clock } from '../../common/clock.js';
 import { validateEnv } from '../../config/env.js';
-import { Prisma } from '../../generated/prisma/client.js';
 import { PrismaService } from '../../prisma/prisma.service.js';
-import { QUEUES } from '../../queues/queues.js';
-import { FakeAiClient, VACANCY_TEXT } from '../../test/ai.js';
+import { DEFAULT_JOB_OPTIONS, QUEUES } from '../../queues/queues.js';
+import {
+  FAILED_AI_RESULT,
+  FakeAiClient,
+  storedAiJob,
+  VACANCY_COMPLETION,
+  VACANCY_TEXT,
+} from '../../test/ai.js';
 import { useTestDatabase } from '../../test/database.js';
 import { exampleEnv } from '../../test/example-env.js';
 import {
@@ -21,19 +26,46 @@ import {
 import { memoryLog } from '../../test/memory-log.js';
 import { processedJob } from '../../test/processed-job.js';
 import { compileProcessorModule } from '../../test/processor.js';
-import { minutesBefore, NOW } from '../../test/time.js';
+import { minutesBefore, NOW, settableClock } from '../../test/time.js';
 import { AI_JOBS, type AiCompleteJob } from './ai.jobs.js';
 import { AiProcessor } from './ai.processor.js';
 import { AiRepository } from './ai.repository.js';
 import { AiService } from './ai.service.js';
 import { AiClient } from './ai-client.js';
 import { aiInputHash } from './ai-input-hash.js';
+import { AiServiceError } from './ai-service-error.js';
 
 const BUDGET = { AI_DAILY_LIMIT: '1', AI_MONTHLY_TOKEN_CAP: '1000' };
 
 const OTHER_VACANCY = 'Middle Node.js developer, Globex, Kyiv, 3000 USD';
 
-const AI_JOB_ROW = { status: true, errorType: true, aiResultId: true, finishedAt: true } as const;
+const NOT_READY = { status: 503, type: 'not_ready' };
+
+const INVALID_OUTPUT = { status: 422, type: 'ai_invalid_output' };
+
+const FINAL_FAILURES = [
+  {
+    verdict: 'still calls',
+    refusal: { status: 401, type: 'unauthorized' },
+    attemptsMade: 0,
+    nextCall: { cached: false },
+    calls: 2,
+  },
+  {
+    verdict: 'still calls',
+    refusal: NOT_READY,
+    attemptsMade: DEFAULT_JOB_OPTIONS.attempts - 1,
+    nextCall: { cached: false },
+    calls: 2,
+  },
+  {
+    verdict: 'refuses',
+    refusal: INVALID_OUTPUT,
+    attemptsMade: 0,
+    nextCall: { name: 'UnrecoverableError', message: 'budget_exceeded' },
+    calls: 1,
+  },
+];
 
 type JobInLine = { owner: OwnedApplication; status: AiJobStatus; minutesAgo: number };
 
@@ -43,6 +75,10 @@ const database = useTestDatabase();
 
 const ai = new FakeAiClient();
 
+const clock = settableClock(NOW);
+
+const succeed = () => Promise.resolve(VACANCY_COMPLETION);
+
 let moduleRef: TestingModule;
 
 beforeAll(async () => {
@@ -50,7 +86,7 @@ beforeAll(async () => {
     AiProcessor,
     AiService,
     AiRepository,
-    { provide: Clock, useValue: { now: () => NOW } },
+    { provide: Clock, useValue: clock },
     { provide: PrismaService, useValue: database.prisma },
     {
       provide: ConfigService,
@@ -62,6 +98,8 @@ beforeAll(async () => {
 
 beforeEach(() => {
   ai.calls.length = 0;
+  ai.answer = succeed;
+  clock.at(NOW);
 });
 
 afterAll(() => moduleRef.close());
@@ -72,13 +110,21 @@ async function queuedJob(owner: OwnedApplication, text: string): Promise<AiCompl
   return { aiJobId, userId, kind: 'vacancy_parse', input: { text } };
 }
 
-function run(job: AiCompleteJob) {
+function run(job: AiCompleteJob, attempt = { attemptsMade: 0 }) {
   const data = { queueName: QUEUES.ai.name, name: AI_JOBS.complete, data: job, id: job.aiJobId };
-  return moduleRef.get(AiProcessor).process(processedJob(data));
+  return moduleRef.get(AiProcessor).process({ ...processedJob(data), ...attempt });
 }
 
 function storedJob(id: string) {
-  return database.prisma.aiJob.findUniqueOrThrow({ where: { id }, select: AI_JOB_ROW });
+  return storedAiJob(database.prisma, id);
+}
+
+function doneOn(aiResultId: string | undefined) {
+  return { status: 'done', errorType: null, aiResultId, finishedAt: NOW };
+}
+
+function failedWith(errorType: string) {
+  return { status: 'failed', errorType, aiResultId: null, finishedAt: NOW };
 }
 
 function jobInLine({ owner, status, minutesAgo }: JobInLine): Promise<string> {
@@ -106,10 +152,9 @@ describe('AiService on Postgres', () => {
       tokensIn: 120,
       tokensOut: 40,
     });
-    const done = { status: 'done', errorType: null, aiResultId: result?.id, finishedAt: NOW };
     expect([await storedJob(first.aiJobId), await storedJob(pastedAgain.aiJobId)]).toEqual([
-      done,
-      done,
+      doneOn(result?.id),
+      doneOn(result?.id),
     ]);
   });
 
@@ -119,13 +164,8 @@ describe('AiService on Postgres', () => {
     const failedId = await createAiResult(database.prisma, {
       userId: olena.userId,
       inputHash: aiInputHash(job),
-      status: 'failed',
+      ...FAILED_AI_RESULT,
       error: 'not_ready',
-      output: Prisma.DbNull,
-      model: '',
-      tokensIn: 0,
-      tokensOut: 0,
-      latencyMs: 0,
       updatedAt: new Date('2026-10-21T23:59:00.000Z'),
     });
 
@@ -140,14 +180,88 @@ describe('AiService on Postgres', () => {
         model: 'fake',
         tokensIn: 120,
         tokensOut: 40,
+        updatedAt: NOW,
       }),
     ]);
-    expect(await storedJob(job.aiJobId)).toEqual({
-      status: 'done',
-      errorType: null,
-      aiResultId: failedId,
-      finishedAt: NOW,
+    expect(await storedJob(job.aiJobId)).toEqual(doneOn(failedId));
+  });
+
+  it('refuses a second vacancy over the daily limit while the clock runs ahead of the wall clock', async () => {
+    clock.at(new Date('2099-03-10T09:00:00.000Z'));
+    const olena = await createOwnedApplication(database.prisma);
+    const first = await queuedJob(olena, VACANCY_TEXT);
+    const other = await queuedJob(olena, OTHER_VACANCY);
+
+    await expect(run(first)).resolves.toMatchObject({ cached: false });
+    await expect(run(other)).rejects.toThrow(new UnrecoverableError('budget_exceeded'));
+
+    expect(ai.calls).toHaveLength(1);
+  });
+
+  it('keeps the succeeded result when an identical job fails after it and serves the next paste from the cache', async () => {
+    const olena = await createOwnedApplication(database.prisma);
+    const failing = await queuedJob(olena, VACANCY_TEXT);
+    const succeeding = await queuedJob(olena, VACANCY_TEXT);
+    const pastedLater = await queuedJob(olena, VACANCY_TEXT);
+    ai.answer = async () => {
+      ai.answer = succeed;
+      await run(succeeding);
+      throw new AiServiceError(INVALID_OUTPUT);
+    };
+
+    await expect(run(failing)).rejects.toBeInstanceOf(UnrecoverableError);
+    const cacheHit = await run(pastedLater);
+
+    const [result, ...others] = await database.prisma.aiResult.findMany();
+    expect(others).toEqual([]);
+    expect(result).toMatchObject({
+      status: 'succeeded',
+      error: null,
+      output: VACANCY_COMPLETION.output,
     });
+    expect(cacheHit).toMatchObject({ aiResultId: result?.id, cached: true });
+    expect(ai.calls).toHaveLength(2);
+    expect(await storedJob(succeeding.aiJobId)).toEqual(doneOn(result?.id));
+    expect(await storedJob(failing.aiJobId)).toEqual(failedWith('ai_invalid_output'));
+  });
+
+  it.each(FINAL_FAILURES)(
+    '$verdict the next vacancy under a daily limit of 1 after a final $refusal.type',
+    async ({ refusal, attemptsMade, nextCall, calls }) => {
+      const olena = await createOwnedApplication(database.prisma);
+      const failing = await queuedJob(olena, VACANCY_TEXT);
+      const next = await queuedJob(olena, OTHER_VACANCY);
+      ai.answer = () => Promise.reject(new AiServiceError(refusal));
+
+      await expect(run(failing, { attemptsMade })).rejects.toThrow(refusal.type);
+      ai.answer = succeed;
+      const outcome = await run(next).catch((thrown: unknown) => thrown);
+
+      expect(
+        await database.prisma.aiResult.findFirst({
+          where: { inputHash: aiInputHash(failing) },
+          select: { status: true, error: true },
+        }),
+      ).toEqual({ status: 'failed', error: refusal.type });
+      expect(outcome).toMatchObject(nextCall);
+      expect(ai.calls).toHaveLength(calls);
+    },
+  );
+
+  it('rethrows a 503 before the last attempt and leaves the job processing with no result, for BullMQ to retry', async () => {
+    const olena = await createOwnedApplication(database.prisma);
+    const job = await queuedJob(olena, VACANCY_TEXT);
+    ai.answer = () => Promise.reject(new AiServiceError(NOT_READY));
+
+    await expect(run(job)).rejects.toBeInstanceOf(AiServiceError);
+
+    expect(await storedJob(job.aiJobId)).toEqual({
+      status: 'processing',
+      errorType: null,
+      aiResultId: null,
+      finishedAt: null,
+    });
+    expect(await database.prisma.aiResult.findMany()).toEqual([]);
   });
 
   it('fails a second vacancy over the daily limit with budget_exceeded and still serves a cached one', async () => {
@@ -163,12 +277,7 @@ describe('AiService on Postgres', () => {
     expect(refusal).toBeInstanceOf(UnrecoverableError);
     expect(refusal).toHaveProperty('message', 'budget_exceeded');
     expect(ai.calls).toHaveLength(1);
-    expect(await storedJob(other.aiJobId)).toEqual({
-      status: 'failed',
-      errorType: 'budget_exceeded',
-      aiResultId: null,
-      finishedAt: NOW,
-    });
+    expect(await storedJob(other.aiJobId)).toEqual(failedWith('budget_exceeded'));
     expect(await storedJob(again.aiJobId)).toMatchObject({ status: 'done' });
   });
 

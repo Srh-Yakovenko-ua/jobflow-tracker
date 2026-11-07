@@ -24,6 +24,8 @@ ERRORS: dict[int, tuple[str, str]] = {
     504: ("ai_timeout", "AI timeout"),
 }
 
+INVALID_OUTPUT = ("ai_invalid_output", "Invalid AI output")
+
 
 @dataclass(frozen=True)
 class FieldError:
@@ -38,11 +40,13 @@ class AppError(Exception):
         *,
         detail: str | None = None,
         errors: list[FieldError] | None = None,
+        problem: tuple[str, str] | None = None,
     ) -> None:
         super().__init__(f"HTTP {status}")
         self.status = status
         self.detail = detail
         self.errors = errors
+        self.problem = problem
 
 
 def timeout_error(seconds: float) -> AppError:
@@ -60,7 +64,7 @@ def field_errors(errors: Sequence[Any]) -> list[FieldError]:
 
 
 def problem(request: Request, error: AppError) -> JSONResponse:
-    error_type, title = ERRORS.get(
+    error_type, title = error.problem or ERRORS.get(
         error.status, ("http_error", HTTPStatus(error.status).phrase)
     )
     body: dict[str, object] = {

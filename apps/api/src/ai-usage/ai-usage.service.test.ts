@@ -27,20 +27,21 @@ async function reportAt(prices: Record<string, string>): Promise<string[]> {
 }
 
 describe('AiUsageService.report', () => {
-  it('prints one line per UTC day, kind and model with its cost, then the totals per day and per kind', async () => {
+  it('prints one line per UTC day, kind, status and model with its cost, failed calls on their own line, then the totals per day and per kind over every line', async () => {
     await expect(reportAt(SONNET_PRICES)).resolves.toEqual([
-      'day\tkind\tmodel\tcalls\ttokens_in\ttokens_out\tavg_latency_ms\tcost_usd',
-      '2026-11-04\tvacancy_parse\tfake\t2\t400\t100\t1500\t0.0027',
-      '2026-11-05\tmatch\tfake\t1\t50\t10\t500\t0.0003',
-      '2026-11-05\tvacancy_parse\tmeta/llama-3.3-70b-instruct\t1\t20\t5\t701\t0.0001',
+      'day\tkind\tstatus\tmodel\tcalls\ttokens_in\ttokens_out\tavg_latency_ms\tcost_usd',
+      '2026-11-04\tvacancy_parse\tsucceeded\tfake\t2\t400\t100\t1500\t0.0027',
+      '2026-11-04\tvacancy_parse\tfailed\t\t1\t0\t0\t0\t0.0000',
+      '2026-11-05\tmatch\tsucceeded\tfake\t1\t50\t10\t500\t0.0003',
+      '2026-11-05\tvacancy_parse\tsucceeded\tmeta/llama-3.3-70b-instruct\t1\t20\t5\t701\t0.0001',
       '',
       'day\tcalls\ttokens_in\ttokens_out\tcost_usd',
-      '2026-11-04\t2\t400\t100\t0.0027',
+      '2026-11-04\t3\t400\t100\t0.0027',
       '2026-11-05\t2\t70\t15\t0.0004',
       '',
       'kind\tcalls\ttokens_in\ttokens_out\tcost_usd',
       'match\t1\t50\t10\t0.0003',
-      'vacancy_parse\t3\t420\t105\t0.0028',
+      'vacancy_parse\t4\t420\t105\t0.0028',
     ]);
   });
 
@@ -49,6 +50,7 @@ describe('AiUsageService.report', () => {
 
     expect(lines.map((line) => line.split('\t').at(-1))).toEqual([
       'cost_usd',
+      '0.0000',
       '0.0000',
       '0.0000',
       '0.0000',

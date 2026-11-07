@@ -56,15 +56,15 @@ async def test_repairs_invalid_json_with_one_more_call_and_sums_the_tokens() -> 
     ]
 
 
-async def test_answers_422_when_the_repaired_output_is_still_invalid() -> None:
+async def test_answers_invalid_output_when_the_repair_is_still_invalid() -> None:
     fake = FakeAiProvider(replies=["not json", '{"company": "Acme"}'])
 
     response = await post_completion(app=build_app(provider=fake))
 
     assert (response.status_code, len(fake.requests)) == (422, 2)
     assert response.json() == {
-        "type": "validation_error",
-        "title": "Invalid request",
+        "type": "ai_invalid_output",
+        "title": "Invalid AI output",
         "status": 422,
         "detail": "The model output did not match the schema after one repair",
         "errors": [
@@ -121,8 +121,10 @@ async def test_answers_404_for_an_unknown_kind() -> None:
 async def test_answers_422_with_paths_for_an_invalid_kind_input() -> None:
     response = await post_completion({"input": {"text": "   "}, "maxTokens": 0})
 
-    assert (response.status_code, response.json()["errors"]) == (
+    body = response.json()
+    assert (response.status_code, body["type"], body["errors"]) == (
         422,
+        "validation_error",
         [
             {
                 "path": "maxTokens",
