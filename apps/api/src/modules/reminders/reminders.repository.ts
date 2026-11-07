@@ -1,4 +1,4 @@
-import type { ReminderStatus } from '@jobflow/shared';
+import { OPEN_STAGES, type ReminderStatus } from '@jobflow/shared';
 import { Injectable } from '@nestjs/common';
 
 import type { Prisma } from '../../generated/prisma/client.js';
@@ -69,7 +69,7 @@ export class RemindersRepository {
       where: {
         userId,
         type: 'followup',
-        application: { userId, deletedAt: null },
+        application: { userId, deletedAt: null, currentStage: { in: [...OPEN_STAGES] } },
         OR: [
           { status: 'pending', dueAt: within },
           { status: 'snoozed', snoozedUntil: within },

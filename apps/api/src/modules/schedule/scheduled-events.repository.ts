@@ -1,8 +1,9 @@
-import type {
-  CreateScheduledEventInput,
-  ScheduledEventStatus,
-  Stage,
-  UpdateScheduledEventInput,
+import {
+  type CreateScheduledEventInput,
+  OPEN_STAGES,
+  type ScheduledEventStatus,
+  type Stage,
+  type UpdateScheduledEventInput,
 } from '@jobflow/shared';
 import { Injectable } from '@nestjs/common';
 
@@ -159,6 +160,7 @@ export class ScheduledEventsRepository {
       JOIN applications a ON a.id = e.application_id
       WHERE a.user_id = ${userId}::uuid AND a.deleted_at IS NULL
         AND e.status IN ('planned', 'done')
+        AND (e.status = 'done' OR a.current_stage = ANY(${[...OPEN_STAGES]}::stage[]))
         AND e.starts_at < ${to.toISOString()}::timestamptz
         AND e.starts_at + make_interval(mins => e.duration_min) > ${from.toISOString()}::timestamptz
       ORDER BY e.starts_at, e.id`;
