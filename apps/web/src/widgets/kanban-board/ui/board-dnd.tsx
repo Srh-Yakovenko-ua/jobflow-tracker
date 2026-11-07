@@ -5,6 +5,7 @@ import {
   KeyboardSensor,
   MouseSensor,
   TouchSensor,
+  type UniqueIdentifier,
   useDndContext,
   useSensor,
   useSensors,
@@ -76,12 +77,14 @@ function RejectionPromptDialog({ rejection }: Readonly<{ rejection: RejectionFlo
 
 function KeyboardDropFocus({ request }: Readonly<{ request: FocusRequest | null }>) {
   const nodes = useDndContext();
-  const focus = useEffectEvent(({ id }: FocusRequest) => {
+  const focus = useEffectEvent((id: UniqueIdentifier) => {
     focusCardOrStrip(nodes, id);
   });
+  const id = request?.id ?? null;
+  const stage = request?.stage ?? null;
   useEffect(() => {
-    if (request !== null) focus(request);
-  }, [request]);
+    if (id !== null) focus(id);
+  }, [id, stage]);
   return null;
 }
 

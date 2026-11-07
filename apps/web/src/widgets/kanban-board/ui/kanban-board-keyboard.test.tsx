@@ -1,13 +1,17 @@
+import { QueryClient } from '@tanstack/react-query';
 import { act, fireEvent, screen, waitFor, within } from '@testing-library/react';
 import type { UserEvent } from '@testing-library/user-event';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { uk } from '@/shared/i18n';
 import { errorReply } from '@/test/api-handlers';
 import { startDrag } from '@/test/board-drag';
+import { type BoardRouteOptions, DESIGN_BOARD } from '@/test/board-fixtures';
 import { fakeTimeouts } from '@/test/fake-timeouts';
-import { latch } from '@/test/latch';
+import { type Latch, latch } from '@/test/latch';
+import { stubMotionPreference } from '@/test/motion-preference';
 import { push } from '@/test/navigation';
+import { stubOverlayGlide } from '@/test/overlay-glide';
 import { boardReadyToDrag, columnNamed } from '@/test/render-board';
 
 import { DROP_GLIDE } from '../model/drop-glide';
@@ -37,6 +41,11 @@ const SAVED_STEP_CLOSERS = [
 const ROLLBACK_TIMINGS = [
   { when: 'after the card lands', order: ['land', 'refuse'] },
   { when: 'while the card still glides', order: ['refuse', 'land'] },
+] as const;
+
+const MOTION_MODES = [
+  { motion: 'no-preference', glides: 1 },
+  { motion: 'reduce', glides: 0 },
 ] as const;
 
 function cardLink(position: string): HTMLAnchorElement {
@@ -79,6 +88,35 @@ async function expectFocusBackOnceLanded(card: HTMLAnchorElement) {
   await waitFor(() => {
     expect(document.activeElement).toBe(card);
   });
+}
+
+async function expectGlides(glide: ReturnType<typeof stubOverlayGlide>, times: number) {
+  await waitFor(() => {
+    expect(glide).toHaveBeenCalledTimes(times);
+  });
+}
+
+function holdBoardPatch(patch: Latch) {
+  vi.spyOn(QueryClient.prototype, 'cancelQueries').mockImplementationOnce(async function held(
+    this: QueryClient,
+    ...filters: Parameters<QueryClient['cancelQueries']>
+  ) {
+    await patch.reached;
+    return this.cancelQueries(...filters);
+  });
+}
+
+async function keyboardDropRefused(board: BoardRouteOptions = DESIGN_BOARD) {
+  fakeTimeouts();
+  const answer = latch();
+  const { user } = await boardReadyToDrag({
+    board,
+    move: { reply: () => errorReply({ status: 409, type: 'conflict' }), latch: answer },
+  });
+  await pickUp(user, APPLIED_CARD);
+  await user.keyboard('{ArrowRight} ');
+  await screen.findByRole('heading', { name: 'скринінг 2' });
+  return answer;
 }
 
 afterEach(() => {
@@ -185,65 +223,6 @@ describe('KanbanBoard keyboard drag and drop', () => {
     expect(document.querySelector('[data-drop="over"]')).toBeNull();
   });
 
-  it('after a keyboard drop on скринінг the moved card has focus in its new column', async () => {
-    fakeTimeouts();
-    const { user } = await boardReadyToDrag({ move: { latch: latch() } });
-
-    await pickUp(user, APPLIED_CARD);
-    await user.keyboard('{ArrowRight} ');
-    await screen.findByRole('heading', { name: 'скринінг 2' });
-    await settleLanding();
-
-    const moved = within(columnNamed('скринінг 2')).getByText(APPLIED_CARD).closest('a');
-    await waitFor(() => {
-      expect(document.activeElement).toBe(moved);
-    });
-  });
-
-  it.each(ROLLBACK_TIMINGS)(
-    'a keyboard move to скринінг answered 409 $when puts focus back on the card in відгук',
-    async ({ order }) => {
-      fakeTimeouts();
-      const answer = latch();
-      const { user } = await boardReadyToDrag({
-        move: { reply: () => errorReply({ status: 409, type: 'conflict' }), latch: answer },
-      });
-      const steps = {
-        land: settleLanding,
-        refuse: async () => {
-          answer.release();
-          await screen.findByRole('heading', { name: 'відгук 2' });
-        },
-      };
-
-      await pickUp(user, APPLIED_CARD);
-      await user.keyboard('{ArrowRight} ');
-      await screen.findByRole('heading', { name: 'скринінг 2' });
-      for (const step of order) await steps[step]();
-
-      await waitFor(() => {
-        expect(document.activeElement).toBe(
-          within(columnNamed('відгук 2')).getByText(APPLIED_CARD).closest('a'),
-        );
-      });
-    },
-  );
-
-  it('after a keyboard drop on the folded ghosted strip the strip has focus', async () => {
-    fakeTimeouts();
-    const { user, moves } = await boardReadyToDrag({ move: { latch: latch() } });
-
-    await pickUp(user, APPLIED_CARD);
-    await user.keyboard('{ArrowRight}{ArrowRight}{ArrowRight}{ArrowRight} ');
-    const strip = await screen.findByRole('button', { name: 'ghosted 18' });
-    await settleLanding();
-
-    await waitFor(() => {
-      expect(document.activeElement).toBe(strip);
-    });
-    expect(moves).toEqual([{ fromStage: 'applied', toStage: 'ghosted' }]);
-  });
-
   it('ENTER on a focused card opens its vacancy page and picks nothing up', async () => {
     const { user } = await boardReadyToDrag();
 
@@ -279,3 +258,94 @@ describe('KanbanBoard keyboard drag and drop', () => {
     drag.cancel();
   });
 });
+
+describe.each(MOTION_MODES)(
+  'KanbanBoard keyboard focus with prefers-reduced-motion: $motion',
+  ({ motion, glides }) => {
+    beforeEach(() => {
+      stubMotionPreference(motion);
+    });
+
+    it('after a keyboard drop on скринінг the moved card has focus in its new column', async () => {
+      fakeTimeouts();
+      const glide = stubOverlayGlide();
+      const patch = latch();
+      const { user } = await boardReadyToDrag({ move: { latch: latch() } });
+      holdBoardPatch(patch);
+
+      await pickUp(user, APPLIED_CARD);
+      await user.keyboard('{ArrowRight} ');
+      await settleLanding();
+      patch.release();
+      await screen.findByRole('heading', { name: 'скринінг 2' });
+
+      const moved = within(columnNamed('скринінг 2')).getByText(APPLIED_CARD).closest('a');
+      await waitFor(() => {
+        expect(document.activeElement).toBe(moved);
+      });
+      await expectGlides(glide, glides);
+    });
+
+    it.each(ROLLBACK_TIMINGS)(
+      'a keyboard move to скринінг answered 409 $when puts focus back on the card in відгук',
+      async ({ order }) => {
+        const glide = stubOverlayGlide();
+        const answer = await keyboardDropRefused();
+        const steps = {
+          land: settleLanding,
+          refuse: async () => {
+            answer.release();
+            await screen.findByRole('heading', { name: 'відгук 2' });
+          },
+        };
+        for (const step of order) await steps[step]();
+
+        await waitFor(() => {
+          expect(document.activeElement).toBe(
+            within(columnNamed('відгук 2')).getByText(APPLIED_CARD).closest('a'),
+          );
+        });
+        await expectGlides(glide, glides);
+      },
+    );
+
+    it("a keyboard move to скринінг answered 409 after another tab moved the card to техінтерв'ю puts focus on the card in техінтерв'ю once the board is fetched again", async () => {
+      const glide = stubOverlayGlide();
+      const anotherTab = { moved: false };
+      const answer = await keyboardDropRefused({
+        ...DESIGN_BOARD,
+        liveCard: (card) =>
+          anotherTab.moved && card.position === APPLIED_CARD
+            ? { ...card, currentStage: 'tech_interview' }
+            : card,
+      });
+      anotherTab.moved = true;
+      await settleLanding();
+      answer.release();
+
+      await waitFor(() => {
+        expect(document.activeElement).toBe(
+          within(columnNamed("техінтерв'ю 1")).getByText(APPLIED_CARD).closest('a'),
+        );
+      });
+      await expectGlides(glide, glides);
+    });
+
+    it('after a keyboard drop on the folded ghosted strip the strip has focus', async () => {
+      fakeTimeouts();
+      const glide = stubOverlayGlide();
+      const { user, moves } = await boardReadyToDrag({ move: { latch: latch() } });
+
+      await pickUp(user, APPLIED_CARD);
+      await user.keyboard('{ArrowRight}{ArrowRight}{ArrowRight}{ArrowRight} ');
+      const strip = await screen.findByRole('button', { name: 'ghosted 18' });
+      await settleLanding();
+
+      await waitFor(() => {
+        expect(document.activeElement).toBe(strip);
+      });
+      expect(moves).toEqual([{ fromStage: 'applied', toStage: 'ghosted' }]);
+      await expectGlides(glide, glides);
+    });
+  },
+);

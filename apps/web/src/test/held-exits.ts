@@ -1,28 +1,15 @@
 import { act } from '@testing-library/react';
-import { vi } from 'vitest';
+
+import { type ComputedStyle, overrideComputedStyle } from './computed-style';
 
 export type HeldExits = Readonly<{ finish: () => void }>;
-
-type HeldStyle = Readonly<{ element: Element; style: CSSStyleDeclaration }>;
 
 const EXIT_ANIMATION = 'exit';
 
 const CLOSED = '[data-state=closed]';
 
-function animationNameOf(element: Element): string {
+function animationNameOf({ element }: ComputedStyle): string {
   return element.matches(CLOSED) ? EXIT_ANIMATION : 'enter';
-}
-
-function heldStyle({ element, style }: HeldStyle): CSSStyleDeclaration {
-  return new Proxy(style, {
-    get(target, key) {
-      if (key === 'animationName') return animationNameOf(element);
-      const value: unknown = Reflect.get(target, key, target);
-      if (typeof value !== 'function') return value;
-      const bound: unknown = value.bind(target);
-      return bound;
-    },
-  });
 }
 
 function exitEnd(): Event {
@@ -32,10 +19,7 @@ function exitEnd(): Event {
 }
 
 export function holdExitAnimations(): HeldExits {
-  const computed = window.getComputedStyle.bind(window);
-  vi.spyOn(window, 'getComputedStyle').mockImplementation((element, pseudo) =>
-    heldStyle({ element, style: computed(element, pseudo) }),
-  );
+  overrideComputedStyle({ property: 'animationName', valueOf: animationNameOf });
   return {
     finish: () => {
       act(() => {

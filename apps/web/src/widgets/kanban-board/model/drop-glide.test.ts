@@ -1,6 +1,7 @@
 import type { ClientRect } from '@dnd-kit/core';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
+import { fakeAnimation } from '@/test/fake-animation';
 import { stubMotionPreference } from '@/test/motion-preference';
 
 import { createDropGlide, type DropLanding, type GlideStart } from './drop-glide';
@@ -35,26 +36,6 @@ const AT_MOVED = { transform: 'translate3d(300px, -40px, 0) scaleX(1) scaleY(1)'
 
 function rectOf({ left, top }: Box): ClientRect {
   return { left, top, width: 250, height: 76, right: left + 250, bottom: top + 76 };
-}
-
-function fakeAnimation({ running }: Readonly<{ running: boolean }>) {
-  let end: () => void = () => undefined;
-  const playState: AnimationPlayState = running ? 'running' : 'finished';
-  const animation = {
-    playState,
-    finished: running
-      ? new Promise<void>((resolve) => {
-          end = () => {
-            resolve();
-          };
-        })
-      : Promise.resolve(),
-    finish: vi.fn(() => {
-      animation.playState = 'finished';
-      end();
-    }),
-  };
-  return animation;
 }
 
 function fakeBoard({ animates = true, running = false }: FakeBoardOptions = {}) {
