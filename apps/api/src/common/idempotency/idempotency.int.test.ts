@@ -7,18 +7,39 @@ import { beforeEach, describe, expect, it } from 'vitest';
 
 import { appTestingModule, useTestApp } from '../../test/app.js';
 import {
+  createApplication,
   notesPath,
+  ROMASHKA,
   type SignedInApplication,
+  signedInWithSearch,
   signUpWithApplication,
 } from '../../test/applications.js';
 import { BOHDAN } from '../../test/auth.js';
+import { createUser } from '../../test/factories.js';
 import { callRoute, errorPathsOf, statusAndDetail } from '../../test/http.js';
 import { keyHeaders } from '../../test/idempotency.js';
-import { minutesAfter, NOW, settableClock } from '../../test/time.js';
+import { minutesAfter, minutesBefore, NOW, settableClock } from '../../test/time.js';
 import { Clock } from '../clock.js';
-import { type ClaimOutcome, IdempotencyRepository } from './idempotency.repository.js';
+import {
+  type ClaimOutcome,
+  IdempotencyRepository,
+  type KeyClaim,
+} from './idempotency.repository.js';
+import { IdempotencyService } from './idempotency.service.js';
+import { requestHashOf } from './idempotency-request.js';
 
 type KeyedNote = { application: SignedInApplication; body: object; key?: string };
+
+type OpenClaim = KeyClaim & { userId: string; claimedAt: Date };
+
+type OpenClaimCase = {
+  case: string;
+  claimedAt: Date;
+  hashOf: (application: SignedInApplication) => string;
+  outcome: unknown[];
+  notes: string[];
+  claimsOpen: boolean[];
+};
 
 const FIRST = { body: 'Перша нотатка' };
 
@@ -27,6 +48,38 @@ const OTHER = { body: 'Інша нотатка' };
 const DAY_MINUTES = 24 * 60;
 
 const IN_PROGRESS = [409, 'A request with this Idempotency-Key is still in progress'];
+
+const MISMATCH = [409, 'Idempotency-Key was already used with another request'];
+
+const firstNoteHash = ({ id }: SignedInApplication) =>
+  requestHashOf({ method: 'POST', originalUrl: notesPath(id), body: FIRST });
+
+const OPEN_CLAIM_CASES: OpenClaimCase[] = [
+  {
+    case: 'from 2 minutes ago with the same request by creating the note',
+    claimedAt: minutesBefore(2),
+    hashOf: firstNoteHash,
+    outcome: [201, undefined],
+    notes: [FIRST.body],
+    claimsOpen: [false],
+  },
+  {
+    case: 'inside the lease with the same request with in progress',
+    claimedAt: NOW,
+    hashOf: firstNoteHash,
+    outcome: IN_PROGRESS,
+    notes: [],
+    claimsOpen: [true],
+  },
+  {
+    case: 'inside the lease with another request with the mismatch',
+    claimedAt: NOW,
+    hashOf: () => 'another-request',
+    outcome: MISMATCH,
+    notes: [],
+    claimsOpen: [true],
+  },
+];
 
 const REFUSED = new Error('connect ECONNREFUSED 127.0.0.1:5432');
 
@@ -69,6 +122,64 @@ describe('an Idempotency-Key on the create POSTs', () => {
 
   const noteBodies = async () =>
     (await testApp.prisma.note.findMany({ select: { body: true } })).map(({ body }) => body);
+
+  const openClaim = async ({ userId, claimedAt, ...claim }: OpenClaim) => {
+    clock.at(claimedAt);
+    await testApp.app.get(IdempotencyService).claim(userId, claim);
+    clock.at(NOW);
+  };
+
+  it.each(OPEN_CLAIM_CASES)(
+    'answers a POST over an open claim $case',
+    async ({ claimedAt, hashOf, outcome, notes, claimsOpen }) => {
+      const { userId, accessToken } = await signedInWithSearch(testApp.prisma);
+      const { id } = await createApplication(testApp.app, { accessToken, input: ROMASHKA });
+      const key = randomUUID();
+      await openClaim({ userId, key, requestHash: hashOf({ accessToken, id }), claimedAt });
+
+      const response = await post({ application: { accessToken, id }, body: FIRST, key });
+
+      const claims = await testApp.prisma.idempotencyKey.findMany({ select: { response: true } });
+      expect(statusAndDetail(response)).toEqual(outcome);
+      expect(await noteBodies()).toEqual(notes);
+      expect(claims.map((claim) => claim.response === null)).toEqual(claimsOpen);
+    },
+  );
+
+  it("keeps Bohdan's open claim on a key when Olena's POST with that key is refused", async () => {
+    const olena = await signUpWithApplication(testApp.app);
+    const bohdan = await createUser(testApp.prisma);
+    const key = randomUUID();
+    await openClaim({ userId: bohdan.id, key, requestHash: 'bohdan-request', claimedAt: NOW });
+
+    const refused = await post({ application: olena, body: { body: ' ' }, key });
+
+    const owners = await testApp.prisma.idempotencyKey.findMany({ select: { userId: true } });
+    expect(refused.status).toBe(422);
+    expect(owners).toEqual([{ userId: bohdan.id }]);
+  });
+
+  it.each([
+    { case: 'an empty key', length: 0 },
+    { case: 'a 256 character key', length: 256 },
+  ])(
+    'refuses $case with 422 at Idempotency-Key over HTTP and stores nothing',
+    async ({ length }) => {
+      const olena = await signUpWithApplication(testApp.app);
+
+      const refused = await post({ application: olena, body: FIRST, key: 'k'.repeat(length) });
+
+      expect(refused.status).toBe(422);
+      expect([errorOf(refused).requestId, errorPathsOf(refused.body)]).toEqual([
+        refused.get('x-request-id'),
+        ['Idempotency-Key'],
+      ]);
+      expect([
+        await testApp.prisma.idempotencyKey.count(),
+        await testApp.prisma.note.count(),
+      ]).toEqual([0, 0]);
+    },
+  );
 
   it('answers the same key with another body with 409 and keeps the first note alone', async () => {
     const olena = await signUpWithApplication(testApp.app);

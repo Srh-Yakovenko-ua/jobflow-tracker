@@ -267,6 +267,18 @@ describe('RejectionReasonDialog, note step', () => {
     expect(failed.finished).toEqual(['done']);
   });
 
+  it('a second save with the same text after a saved note carries a new key', async () => {
+    const { user, sent } = await submitNote();
+    expect(await screen.findByText('Нотатку збережено')).toBeDefined();
+
+    await user.click(screen.getByRole('button', { name: 'Зберегти' }));
+
+    await waitFor(() => {
+      expect(sent).toEqual([LIVE_CODING_NOTE, LIVE_CODING_NOTE]);
+    });
+    expect(new Set(sent.map(({ idempotencyKey }) => idempotencyKey)).size).toBe(2);
+  });
+
   it('a note the server refuses shows the reason at its field and the dialog stays open', async () => {
     const { finished, sent } = await submitNote({
       reply: () => validationReply([{ path: 'body', message: 'Note must not be blank' }]),

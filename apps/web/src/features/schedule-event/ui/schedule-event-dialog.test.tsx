@@ -99,6 +99,20 @@ describe('ScheduleEventDialog', () => {
     expect(retried.sent.created).toEqual(sent.created);
   });
 
+  it('a second create sent unchanged after a scheduled event carries a new key', async () => {
+    const { user, sent, scheduleUntilClosed } = renderDialog();
+    const dialog = await findScheduleDialog();
+    await waitForDate(KYIV_TOMORROW);
+    await scheduleUntilClosed();
+
+    await user.click(dialog.getByRole('button', { name: 'Запланувати' }));
+
+    await waitFor(() => {
+      expect(sent.created).toEqual([TOMORROW_CREATE, TOMORROW_CREATE]);
+    });
+    expect(new Set(sent.created.map(({ idempotencyKey }) => idempotencyKey)).size).toBe(2);
+  });
+
   it('a start that already passed today stays open with the reason on the time field and sends nothing', async () => {
     const { user, onClose, sent } = renderDialog();
     const dialog = await findScheduleDialog();
