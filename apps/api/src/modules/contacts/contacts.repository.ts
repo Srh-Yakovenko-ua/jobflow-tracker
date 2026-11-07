@@ -4,6 +4,7 @@ import { Injectable } from '@nestjs/common';
 import { withoutUndefined } from '../../common/without-undefined.js';
 import type { Prisma } from '../../generated/prisma/client.js';
 import { EFFECTIVE_STAGE_EVENTS } from '../../prisma/effective-stage-events.js';
+import type { InTransaction } from '../../prisma/in-transaction.js';
 import { ownedChildWhere } from '../../prisma/owned-child-where.js';
 import { PrismaService } from '../../prisma/prisma.service.js';
 
@@ -34,8 +35,6 @@ export type ContactRow = Prisma.ContactGetPayload<{ select: typeof CONTACT_SELEC
 export type ApplicationHistory = Prisma.ApplicationGetPayload<{
   select: typeof APPLICATION_HISTORY_SELECT;
 }>;
-
-type InTransaction = { tx?: Prisma.TransactionClient };
 
 export type ContactsOfApplication = { applicationId: string };
 

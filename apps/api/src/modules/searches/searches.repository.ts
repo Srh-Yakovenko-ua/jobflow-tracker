@@ -2,9 +2,8 @@ import { DEFAULT_SEARCH_TITLE, type SearchOutcome } from '@jobflow/shared';
 import { Injectable } from '@nestjs/common';
 
 import type { Prisma } from '../../generated/prisma/client.js';
+import type { InTransaction } from '../../prisma/in-transaction.js';
 import { PrismaService } from '../../prisma/prisma.service.js';
-
-export type InTransaction = { tx?: Prisma.TransactionClient };
 
 export type ActiveSearch = { id: string };
 
@@ -67,10 +66,5 @@ export class SearchesRepository {
       orderBy: [{ startedAt: 'desc' }, { id: 'desc' }],
       select: SEARCH_SELECT,
     });
-  }
-
-  async exists(userId: string, { id, tx = this.prisma }: SearchById): Promise<boolean> {
-    const count = await tx.search.count({ where: { id, userId } });
-    return count > 0;
   }
 }

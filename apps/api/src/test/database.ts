@@ -1,13 +1,19 @@
 import { Test, type TestingModule } from '@nestjs/testing';
-import { afterAll, beforeAll, beforeEach } from 'vitest';
+import { afterAll, beforeAll, beforeEach, expect } from 'vitest';
 
 import { configModule } from '../config/app-config.js';
+import type { Prisma } from '../generated/prisma/client.js';
 import { PrismaModule } from '../prisma/prisma.module.js';
 import { PrismaService } from '../prisma/prisma.service.js';
 
 const TEST_DATABASE_NAME = /^jobflow_(test|[a-z]+_\d+)$/;
 
 export type TestDatabase = { readonly prisma: PrismaService };
+
+export type RowLockQueue<T> = {
+  readonly lock: Prisma.Sql;
+  readonly calls: readonly (() => Promise<T>)[];
+};
 
 export function assertTestDatabase(name: string): void {
   if (!TEST_DATABASE_NAME.test(name)) {
@@ -19,6 +25,31 @@ export async function resetDatabase(prisma: PrismaService): Promise<void> {
   const [row] = await prisma.$queryRaw<{ name: string }[]>`SELECT current_database() AS name`;
   assertTestDatabase(row?.name ?? '');
   await prisma.$executeRaw`TRUNCATE TABLE users, outbox CASCADE`;
+}
+
+async function countLockWaiters(prisma: PrismaService): Promise<number | undefined> {
+  const [row] = await prisma.$queryRaw<{ waiting: number }[]>`
+    SELECT count(*)::int AS waiting FROM pg_stat_activity
+    WHERE datname = current_database() AND wait_event_type = 'Lock'`;
+  return row?.waiting;
+}
+
+export async function queuedBehindRowLock<T>(
+  prisma: PrismaService,
+  { lock, calls }: RowLockQueue<T>,
+): Promise<Awaited<T>[]> {
+  let queued: Promise<Awaited<T>[]> = Promise.resolve([]);
+  try {
+    await prisma.$transaction(async (tx) => {
+      await tx.$queryRaw(lock);
+      queued = Promise.all(calls.map((call) => call()));
+      await expect.poll(() => countLockWaiters(prisma), { timeout: 5000 }).toBe(calls.length);
+    });
+  } catch (error) {
+    await queued.catch(() => undefined);
+    throw error;
+  }
+  return queued;
 }
 
 export function useTestDatabase(): TestDatabase {

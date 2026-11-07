@@ -1,10 +1,11 @@
-import type { MoveApplicationInput, RejectionReasonCode } from '@jobflow/shared';
+import type { RejectionReasonCode } from '@jobflow/shared';
 import { describe, expect, it } from 'vitest';
 
 import {
   applicationPath,
   createMovedApplication,
   getWithQuery,
+  type MovedApplication,
   type QueryString,
   REASONS_SUMMARY_PATH,
   type SignedInSearcher,
@@ -14,22 +15,19 @@ import {
 } from '../../test/applications.js';
 import { createApplicationRows, createSearch, createStageEvents } from '../../test/factories.js';
 import { callRoute, statusAndDetail } from '../../test/http.js';
-import { TO_SCREENING, TO_TECH_INTERVIEW } from '../../test/service-fixtures.js';
+import {
+  rejectedAfterTechInterview,
+  TO_SCREENING,
+  TO_TECH_INTERVIEW,
+} from '../../test/service-fixtures.js';
 import { NOW, settableClock } from '../../test/time.js';
 
-type MovedApplication = { accessToken: string; moves: MoveApplicationInput[] };
-
 const clock = settableClock(NOW);
-
-const rejectedAfterTechInterview = (reasonCode: RejectionReasonCode): MoveApplicationInput[] => [
-  TO_TECH_INTERVIEW,
-  { fromStage: 'tech_interview', toStage: 'rejected', reasonCode },
-];
 
 describe('the rejection reasons summary route', () => {
   const testApp = useStageMoveTestApp(clock);
 
-  const movedThrough = (moved: MovedApplication) =>
+  const movedThrough = (moved: Omit<MovedApplication, 'clock'>) =>
     createMovedApplication(testApp.app, { ...moved, clock });
 
   const rejectedBy = ({ accessToken }: SignedInSearcher, reasonCode: RejectionReasonCode) =>

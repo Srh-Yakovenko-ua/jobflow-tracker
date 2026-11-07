@@ -4,12 +4,20 @@ import { describe, expect, it } from 'vitest';
 import { PrismaService } from '../../prisma/prisma.service.js';
 import { FAKE_TRANSACTION, fakeTransactionModule } from '../../test/fake-prisma.js';
 import type { ByUser } from '../../test/recorded-events.js';
-import { APPLICATION_ID, OLENA_ID, SEARCH_ID } from '../../test/service-fixtures.js';
+import {
+  APPLICATION_ID,
+  CURRENT_SEARCH_ID,
+  OLENA_ID,
+  SEARCH_ID,
+  WITHDRAWAL,
+  WITHDRAWN,
+} from '../../test/service-fixtures.js';
 import { daysBefore, NOW } from '../../test/time.js';
+import { ApplicationListRepository } from './application-list.repository.js';
 import { ApplicationsRepository, type RecordApplicationEvents } from './applications.repository.js';
 import {
+  type InSearch,
   type OpenApplication,
-  type OpenInSearch,
   SearchApplicationsRepository,
   type SearchMove,
   type SearchTotalsRow,
@@ -21,8 +29,6 @@ type Write = ByUser<{ method: string; input: object }>;
 
 type FakeData = { open?: OpenApplication[]; totals?: SearchTotalsRow[] };
 
-const CURRENT_SEARCH_ID = '0199f0a0-0000-7000-8000-0000000000a3';
-
 const FINAL_ID = '0199f0a0-0000-7000-8000-0000000000c3';
 
 const OPEN: OpenApplication[] = [
@@ -30,28 +36,10 @@ const OPEN: OpenApplication[] = [
   { id: FINAL_ID, currentStage: 'final' },
 ];
 
-const withdrawalAt = ({ id, currentStage }: OpenApplication) => ({
-  applicationId: id,
-  fromStage: currentStage,
-  toStage: 'withdrawn',
-  reasonCode: null,
-  comment: null,
-  occurredAt: NOW,
-  compensatesEventId: null,
-  createdAt: NOW,
-});
-
-const stageChangedOf = ({ id, currentStage }: OpenApplication) => ({
-  eventType: 'application.stage_changed',
-  applicationId: id,
-  fromStage: currentStage,
-  toStage: 'withdrawn',
-  reasonCode: null,
-  compensatesEventId: null,
-});
+const WITHDRAWN_CHANGE = { ...WITHDRAWN, eventType: 'application.stage_changed' };
 
 class FakeSearchApplicationsRepository {
-  readonly locks: ByUser<OpenInSearch>[] = [];
+  readonly locks: ByUser<InSearch>[] = [];
 
   readonly writes: Write[] = [];
 
@@ -61,7 +49,7 @@ class FakeSearchApplicationsRepository {
 
   constructor(private readonly data: Required<FakeData>) {}
 
-  lockOpen(userId: string, query: OpenInSearch): Promise<OpenApplication[]> {
+  lockOpen(userId: string, query: InSearch): Promise<OpenApplication[]> {
     this.locks.push({ userId, ...query });
     return Promise.resolve(this.data.open);
   }
@@ -94,13 +82,20 @@ class FakeApplicationsRepository {
 async function serviceWith({ open = OPEN, totals = [] }: FakeData = {}) {
   const repository = new FakeSearchApplicationsRepository({ open, totals });
   const moduleRef = await fakeTransactionModule({
-    providers: [SearchApplicationsService, SearchApplicationsRepository, ApplicationsRepository],
+    providers: [
+      SearchApplicationsService,
+      SearchApplicationsRepository,
+      ApplicationsRepository,
+      ApplicationListRepository,
+    ],
     now: NOW,
   })
     .overrideProvider(SearchApplicationsRepository)
     .useValue(repository)
     .overrideProvider(ApplicationsRepository)
     .useValue(new FakeApplicationsRepository(repository.writes))
+    .overrideProvider(ApplicationListRepository)
+    .useValue({})
     .compile();
   const service = moduleRef.get(SearchApplicationsService);
   const prisma = moduleRef.get(PrismaService);
@@ -137,12 +132,25 @@ describe('SearchApplicationsService.handOver', () => {
       {
         userId: OLENA_ID,
         method: 'withdraw',
-        input: { events: OPEN.map(withdrawalAt), lastEventAt: NOW, tx: FAKE_TRANSACTION },
+        input: {
+          events: [
+            { ...WITHDRAWAL, applicationId: APPLICATION_ID, fromStage: 'screening' },
+            { ...WITHDRAWAL, applicationId: FINAL_ID, fromStage: 'final' },
+          ],
+          lastEventAt: NOW,
+          tx: FAKE_TRANSACTION,
+        },
       },
       {
         userId: OLENA_ID,
         method: 'recordEvents',
-        input: { events: OPEN.map(stageChangedOf), tx: FAKE_TRANSACTION },
+        input: {
+          events: [
+            { ...WITHDRAWN_CHANGE, applicationId: APPLICATION_ID, fromStage: 'screening' },
+            { ...WITHDRAWN_CHANGE, applicationId: FINAL_ID, fromStage: 'final' },
+          ],
+          tx: FAKE_TRANSACTION,
+        },
       },
     ]);
   });

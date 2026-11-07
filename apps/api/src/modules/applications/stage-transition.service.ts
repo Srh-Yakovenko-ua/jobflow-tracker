@@ -6,7 +6,7 @@ import { owned } from '../../common/owned.js';
 import type { Prisma } from '../../generated/prisma/client.js';
 import { PrismaService } from '../../prisma/prisma.service.js';
 import { toApplicationResponse } from './application-response.js';
-import { APPLICATION_EVENTS, type ApplicationEvent } from './applications.events.js';
+import { stageChanged } from './applications.events.js';
 import { ApplicationsRepository } from './applications.repository.js';
 import {
   type StageEventPlan,
@@ -20,20 +20,6 @@ export type StageMove = { id: string; input: MoveApplicationInput };
 type StageTransition = { id: string; plan: (context: UndoContext) => StageEventPlan };
 
 type LockedApplication = { id: string; tx: Prisma.TransactionClient };
-
-export type AppliedStageEvent = Pick<StageEventPlan, 'event'> & { id: string };
-
-export function stageChanged({ id, event }: AppliedStageEvent): ApplicationEvent {
-  const { fromStage, toStage, reasonCode, compensatesEventId } = event;
-  return {
-    eventType: APPLICATION_EVENTS.stageChanged,
-    applicationId: id,
-    fromStage,
-    toStage,
-    reasonCode,
-    compensatesEventId,
-  };
-}
 
 @Injectable()
 export class StageTransitionService {

@@ -9,6 +9,7 @@ import { Injectable } from '@nestjs/common';
 
 import { withoutUndefined } from '../../common/without-undefined.js';
 import type { Prisma } from '../../generated/prisma/client.js';
+import type { InTransaction } from '../../prisma/in-transaction.js';
 import { ownedChildWhere } from '../../prisma/owned-child-where.js';
 import { PrismaService } from '../../prisma/prisma.service.js';
 import type { DateRange } from '../reminders/index.js';
@@ -59,8 +60,6 @@ export type CalendarEventRow = Omit<
   company: string;
   currentStage: Stage;
 };
-
-type InTransaction = { tx?: Prisma.TransactionClient };
 
 export type ScheduledEventsOfApplication = { applicationId: string };
 

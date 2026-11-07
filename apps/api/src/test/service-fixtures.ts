@@ -1,4 +1,8 @@
-import type { ApplicationResponse, MoveApplicationInput } from '@jobflow/shared';
+import type {
+  ApplicationResponse,
+  MoveApplicationInput,
+  RejectionReasonCode,
+} from '@jobflow/shared';
 
 import type {
   ApplicationRow,
@@ -11,6 +15,7 @@ import { daysBefore, NOW, UNDO_WINDOW_END } from './time.js';
 export const OLENA_ID = '0199f0a0-0000-7000-8000-000000000001';
 export const BOHDAN_ID = '0199f0a0-0000-7000-8000-000000000002';
 export const SEARCH_ID = '0199f0a0-0000-7000-8000-0000000000a1';
+export const CURRENT_SEARCH_ID = '0199f0a0-0000-7000-8000-0000000000a3';
 export const RESUME_VERSION_ID = '0199f0a0-0000-7000-8000-0000000000b1';
 export const APPLICATION_ID = '0199f0a0-0000-7000-8000-0000000000c1';
 export const MISSING_ID = '0199f0a0-0000-7000-8000-0000000000c2';
@@ -67,6 +72,18 @@ export const TO_TECH_INTERVIEW: MoveApplicationInput = {
   toStage: 'tech_interview',
 };
 
+export const SCREENING_TO_TECH_INTERVIEW: MoveApplicationInput = {
+  fromStage: 'screening',
+  toStage: 'tech_interview',
+};
+
+export const rejectedAfterTechInterview = (
+  reasonCode: RejectionReasonCode,
+): MoveApplicationInput[] => [
+  TO_TECH_INTERVIEW,
+  { fromStage: 'tech_interview', toStage: 'rejected', reasonCode },
+];
+
 export const MOVE_TO_SCREENING_PLAN: StageEventPlan = {
   event: {
     fromStage: 'applied',
@@ -92,6 +109,19 @@ export const UNDO_OF_SCREENING_PLAN: StageEventPlan = {
   },
   lastEventAt: daysBefore(3),
 };
+
+export const WITHDRAWN = {
+  toStage: 'withdrawn',
+  reasonCode: null,
+  compensatesEventId: null,
+} satisfies Partial<StageEventPlan['event']>;
+
+export const WITHDRAWAL = {
+  ...WITHDRAWN,
+  comment: null,
+  occurredAt: NOW,
+  createdAt: NOW,
+} satisfies Omit<StageEventPlan['event'], 'fromStage'>;
 
 export const COLUMNS_AS_STORED = {
   id: APPLICATION_ID,

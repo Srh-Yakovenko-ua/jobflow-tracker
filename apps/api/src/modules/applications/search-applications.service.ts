@@ -3,15 +3,16 @@ import { Injectable } from '@nestjs/common';
 
 import { conflict } from '../../common/app-error.js';
 import type { Prisma } from '../../generated/prisma/client.js';
-import { APPLICATION_EVENTS, type ApplicationEvent } from './applications.events.js';
+import { ApplicationListRepository } from './application-list.repository.js';
+import { APPLICATION_EVENTS, type ApplicationEvent, stageChanged } from './applications.events.js';
 import { ApplicationsRepository } from './applications.repository.js';
 import {
+  type InSearch,
   type OpenApplication,
   SearchApplicationsRepository,
   type SearchTotalsRow,
   type WithdrawalEvent,
 } from './search-applications.repository.js';
-import { stageChanged } from './stage-transition.service.js';
 import { refuseIllegalTransition } from './stage-transition-rules.js';
 
 export type HandOver = {
@@ -28,7 +29,12 @@ export type SearchTotalsOf = (searchId: string) => SearchTotals;
 
 type OpenHandOver = { open: OpenApplication[]; handOver: HandOver };
 
-const NO_TOTALS: SearchTotals = { applications: 0, interviews: 0, offers: 0, firstOfferAt: null };
+export const NO_TOTALS: SearchTotals = {
+  applications: 0,
+  interviews: 0,
+  offers: 0,
+  firstOfferAt: null,
+};
 
 function withdrawalOf({ id, currentStage }: OpenApplication, now: Date): WithdrawalEvent {
   refuseIllegalTransition({ from: currentStage, to: 'withdrawn', stageBeforeGhosted: null });
@@ -55,7 +61,12 @@ export class SearchApplicationsService {
   constructor(
     private readonly repository: SearchApplicationsRepository,
     private readonly applications: ApplicationsRepository,
+    private readonly applicationList: ApplicationListRepository,
   ) {}
+
+  searchExists(userId: string, inSearch: InSearch): Promise<boolean> {
+    return this.applicationList.searchExists(userId, inSearch);
+  }
 
   async handOver(userId: string, handOver: HandOver): Promise<void> {
     const { fromSearchId, tx } = handOver;
