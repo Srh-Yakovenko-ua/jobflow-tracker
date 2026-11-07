@@ -52,7 +52,7 @@ export function BoardToolbar({ board, load, view }: BoardToolbarProps) {
       <div className={BOARD_FRAME.toolbar}>
         <p className="eyebrow text-ink-3 tabular-nums">{uk.board.eyebrow(inWork)}</p>
         <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto">
-          <FilterSearch />
+          <FilterSearch copy={uk.board.filters.search} />
           <FilterMenus />
           {view.cards && <DensitySwitch />}
           <ViewSwitch current="board" />

@@ -28,10 +28,7 @@ vi.mock('next/navigation', () => import('@/test/navigation'));
 
 type ItemSeed = Partial<ApplicationListItem> & { serial: number };
 
-type TableSetup = Omit<PagedListRouteOptions, 'items'> & {
-  items: readonly ApplicationListItem[];
-  filters?: ApplicationFilters;
-};
+type TableSetup = PagedListRouteOptions & { filters?: ApplicationFilters };
 
 function itemOf({ serial, ...fields }: ItemSeed): ApplicationListItem {
   return { ...FULL_CARD, snippet: null, id: fixtureIdOf(serial), salaryMin: null, ...fields };
@@ -187,6 +184,27 @@ describe('ApplicationsTable rows', () => {
 
     expect(await screen.findByRole('link', { name: 'Альфа' })).toBeDefined();
   });
+
+  it('a later page that fails shows the load failed panel instead of a part of the rows, and the retry loads every page', async () => {
+    const laterPageFails = http.get(apiUrl('/applications'), ({ request }) =>
+      new URL(request.url).searchParams.has('cursor')
+        ? errorReply({ status: 500, type: 'internal_error' })
+        : undefined,
+    );
+    const list = pagedListRoute({ items: SCORED, pageSize: 2 });
+    const user = renderTableOver({ handlers: [laterPageFails, list.handler] });
+    const retry = await screen.findByRole(
+      'button',
+      { name: 'Спробувати ще раз' },
+      { timeout: 2500 },
+    );
+    expect(screen.queryByRole('table')).toBeNull();
+
+    server.use(pagedListRoute({ items: SCORED, pageSize: 2 }).handler);
+    await user.click(retry);
+
+    expect(await screen.findByRole('link', { name: 'Епсилон' })).toBeDefined();
+  });
 });
 
 describe('ApplicationsTable sorting and columns', () => {
@@ -307,6 +325,47 @@ describe('ApplicationsTable bulk actions', () => {
     });
   });
 
+  it('Перенести далі moves the picked cards in the order the table is sorted, not the order the server sent', async () => {
+    const { user, moves } = await tableReady({ items: SCORED });
+    await user.click(screen.getByRole('button', { name: 'score' }));
+    await user.click(checkboxNamed('Обрати всі картки'));
+
+    await user.click(screen.getByRole('button', { name: 'Перенести далі' }));
+
+    await waitFor(() => {
+      expect(moves).toHaveLength(4);
+    });
+    expect(moves).toEqual([
+      { fromStage: 'applied', toStage: 'screening' },
+      { fromStage: 'final', toStage: 'offer' },
+      { fromStage: 'tech_interview', toStage: 'final' },
+      { fromStage: 'screening', toStage: 'tech_interview' },
+    ]);
+  });
+
+  it('picks a query hid are dropped: clearing it shows every row unpicked, the header box unchecked and no bulk bar', async () => {
+    fakeTimeouts();
+    const { user } = await tableReady({
+      items: (params) => (params.has('q') ? SCORED.slice(0, 1) : SCORED),
+    });
+    await user.click(checkboxNamed('Обрати «Альфа»'));
+    await user.click(checkboxNamed('Обрати «Бета»'));
+    const search = screen.getByRole('textbox', { name: 'Пошук у таблиці' });
+
+    await user.type(search, 'альфа');
+    await act(() => vi.advanceTimersByTimeAsync(250));
+    await waitFor(() => {
+      expect(screen.queryByRole('link', { name: 'Бета' })).toBeNull();
+    });
+    await user.clear(search);
+
+    expect(await screen.findByRole('link', { name: 'Бета' })).toBeDefined();
+    expect(checkboxNamed('Обрати «Альфа»').getAttribute('aria-checked')).toBe('false');
+    expect(checkboxNamed('Обрати «Бета»').getAttribute('aria-checked')).toBe('false');
+    expect(checkboxNamed('Обрати всі картки').getAttribute('aria-checked')).toBe('false');
+    expect(screen.queryByRole('group', { name: 'Дії з обраними картками' })).toBeNull();
+  });
+
   it('Скинути вибір clears the pick and hides the bar', async () => {
     const { user } = await tableReady({ items: SCORED });
     await user.click(checkboxNamed('Обрати «Альфа»'));
@@ -326,7 +385,7 @@ describe('ApplicationsTable filters', () => {
     const user = renderTableOver({ handlers: [route.handler], filters });
     await screen.findByRole('link', { name: 'Альфа' });
 
-    await user.type(screen.getByRole('textbox', { name: 'Пошук по картках' }), 'react');
+    await user.type(screen.getByRole('textbox', { name: 'Пошук у таблиці' }), 'react');
     await act(() => vi.advanceTimersByTimeAsync(250));
 
     expect(await screen.findByText('Немає карток за «react»')).toBeDefined();
@@ -350,14 +409,14 @@ describe('ApplicationsTable filters', () => {
     renderTable({ items: [] });
 
     expect(await screen.findByText('Тут буде твоя воронка')).toBeDefined();
-    expect(screen.queryByRole('textbox', { name: 'Пошук по картках' })).toBeNull();
+    expect(screen.queryByRole('textbox', { name: 'Пошук у таблиці' })).toBeNull();
   });
 
   it('no cards under a filter keeps the toolbar and shows the filtered empty state, whose reset asks again without the filter', async () => {
     const { user, sent } = renderTable({ items: [], filters: { source: ['djinni'] } });
 
     expect(await screen.findByText('Немає карток за цими фільтрами')).toBeDefined();
-    expect(screen.getByRole('textbox', { name: 'Пошук по картках' })).toBeDefined();
+    expect(screen.getByRole('textbox', { name: 'Пошук у таблиці' })).toBeDefined();
     await user.click(screen.getByRole('button', { name: 'Скинути фільтри' }));
 
     await waitFor(() => {

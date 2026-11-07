@@ -50,7 +50,7 @@ export function TableToolbar({ table, timeZone, view }: TableToolbarProps) {
   return (
     <div className="flex flex-col gap-1 px-4 pt-3.5 pb-1.5 shadow-[inset_0_-1px_0_var(--line-soft)]">
       <div className="flex flex-wrap items-center gap-2.5 pb-2">
-        <FilterSearch />
+        <FilterSearch copy={uk.applicationsTable.search} />
         <FilterMenus />
         <span className="hidden flex-1 sm:block" />
         {view.rows && <ColumnsMenu table={table} />}

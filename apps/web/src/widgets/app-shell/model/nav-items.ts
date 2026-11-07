@@ -9,11 +9,13 @@ import {
 } from 'lucide-react';
 
 import type { FeatureFlag, FeatureFlags } from '@/shared/config';
-import type { uk } from '@/shared/i18n';
+import { uk } from '@/shared/i18n';
 
 export type NavItemId = keyof typeof uk.shell.nav;
 
 export type NavBadge = 'silent';
+
+export type NavAlias = Readonly<{ href: string; title: string }>;
 
 export type NavItem = Readonly<{
   id: NavItemId;
@@ -21,7 +23,7 @@ export type NavItem = Readonly<{
   icon: LucideIcon;
   flag?: FeatureFlag;
   badge?: NavBadge;
-  aliases?: readonly string[];
+  aliases?: readonly NavAlias[];
 }>;
 
 export type ShellNav = Readonly<{
@@ -36,7 +38,7 @@ export const NAV_ITEMS: readonly NavItem[] = [
     href: '/board',
     icon: SquareKanban,
     badge: 'silent',
-    aliases: ['/applications'],
+    aliases: [{ href: '/applications', title: uk.applicationsTable.title }],
   },
   { id: 'analytics', href: '/analytics', icon: ChartColumn, flag: 'analytics' },
   { id: 'calendar', href: '/calendar', icon: CalendarDays, flag: 'calendar' },
@@ -53,16 +55,30 @@ export function visibleNavItems(flags: FeatureFlags): readonly NavItem[] {
   return NAV_ITEMS.filter((item) => isFlagOn(flags, item.flag));
 }
 
+function aliasAt(item: NavItem, pathname: string): NavAlias | undefined {
+  return item.aliases?.find((alias) => alias.href === pathname);
+}
+
 function isActiveAt(item: NavItem, pathname: string): boolean {
   return (
     pathname === item.href ||
     pathname.startsWith(`${item.href}/`) ||
-    (item.aliases?.includes(pathname) ?? false)
+    aliasAt(item, pathname) !== undefined
   );
 }
 
+function activeItemOf(pathname: string, items: readonly NavItem[]): NavItem | undefined {
+  return items.find((item) => isActiveAt(item, pathname));
+}
+
 export function activeHrefOf(pathname: string, items: readonly NavItem[]): string | undefined {
-  return items.find((item) => isActiveAt(item, pathname))?.href;
+  return activeItemOf(pathname, items)?.href;
+}
+
+export function shellTitleOf(pathname: string, items: readonly NavItem[]): string | undefined {
+  const item = activeItemOf(pathname, items);
+  if (item === undefined) return undefined;
+  return aliasAt(item, pathname)?.title ?? uk.shell.nav[item.id];
 }
 
 export function navStatusOf(nav: ShellNav, item: NavItem) {

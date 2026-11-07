@@ -13,10 +13,15 @@ import { LayoutGroup, motion } from 'motion/react';
 import type { ReactNode } from 'react';
 
 import { type ApplicationCardContext, FirstRunState } from '@/entities/application';
-import { ApplicationFiltersProvider, useApplicationFilters } from '@/features/filter-applications';
+import {
+  ApplicationFiltersProvider,
+  useApplicationFilters,
+  ViewSwitch,
+} from '@/features/filter-applications';
 import { uk } from '@/shared/i18n';
 import { cn } from '@/shared/lib/cn';
 import { LoadFailedPanel } from '@/shared/ui/error-panel';
+import { LoadingRegion } from '@/shared/ui/loading-region';
 import { ColumnSkeleton } from '@/shared/ui/skeleton';
 
 import type { BoardDensityState } from '../model/board-density-cookie';
@@ -62,10 +67,7 @@ function BoardFrame({ children, busy }: BoardFrameProps) {
 
 function BoardSkeleton() {
   return (
-    <div aria-busy="true">
-      <p role="status" className="sr-only">
-        {uk.ui.loading}
-      </p>
+    <LoadingRegion>
       <p aria-hidden className={cn(BOARD_FRAME.width, BOARD_FRAME.toolbar, 'eyebrow')}>
         <span className="inline-block h-2.25 w-28 rounded-[7px] bg-line-soft align-middle" />
       </p>
@@ -83,13 +85,16 @@ function BoardSkeleton() {
           />
         ))}
       </BoardFrame>
-    </div>
+    </LoadingRegion>
   );
 }
 
 function FirstRunBoard() {
   return (
     <div className="animate-fade-in">
+      <div className={cn(BOARD_FRAME.width, BOARD_FRAME.toolbar, 'justify-end')}>
+        <ViewSwitch current="board" />
+      </div>
       <BoardFrame>
         <BoardColumn column={{ stage: 'applied', count: 0 }}>
           <FirstRunState />

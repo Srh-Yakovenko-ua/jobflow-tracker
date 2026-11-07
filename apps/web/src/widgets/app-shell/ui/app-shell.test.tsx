@@ -1,6 +1,6 @@
 import { screen, within } from '@testing-library/react';
 import { http, HttpResponse } from 'msw/http';
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { applicationKeys } from '@/entities/application';
 import { userKeys } from '@/entities/user';
@@ -8,6 +8,7 @@ import { uk } from '@/shared/i18n';
 import { apiUrl, OUTAGES, validationReply } from '@/test/api-handlers';
 import { boardOf, type ColumnCounts } from '@/test/board-fixtures';
 import { axeViolations } from '@/test/dev-ui';
+import { route } from '@/test/navigation';
 import { QueryProbe, waitForQuery } from '@/test/query-status';
 import { renderInApp } from '@/test/render-in-app';
 import { server } from '@/test/server';
@@ -16,6 +17,10 @@ import { meRoute } from '@/test/session-fixtures';
 import { AppShell } from './app-shell';
 
 vi.mock('next/navigation', () => import('@/test/navigation'));
+
+afterEach(() => {
+  route.pathname = '/board';
+});
 
 const SHELL = uk.shell;
 
@@ -94,6 +99,18 @@ describe('AppShell', () => {
       expect(avatar.querySelector('svg')).not.toBeNull();
     },
   );
+
+  it('on the table the heading reads Таблиця while the Дошка link stays the current page', async () => {
+    route.pathname = '/applications';
+    server.use(meRoute(), silentBoardRoute({}));
+    const { sidebar } = renderShell();
+    await waitForQuery({ queryKey: userKeys.me(), status: 'success' });
+
+    expect(screen.getByRole('heading', { level: 1 }).textContent).toBe('Таблиця');
+    expect(
+      within(sidebar).getByRole('link', { name: SHELL.nav.board }).getAttribute('aria-current'),
+    ).toBe('page');
+  });
 
   it('keeps Додати вакансію out while its page is behind the flag', async () => {
     server.use(meRoute(), silentBoardRoute({}));

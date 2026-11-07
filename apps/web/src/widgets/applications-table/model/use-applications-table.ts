@@ -1,8 +1,14 @@
-import type { ApplicationListItem } from '@jobflow/shared';
-import { keepPreviousData, useQuery } from '@tanstack/react-query';
-import { useTable } from '@tanstack/react-table';
+import type { ApplicationFilters, ApplicationListItem } from '@jobflow/shared';
+import { hashKey, keepPreviousData, useQuery } from '@tanstack/react-query';
+import {
+  functionalUpdate,
+  type OnChangeFn,
+  type RowSelectionState,
+  useTable,
+} from '@tanstack/react-table';
+import { useState } from 'react';
 
-import { applicationTableQueryOptions } from '@/entities/application';
+import { applicationKeys, applicationTableQueryOptions } from '@/entities/application';
 import { useUserTimeZone } from '@/entities/user';
 import { useSentFilters } from '@/features/filter-applications';
 
@@ -13,7 +19,21 @@ export type TableLoad = Readonly<{ failed: boolean; onRetry: () => void }>;
 
 export type ApplicationsTableInstance = ReturnType<typeof useApplicationsTable>['table'];
 
+type FiltersSelection = Readonly<{ filtersHash: string; rows: RowSelectionState }>;
+
 const NO_ROWS: ApplicationListItem[] = [];
+
+function useSelectionPerFilters(sent: ApplicationFilters) {
+  const filtersHash = hashKey(applicationKeys.table(sent));
+  const [selection, setSelection] = useState<FiltersSelection>({ filtersHash, rows: {} });
+  if (selection.filtersHash !== filtersHash) {
+    setSelection({ filtersHash, rows: {} });
+  }
+  const onChange: OnChangeFn<RowSelectionState> = (updater) => {
+    setSelection((prev) => ({ ...prev, rows: functionalUpdate(updater, prev.rows) }));
+  };
+  return { rows: selection.rows, onChange };
+}
 
 export function useApplicationsTable() {
   const sent = useSentFilters();
@@ -22,12 +42,15 @@ export function useApplicationsTable() {
     ...applicationTableQueryOptions(sent),
     placeholderData: keepPreviousData,
   });
+  const selection = useSelectionPerFilters(sent);
   const table = useTable({
     features: applicationTableFeatures,
     columns: APPLICATION_COLUMNS,
     data: query.data ?? NO_ROWS,
     getRowId: (application) => application.id,
     initialState: { sorting: INITIAL_SORTING },
+    state: { rowSelection: selection.rows },
+    onRowSelectionChange: selection.onChange,
   });
   const load: TableLoad = {
     failed: query.isError && !query.isFetching,

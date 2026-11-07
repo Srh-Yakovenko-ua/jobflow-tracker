@@ -121,7 +121,7 @@ describe('tableCsvFileOf', () => {
     });
 
     expect(file).toEqual({
-      text: '﻿Компанія;Посада\r\n',
+      text: '\uFEFFКомпанія;Посада\r\n',
       fileName: 'jobflow-applications-2026-11-06.csv',
       type: 'text/csv;charset=utf-8',
     });
