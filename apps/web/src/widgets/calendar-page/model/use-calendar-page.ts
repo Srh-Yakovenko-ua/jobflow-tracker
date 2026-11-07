@@ -1,22 +1,20 @@
 import { type CalendarController, useCalendarController } from '@fullcalendar/react';
-import type { CalendarQuery, CalendarResponse } from '@jobflow/shared';
+import type { CalendarResponse } from '@jobflow/shared';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
 import { useSilentCount } from '@/entities/application';
 import { calendarQueryOptions } from '@/entities/scheduled-event';
-import { useUserTimeZone } from '@/entities/user';
+import { useSettledTimeZone } from '@/entities/user';
 import { useRescheduleEventMutation } from '@/features/schedule-event';
 import { useMediaQuery } from '@/shared/lib/use-media-query';
 
 import type { GridActions, ShownPeriod } from '../lib/grid-handlers';
 import type { EmptyWeek } from '../ui/calendar-empty';
-import type { CalendarGridData } from '../ui/calendar-grid';
+import type { CalendarGridProps } from '../ui/calendar-grid';
 import type { CalendarToolbarProps } from '../ui/calendar-toolbar';
 import { type CalendarView, NARROW_SCREEN_QUERY } from './calendar-views';
-
-const NOT_SHOWN_YET: CalendarQuery = { from: '', to: '' };
 
 export type CalendarLoad = Readonly<{
   pending: boolean;
@@ -26,7 +24,7 @@ export type CalendarLoad = Readonly<{
 }>;
 
 export type CalendarPageModel = Readonly<{
-  grid: { calendar: CalendarGridData; actions: GridActions };
+  grid: CalendarGridProps | null;
   toolbar: CalendarToolbarProps;
   load: CalendarLoad;
   emptyWeek: EmptyWeek | null;
@@ -44,8 +42,7 @@ function useCalendarView(controller: CalendarController) {
 
 function useCalendarItems(period: ShownPeriod | null) {
   const items = useQuery({
-    ...calendarQueryOptions(period?.range ?? NOT_SHOWN_YET),
-    enabled: period !== null,
+    ...calendarQueryOptions(period?.range ?? null),
     placeholderData: keepPreviousData,
   });
   const onRetry = () => {
@@ -83,14 +80,17 @@ export function useCalendarPage(): CalendarPageModel {
   const { view, onView } = useCalendarView(controller);
   const [period, setPeriod] = useState<ShownPeriod | null>(null);
   const { shown, fresh, load } = useCalendarItems(period);
-  const timeZone = useUserTimeZone();
+  const timeZone = useSettledTimeZone();
   const silentCount = useSilentCount();
   const actions = useGridActions(setPeriod);
   const weekly = view !== 'dayGridMonth';
   return {
-    grid: { calendar: { controller, initialView: view, items: shown, timeZone }, actions },
+    grid:
+      timeZone === null
+        ? null
+        : { calendar: { controller, initialView: view, items: shown, timeZone }, actions },
     toolbar: {
-      period: { title: period?.title ?? '', view },
+      period: { title: period?.title ?? '', view, current: period?.current === true },
       actions: {
         onPrevious: () => {
           controller.prev();

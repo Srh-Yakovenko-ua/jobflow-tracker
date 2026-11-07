@@ -18,6 +18,7 @@ export type GridActions = Readonly<{
 type ShownDates = Pick<DatesSetInfo, 'start' | 'end' | 'view'>;
 
 type ClickedEvent = Readonly<{
+  el: Pick<HTMLElement, 'focus'>;
   event: Pick<EventApi, 'extendedProps'>;
   jsEvent: Pick<Event, 'preventDefault'>;
 }>;
@@ -28,11 +29,12 @@ export function gridHandlersOf({ onPeriod, onOpen, onReschedule }: GridActions) 
   return {
     datesSet: ({ start, end, view }: ShownDates) => {
       const now = Date.now();
-      const current = start.getTime() <= now && now < end.getTime();
+      const current = view.currentStart.getTime() <= now && now < view.currentEnd.getTime();
       onPeriod({ range: rangeOf({ start, end }), title: view.title, current });
     },
-    eventClick: ({ event, jsEvent }: ClickedEvent) => {
+    eventClick: ({ el, event, jsEvent }: ClickedEvent) => {
       jsEvent.preventDefault();
+      el.focus({ preventScroll: true });
       const props = eventPropsOf(event.extendedProps);
       if (props !== null) onOpen(props.applicationId);
     },

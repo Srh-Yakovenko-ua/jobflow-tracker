@@ -37,7 +37,7 @@ export function CalendarPage() {
       {load.pending && <GridSkeleton />}
       {load.failed && <LoadFailedPanel onRetry={load.onRetry} />}
       <div hidden={gridHidden} className={GRID_HEIGHT}>
-        <CalendarGrid calendar={grid.calendar} actions={grid.actions} />
+        {grid && <CalendarGrid calendar={grid.calendar} actions={grid.actions} />}
       </div>
       <CalendarLegend />
     </section>

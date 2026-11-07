@@ -52,6 +52,7 @@ export const GRID_OPTIONS = {
       displayEventEnd: false,
       dayLaneInnerClass: 'has-[[aria-haspopup=dialog]]:me-6.5',
       columnMoreLinkClass: 'absolute inset-y-0 start-0.5 w-6 items-center',
+      columnMoreLinkInnerClass: 'px-0 text-[11px] tabular-nums whitespace-nowrap',
     },
   },
 } satisfies CalendarOptions;
