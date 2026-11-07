@@ -899,7 +899,7 @@
                   "type": "string",
                   "description": "Sets the httpOnly oauth_state cookie for ten minutes, only when the provider is set up"
                 },
-                "required": true,
+                "required": false,
                 "description": "Sets the httpOnly oauth_state cookie for ten minutes, only when the provider is set up"
               }
             }

@@ -131,6 +131,20 @@ describe('the OpenAPI document', () => {
     expect(route && replyOf(route, 429)?.description).toContain(limit);
   });
 
+  it.each([
+    { route: 'start', path: '/auth/oauth/{provider}/start', cookieRequired: false },
+    { route: 'callback', path: '/auth/oauth/{provider}/callback', cookieRequired: true },
+  ])(
+    'marks Set-Cookie required $cookieRequired on the OAuth $route redirect',
+    ({ path, cookieRequired }) => {
+      const redirect: unknown = buildOpenApiDocument().paths?.[path]?.get?.responses?.['302'];
+
+      expect(redirect).toMatchObject({
+        headers: { Location: { required: true }, 'Set-Cookie': { required: cookieRequired } },
+      });
+    },
+  );
+
   it('files every route under a tag the document lists, and lists no unused tag', () => {
     const tags = buildOpenApiDocument().tags?.map(({ name }) => name);
 

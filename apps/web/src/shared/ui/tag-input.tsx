@@ -8,6 +8,7 @@ import { cn } from '@/shared/lib/cn';
 import { Chip } from './chip';
 import { useField } from './field';
 import { FIELD_SURFACE } from './field-surface';
+import { TOUCH_HEIGHT } from './touch-height';
 
 export type TagInputProps = Readonly<{
   value: readonly string[];
@@ -37,7 +38,11 @@ export function TagInput({ value, onValueChange, placeholder, autoFocus }: TagIn
   return (
     <div
       data-invalid={field['aria-invalid']}
-      className={cn(FIELD_SURFACE.shell, 'min-h-control-md flex-wrap gap-1.5 px-2 py-1.5')}
+      className={cn(
+        FIELD_SURFACE.shell,
+        'min-h-control-md flex-wrap gap-1.5 px-2 py-1.5',
+        TOUCH_HEIGHT,
+      )}
     >
       {value.map((tag) => (
         <Chip
