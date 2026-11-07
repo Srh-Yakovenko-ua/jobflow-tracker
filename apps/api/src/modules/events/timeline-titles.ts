@@ -3,6 +3,7 @@ import {
   countedUk,
   DAY_FORMS_UK,
   type PluralForms,
+  resumeVersionLabel,
   SCHEDULED_EVENT_KIND_LABELS,
   type Stage,
   STAGE_LABELS,
@@ -37,7 +38,7 @@ const RECORD_TITLES: RecordTitles = {
   interview_done: ({ kind, durationMin }) =>
     `${SCHEDULED_EVENT_KIND_LABELS[kind].labelUk} пройдено · ${String(durationMin)} хв`,
   note_added: () => NOTE_TITLE,
-  resume_attached: () => 'CV прикріплено',
+  resume_attached: (payload) => `Прикріплено ${resumeVersionLabel(payload)}`,
 };
 
 export function recordTitle<Kind extends keyof PayloadOf>({

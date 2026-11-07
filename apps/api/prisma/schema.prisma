@@ -197,6 +197,7 @@ model UserSettings {
   notifyPush            Boolean        @default(false) @map("notify_push")
   notifyEmail           Boolean        @default(true) @map("notify_email")
   analyticsOptOut       Boolean        @default(false) @map("analytics_opt_out")
+  singleKeyShortcuts    Boolean        @default(true) @map("single_key_shortcuts")
   activeResumeVersionId String?        @map("active_resume_version_id") @db.Uuid
   createdAt             DateTime       @default(now()) @map("created_at") @db.Timestamptz
   updatedAt             DateTime       @default(now()) @updatedAt @map("updated_at") @db.Timestamptz
@@ -434,6 +435,7 @@ model ResumeVersion {
   id             String         @id @default(dbgenerated("uuidv7()")) @db.Uuid
   userId         String         @map("user_id") @db.Uuid
   resumeId       String         @map("resume_id") @db.Uuid
+  number         Int
   storageKey     String         @unique @map("storage_key")
   filename       String
   mime           String
@@ -453,6 +455,7 @@ model ResumeVersion {
   aiJobs         AiJob[]
 
   @@unique([id, userId])
+  @@unique([resumeId, number])
   @@index([userId, resumeId])
   @@map("resume_versions")
 }

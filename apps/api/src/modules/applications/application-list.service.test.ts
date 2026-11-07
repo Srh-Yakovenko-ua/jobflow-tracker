@@ -11,7 +11,7 @@ import { describe, expect, it } from 'vitest';
 
 import { Clock } from '../../common/clock.js';
 import { BOHDAN_ID, OLENA_ID, SEARCH_ID } from '../../test/service-fixtures.js';
-import { daysBefore, NOW } from '../../test/time.js';
+import { daysBefore, fixedClock, NOW } from '../../test/time.js';
 import { applicationCursorSchema, type ApplicationListRequest } from './application-cursor.js';
 import {
   type ApplicationListFilter,
@@ -222,7 +222,7 @@ async function serviceWith({
     .overrideProvider(ApplicationSearchRepository)
     .useValue(search)
     .overrideProvider(Clock)
-    .useValue({ now: () => NOW })
+    .useValue(fixedClock(NOW))
     .compile();
   return { repository, search, service: moduleRef.get(ApplicationListService) };
 }

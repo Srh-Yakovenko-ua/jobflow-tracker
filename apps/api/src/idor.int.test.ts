@@ -6,9 +6,29 @@ import { useTestApp } from './test/app.js';
 import { applicationPath, createApplication, ROMASHKA } from './test/applications.js';
 import { BOHDAN, OLENA, signUp } from './test/auth.js';
 import { callRoute, type RouteCall } from './test/http.js';
+import {
+  activationPath,
+  downloadPath,
+  resumeLinkPath,
+  resumeVersionPath,
+  uploadResumeVersion,
+} from './test/resumes.js';
 import { TO_SCREENING } from './test/service-fixtures.js';
 
 type OwnerOnlyCase = Omit<RouteCall, 'accessToken'> & { card: string; ownerStatus: number };
+
+type VersionReach = {
+  olenaVersion: string;
+  bohdanVersion: string;
+  olenaApplication: string;
+  bohdanApplication: string;
+};
+
+type VersionOwnedCase = {
+  route: string;
+  reach: (ids: VersionReach) => Omit<RouteCall, 'accessToken'>;
+  ownerStatus: number;
+};
 
 const OLENAS_NOTE = 'Нотатка Олени';
 
@@ -115,9 +135,52 @@ const OWNER_ONLY_CASES: OwnerOnlyCase[] = [
   },
 ];
 
-const ROUTES_WITHOUT_IDOR_CASE = [
-  { card: 'BE-30', method: 'patch', path: '/resumes/versions/:id', resource: 'resume version' },
-] as const;
+const FOREIGN_VERSION_PATCH = { title: 'Чужа назва', note: 'Чужа примітка', isArchived: true };
+
+const VERSION_OWNED_CASES: VersionOwnedCase[] = [
+  {
+    route: 'PATCH /resumes/versions/:id',
+    reach: ({ olenaVersion }) => ({
+      method: 'patch',
+      path: resumeVersionPath(olenaVersion),
+      body: FOREIGN_VERSION_PATCH,
+    }),
+    ownerStatus: 200,
+  },
+  {
+    route: 'DELETE /resumes/versions/:id',
+    reach: ({ olenaVersion }) => ({ method: 'delete', path: resumeVersionPath(olenaVersion) }),
+    ownerStatus: 204,
+  },
+  {
+    route: 'POST /resumes/versions/:id/activate',
+    reach: ({ olenaVersion }) => ({ method: 'post', path: activationPath(olenaVersion) }),
+    ownerStatus: 204,
+  },
+  {
+    route: 'GET /resumes/versions/:id/download',
+    reach: ({ olenaVersion }) => ({ method: 'get', path: downloadPath(olenaVersion) }),
+    ownerStatus: 200,
+  },
+  {
+    route: "PATCH /applications/:id/resume-version of his own application to OLENA's version",
+    reach: ({ bohdanApplication, olenaVersion }) => ({
+      method: 'patch',
+      path: resumeLinkPath(bohdanApplication),
+      body: { resumeVersionId: olenaVersion },
+    }),
+    ownerStatus: 204,
+  },
+  {
+    route: "PATCH /applications/:id/resume-version of OLENA's application to his own version",
+    reach: ({ olenaApplication, bohdanVersion }) => ({
+      method: 'patch',
+      path: resumeLinkPath(olenaApplication),
+      body: { resumeVersionId: bohdanVersion },
+    }),
+    ownerStatus: 204,
+  },
+];
 
 describe("another user's data", () => {
   const testApp = useTestApp();
@@ -203,15 +266,75 @@ describe("another user's data", () => {
     },
   );
 
-  it.each(ROUTES_WITHOUT_IDOR_CASE)(
-    "has no $method $path route yet, so $card adds BOHDAN's 404 on OLENA's $resource",
-    async ({ method, path }) => {
-      const response = await http()[method](`/api/v1${path}`);
+  it.each(VERSION_OWNED_CASES)(
+    "answers BOHDAN's $route with 404 and leaves OLENA's resume version and every link as it was",
+    async ({ reach, ownerStatus }) => {
+      const olena = await signUp(testApp.app, OLENA);
+      const bohdan = await signUp(testApp.app, BOHDAN);
+      const olenaApplication = await createApplication(testApp.app, {
+        accessToken: olena.accessToken,
+        input: ROMASHKA,
+      });
+      const bohdanApplication = await createApplication(testApp.app, {
+        accessToken: bohdan.accessToken,
+        input: ROMASHKA,
+      });
+      const { version } = await uploadResumeVersion(testApp.app, olena);
+      const bohdanUpload = await uploadResumeVersion(testApp.app, bohdan);
+      await callRoute(testApp.app, {
+        method: 'post',
+        path: activationPath(version.id),
+        accessToken: olena.accessToken,
+      });
+      const stored = () =>
+        Promise.all([
+          testApp.prisma.resumeVersion.findUnique({
+            where: { id: version.id },
+            select: { title: true, note: true, isArchived: true },
+          }),
+          ...[olena, bohdan].map(({ user }) =>
+            testApp.prisma.userSettings.findUnique({
+              where: { userId: user.id },
+              select: { activeResumeVersionId: true },
+            }),
+          ),
+          ...[olenaApplication, bohdanApplication].map(({ id }) =>
+            testApp.prisma.application.findUnique({
+              where: { id },
+              select: { resumeVersionId: true },
+            }),
+          ),
+        ]);
 
-      expect(response.status).toBe(404);
-      expect(errorResponseSchema.parse(response.body).detail).toBe(
-        `Cannot ${method.toUpperCase()} /api/v1${path}`,
-      );
+      const intruder = await callRoute(testApp.app, {
+        ...reach({
+          olenaVersion: version.id,
+          bohdanVersion: bohdanUpload.version.id,
+          olenaApplication: olenaApplication.id,
+          bohdanApplication: bohdanApplication.id,
+        }),
+        accessToken: bohdan.accessToken,
+      });
+
+      expect(intruder.status).toBe(404);
+      expect(errorResponseSchema.parse(intruder.body).type).toBe('not_found');
+      expect(await stored()).toEqual([
+        { title: 'для продуктових', note: null, isArchived: false },
+        { activeResumeVersionId: version.id },
+        { activeResumeVersionId: null },
+        { resumeVersionId: null },
+        { resumeVersionId: null },
+      ]);
+      const owner = await callRoute(testApp.app, {
+        ...reach({
+          olenaVersion: version.id,
+          bohdanVersion: version.id,
+          olenaApplication: olenaApplication.id,
+          bohdanApplication: olenaApplication.id,
+        }),
+        accessToken: olena.accessToken,
+      });
+      expect(owner.status).toBe(ownerStatus);
     },
   );
 });

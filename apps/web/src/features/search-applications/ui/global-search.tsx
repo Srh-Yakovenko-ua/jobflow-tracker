@@ -7,6 +7,7 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 
 import { isSearchable, SEARCH_LIMITS } from '@/entities/application';
+import { useSingleKeyShortcuts } from '@/entities/user';
 import { uk } from '@/shared/i18n';
 import { cn } from '@/shared/lib/cn';
 import { ClearButton } from '@/shared/ui/clear-button';
@@ -20,6 +21,14 @@ import { SearchResults } from './search-results';
 
 const SEARCH = uk.shell.search;
 
+function SlashHint() {
+  return (
+    <span aria-hidden className="hidden md:inline-flex">
+      <Kbd>{SEARCH_SHORTCUT}</Kbd>
+    </span>
+  );
+}
+
 export function GlobalSearch() {
   const router = useRouter();
   const [text, setText] = useState('');
@@ -28,7 +37,8 @@ export function GlobalSearch() {
   const anchorRef = useRef<HTMLDivElement>(null);
   const search = useApplicationSearch(text);
   const shown = open && isSearchable(text.trim());
-  useSlashShortcut(inputRef);
+  const singleKeys = useSingleKeyShortcuts();
+  useSlashShortcut({ input: inputRef, enabled: singleKeys });
   useEffect(() => {
     inputRef.current?.setAttribute('aria-expanded', String(shown));
   }, [shown]);
@@ -66,14 +76,12 @@ export function GlobalSearch() {
                 setOpen(true);
               }}
               maxLength={SEARCH_LIMITS.maxLength}
-              aria-keyshortcuts={SEARCH_SHORTCUT}
+              aria-keyshortcuts={singleKeys ? SEARCH_SHORTCUT : undefined}
               placeholder={SEARCH.placeholder}
               className={FIELD_SURFACE.control}
             />
             {text === '' ? (
-              <span aria-hidden className="hidden md:inline-flex">
-                <Kbd>{SEARCH_SHORTCUT}</Kbd>
-              </span>
+              singleKeys && <SlashHint />
             ) : (
               <ClearButton
                 label={uk.ui.clear}

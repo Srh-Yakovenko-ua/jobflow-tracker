@@ -1,6 +1,7 @@
 import { useRouter } from 'next/navigation';
 import { useRef, useState } from 'react';
 
+import { useSingleKeyShortcuts } from '@/entities/user';
 import { FEATURE_FLAGS } from '@/shared/config';
 
 import { useGlobalShortcuts } from './use-global-shortcuts';
@@ -54,6 +55,7 @@ export function useShellSurfaces() {
   };
   useGlobalShortcuts({
     flags: FEATURE_FLAGS,
+    singleKeys: useSingleKeyShortcuts(),
     actions: {
       onPalette,
       onShortcut: (target) => {

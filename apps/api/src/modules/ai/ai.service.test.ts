@@ -19,7 +19,7 @@ import { exampleEnv } from '../../test/example-env.js';
 import { memoryLog } from '../../test/memory-log.js';
 import { compileProcessorModule } from '../../test/processor.js';
 import { BOHDAN_ID, OLENA_ID } from '../../test/service-fixtures.js';
-import { NOW } from '../../test/time.js';
+import { fixedClock, NOW } from '../../test/time.js';
 import type { AiCompleteJob } from './ai.jobs.js';
 import { AiRepository } from './ai.repository.js';
 import { type AiCompleteAttempt, AiService } from './ai.service.js';
@@ -58,7 +58,7 @@ async function serviceWithFakes(nodeEnv: Env['NODE_ENV'] = 'development') {
     AiService,
     { provide: AiRepository, useValue: repository },
     { provide: AiClient, useValue: ai },
-    { provide: Clock, useValue: { now: () => NOW } },
+    { provide: Clock, useValue: fixedClock(NOW) },
     { provide: ConfigService, useValue: config },
   ]);
   repository.queueJob(OLENA_ID);

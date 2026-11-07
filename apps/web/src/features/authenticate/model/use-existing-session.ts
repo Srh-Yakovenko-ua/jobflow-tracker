@@ -4,6 +4,7 @@ import { useEffect } from 'react';
 
 import { userKeys } from '@/entities/user';
 import { refreshAccessToken } from '@/shared/api';
+import { hasSessionCookie } from '@/shared/lib/session-cookie';
 
 export type UseExistingSessionOptions = { returnTo: string; enabled: boolean };
 
@@ -18,7 +19,7 @@ export function useExistingSession({ returnTo, enabled }: UseExistingSessionOpti
     staleTime: 'static',
     retry: false,
     retryOnMount: false,
-    enabled,
+    enabled: () => enabled && hasSessionCookie(),
   });
   useEffect(() => {
     if (!isSuccess) return;

@@ -4,6 +4,7 @@ import { usePathname } from 'next/navigation';
 import type { ReactNode } from 'react';
 
 import { useSilentCount } from '@/entities/application';
+import { useSingleKeyShortcuts } from '@/entities/user';
 import { FEATURE_FLAGS } from '@/shared/config';
 import { uk } from '@/shared/i18n';
 import { cn } from '@/shared/lib/cn';
@@ -40,6 +41,7 @@ function ShellSurfacesLayer({ surfaces }: Readonly<{ surfaces: ShellSurfaces }>)
           },
         }}
         shortcuts={shortcutsOf(FEATURE_FLAGS)}
+        singleKeys={useSingleKeyShortcuts()}
         handlers={{ onCloseAutoFocus: surfaces.onCloseAutoFocus }}
       />
     </>

@@ -26,10 +26,12 @@ const UKRAINIAN = {
   question: { key: ',', code: 'Slash', shiftKey: true },
 } as const satisfies Record<string, Press>;
 
-function listen(flags: FeatureFlags = EVERY_FLAG_ON) {
+type Listening = Readonly<{ flags?: FeatureFlags; singleKeys?: boolean }>;
+
+function listen({ flags = EVERY_FLAG_ON, singleKeys = true }: Listening = {}) {
   const actions = { onPalette: vi.fn(), onShortcut: vi.fn() };
   renderHook(() => {
-    useGlobalShortcuts({ flags, actions });
+    useGlobalShortcuts({ flags, singleKeys, actions });
   });
   return actions;
 }
@@ -85,7 +87,7 @@ describe.each([
 
 describe('global shortcuts', () => {
   it('N, G A and G R do nothing while their pages are behind the flags, G B still works', () => {
-    const actions = listen(FEATURE_FLAGS);
+    const actions = listen({ flags: FEATURE_FLAGS });
 
     press([LATIN.n, LATIN.g, LATIN.a, LATIN.g, LATIN.r, LATIN.g, LATIN.b]);
 
@@ -116,6 +118,16 @@ describe('global shortcuts', () => {
 
     expect(actions.onPalette).toHaveBeenCalledTimes(2);
     expect(handled).toEqual([false, false]);
+  });
+
+  it('with single key shortcuts off, N, every G chord and ? do nothing and Ctrl+K still opens the palette', () => {
+    const actions = listen({ singleKeys: false });
+
+    press([LATIN.n, LATIN.g, LATIN.b, LATIN.g, LATIN.a, LATIN.g, LATIN.r, LATIN.question]);
+    press([{ key: 'k', code: 'KeyK', ctrlKey: true }]);
+
+    expect(actions.onShortcut).not.toHaveBeenCalled();
+    expect(actions.onPalette).toHaveBeenCalledTimes(1);
   });
 
   it('K with Shift, K with Alt and a plain K leave the palette closed', () => {
@@ -153,5 +165,18 @@ describe('global shortcuts', () => {
     const actions = pressGThenB([10_000, 11_000]);
 
     expect(actions.onShortcut).toHaveBeenCalledWith({ kind: 'navigate', href: '/board' });
+  });
+
+  it('a keydown with no key, as autofill sends, throws nothing and runs nothing', () => {
+    const actions = listen();
+    const thrown = vi.fn();
+    window.addEventListener('error', thrown);
+
+    document.dispatchEvent(new Event('keydown', { bubbles: true }));
+    window.removeEventListener('error', thrown);
+
+    expect(thrown).not.toHaveBeenCalled();
+    expect(actions.onPalette).not.toHaveBeenCalled();
+    expect(actions.onShortcut).not.toHaveBeenCalled();
   });
 });

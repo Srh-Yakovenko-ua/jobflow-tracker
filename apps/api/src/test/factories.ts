@@ -84,6 +84,7 @@ export const NEW_USER_SETTINGS_ROW = {
   notifyPush: false,
   notifyEmail: true,
   analyticsOptOut: false,
+  singleKeyShortcuts: true,
   activeResumeVersionId: null,
 } satisfies Omit<UserSettings, 'userId' | 'createdAt' | 'updatedAt'>;
 
@@ -255,6 +256,7 @@ export async function createResume(prisma: PrismaService, userId: string): Promi
 export function resumeVersionData(owner: ResumeOwner): Prisma.ResumeVersionUncheckedCreateInput {
   return {
     ...owner,
+    number: 1,
     storageKey: `resumes/${owner.resumeId}/v1.pdf`,
     filename: 'cv.pdf',
     mime: 'application/pdf',

@@ -316,6 +316,19 @@ describe('NoteEditor autosave', () => {
     });
     expect(sentKinds()).toEqual(['POST true', 'DELETE true', 'POST true']);
   });
+
+  it('a draft cleared after its first POST was stored but lost its reply resends that POST with its key and deletes the note it returns', async () => {
+    const { user, field, added, deleted, retried } = await afterRefusedFirstSave();
+
+    await user.clear(field);
+    pass(1000);
+
+    await waitFor(() => {
+      expect(deleted).toEqual([NOTE_ID]);
+    });
+    expect(retried.sent).toEqual(added);
+    expect(added).toEqual([postOf('Друга задача')]);
+  });
 });
 
 describe('NoteEditor finish', () => {

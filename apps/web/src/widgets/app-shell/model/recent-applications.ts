@@ -1,6 +1,7 @@
 import { applicationResponseSchema } from '@jobflow/shared';
 import type { z } from 'zod';
 
+import { recentApplicationsKeyOf } from '@/entities/user';
 import { logger } from '@/shared/lib/logger';
 
 const recentApplicationSchema = applicationResponseSchema.pick({
@@ -17,13 +18,9 @@ export type RememberedApplication = Readonly<{ userId: string; application: Rece
 
 const RECENT_LIMIT = 5;
 
-function storageKeyOf(userId: string): string {
-  return `jobflow.recent-applications.${userId}`;
-}
-
 export function readRecentApplications(userId: string): RecentApplication[] {
   try {
-    const stored = localStorage.getItem(storageKeyOf(userId));
+    const stored = localStorage.getItem(recentApplicationsKeyOf(userId));
     if (stored === null) return [];
     const parsed = recentListSchema.safeParse(JSON.parse(stored));
     return parsed.success ? parsed.data.slice(0, RECENT_LIMIT) : [];
@@ -38,7 +35,7 @@ export function rememberRecentApplication({ userId, application }: RememberedApp
   const others = readRecentApplications(userId).filter((recent) => recent.id !== id);
   const recent = [{ id, company, position }, ...others].slice(0, RECENT_LIMIT);
   try {
-    localStorage.setItem(storageKeyOf(userId), JSON.stringify(recent));
+    localStorage.setItem(recentApplicationsKeyOf(userId), JSON.stringify(recent));
   } catch (error) {
     logger.warn({ err: error }, 'recent applications not stored');
   }

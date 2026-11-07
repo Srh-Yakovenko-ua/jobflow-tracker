@@ -22,7 +22,7 @@ import {
   loadedBoardRows,
 } from '../../test/factories.js';
 import { createQueryLog, type QueryLog } from '../../test/query-log.js';
-import { minutesAfter, NOW } from '../../test/time.js';
+import { fixedClock, minutesAfter, NOW } from '../../test/time.js';
 
 const LOAD = { few: 5, loaded: 500, maxStatements: 8 } as const;
 
@@ -63,7 +63,7 @@ describe('the board and the list with 500 applications', () => {
   const testApp = useTestApp(() =>
     appTestingModule()
       .overrideProvider(Clock)
-      .useValue({ now: () => NOW })
+      .useValue(fixedClock(NOW))
       .overrideProvider(PrismaService)
       .useFactory({
         factory: (config: AppConfig) => {

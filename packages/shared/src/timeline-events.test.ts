@@ -20,7 +20,11 @@ const VALID_PAYLOADS: {
   interview_scheduled: { kind: 'final_interview', startsAt: '2026-11-04T08:30:00.000Z' },
   interview_done: { kind: 'screening_call', durationMin: 45 },
   note_added: { noteId: '01920000-0000-7000-8000-000000000050' },
-  resume_attached: { resumeVersionId: '01920000-0000-7000-8000-000000000051' },
+  resume_attached: {
+    resumeVersionId: '01920000-0000-7000-8000-000000000051',
+    number: 2,
+    title: 'акцент на продукті',
+  },
 };
 
 describe('timelineRecordSchema', () => {

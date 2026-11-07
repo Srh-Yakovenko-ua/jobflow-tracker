@@ -1,20 +1,18 @@
 import { randomUUID } from 'node:crypto';
 
+import { GetBucketLifecycleConfigurationCommand, S3Client } from '@aws-sdk/client-s3';
 import { ConfigService } from '@nestjs/config';
 import { Test } from '@nestjs/testing';
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 
 import { DEPENDENCY_LIMITS } from '../common/probe.js';
 import { type AppConfig, configModule } from '../config/app-config.js';
+import { PDF, PDF_BYTES, PDF_ETAG } from '../test/resumes.js';
 import { outcomeWithin, startTcpProxy, type TcpProxy } from '../test/tcp-proxy.js';
 import type { UploadUrlRequest } from './file-storage.js';
 import { S3FileStorage, type S3Settings, s3SettingsOf } from './s3-file-storage.js';
 
-const PDF = 'application/pdf';
-
 const DOCX = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
-
-const PDF_BYTES = new TextEncoder().encode('%PDF-1.7\n1 0 obj\n<<>>\nendobj\n%%EOF\n');
 
 const SIGNED_AT = new Date('2026-11-07T10:00:00.000Z');
 
@@ -29,6 +27,15 @@ const STORAGE_DOWN = {
 type PutBody = { type: string; body: Uint8Array };
 
 const newKey = (extension = 'pdf') => `users/${randomUUID()}/resumes/${randomUUID()}.${extension}`;
+
+const STORAGE_CALLS = [
+  { name: 'head', call: (storage: S3FileStorage) => storage.head(newKey()) },
+  {
+    name: 'copy',
+    call: (storage: S3FileStorage) =>
+      storage.copy({ from: newKey(), to: newKey(), ifMatch: PDF_ETAG }),
+  },
+];
 
 const pdfUpload = (key: string, signedAt = new Date()): UploadUrlRequest => ({
   key,
@@ -95,7 +102,49 @@ describe('S3FileStorage against MinIO', () => {
     const key = newKey();
 
     expect(await putPdf(key)).toBe(200);
-    expect(await storage.head(key)).toEqual({ sizeBytes: PDF_BYTES.length, mime: PDF });
+    expect(await storage.head(key)).toEqual({
+      sizeBytes: PDF_BYTES.length,
+      mime: PDF,
+      etag: PDF_ETAG,
+    });
+  });
+
+  it('copies an object whose ETag still matches the one read', async () => {
+    const [from, to] = [newKey(), newKey()];
+    await putPdf(from);
+
+    const copied = await storage.copy({ from, to, ifMatch: PDF_ETAG });
+
+    expect([copied, await storage.readStart({ key: to, bytes: PDF_BYTES.length })]).toEqual([
+      true,
+      PDF_BYTES,
+    ]);
+  });
+
+  it('refuses to copy an object written again since its ETag was read and writes nothing', async () => {
+    const [from, to] = [newKey(), newKey()];
+    await putPdf(from);
+    await putThroughUrl(from, { type: PDF, body: new Uint8Array(PDF_BYTES.length) });
+
+    expect(await storage.copy({ from, to, ifMatch: PDF_ETAG })).toBe(false);
+    expect(await storage.head(to)).toBeNull();
+  });
+
+  it('answers false to a copy of a missing object', async () => {
+    expect(await storage.copy({ from: newKey(), to: newKey(), ifMatch: PDF_ETAG })).toBe(false);
+  });
+
+  it('expires uploads under the pending prefix after one day', async () => {
+    const client = new S3Client({ ...settings, forcePathStyle: true });
+    const { Rules = [] } = await client.send(
+      new GetBucketLifecycleConfigurationCommand({ Bucket: settings.bucket }),
+    );
+    client.destroy();
+
+    const pending = Rules.filter(({ Filter }) => Filter?.Prefix === 'pending/');
+    expect(pending.map(({ Status, Expiration }) => [Status, Expiration?.Days])).toEqual([
+      ['Enabled', 1],
+    ]);
   });
 
   it.each([
@@ -161,13 +210,21 @@ describe('S3FileStorage against MinIO', () => {
     );
   });
 
-  it('reads only the first bytes asked for', async () => {
+  it('reads only the first bytes asked for while the ETag still matches', async () => {
     const key = newKey();
     await putPdf(key);
 
-    const start = await storage.readStart({ key, bytes: 8 });
+    const start = await storage.readStart({ key, bytes: 8, ifMatch: PDF_ETAG });
 
     expect(new TextDecoder().decode(start)).toBe('%PDF-1.7');
+  });
+
+  it('reads nothing from an object written again since its ETag was read', async () => {
+    const key = newKey();
+    await putPdf(key);
+    await putThroughUrl(key, { type: PDF, body: new Uint8Array(PDF_BYTES.length) });
+
+    expect(await storage.readStart({ key, bytes: 8, ifMatch: PDF_ETAG })).toEqual(new Uint8Array());
   });
 
   it('answers null for a missing object and deletes a stored one', async () => {
@@ -193,24 +250,23 @@ describe('S3FileStorage when MinIO does not answer', () => {
     storage.onModuleDestroy();
   });
 
-  it(
-    'answers 503 within the storage limit while the open connection stays silent',
+  it.each(STORAGE_CALLS)(
+    'answers $name with 503 within the storage limit while the open connection stays silent',
     { timeout: SILENT_LIMIT_MS + 1000 },
-    async () => {
+    async ({ call }) => {
       proxy.silence();
 
-      expect(await outcomeWithin(storage.head(newKey()), SILENT_LIMIT_MS)).toMatchObject(
-        STORAGE_DOWN,
-      );
+      expect(await outcomeWithin(call(storage), SILENT_LIMIT_MS)).toMatchObject(STORAGE_DOWN);
       await proxy.close();
     },
   );
 
-  it('answers 503 at once when the connection is refused', async () => {
-    await proxy.close();
+  it.each(STORAGE_CALLS)(
+    'answers $name with 503 at once when the connection is refused',
+    async ({ call }) => {
+      await proxy.close();
 
-    expect(await outcomeWithin(storage.head(newKey()), REFUSED_LIMIT_MS)).toMatchObject(
-      STORAGE_DOWN,
-    );
-  });
+      expect(await outcomeWithin(call(storage), REFUSED_LIMIT_MS)).toMatchObject(STORAGE_DOWN);
+    },
+  );
 });

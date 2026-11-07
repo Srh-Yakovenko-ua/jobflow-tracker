@@ -112,8 +112,11 @@ const TITLE_CASES: TitleCase[] = [
   },
   {
     type: 'resume_attached',
-    rows: journal({ kind: 'resume_attached', payload: { resumeVersionId: RESUME_VERSION_ID } }),
-    title: 'CV прикріплено',
+    rows: journal({
+      kind: 'resume_attached',
+      payload: { resumeVersionId: RESUME_VERSION_ID, number: 2, title: 'акцент на продукті' },
+    }),
+    title: 'Прикріплено CV v2 · акцент на продукті',
     actor: 'user',
   },
 ];

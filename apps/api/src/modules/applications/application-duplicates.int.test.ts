@@ -345,6 +345,24 @@ describe('the possible duplicates of a new application', () => {
     {
       company: 'Globex',
       companyKey: 'globex',
+      url: 'https://ua.indeed.com/viewjob?xjk=9&jk=a1b2',
+      urlKey: 'ua.indeed.com/viewjob?jk=a1b2',
+    },
+    {
+      company: 'Globex',
+      companyKey: 'globex',
+      url: 'https://ua.indeed.com/viewjob?jk=1&jk=2',
+      urlKey: 'ua.indeed.com/viewjob?jk=1&jk=2',
+    },
+    {
+      company: 'Globex',
+      companyKey: 'globex',
+      url: 'https://ua.indeed.com/viewjob?jk=2&jk=1',
+      urlKey: 'ua.indeed.com/viewjob?jk=1&jk=2',
+    },
+    {
+      company: 'Globex',
+      companyKey: 'globex',
       url: 'https://careers.example.com/#/',
       urlKey: null,
     },

@@ -1,4 +1,5 @@
 import {
+  CopyObjectCommand,
   DeleteObjectCommand,
   GetObjectCommand,
   HeadObjectCommand,
@@ -6,6 +7,7 @@ import {
   NotFound,
   PutObjectCommand,
   S3Client,
+  S3ServiceException,
 } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { RESUME_UPLOAD_LIMITS } from '@jobflow/shared';
@@ -16,6 +18,7 @@ import { AppError, ERROR_TYPES } from '../common/app-error.js';
 import { DEPENDENCY_LIMITS } from '../common/probe.js';
 import type { AppConfig } from '../config/app-config.js';
 import type {
+  CopyRequest,
   DownloadUrlRequest,
   FileStorage,
   ObjectStart,
@@ -74,11 +77,16 @@ const withinStorageLimit = () => ({
 const storageDown = (cause: unknown) =>
   new AppError({ ...ERROR_TYPES[503], status: 503, detail: 'File storage did not answer', cause });
 
+const isMissing = (error: unknown) => error instanceof NotFound || error instanceof NoSuchKey;
+
+const isPreconditionFailed = (error: unknown) =>
+  error instanceof S3ServiceException && error.$metadata.httpStatusCode === 412;
+
 async function orMissing<T>(call: Promise<T>): Promise<T | null> {
   try {
     return await call;
   } catch (error) {
-    if (error instanceof NotFound || error instanceof NoSuchKey) {
+    if (isMissing(error) || isPreconditionFailed(error)) {
       return null;
     }
     throw storageDown(error);
@@ -149,14 +157,31 @@ export class S3FileStorage implements FileStorage, OnModuleDestroy {
   async head(key: string): Promise<StoredObject | null> {
     const command = new HeadObjectCommand({ Bucket: this.bucket, Key: key });
     const stored = await orMissing(this.client.send(command, withinStorageLimit()));
-    return stored && { sizeBytes: stored.ContentLength ?? 0, mime: stored.ContentType ?? null };
+    return (
+      stored && {
+        sizeBytes: stored.ContentLength ?? 0,
+        mime: stored.ContentType ?? null,
+        etag: stored.ETag ?? null,
+      }
+    );
   }
 
-  async readStart({ key, bytes }: ObjectStart): Promise<Uint8Array> {
+  async copy({ from, to, ifMatch }: CopyRequest): Promise<boolean> {
+    const command = new CopyObjectCommand({
+      Bucket: this.bucket,
+      Key: to,
+      CopySource: `${this.bucket}/${from}`,
+      CopySourceIfMatch: ifMatch,
+    });
+    return (await orMissing(this.client.send(command, withinStorageLimit()))) !== null;
+  }
+
+  async readStart({ key, bytes, ifMatch }: ObjectStart): Promise<Uint8Array> {
     const command = new GetObjectCommand({
       Bucket: this.bucket,
       Key: key,
       Range: `bytes=0-${String(bytes - 1)}`,
+      IfMatch: ifMatch,
     });
     return (await orMissing(this.bodyOf(command))) ?? new Uint8Array();
   }

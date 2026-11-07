@@ -39,6 +39,7 @@ export const ME_RESPONSE: MeResponse = {
     notifyPush: true,
     notifyEmail: false,
     analyticsOptOut: false,
+    singleKeyShortcuts: true,
     activeResumeVersionId: null,
   },
 };
