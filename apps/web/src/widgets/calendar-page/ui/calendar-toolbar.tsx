@@ -16,7 +16,7 @@ const NAV_LOOK = {
   className: cn('rounded-md max-md:min-w-11', TOUCH_HEIGHT),
 } as const;
 
-export type CalendarPeriod = Readonly<{ title: string; view: CalendarView }>;
+export type CalendarPeriod = Readonly<{ title: string; view: CalendarView; current: boolean }>;
 
 export type CalendarToolbarActions = Readonly<{
   onPrevious: () => void;
@@ -40,7 +40,7 @@ export function CalendarToolbar({ period, actions }: CalendarToolbarProps) {
           icon={<ChevronLeft aria-hidden size={16} strokeWidth={1.9} />}
           onClick={actions.onPrevious}
         />
-        <Button {...NAV_LOOK} onClick={actions.onToday}>
+        <Button {...NAV_LOOK} aria-disabled={period.current} onClick={actions.onToday}>
           {uk.calendar.today}
         </Button>
         <Button

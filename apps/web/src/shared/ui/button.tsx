@@ -8,7 +8,7 @@ import { Spinner } from './spinner';
 import { Tooltip } from './tooltip';
 
 const BASE =
-  'touch-target inline-flex flex-none items-center justify-center gap-2 font-ui font-semibold whitespace-nowrap select-none transition-[background-color,color,box-shadow,translate] duration-(--duration-instant) ease-standard not-disabled:hover:-translate-y-px not-disabled:active:translate-y-0 disabled:cursor-not-allowed aria-busy:cursor-progress';
+  'touch-target inline-flex flex-none items-center justify-center gap-2 font-ui font-semibold whitespace-nowrap select-none transition-[background-color,color,box-shadow,translate] duration-(--duration-instant) ease-standard not-disabled:hover:-translate-y-px not-disabled:active:translate-y-0 disabled:cursor-not-allowed aria-disabled:cursor-not-allowed aria-busy:cursor-progress';
 
 const VARIANTS = {
   primary:
@@ -68,6 +68,14 @@ function buttonClasses({ variant, size, iconOnly, dimmed }: ButtonShape): string
   );
 }
 
+function isDimmed({
+  disabled,
+  loading,
+  'aria-disabled': ariaDisabled,
+}: ComponentProps<'button'> & ButtonLook): boolean {
+  return loading !== true && (disabled === true || String(ariaDisabled) === 'true');
+}
+
 export function buttonLinkClasses(look: ButtonLinkLook): string {
   return buttonClasses({ ...look, iconOnly: false, dimmed: false });
 }
@@ -90,7 +98,12 @@ export function Button({
       disabled={Boolean(disabled) || loading}
       aria-busy={loading || undefined}
       className={cn(
-        buttonClasses({ variant, size, iconOnly, dimmed: Boolean(disabled) && !loading }),
+        buttonClasses({
+          variant,
+          size,
+          iconOnly,
+          dimmed: isDimmed({ disabled, loading, 'aria-disabled': props['aria-disabled'] }),
+        }),
         className,
       )}
     >

@@ -30,6 +30,7 @@ export function CalendarGrid({ calendar, actions }: CalendarGridProps) {
       timeZone={calendar.timeZone}
       events={calendar.items.map(eventInputOf)}
       eventContent={(shown) => <CalendarEventContent shown={shown} />}
+      moreLinkContent={(link) => <span aria-hidden>{link.text}</span>}
     />
   );
 }

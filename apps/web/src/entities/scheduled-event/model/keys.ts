@@ -5,5 +5,5 @@ export const scheduledEventKeys = {
   list: (applicationId: Application['id']) =>
     [...scheduledEventKeys.all, 'list', applicationId] as const,
   calendars: () => [...scheduledEventKeys.all, 'calendar'] as const,
-  calendar: (range: CalendarQuery) => [...scheduledEventKeys.calendars(), range] as const,
+  calendar: (range: CalendarQuery | null) => [...scheduledEventKeys.calendars(), range] as const,
 };
