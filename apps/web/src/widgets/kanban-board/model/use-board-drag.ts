@@ -25,6 +25,8 @@ type DropAttempt = { card: ApplicationCard | undefined; over: Over | null };
 
 type Landing = LandingCard & Readonly<{ glide: DropLanding }>;
 
+export type FocusRequest = Readonly<{ id: UniqueIdentifier }>;
+
 function legalMoveOf({ card, over }: DropAttempt): ApplicationMove | undefined {
   const toStage = stageOf(over);
   if (card === undefined || toStage === undefined) {
@@ -72,12 +74,12 @@ function useDropLanding() {
   return { landing, setLanding, dropAnimation };
 }
 
-function keyboardOnly(event: DragCancelEvent, focusId: UniqueIdentifier | null) {
-  return event.activatorEvent instanceof KeyboardEvent ? focusId : null;
+function keyboardOnly(event: DragCancelEvent, id: UniqueIdentifier): FocusRequest | null {
+  return event.activatorEvent instanceof KeyboardEvent ? { id } : null;
 }
 
-function useMoveSender() {
-  const { mutate } = useMoveApplicationMutation();
+function useMoveSender(onRollback: (move: ApplicationMove) => void) {
+  const { mutate } = useMoveApplicationMutation({ onRollback });
   const { mutate: undo } = useUndoMoveMutation();
   const rejection = useRejectionPrompt({ send: mutate, undo });
   const sent = (move: ApplicationMove) => rejection.sendOrAsk(move) === 'sent';
@@ -86,14 +88,16 @@ function useMoveSender() {
 
 export function useBoardDrag(board: ApplicationBoardResponse) {
   const [activeId, setActiveId] = useState<UniqueIdentifier | null>(null);
-  const [keyboardDrop, setKeyboardDrop] = useState<UniqueIdentifier | null>(null);
+  const [focusRequest, setFocusRequest] = useState<FocusRequest | null>(null);
   const { landing, setLanding, dropAnimation } = useDropLanding();
-  const { rejection, sent } = useMoveSender();
+  const { rejection, sent } = useMoveSender(({ application }) => {
+    setFocusRequest({ id: application.id });
+  });
   const activeCard = activeId === null ? undefined : findCard(board, activeId);
   const putBack = (event: DragCancelEvent) => {
     setActiveId(null);
     setLanding(sourceLandingOf(activeCard));
-    setKeyboardDrop(keyboardOnly(event, event.active.id));
+    setFocusRequest(keyboardOnly(event, event.active.id));
   };
   const onDragEnd = (event: DragEndEvent) => {
     const move = legalMoveOf({ card: activeCard, over: event.over });
@@ -104,18 +108,18 @@ export function useBoardDrag(board: ApplicationBoardResponse) {
     setActiveId(null);
     const landed = sent(move);
     setLanding(landed ? sentLandingOf(move) : sourceLandingOf(activeCard));
-    setKeyboardDrop(landed ? keyboardOnly(event, focusIdOf(move)) : null);
+    setFocusRequest(landed ? keyboardOnly(event, focusIdOf(move)) : null);
   };
   const handlers = {
     onDragStart: ({ active }: DragStartEvent) => {
       setActiveId(active.id);
       setLanding(null);
-      setKeyboardDrop(null);
+      setFocusRequest(null);
     },
     onDragEnd,
     onDragCancel: putBack,
   };
   const landingToHide = landing?.glide === 'in-place' ? null : landing;
-  const keyboardFocus = landing === null ? keyboardDrop : null;
+  const keyboardFocus = landing === null ? focusRequest : null;
   return { activeCard, landing: landingToHide, dropAnimation, handlers, rejection, keyboardFocus };
 }

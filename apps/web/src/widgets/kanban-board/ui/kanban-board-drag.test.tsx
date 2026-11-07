@@ -246,7 +246,7 @@ describe('KanbanBoard drag and drop', () => {
     },
   );
 
-  it('a card dropped on скринінг and rolled back by a 409 is one focusable link while each old copy fades out', async () => {
+  it('a card dropped on скринінг and rolled back by a 409 is one focusable link while each old copy fades out, and that link in відгук has focus', async () => {
     const answer = latch();
     await boardReadyToDrag({ move: { reply: CONFLICT.reply, latch: answer } });
 
@@ -257,6 +257,9 @@ describe('KanbanBoard drag and drop', () => {
     await screen.findByRole('heading', { name: 'відгук 2' });
 
     await expectOneFocusableCopy();
+    await waitFor(() => {
+      expect(document.activeElement).toBe(draggedCard());
+    });
   });
 
   it('«Скасувати перенос» from the open відмова lane leaves the card one focusable link while the lane copy fades out', async () => {

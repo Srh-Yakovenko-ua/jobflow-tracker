@@ -3,6 +3,7 @@ import type { UserEvent } from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { uk } from '@/shared/i18n';
+import { errorReply } from '@/test/api-handlers';
 import { startDrag } from '@/test/board-drag';
 import { fakeTimeouts } from '@/test/fake-timeouts';
 import { latch } from '@/test/latch';
@@ -21,6 +22,22 @@ const HINT = uk.board.move.keyboardHint;
 const APPLIED_CARD = 'Senior Frontend Engineer';
 
 const SCREENING_CARD = 'Go Backend Engineer';
+
+const SAVED_STEP_CLOSERS = [
+  { closer: 'ESC', close: (user: UserEvent) => user.keyboard('{Escape}') },
+  {
+    closer: '«Готово»',
+    close: (user: UserEvent) => {
+      screen.getByRole('button', { name: uk.board.reject.saved.done }).focus();
+      return user.keyboard('{Enter}');
+    },
+  },
+];
+
+const ROLLBACK_TIMINGS = [
+  { when: 'after the card lands', order: ['land', 'refuse'] },
+  { when: 'while the card still glides', order: ['refuse', 'land'] },
+] as const;
 
 function cardLink(position: string): HTMLAnchorElement {
   const link = screen.getByText(position).closest('a');
@@ -72,25 +89,28 @@ afterEach(() => {
 });
 
 describe('KanbanBoard keyboard drag and drop', () => {
-  it('a скринінг card reaches відмова with a reason by keyboard alone, and ESC on the saved step focuses the відмова strip', async () => {
-    const { user, moves } = await boardReadyToDrag();
-    const strip = screen.getByRole('button', { name: 'відмова 32' });
+  it.each(SAVED_STEP_CLOSERS)(
+    'a скринінг card reaches відмова with a reason by keyboard alone, and $closer on the saved step focuses the відмова strip',
+    async ({ close }) => {
+      const { user, moves } = await boardReadyToDrag();
+      const strip = screen.getByRole('button', { name: 'відмова 32' });
 
-    await pickUp(user, SCREENING_CARD);
-    await user.keyboard('{ArrowRight}{ArrowRight}{ArrowRight}{ArrowRight} ');
-    await screen.findByRole('dialog', { name: uk.board.reject.title });
-    expect(moves).toEqual([]);
-    await user.keyboard('1');
+      await pickUp(user, SCREENING_CARD);
+      await user.keyboard('{ArrowRight}{ArrowRight}{ArrowRight}{ArrowRight} ');
+      await screen.findByRole('dialog', { name: uk.board.reject.title });
+      expect(moves).toEqual([]);
+      await user.keyboard('1');
 
-    expect(await screen.findByText(uk.board.reject.saved.eyebrow)).toBeDefined();
-    expect(moves).toEqual([
-      { fromStage: 'screening', toStage: 'rejected', reasonCode: 'skills_gap' },
-    ]);
-    await user.keyboard('{Escape}');
-    await waitFor(() => {
-      expect(document.activeElement).toBe(strip);
-    });
-  });
+      expect(await screen.findByText(uk.board.reject.saved.eyebrow)).toBeDefined();
+      expect(moves).toEqual([
+        { fromStage: 'screening', toStage: 'rejected', reasonCode: 'skills_gap' },
+      ]);
+      await close(user);
+      await waitFor(() => {
+        expect(document.activeElement).toBe(strip);
+      });
+    },
+  );
 
   it('from відгук the third ARROW RIGHT skips the refused фінал and офер to land on відмова, and SPACE there asks why before any request', async () => {
     const { user, moves } = await boardReadyToDrag();
@@ -179,6 +199,35 @@ describe('KanbanBoard keyboard drag and drop', () => {
       expect(document.activeElement).toBe(moved);
     });
   });
+
+  it.each(ROLLBACK_TIMINGS)(
+    'a keyboard move to скринінг answered 409 $when puts focus back on the card in відгук',
+    async ({ order }) => {
+      fakeTimeouts();
+      const answer = latch();
+      const { user } = await boardReadyToDrag({
+        move: { reply: () => errorReply({ status: 409, type: 'conflict' }), latch: answer },
+      });
+      const steps = {
+        land: settleLanding,
+        refuse: async () => {
+          answer.release();
+          await screen.findByRole('heading', { name: 'відгук 2' });
+        },
+      };
+
+      await pickUp(user, APPLIED_CARD);
+      await user.keyboard('{ArrowRight} ');
+      await screen.findByRole('heading', { name: 'скринінг 2' });
+      for (const step of order) await steps[step]();
+
+      await waitFor(() => {
+        expect(document.activeElement).toBe(
+          within(columnNamed('відгук 2')).getByText(APPLIED_CARD).closest('a'),
+        );
+      });
+    },
+  );
 
   it('after a keyboard drop on the folded ghosted strip the strip has focus', async () => {
     fakeTimeouts();

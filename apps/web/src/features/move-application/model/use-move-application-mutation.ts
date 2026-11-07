@@ -9,12 +9,14 @@ import { moveErrorMessage } from '../lib/move-error-toast';
 import { invalidateAfterMove } from './invalidate-after-move';
 import { withOptimisticBoard } from './optimistic-move';
 
+type MoveMutationEvents = Readonly<{ onRollback?: (move: ApplicationMove) => void }>;
+
 function bodyOf({ application, toStage, reasonCode }: ApplicationMove): MoveApplicationInput {
   const body = { fromStage: application.currentStage, toStage };
   return reasonCode === undefined ? body : { ...body, reasonCode };
 }
 
-export function useMoveApplicationMutation() {
+export function useMoveApplicationMutation({ onRollback }: MoveMutationEvents = {}) {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (move: ApplicationMove) =>
@@ -27,6 +29,7 @@ export function useMoveApplicationMutation() {
     onError: (error, move) => {
       const stages = { from: move.application.currentStage, to: move.toStage };
       showErrorToast(moveErrorMessage({ error, move: stages }));
+      onRollback?.(move);
     },
     onSettled: () => invalidateAfterMove(queryClient),
   });
