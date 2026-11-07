@@ -63,7 +63,7 @@ describe('ApplicationRecruiter', () => {
     expect(['href', 'target', 'rel'].map((name) => telegram.getAttribute(name))).toEqual([
       'https://t.me/oksana_hr',
       '_blank',
-      'noreferrer',
+      'noopener noreferrer',
     ]);
     expect(within(section).getByText('~14 год')).toBeDefined();
   });

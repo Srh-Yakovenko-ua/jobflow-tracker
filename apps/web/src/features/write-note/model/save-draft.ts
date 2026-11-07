@@ -45,7 +45,9 @@ async function writeDraft(input: SaveDraftInput): Promise<DraftSaved> {
     noteId === null
       ? await createDraft(input)
       : await updateNote({ applicationId, noteId, body: { body } });
-  draft.current = { noteId: note.id, savedBody: body, pendingCreate: null };
+  if (draft.current.noteId === noteId) {
+    draft.current = { noteId: note.id, savedBody: body, pendingCreate: null };
+  }
   return { kind: 'written', note, created: noteId === null };
 }
 

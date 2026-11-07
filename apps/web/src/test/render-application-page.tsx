@@ -1,6 +1,5 @@
 import type { ApplicationResponse, ApplicationTimelineResponse } from '@jobflow/shared';
-import { render, screen } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
+import { screen } from '@testing-library/react';
 import type { ReactNode } from 'react';
 
 import {
@@ -33,7 +32,7 @@ import {
   type NotesRouteOptions,
   noteUpdateRoute,
 } from './note-fixtures';
-import { InApp } from './render-in-app';
+import { renderViewInApp } from './render-in-app';
 import {
   liveCardOf,
   scheduledEventRoutes,
@@ -122,9 +121,9 @@ export function renderApplicationPage({
   const ui = beside.wrap(
     mode === 'sheet' ? <ApplicationSheet id={id} /> : <ApplicationPage id={id} view={{ mode }} />,
   );
-  const view = render(ui, { wrapper: InApp });
+  const { user, view } = renderViewInApp(ui);
   return {
-    user: userEvent.setup(),
+    user,
     reopen: () => {
       view.rerender(null);
       view.rerender(ui);

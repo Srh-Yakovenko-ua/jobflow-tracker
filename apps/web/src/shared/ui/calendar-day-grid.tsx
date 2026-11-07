@@ -163,12 +163,14 @@ export function CalendarDayGrid({ value, days, focus, actions }: CalendarDayGrid
       onKeyDown={onKeyDown}
       className="flex flex-col gap-1.5"
     >
-      <div role="row" className="grid grid-cols-7 gap-0.5">
-        {COPY.weekdays.map((weekday) => (
-          <span key={weekday} role="columnheader" className={WEEKDAY}>
-            {weekday}
-          </span>
-        ))}
+      <div role="rowgroup">
+        <div role="row" className="grid grid-cols-7 gap-0.5">
+          {COPY.weekdays.map((weekday) => (
+            <span key={weekday} role="columnheader" className={WEEKDAY}>
+              {weekday}
+            </span>
+          ))}
+        </div>
       </div>
       <div role="rowgroup" className="flex flex-col gap-0.5">
         {weeksOf(monthGrid(month)).map((week) => (

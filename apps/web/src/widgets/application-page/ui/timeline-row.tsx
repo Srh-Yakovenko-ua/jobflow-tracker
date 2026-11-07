@@ -1,13 +1,14 @@
 import { motion } from 'motion/react';
 import type { Ref } from 'react';
 
+import { NotePlainText } from '@/entities/note';
 import { cn } from '@/shared/lib/cn';
 import { FADE_PRESENCE } from '@/shared/ui/fade';
 
 import type { TimelineRow, TimelineTone } from '../lib/timeline-rows';
 import { TimelineMarker, type TimelineMarkerKind } from './timeline-marker';
 
-export type TimelineEntry = Pick<TimelineRow, 'id' | 'title' | 'meta' | 'tone'> & {
+export type TimelineEntry = Pick<TimelineRow, 'id' | 'title' | 'meta' | 'metaFormat' | 'tone'> & {
   marker: TimelineMarkerKind;
   when: { label: string; at: Date };
 };
@@ -41,7 +42,13 @@ export function TimelineEntryRow({ entry, ref }: TimelineEntryRowProps) {
       <div className="flex min-w-0 flex-col gap-0.75 pb-5.5 wrap-anywhere group-last:pb-0">
         <p className={cn('text-[14.5px]', TITLE_TONE[entry.tone])}>{entry.title}</p>
         {entry.meta !== null && (
-          <p className="text-[13px] leading-normal text-ink-3">{entry.meta}</p>
+          <p className="text-[13px] leading-normal text-ink-3">
+            {entry.metaFormat === 'note' ? (
+              <NotePlainText note={{ body: entry.meta }} />
+            ) : (
+              entry.meta
+            )}
+          </p>
         )}
       </div>
     </motion.li>
