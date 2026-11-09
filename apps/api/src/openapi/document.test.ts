@@ -50,6 +50,10 @@ const PATH_PARAMS = ROUTES.flatMap(({ name, route }) =>
 
 const BEARER_ROUTES = ROUTES.filter(({ route }) => route.security === undefined);
 
+const CAPTURE_TOKEN_ROUTES = ROUTES.filter(({ route }) =>
+  (route.security ?? []).some((scheme) => 'captureToken' in scheme),
+).map(({ name }) => name);
+
 describe('the OpenAPI document', () => {
   it.each(EXAMPLES)('gives $at an example its schema accepts', ({ schema, example }) => {
     expect(example).toBeDefined();
@@ -126,6 +130,7 @@ describe('the OpenAPI document', () => {
     { name: 'POST /auth/register', limit: '3 per 3600 s' },
     { name: 'GET /applications/{id}', limit: '300 per 60 s' },
     { name: 'POST /capture/paste', limit: '30 per 3600 s' },
+    { name: 'POST /capture/bookmarklet', limit: '60 per 3600 s' },
   ])('describes the default rate limit of $name as $limit', ({ name, limit }) => {
     const route = ROUTES.find((candidate) => candidate.name === name)?.route;
 
@@ -152,6 +157,7 @@ describe('the OpenAPI document', () => {
     '/applications/{id}/contacts',
     '/applications/{id}/scheduled-events',
     '/capture/paste',
+    '/capture/bookmarklet',
   ])('documents the optional Idempotency-Key header and its 409 on POST %s', (path) => {
     const post = buildOpenApiDocument().paths?.[path]?.post;
 
@@ -159,6 +165,19 @@ describe('the OpenAPI document', () => {
       expect.objectContaining({ in: 'header', name: 'Idempotency-Key', required: false }),
     );
     expect(Object.keys(post?.responses ?? {})).toContain('409');
+  });
+
+  it('takes the capture token, sent as Authorization: Capture, on POST /capture/bookmarklet alone', () => {
+    const { components, paths } = buildOpenApiDocument();
+
+    expect(components?.securitySchemes?.captureToken).toEqual({
+      type: 'apiKey',
+      in: 'header',
+      name: 'Authorization',
+      description: 'Capture <token>',
+    });
+    expect(CAPTURE_TOKEN_ROUTES).toEqual(['POST /capture/bookmarklet']);
+    expect(paths?.['/capture/bookmarklet']?.post?.security).toEqual([{ captureToken: [] }]);
   });
 
   it('files every route under a tag the document lists, and lists no unused tag', () => {

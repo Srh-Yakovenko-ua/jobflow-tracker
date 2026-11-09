@@ -25,6 +25,13 @@ class ProbeController {
     this.logger.log({ password: 'marker-password', passwordHash: 'marker-hash' }, 'credentials');
     return { handled: true };
   }
+
+  @Get('capture-token')
+  captureToken(): { handled: true } {
+    const created = { token: 'marker-nested-token', captureToken: 'marker-nested-capture' };
+    this.logger.log({ token: 'marker-token', captureToken: 'marker-capture', created }, 'token');
+    return { handled: true };
+  }
 }
 
 const log = memoryLog();
@@ -71,6 +78,20 @@ describe('request logs', () => {
 
     const [credentialsLine] = log.parsed();
     expect(credentialsLine).toMatchObject({ password: '[Redacted]', passwordHash: '[Redacted]' });
+    expect(log.lines.join('\n')).not.toContain('marker-');
+  });
+
+  it('redacts a logged capture token, at the top and one level down, and the Capture authorization header', async () => {
+    await request(app.getHttpServer())
+      .get('/api/v1/probe/capture-token')
+      .set('authorization', 'Capture marker-header');
+
+    const [tokenLine] = log.parsed();
+    expect(tokenLine).toMatchObject({
+      token: '[Redacted]',
+      captureToken: '[Redacted]',
+      created: { token: '[Redacted]', captureToken: '[Redacted]' },
+    });
     expect(log.lines.join('\n')).not.toContain('marker-');
   });
 

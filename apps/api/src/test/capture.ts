@@ -1,4 +1,10 @@
-import type { CapturePasteInput, PossibleDuplicate } from '@jobflow/shared';
+import {
+  type CaptureBookmarkletInput,
+  type CapturePasteInput,
+  type CaptureTokenCreated,
+  captureTokenCreatedSchema,
+  type PossibleDuplicate,
+} from '@jobflow/shared';
 import type { NestExpressApplication } from '@nestjs/platform-express';
 
 import type {
@@ -11,7 +17,12 @@ import type {
   OpenedDraft,
 } from '../modules/applications/index.js';
 import { VACANCY_TEXT } from './ai.js';
-import type { ApplicationRequest, SignedInApplication } from './applications.js';
+import type { TestApp } from './app.js';
+import {
+  type ApplicationRequest,
+  type SignedInApplication,
+  signedInWithSearch,
+} from './applications.js';
 import { callRoute } from './http.js';
 import type { ByUser } from './recorded-events.js';
 import { APPLICATION_ID, MISSING_ID, OLENA_ID } from './service-fixtures.js';
@@ -26,6 +37,53 @@ export type DraftConfirmRequest = Pick<SignedInApplication, 'id'> & { accessToke
 export const PASTED_URL = 'https://jobs.example.test/7';
 
 export const PASTE: CapturePasteInput = { text: VACANCY_TEXT, url: PASTED_URL };
+
+export const CAPTURE_BOOKMARKLET_PATH = '/api/v1/capture/bookmarklet';
+
+export const CAPTURE_TOKENS_PATH = '/api/v1/capture/tokens';
+
+export const JOB_BOARD_ORIGIN = 'https://djinni.co';
+
+export const BOOKMARKLET = {
+  url: 'https://djinni.co/jobs/700123-senior-react-developer/',
+  title: 'Senior React developer at Acme',
+  text: VACANCY_TEXT,
+} satisfies CaptureBookmarkletInput;
+
+export type BookmarkletRequest = {
+  captureToken?: string | undefined;
+  input: object;
+  headers?: Record<string, string> | undefined;
+};
+
+export const captureAuthorization = (token: string) => ({ authorization: `Capture ${token}` });
+
+export async function issueCaptureToken(
+  app: NestExpressApplication,
+  accessToken: string,
+): Promise<CaptureTokenCreated> {
+  const response = await callRoute(app, { method: 'post', path: CAPTURE_TOKENS_PATH, accessToken });
+  return captureTokenCreatedSchema.parse(response.body);
+}
+
+export async function signedInWithCaptureToken({ app, prisma }: TestApp) {
+  const searcher = await signedInWithSearch(prisma);
+  const { id, token } = await issueCaptureToken(app, searcher.accessToken);
+  return { ...searcher, captureTokenId: id, captureToken: token };
+}
+
+export function postBookmarklet(
+  app: NestExpressApplication,
+  { captureToken, input, headers }: BookmarkletRequest,
+) {
+  const authorization = captureToken === undefined ? {} : captureAuthorization(captureToken);
+  return callRoute(app, {
+    method: 'post',
+    path: CAPTURE_BOOKMARKLET_PATH,
+    body: input,
+    headers: { ...headers, ...authorization },
+  });
+}
 
 export const BLANK_DRAFT_COLUMNS = {
   company: 'компанію не розпізнано',

@@ -1,5 +1,8 @@
 import type { RouteConfig } from '@asteasolutions/zod-to-openapi';
 import {
+  CAPTURE_BOOKMARKLET_LIMITS,
+  type CaptureBookmarkletInput,
+  captureBookmarkletInputSchema,
   type CapturePasteInput,
   capturePasteInputSchema,
   type CapturePasteResponse,
@@ -20,11 +23,23 @@ const PASTE = {
   url: 'https://djinni.co/jobs/700123-senior-react-developer/',
 } satisfies CapturePasteInput;
 
+const BOOKMARKLET = {
+  ...PASTE,
+  title: 'Senior React developer at Acme | Djinni',
+  html: '<main><h1>Senior React developer</h1><p>Acme. Remote, 4000-5000 USD.</p></main>',
+} satisfies CaptureBookmarkletInput;
+
 const ACCEPTED = {
   applicationId: EXAMPLE_APPLICATION_ID,
   jobId: '0199f4b1-2c3d-7e4f-8a51-6b7c8d9e0f1a',
   possibleDuplicates: [],
 } satisfies CapturePasteResponse;
+
+const ACCEPTED_REPLY = {
+  description:
+    'The draft and its AI job are stored; possibleDuplicates lists Applications with the same url',
+  content: jsonContent(capturePasteResponseSchema, ACCEPTED),
+};
 
 export const CAPTURE_OPENAPI_PATHS: RouteConfig[] = [
   {
@@ -42,13 +57,26 @@ export const CAPTURE_OPENAPI_PATHS: RouteConfig[] = [
         content: jsonContent(capturePasteInputSchema, PASTE),
       },
     },
-    responses: {
-      202: {
-        description:
-          'The draft and its AI job are stored; possibleDuplicates lists Applications with the same url',
-        content: jsonContent(capturePasteResponseSchema, ACCEPTED),
+    responses: { 202: ACCEPTED_REPLY, ...errorResponses([400, 401, 403, 409, 422], 'ai') },
+  },
+  {
+    method: 'post',
+    path: '/capture/bookmarklet',
+    tags: ['capture'],
+    summary: 'Capture a vacancy from the page the bookmarklet reads',
+    description: `Takes the capture token as "Authorization: Capture <token>", from any origin and without cookies; a user access token answers 403. Stores the same draft, AI job, captured timeline row and event as a paste. The stored text is the title, a blank line and the page text, cut at ${String(VACANCY_PARSE_LIMITS.textMaxLength)} characters; when html is sent the server strips it to text and uses that instead of text. The source is set from the host for djinni.co, jobs.dou.ua, robota.ua and linkedin.com. The server never fetches the page.`,
+    security: [{ captureToken: [] }],
+    request: {
+      headers: idempotencyHeaders,
+      body: {
+        required: true,
+        description: `The page url, its title up to ${String(CAPTURE_BOOKMARKLET_LIMITS.titleMaxLength)} characters, its visible text and optionally its html. The whole body is at most ${String(CAPTURE_BOOKMARKLET_LIMITS.bodyMaxBytes / 1024)} KB.`,
+        content: jsonContent(captureBookmarkletInputSchema, BOOKMARKLET),
       },
-      ...errorResponses([400, 401, 403, 409, 422], 'ai'),
+    },
+    responses: {
+      202: ACCEPTED_REPLY,
+      ...errorResponses([400, 401, 403, 409, 413, 422], 'capture'),
     },
   },
   {

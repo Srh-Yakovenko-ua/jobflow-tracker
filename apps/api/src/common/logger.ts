@@ -23,10 +23,14 @@ const REDACTED_PATHS = [
   'passwordHash',
   'refreshToken',
   'accessToken',
+  'token',
+  'captureToken',
   '*.password',
   '*.passwordHash',
   '*.refreshToken',
   '*.accessToken',
+  '*.token',
+  '*.captureToken',
 ];
 
 const withoutQueryString = (req: SerializedRequest): SerializedRequest => ({

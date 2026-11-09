@@ -4,23 +4,32 @@ import { Reflector } from '@nestjs/core';
 import type { Request, Response } from 'express';
 
 import { forbidden, unauthorized } from '../../common/app-error.js';
-import { AccessTokens, type AccessUser } from './access-tokens.js';
+import type { AccessUser } from './access-tokens.js';
+import { type Credentials, CredentialsService } from './credentials.service.js';
 import { IS_PUBLIC } from './public.decorator.js';
 import type { HttpExchange } from './refresh-cookie.js';
 import { DEFAULT_SCOPE, REQUIRED_SCOPE } from './require-scope.decorator.js';
 
-const BEARER = /^Bearer\s+(\S+)$/i;
+const CREDENTIALS = /^(Bearer|Capture)\s+(\S+)$/i;
 
-const CHALLENGE = { missing: 'Bearer', invalid: 'Bearer error="invalid_token"' } as const;
+const CHALLENGE = {
+  missing: 'Bearer',
+  bearer: 'Bearer error="invalid_token"',
+  capture: 'Capture error="invalid_token"',
+} as const;
 
-function bearerToken(header: string | undefined): string | undefined {
-  return header === undefined ? undefined : BEARER.exec(header)?.[1];
+function credentialsOf(header: string | undefined): Credentials | undefined {
+  const [, scheme, token] = CREDENTIALS.exec(header ?? '') ?? [];
+  if (scheme === undefined || token === undefined) {
+    return undefined;
+  }
+  return { scheme: scheme.toLowerCase() === 'capture' ? 'capture' : 'bearer', token };
 }
 
 @Injectable()
 export class JwtAuthGuard implements CanActivate {
   constructor(
-    private readonly accessTokens: AccessTokens,
+    private readonly credentials: CredentialsService,
     private readonly reflector: Reflector,
   ) {}
 
@@ -44,15 +53,15 @@ export class JwtAuthGuard implements CanActivate {
   }
 
   private async authenticate({ req, res }: HttpExchange): Promise<AccessUser> {
-    const token = bearerToken(req.get('authorization'));
-    if (token === undefined) {
+    const credentials = credentialsOf(req.get('authorization'));
+    if (credentials === undefined) {
       res.set('WWW-Authenticate', CHALLENGE.missing);
       throw unauthorized('Missing access token');
     }
     try {
-      return await this.accessTokens.verify(token);
+      return await this.credentials.verify(credentials);
     } catch (error) {
-      res.set('WWW-Authenticate', CHALLENGE.invalid);
+      res.set('WWW-Authenticate', CHALLENGE[credentials.scheme]);
       throw error;
     }
   }

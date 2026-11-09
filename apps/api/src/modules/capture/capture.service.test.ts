@@ -1,8 +1,10 @@
+import type { CaptureBookmarkletInput } from '@jobflow/shared';
 import { describe, expect, it } from 'vitest';
 
 import { conflict } from '../../common/app-error.js';
-import { AI_JOB_ID, FakeAiRepository } from '../../test/ai.js';
+import { AI_JOB_ID, FakeAiRepository, VACANCY_TEXT } from '../../test/ai.js';
 import {
+  BOOKMARKLET,
   FakeApplicationDrafts,
   OPENED_DRAFT,
   PASTE,
@@ -88,6 +90,67 @@ describe('CaptureService.paste', () => {
     });
 
     expect([ai.jobs.size, timeline.events, drafts.announced]).toEqual([0, [], []]);
+  });
+});
+
+describe('CaptureService.bookmarklet', () => {
+  async function openedInputOf(page: Partial<CaptureBookmarkletInput>) {
+    const { drafts, service } = await serviceWith();
+    await service.bookmarklet(OLENA_ID, { ...CAPTURE, input: { ...BOOKMARKLET, ...page } });
+    return drafts.opened.map(({ input }) => input);
+  }
+
+  it('opens the draft with the page url and the title, a blank line and the page text', async () => {
+    expect(await openedInputOf({})).toEqual([
+      {
+        url: 'https://djinni.co/jobs/700123-senior-react-developer/',
+        text: `Senior React developer at Acme\n\n${VACANCY_TEXT}`,
+      },
+    ]);
+  });
+
+  it('takes the text of the html over the text the browser read, without tags or script text', async () => {
+    const html = '<h1>Acme</h1><script>stolen()</script><p>Remote &amp; hybrid</p>';
+
+    expect(await openedInputOf({ title: 'React developer', html })).toMatchObject([
+      { text: 'React developer\n\nAcme\n\nRemote & hybrid' },
+    ]);
+  });
+
+  it('falls back to the text the browser read when the html holds no text', async () => {
+    const html = '<script>stolen()</script><div> </div>';
+
+    expect(await openedInputOf({ title: 'React developer', text: 'Remote', html })).toMatchObject([
+      { text: 'React developer\n\nRemote' },
+    ]);
+  });
+
+  it('cuts the stored text at 20 000 characters and keeps the title first', async () => {
+    const [opened] = await openedInputOf({ title: 'Acme', text: 'a'.repeat(30_000) });
+
+    expect(opened?.text).toBe(`Acme\n\n${'a'.repeat(19_994)}`);
+  });
+
+  it('replaces a surrogate pair the cut would split', async () => {
+    const [opened] = await openedInputOf({ title: 'Acme', text: `${'a'.repeat(19_993)}😀😀` });
+
+    expect(opened?.text).toBe(`Acme\n\n${'a'.repeat(19_993)}�`);
+  });
+
+  it('answers like a paste and records the capture with the bookmarklet method', async () => {
+    const { timeline, service } = await serviceWith();
+
+    await expect(
+      service.bookmarklet(OLENA_ID, { ...CAPTURE, input: BOOKMARKLET }),
+    ).resolves.toEqual({
+      applicationId: APPLICATION_ID,
+      jobId: AI_JOB_ID,
+      possibleDuplicates: [POSSIBLE_DUPLICATE],
+    });
+
+    expect(timeline.events.map(({ kind, payload }) => ({ kind, payload }))).toEqual([
+      { kind: 'captured', payload: { method: 'bookmarklet' } },
+    ]);
   });
 });
 

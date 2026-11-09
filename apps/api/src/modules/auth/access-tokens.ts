@@ -10,7 +10,7 @@ import { JwtKeys, signWithKeys, verifyWithKeys } from './jwt-keys.js';
 
 export const ACCESS_TOKEN_TTL_SECONDS = 15 * 60;
 
-export type AccessUser = { id: string; scope: string[] };
+export type AccessUser = { id: string; scope: string[]; captureTokenId?: string };
 
 export type SignAccessTokenInput = {
   keys: JwtKeys;

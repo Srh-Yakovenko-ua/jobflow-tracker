@@ -5,6 +5,10 @@ import { AccessTokens } from './access-tokens.js';
 import { AuthController } from './auth.controller.js';
 import { AuthRepository } from './auth.repository.js';
 import { AuthService } from './auth.service.js';
+import { CaptureTokensController } from './capture-tokens.controller.js';
+import { CaptureTokensRepository } from './capture-tokens.repository.js';
+import { CaptureTokensService } from './capture-tokens.service.js';
+import { CredentialsService } from './credentials.service.js';
 import { JwksController } from './jwks.controller.js';
 import { JwtAuthGuard } from './jwt-auth.guard.js';
 import { JwtKeysModule } from './jwt-keys.module.js';
@@ -18,10 +22,13 @@ import { SessionService } from './session.service.js';
 
 @Module({
   imports: [JwtKeysModule],
-  controllers: [AuthController, OAuthController, JwksController],
+  controllers: [AuthController, OAuthController, JwksController, CaptureTokensController],
   providers: [
     AuthService,
     AuthRepository,
+    CaptureTokensService,
+    CaptureTokensRepository,
+    CredentialsService,
     OAuthService,
     OAuthClient,
     OAuthStates,

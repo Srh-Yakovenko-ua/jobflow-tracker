@@ -1,5 +1,7 @@
 import {
   applicationIdSchema,
+  type CaptureBookmarkletInput,
+  captureBookmarkletInputSchema,
   type CapturePasteInput,
   capturePasteInputSchema,
   type CapturePasteResponse,
@@ -10,7 +12,7 @@ import type { Request } from 'express';
 import { Idempotent } from '../../common/idempotency/idempotent.decorator.js';
 import { readRequestId } from '../../common/request-id.middleware.js';
 import { RateLimit } from '../../rate-limit/rate-limit.decorator.js';
-import { type AccessUser, CurrentUser } from '../auth/index.js';
+import { type AccessUser, CurrentUser, RequireScope } from '../auth/index.js';
 import { CaptureService } from './capture.service.js';
 
 @Controller('capture')
@@ -27,6 +29,19 @@ export class CaptureController {
     @Req() req: Request,
   ): Promise<CapturePasteResponse> {
     return this.capture.paste(user.id, { input, requestId: readRequestId(req) });
+  }
+
+  @Post('bookmarklet')
+  @HttpCode(202)
+  @RequireScope('capture')
+  @RateLimit('capture')
+  @Idempotent()
+  bookmarklet(
+    @CurrentUser() user: AccessUser,
+    @Body({ schema: captureBookmarkletInputSchema }) input: CaptureBookmarkletInput,
+    @Req() req: Request,
+  ): Promise<CapturePasteResponse> {
+    return this.capture.bookmarklet(user.id, { input, requestId: readRequestId(req) });
   }
 
   @Post('drafts/:id/confirm')

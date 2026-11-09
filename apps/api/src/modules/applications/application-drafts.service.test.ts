@@ -174,6 +174,30 @@ describe('ApplicationDraftsService.open', () => {
 
     expect(applications.inserted.map(({ fields }) => fields.url)).toEqual([null]);
   });
+
+  it.each([
+    { page: 'a djinni.co url', url: 'https://djinni.co/jobs/700123-react/', source: 'djinni' },
+    {
+      page: 'a jobs.dou.ua url',
+      url: 'https://jobs.dou.ua/companies/acme/vacancies/7/',
+      source: 'dou',
+    },
+    {
+      page: 'a www.linkedin.com url',
+      url: 'https://www.linkedin.com/jobs/view/7/',
+      source: 'linkedin',
+    },
+    { page: 'an unknown host', url: 'https://jobs.example.test/7', source: 'other' },
+    { page: 'a lookalike of djinni.co', url: 'https://djinni.co.example.test/7', source: 'other' },
+    { page: 'no url', url: undefined, source: 'other' },
+  ])('stores the source $source for a draft opened from $page', async ({ url, source }) => {
+    const { applications, service, within } = await serviceWith();
+    const input = { text: VACANCY_TEXT, url };
+
+    await within((client) => service.open(OLENA_ID, { input, tx: client }));
+
+    expect(applications.inserted.map(({ fields }) => fields.source)).toEqual([source]);
+  });
 });
 
 describe('ApplicationDraftsService.possibleDuplicates', () => {

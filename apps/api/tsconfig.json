@@ -3,6 +3,7 @@
   "compilerOptions": {
     "module": "nodenext",
     "moduleResolution": "nodenext",
+    "lib": ["ES2022", "ES2024.String"],
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true,
     "outDir": "dist",

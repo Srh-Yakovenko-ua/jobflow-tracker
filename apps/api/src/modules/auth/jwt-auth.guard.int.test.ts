@@ -7,6 +7,8 @@ import { describe, expect, it } from 'vitest';
 
 import { appTestingModule, useTestApp } from '../../test/app.js';
 import { accessTokenFor, cacheControlOf, serviceTokenFor } from '../../test/auth.js';
+import { captureAuthorization, signedInWithCaptureToken } from '../../test/capture.js';
+import { statusAndDetail } from '../../test/http.js';
 import type { AccessUser } from './access-tokens.js';
 import { CurrentUser } from './current-user.decorator.js';
 import { Public } from './public.decorator.js';
@@ -40,6 +42,13 @@ type ScopeCase = {
   route: 'default' | 'capture';
   status: 200 | 403;
   body: object;
+};
+
+type CredentialsCase = {
+  credentials: string;
+  authorization: (captureToken: string) => string | Promise<string>;
+  detail: string;
+  challenge: string;
 };
 
 const CAPTURE_REFUSED = { type: 'forbidden', detail: 'Token lacks the capture scope' };
@@ -116,6 +125,58 @@ describe('the global access token guard', () => {
       expect(response.status).toBe(status);
       expect(response.body).toMatchObject(body);
       expect(response.get('www-authenticate')).toBeUndefined();
+    },
+  );
+
+  it('hands the capture route the owner of a capture token as { id, scope, captureTokenId }, marked no-store', async () => {
+    const { userId, captureTokenId, captureToken } = await signedInWithCaptureToken(testApp);
+
+    const response = await routes.capture().set(captureAuthorization(captureToken));
+
+    expect(response.status).toBe(200);
+    expect(response.body).toEqual({ id: userId, scope: ['capture'], captureTokenId });
+    expect(cacheControlOf(response)).toEqual(['no-store']);
+  });
+
+  it('refuses a capture token on a route with no decorator with 403 and no challenge', async () => {
+    const { captureToken } = await signedInWithCaptureToken(testApp);
+
+    const response = await routes.default().set(captureAuthorization(captureToken));
+
+    expect(response.status).toBe(403);
+    expect(response.body).toMatchObject(USER_REFUSED);
+    expect(response.get('www-authenticate')).toBeUndefined();
+  });
+
+  it.each<CredentialsCase>([
+    {
+      credentials: 'an unknown capture token',
+      authorization: () => 'Capture unknown-capture-token',
+      detail: 'Invalid capture token',
+      challenge: 'Capture error="invalid_token"',
+    },
+    {
+      credentials: 'an access token scoped capture sent as Capture',
+      authorization: async () => `Capture ${await accessTokenFor(USER, { scope: ['capture'] })}`,
+      detail: 'Invalid capture token',
+      challenge: 'Capture error="invalid_token"',
+    },
+    {
+      credentials: 'a capture token sent as Bearer',
+      authorization: (token) => `Bearer ${token}`,
+      detail: 'Invalid access token',
+      challenge: 'Bearer error="invalid_token"',
+    },
+  ])(
+    'refuses $credentials on the capture route with 401 and the $challenge challenge',
+    async ({ authorization, detail, challenge }) => {
+      const { captureToken } = await signedInWithCaptureToken(testApp);
+      const header = await authorization(captureToken);
+
+      const response = await routes.capture().set('authorization', header);
+
+      expect(statusAndDetail(response)).toEqual([401, detail]);
+      expect(response.get('www-authenticate')).toBe(challenge);
     },
   );
 });

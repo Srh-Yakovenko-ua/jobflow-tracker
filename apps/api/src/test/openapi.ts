@@ -1,3 +1,5 @@
+import { randomUUID } from 'node:crypto';
+
 import type { NestExpressApplication } from '@nestjs/platform-express';
 import { z } from 'zod';
 
@@ -49,6 +51,17 @@ export function documentedOperations(document: unknown): DocumentedOperation[] {
 export type OperationRef = { method: string; path: string };
 
 export const operationKey = ({ method, path }: OperationRef) => `${method.toUpperCase()} ${path}`;
+
+export type BearerCall = { name: string; call: Pick<RouteCall, 'method' | 'path'> };
+
+export function bearerCalls(document: unknown): BearerCall[] {
+  return documentedOperations(document)
+    .filter(({ bearer }) => bearer)
+    .map(({ method, path }) => ({
+      name: operationKey({ method, path }),
+      call: { method, path: path.replaceAll(/:\w+/g, () => randomUUID()) },
+    }));
+}
 
 const routeLayersSchema = z.array(
   z.object({

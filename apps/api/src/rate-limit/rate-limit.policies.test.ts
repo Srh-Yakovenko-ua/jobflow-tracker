@@ -15,6 +15,20 @@ const callerKey = (ip: string, userId?: string) =>
     ...(userId === undefined ? {} : { user: { id: userId, scope: ['user'] } }),
   });
 
+const FIRST_TOKEN_ID = '01920000-0000-7000-8000-00000000000a';
+const SECOND_TOKEN_ID = '01920000-0000-7000-8000-00000000000b';
+
+const captureKey = (captureTokenId?: string) =>
+  RATE_LIMIT_POLICIES.capture.keyOf({
+    ip: FIRST_IP,
+    body: {},
+    user: {
+      id: USER_ID,
+      scope: ['capture'],
+      ...(captureTokenId === undefined ? {} : { captureTokenId }),
+    },
+  });
+
 describe('RATE_LIMIT_POLICIES', () => {
   it('counts case variants of one email from one IP together, and each IP apart', () => {
     const lower = loginKey(FIRST_IP, { email: 'olena@example.test', password: 'x' });
@@ -47,6 +61,17 @@ describe('RATE_LIMIT_POLICIES', () => {
       USER_ID,
     ]);
     expect(callerKey(FIRST_IP)).toBe(FIRST_IP);
+  });
+
+  it('keys a capture by the capture token id, so two tokens of one user count apart', () => {
+    expect([captureKey(FIRST_TOKEN_ID), captureKey(SECOND_TOKEN_ID)]).toEqual([
+      FIRST_TOKEN_ID,
+      SECOND_TOKEN_ID,
+    ]);
+  });
+
+  it('keys a capture without a token id by the user id', () => {
+    expect(captureKey()).toBe(USER_ID);
   });
 
   it('counts per minute for login and api, per hour for register, ai and capture', () => {

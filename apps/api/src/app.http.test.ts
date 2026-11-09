@@ -12,17 +12,16 @@ import { PrismaService } from './prisma/prisma.service.js';
 import { RedisService } from './redis/redis.service.js';
 import { appTestingModule, startTestApp } from './test/app.js';
 import { authAs, jwksResponseSchema, testJwtKeys } from './test/auth.js';
+import { JOB_BOARD_ORIGIN } from './test/capture.js';
 import { FakeDependency } from './test/fake-dependency.js';
 import { callRoute } from './test/http.js';
 import { type LogLine, memoryLog, withLogSink } from './test/memory-log.js';
-import { documentedOperations } from './test/openapi.js';
+import { bearerCalls } from './test/openapi.js';
 import { stubQueues } from './test/stub-queues.js';
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
 
-const BEARER_OPERATIONS = documentedOperations(buildOpenApiDocument()).filter(
-  ({ bearer }) => bearer,
-);
+const BEARER_CALLS = bearerCalls(buildOpenApiDocument());
 
 @Controller('probe')
 @Public()
@@ -128,13 +127,10 @@ describe('the API over HTTP', () => {
     expect(response.status).toBe(404);
   });
 
-  it.each(BEARER_OPERATIONS)(
-    'answers the bearer route $method $path without an access token with 401',
-    async ({ method, path }) => {
-      const response = await callRoute(app, {
-        method,
-        path: path.replaceAll(/:\w+/g, () => randomUUID()),
-      });
+  it.each(BEARER_CALLS)(
+    'answers the bearer route $name without an access token with 401',
+    async ({ call }) => {
+      const response = await callRoute(app, call);
 
       expect(response.status).toBe(401);
       expect(errorResponseSchema.parse(response.body).type).toBe('unauthorized');
@@ -279,6 +275,34 @@ describe('the API over HTTP', () => {
 
     expect(response.headers).not.toHaveProperty('access-control-allow-origin');
   });
+
+  const preflightFromJobBoard = (path: string) =>
+    request(app.getHttpServer())
+      .options(path)
+      .set('origin', JOB_BOARD_ORIGIN)
+      .set('access-control-request-method', 'POST')
+      .set('access-control-request-headers', 'authorization,content-type,idempotency-key');
+
+  it('allows a CORS preflight from a job board on the bookmarklet route, for any origin and without credentials', async () => {
+    const response = await preflightFromJobBoard('/api/v1/capture/bookmarklet');
+
+    expect(response.status).toBe(204);
+    expect(response.headers['access-control-allow-origin']).toBe('*');
+    expect(response.headers).not.toHaveProperty('access-control-allow-credentials');
+    expect(response.headers['access-control-allow-headers']).toBe(
+      'Authorization,Content-Type,Idempotency-Key',
+    );
+    expect(response.headers['access-control-allow-methods']).toBe('POST');
+  });
+
+  it.each(['/api/v1/capture/paste', '/api/v1/capture/tokens', '/api/v1/capture/bookmarklet/x'])(
+    'gives a CORS preflight from a job board on %s no allow-origin header',
+    async (path) => {
+      const response = await preflightFromJobBoard(path);
+
+      expect(response.headers).not.toHaveProperty('access-control-allow-origin');
+    },
+  );
 
   it('answers GET /api/v1/ready with 200 while Redis and Postgres are up', async () => {
     const response = await request(app.getHttpServer()).get('/api/v1/ready');
