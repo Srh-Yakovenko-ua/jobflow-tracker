@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 
 import { Clock } from '../../common/clock.js';
+import { ApplicationDraftsService } from './application-drafts.service.js';
 import { ApplicationDuplicatesRepository } from './application-duplicates.repository.js';
 import { ApplicationListRepository } from './application-list.repository.js';
 import { ApplicationListService } from './application-list.service.js';
@@ -17,6 +18,7 @@ import { StageTransitionService } from './stage-transition.service.js';
   controllers: [ApplicationsController],
   providers: [
     ApplicationsService,
+    ApplicationDraftsService,
     ApplicationsRepository,
     ApplicationDuplicatesRepository,
     ApplicationListService,
@@ -28,6 +30,6 @@ import { StageTransitionService } from './stage-transition.service.js';
     SearchApplicationsRepository,
     Clock,
   ],
-  exports: [ApplicationsService, SearchApplicationsService],
+  exports: [ApplicationsService, ApplicationDraftsService, SearchApplicationsService],
 })
 export class ApplicationsModule {}

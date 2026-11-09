@@ -11,6 +11,8 @@ import { DEFAULT_JOB_OPTIONS, QUEUES } from '../../queues/queues.js';
 import {
   FAILED_AI_RESULT,
   FakeAiClient,
+  NAMELESS_VACANCY_COMPLETION,
+  SettledAiJobs,
   storedAiJob,
   VACANCY_COMPLETION,
   VACANCY_TEXT,
@@ -33,6 +35,7 @@ import { AiRepository } from './ai.repository.js';
 import { AiService } from './ai.service.js';
 import { AiClient } from './ai-client.js';
 import { aiInputHash } from './ai-input-hash.js';
+import { AiJobRouter } from './ai-job-router.js';
 import { AiServiceError } from './ai-service-error.js';
 
 const BUDGET = { AI_DAILY_LIMIT: '1', AI_MONTHLY_TOKEN_CAP: '1000' };
@@ -79,6 +82,8 @@ const clock = settableClock(NOW);
 
 const succeed = () => Promise.resolve(VACANCY_COMPLETION);
 
+const settledJobs = new SettledAiJobs();
+
 let moduleRef: TestingModule;
 
 beforeAll(async () => {
@@ -86,6 +91,7 @@ beforeAll(async () => {
     AiProcessor,
     AiService,
     AiRepository,
+    AiJobRouter,
     { provide: Clock, useValue: clock },
     { provide: PrismaService, useValue: database.prisma },
     {
@@ -94,9 +100,11 @@ beforeAll(async () => {
     },
     { provide: AiClient, useValue: ai },
   ]);
+  moduleRef.get(AiJobRouter).subscribe('vacancy_parse', settledJobs.record);
 });
 
 beforeEach(() => {
+  settledJobs.outcomes.length = 0;
   ai.calls.length = 0;
   ai.answer = succeed;
   clock.at(NOW);
@@ -334,6 +342,48 @@ describe('AiService on Postgres', () => {
     );
   });
 
+  it('fails a job whose output names no company and no position with that error_type, keeps the succeeded result and fails the next paste from the cache', async () => {
+    const olena = await createOwnedApplication(database.prisma);
+    const first = await queuedJob(olena, VACANCY_TEXT);
+    const pastedAgain = await queuedJob(olena, VACANCY_TEXT);
+    ai.answer = () => Promise.resolve(NAMELESS_VACANCY_COMPLETION);
+
+    await expect(run(first)).rejects.toThrow(new UnrecoverableError('no_company_no_position'));
+    await expect(run(pastedAgain)).rejects.toThrow(
+      new UnrecoverableError('no_company_no_position'),
+    );
+
+    expect(ai.calls).toHaveLength(1);
+    expect(
+      await database.prisma.aiResult.findMany({ select: { status: true, error: true } }),
+    ).toEqual([{ status: 'succeeded', error: null }]);
+    expect([await storedJob(first.aiJobId), await storedJob(pastedAgain.aiJobId)]).toEqual([
+      failedWith('no_company_no_position'),
+      failedWith('no_company_no_position'),
+    ]);
+    expect(settledJobs.outcomes).toEqual([
+      { job: first, status: 'failed', errorType: 'no_company_no_position' },
+      { job: pastedAgain, status: 'failed', errorType: 'no_company_no_position' },
+    ]);
+  });
+
+  it('settles a done job while its row is still processing, then marks the row done', async () => {
+    const olena = await createOwnedApplication(database.prisma);
+    const job = await queuedJob(olena, VACANCY_TEXT);
+    const statuses: string[] = [];
+    const router = moduleRef.get(AiJobRouter);
+    router.subscribe('vacancy_parse', async ({ job: settled }) => {
+      if (settled.aiJobId === job.aiJobId) {
+        statuses.push((await storedJob(job.aiJobId)).status);
+      }
+    });
+
+    await run(job);
+
+    expect(statuses).toEqual(['processing']);
+    expect(await storedJob(job.aiJobId)).toMatchObject({ status: 'done' });
+  });
+
   it("skips a job sent with another user's id and leaves that user's job queued", async () => {
     const olena = await createOwnedApplication(database.prisma);
     const bohdan = await createOwnedApplication(database.prisma);
@@ -343,6 +393,32 @@ describe('AiService on Postgres', () => {
 
     expect(ai.calls).toEqual([]);
     expect(await storedJob(job.aiJobId)).toMatchObject({ status: 'queued', finishedAt: null });
+  });
+});
+
+describe('AiService.createJob on Postgres', () => {
+  it("queues a vacancy_parse job on the user's application and refuses another user's application", async () => {
+    const olena = await createOwnedApplication(database.prisma);
+    const bohdan = await createOwnedApplication(database.prisma);
+    const service = moduleRef.get(AiService);
+    const job = { kind: 'vacancy_parse', applicationId: olena.applicationId } as const;
+
+    const id = await service.createJob(olena.userId, job);
+    await expect(service.createJob(bohdan.userId, job)).rejects.toMatchObject({ code: 'P2003' });
+
+    expect(
+      await database.prisma.aiJob.findMany({
+        select: { id: true, userId: true, kind: true, status: true, applicationId: true },
+      }),
+    ).toEqual([
+      {
+        id,
+        userId: olena.userId,
+        kind: 'vacancy_parse',
+        status: 'queued',
+        applicationId: olena.applicationId,
+      },
+    ]);
   });
 });
 

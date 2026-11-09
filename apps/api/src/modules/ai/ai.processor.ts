@@ -6,6 +6,7 @@ import { failedJobFields, jobFields, type ProcessedJob } from '../../queues/proc
 import { DEFAULT_JOB_OPTIONS, QUEUES } from '../../queues/queues.js';
 import { AI_JOBS, type AiCompleteJob, aiCompleteJobSchema } from './ai.jobs.js';
 import { type AiOutcome, AiService } from './ai.service.js';
+import { AiJobRouter } from './ai-job-router.js';
 
 const failedJobSchema = aiCompleteJobSchema
   .pick({ aiJobId: true, kind: true, requestId: true })
@@ -15,7 +16,10 @@ const failedJobSchema = aiCompleteJobSchema
 export class AiProcessor extends WorkerHost {
   private readonly logger = new Logger(AiProcessor.name);
 
-  constructor(private readonly ai: AiService) {
+  constructor(
+    private readonly ai: AiService,
+    private readonly router: AiJobRouter,
+  ) {
     super();
   }
 
@@ -24,6 +28,7 @@ export class AiProcessor extends WorkerHost {
       job: this.parse(job),
       finalAttempt: job.attemptsMade + 1 >= DEFAULT_JOB_OPTIONS.attempts,
       logFields: jobFields(job),
+      settled: (outcome) => this.router.route(outcome),
     });
   }
 

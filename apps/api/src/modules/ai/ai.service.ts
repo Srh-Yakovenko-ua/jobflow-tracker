@@ -3,6 +3,8 @@ import {
   AI_PROMPT_VERSIONS,
   type AiKind,
   type AiKindOutput,
+  vacancyParseFailure,
+  vacancyParseOutputSchema,
 } from '@jobflow/shared';
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
@@ -12,10 +14,11 @@ import { Clock } from '../../common/clock.js';
 import type { Env } from '../../config/env.js';
 import type { jobFields } from '../../queues/processed-job.js';
 import { AI_JOB_ERRORS, type AiCompleteJob } from './ai.jobs.js';
-import { AiRepository } from './ai.repository.js';
+import { AiRepository, type CreateAiJob } from './ai.repository.js';
 import { budgetWindow } from './ai-budget.js';
 import { AiClient } from './ai-client.js';
 import { aiInputHash } from './ai-input-hash.js';
+import type { SettledAiJob } from './ai-job-router.js';
 import { AiPayloadError, privatePayloadPaths } from './ai-payload-guard.js';
 import { type AiQueuePosition, queueEstimate } from './ai-queue-estimate.js';
 import { AiServiceError } from './ai-service-error.js';
@@ -24,6 +27,7 @@ export type AiCompleteAttempt = {
   job: AiCompleteJob;
   finalAttempt: boolean;
   logFields: ReturnType<typeof jobFields>;
+  settled: (outcome: SettledAiJob) => Promise<void>;
 };
 
 export type AiOutcome = { aiResultId: string; output: AiKindOutput<AiKind>; cached: boolean };
@@ -31,6 +35,12 @@ export type AiOutcome = { aiResultId: string; output: AiKindOutput<AiKind>; cach
 export type AiJobOfUser = { userId: string; aiJobId: string };
 
 type AiRun = AiCompleteAttempt & { now: Date; inputHash: string };
+
+type AiAnswer = Pick<AiOutcome, 'aiResultId' | 'output'>;
+
+const OUTPUT_FAILURES: Record<AiKind, (output: unknown) => string | null> = {
+  vacancy_parse: (output) => vacancyParseFailure(vacancyParseOutputSchema.parse(output)),
+};
 
 const FAILED_CALL = {
   model: '',
@@ -79,6 +89,10 @@ export class AiService {
     return (await this.fromCache(run)) ?? this.callWithinBudget(run);
   }
 
+  createJob(userId: string, job: CreateAiJob): Promise<string> {
+    return this.repository.createJob(userId, job);
+  }
+
   async queuePosition({ userId, aiJobId }: AiJobOfUser): Promise<AiQueuePosition | null> {
     const sample = await this.repository.queueSample(userId, aiJobId);
     return sample === null ? null : queueEstimate(sample);
@@ -89,7 +103,7 @@ export class AiService {
   }
 
   private async fromCache(run: AiRun): Promise<AiOutcome | null> {
-    const { aiJobId: id, userId, kind } = run.job;
+    const { userId, kind } = run.job;
     const cached = await this.repository.findCachedResult(userId, {
       kind,
       inputHash: run.inputHash,
@@ -98,26 +112,25 @@ export class AiService {
       return null;
     }
     const output = AI_KIND_SCHEMAS[kind].output.parse(cached.output);
-    await this.repository.finishJob(userId, { id, aiResultId: cached.id, now: run.now });
+    await this.finish(run, { aiResultId: cached.id, output });
     this.logger.log(traceOf(run), 'ai cache hit');
     return { aiResultId: cached.id, output, cached: true };
   }
 
   private async callWithinBudget(run: AiRun): Promise<AiOutcome> {
-    const { aiJobId: id, userId } = run.job;
-    const usage = await this.repository.budgetUsage(userId, budgetWindow(run.now));
+    const usage = await this.repository.budgetUsage(run.job.userId, budgetWindow(run.now));
     if (usage.calls < this.budget.dailyCalls && usage.tokens < this.budget.monthlyTokens) {
       return this.call(run);
     }
     const errorType = AI_JOB_ERRORS.budgetExceeded;
-    await this.repository.failJob(userId, { id, errorType, now: run.now });
+    await this.fail(run, errorType);
     this.logger.warn({ ...traceOf(run), ...usage }, 'ai budget exceeded');
     throw new UnrecoverableError(errorType);
   }
 
   private async call(run: AiRun): Promise<AiOutcome> {
     const { job, inputHash, now } = run;
-    const { aiJobId: id, userId, kind, input, requestId } = job;
+    const { userId, kind, input, requestId } = job;
     this.guardPayload(run);
     const { output, ...meta } = await this.ai
       .complete({ kind, input, requestId })
@@ -132,9 +145,27 @@ export class AiService {
       ...meta,
     } as const;
     const aiResultId = await this.repository.saveResult(userId, succeeded);
-    await this.repository.finishJob(userId, { id, aiResultId, now });
+    await this.finish(run, { aiResultId, output });
     this.logger.log({ ...traceOf(run), ...meta }, 'ai completion done');
     return { aiResultId, output, cached: false };
+  }
+
+  private async finish(run: AiRun, { aiResultId, output }: AiAnswer): Promise<void> {
+    const { job, now, settled } = run;
+    const failure = OUTPUT_FAILURES[job.kind](output);
+    if (failure !== null) {
+      await this.fail(run, failure);
+      throw new UnrecoverableError(failure);
+    }
+    await settled({ job, status: 'done', output });
+    await this.repository.finishJob(job.userId, { id: job.aiJobId, aiResultId, now });
+  }
+
+  private async fail({ job, now, settled }: AiRun, errorType: string): Promise<void> {
+    const failed = await this.repository.failJob(job.userId, { id: job.aiJobId, errorType, now });
+    if (failed === 1) {
+      await settled({ job, status: 'failed', errorType });
+    }
   }
 
   private guardPayload(run: AiRun): void {
@@ -160,8 +191,9 @@ export class AiService {
     throw final ? new UnrecoverableError(error.message) : error;
   }
 
-  private async recordFailure({ job, inputHash, now }: AiRun, errorType: string): Promise<void> {
-    const { aiJobId: id, userId, kind } = job;
+  private async recordFailure(run: AiRun, errorType: string): Promise<void> {
+    const { job, inputHash, now } = run;
+    const { userId, kind } = job;
     const promptVersion = AI_PROMPT_VERSIONS[kind];
     await this.repository.saveFailure(userId, {
       kind,
@@ -171,6 +203,6 @@ export class AiService {
       now,
       ...FAILED_CALL,
     });
-    await this.repository.failJob(userId, { id, errorType, now });
+    await this.fail(run, errorType);
   }
 }

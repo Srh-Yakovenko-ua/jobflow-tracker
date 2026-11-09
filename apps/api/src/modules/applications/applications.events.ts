@@ -8,6 +8,7 @@ export const APPLICATION_EVENTS = {
   created: 'application.created',
   updated: 'application.updated',
   stageChanged: 'application.stage_changed',
+  captureRequested: 'application.capture_requested',
 } as const;
 
 export const applicationCreatedPayloadSchema = z.object({
@@ -26,17 +27,30 @@ export const applicationStageChangedPayloadSchema = applicationCreatedPayloadSch
   compensatesEventId: z.uuid().nullable(),
 });
 
+export const applicationCaptureRequestedPayloadSchema = applicationCreatedPayloadSchema.extend({
+  aiJobId: z.uuid(),
+  requestId: z.string().min(1).optional(),
+});
+
 export type ApplicationCreatedPayload = z.infer<typeof applicationCreatedPayloadSchema>;
 
 export type ApplicationUpdatedPayload = z.infer<typeof applicationUpdatedPayloadSchema>;
 
 export type ApplicationStageChangedPayload = z.infer<typeof applicationStageChangedPayloadSchema>;
 
+export type ApplicationCaptureRequestedPayload = z.infer<
+  typeof applicationCaptureRequestedPayloadSchema
+>;
+
 export type ApplicationEvent =
   | ({ eventType: typeof APPLICATION_EVENTS.created } & Omit<ApplicationCreatedPayload, 'userId'>)
   | ({ eventType: typeof APPLICATION_EVENTS.updated } & Omit<ApplicationUpdatedPayload, 'userId'>)
   | ({ eventType: typeof APPLICATION_EVENTS.stageChanged } & Omit<
       ApplicationStageChangedPayload,
+      'userId'
+    >)
+  | ({ eventType: typeof APPLICATION_EVENTS.captureRequested } & Omit<
+      ApplicationCaptureRequestedPayload,
       'userId'
     >);
 

@@ -49,6 +49,10 @@
       "description": "The AI results of the signed-in user"
     },
     {
+      "name": "capture",
+      "description": "Draft Applications captured from a vacancy and parsed by AI"
+    },
+    {
       "name": "dev",
       "description": "Development and test only"
     }
@@ -14135,6 +14139,272 @@
           },
           "429": {
             "description": "Too many requests: 300 per 60 s by default (RATE_LIMIT_API_PER_MINUTE)",
+            "headers": {
+              "Retry-After": {
+                "schema": {
+                  "type": "integer",
+                  "exclusiveMinimum": 0,
+                  "description": "Seconds until the limit window resets"
+                },
+                "required": true,
+                "description": "Seconds until the limit window resets"
+              }
+            },
+            "content": {
+              "application/json": {
+                "example": {
+                  "type": "rate_limited",
+                  "title": "Too many requests",
+                  "status": 429,
+                  "requestId": "0199f0c4-5d2e-7b31-8c4f-6a7b8c9d0e1f"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal error",
+            "content": {
+              "application/json": {
+                "example": {
+                  "type": "internal_error",
+                  "title": "Internal error",
+                  "status": 500,
+                  "requestId": "0199f0c4-5d2e-7b31-8c4f-6a7b8c9d0e1f"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/capture/paste": {
+      "post": {
+        "tags": [
+          "capture"
+        ],
+        "summary": "Capture a vacancy from pasted text",
+        "description": "In one transaction stores a draft Application in the applied stage with the pasted text, its queued AI job, the captured timeline row and the application.capture_requested event. The worker parses the text later: a parse fills the draft and records ai_parsed, a failed one leaves the draft and keeps the text as a note. Answers before any AI call.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 255,
+              "description": "One key per submit, kept on its retries, 1 to 255 characters. The same key with the same request within 24 hours answers the first reply again and creates nothing; with another request, or while the first one still runs, it answers 409. A request that fails keeps nothing, so its retry runs again.",
+              "example": "0199f3a0-1b2c-7d3e-8f40-5a6b7c8d9e0f"
+            },
+            "required": false,
+            "description": "One key per submit, kept on its retries, 1 to 255 characters. The same key with the same request within 24 hours answers the first reply again and creates nothing; with another request, or while the first one still runs, it answers 409. A request that fails keeps nothing, so its retry runs again.",
+            "name": "Idempotency-Key",
+            "in": "header"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "description": "The vacancy text, not blank, at most 20000 characters, and optionally the http(s) page it came from.",
+          "content": {
+            "application/json": {
+              "example": {
+                "text": "Senior React developer у Acme. Remote, 4000-5000 USD. React, TypeScript, Next.js.",
+                "url": "https://djinni.co/jobs/700123-senior-react-developer/"
+              },
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "text": {
+                    "type": "string",
+                    "maxLength": 20000,
+                    "pattern": "\\S"
+                  },
+                  "url": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "maxLength": 2048,
+                    "format": "uri"
+                  }
+                },
+                "required": [
+                  "text"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "The draft and its AI job are stored; possibleDuplicates lists Applications with the same url",
+            "content": {
+              "application/json": {
+                "example": {
+                  "applicationId": "0199f0c4-6e3f-7c42-9d50-7b8c9d0e1f2a",
+                  "jobId": "0199f4b1-2c3d-7e4f-8a51-6b7c8d9e0f1a",
+                  "possibleDuplicates": []
+                },
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "applicationId": {
+                      "type": "string",
+                      "format": "uuid"
+                    },
+                    "jobId": {
+                      "type": "string",
+                      "format": "uuid"
+                    },
+                    "possibleDuplicates": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string",
+                            "format": "uuid"
+                          },
+                          "company": {
+                            "type": "string",
+                            "minLength": 1
+                          },
+                          "position": {
+                            "type": "string",
+                            "minLength": 1
+                          },
+                          "appliedAt": {
+                            "type": [
+                              "string",
+                              "null"
+                            ],
+                            "format": "date-time"
+                          },
+                          "stage": {
+                            "type": "string",
+                            "enum": [
+                              "applied",
+                              "screening",
+                              "tech_interview",
+                              "final",
+                              "offer",
+                              "rejected",
+                              "ghosted",
+                              "withdrawn"
+                            ]
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "company",
+                          "position",
+                          "appliedAt",
+                          "stage"
+                        ]
+                      }
+                    }
+                  },
+                  "required": [
+                    "applicationId",
+                    "jobId",
+                    "possibleDuplicates"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "example": {
+                  "type": "bad_request",
+                  "title": "Bad request",
+                  "status": 400,
+                  "detail": "Unexpected end of JSON input",
+                  "requestId": "0199f0c4-5d2e-7b31-8c4f-6a7b8c9d0e1f"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "example": {
+                  "type": "unauthorized",
+                  "title": "Unauthorized",
+                  "status": 401,
+                  "requestId": "0199f0c4-5d2e-7b31-8c4f-6a7b8c9d0e1f"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "example": {
+                  "type": "forbidden",
+                  "title": "Forbidden",
+                  "status": 403,
+                  "requestId": "0199f0c4-5d2e-7b31-8c4f-6a7b8c9d0e1f"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "example": {
+                  "type": "conflict",
+                  "title": "Conflict",
+                  "status": 409,
+                  "requestId": "0199f0c4-5d2e-7b31-8c4f-6a7b8c9d0e1f"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Invalid request",
+            "content": {
+              "application/json": {
+                "example": {
+                  "type": "validation_error",
+                  "title": "Invalid request",
+                  "status": 422,
+                  "errors": [
+                    {
+                      "path": "email",
+                      "message": "Invalid input: expected string, received undefined"
+                    }
+                  ],
+                  "requestId": "0199f0c4-5d2e-7b31-8c4f-6a7b8c9d0e1f"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too many requests: 30 per 3600 s by default (RATE_LIMIT_AI_PER_HOUR)",
             "headers": {
               "Retry-After": {
                 "schema": {

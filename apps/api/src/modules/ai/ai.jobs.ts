@@ -10,6 +10,7 @@ export const aiCompleteJobSchema = z.object({
   userId: z.uuid(),
   kind: aiKindSchema,
   input: z.unknown(),
+  applicationId: z.uuid().optional(),
   requestId: z.string().min(1).optional(),
 });
 

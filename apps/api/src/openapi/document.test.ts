@@ -125,6 +125,7 @@ describe('the OpenAPI document', () => {
     { name: 'POST /auth/login', limit: '5 per 60 s' },
     { name: 'POST /auth/register', limit: '3 per 3600 s' },
     { name: 'GET /applications/{id}', limit: '300 per 60 s' },
+    { name: 'POST /capture/paste', limit: '30 per 3600 s' },
   ])('describes the default rate limit of $name as $limit', ({ name, limit }) => {
     const route = ROUTES.find((candidate) => candidate.name === name)?.route;
 
@@ -150,6 +151,7 @@ describe('the OpenAPI document', () => {
     '/applications/{id}/notes',
     '/applications/{id}/contacts',
     '/applications/{id}/scheduled-events',
+    '/capture/paste',
   ])('documents the optional Idempotency-Key header and its 409 on POST %s', (path) => {
     const post = buildOpenApiDocument().paths?.[path]?.post;
 

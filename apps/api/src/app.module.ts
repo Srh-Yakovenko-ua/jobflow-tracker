@@ -10,6 +10,7 @@ import { configModule } from './config/app-config.js';
 import { AiModule } from './modules/ai/index.js';
 import { ApplicationsModule } from './modules/applications/index.js';
 import { AuthModule } from './modules/auth/index.js';
+import { CaptureModule } from './modules/capture/index.js';
 import { ContactsModule } from './modules/contacts/index.js';
 import { EventsModule } from './modules/events/index.js';
 import { HealthModule } from './modules/health/index.js';
@@ -44,6 +45,7 @@ import { RedisModule } from './redis/redis.module.js';
     SettingsModule,
     SearchesModule,
     AiModule,
+    CaptureModule,
     ResumesModule,
   ],
   providers: [

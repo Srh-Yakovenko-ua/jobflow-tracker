@@ -9,7 +9,9 @@ import {
   FakeAiClient,
   type FakeAiJob,
   FakeAiRepository,
+  NAMELESS_VACANCY_COMPLETION,
   PRIVATE_NOTE,
+  SettledAiJobs,
   VACANCY_CALL,
   VACANCY_COMPLETION,
   VACANCY_JOB,
@@ -18,12 +20,13 @@ import {
 import { exampleEnv } from '../../test/example-env.js';
 import { memoryLog } from '../../test/memory-log.js';
 import { compileProcessorModule } from '../../test/processor.js';
-import { BOHDAN_ID, OLENA_ID } from '../../test/service-fixtures.js';
+import { APPLICATION_ID, BOHDAN_ID, OLENA_ID } from '../../test/service-fixtures.js';
 import { fixedClock, NOW } from '../../test/time.js';
 import type { AiCompleteJob } from './ai.jobs.js';
 import { AiRepository } from './ai.repository.js';
 import { type AiCompleteAttempt, AiService } from './ai.service.js';
 import { AiClient } from './ai-client.js';
+import type { SettledAiJob } from './ai-job-router.js';
 import { AiPayloadError } from './ai-payload-guard.js';
 import { AiServiceError } from './ai-service-error.js';
 
@@ -37,16 +40,20 @@ const NOT_READY = new AiServiceError({ status: 503, type: 'not_ready' });
 
 const NOTE_JOB: AiCompleteJob = { ...VACANCY_JOB, input: { text: VACANCY_TEXT, ...PRIVATE_NOTE } };
 
-type AttemptOptions = { job?: AiCompleteJob; finalAttempt?: boolean };
+const INVALID_OUTPUT = { status: 422, type: 'ai_invalid_output' };
+
+type AttemptOptions = Partial<Pick<AiCompleteAttempt, 'job' | 'finalAttempt' | 'settled'>>;
 
 function attemptOf({
   job = VACANCY_JOB,
   finalAttempt = false,
+  settled = new SettledAiJobs().record,
 }: AttemptOptions = {}): AiCompleteAttempt {
   return {
     job,
     finalAttempt,
     logFields: { jobId: job.aiJobId, queue: 'ai', jobName: 'ai.complete' },
+    settled,
   };
 }
 
@@ -195,8 +202,7 @@ describe('AiService.complete', () => {
 
   it('records a 422 from services/ai as a failed result, fails the job and gives up without a retry', async () => {
     const { repository, ai, service } = await serviceWithFakes();
-    ai.answer = () =>
-      Promise.reject(new AiServiceError({ status: 422, type: 'ai_invalid_output' }));
+    ai.answer = () => Promise.reject(new AiServiceError(INVALID_OUTPUT));
 
     await expect(service.complete(attemptOf())).rejects.toBeInstanceOf(UnrecoverableError);
 
@@ -224,7 +230,7 @@ describe('AiService.complete', () => {
     ai.answer = async () => {
       ai.answer = () => Promise.resolve(VACANCY_COMPLETION);
       await service.complete(attemptOf({ job: identical }));
-      throw new AiServiceError({ status: 422, type: 'ai_invalid_output' });
+      throw new AiServiceError(INVALID_OUTPUT);
     };
 
     await expect(service.complete(attemptOf())).rejects.toBeInstanceOf(UnrecoverableError);
@@ -329,6 +335,145 @@ describe('AiService.complete', () => {
     expect(log.parsed()).toEqual([
       expect.objectContaining({ msg: 'ai job skipped', aiJobId: AI_JOB_ID, requestId: 'req-ai-7' }),
     ]);
+  });
+});
+
+describe('AiService.complete settling the job', () => {
+  const PROCESSING: FakeAiJob = { userId: OLENA_ID, status: 'processing' };
+
+  it('hands the output to the settle callback while the job is still processing, then finishes it', async () => {
+    const { repository, service } = await serviceWithFakes();
+    const seen: { outcome: SettledAiJob; job: FakeAiJob | undefined }[] = [];
+    const settled = (outcome: SettledAiJob) => {
+      seen.push({ outcome, job: repository.jobs.get(AI_JOB_ID) });
+      return Promise.resolve();
+    };
+
+    await service.complete(attemptOf({ settled }));
+
+    expect(seen).toEqual([
+      {
+        outcome: { job: VACANCY_JOB, status: 'done', output: VACANCY_COMPLETION.output },
+        job: PROCESSING,
+      },
+    ]);
+    expect(repository.jobs.get(AI_JOB_ID)).toEqual(doneJob('ai-result-1'));
+  });
+
+  it('leaves the job processing when the settle callback throws, and the retry settles it from the cache without a second call', async () => {
+    const { repository, ai, service } = await serviceWithFakes();
+    const refused = new Error('connect ECONNREFUSED 127.0.0.1:5432');
+    const settledJobs = new SettledAiJobs();
+
+    await expect(
+      service.complete(attemptOf({ settled: () => Promise.reject(refused) })),
+    ).rejects.toBe(refused);
+    const afterThrow = repository.jobs.get(AI_JOB_ID);
+    const retried = await service.complete(attemptOf({ settled: settledJobs.record }));
+
+    expect(afterThrow).toEqual(PROCESSING);
+    expect(retried).toMatchObject({ aiResultId: 'ai-result-1', cached: true });
+    expect(ai.calls).toEqual([VACANCY_CALL]);
+    expect(settledJobs.outcomes).toEqual([
+      { job: VACANCY_JOB, status: 'done', output: VACANCY_COMPLETION.output },
+    ]);
+    expect(repository.jobs.get(AI_JOB_ID)).toEqual(doneJob('ai-result-1'));
+  });
+
+  it('settles a failed job once when a second attempt fails the same job after the first', async () => {
+    const { ai, service } = await serviceWithFakes();
+    const settledJobs = new SettledAiJobs();
+    const attempt = attemptOf({ settled: settledJobs.record });
+    ai.answer = async () => {
+      ai.answer = () => Promise.reject(new AiServiceError(INVALID_OUTPUT));
+      await service.complete(attempt).catch(() => undefined);
+      throw new AiServiceError(INVALID_OUTPUT);
+    };
+
+    await expect(service.complete(attempt)).rejects.toBeInstanceOf(UnrecoverableError);
+
+    expect(ai.calls).toHaveLength(2);
+    expect(settledJobs.outcomes).toEqual([
+      { job: VACANCY_JOB, status: 'failed', errorType: 'ai_invalid_output' },
+    ]);
+  });
+
+  it('settles a job refused over the budget as failed with budget_exceeded', async () => {
+    const { repository, service } = await serviceWithFakes();
+    const settledJobs = new SettledAiJobs();
+    repository.usage = { calls: 3, tokens: 0 };
+
+    await expect(
+      service.complete(attemptOf({ settled: settledJobs.record })),
+    ).rejects.toBeInstanceOf(UnrecoverableError);
+
+    expect(settledJobs.outcomes).toEqual([
+      { job: VACANCY_JOB, status: 'failed', errorType: 'budget_exceeded' },
+    ]);
+  });
+
+  it('settles nothing while a 503 is still retried', async () => {
+    const { ai, service } = await serviceWithFakes();
+    const settledJobs = new SettledAiJobs();
+    ai.answer = () => Promise.reject(NOT_READY);
+
+    await expect(service.complete(attemptOf({ settled: settledJobs.record }))).rejects.toBe(
+      NOT_READY,
+    );
+
+    expect(settledJobs.outcomes).toEqual([]);
+  });
+
+  it('fails a job whose output names no company and no position, keeps the succeeded result, and fails the same text pasted again from the cache', async () => {
+    const { repository, ai, service } = await serviceWithFakes();
+    const settledJobs = new SettledAiJobs();
+    const pastedAgain = { ...VACANCY_JOB, aiJobId: PASTED_AGAIN_JOB_ID };
+    repository.queueJob(OLENA_ID, PASTED_AGAIN_JOB_ID);
+    ai.answer = () => Promise.resolve(NAMELESS_VACANCY_COMPLETION);
+
+    const failures = [
+      await service
+        .complete(attemptOf({ settled: settledJobs.record }))
+        .catch((thrown: unknown) => thrown),
+      await service
+        .complete(attemptOf({ job: pastedAgain, settled: settledJobs.record }))
+        .catch((thrown: unknown) => thrown),
+    ];
+
+    expect(failures).toEqual([
+      new UnrecoverableError('no_company_no_position'),
+      new UnrecoverableError('no_company_no_position'),
+    ]);
+    expect(ai.calls).toEqual([VACANCY_CALL]);
+    expect([...repository.results.values()]).toEqual([
+      expect.objectContaining({ id: 'ai-result-1', status: 'succeeded', error: null }),
+    ]);
+    expect([repository.jobs.get(AI_JOB_ID), repository.jobs.get(PASTED_AGAIN_JOB_ID)]).toEqual([
+      failedJob('no_company_no_position'),
+      failedJob('no_company_no_position'),
+    ]);
+    expect(settledJobs.outcomes).toEqual([
+      { job: VACANCY_JOB, status: 'failed', errorType: 'no_company_no_position' },
+      { job: pastedAgain, status: 'failed', errorType: 'no_company_no_position' },
+    ]);
+  });
+});
+
+describe('AiService.createJob', () => {
+  it("queues a job for the user's application and returns its id", async () => {
+    const { repository, service } = await serviceWithFakes();
+
+    const id = await service.createJob(OLENA_ID, {
+      kind: 'vacancy_parse',
+      applicationId: APPLICATION_ID,
+    });
+
+    expect(id).toBe(AI_JOB_ID);
+    expect(repository.jobs.get(AI_JOB_ID)).toEqual({
+      userId: OLENA_ID,
+      status: 'queued',
+      applicationId: APPLICATION_ID,
+    });
   });
 });
 

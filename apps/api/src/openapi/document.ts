@@ -4,6 +4,7 @@ import { API_PREFIX } from '../common/api-prefix.middleware.js';
 import { AI_OPENAPI_PATHS } from '../modules/ai/index.js';
 import { APPLICATIONS_OPENAPI_PATHS } from '../modules/applications/index.js';
 import { AUTH_OPENAPI_PATHS, REFRESH_COOKIE } from '../modules/auth/index.js';
+import { CAPTURE_OPENAPI_PATHS } from '../modules/capture/index.js';
 import { CONTACTS_OPENAPI_PATHS } from '../modules/contacts/index.js';
 import { TIMELINE_OPENAPI_PATHS } from '../modules/events/index.js';
 import { HEALTH_OPENAPI_PATHS } from '../modules/health/index.js';
@@ -28,6 +29,7 @@ export const API_OPENAPI_PATHS = [
   ...SCHEDULE_OPENAPI_PATHS,
   ...RESUMES_OPENAPI_PATHS,
   ...AI_OPENAPI_PATHS,
+  ...CAPTURE_OPENAPI_PATHS,
   ...MAINTENANCE_OPENAPI_PATHS,
 ];
 
@@ -43,6 +45,7 @@ const TAGS = [
     description: 'Resume files of the signed-in user, uploaded straight to storage',
   },
   { name: 'ai', description: 'The AI results of the signed-in user' },
+  { name: 'capture', description: 'Draft Applications captured from a vacancy and parsed by AI' },
   { name: 'dev', description: 'Development and test only' },
 ];
 
