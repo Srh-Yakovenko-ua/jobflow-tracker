@@ -3,6 +3,8 @@ import {
   type CaptureTokenCreated,
   captureTokenCreatedSchema,
   captureTokenIdSchema,
+  type CaptureTokenListResponse,
+  captureTokenListResponseSchema,
 } from '@jobflow/shared';
 import { z } from 'zod';
 
@@ -22,7 +24,32 @@ const captureTokenParams = z.object({
   id: captureTokenIdSchema.meta({ example: EXAMPLE_CAPTURE_TOKEN_ID }),
 });
 
+const LISTED = {
+  items: [
+    {
+      id: EXAMPLE_CAPTURE_TOKEN_ID,
+      createdAt: CREATED.createdAt,
+      lastUsedAt: '2026-11-10T09:20:00.000Z',
+    },
+  ],
+} satisfies CaptureTokenListResponse;
+
 export const CAPTURE_TOKENS_OPENAPI_PATHS: RouteConfig[] = [
+  {
+    method: 'get',
+    path: '/capture/tokens',
+    tags: TAGS,
+    summary: 'List the active capture tokens of the bookmarklet',
+    description:
+      'The capture tokens of the user that are not revoked, newest first; the list is empty when there is none. The token and its hash are never returned. lastUsedAt is null until the token is first used.',
+    responses: {
+      200: {
+        description: 'The active capture tokens',
+        content: jsonContent(captureTokenListResponseSchema, LISTED),
+      },
+      ...errorResponses([401, 403]),
+    },
+  },
   {
     method: 'post',
     path: '/capture/tokens',

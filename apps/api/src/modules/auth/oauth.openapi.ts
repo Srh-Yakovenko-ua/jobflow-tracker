@@ -71,7 +71,7 @@ export const OAUTH_OPENAPI_PATHS: RouteConfig[] = [
     path: '/auth/oauth/{provider}/callback',
     tags: TAGS,
     summary: 'Finish a sign-in with Google or GitHub',
-    description: `Takes code and state, or the provider's error when the user declined. Links the provider account by verified email, dropping a password and the sessions it opened, or creates a user without a password. 400 when state does not match the ${OAUTH_STATE_COOKIE} cookie, 409 when the user already has another account of the provider, 422 without code and state or error, 503 when the provider is not reachable.`,
+    description: `Takes code and state, or the provider's error when the user declined. Links the provider account by verified email, dropping a password, the sessions it opened and its capture token, or creates a user without a password. 400 when state does not match the ${OAUTH_STATE_COOKIE} cookie, 409 when the user already has another account of the provider, 422 without code and state or error, 503 when the provider is not reachable.`,
     ...PUBLIC,
     request: { params: providerParams, query: callbackQuery },
     responses: {

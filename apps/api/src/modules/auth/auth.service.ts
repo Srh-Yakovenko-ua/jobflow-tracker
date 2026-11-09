@@ -13,7 +13,7 @@ import { toUserSettings } from '../../prisma/user-settings-row.js';
 import { AuthRepository, type OAuthAccountKey, type UserCredentials } from './auth.repository.js';
 import type { OAuthProfile } from './oauth-profiles.js';
 import { PasswordHasher } from './password-hasher.js';
-import { SessionRepository } from './session.repository.js';
+import { UserTokens } from './user-tokens.js';
 
 export type ChangePassword = {
   userId: string;
@@ -33,7 +33,7 @@ function toAuthUser({ id, email, displayName, locale }: AuthUser): AuthUser {
 export class AuthService {
   constructor(
     private readonly repository: AuthRepository,
-    private readonly sessions: SessionRepository,
+    private readonly tokens: UserTokens,
     private readonly hasher: PasswordHasher,
     private readonly prisma: PrismaService,
   ) {}
@@ -61,7 +61,7 @@ export class AuthService {
     const now = new Date();
     await this.prisma.$transaction(async (tx) => {
       await this.repository.replacePassword({ userId, passwordHash }, tx);
-      await this.sessions.revokeAll({ userId, now, keepFamilyId }, tx);
+      await this.tokens.revokeAll({ userId, now, keepFamilyId }, tx);
     });
   }
 
@@ -116,7 +116,7 @@ export class AuthService {
     await this.prisma.$transaction(async (tx) => {
       await this.repository.linkOAuthAccount({ userId, ...oauthAccount }, tx);
       await this.repository.replacePassword({ userId, passwordHash: null }, tx);
-      await this.sessions.revokeAll({ userId, now }, tx);
+      await this.tokens.revokeAll({ userId, now }, tx);
     });
   }
 }

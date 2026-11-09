@@ -15,6 +15,7 @@ import {
   signIn,
   signUp,
 } from '../../test/auth.js';
+import { bookmarkletStatus, issueCaptureToken } from '../../test/capture.js';
 
 const NEW_PASSWORD = 'olena-password-2';
 
@@ -164,6 +165,23 @@ describe('the signed-in account', () => {
 
     expect(response.status).toBe(204);
     expect((await refreshWith(testApp.app, bohdan)).status).toBe(200);
+  });
+
+  it("ends the user's capture token on a password change and leaves another user's working", async () => {
+    const olena = await signUp(testApp.app, OLENA);
+    const bohdan = await signUp(testApp.app, BOHDAN);
+    const changed = await issueCaptureToken(testApp.app, olena.accessToken);
+    const untouched = await issueCaptureToken(testApp.app, bohdan.accessToken);
+    expect(await bookmarkletStatus(testApp.app, changed.token)).toBe(202);
+
+    const response = await changePassword(olena.accessToken, {
+      currentPassword: OLENA.password,
+      newPassword: NEW_PASSWORD,
+    });
+
+    expect(response.status).toBe(204);
+    expect(await bookmarkletStatus(testApp.app, changed.token)).toBe(401);
+    expect(await bookmarkletStatus(testApp.app, untouched.token)).toBe(202);
   });
 
   it('publishes a JWKS that verifies an access token issued at sign-in', async () => {

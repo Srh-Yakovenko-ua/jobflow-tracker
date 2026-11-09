@@ -130,7 +130,7 @@ export const AUTH_OPENAPI_PATHS: RouteConfig[] = [
     path: '/auth/change-password',
     tags: TAGS,
     summary: 'Change the password',
-    description: `Keeps the session of the ${REFRESH_COOKIE} cookie and revokes the others; 422 when currentPassword is wrong.`,
+    description: `Keeps the session of the ${REFRESH_COOKIE} cookie, revokes the others and revokes the capture token of the bookmarklet; 422 when currentPassword is wrong.`,
     request: {
       body: {
         required: true,

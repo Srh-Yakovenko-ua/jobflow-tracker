@@ -22,6 +22,7 @@ import {
   signIn,
   signUp,
 } from '../../test/auth.js';
+import { bookmarkletStatus, issueCaptureToken } from '../../test/capture.js';
 import {
   callOAuthCallback,
   fakeOAuthClient,
@@ -167,6 +168,20 @@ describe('sign in with Google and GitHub', () => {
     const bohdanSession = await refreshWith(testApp.app, { refreshToken: bohdan.refreshToken });
     expect(bohdanSession.status).toBe(200);
     expect((await signIn(testApp.app, BOHDAN)).user).toEqual(bohdan.user);
+  });
+
+  it("ends the password user's capture token when GitHub is linked by verified email and leaves another user's working", async () => {
+    const registered = await signUp(testApp.app, OLENA);
+    const linkedToken = await issueCaptureToken(testApp.app, registered.accessToken);
+    const bohdan = await signUp(testApp.app, BOHDAN);
+    const bohdanToken = await issueCaptureToken(testApp.app, bohdan.accessToken);
+    expect(await bookmarkletStatus(testApp.app, linkedToken.token)).toBe(202);
+
+    const linked = await githubSignIn('olena-code');
+
+    expect(linked.status).toBe(302);
+    expect(await bookmarkletStatus(testApp.app, linkedToken.token)).toBe(401);
+    expect(await bookmarkletStatus(testApp.app, bohdanToken.token)).toBe(202);
   });
 
   it('refuses a second GitHub account for a user who already has one with 409', async () => {
