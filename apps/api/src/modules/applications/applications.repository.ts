@@ -2,10 +2,11 @@ import type { CreateApplicationInput, Stage, UpdateApplicationInput } from '@job
 import { Injectable } from '@nestjs/common';
 
 import { withoutUndefined } from '../../common/without-undefined.js';
-import type { Prisma } from '../../generated/prisma/client.js';
+import { Prisma } from '../../generated/prisma/client.js';
 import { EFFECTIVE_STAGE_EVENTS } from '../../prisma/effective-stage-events.js';
 import type { InTransaction } from '../../prisma/in-transaction.js';
 import { PrismaService } from '../../prisma/prisma.service.js';
+import type { DraftData } from './application-draft-fields.js';
 import { type ApplicationEvent, applicationEvent } from './applications.events.js';
 
 export const LATEST_STAGE_EVENT_SELECT = {
@@ -45,7 +46,9 @@ export type ApplicationRow = Prisma.ApplicationGetPayload<{ select: typeof APPLI
 
 export type CreateDefaults = { searchId: string | null; resumeVersionId: string | null };
 
-export type NewApplication = CreateApplicationInput & {
+export type ApplicationFields = CreateApplicationInput & { isDraft?: boolean; rawText?: string };
+
+export type NewApplication = ApplicationFields & {
   searchId: string;
   resumeVersionId: string | null;
   currentStage: Stage;
@@ -69,6 +72,8 @@ export type RecordApplicationEvents = InTransaction & { events: readonly Applica
 export type ApplicationById = InTransaction & { id: string };
 
 export type UpdateApplicationById = ApplicationById & { data: ApplicationChanges };
+
+export type FillDraft = ApplicationById & { data: DraftData & { isDraft: boolean } };
 
 export type SoftDeleteApplication = ApplicationById & { deletedAt: Date };
 
@@ -139,6 +144,15 @@ export class ApplicationsRepository {
       data: withoutUndefined(data),
     });
     return count;
+  }
+
+  async fillDraft(userId: string, { id, data, tx = this.prisma }: FillDraft): Promise<Date | null> {
+    const [filled] = await tx.application.updateManyAndReturn({
+      where: { id, userId, deletedAt: null, isDraft: true, aiParsed: { equals: Prisma.DbNull } },
+      data,
+      select: { createdAt: true },
+    });
+    return filled?.createdAt ?? null;
   }
 
   async softDelete(

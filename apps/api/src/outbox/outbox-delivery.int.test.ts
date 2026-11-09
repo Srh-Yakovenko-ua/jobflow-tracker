@@ -1,19 +1,13 @@
 import { getQueueToken } from '@nestjs/bullmq';
 import type { INestApplicationContext } from '@nestjs/common';
-import type { TestingModule } from '@nestjs/testing';
-import type { Queue, QueueOptions } from 'bullmq';
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import type { Queue } from 'bullmq';
+import { beforeEach, describe, expect, it } from 'vitest';
 
 import type { ApplicationEvent } from '../modules/applications/index.js';
 import { QUEUES } from '../queues/queues.js';
 import { appTestingModule, useTestApp } from '../test/app.js';
 import { postApplication, ROMASHKA, signedInWithSearch } from '../test/applications.js';
-import {
-  dropTestQueues,
-  overrideBullConfig,
-  REFUSED_REDIS,
-  testQueuePrefix,
-} from '../test/bull-config.js';
+import { overrideBullConfig, REFUSED_REDIS } from '../test/bull-config.js';
 import { memoryLog, withLogSink } from '../test/memory-log.js';
 import {
   createOutboxRows,
@@ -21,7 +15,7 @@ import {
   relayWithinSettleLimit,
   unpublishedOutboxIds,
 } from '../test/outbox.js';
-import { compileWorker, workerTestingModule } from '../test/worker.js';
+import { useTestWorkers } from '../test/worker.js';
 import { DomainEventRouter } from './domain-event-router.js';
 import { OutboxRelayService } from './outbox-relay.service.js';
 
@@ -39,17 +33,10 @@ describe('domain events relayed from the outbox to the subscribers by the worker
   const testApp = useTestApp(() =>
     overrideBullConfig(withLogSink(appTestingModule(), log.sink), REFUSED_REDIS),
   );
-  const contexts: TestingModule[] = [];
-  let prefix = testQueuePrefix();
-
-  async function compiled(bull: Partial<QueueOptions>): Promise<TestingModule> {
-    const moduleRef = await compileWorker(workerTestingModule(log.sink, bull));
-    contexts.push(moduleRef);
-    return moduleRef;
-  }
+  const workers = useTestWorkers(log.sink);
 
   async function startWorker(): Promise<INestApplicationContext> {
-    const worker = await compiled({ prefix });
+    const worker = await workers.compile();
     worker.get(DomainEventRouter, { strict: false }).subscribe(CREATED, recorder.handle);
     return worker.init();
   }
@@ -69,15 +56,7 @@ describe('domain events relayed from the outbox to the subscribers by the worker
   }
 
   beforeEach(() => {
-    prefix = testQueuePrefix();
     recorder.events.length = 0;
-  });
-
-  afterEach(async () => {
-    await Promise.all(contexts.splice(0).map((moduleRef) => moduleRef.close()));
-    const cleaner = await compileWorker(workerTestingModule(log.sink, { prefix }));
-    await dropTestQueues(cleaner);
-    await cleaner.close();
   });
 
   it(
@@ -95,7 +74,7 @@ describe('domain events relayed from the outbox to the subscribers by the worker
       const outboxIds = await unpublishedOutboxIds(testApp.prisma);
       expect(outboxIds).toHaveLength(10);
 
-      const refused = await compiled(REFUSED_REDIS);
+      const refused = await workers.compile(REFUSED_REDIS);
       const refusedRelay = refused.get(OutboxRelayService, { strict: false });
       await expect(relayWithinSettleLimit(refusedRelay)).rejects.toThrow('timed out after 2000 ms');
       expect(await unpublishedOutboxIds(testApp.prisma)).toEqual(outboxIds);
@@ -111,12 +90,12 @@ describe('domain events relayed from the outbox to the subscribers by the worker
       await createOutboxRows(testApp.prisma, { count: 250, eventType: CREATED });
       const outboxIds = await unpublishedOutboxIds(testApp.prisma);
 
-      const workers = await Promise.all([startWorker(), startWorker()]);
+      const started = await Promise.all([startWorker(), startWorker()]);
       await Promise.all(
-        workers.map((worker) => worker.get(OutboxRelayService, { strict: false }).relay()),
+        started.map((worker) => worker.get(OutboxRelayService, { strict: false }).relay()),
       );
 
-      await expectDeliveredOnce(workers[0], outboxIds);
+      await expectDeliveredOnce(started[0], outboxIds);
     },
   );
 });

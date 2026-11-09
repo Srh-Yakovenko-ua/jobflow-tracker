@@ -1,5 +1,10 @@
 import type { AiCompletion, AiJobStatus, AiKind, Contact, NoteInput } from '@jobflow/shared';
-import { buildVacancyCompletion, VACANCY_SAMPLE_TEXT } from '@jobflow/shared/testing';
+import {
+  buildVacancyCompletion,
+  buildVacancyParseOutput,
+  VACANCY_SAMPLE_TEXT,
+  vacancyFieldOf,
+} from '@jobflow/shared/testing';
 
 import type { VacancyEvalCaseFile, VacancyExpected } from '../ai-eval/vacancy-cases.js';
 import type { AiUsageRow } from '../ai-usage/ai-usage.repository.js';
@@ -12,11 +17,13 @@ import type {
   BudgetUsage,
   BudgetWindow,
   CachedAiResult,
+  CreateAiJob,
   FailAiJob,
   FinishAiJob,
   QueueSample,
   SaveAiFailure,
   SaveAiResult,
+  SettledAiJob,
 } from '../modules/ai/index.js';
 import type { PrismaService } from '../prisma/prisma.service.js';
 import { OLENA_ID } from './service-fixtures.js';
@@ -25,17 +32,28 @@ export const VACANCY_TEXT = VACANCY_SAMPLE_TEXT;
 
 export const VACANCY_COMPLETION = buildVacancyCompletion();
 
-export const VACANCY_EXPECTED: VacancyExpected = {
+export const NAMELESS_VACANCY_COMPLETION = buildVacancyCompletion({
+  output: buildVacancyParseOutput({
+    company: vacancyFieldOf(null, null),
+    position: vacancyFieldOf(null, null),
+  }),
+});
+
+export const PARSED_VACANCY_COLUMNS = {
   company: 'Acme',
   position: 'Senior React developer',
-  seniority: 'senior',
   salaryMin: 4000,
   salaryMax: 5000,
   currency: 'USD',
-  salaryTax: null,
+  stack: ['React'],
   location: null,
   workMode: 'remote',
-  stack: ['React'],
+} satisfies Partial<VacancyExpected>;
+
+export const VACANCY_EXPECTED: VacancyExpected = {
+  ...PARSED_VACANCY_COLUMNS,
+  seniority: 'senior',
+  salaryTax: null,
   englishLevel: null,
   sourceGuess: null,
   failure: null,
@@ -145,9 +163,19 @@ export class FakeAiClient {
   }
 }
 
+export class SettledAiJobs {
+  readonly outcomes: SettledAiJob[] = [];
+
+  readonly record = (outcome: SettledAiJob): Promise<void> => {
+    this.outcomes.push(outcome);
+    return Promise.resolve();
+  };
+}
+
 export type FakeAiJob = {
   userId: string;
   status: AiJobStatus;
+  applicationId?: string;
   aiResultId?: string;
   errorType?: string;
   finishedAt?: Date;
@@ -179,6 +207,13 @@ export class FakeAiRepository {
     this.jobs.set(id, { userId, status: 'queued' });
   }
 
+  createJob(userId: string, { applicationId }: CreateAiJob): Promise<string> {
+    return this.reached(() => {
+      this.jobs.set(AI_JOB_ID, { userId, status: 'queued', applicationId });
+      return AI_JOB_ID;
+    });
+  }
+
   startJob(userId: string, { id }: AiJobChange): Promise<number> {
     const to = { status: 'processing' } as const;
     return this.reached(() => this.moveJob(userId, { id, from: ['queued', 'processing'], to }));
@@ -191,11 +226,9 @@ export class FakeAiRepository {
     });
   }
 
-  failJob(userId: string, { id, errorType, now }: FailAiJob): Promise<void> {
+  failJob(userId: string, { id, errorType, now }: FailAiJob): Promise<number> {
     const to = { status: 'failed', errorType, finishedAt: now } as const;
-    return this.reached(() => {
-      this.moveJob(userId, { id, from: ['processing'], to });
-    });
+    return this.reached(() => this.moveJob(userId, { id, from: ['processing'], to }));
   }
 
   findCachedResult(userId: string, key: AiResultKey): Promise<CachedAiResult | null> {

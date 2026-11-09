@@ -1,5 +1,17 @@
+export type {
+  AnnouncedCapture,
+  DraftFill,
+  FilledDraft,
+  OpenDraft,
+  OpenedDraft,
+} from './application-drafts.service.js';
+export { ApplicationDraftsService } from './application-drafts.service.js';
 export type { DuplicateProbe } from './application-duplicates.repository.js';
 export type { ApplicationEvent } from './applications.events.js';
+export {
+  APPLICATION_EVENTS,
+  applicationCaptureRequestedPayloadSchema,
+} from './applications.events.js';
 export { ApplicationsModule } from './applications.module.js';
 export { APPLICATIONS_OPENAPI_PATHS } from './applications.openapi.js';
 export type { ApplicationRow } from './applications.repository.js';

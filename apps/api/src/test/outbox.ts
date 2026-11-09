@@ -38,6 +38,11 @@ const SAMPLE_APPLICATION_EVENTS: SampleApplicationEvents = {
     reasonCode: null,
     compensatesEventId: null,
   }),
+  'application.capture_requested': (applicationId) => ({
+    eventType: 'application.capture_requested',
+    applicationId,
+    aiJobId: randomUUID(),
+  }),
 };
 
 export type RecordingHandler = {

@@ -2,6 +2,7 @@ import type { AiKind, AiResultStatus } from '@jobflow/shared';
 import { Injectable } from '@nestjs/common';
 
 import { Prisma } from '../../generated/prisma/client.js';
+import type { InTransaction } from '../../prisma/in-transaction.js';
 import { PrismaService } from '../../prisma/prisma.service.js';
 import { AI_BUDGET } from './ai-budget.js';
 import { AI_QUEUE_ESTIMATE } from './ai-queue-estimate.js';
@@ -20,6 +21,8 @@ export type AiJobChange = { id: string; now: Date };
 export type FinishAiJob = AiJobChange & { aiResultId: string };
 
 export type FailAiJob = AiJobChange & { errorType: string };
+
+export type CreateAiJob = InTransaction & { kind: AiKind; applicationId: string };
 
 export type AiResultKey = { kind: AiKind; inputHash: string };
 
@@ -63,6 +66,17 @@ function resultChange({ now, tokensIn, tokensOut, ...result }: SaveAiResult) {
 export class AiRepository {
   constructor(private readonly prisma: PrismaService) {}
 
+  async createJob(
+    userId: string,
+    { kind, applicationId, tx = this.prisma }: CreateAiJob,
+  ): Promise<string> {
+    const { id } = await tx.aiJob.create({
+      data: { userId, kind, applicationId },
+      select: { id: true },
+    });
+    return id;
+  }
+
   async startJob(userId: string, { id, now }: AiJobChange): Promise<number> {
     const { count } = await this.prisma.aiJob.updateMany({
       where: { id, userId, status: { in: ['queued', 'processing'] } },
@@ -78,11 +92,12 @@ export class AiRepository {
     });
   }
 
-  async failJob(userId: string, { id, errorType, now }: FailAiJob): Promise<void> {
-    await this.prisma.aiJob.updateMany({
+  async failJob(userId: string, { id, errorType, now }: FailAiJob): Promise<number> {
+    const { count } = await this.prisma.aiJob.updateMany({
       where: { id, userId, status: 'processing' },
       data: { status: 'failed', errorType, finishedAt: now },
     });
+    return count;
   }
 
   findCachedResult(

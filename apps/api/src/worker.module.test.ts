@@ -6,6 +6,7 @@ import { describe, expect, it } from 'vitest';
 import type { AppConfig } from './config/app-config.js';
 import { AiProcessor } from './modules/ai/index.js';
 import { JwtKeys } from './modules/auth/index.js';
+import { CaptureSubscriber } from './modules/capture/index.js';
 import { MaintenanceProcessor, MaintenanceScheduler } from './modules/maintenance/index.js';
 import { DomainEventsProcessor } from './outbox/domain-events.processor.js';
 import { testJwtKeys } from './test/auth.js';
@@ -27,6 +28,7 @@ describe('WorkerModule', () => {
       DomainEventsProcessor,
       AiProcessor,
       MaintenanceScheduler,
+      CaptureSubscriber,
     ]) {
       expect(moduleRef.get(provider, { strict: false })).toBeInstanceOf(provider);
     }

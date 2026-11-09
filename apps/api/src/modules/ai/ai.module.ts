@@ -7,12 +7,13 @@ import { AiProcessor } from './ai.processor.js';
 import { AiRepository } from './ai.repository.js';
 import { AiService } from './ai.service.js';
 import { AiClient } from './ai-client.js';
+import { AiJobRouter } from './ai-job-router.js';
 
 @Module({
   imports: [JwtKeysModule],
   controllers: [AiController],
-  providers: [AiClient, AiService, AiRepository, Clock],
-  exports: [AiClient, AiService],
+  providers: [AiClient, AiService, AiRepository, AiJobRouter, Clock],
+  exports: [AiClient, AiService, AiJobRouter],
 })
 export class AiModule {}
 

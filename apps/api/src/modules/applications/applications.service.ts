@@ -20,9 +20,20 @@ import {
 } from './application-duplicates.repository.js';
 import { toApplicationResponse } from './application-response.js';
 import { APPLICATION_EVENTS } from './applications.events.js';
-import { type ApplicationChanges, ApplicationsRepository } from './applications.repository.js';
+import {
+  type ApplicationChanges,
+  type ApplicationFields,
+  type ApplicationRow,
+  ApplicationsRepository,
+} from './applications.repository.js';
 
 export type ApplicationUpdate = { id: string; input: ApplicationChanges };
+
+export type InsertApplied = {
+  fields: ApplicationFields;
+  now: Date;
+  tx: Prisma.TransactionClient;
+};
 
 type RecordedChange = {
   count: number;
@@ -54,29 +65,31 @@ export class ApplicationsService {
     const now = this.clock.now();
     const possibleDuplicates = await this.duplicatesAt(userId, { probe: input, now });
     const row = await this.prisma.$transaction(async (tx) => {
-      const { searchId, resumeVersionId } = await this.repository.findCreateDefaults(userId, {
-        tx,
-      });
-      if (searchId === null) {
-        throw conflict('No active search');
-      }
-      const created = await this.repository.insert(userId, {
-        application: {
-          ...input,
-          searchId,
-          resumeVersionId,
-          currentStage: FIRST_STAGE,
-          appliedAt: now,
-          lastEventAt: now,
-        },
-        firstEvent: { fromStage: null, toStage: FIRST_STAGE, occurredAt: now },
-        tx,
-      });
+      const created = await this.insertApplied(userId, { fields: input, now, tx });
       const event = { eventType: APPLICATION_EVENTS.created, applicationId: created.id };
       await this.repository.recordEvent(userId, { event, tx });
       return created;
     });
     return { ...toApplicationResponse(row, now), possibleDuplicates };
+  }
+
+  async insertApplied(userId: string, { fields, now, tx }: InsertApplied): Promise<ApplicationRow> {
+    const { searchId, resumeVersionId } = await this.repository.findCreateDefaults(userId, { tx });
+    if (searchId === null) {
+      throw conflict('No active search');
+    }
+    return this.repository.insert(userId, {
+      application: {
+        ...fields,
+        searchId,
+        resumeVersionId,
+        currentStage: FIRST_STAGE,
+        appliedAt: now,
+        lastEventAt: now,
+      },
+      firstEvent: { fromStage: null, toStage: FIRST_STAGE, occurredAt: now },
+      tx,
+    });
   }
 
   async get(userId: string, id: string): Promise<ApplicationResponse> {

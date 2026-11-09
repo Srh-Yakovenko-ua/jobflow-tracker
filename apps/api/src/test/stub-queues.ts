@@ -7,13 +7,15 @@ export type StubJob = { id: string; name: string; data: unknown };
 
 export type StubBulkJob = { name: string; data: unknown; opts?: { jobId?: string } };
 
+export type StubAdd = [name: string, data: unknown, opts?: StubBulkJob['opts']];
+
 export class StubQueue {
   readonly jobs: StubJob[] = [];
 
   constructor(readonly name: string) {}
 
-  add(name: string, data: unknown): Promise<StubJob> {
-    return Promise.resolve(this.record({ id: this.nextId(), name, data }));
+  add(...[name, data, opts]: StubAdd): Promise<StubJob> {
+    return Promise.resolve(this.record({ id: opts?.jobId ?? this.nextId(), name, data }));
   }
 
   addBulk(jobs: StubBulkJob[]): Promise<StubJob[]> {

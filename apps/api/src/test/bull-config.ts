@@ -15,7 +15,7 @@ export const REFUSED_REDIS = {
   connection: { url: 'redis://127.0.0.1:1' },
 } satisfies Partial<QueueOptions>;
 
-const DROPPED_QUEUES = [QUEUES.maintenance.name, QUEUES.domainEvents.name];
+const DROPPED_QUEUES = [QUEUES.maintenance.name, QUEUES.domainEvents.name, QUEUES.ai.name];
 
 export function testQueuePrefix(): string {
   return `${TEST_QUEUE_PREFIX}${randomUUID()}`;

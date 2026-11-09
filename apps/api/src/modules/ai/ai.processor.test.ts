@@ -7,6 +7,7 @@ import {
   AI_JOB_ID,
   FakeAiClient,
   FakeAiRepository,
+  SettledAiJobs,
   VACANCY_CALL,
   VACANCY_COMPLETION,
   VACANCY_JOB,
@@ -14,14 +15,17 @@ import {
 import { memoryLog } from '../../test/memory-log.js';
 import { processedJob } from '../../test/processed-job.js';
 import { compileProcessorModule } from '../../test/processor.js';
-import { OLENA_ID } from '../../test/service-fixtures.js';
+import { APPLICATION_ID, OLENA_ID } from '../../test/service-fixtures.js';
 import { AiProcessor } from './ai.processor.js';
 import { AiRepository } from './ai.repository.js';
 import { AiService } from './ai.service.js';
 import { AiClient } from './ai-client.js';
+import { AiJobRouter } from './ai-job-router.js';
 import { AiServiceError } from './ai-service-error.js';
 
 const log = memoryLog();
+
+const settledJobs = new SettledAiJobs();
 
 function aiJob(data: unknown, name = 'ai.complete') {
   return processedJob({ queueName: 'ai', name, data, id: '71' });
@@ -37,15 +41,18 @@ describe('AiProcessor', () => {
     moduleRef = await compileProcessorModule(log.sink, [
       AiProcessor,
       AiService,
+      AiJobRouter,
       Clock,
       { provide: AiClient, useValue: ai },
       { provide: AiRepository, useValue: repository },
     ]);
     processor = moduleRef.get(AiProcessor);
+    moduleRef.get(AiJobRouter).subscribe('vacancy_parse', settledJobs.record);
   });
 
   beforeEach(() => {
     log.lines.length = 0;
+    settledJobs.outcomes.length = 0;
     ai.calls.length = 0;
     ai.answer = () => Promise.resolve(VACANCY_COMPLETION);
     repository.jobs.clear();
@@ -77,6 +84,16 @@ describe('AiProcessor', () => {
       }),
     ]);
     expect(log.lines.join('')).not.toContain('Acme');
+  });
+
+  it('routes the settled job with its application id to the subscribers of its kind', async () => {
+    const job = { ...VACANCY_JOB, applicationId: APPLICATION_ID };
+
+    await processor.process(aiJob(job));
+
+    expect(settledJobs.outcomes).toEqual([
+      { job, status: 'done', output: VACANCY_COMPLETION.output },
+    ]);
   });
 
   it('fails the job as unrecoverable when services/ai refuses it with 422', async () => {

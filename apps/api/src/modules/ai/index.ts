@@ -8,6 +8,7 @@ export type {
   BudgetUsage,
   BudgetWindow,
   CachedAiResult,
+  CreateAiJob,
   FailAiJob,
   FinishAiJob,
   QueueSample,
@@ -16,6 +17,7 @@ export type {
 } from './ai.repository.js';
 export { type AiJobOfUser, type AiOutcome, AiService } from './ai.service.js';
 export { AiClient, type AiCompleteCall } from './ai-client.js';
+export { AiJobRouter, type SettledAiJob } from './ai-job-router.js';
 export { AI_PAYLOAD_BUILDERS, type VacancySource } from './ai-payloads.js';
 export type { AiQueuePosition } from './ai-queue-estimate.js';
 export { AiServiceError } from './ai-service-error.js';
