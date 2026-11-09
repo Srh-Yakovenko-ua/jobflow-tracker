@@ -44,7 +44,7 @@ export const RATE_LIMIT_POLICIES = {
   capture: {
     envKey: 'RATE_LIMIT_CAPTURE_PER_HOUR',
     durationSeconds: WINDOW_SECONDS.hour,
-    keyOf: callerKey,
+    keyOf: (req) => req.user?.captureTokenId ?? callerKey(req),
   },
   api: {
     envKey: 'RATE_LIMIT_API_PER_MINUTE',

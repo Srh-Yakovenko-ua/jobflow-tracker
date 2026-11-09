@@ -22,7 +22,7 @@ export async function expectReplayedCreate({
   status = 201,
 }: ReplayedCreate): Promise<void> {
   const before = await countRows();
-  const keyed = { ...call, headers: keyHeaders() };
+  const keyed = { ...call, headers: { ...call.headers, ...keyHeaders() } };
 
   const first = await callRoute(app, keyed);
   const second = await callRoute(app, keyed);

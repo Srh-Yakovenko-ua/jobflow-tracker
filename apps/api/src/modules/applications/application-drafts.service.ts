@@ -1,4 +1,9 @@
-import type { CapturePasteInput, PossibleDuplicate, VacancyParseOutput } from '@jobflow/shared';
+import {
+  type CapturePasteInput,
+  type PossibleDuplicate,
+  sourceOfUrl,
+  type VacancyParseOutput,
+} from '@jobflow/shared';
 import { Injectable } from '@nestjs/common';
 
 import { conflict } from '../../common/app-error.js';
@@ -47,6 +52,7 @@ export class ApplicationDraftsService {
     const { id, createdAt } = await this.applications.insertApplied(userId, {
       fields: {
         ...DRAFT_BLANK,
+        source: sourceOfUrl(input.url),
         url: input.url ?? null,
         isDraft: true,
         rawText: input.text,

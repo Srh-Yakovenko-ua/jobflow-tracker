@@ -27,3 +27,28 @@ export const SOURCE_LABELS: Record<Source, LocalizedLabel> = {
   company_site: { labelUk: 'сайт компанії', labelEn: 'Company site' },
   other: { labelUk: 'інше', labelEn: 'Other' },
 };
+
+export const SOURCE_HOSTS = {
+  djinni: 'djinni.co',
+  dou: 'jobs.dou.ua',
+  robota: 'robota.ua',
+  linkedin: 'linkedin.com',
+} satisfies Partial<Record<Source, string>>;
+
+const hostOrSubdomainPattern = (host: string) =>
+  new RegExp(`(^|\\.)${host.replaceAll('.', '\\.')}$`);
+
+const sourceHosts: Partial<Record<Source, string>> = SOURCE_HOSTS;
+
+const SOURCE_URL_SCHEMAS = SOURCES.flatMap((source) => {
+  const host = sourceHosts[source];
+  return host === undefined
+    ? []
+    : [{ source, urlSchema: z.url({ hostname: hostOrSubdomainPattern(host) }) }];
+});
+
+export function sourceOfUrl(url: string | null | undefined): Source {
+  return (
+    SOURCE_URL_SCHEMAS.find(({ urlSchema }) => urlSchema.safeParse(url).success)?.source ?? 'other'
+  );
+}

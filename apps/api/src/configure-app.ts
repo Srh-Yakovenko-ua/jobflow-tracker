@@ -1,12 +1,15 @@
+import { CAPTURE_BOOKMARKLET_LIMITS } from '@jobflow/shared';
 import { type NestApplicationOptions, RequestMethod } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import type { NestExpressApplication } from '@nestjs/platform-express';
+import { json } from 'express';
 import helmet from 'helmet';
 import { Logger } from 'nestjs-pino';
 
 import { BOOT_OPTIONS } from './boot.js';
 import { API_PREFIX, JWKS_PATH, rejectOutsidePrefix } from './common/api-prefix.middleware.js';
-import { REQUEST_ID_HEADER, requestId } from './common/request-id.middleware.js';
+import { BOOKMARKLET_PATH, corsFor } from './common/cors.js';
+import { requestId } from './common/request-id.middleware.js';
 import type { AppConfig } from './config/app-config.js';
 import { mountApiDocs } from './openapi/api-docs.js';
 import { mountBullBoard } from './queues/bull-board.js';
@@ -22,12 +25,9 @@ export function configureApp(app: NestExpressApplication): NestExpressApplicatio
     mountApiDocs(app);
   }
   app.use(helmet());
-  app.enableCors({
-    origin: [config.get('WEB_ORIGIN', { infer: true })],
-    credentials: true,
-    exposedHeaders: [REQUEST_ID_HEADER, 'Retry-After'],
-  });
+  app.enableCors(corsFor(config.get('WEB_ORIGIN', { infer: true })));
   app.use(rejectOutsidePrefix);
+  app.use(BOOKMARKLET_PATH, json({ limit: CAPTURE_BOOKMARKLET_LIMITS.bodyMaxBytes }));
   app.useBodyParser('json', { limit: '1mb' });
   app.setGlobalPrefix(API_PREFIX, {
     exclude: [{ path: JWKS_PATH, method: RequestMethod.GET }],

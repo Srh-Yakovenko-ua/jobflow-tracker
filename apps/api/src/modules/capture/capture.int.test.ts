@@ -1,9 +1,14 @@
 import {
   type CapturePasteResponse,
   capturePasteResponseSchema,
+  errorResponseSchema,
   timelineRecordSchema,
 } from '@jobflow/shared';
-import { buildVacancyCompletion, buildVacancyParseOutput } from '@jobflow/shared/testing';
+import {
+  buildVacancyCompletion,
+  buildVacancyParseOutput,
+  vacancyFieldOf,
+} from '@jobflow/shared/testing';
 import { getQueueToken } from '@nestjs/bullmq';
 import type { INestApplicationContext } from '@nestjs/common';
 import type { Queue } from 'bullmq';
@@ -35,11 +40,18 @@ import { accessTokenFor } from '../../test/auth.js';
 import { overrideBullConfig, REFUSED_REDIS } from '../../test/bull-config.js';
 import {
   BLANK_DRAFT_COLUMNS,
+  BOOKMARKLET,
+  CAPTURE_BOOKMARKLET_PATH,
   CAPTURE_PASTE_PATH,
+  captureAuthorization,
+  issueCaptureToken,
+  JOB_BOARD_ORIGIN,
   PASTE,
   PASTED_URL,
+  postBookmarklet,
   postConfirm,
   postPaste,
+  signedInWithCaptureToken,
 } from '../../test/capture.js';
 import { createUser } from '../../test/factories.js';
 import { callRoute, errorPathsOf, statusAndDetail } from '../../test/http.js';
@@ -53,6 +65,7 @@ import { ApplicationDraftsService } from '../applications/index.js';
 
 vi.hoisted(() => {
   vi.stubEnv('RATE_LIMIT_AI_PER_HOUR', '6');
+  vi.stubEnv('RATE_LIMIT_CAPTURE_PER_HOUR', '3');
 });
 
 const PLACEHOLDER_DRAFT = {
@@ -81,6 +94,17 @@ const CHECKED_DRAFT = {
   isDraft: true,
   aiParsed: LOCATION_TO_CHECK,
 };
+
+const BOOKMARKLET_DRAFT = {
+  ...PLACEHOLDER_DRAFT,
+  source: 'djinni',
+  url: 'https://djinni.co/jobs/700123-senior-react-developer/',
+  rawText: `Senior React developer at Acme\n\n${VACANCY_TEXT}`,
+};
+
+const LINKEDIN_GUESS = buildVacancyParseOutput({
+  sourceGuess: vacancyFieldOf('linkedin', 'LinkedIn'),
+});
 
 const FILL_FIELDS = [...Object.keys(PARSED_VACANCY_COLUMNS), 'aiParsed'];
 
@@ -584,6 +608,218 @@ describe('POST /api/v1/capture/paste', () => {
         'draft_confirmed',
       ]);
     });
+  });
+
+  describe('POST /api/v1/capture/bookmarklet', () => {
+    async function captured(captureToken: string, page: object = {}) {
+      const input = { ...BOOKMARKLET, ...page };
+      const response = await postBookmarklet(testApp.app, { captureToken, input });
+      expect(statusAndDetail(response)).toEqual([202, undefined]);
+      return { response, ...capturePasteResponseSchema.parse(response.body) };
+    }
+
+    it('answers 202 to a capture token while the queue Redis is down and stores the draft with the title and the page text, the djinni source, its queued ai job, the captured timeline row and the capture event', async () => {
+      const { userId, captureToken } = await signedInWithCaptureToken(testApp);
+
+      const { response, applicationId, jobId, possibleDuplicates } = await captured(captureToken);
+
+      const requestId = response.get('x-request-id');
+      expect(possibleDuplicates).toEqual([]);
+      expect(await draftOf(applicationId)).toEqual(BOOKMARKLET_DRAFT);
+      expect(await storedAiJob(testApp.prisma, jobId)).toMatchObject({ status: 'queued' });
+      expect(await timelineOf(applicationId)).toEqual([
+        { kind: 'captured', payload: { method: 'bookmarklet' } },
+      ]);
+      expect(await outboxRows(testApp.prisma)).toMatchObject([
+        {
+          eventType: 'application.capture_requested',
+          payload: { userId, applicationId, aiJobId: jobId, requestId },
+        },
+      ]);
+      expect(await countRows()).toEqual([1, 1, 1, 1]);
+      expect(ai.calls).toEqual([]);
+    });
+
+    it('stores the text of the html when it is sent, without tags or script text', async () => {
+      const { captureToken } = await signedInWithCaptureToken(testApp);
+      const html = '<main><h1>Acme</h1><script>stolen()</script><p>Remote &amp; hybrid</p></main>';
+
+      const { applicationId } = await captured(captureToken, { html });
+
+      expect(await draftOf(applicationId)).toMatchObject({
+        rawText: 'Senior React developer at Acme\n\nAcme\n\nRemote & hybrid',
+      });
+    });
+
+    it("lists the user's own Application with the page url as a possible duplicate, and not another user's", async () => {
+      const olena = await signedInWithCaptureToken(testApp);
+      const bohdan = await signedInWithCaptureToken(testApp);
+      const existing = await createApplication(testApp.app, {
+        accessToken: olena.accessToken,
+        input: { ...ROMASHKA, url: BOOKMARKLET.url },
+      });
+
+      const olenas = await captured(olena.captureToken);
+      const bohdans = await captured(bohdan.captureToken);
+
+      expect(olenas.possibleDuplicates).toMatchObject([{ id: existing.id, company: 'Ромашка' }]);
+      expect(bohdans.possibleDuplicates).toEqual([]);
+    });
+
+    it('answers 403 to a user access token and stores nothing', async () => {
+      const { accessToken } = await signedInWithCaptureToken(testApp);
+
+      const response = await postBookmarklet(testApp.app, {
+        input: BOOKMARKLET,
+        headers: { authorization: `Bearer ${accessToken}` },
+      });
+
+      expect(statusAndDetail(response)).toEqual([403, 'Token lacks the capture scope']);
+      expect(await countRows()).toEqual([0, 0, 0, 0]);
+    });
+
+    it('answers 401 without a token and stores nothing', async () => {
+      const response = await postBookmarklet(testApp.app, { input: BOOKMARKLET });
+
+      expect(statusAndDetail(response)).toEqual([401, 'Missing access token']);
+      expect(await countRows()).toEqual([0, 0, 0, 0]);
+    });
+
+    it.each([
+      { page: 'without a url', change: { url: undefined }, path: 'url' },
+      { page: 'with an ftp url', change: { url: 'ftp://djinni.co/jobs/7' }, path: 'url' },
+      { page: 'without a title', change: { title: undefined }, path: 'title' },
+      { page: 'with a blank title', change: { title: ' ' }, path: 'title' },
+      { page: 'with a title of 301 characters', change: { title: 'a'.repeat(301) }, path: 'title' },
+      { page: 'without text', change: { text: undefined }, path: 'text' },
+      { page: 'with a NUL in the text', change: { text: 'React\u0000Node' }, path: 'text' },
+      { page: 'with blank html', change: { html: ' \n ' }, path: 'html' },
+    ])('answers 422 naming $path for a page $page and stores nothing', async ({ change, path }) => {
+      const { captureToken } = await signedInWithCaptureToken(testApp);
+      const input = { ...BOOKMARKLET, ...change };
+
+      const response = await postBookmarklet(testApp.app, { captureToken, input });
+
+      expect([response.status, errorPathsOf(response.body)]).toEqual([422, [path]]);
+      expect(await countRows()).toEqual([0, 0, 0, 0]);
+    });
+
+    it('answers 409 and stores nothing when the owner of the token has no active search', async () => {
+      const accessToken = await accessTokenFor(await createUser(testApp.prisma));
+      const { token } = await issueCaptureToken(testApp.app, accessToken);
+
+      const response = await postBookmarklet(testApp.app, {
+        captureToken: token,
+        input: BOOKMARKLET,
+      });
+
+      expect(statusAndDetail(response)).toEqual([409, 'No active search']);
+      expect(await countRows()).toEqual([0, 0, 0, 0]);
+    });
+
+    it('answers the first reply again for a repeated Idempotency-Key sent with a capture token and stores one draft', async () => {
+      const { captureToken } = await signedInWithCaptureToken(testApp);
+
+      await expectReplayedCreate({
+        app: testApp.app,
+        call: {
+          method: 'post',
+          path: CAPTURE_BOOKMARKLET_PATH,
+          body: BOOKMARKLET,
+          headers: captureAuthorization(captureToken),
+        },
+        countRows,
+        status: 202,
+      });
+    });
+
+    it('answers the fourth capture with one token in an hour with 429 when RATE_LIMIT_CAPTURE_PER_HOUR is 3, and neither another user nor a new token of the same user', async () => {
+      const olena = await signedInWithCaptureToken(testApp);
+      const bohdan = await signedInWithCaptureToken(testApp);
+      for (const text of ['first', 'second', 'third']) {
+        await captured(olena.captureToken, { text });
+      }
+
+      const fourth = await postBookmarklet(testApp.app, {
+        captureToken: olena.captureToken,
+        input: BOOKMARKLET,
+      });
+
+      expectRateLimited(fourth, { windowSeconds: 3600 });
+      await captured(bohdan.captureToken);
+      await captured((await issueCaptureToken(testApp.app, olena.accessToken)).token);
+    });
+
+    it('answers 202 to a body of 290 KB, read by the route parser and left alone by the 1 MB one', async () => {
+      const { captureToken } = await signedInWithCaptureToken(testApp);
+
+      const { applicationId } = await captured(captureToken, { html: 'x'.repeat(290 * 1024) });
+
+      expect(await draftOf(applicationId)).toMatchObject({
+        rawText: `Senior React developer at Acme\n\n${'x'.repeat(19_968)}`,
+      });
+    });
+
+    it.each(['with a capture token', 'without a token'])(
+      'answers 413 payload_too_large to a body over 300 KB %s and stores nothing',
+      async (caller) => {
+        const { captureToken } = await signedInWithCaptureToken(testApp);
+        const input = { ...BOOKMARKLET, text: 'x'.repeat(301 * 1024) };
+
+        const response = await postBookmarklet(testApp.app, {
+          ...(caller === 'with a capture token' ? { captureToken } : {}),
+          input,
+          headers: { origin: JOB_BOARD_ORIGIN },
+        });
+
+        expect(response.status).toBe(413);
+        expect(errorResponseSchema.parse(response.body)).toMatchObject({
+          type: 'payload_too_large',
+          requestId: response.get('x-request-id'),
+        });
+        expect(response.get('access-control-allow-origin')).toBe('*');
+        expect(await countRows()).toEqual([0, 0, 0, 0]);
+      },
+    );
+
+    it('answers a capture from a job board origin with allow-origin * and no allow-credentials', async () => {
+      const { captureToken } = await signedInWithCaptureToken(testApp);
+
+      const response = await postBookmarklet(testApp.app, {
+        captureToken,
+        input: BOOKMARKLET,
+        headers: { origin: JOB_BOARD_ORIGIN },
+      });
+
+      expect(response.status).toBe(202);
+      expect(response.get('access-control-allow-origin')).toBe('*');
+      expect(response.get('access-control-allow-credentials')).toBeUndefined();
+      expect(response.get('access-control-expose-headers')).toBe('x-request-id,Retry-After');
+    });
+
+    it(
+      'fills the bookmarklet draft from the parse in the worker and keeps the source the url proved over the one the parse guessed',
+      WORKER_TEST,
+      async () => {
+        ai.answer = () => Promise.resolve(buildVacancyCompletion({ output: LINKEDIN_GUESS }));
+        const { captureToken } = await signedInWithCaptureToken(testApp);
+        const draft = await captured(captureToken);
+        const { applicationId } = draft;
+
+        await relayed(draft, 'done');
+
+        expect(await draftOf(applicationId)).toEqual({
+          ...BOOKMARKLET_DRAFT,
+          ...PARSED_VACANCY_COLUMNS,
+          isDraft: false,
+          aiParsed: LINKEDIN_GUESS,
+        });
+        expect(await kindsOf(applicationId)).toEqual(['captured', 'ai_parsed']);
+        expect(ai.calls).toMatchObject([
+          { kind: 'vacancy_parse', input: { text: BOOKMARKLET_DRAFT.rawText } },
+        ]);
+      },
+    );
   });
 
   it(

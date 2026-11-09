@@ -64,6 +64,12 @@ export function buildOpenApiDocument(): OpenApiDocument {
     in: 'cookie',
     name: REFRESH_COOKIE,
   });
+  registry.registerComponent('securitySchemes', 'captureToken', {
+    type: 'apiKey',
+    in: 'header',
+    name: 'Authorization',
+    description: 'Capture <token>',
+  });
   API_OPENAPI_PATHS.forEach((route) => {
     registry.registerPath(route);
   });
