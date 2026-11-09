@@ -1,5 +1,6 @@
 export type {
   AnnouncedCapture,
+  DraftConfirm,
   DraftFill,
   FilledDraft,
   OpenDraft,

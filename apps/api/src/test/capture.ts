@@ -3,13 +3,15 @@ import type { NestExpressApplication } from '@nestjs/platform-express';
 
 import type {
   AnnouncedCapture,
+  ApplicationRow,
+  DraftConfirm,
   DraftFill,
   FilledDraft,
   OpenDraft,
   OpenedDraft,
 } from '../modules/applications/index.js';
 import { VACANCY_TEXT } from './ai.js';
-import type { ApplicationRequest } from './applications.js';
+import type { ApplicationRequest, SignedInApplication } from './applications.js';
 import { callRoute } from './http.js';
 import type { ByUser } from './recorded-events.js';
 import { APPLICATION_ID, MISSING_ID, OLENA_ID } from './service-fixtures.js';
@@ -17,9 +19,25 @@ import { minutesBefore, NOW } from './time.js';
 
 export const CAPTURE_PASTE_PATH = '/api/v1/capture/paste';
 
+export const draftConfirmPath = (id: string) => `/api/v1/capture/drafts/${id}/confirm`;
+
+export type DraftConfirmRequest = Pick<SignedInApplication, 'id'> & { accessToken?: string };
+
 export const PASTED_URL = 'https://jobs.example.test/7';
 
 export const PASTE: CapturePasteInput = { text: VACANCY_TEXT, url: PASTED_URL };
+
+export const BLANK_DRAFT_COLUMNS = {
+  company: 'компанію не розпізнано',
+  position: 'Без назви',
+  source: 'other',
+  salaryMin: null,
+  salaryMax: null,
+  currency: null,
+  stack: [],
+  location: null,
+  workMode: null,
+} satisfies Partial<ApplicationRow>;
 
 export const OPENED_DRAFT: OpenedDraft = {
   applicationId: APPLICATION_ID,
@@ -41,6 +59,10 @@ export function postPaste(
   return callRoute(app, { method: 'post', path: CAPTURE_PASTE_PATH, body: input, accessToken });
 }
 
+export function postConfirm(app: NestExpressApplication, { accessToken, id }: DraftConfirmRequest) {
+  return callRoute(app, { method: 'post', path: draftConfirmPath(id), accessToken });
+}
+
 export class FakeApplicationDrafts {
   readonly steps: string[] = [];
 
@@ -49,6 +71,8 @@ export class FakeApplicationDrafts {
   readonly announced: ByUser<AnnouncedCapture>[] = [];
 
   readonly fills: ByUser<DraftFill>[] = [];
+
+  readonly confirmed: ByUser<DraftConfirm>[] = [];
 
   refusal: Error | undefined;
 
@@ -81,5 +105,13 @@ export class FakeApplicationDrafts {
   fill(userId: string, fill: DraftFill): Promise<FilledDraft | null> {
     this.fills.push({ userId, ...fill });
     return Promise.resolve(this.filled);
+  }
+
+  confirm(userId: string, draft: DraftConfirm): Promise<Date> {
+    if (this.refusal !== undefined) {
+      return Promise.reject(this.refusal);
+    }
+    this.confirmed.push({ userId, ...draft });
+    return Promise.resolve(NOW);
   }
 }

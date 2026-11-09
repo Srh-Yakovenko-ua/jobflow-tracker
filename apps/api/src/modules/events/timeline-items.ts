@@ -25,6 +25,7 @@ const JOURNAL_ACTORS: Record<TimelineEventKind, TimelineActor> = {
   interview_done: 'user',
   note_added: 'user',
   resume_attached: 'user',
+  draft_confirmed: 'user',
 };
 
 function stageItem(event: StageEventRow, previous: StageEventRow | undefined): TimelineItem {

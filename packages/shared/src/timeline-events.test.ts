@@ -25,6 +25,7 @@ const VALID_PAYLOADS: {
     number: 2,
     title: 'акцент на продукті',
   },
+  draft_confirmed: {},
 };
 
 describe('timelineRecordSchema', () => {

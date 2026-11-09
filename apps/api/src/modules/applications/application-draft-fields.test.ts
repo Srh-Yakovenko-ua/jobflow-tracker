@@ -3,7 +3,13 @@ import { buildVacancyParseOutput, vacancyFieldOf } from '@jobflow/shared/testing
 import { describe, expect, it } from 'vitest';
 
 import { PARSED_VACANCY_COLUMNS } from '../../test/ai.js';
-import { draftFieldsOf } from './application-draft-fields.js';
+import { BLANK_DRAFT_COLUMNS } from '../../test/capture.js';
+import {
+  type DraftColumns,
+  draftFieldsOf,
+  type ParsedColumns,
+  untouchedDraftFields,
+} from './application-draft-fields.js';
 
 const PARSED = PARSED_VACANCY_COLUMNS;
 
@@ -36,13 +42,13 @@ const CASES: DraftCase[] = [
     parse: 'with a salary range in the wrong order',
     overrides: { salaryMin: vacancyFieldOf(6000, '6000'), salaryMax: vacancyFieldOf(5000, '5000') },
     fields: { ...PARSED, ...NO_SALARY },
-    isDraft: false,
+    isDraft: true,
   },
   {
     parse: 'with a salary the column cannot hold',
     overrides: { salaryMax: vacancyFieldOf(2_147_483_648, '2147483648') },
     fields: { ...PARSED, ...NO_SALARY },
-    isDraft: false,
+    isDraft: true,
   },
   {
     parse: 'with the largest salary the column holds',
@@ -78,5 +84,39 @@ describe('draftFieldsOf', () => {
     const output = buildVacancyParseOutput(overrides);
 
     expect(draftFieldsOf(output)).toEqual({ data: { ...fields, aiParsed: output }, isDraft });
+  });
+});
+
+const PARSED_WITH_SOURCE: ParsedColumns = { ...PARSED, source: 'djinni' };
+
+const SALARY_GROUP = ['salaryMin', 'salaryMax', 'currency'];
+
+type EditCase = { edited: string; edit: Partial<DraftColumns>; kept: string[] };
+
+const EDITS: EditCase[] = [
+  { edited: 'nothing', edit: {}, kept: [] },
+  { edited: 'the company', edit: { company: 'Ромашка' }, kept: ['company'] },
+  { edited: 'the position', edit: { position: 'Lead React developer' }, kept: ['position'] },
+  { edited: 'the source', edit: { source: 'dou' }, kept: ['source'] },
+  { edited: 'the salary range', edit: { salaryMin: 3000, salaryMax: 3500 }, kept: SALARY_GROUP },
+  { edited: 'the currency', edit: { currency: 'EUR' }, kept: SALARY_GROUP },
+  { edited: 'the stack', edit: { stack: ['Vue'] }, kept: ['stack'] },
+  { edited: 'the location', edit: { location: 'Київ' }, kept: ['location'] },
+  { edited: 'the work mode', edit: { workMode: 'office' }, kept: ['workMode'] },
+];
+
+describe('untouchedDraftFields', () => {
+  it.each(EDITS)('fills every parsed field but the group of $edited', ({ edit, kept }) => {
+    const filled = Object.entries(PARSED_WITH_SOURCE).filter(([field]) => !kept.includes(field));
+
+    expect(untouchedDraftFields({ ...BLANK_DRAFT_COLUMNS, ...edit }, PARSED_WITH_SOURCE)).toEqual(
+      Object.fromEntries(filled),
+    );
+  });
+
+  it('names no source when the parse guesses none', () => {
+    expect(Object.keys(untouchedDraftFields(BLANK_DRAFT_COLUMNS, PARSED))).toEqual(
+      Object.keys(PARSED),
+    );
   });
 });

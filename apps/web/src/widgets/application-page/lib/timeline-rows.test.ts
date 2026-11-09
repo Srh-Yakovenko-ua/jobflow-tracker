@@ -106,6 +106,14 @@ describe('timelineRowsOf', () => {
     ]);
   });
 
+  it('a confirmed draft reads as a muted ringed row with the title the API gave it', () => {
+    const title = 'Поля перевірено вручну';
+
+    expect(looksOf([itemOf({ type: 'draft_confirmed', meta: {}, title })])).toEqual([
+      { title, meta: null, marker: RING, tone: 'muted' },
+    ]);
+  });
+
   it('a rejection reads the days in the stage, the reason and the comment, with the clay ring', () => {
     const rejection = itemOf({
       type: 'stage_changed',

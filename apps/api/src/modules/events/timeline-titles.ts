@@ -39,6 +39,7 @@ const RECORD_TITLES: RecordTitles = {
     `${SCHEDULED_EVENT_KIND_LABELS[kind].labelUk} пройдено · ${String(durationMin)} хв`,
   note_added: () => NOTE_TITLE,
   resume_attached: (payload) => `Прикріплено ${resumeVersionLabel(payload)}`,
+  draft_confirmed: () => 'Поля перевірено вручну',
 };
 
 export function recordTitle<Kind extends keyof PayloadOf>({

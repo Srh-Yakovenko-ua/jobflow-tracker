@@ -93,6 +93,7 @@ interview_scheduled interview_scheduled
 interview_done interview_done
 note_added note_added
 resume_attached resume_attached
+draft_confirmed draft_confirmed
         }
     
 

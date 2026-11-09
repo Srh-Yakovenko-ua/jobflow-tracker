@@ -34,4 +34,17 @@ export class CaptureService {
     });
     return { ...captured, possibleDuplicates };
   }
+
+  async confirm(userId: string, applicationId: string): Promise<void> {
+    await this.prisma.$transaction(async (tx) => {
+      const confirmedAt = await this.drafts.confirm(userId, { applicationId, tx });
+      await this.timeline.record(userId, {
+        applicationId,
+        kind: 'draft_confirmed',
+        payload: {},
+        occurredAt: confirmedAt,
+        tx,
+      });
+    });
+  }
 }

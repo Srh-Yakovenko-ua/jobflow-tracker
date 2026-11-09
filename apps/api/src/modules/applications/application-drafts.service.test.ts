@@ -5,14 +5,16 @@ import { describe, expect, it } from 'vitest';
 import type { Prisma } from '../../generated/prisma/client.js';
 import { PrismaService } from '../../prisma/prisma.service.js';
 import { AI_JOB_ID, PARSED_VACANCY_COLUMNS, VACANCY_TEXT } from '../../test/ai.js';
-import { POSSIBLE_DUPLICATE } from '../../test/capture.js';
+import { BLANK_DRAFT_COLUMNS, POSSIBLE_DUPLICATE } from '../../test/capture.js';
 import { FAKE_TRANSACTION, fakeTransactionModule } from '../../test/fake-prisma.js';
 import { type ByUser, RecordedEvents } from '../../test/recorded-events.js';
 import {
   APPLICATION_ID,
+  APPLICATION_NOT_FOUND,
   APPLICATION_ROW,
   BOHDAN_ID,
   MISSING_ID,
+  MISSING_TARGETS,
   OLENA_ID,
 } from '../../test/service-fixtures.js';
 import { minutesBefore, NOW } from '../../test/time.js';
@@ -22,20 +24,26 @@ import {
   type ApplicationById,
   type ApplicationRow,
   ApplicationsRepository,
+  type DraftRow,
   type FillDraft,
   type RecordApplicationEvent,
+  type UpdateApplicationById,
 } from './applications.repository.js';
 import { ApplicationsService, type InsertApplied } from './applications.service.js';
 
 const tx = FAKE_TRANSACTION;
 
-const DRAFT_ROW: ApplicationRow = {
+const EDITED_DRAFT_ROW: ApplicationRow = {
   ...APPLICATION_ROW,
   isDraft: true,
   aiParsed: null,
   rawText: VACANCY_TEXT,
   createdAt: minutesBefore(2),
 };
+
+const DRAFT_ROW: ApplicationRow = { ...EDITED_DRAFT_ROW, ...BLANK_DRAFT_COLUMNS };
+
+const CONFIRM = { applicationId: APPLICATION_ID };
 
 const OUTPUT = buildVacancyParseOutput();
 
@@ -71,6 +79,12 @@ class FakeApplications {
 class FakeDraftsRepository extends RecordedEvents<RecordApplicationEvent> {
   readonly fills: ByUser<FillDraft>[] = [];
 
+  readonly updates: ByUser<UpdateApplicationById>[] = [];
+
+  readonly confirmed: ByUser<ApplicationById>[] = [];
+
+  parseRunning = false;
+
   constructor(private readonly row: ApplicationRow) {
     super();
   }
@@ -79,10 +93,24 @@ class FakeDraftsRepository extends RecordedEvents<RecordApplicationEvent> {
     return Promise.resolve(userId === OLENA_ID && id === this.row.id ? this.row : null);
   }
 
-  async fillDraft(userId: string, input: FillDraft): Promise<Date | null> {
+  async fillDraft(userId: string, input: FillDraft): Promise<DraftRow | null> {
     this.fills.push({ userId, ...input });
     const row = await this.findOwned(userId, input);
-    return row?.isDraft === true && row.aiParsed === null ? row.createdAt : null;
+    return row?.isDraft === true && row.aiParsed === null ? row : null;
+  }
+
+  updateOwned(userId: string, input: UpdateApplicationById): Promise<number> {
+    this.updates.push({ userId, ...input });
+    return Promise.resolve(1);
+  }
+
+  async confirmDraft(userId: string, input: ApplicationById): Promise<number> {
+    const row = await this.findOwned(userId, input);
+    if (row?.isDraft !== true || this.parseRunning) {
+      return 0;
+    }
+    this.confirmed.push({ userId, ...input });
+    return 1;
   }
 }
 
@@ -124,6 +152,11 @@ describe('ApplicationDraftsService.open', () => {
           position: 'Без назви',
           source: 'other',
           stack: [],
+          salaryMin: null,
+          salaryMax: null,
+          currency: null,
+          location: null,
+          workMode: null,
           url: 'https://jobs.example.test/7',
           isDraft: true,
           rawText: VACANCY_TEXT,
@@ -211,9 +244,12 @@ describe('ApplicationDraftsService.fill', () => {
       {
         userId: OLENA_ID,
         id: APPLICATION_ID,
-        data: { ...PARSED_VACANCY_COLUMNS, aiParsed: OUTPUT, isDraft: false },
+        data: { aiParsed: OUTPUT, isDraft: false },
         tx,
       },
+    ]);
+    expect(repository.updates).toEqual([
+      { userId: OLENA_ID, id: APPLICATION_ID, data: PARSED_VACANCY_COLUMNS, tx },
     ]);
     expect(repository.events).toEqual([
       {
@@ -244,6 +280,42 @@ describe('ApplicationDraftsService.fill', () => {
     ]);
   });
 
+  it('keeps a position the user changed while the parse ran', async () => {
+    const row = { ...DRAFT_ROW, position: 'Lead React developer' };
+    const { repository, service, within } = await serviceWith(row);
+
+    await within((client) => service.fill(OLENA_ID, { ...FILL, tx: client }));
+
+    expect(repository.updates.map(({ data }) => data)).toEqual([
+      { ...PARSED_VACANCY_COLUMNS, position: undefined },
+    ]);
+    expect(repository.events.map(({ event }) => event)).toEqual([
+      {
+        eventType: 'application.updated',
+        applicationId: APPLICATION_ID,
+        fields: [...FILLED_FIELDS.filter((field) => field !== 'position'), 'isDraft'],
+      },
+    ]);
+  });
+
+  it('writes only the parse when the user changed every field while it ran', async () => {
+    const { repository, service, within } = await serviceWith(EDITED_DRAFT_ROW);
+
+    await within((client) => service.fill(OLENA_ID, { ...FILL, tx: client }));
+
+    expect(repository.fills.map(({ data }) => data)).toEqual([
+      { aiParsed: OUTPUT, isDraft: false },
+    ]);
+    expect(repository.updates).toEqual([]);
+    expect(repository.events.map(({ event }) => event)).toEqual([
+      {
+        eventType: 'application.updated',
+        applicationId: APPLICATION_ID,
+        fields: ['aiParsed', 'isDraft'],
+      },
+    ]);
+  });
+
   it.each([
     { draft: 'already filled', row: { ...DRAFT_ROW, aiParsed: { company: 'Acme' } } },
     { draft: 'the user has confirmed', row: { ...DRAFT_ROW, isDraft: false } },
@@ -256,5 +328,65 @@ describe('ApplicationDraftsService.fill', () => {
     ).resolves.toBeNull();
 
     expect(repository.events).toEqual([]);
+  });
+});
+
+describe('ApplicationDraftsService.confirm', () => {
+  it('clears the draft flag at the confirm time and records application.updated in the transaction', async () => {
+    const { repository, service, within } = await serviceWith();
+
+    await expect(
+      within((client) => service.confirm(OLENA_ID, { ...CONFIRM, tx: client })),
+    ).resolves.toEqual(NOW);
+
+    expect(repository.confirmed).toEqual([{ userId: OLENA_ID, id: APPLICATION_ID, tx }]);
+    expect(repository.events).toEqual([
+      {
+        userId: OLENA_ID,
+        event: {
+          eventType: 'application.updated',
+          applicationId: APPLICATION_ID,
+          fields: ['isDraft'],
+        },
+        tx,
+      },
+    ]);
+  });
+
+  it.each([
+    {
+      card: 'that is not a draft',
+      row: { ...DRAFT_ROW, isDraft: false },
+      parseRunning: false,
+      detail: 'Application is not a draft',
+    },
+    {
+      card: 'whose vacancy parse is still queued',
+      row: DRAFT_ROW,
+      parseRunning: true,
+      detail: 'Vacancy parse is still running',
+    },
+  ])(
+    'refuses a card $card with 409 and records no event',
+    async ({ row, parseRunning, detail }) => {
+      const { repository, service, within } = await serviceWith(row);
+      repository.parseRunning = parseRunning;
+
+      await expect(
+        within((client) => service.confirm(OLENA_ID, { ...CONFIRM, tx: client })),
+      ).rejects.toMatchObject({ body: { status: 409, detail } });
+
+      expect([repository.confirmed, repository.events]).toEqual([[], []]);
+    },
+  );
+
+  it.each(MISSING_TARGETS)('answers 404 for $case and records no event', async ({ userId, id }) => {
+    const { repository, service, within } = await serviceWith();
+
+    await expect(
+      within((client) => service.confirm(userId, { applicationId: id, tx: client })),
+    ).rejects.toMatchObject(APPLICATION_NOT_FOUND);
+
+    expect([repository.confirmed, repository.events]).toEqual([[], []]);
   });
 });

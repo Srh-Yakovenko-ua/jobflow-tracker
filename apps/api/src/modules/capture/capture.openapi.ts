@@ -8,6 +8,7 @@ import {
 } from '@jobflow/shared';
 
 import {
+  applicationIdParams,
   errorResponses,
   EXAMPLE_APPLICATION_ID,
   idempotencyHeaders,
@@ -32,7 +33,7 @@ export const CAPTURE_OPENAPI_PATHS: RouteConfig[] = [
     tags: ['capture'],
     summary: 'Capture a vacancy from pasted text',
     description:
-      'In one transaction stores a draft Application in the applied stage with the pasted text, its queued AI job, the captured timeline row and the application.capture_requested event. The worker parses the text later: a parse fills the draft and records ai_parsed, a failed one leaves the draft and keeps the text as a note. Answers before any AI call.',
+      'In one transaction stores a draft Application in the applied stage with the pasted text, its queued AI job, the captured timeline row and the application.capture_requested event. The worker parses the text later: a parse fills the fields the user has not changed meanwhile and records ai_parsed, a failed one leaves the draft and keeps the text as a note. Answers before any AI call.',
     request: {
       headers: idempotencyHeaders,
       body: {
@@ -48,6 +49,19 @@ export const CAPTURE_OPENAPI_PATHS: RouteConfig[] = [
         content: jsonContent(capturePasteResponseSchema, ACCEPTED),
       },
       ...errorResponses([400, 401, 403, 409, 422], 'ai'),
+    },
+  },
+  {
+    method: 'post',
+    path: '/capture/drafts/{id}/confirm',
+    tags: ['capture'],
+    summary: 'Confirm a draft',
+    description:
+      'Clears the draft flag of a captured Application, so it reads as a normal card, and in the same transaction records the draft_confirmed timeline row and the application.updated event with fields ["isDraft"]. A draft whose vacancy parse failed can be confirmed. Answers 409 for an Application that is not a draft ("Application is not a draft"), a repeated confirm included, and while its vacancy parse is still queued or processing ("Vacancy parse is still running").',
+    request: { params: applicationIdParams },
+    responses: {
+      204: { description: 'The Application is no longer a draft' },
+      ...errorResponses([401, 403, 404, 409, 422]),
     },
   },
 ];

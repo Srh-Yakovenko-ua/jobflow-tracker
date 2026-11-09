@@ -33,7 +33,14 @@ import {
 } from '../../test/applications.js';
 import { accessTokenFor } from '../../test/auth.js';
 import { overrideBullConfig, REFUSED_REDIS } from '../../test/bull-config.js';
-import { CAPTURE_PASTE_PATH, PASTE, PASTED_URL, postPaste } from '../../test/capture.js';
+import {
+  BLANK_DRAFT_COLUMNS,
+  CAPTURE_PASTE_PATH,
+  PASTE,
+  PASTED_URL,
+  postConfirm,
+  postPaste,
+} from '../../test/capture.js';
 import { createUser } from '../../test/factories.js';
 import { callRoute, errorPathsOf, statusAndDetail } from '../../test/http.js';
 import { expectReplayedCreate } from '../../test/idempotency.js';
@@ -49,20 +56,12 @@ vi.hoisted(() => {
 });
 
 const PLACEHOLDER_DRAFT = {
-  company: 'компанію не розпізнано',
-  position: 'Без назви',
-  source: 'other',
+  ...BLANK_DRAFT_COLUMNS,
   url: PASTED_URL,
   currentStage: 'applied',
   isDraft: true,
   rawText: VACANCY_TEXT,
   aiParsed: null,
-  salaryMin: null,
-  salaryMax: null,
-  currency: null,
-  stack: [],
-  location: null,
-  workMode: null,
 };
 
 const PARSED_DRAFT = {
@@ -71,6 +70,19 @@ const PARSED_DRAFT = {
   isDraft: false,
   aiParsed: VACANCY_COMPLETION.output,
 };
+
+const LOCATION_TO_CHECK = buildVacancyParseOutput({
+  location: { value: 'Львів', confidence: 'check', evidence: 'Lviv or remote' },
+});
+
+const CHECKED_DRAFT = {
+  ...PARSED_DRAFT,
+  location: 'Львів',
+  isDraft: true,
+  aiParsed: LOCATION_TO_CHECK,
+};
+
+const FILL_FIELDS = [...Object.keys(PARSED_VACANCY_COLUMNS), 'aiParsed'];
 
 const SIX_VACANCIES = Array.from(
   { length: 6 },
@@ -176,6 +188,30 @@ describe('POST /api/v1/capture/paste', () => {
   async function kindsOf(applicationId: string) {
     const timeline = await timelineOf(applicationId);
     return timeline.map(({ kind }) => kind);
+  }
+
+  function confirmAs(userId: string, applicationId: string) {
+    const drafts = testApp.app.get(ApplicationDraftsService, { strict: false });
+    return testApp.prisma.$transaction((tx) => drafts.confirm(userId, { applicationId, tx }));
+  }
+
+  async function capturedToCheck() {
+    ai.answer = () => Promise.resolve(buildVacancyCompletion({ output: LOCATION_TO_CHECK }));
+    const olena = await signedInWithSearch(testApp.prisma);
+    const captured = await paste(olena.accessToken);
+    await relayed(captured, 'done');
+    return { ...olena, ...captured };
+  }
+
+  const expectTextKeptAsNote = (applicationId: string) =>
+    expect.poll(() => kindsOf(applicationId), SETTLED).toEqual(['captured', 'note_added']);
+
+  async function updatesOf(applicationId: string) {
+    const updates = await outboxRows(testApp.prisma, {
+      eventType: 'application.updated',
+      aggregateId: applicationId,
+    });
+    return updates.map(({ payload }) => payload);
   }
 
   function fillAs(userId: string, applicationId: string) {
@@ -394,21 +430,9 @@ describe('POST /api/v1/capture/paste', () => {
   );
 
   it('keeps the draft flag when the parse marks a field to check', WORKER_TEST, async () => {
-    const output = buildVacancyParseOutput({
-      location: { value: 'Львів', confidence: 'check', evidence: 'Lviv or remote' },
-    });
-    ai.answer = () => Promise.resolve(buildVacancyCompletion({ output }));
-    const { accessToken } = await signedInWithSearch(testApp.prisma);
-    const captured = await paste(accessToken);
+    const { applicationId } = await capturedToCheck();
 
-    await relayed(captured, 'done');
-
-    expect(await draftOf(captured.applicationId)).toEqual({
-      ...PARSED_DRAFT,
-      location: 'Львів',
-      isDraft: true,
-      aiParsed: output,
-    });
+    expect(await draftOf(applicationId)).toEqual(CHECKED_DRAFT);
   });
 
   it('parses once when the capture event is delivered twice', WORKER_TEST, async () => {
@@ -460,6 +484,137 @@ describe('POST /api/v1/capture/paste', () => {
         { id: captured.applicationId, isDraft: true, aiStatus: 'failed' },
       ]);
       expect(await kindsOf(captured.applicationId)).toEqual(['captured', 'note_added']);
+    },
+  );
+
+  describe('POST /api/v1/capture/drafts/:id/confirm', () => {
+    it(
+      'clears the draft flag of a parsed draft with a field to check, records draft_confirmed and application.updated, and answers 409 to a second confirm',
+      WORKER_TEST,
+      async () => {
+        const { userId, accessToken, applicationId } = await capturedToCheck();
+
+        const first = await postConfirm(testApp.app, { accessToken, id: applicationId });
+        const second = await postConfirm(testApp.app, { accessToken, id: applicationId });
+
+        expect(statusAndDetail(first)).toEqual([204, undefined]);
+        expect(statusAndDetail(second)).toEqual([409, 'Application is not a draft']);
+        expect(await draftOf(applicationId)).toEqual({ ...CHECKED_DRAFT, isDraft: false });
+        expect(await boardCardOf(accessToken)).toEqual([
+          { id: applicationId, isDraft: false, aiStatus: 'done' },
+        ]);
+        expect(await kindsOf(applicationId)).toEqual(['captured', 'ai_parsed', 'draft_confirmed']);
+        expect((await timelineOf(applicationId)).at(-1)).toEqual({
+          kind: 'draft_confirmed',
+          payload: {},
+        });
+        expect(await updatesOf(applicationId)).toEqual([
+          { userId, applicationId, fields: FILL_FIELDS },
+          { userId, applicationId, fields: ['isDraft'] },
+        ]);
+      },
+    );
+
+    it(
+      "answers 404 to another user's token and 401 without a token, and leaves the draft for its owner to confirm",
+      WORKER_TEST,
+      async () => {
+        const { accessToken, applicationId: id } = await capturedToCheck();
+        const bohdan = await signedInWithSearch(testApp.prisma);
+
+        const foreign = await postConfirm(testApp.app, { accessToken: bohdan.accessToken, id });
+        const anonymous = await postConfirm(testApp.app, { id });
+
+        expect(statusAndDetail(foreign)).toEqual([404, 'Application not found']);
+        await expect(confirmAs(bohdan.userId, id)).rejects.toMatchObject({
+          body: { status: 404, detail: 'Application not found' },
+        });
+        expect(anonymous.status).toBe(401);
+        expect(await draftOf(id)).toEqual(CHECKED_DRAFT);
+        expect(await kindsOf(id)).toEqual(['captured', 'ai_parsed']);
+        expect((await postConfirm(testApp.app, { accessToken, id })).status).toBe(204);
+      },
+    );
+
+    it('answers 422 for an id that is not a uuid', async () => {
+      const { accessToken } = await signedInWithSearch(testApp.prisma);
+
+      const response = await postConfirm(testApp.app, { accessToken, id: 'not-a-uuid' });
+
+      expect(response.status).toBe(422);
+    });
+
+    it.each(['queued', 'processing'] as const)(
+      'answers 409 while the vacancy parse is %s and leaves the draft as it was',
+      async (status) => {
+        const { accessToken } = await signedInWithSearch(testApp.prisma);
+        const { applicationId, jobId } = await paste(accessToken);
+        await testApp.prisma.aiJob.update({
+          where: { id: jobId },
+          data: { status },
+          select: { id: true },
+        });
+
+        const response = await postConfirm(testApp.app, { accessToken, id: applicationId });
+
+        expect(statusAndDetail(response)).toEqual([409, 'Vacancy parse is still running']);
+        expect(await draftOf(applicationId)).toEqual(PLACEHOLDER_DRAFT);
+        expect(await kindsOf(applicationId)).toEqual(['captured']);
+      },
+    );
+
+    it('confirms a draft whose vacancy parse failed', WORKER_TEST, async () => {
+      ai.answer = () =>
+        Promise.reject(new AiServiceError({ status: 422, type: 'ai_invalid_output' }));
+      const { accessToken } = await signedInWithSearch(testApp.prisma);
+      const captured = await paste(accessToken);
+      await relayed(captured, 'failed');
+      await expectTextKeptAsNote(captured.applicationId);
+
+      const response = await postConfirm(testApp.app, { accessToken, id: captured.applicationId });
+
+      expect(statusAndDetail(response)).toEqual([204, undefined]);
+      expect(await draftOf(captured.applicationId)).toEqual({
+        ...PLACEHOLDER_DRAFT,
+        isDraft: false,
+      });
+      expect(await kindsOf(captured.applicationId)).toEqual([
+        'captured',
+        'note_added',
+        'draft_confirmed',
+      ]);
+    });
+  });
+
+  it(
+    'keeps a position the user changed while the parse was queued and fills the other fields',
+    WORKER_TEST,
+    async () => {
+      const { userId, accessToken } = await signedInWithSearch(testApp.prisma);
+      const captured = await paste(accessToken);
+      const { applicationId } = captured;
+      const edit = await callRoute(testApp.app, {
+        method: 'patch',
+        path: applicationPath(applicationId),
+        body: { position: 'Lead React developer' },
+        accessToken,
+      });
+
+      await relayed(captured, 'done');
+
+      expect(edit.status).toBe(200);
+      expect(await draftOf(applicationId)).toEqual({
+        ...PARSED_DRAFT,
+        position: 'Lead React developer',
+      });
+      expect(await updatesOf(applicationId)).toEqual([
+        { userId, applicationId, fields: ['position'] },
+        {
+          userId,
+          applicationId,
+          fields: [...FILL_FIELDS.filter((field) => field !== 'position'), 'isDraft'],
+        },
+      ]);
     },
   );
 });
