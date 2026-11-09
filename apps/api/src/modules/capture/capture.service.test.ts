@@ -90,3 +90,34 @@ describe('CaptureService.paste', () => {
     expect([ai.jobs.size, timeline.events, drafts.announced]).toEqual([0, [], []]);
   });
 });
+
+describe('CaptureService.confirm', () => {
+  it('confirms the draft and records one draft_confirmed row at the confirm time in the transaction', async () => {
+    const { drafts, timeline, service } = await serviceWith();
+
+    await service.confirm(OLENA_ID, APPLICATION_ID);
+
+    expect(drafts.confirmed).toEqual([{ userId: OLENA_ID, applicationId: APPLICATION_ID, tx }]);
+    expect(timeline.events).toEqual([
+      {
+        userId: OLENA_ID,
+        applicationId: APPLICATION_ID,
+        kind: 'draft_confirmed',
+        payload: {},
+        occurredAt: NOW,
+        tx,
+      },
+    ]);
+  });
+
+  it('records no timeline row when the draft cannot be confirmed', async () => {
+    const { drafts, timeline, service } = await serviceWith();
+    drafts.refusal = conflict('Application is not a draft');
+
+    await expect(service.confirm(OLENA_ID, APPLICATION_ID)).rejects.toMatchObject({
+      body: { status: 409, detail: 'Application is not a draft' },
+    });
+
+    expect(timeline.events).toEqual([]);
+  });
+});

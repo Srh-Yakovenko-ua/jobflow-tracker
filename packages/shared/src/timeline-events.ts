@@ -13,6 +13,7 @@ export const TIMELINE_EVENT_KINDS = [
   'interview_done',
   'note_added',
   'resume_attached',
+  'draft_confirmed',
 ] as const;
 
 export const timelineEventKindSchema = z.enum(TIMELINE_EVENT_KINDS);
@@ -48,6 +49,7 @@ export const timelineRecordSchema = z.discriminatedUnion('kind', [
     resumeVersionId: resumeVersionIdSchema,
     ...resumeVersionLabelSchema.shape,
   }),
+  timelineRecordOf('draft_confirmed', {}),
 ]);
 
 export type TimelineRecord = z.infer<typeof timelineRecordSchema>;

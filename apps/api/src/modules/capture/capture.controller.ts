@@ -1,9 +1,10 @@
 import {
+  applicationIdSchema,
   type CapturePasteInput,
   capturePasteInputSchema,
   type CapturePasteResponse,
 } from '@jobflow/shared';
-import { Body, Controller, HttpCode, Post, Req } from '@nestjs/common';
+import { Body, Controller, HttpCode, Param, Post, Req } from '@nestjs/common';
 import type { Request } from 'express';
 
 import { Idempotent } from '../../common/idempotency/idempotent.decorator.js';
@@ -26,5 +27,14 @@ export class CaptureController {
     @Req() req: Request,
   ): Promise<CapturePasteResponse> {
     return this.capture.paste(user.id, { input, requestId: readRequestId(req) });
+  }
+
+  @Post('drafts/:id/confirm')
+  @HttpCode(204)
+  confirm(
+    @CurrentUser() user: AccessUser,
+    @Param('id', { schema: applicationIdSchema }) id: string,
+  ): Promise<void> {
+    return this.capture.confirm(user.id, id);
   }
 }

@@ -108,6 +108,7 @@ enum TimelineEventKind {
   interview_done
   note_added
   resume_attached
+  draft_confirmed
 
   @@map("timeline_event_kind")
 }

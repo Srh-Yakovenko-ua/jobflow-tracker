@@ -3,6 +3,7 @@ import { Injectable } from '@nestjs/common';
 
 import { Prisma } from '../../generated/prisma/client.js';
 import type { InTransaction } from '../../prisma/in-transaction.js';
+import { UNSETTLED_AI_JOB_STATUSES } from '../../prisma/latest-ai-job.js';
 import { PrismaService } from '../../prisma/prisma.service.js';
 import { AI_BUDGET } from './ai-budget.js';
 import { AI_QUEUE_ESTIMATE } from './ai-queue-estimate.js';
@@ -79,7 +80,7 @@ export class AiRepository {
 
   async startJob(userId: string, { id, now }: AiJobChange): Promise<number> {
     const { count } = await this.prisma.aiJob.updateMany({
-      where: { id, userId, status: { in: ['queued', 'processing'] } },
+      where: { id, userId, status: { in: UNSETTLED_AI_JOB_STATUSES } },
       data: { status: 'processing', startedAt: now },
     });
     return count;

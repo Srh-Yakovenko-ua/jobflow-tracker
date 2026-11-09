@@ -138,6 +138,7 @@ const LOOKS: Record<TimelineItemType, RowLook> = {
     meta: ({ meta, note }) => textOf(note?.body ?? meta.body),
   },
   resume_attached: { marker: ringed, tone: 'strong', meta: noMeta },
+  draft_confirmed: { marker: ringed, tone: 'muted', meta: noMeta },
 };
 
 function foldedParseOf(items: readonly TimelineItem[]): TimelineItem | undefined {

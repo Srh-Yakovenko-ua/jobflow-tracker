@@ -5,6 +5,7 @@ import { withoutUndefined } from '../../common/without-undefined.js';
 import { Prisma } from '../../generated/prisma/client.js';
 import { EFFECTIVE_STAGE_EVENTS } from '../../prisma/effective-stage-events.js';
 import type { InTransaction } from '../../prisma/in-transaction.js';
+import { UNSETTLED_AI_JOB_STATUSES } from '../../prisma/latest-ai-job.js';
 import { PrismaService } from '../../prisma/prisma.service.js';
 import type { DraftData } from './application-draft-fields.js';
 import { type ApplicationEvent, applicationEvent } from './applications.events.js';
@@ -73,7 +74,24 @@ export type ApplicationById = InTransaction & { id: string };
 
 export type UpdateApplicationById = ApplicationById & { data: ApplicationChanges };
 
-export type FillDraft = ApplicationById & { data: DraftData & { isDraft: boolean } };
+const DRAFT_SELECT = {
+  createdAt: true,
+  company: true,
+  position: true,
+  source: true,
+  salaryMin: true,
+  salaryMax: true,
+  currency: true,
+  stack: true,
+  location: true,
+  workMode: true,
+} satisfies Prisma.ApplicationSelect;
+
+export type DraftRow = Prisma.ApplicationGetPayload<{ select: typeof DRAFT_SELECT }>;
+
+export type FillDraft = ApplicationById & {
+  data: Pick<DraftData, 'aiParsed'> & { isDraft: boolean };
+};
 
 export type SoftDeleteApplication = ApplicationById & { deletedAt: Date };
 
@@ -146,13 +164,30 @@ export class ApplicationsRepository {
     return count;
   }
 
-  async fillDraft(userId: string, { id, data, tx = this.prisma }: FillDraft): Promise<Date | null> {
-    const [filled] = await tx.application.updateManyAndReturn({
+  async fillDraft(
+    userId: string,
+    { id, data, tx = this.prisma }: FillDraft,
+  ): Promise<DraftRow | null> {
+    const [draft] = await tx.application.updateManyAndReturn({
       where: { id, userId, deletedAt: null, isDraft: true, aiParsed: { equals: Prisma.DbNull } },
       data,
-      select: { createdAt: true },
+      select: DRAFT_SELECT,
     });
-    return filled?.createdAt ?? null;
+    return draft ?? null;
+  }
+
+  async confirmDraft(userId: string, { id, tx = this.prisma }: ApplicationById): Promise<number> {
+    const { count } = await tx.application.updateMany({
+      where: {
+        id,
+        userId,
+        deletedAt: null,
+        isDraft: true,
+        aiJobs: { none: { kind: 'vacancy_parse', status: { in: UNSETTLED_AI_JOB_STATUSES } } },
+      },
+      data: { isDraft: false },
+    });
+    return count;
   }
 
   async softDelete(

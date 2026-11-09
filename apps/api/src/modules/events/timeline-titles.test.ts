@@ -119,6 +119,12 @@ const TITLE_CASES: TitleCase[] = [
     title: 'Прикріплено CV v2 · акцент на продукті',
     actor: 'user',
   },
+  {
+    type: 'draft_confirmed',
+    rows: journal({ kind: 'draft_confirmed', payload: {} }),
+    title: 'Поля перевірено вручну',
+    actor: 'user',
+  },
 ];
 
 describe('timeline item titles', () => {
