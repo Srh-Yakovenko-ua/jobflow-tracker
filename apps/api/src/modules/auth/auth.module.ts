@@ -19,6 +19,7 @@ import { OAuthStates } from './oauth-state.js';
 import { PasswordHasher } from './password-hasher.js';
 import { SessionRepository } from './session.repository.js';
 import { SessionService } from './session.service.js';
+import { UserTokens } from './user-tokens.js';
 
 @Module({
   imports: [JwtKeysModule],
@@ -35,6 +36,7 @@ import { SessionService } from './session.service.js';
     PasswordHasher,
     SessionService,
     SessionRepository,
+    UserTokens,
     AccessTokens,
     { provide: APP_GUARD, useClass: JwtAuthGuard },
   ],

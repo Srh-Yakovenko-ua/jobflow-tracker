@@ -1,4 +1,4 @@
-import type { CaptureTokenCreated } from '@jobflow/shared';
+import type { CaptureTokenCreated, CaptureTokenListResponse } from '@jobflow/shared';
 import { Injectable } from '@nestjs/common';
 
 import { notFound, unauthorized } from '../../common/app-error.js';
@@ -18,6 +18,17 @@ export class CaptureTokensService {
       now: new Date(),
     });
     return { id, token, createdAt: createdAt.toISOString() };
+  }
+
+  async list(userId: string): Promise<CaptureTokenListResponse> {
+    const tokens = await this.repository.findActive(userId);
+    return {
+      items: tokens.map(({ id, createdAt, lastUsedAt }) => ({
+        id,
+        createdAt: createdAt.toISOString(),
+        lastUsedAt: lastUsedAt?.toISOString() ?? null,
+      })),
+    };
   }
 
   async revoke(userId: string, id: string): Promise<void> {

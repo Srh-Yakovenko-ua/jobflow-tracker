@@ -17,7 +17,8 @@ import {
 } from './auth.repository.js';
 import { AuthService, type OAuthIdentity } from './auth.service.js';
 import { PasswordHasher } from './password-hasher.js';
-import { type RevokeAllInput, SessionRepository } from './session.repository.js';
+import type { RevokeAllInput } from './session.repository.js';
+import { UserTokens } from './user-tokens.js';
 
 type InTransaction<T> = T & { client: unknown };
 
@@ -36,7 +37,7 @@ const ANNA: AuthUser = {
   locale: 'uk',
 };
 
-class FakeSessionRepository {
+class FakeUserTokens {
   readonly revokedAll: InTransaction<RevokeAllInput>[] = [];
 
   revokeAll(input: RevokeAllInput, client: unknown): Promise<void> {
@@ -112,21 +113,21 @@ class FakeAuthRepository {
 
 async function authServiceWith(users: UserCredentials[] = [], profiles: UserProfile[] = []) {
   const repository = new FakeAuthRepository(users, profiles);
-  const sessions = new FakeSessionRepository();
+  const tokens = new FakeUserTokens();
   const hasher = new FakePasswordHasher();
   const moduleRef = await Test.createTestingModule({
-    providers: [AuthService, AuthRepository, SessionRepository, PasswordHasher, PrismaService],
+    providers: [AuthService, AuthRepository, UserTokens, PasswordHasher, PrismaService],
   })
     .overrideProvider(AuthRepository)
     .useValue(repository)
-    .overrideProvider(SessionRepository)
-    .useValue(sessions)
+    .overrideProvider(UserTokens)
+    .useValue(tokens)
     .overrideProvider(PasswordHasher)
     .useValue(hasher)
     .overrideProvider(PrismaService)
     .useValue(new FakePrisma())
     .compile();
-  return { repository, sessions, hasher, service: moduleRef.get(AuthService) };
+  return { repository, tokens, hasher, service: moduleRef.get(AuthService) };
 }
 
 const INVALID_CREDENTIALS = {
@@ -207,14 +208,14 @@ describe('AuthService.changePassword', () => {
   });
 
   it('stores the new hash and revokes every family but the current one in one transaction', async () => {
-    const { repository, sessions, service } = await authServiceWith([annaWithPassword]);
+    const { repository, tokens, service } = await authServiceWith([annaWithPassword]);
 
     await service.changePassword({ userId: ANNA.id, input, keepFamilyId: FAMILY_ID });
 
     expect(repository.passwords).toEqual([
       { userId: ANNA.id, passwordHash: 'hashed:a brand new secret', client: FAKE_TRANSACTION },
     ]);
-    expect(sessions.revokedAll).toEqual([
+    expect(tokens.revokedAll).toEqual([
       { userId: ANNA.id, now: NOW, keepFamilyId: FAMILY_ID, client: FAKE_TRANSACTION },
     ]);
   });
@@ -233,7 +234,7 @@ describe('AuthService.changePassword', () => {
   ])(
     'refuses $case with 422 on currentPassword and keeps the old hash',
     async ({ users, currentPassword }) => {
-      const { repository, sessions, service } = await authServiceWith(users);
+      const { repository, tokens, service } = await authServiceWith(users);
 
       const failure = service.changePassword({
         userId: ANNA.id,
@@ -248,7 +249,7 @@ describe('AuthService.changePassword', () => {
           errors: [{ path: 'currentPassword', message: 'Current password is wrong' }],
         },
       });
-      expect([repository.passwords, sessions.revokedAll]).toEqual([[], []]);
+      expect([repository.passwords, tokens.revokedAll]).toEqual([[], []]);
     },
   );
 });
@@ -288,7 +289,7 @@ describe('AuthService.signInWithOAuth', () => {
   });
 
   it('links the GitHub account to the passwordless user with the same verified email and keeps its sessions', async () => {
-    const { repository, sessions, service } = await authServiceWith([
+    const { repository, tokens, service } = await authServiceWith([
       bohdan,
       { ...ANNA, passwordHash: null },
     ]);
@@ -297,11 +298,11 @@ describe('AuthService.signInWithOAuth', () => {
 
     expect(user).toEqual(ANNA);
     expect(repository.linked).toEqual([{ userId: ANNA.id, ...GITHUB_ANNA }]);
-    expect([repository.created, repository.passwords, sessions.revokedAll]).toEqual([[], [], []]);
+    expect([repository.created, repository.passwords, tokens.revokedAll]).toEqual([[], [], []]);
   });
 
   it('links the GitHub account to the password user with the same verified email, drops the password and revokes every session in one transaction', async () => {
-    const { repository, sessions, service } = await authServiceWith([bohdan, annaWithPassword]);
+    const { repository, tokens, service } = await authServiceWith([bohdan, annaWithPassword]);
 
     const user = await service.signInWithOAuth(annaOnGitHub);
 
@@ -312,7 +313,7 @@ describe('AuthService.signInWithOAuth', () => {
     expect(repository.passwords).toEqual([
       { userId: ANNA.id, passwordHash: null, client: FAKE_TRANSACTION },
     ]);
-    expect(sessions.revokedAll).toEqual([{ userId: ANNA.id, now: NOW, client: FAKE_TRANSACTION }]);
+    expect(tokens.revokedAll).toEqual([{ userId: ANNA.id, now: NOW, client: FAKE_TRANSACTION }]);
   });
 
   it('creates a user without a password for a new verified email', async () => {

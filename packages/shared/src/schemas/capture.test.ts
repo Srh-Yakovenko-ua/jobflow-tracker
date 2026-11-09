@@ -6,6 +6,7 @@ import {
   captureBookmarkletInputSchema,
   capturePasteInputSchema,
   captureTokenCreatedSchema,
+  captureTokenListResponseSchema,
 } from './capture.js';
 
 const text = 'Senior Frontend Engineer у Grammarly\nReact, TypeScript\n';
@@ -85,12 +86,13 @@ describe('captureBookmarkletInputSchema', () => {
   });
 });
 
+const issued = {
+  id: '0199f1a0-3c4d-7e5f-8a6b-7c8d9e0f1a2b',
+  createdAt: '2026-11-10T09:00:00.000Z',
+};
+
 describe('captureTokenCreatedSchema', () => {
-  const created = {
-    id: '0199f1a0-3c4d-7e5f-8a6b-7c8d9e0f1a2b',
-    token: 'Zm9vYmFyYmF6cXV4Zm9vYmFyYmF6cXV4Zm9vYmFyYmF6cXV4',
-    createdAt: '2026-11-10T09:00:00.000Z',
-  };
+  const created = { ...issued, token: 'Zm9vYmFyYmF6cXV4Zm9vYmFyYmF6cXV4Zm9vYmFyYmF6cXV4' };
 
   it('accepts the id, the token and the creation time', () => {
     expect(captureTokenCreatedSchema.parse(created)).toEqual(created);
@@ -99,6 +101,27 @@ describe('captureTokenCreatedSchema', () => {
   it('refuses an empty token at token', () => {
     expect(issuePathsOf(captureTokenCreatedSchema.safeParse({ ...created, token: '' }))).toEqual([
       'token',
+    ]);
+  });
+});
+
+describe('captureTokenListResponseSchema', () => {
+  it.each([
+    { label: 'an empty list', items: [] },
+    { label: 'a capture token never used', items: [{ ...issued, lastUsedAt: null }] },
+    {
+      label: 'a capture token with its last used time',
+      items: [{ ...issued, lastUsedAt: '2026-11-10T09:05:00.000Z' }],
+    },
+  ])('accepts $label unchanged', ({ items }) => {
+    expect(captureTokenListResponseSchema.parse({ items })).toEqual({ items });
+  });
+
+  it('refuses a last used time that is not an ISO time at items.0.lastUsedAt', () => {
+    const items = [{ ...issued, lastUsedAt: '10.11.2026 09:05' }];
+
+    expect(issuePathsOf(captureTokenListResponseSchema.safeParse({ items }))).toEqual([
+      'items.0.lastUsedAt',
     ]);
   });
 });

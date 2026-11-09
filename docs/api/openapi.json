@@ -996,7 +996,7 @@
           "auth"
         ],
         "summary": "Finish a sign-in with Google or GitHub",
-        "description": "Takes code and state, or the provider's error when the user declined. Links the provider account by verified email, dropping a password and the sessions it opened, or creates a user without a password. 400 when state does not match the oauth_state cookie, 409 when the user already has another account of the provider, 422 without code and state or error, 503 when the provider is not reachable.",
+        "description": "Takes code and state, or the provider's error when the user declined. Links the provider account by verified email, dropping a password, the sessions it opened and its capture token, or creates a user without a password. 400 when state does not match the oauth_state cookie, 409 when the user already has another account of the provider, 422 without code and state or error, 503 when the provider is not reachable.",
         "security": [],
         "parameters": [
           {
@@ -1634,7 +1634,7 @@
           "auth"
         ],
         "summary": "Change the password",
-        "description": "Keeps the session of the refresh_token cookie and revokes the others; 422 when currentPassword is wrong.",
+        "description": "Keeps the session of the refresh_token cookie, revokes the others and revokes the capture token of the bookmarklet; 422 when currentPassword is wrong.",
         "requestBody": {
           "required": true,
           "content": {
@@ -2153,6 +2153,142 @@
       }
     },
     "/capture/tokens": {
+      "get": {
+        "tags": [
+          "capture"
+        ],
+        "summary": "List the active capture tokens of the bookmarklet",
+        "description": "The capture tokens of the user that are not revoked, newest first; the list is empty when there is none. The token and its hash are never returned. lastUsedAt is null until the token is first used.",
+        "responses": {
+          "200": {
+            "description": "The active capture tokens",
+            "content": {
+              "application/json": {
+                "example": {
+                  "items": [
+                    {
+                      "id": "0199f4c2-3d4e-7f50-8a61-7c8d9e0f1a2b",
+                      "createdAt": "2026-11-10T09:15:00.000Z",
+                      "lastUsedAt": "2026-11-10T09:20:00.000Z"
+                    }
+                  ]
+                },
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string",
+                            "format": "uuid"
+                          },
+                          "createdAt": {
+                            "type": "string",
+                            "format": "date-time"
+                          },
+                          "lastUsedAt": {
+                            "type": [
+                              "string",
+                              "null"
+                            ],
+                            "format": "date-time"
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "createdAt",
+                          "lastUsedAt"
+                        ]
+                      }
+                    }
+                  },
+                  "required": [
+                    "items"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "example": {
+                  "type": "unauthorized",
+                  "title": "Unauthorized",
+                  "status": 401,
+                  "requestId": "0199f0c4-5d2e-7b31-8c4f-6a7b8c9d0e1f"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "example": {
+                  "type": "forbidden",
+                  "title": "Forbidden",
+                  "status": 403,
+                  "requestId": "0199f0c4-5d2e-7b31-8c4f-6a7b8c9d0e1f"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too many requests: 300 per 60 s by default (RATE_LIMIT_API_PER_MINUTE)",
+            "headers": {
+              "Retry-After": {
+                "schema": {
+                  "type": "integer",
+                  "exclusiveMinimum": 0,
+                  "description": "Seconds until the limit window resets"
+                },
+                "required": true,
+                "description": "Seconds until the limit window resets"
+              }
+            },
+            "content": {
+              "application/json": {
+                "example": {
+                  "type": "rate_limited",
+                  "title": "Too many requests",
+                  "status": 429,
+                  "requestId": "0199f0c4-5d2e-7b31-8c4f-6a7b8c9d0e1f"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal error",
+            "content": {
+              "application/json": {
+                "example": {
+                  "type": "internal_error",
+                  "title": "Internal error",
+                  "status": 500,
+                  "requestId": "0199f0c4-5d2e-7b31-8c4f-6a7b8c9d0e1f"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      },
       "post": {
         "tags": [
           "capture"

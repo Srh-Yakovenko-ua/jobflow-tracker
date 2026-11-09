@@ -1,6 +1,6 @@
 import { createHash } from 'node:crypto';
 
-import { captureTokenCreatedSchema } from '@jobflow/shared';
+import { captureTokenCreatedSchema, captureTokenListResponseSchema } from '@jobflow/shared';
 import { describe, expect, it } from 'vitest';
 
 import { buildOpenApiDocument } from '../../openapi/document.js';
@@ -40,6 +40,9 @@ describe('capture tokens', () => {
       path: `${CAPTURE_TOKENS_PATH}/${id}`,
       accessToken,
     });
+
+  const listTokens = (accessToken?: string) =>
+    callRoute(testApp.app, { method: 'get', path: CAPTURE_TOKENS_PATH, accessToken });
 
   const captureWith = (captureToken: string) =>
     postBookmarklet(testApp.app, { captureToken, input: BOOKMARKLET });
@@ -107,6 +110,47 @@ describe('capture tokens', () => {
     expect(statusAndDetail(repeated)).toEqual(TOKEN_NOT_FOUND);
   });
 
+  it('lists the active capture token with its last use and neither the token nor its hash, and nothing after the revoke', async () => {
+    const { accessToken } = await signedInWithSearch(testApp.prisma);
+    const { id, token, createdAt } = await issueCaptureToken(testApp.app, accessToken);
+
+    const unused = await listTokens(accessToken);
+    expect((await captureWith(token)).status).toBe(202);
+    const used = await listTokens(accessToken);
+    const stored = await testApp.prisma.captureToken.findUniqueOrThrow({ where: { id } });
+    expect((await revokeToken({ accessToken, id })).status).toBe(204);
+    const revoked = await listTokens(accessToken);
+
+    expect([unused.status, unused.body]).toEqual([
+      200,
+      { items: [{ id, createdAt, lastUsedAt: null }] },
+    ]);
+    expect(stored.lastUsedAt).toBeInstanceOf(Date);
+    expect(used.body).toEqual({
+      items: [{ id, createdAt, lastUsedAt: stored.lastUsedAt?.toISOString() }],
+    });
+    expect(used.body).toEqual(captureTokenListResponseSchema.parse(used.body));
+    expect(JSON.stringify(used.body)).not.toContain(token);
+    expect(JSON.stringify(used.body)).not.toContain(stored.tokenHash);
+    expect([revoked.status, revoked.body]).toEqual([200, { items: [] }]);
+  });
+
+  it('lists to each user their own capture token and nothing to a user without one', async () => {
+    const olena = await signedInWithCaptureToken(testApp);
+    const bohdan = await signedInWithCaptureToken(testApp);
+    const taras = await signedInWithSearch(testApp.prisma);
+
+    const [toOlena, toBohdan, toTaras] = await Promise.all(
+      [olena, bohdan, taras].map(({ accessToken }) => listTokens(accessToken)),
+    );
+
+    expect([toOlena?.body, toBohdan?.body, toTaras?.body]).toMatchObject([
+      { items: [{ id: olena.captureTokenId }] },
+      { items: [{ id: bohdan.captureTokenId }] },
+      { items: [] },
+    ]);
+  });
+
   it("answers 404 to a revoke of another user's capture token, which still captures for its owner", async () => {
     const olena = await signedInWithCaptureToken(testApp);
     const bohdan = await signedInWithSearch(testApp.prisma);
@@ -138,11 +182,12 @@ describe('capture tokens', () => {
     expect(await draftCount()).toBe(0);
   });
 
-  it('answers 401 without a token to a create and to a revoke, and stores no token', async () => {
+  it('answers 401 without a token to a create, a list and a revoke, and stores no token', async () => {
     const created = await createToken();
+    const listed = await listTokens();
     const revoked = await revokeToken({ id: UNKNOWN_TOKEN_ID });
 
-    expect([created.status, revoked.status]).toEqual([401, 401]);
+    expect([created.status, listed.status, revoked.status]).toEqual([401, 401, 401]);
     expect(await storedTokens()).toEqual([]);
   });
 

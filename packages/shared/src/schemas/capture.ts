@@ -36,7 +36,17 @@ export const captureTokenCreatedSchema = z.object({
   createdAt: z.iso.datetime(),
 });
 
+export const captureTokenSummarySchema = captureTokenCreatedSchema
+  .omit({ token: true })
+  .extend({ lastUsedAt: z.iso.datetime().nullable() });
+
+export const captureTokenListResponseSchema = z.object({
+  items: z.array(captureTokenSummarySchema),
+});
+
 export type CapturePasteInput = z.infer<typeof capturePasteInputSchema>;
 export type CaptureBookmarkletInput = z.infer<typeof captureBookmarkletInputSchema>;
 export type CapturePasteResponse = z.infer<typeof capturePasteResponseSchema>;
 export type CaptureTokenCreated = z.infer<typeof captureTokenCreatedSchema>;
+export type CaptureTokenSummary = z.infer<typeof captureTokenSummarySchema>;
+export type CaptureTokenListResponse = z.infer<typeof captureTokenListResponseSchema>;

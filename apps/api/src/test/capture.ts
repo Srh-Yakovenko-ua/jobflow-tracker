@@ -85,6 +85,14 @@ export function postBookmarklet(
   });
 }
 
+export async function bookmarkletStatus(
+  app: NestExpressApplication,
+  captureToken: string,
+): Promise<number> {
+  const response = await postBookmarklet(app, { captureToken, input: BOOKMARKLET });
+  return response.status;
+}
+
 export const BLANK_DRAFT_COLUMNS = {
   company: 'компанію не розпізнано',
   position: 'Без назви',
