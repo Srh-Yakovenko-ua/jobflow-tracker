@@ -1,7 +1,7 @@
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
-import type { ApplicationResponse } from '@jobflow/shared';
+import { type ApplicationResponse, DRAFT_PLACEHOLDERS } from '@jobflow/shared';
 import Link from 'next/link';
 import { type ReactNode, useState } from 'react';
 import { useForm } from 'react-hook-form';
@@ -13,13 +13,13 @@ import { Button, buttonLinkClasses } from '@/shared/ui/button';
 import { FormServerError } from '@/shared/ui/form-server-error';
 import { TOUCH_HEIGHT } from '@/shared/ui/touch-height';
 
+import { REVIEWED_FIELDS, type ReviewFields, reviewFieldsOf } from '../lib/review-fields';
 import {
-  NO_REVIEW,
-  REVIEWED_FIELDS,
-  type ReviewFields,
-  reviewFieldsOf,
-} from '../lib/review-fields';
-import { editFormSchemaOf, formValuesOf } from '../model/edit-form';
+  type EditField,
+  editFormSchemaOf,
+  type EditFormValues,
+  formValuesOf,
+} from '../model/edit-form';
 import { useConfirmDraft } from '../model/use-confirm-draft';
 import { REVIEW_NAMES } from './confidence-chip';
 import { ReviewFormFields } from './review-form-fields';
@@ -28,6 +28,7 @@ export type DraftReviewProps = Readonly<{
   application: ApplicationResponse;
   actions: { onConfirmed: () => void };
   heading?: ReactNode;
+  view?: { name?: string; focusField?: EditField };
 }>;
 
 const COPY = uk.add.review;
@@ -47,11 +48,24 @@ function ReviewNote({ reviews }: Readonly<{ reviews: ReviewFields }>) {
   );
 }
 
-export function DraftReview({ application, actions, heading }: DraftReviewProps) {
+function blankOr(value: string, placeholder: string): string {
+  return value === placeholder ? '' : value;
+}
+
+function draftValuesOf(application: ApplicationResponse): EditFormValues {
+  const values = formValuesOf(application);
+  return {
+    ...values,
+    position: blankOr(values.position, DRAFT_PLACEHOLDERS.position),
+    company: blankOr(values.company, DRAFT_PLACEHOLDERS.company),
+  };
+}
+
+export function DraftReview({ application, actions, heading, view = {} }: DraftReviewProps) {
   const [source, setSource] = useState(application.source);
   const methods = useForm({
     mode: 'onTouched',
-    defaultValues: formValuesOf(application),
+    defaultValues: draftValuesOf(application),
     resolver: zodResolver(editFormSchemaOf(application)),
   });
   const mutation = useConfirmDraft({
@@ -59,7 +73,7 @@ export function DraftReview({ application, actions, heading }: DraftReviewProps)
     setError: methods.setError,
     actions,
   });
-  const reviews = reviewFieldsOf(application) ?? NO_REVIEW;
+  const reviews = reviewFieldsOf(application);
   const send = methods.handleSubmit((patch) => {
     mutation.save(source === application.source ? patch : { ...patch, source });
   });
@@ -67,7 +81,7 @@ export function DraftReview({ application, actions, heading }: DraftReviewProps)
     <form
       method="post"
       noValidate
-      aria-label={COPY.title}
+      aria-label={view.name ?? COPY.title}
       onSubmit={(event) => {
         void send(event);
       }}
@@ -79,12 +93,12 @@ export function DraftReview({ application, actions, heading }: DraftReviewProps)
       </div>
       <FormServerError control={methods.control} />
       <ReviewFormFields
-        form={{ methods }}
+        form={{ methods, ...(view.focusField !== undefined && { focusField: view.focusField }) }}
         application={application}
         reviews={reviews}
         source={{ value: source, onChange: setSource }}
       />
-      <ReviewNote reviews={reviews} />
+      {reviews !== null && <ReviewNote reviews={reviews} />}
       <div className="flex flex-wrap items-center gap-2.5">
         <Button type="submit" size="lg" loading={mutation.isPending} className={TOUCH_HEIGHT}>
           {COPY.confirm}

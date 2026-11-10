@@ -1,3 +1,4 @@
+import type { Note } from '@jobflow/shared';
 import { describe, expect, it } from 'vitest';
 
 import { VACANCY_COMPLETION, VACANCY_JOB, VACANCY_TEXT } from '../../test/ai.js';
@@ -23,9 +24,16 @@ const msAfterNow = (ms: number) => new Date(NOW.getTime() + ms);
 class FakeNotes {
   readonly created: ByUser<CreateNote>[] = [];
 
+  kept: Pick<Note, 'body'>[] = [];
+
   create(userId: string, note: CreateNote): Promise<void> {
     this.created.push({ userId, ...note });
+    this.kept.push(note.input);
     return Promise.resolve();
+  }
+
+  list(): Promise<{ items: Pick<Note, 'body'>[] }> {
+    return Promise.resolve({ items: this.kept });
   }
 }
 
@@ -108,6 +116,31 @@ describe('CaptureParseService.settle, a failed job', () => {
       { userId: OLENA_ID, applicationId: APPLICATION_ID, input: { body: VACANCY_TEXT } },
     ]);
     expect([drafts.fills, timeline.events]).toEqual([[], []]);
+  });
+
+  it('writes no second note when a parse of the same draft fails again', async () => {
+    const { notes, service } = await serviceWith();
+
+    await service.settle(FAILED);
+    await service.settle({ ...FAILED, errorType: 'ai_timeout' });
+
+    expect(notes.created.map(({ input }) => input)).toEqual([{ body: VACANCY_TEXT }]);
+  });
+
+  it.each([
+    { card: 'whose note was deleted', kept: [] },
+    { card: 'whose note was edited', kept: [{ body: 'Senior React developer, Acme' }] },
+  ])('writes the pasted text again for a card $card', async ({ kept }) => {
+    const { notes, service } = await serviceWith();
+    await service.settle(FAILED);
+    notes.kept = kept;
+
+    await service.settle(FAILED);
+
+    expect(notes.created.map(({ input }) => input)).toEqual([
+      { body: VACANCY_TEXT },
+      { body: VACANCY_TEXT },
+    ]);
   });
 
   it("writes no note for a draft that is gone or another user's", async () => {

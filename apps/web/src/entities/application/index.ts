@@ -23,6 +23,7 @@ export { NextEventChip, type NextEventChipProps } from './ui/next-event-chip';
 export { OutcomeBadge, type OutcomeBadgeProps } from './ui/outcome-badge';
 export { ParsingCard, type ParsingCardProps } from './ui/parsing-card';
 export { PreviewCard, type PreviewCardProps } from './ui/preview-card';
+export type { DraftMark } from './ui/review-mark';
 export { ScoreBadge, type ScoreBadgeProps } from './ui/score-badge';
 export { SearchSnippet, type SearchSnippetProps } from './ui/search-snippet';
 export { SilenceIndicator, type SilenceIndicatorProps } from './ui/silence-indicator';

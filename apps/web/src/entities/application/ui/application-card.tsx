@@ -8,7 +8,8 @@ import { uk } from '@/shared/i18n';
 import { cn } from '@/shared/lib/cn';
 
 import { formatDaysInStage } from '../lib/days-in-stage';
-import { draftStateOf } from '../lib/draft-state';
+import { type DraftState, draftStateOf } from '../lib/draft-state';
+import type { ScoreSource } from '../lib/score-tier';
 import type { ApplicationCardContext } from '../model/card-context';
 import type { CardDensity } from '../model/card-density';
 import { CardFooter } from './card-footer';
@@ -17,7 +18,7 @@ import { CardHeading } from './card-heading';
 import { NextEventChip } from './next-event-chip';
 import { OfferCard } from './offer-card';
 import { ParsingCard } from './parsing-card';
-import { ReviewMark } from './review-mark';
+import { type DraftMark, ReviewMark, TextKeptLine } from './review-mark';
 import { ScoreBadge } from './score-badge';
 import { SilenceIndicator } from './silence-indicator';
 import { STAGE_COLOR_CLASS } from './stage-color';
@@ -35,7 +36,10 @@ const CARD_LOOK = {
   silent: 'bg-surface-2 text-ink-2 inset-ring inset-ring-line-soft',
 };
 
-const REVIEW_LOOK = 'animate-fade-in inset-ring inset-ring-accent/25';
+const MARK_LOOK: Record<DraftMark, string> = {
+  review: 'animate-fade-in inset-ring inset-ring-accent/25',
+  failed: 'animate-fade-in text-ink-3 inset-ring inset-ring-rejected',
+};
 
 function StackTags({ application }: Readonly<{ application: ApplicationCardData }>) {
   const hidden = application.stackCount - application.stack.length;
@@ -76,9 +80,31 @@ function DaysInStage({
   );
 }
 
-type FieldsCardProps = ApplicationCardProps & Readonly<{ review: boolean }>;
+type FieldsCardProps = ApplicationCardProps & Readonly<{ mark: DraftMark | null }>;
 
-function FieldsCard({ application, view, context, review }: FieldsCardProps) {
+type MarkedCard = Pick<FieldsCardProps, 'application' | 'mark'>;
+
+function scoredOf({ application, mark }: MarkedCard): ScoreSource {
+  return mark === 'failed' ? { ...application, aiStatus: null } : application;
+}
+
+function FieldsFooter({ application, mark }: MarkedCard) {
+  if (mark === 'failed') return <TextKeptLine />;
+  const silent = application.silenceLevel === 'silent';
+  return (
+    <CardFooter
+      application={application}
+      view={{ muted: silent }}
+      aside={
+        application.silenceLevel === 'none' ? undefined : (
+          <SilenceIndicator application={application} />
+        )
+      }
+    />
+  );
+}
+
+function FieldsCard({ application, view, context, mark }: FieldsCardProps) {
   const silent = application.silenceLevel === 'silent';
   const showStack = view?.density !== 'compact' && application.stack.length > 0;
   return (
@@ -87,30 +113,28 @@ function FieldsCard({ application, view, context, review }: FieldsCardProps) {
         CARD_FRAME.article,
         CARD_LOOK[silent ? 'silent' : 'live'],
         showStack ? 'gap-2.75' : 'gap-2.5',
-        review && REVIEW_LOOK,
+        mark !== null && MARK_LOOK[mark],
       )}
     >
-      {review && <ReviewMark />}
+      {mark !== null && <ReviewMark mark={mark} />}
       <CardHeading
         application={application}
-        badge={<ScoreBadge application={application} view={{ muted: silent }} />}
+        badge={
+          <ScoreBadge application={scoredOf({ application, mark })} view={{ muted: silent }} />
+        }
       />
       {showStack && <StackTags application={application} />}
       {application.nextScheduledEvent !== null && (
         <NextEventChip event={application.nextScheduledEvent} context={context} />
       )}
       <DaysInStage application={application} context={context} />
-      <CardFooter
-        application={application}
-        view={{ muted: silent }}
-        aside={
-          application.silenceLevel === 'none' ? undefined : (
-            <SilenceIndicator application={application} />
-          )
-        }
-      />
+      <FieldsFooter application={application} mark={mark} />
     </article>
   );
+}
+
+function markOf(draft: DraftState): DraftMark | null {
+  return draft === 'review' || draft === 'failed' ? draft : null;
 }
 
 export function ApplicationCard(card: ApplicationCardProps) {
@@ -122,5 +146,5 @@ export function ApplicationCard(card: ApplicationCardProps) {
   if (application.currentStage === 'offer') {
     return <OfferCard application={application} context={context} />;
   }
-  return <FieldsCard {...card} review={draft === 'review'} />;
+  return <FieldsCard {...card} mark={markOf(draft)} />;
 }

@@ -31,6 +31,8 @@ export const application = {
     queued: 'у черзі',
     queuedEta: (eta: string) => `у черзі · ~${eta}`,
     review: 'перевір поля',
+    failed: 'потрібні поля',
+    textKept: 'текст збережено в нотатці',
   },
   nextEvent: {
     today: 'сьогодні',

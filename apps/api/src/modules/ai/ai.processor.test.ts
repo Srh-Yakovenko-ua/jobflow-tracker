@@ -146,6 +146,7 @@ describe('AiProcessor', () => {
     { status: 429, type: 'rate_limited' },
     { status: 504, type: 'ai_timeout' },
     { status: 503, type: 'not_ready' },
+    { status: 502, type: 'ai_provider_error' },
   ])('rethrows a $status $type so BullMQ retries it with backoff', async (failure) => {
     const refusal = new AiServiceError(failure);
     ai.answer = () => Promise.reject(refusal);

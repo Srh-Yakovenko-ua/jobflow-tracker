@@ -104,16 +104,35 @@ describe('KanbanBoard drafts', () => {
     });
   });
 
-  it('a board with no parsing draft is asked once and never on a timer', async () => {
-    fakeTimeoutsAndIntervals();
-    const boardRequests = boardRequestsOf(recordSentRequests());
-    renderBoard(oneDraftBoard({ aiStatus: 'done', aiJobId: JOB_ID }));
-    await screen.findByText('перевір поля');
+  it('a draft whose parse failed shows потрібні поля with the kept text line and opens the failure flow with its job', async () => {
+    renderBoard(oneDraftBoard({ aiStatus: 'failed', aiJobId: JOB_ID }));
 
-    await wait(30_000);
+    const link = (await screen.findByText('потрібні поля')).closest('a');
 
-    expect(boardRequests()).toHaveLength(1);
+    expect(screen.getByText('текст збережено в нотатці')).toBeDefined();
+    expect(screen.getByText('Draft 301')).toBeDefined();
+    expect(screen.queryByText('перевір поля')).toBeNull();
+    expect(screen.queryByRole('img', { name: 'Match Score не пораховано' })).toBeNull();
+    expect(link?.getAttribute('href')).toBe(`/add?review=${fixtureIdOf(301)}&job=${JOB_ID}#review`);
+    expect(link?.dataset.scroll).toBe('true');
   });
+
+  it.each([
+    { aiStatus: 'done', mark: 'перевір поля' },
+    { aiStatus: 'failed', mark: 'потрібні поля' },
+  ] as const)(
+    'a board whose only draft is $aiStatus is asked once and never on a timer',
+    async ({ aiStatus, mark }) => {
+      fakeTimeoutsAndIntervals();
+      const boardRequests = boardRequestsOf(recordSentRequests());
+      renderBoard(oneDraftBoard({ aiStatus, aiJobId: JOB_ID }));
+      await screen.findByText(mark);
+
+      await wait(30_000);
+
+      expect(boardRequests()).toHaveLength(1);
+    },
+  );
 
   it('20 parsing drafts in відгук stand still: no bar shimmers and no dot pulses', async () => {
     const cards = Array.from({ length: 20 }, (_, slot) => draftIn(400 + slot, PROCESSING));

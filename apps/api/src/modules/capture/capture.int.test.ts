@@ -1,6 +1,8 @@
 import {
-  type CapturePasteResponse,
+  type AiJobStatus,
   capturePasteResponseSchema,
+  type CaptureRetryResponse,
+  captureRetryResponseSchema,
   errorResponseSchema,
   timelineRecordSchema,
 } from '@jobflow/shared';
@@ -44,6 +46,7 @@ import {
   CAPTURE_BOOKMARKLET_PATH,
   CAPTURE_PASTE_PATH,
   captureAuthorization,
+  draftRetryPath,
   issueCaptureToken,
   JOB_BOARD_ORIGIN,
   PASTE,
@@ -51,6 +54,7 @@ import {
   postBookmarklet,
   postConfirm,
   postPaste,
+  postRetry,
   signedInWithCaptureToken,
 } from '../../test/capture.js';
 import { createUser } from '../../test/factories.js';
@@ -132,6 +136,26 @@ const DRAFT_COLUMNS = {
   workMode: true,
 } satisfies Prisma.ApplicationSelect;
 
+type FailedDraft = { accessToken: string; applicationId: string };
+
+const refusedByAi = () =>
+  Promise.reject(new AiServiceError({ status: 422, type: 'ai_invalid_output' }));
+
+const FINAL_FAILURES = [
+  {
+    failure: 'services/ai refuses the text with 422',
+    answer: refusedByAi,
+    errorType: 'ai_invalid_output',
+    callsWithRetry: 2,
+  },
+  {
+    failure: 'the parse names no company and no position',
+    answer: () => Promise.resolve(NAMELESS_VACANCY_COMPLETION),
+    errorType: 'no_company_no_position',
+    callsWithRetry: 1,
+  },
+];
+
 const AI_QUEUE_AFTER_ONE_PARSE = { waiting: 0, active: 0, delayed: 0, completed: 1 };
 
 const WORKER_TEST = { timeout: 30_000 };
@@ -149,6 +173,12 @@ const pushedTo = ({ frames }: SseStream, type: string) =>
 const log = memoryLog();
 
 const ai = new FakeAiClient();
+
+const failureLogged = (aiJobId: string) =>
+  log.parsed().some((line) => line.msg === 'ai job failed' && line.aiJobId === aiJobId);
+
+const expectFailureLogged = (aiJobId: string) =>
+  expect.poll(() => failureLogged(aiJobId), SETTLED).toBe(true);
 
 describe('POST /api/v1/capture/paste', () => {
   const testApp = useTestApp(() =>
@@ -211,12 +241,32 @@ describe('POST /api/v1/capture/paste', () => {
     return worker;
   }
 
-  async function relayed({ jobId }: CapturePasteResponse, status: string) {
-    const worker = await relayingWorker();
-    await expect
+  const expectJobStatus = (jobId: string, status: AiJobStatus) =>
+    expect
       .poll(async () => (await storedAiJob(testApp.prisma, jobId)).status, SETTLED)
       .toBe(status);
+
+  async function relayed({ jobId }: CaptureRetryResponse, status: AiJobStatus) {
+    const worker = await relayingWorker();
+    await expectJobStatus(jobId, status);
     return worker;
+  }
+
+  const setJobStatus = (id: string, status: AiJobStatus) =>
+    testApp.prisma.aiJob.update({ where: { id }, data: { status }, select: { id: true } });
+
+  async function capturedAndFailed() {
+    const olena = await signedInWithSearch(testApp.prisma);
+    const captured = await paste(olena.accessToken);
+    await setJobStatus(captured.jobId, 'failed');
+    return { ...olena, ...captured };
+  }
+
+  async function retried(accessToken: string, id: string) {
+    const response = await postRetry(testApp.app, { accessToken, id });
+    expect(statusAndDetail(response)).toEqual([202, undefined]);
+    const requestId = response.get('x-request-id');
+    return { ...captureRetryResponseSchema.parse(response.body), requestId };
   }
 
   async function kindsOf(applicationId: string) {
@@ -525,18 +575,7 @@ describe('POST /api/v1/capture/paste', () => {
     expect(await kindsOf(captured.applicationId)).toEqual(['captured', 'ai_parsed']);
   });
 
-  it.each([
-    {
-      failure: 'services/ai refuses the text with 422',
-      answer: () => Promise.reject(new AiServiceError({ status: 422, type: 'ai_invalid_output' })),
-      errorType: 'ai_invalid_output',
-    },
-    {
-      failure: 'the parse names no company and no position',
-      answer: () => Promise.resolve(NAMELESS_VACANCY_COMPLETION),
-      errorType: 'no_company_no_position',
-    },
-  ])(
+  it.each(FINAL_FAILURES)(
     'leaves the draft and keeps the pasted text as one note when $failure',
     WORKER_TEST,
     async ({ answer, errorType }) => {
@@ -620,11 +659,7 @@ describe('POST /api/v1/capture/paste', () => {
       async (status) => {
         const { accessToken } = await signedInWithSearch(testApp.prisma);
         const { applicationId, jobId } = await paste(accessToken);
-        await testApp.prisma.aiJob.update({
-          where: { id: jobId },
-          data: { status },
-          select: { id: true },
-        });
+        await setJobStatus(jobId, status);
 
         const response = await postConfirm(testApp.app, { accessToken, id: applicationId });
 
@@ -635,8 +670,7 @@ describe('POST /api/v1/capture/paste', () => {
     );
 
     it('confirms a draft whose vacancy parse failed', WORKER_TEST, async () => {
-      ai.answer = () =>
-        Promise.reject(new AiServiceError({ status: 422, type: 'ai_invalid_output' }));
+      ai.answer = refusedByAi;
       const { accessToken } = await signedInWithSearch(testApp.prisma);
       const captured = await paste(accessToken);
       await relayed(captured, 'failed');
@@ -655,6 +689,194 @@ describe('POST /api/v1/capture/paste', () => {
         'draft_confirmed',
       ]);
     });
+  });
+
+  describe('POST /api/v1/capture/drafts/:id/retry', () => {
+    const TWO_JOBS_ONE_CAPTURE = [1, 2, 1, 2];
+
+    async function retriedInWorker(worker: INestApplicationContext, draft: FailedDraft) {
+      await expectTextKeptAsNote(draft.applicationId);
+      const { jobId } = await retried(draft.accessToken, draft.applicationId);
+      await worker.get(OutboxRelayService, { strict: false }).relay();
+      return jobId;
+    }
+
+    it('answers 202 while the queue Redis is down, stores a new queued ai job and one more capture event, and shows the draft queued under the new job', async () => {
+      const { userId, accessToken, applicationId, jobId: failedJobId } = await capturedAndFailed();
+
+      const { jobId, requestId } = await retried(accessToken, applicationId);
+
+      const { columns } = await getApplicationBoard(testApp.app, { accessToken });
+      expect(jobId).not.toBe(failedJobId);
+      expect(await storedAiJob(testApp.prisma, jobId)).toMatchObject({ status: 'queued' });
+      expect(await countRows()).toEqual(TWO_JOBS_ONE_CAPTURE);
+      expect((await outboxRows(testApp.prisma)).at(-1)).toEqual(
+        applicationEventRow({
+          eventType: 'application.capture_requested',
+          applicationId,
+          aiJobId: jobId,
+          requestId,
+          userId,
+        }),
+      );
+      expect(columns.applied.items).toMatchObject([
+        { id: applicationId, isDraft: true, aiStatus: 'queued', aiJobId: jobId },
+      ]);
+      expect(await draftOf(applicationId)).toEqual(PLACEHOLDER_DRAFT);
+      expect(ai.calls).toEqual([]);
+    });
+
+    it('answers two retries at once and a third one after them with the same job and stores one new job', async () => {
+      const { accessToken, applicationId } = await capturedAndFailed();
+
+      const [first, second] = await Promise.all([
+        retried(accessToken, applicationId),
+        retried(accessToken, applicationId),
+      ]);
+      const third = await retried(accessToken, applicationId);
+
+      expect([second.jobId, third.jobId]).toEqual([first.jobId, first.jobId]);
+      expect(await countRows()).toEqual(TWO_JOBS_ONE_CAPTURE);
+    });
+
+    it('answers the job of the first parse while it is processing and stores nothing', async () => {
+      const { accessToken } = await signedInWithSearch(testApp.prisma);
+      const captured = await paste(accessToken);
+      await setJobStatus(captured.jobId, 'processing');
+
+      const { jobId } = await retried(accessToken, captured.applicationId);
+
+      expect(jobId).toBe(captured.jobId);
+      expect(await countRows()).toEqual([1, 1, 1, 1]);
+    });
+
+    it("answers 404 to another user's token and 401 without a token, stores nothing, and leaves the draft for its owner to retry", async () => {
+      const { accessToken, applicationId: id } = await capturedAndFailed();
+      const bohdan = await signedInWithSearch(testApp.prisma);
+
+      const foreign = await postRetry(testApp.app, { accessToken: bohdan.accessToken, id });
+      const anonymous = await postRetry(testApp.app, { id });
+
+      expect(statusAndDetail(foreign)).toEqual([404, 'Application not found']);
+      expect(anonymous.status).toBe(401);
+      expect(await countRows()).toEqual([1, 1, 1, 1]);
+      await retried(accessToken, id);
+    });
+
+    it('answers 404 for a deleted draft and stores nothing', async () => {
+      const { accessToken, applicationId: id } = await capturedAndFailed();
+      await callRoute(testApp.app, { method: 'delete', path: applicationPath(id), accessToken });
+
+      const response = await postRetry(testApp.app, { accessToken, id });
+
+      expect(statusAndDetail(response)).toEqual([404, 'Application not found']);
+      expect(await testApp.prisma.aiJob.count()).toBe(1);
+    });
+
+    it('answers 422 naming id for a draft id that is not a uuid', async () => {
+      const { accessToken } = await signedInWithSearch(testApp.prisma);
+
+      const response = await postRetry(testApp.app, { accessToken, id: 'not-a-uuid' });
+
+      expect([response.status, errorPathsOf(response.body)]).toEqual([422, ['id']]);
+    });
+
+    it('answers 403 to a capture token and stores nothing', async () => {
+      const { accessToken, captureToken } = await signedInWithCaptureToken(testApp);
+      const { applicationId, jobId } = await paste(accessToken);
+      await setJobStatus(jobId, 'failed');
+
+      const response = await callRoute(testApp.app, {
+        method: 'post',
+        path: draftRetryPath(applicationId),
+        headers: captureAuthorization(captureToken),
+      });
+
+      expect(statusAndDetail(response)).toEqual([403, 'Token lacks the user scope']);
+      expect(await countRows()).toEqual([1, 1, 1, 1]);
+    });
+
+    it('answers 409 for a card the user has confirmed and stores nothing', async () => {
+      const { accessToken, applicationId: id } = await capturedAndFailed();
+      await postConfirm(testApp.app, { accessToken, id });
+
+      const response = await postRetry(testApp.app, { accessToken, id });
+
+      expect(statusAndDetail(response)).toEqual([409, 'Application is not a draft']);
+      expect(await testApp.prisma.aiJob.count()).toBe(1);
+    });
+
+    it('answers 409 for a draft the parse has filled and stores nothing', WORKER_TEST, async () => {
+      const { accessToken, applicationId: id } = await capturedToCheck();
+
+      const response = await postRetry(testApp.app, { accessToken, id });
+
+      expect(statusAndDetail(response)).toEqual([409, 'Vacancy is already parsed']);
+      expect(await testApp.prisma.aiJob.count()).toBe(1);
+    });
+
+    it('answers 429 once a paste and five retries have used the six parses of the hour, and to a paste after them', async () => {
+      const { accessToken, applicationId: id } = await capturedAndFailed();
+      for (let retry = 0; retry < 5; retry += 1) {
+        await retried(accessToken, id);
+      }
+
+      const seventh = await postRetry(testApp.app, { accessToken, id });
+      const eighth = await postPaste(testApp.app, { accessToken, input: PASTE });
+
+      expectRateLimited(seventh, { windowSeconds: 3600 });
+      expectRateLimited(eighth, { windowSeconds: 3600 });
+    });
+
+    it(
+      'fills the draft when the parse succeeds after a retry and leaves the one note of the first failure',
+      WORKER_TEST,
+      async () => {
+        ai.answer = refusedByAi;
+        const { accessToken } = await signedInWithSearch(testApp.prisma);
+        const captured = await paste(accessToken);
+        const worker = await relayed(captured, 'failed');
+        ai.answer = () => Promise.resolve(VACANCY_COMPLETION);
+
+        const jobId = await retriedInWorker(worker, { ...captured, accessToken });
+
+        await expectJobStatus(jobId, 'done');
+        expect(await draftOf(captured.applicationId)).toEqual(PARSED_DRAFT);
+        expect(await notesOf(captured.applicationId)).toEqual([{ body: VACANCY_TEXT }]);
+        expect(await kindsOf(captured.applicationId)).toEqual([
+          'captured',
+          'note_added',
+          'ai_parsed',
+        ]);
+        expect(await boardCardOf(accessToken)).toEqual([
+          { id: captured.applicationId, isDraft: false, aiStatus: 'done' },
+        ]);
+        expect(ai.calls).toHaveLength(2);
+      },
+    );
+
+    it.each(FINAL_FAILURES)(
+      'keeps the pasted text as one note and the draft as it was when $failure before and after a retry',
+      WORKER_TEST,
+      async ({ answer, errorType, callsWithRetry }) => {
+        ai.answer = answer;
+        const { accessToken } = await signedInWithSearch(testApp.prisma);
+        const captured = await paste(accessToken);
+        const worker = await relayed(captured, 'failed');
+
+        const jobId = await retriedInWorker(worker, { ...captured, accessToken });
+
+        await expectFailureLogged(jobId);
+        expect(await storedAiJob(testApp.prisma, jobId)).toMatchObject({
+          status: 'failed',
+          errorType,
+        });
+        expect(await notesOf(captured.applicationId)).toEqual([{ body: VACANCY_TEXT }]);
+        expect(await kindsOf(captured.applicationId)).toEqual(['captured', 'note_added']);
+        expect(await draftOf(captured.applicationId)).toEqual(PLACEHOLDER_DRAFT);
+        expect(ai.calls).toHaveLength(callsWithRetry);
+      },
+    );
   });
 
   describe('POST /api/v1/capture/bookmarklet', () => {

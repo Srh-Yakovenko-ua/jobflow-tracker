@@ -53,6 +53,10 @@ def timeout_error(seconds: float) -> AppError:
     return AppError(504, detail=f"The model did not answer within {seconds:g} seconds")
 
 
+def provider_error() -> AppError:
+    return AppError(502, detail="The AI provider failed")
+
+
 def field_errors(errors: Sequence[Any]) -> list[FieldError]:
     return [
         FieldError(

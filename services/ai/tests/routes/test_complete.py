@@ -5,8 +5,10 @@ import pytest
 from app.providers.fake import FIXTURES, FakeAiProvider
 from tests.factories import (
     PARSED_VACANCY,
+    UNNAMED_VACANCY,
     VACANCY_BODY,
     build_app,
+    failing_vacancy,
     post_as_worker,
     post_completion,
     settings_for,
@@ -121,6 +123,48 @@ async def test_answers_504_when_the_model_does_not_answer_in_time() -> None:
             "requestId": "req-test",
         },
     )
+
+
+@pytest.mark.parametrize(
+    ("failure", "problem"),
+    [
+        (
+            "ai_timeout",
+            {
+                "type": "ai_timeout",
+                "title": "AI timeout",
+                "status": 504,
+                "detail": "The model did not answer within 30 seconds",
+            },
+        ),
+        (
+            "ai_provider_error",
+            {
+                "type": "ai_provider_error",
+                "title": "AI provider error",
+                "status": 502,
+                "detail": "The AI provider failed",
+            },
+        ),
+    ],
+)
+async def test_fails_the_way_a_vendor_does_for_a_fake_failure_marker(
+    *, failure: str, problem: dict[str, object]
+) -> None:
+    response = await post_completion({"input": {"text": failing_vacancy(failure)}})
+
+    assert (response.status_code, response.json()) == (
+        problem["status"],
+        {**problem, "requestId": "req-test"},
+    )
+
+
+async def test_answers_200_without_company_and_position_for_their_marker() -> None:
+    response = await post_completion(
+        {"input": {"text": failing_vacancy("no_company_no_position")}}
+    )
+
+    assert (response.status_code, response.json()["output"]) == (200, UNNAMED_VACANCY)
 
 
 async def test_answers_404_for_an_unknown_kind() -> None:

@@ -19,7 +19,7 @@ def vendor_settings_of(settings: Settings) -> VendorSettings:
 
 def provider_for(settings: Settings) -> AiProvider:
     if settings.ai_provider == "fake":
-        return FakeAiProvider()
+        return FakeAiProvider(timeout_seconds=settings.ai_timeout_seconds)
     vendor = vendor_settings_of(settings)
     if settings.ai_provider == "anthropic":
         return AnthropicProvider(vendor)

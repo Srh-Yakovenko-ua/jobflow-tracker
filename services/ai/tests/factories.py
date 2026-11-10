@@ -52,6 +52,16 @@ PARSED_VACANCY = {
     "sourceGuess": vacancy_field(None, None),
 }
 
+UNNAMED_VACANCY = {
+    **PARSED_VACANCY,
+    "company": vacancy_field(None, None),
+    "position": vacancy_field(None, None),
+}
+
+
+def failing_vacancy(failure: str) -> str:
+    return f"{VACANCY_TEXT}\nfake-ai-fail:{failure}"
+
 
 def service_token(**claims: Any) -> str:
     now = int(time.time())

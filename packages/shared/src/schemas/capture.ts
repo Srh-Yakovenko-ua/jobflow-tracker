@@ -28,6 +28,13 @@ export const capturePasteResponseSchema = z.object({
   possibleDuplicates: z.array(possibleDuplicateSchema),
 });
 
+export const captureRetryResponseSchema = capturePasteResponseSchema.pick({ jobId: true });
+
+export const DRAFT_PLACEHOLDERS = {
+  position: 'Без назви',
+  company: 'компанію не розпізнано',
+} as const;
+
 export const captureTokenIdSchema = z.uuid();
 
 export const captureTokenCreatedSchema = z.object({
@@ -47,6 +54,7 @@ export const captureTokenListResponseSchema = z.object({
 export type CapturePasteInput = z.infer<typeof capturePasteInputSchema>;
 export type CaptureBookmarkletInput = z.infer<typeof captureBookmarkletInputSchema>;
 export type CapturePasteResponse = z.infer<typeof capturePasteResponseSchema>;
+export type CaptureRetryResponse = z.infer<typeof captureRetryResponseSchema>;
 export type CaptureTokenCreated = z.infer<typeof captureTokenCreatedSchema>;
 export type CaptureTokenSummary = z.infer<typeof captureTokenSummarySchema>;
 export type CaptureTokenListResponse = z.infer<typeof captureTokenListResponseSchema>;

@@ -5,7 +5,7 @@ import type { ErrorToastContent } from '@/shared/ui/error-toast';
 
 const COPY = uk.add.errors;
 
-function parseLimitToast(retryAfterSeconds: number | undefined): ErrorToastContent {
+export function parseLimitToast(retryAfterSeconds: number | undefined): ErrorToastContent {
   return {
     title: COPY.parseLimit.title,
     description:

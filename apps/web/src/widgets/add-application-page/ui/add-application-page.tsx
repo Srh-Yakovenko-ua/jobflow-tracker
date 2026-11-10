@@ -17,8 +17,9 @@ import { cn } from '@/shared/lib/cn';
 import { Fade } from '@/shared/ui/fade';
 import { STATE_TEXT } from '@/shared/ui/state-text';
 
+import type { Capture } from '../model/use-capture';
 import { AddExplainer } from './add-explainer';
-import { type Capture, CaptureProgress } from './capture-progress';
+import { CaptureProgress } from './capture-progress';
 
 export type AddApplicationPageProps = Readonly<{ query: AddQuery }>;
 
@@ -75,8 +76,15 @@ function PageHeading() {
   );
 }
 
-function captureOf({ reviewId }: AddPrefill): Capture | null {
-  return reviewId === null ? null : { applicationId: reviewId, jobId: null };
+function captureOf({ reviewId, jobId }: AddPrefill): Capture | null {
+  return reviewId === null ? null : { applicationId: reviewId, jobId };
+}
+
+function writeCaptureToUrl({ applicationId, jobId }: CapturedDraft): void {
+  const url = new URL(window.location.href);
+  url.searchParams.set('review', applicationId);
+  url.searchParams.set('job', jobId);
+  window.history.replaceState(null, '', url);
 }
 
 export function AddApplicationPage({ query }: AddApplicationPageProps) {
@@ -110,7 +118,19 @@ export function AddApplicationPage({ query }: AddApplicationPageProps) {
             </Fade>
           ) : (
             <Fade key={capture.applicationId}>
-              <CaptureProgress capture={capture} />
+              <CaptureProgress
+                capture={capture}
+                actions={{
+                  onRetried: (jobId) => {
+                    const retried = { ...capture, jobId };
+                    setCapture(retried);
+                    writeCaptureToUrl(retried);
+                  },
+                  onDeleted: () => {
+                    setCapture(null);
+                  },
+                }}
+              />
             </Fade>
           )}
         </AnimatePresence>

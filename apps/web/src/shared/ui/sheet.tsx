@@ -11,6 +11,8 @@ import {
   useState,
 } from 'react';
 
+import { useOpenerFocus } from '@/shared/lib/use-opener-focus';
+
 import { DialogOverlay } from './dialog';
 
 export type SheetProps = Readonly<{ title: string; onClose: () => void; children: ReactNode }>;
@@ -29,20 +31,6 @@ function leaveEscapeToItsOwner(event: KeyboardEvent) {
   if (event.target instanceof Element && event.target.closest('[data-owns-escape]')) {
     event.preventDefault();
   }
-}
-
-function useOpenerFocus() {
-  const openerRef = useRef<HTMLElement | null>(null);
-  return {
-    onOpenAutoFocus: () => {
-      openerRef.current =
-        document.activeElement instanceof HTMLElement ? document.activeElement : null;
-    },
-    onCloseAutoFocus: (event: Event) => {
-      event.preventDefault();
-      openerRef.current?.focus();
-    },
-  };
 }
 
 function useCloseAfterExit(onClose: () => void) {

@@ -2,9 +2,11 @@ import { describe, expect, it } from 'vitest';
 
 import { addPrefillOf } from './add-prefill';
 
-const BLANK = { text: '', url: '', focusPaste: false, reviewId: null };
+const BLANK = { text: '', url: '', focusPaste: false, reviewId: null, jobId: null };
 
 const DRAFT_ID = '0b6f3c1e-5d2a-4c8e-9f10-000000000301';
+
+const JOB_ID = '0199f1a0-3c4d-7e5f-8a6b-7c8d9e0f1a2b';
 
 const TEXT_LIMIT = 20_000;
 
@@ -16,7 +18,7 @@ describe('addPrefillOf', () => {
   it('the bookmarklet fallback fills the text and its http url and asks for focus', () => {
     const query = { text: 'Senior QA\n\nKvit Software шукає', url: 'https://djinni.co/jobs/1' };
 
-    expect(addPrefillOf(query)).toEqual({ ...query, focusPaste: true, reviewId: null });
+    expect(addPrefillOf(query)).toEqual({ ...BLANK, ...query, focusPaste: true });
   });
 
   it.each([
@@ -62,5 +64,17 @@ describe('addPrefillOf', () => {
 
   it.each(['garbage', '', '301', [DRAFT_ID, DRAFT_ID]])('review %j names no draft', (review) => {
     expect(addPrefillOf({ review })).toEqual(BLANK);
+  });
+
+  it('job=<job id> beside review names the parse job of that draft', () => {
+    expect(addPrefillOf({ review: DRAFT_ID, job: JOB_ID })).toEqual({
+      ...BLANK,
+      reviewId: DRAFT_ID,
+      jobId: JOB_ID,
+    });
+  });
+
+  it.each(['garbage', '', '77', [JOB_ID, JOB_ID]])('job %j names no job', (job) => {
+    expect(addPrefillOf({ review: DRAFT_ID, job })).toEqual({ ...BLANK, reviewId: DRAFT_ID });
   });
 });

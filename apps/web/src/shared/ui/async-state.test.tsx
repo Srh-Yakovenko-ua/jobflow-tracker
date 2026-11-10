@@ -51,6 +51,26 @@ describe('AsyncState', () => {
     expect(container.querySelector('.motion-safe\\:animate-pulse')).toBeNull();
   });
 
+  it('a failed job reads its line as the small uppercase eyebrow, a finished one keeps the label look', () => {
+    const { rerender } = render(<AsyncState job={{ status: 'failed' }} />);
+    const failed = [...(screen.getByText('AI не впорався').closest('p')?.classList ?? [])];
+    expect(failed).toEqual(
+      expect.arrayContaining([
+        'uppercase',
+        'text-[10px]',
+        'font-semibold',
+        'tracking-[0.12em]',
+        'text-danger',
+      ]),
+    );
+    expect(failed).not.toContain('label');
+
+    rerender(<AsyncState job={{ status: 'done', tookSeconds: 4 }} />);
+    const done = [...(screen.getByText('готово за 4 с').closest('p')?.classList ?? [])];
+    expect(done).toContain('label');
+    expect(done).not.toContain('uppercase');
+  });
+
   it('a failed job says the data is safe and offers the manual way first, then a retry', async () => {
     const user = userEvent.setup();
     const actions = { onManual: vi.fn(), onRetry: vi.fn() };
@@ -58,12 +78,41 @@ describe('AsyncState', () => {
 
     expect(screen.getByText('Дані цілі, нічого не втрачено.')).toBeDefined();
     const buttons = screen.getAllByRole('button').map((button) => button.textContent);
-    expect(buttons).toEqual(['Зробити вручну', 'Спробувати ще раз']);
+    expect(buttons).toEqual(['Заповнити вручну', 'Спробувати ще раз']);
 
-    await user.click(screen.getByRole('button', { name: 'Зробити вручну' }));
+    await user.click(screen.getByRole('button', { name: 'Заповнити вручну' }));
     await user.click(screen.getByRole('button', { name: 'Спробувати ще раз' }));
     expect(actions.onManual).toHaveBeenCalledTimes(1);
     expect(actions.onRetry).toHaveBeenCalledTimes(1);
+  });
+
+  it('a failed job with a delete action offers it last, and without a retry action shows no retry', async () => {
+    const user = userEvent.setup();
+    const actions = { onManual: vi.fn(), onDelete: vi.fn() };
+    render(<AsyncState job={{ status: 'failed' }} actions={actions} />);
+
+    const buttons = screen.getAllByRole('button').map((button) => button.textContent);
+    expect(buttons).toEqual(['Заповнити вручну', 'Видалити картку']);
+
+    await user.click(screen.getByRole('button', { name: 'Видалити картку' }));
+    expect(actions.onDelete).toHaveBeenCalledTimes(1);
+    expect(actions.onManual).not.toHaveBeenCalled();
+  });
+
+  it('a retry on its way keeps the retry button busy and takes no second click', async () => {
+    const user = userEvent.setup();
+    const actions = { onManual: vi.fn(), onRetry: vi.fn(), retrying: true };
+    render(<AsyncState job={{ status: 'failed' }} actions={actions} />);
+
+    const retry = screen.getByRole<HTMLButtonElement>('button', { name: 'Спробувати ще раз' });
+    await user.click(retry);
+
+    expect(retry.getAttribute('aria-busy')).toBe('true');
+    expect(retry.disabled).toBe(true);
+    expect(actions.onRetry).not.toHaveBeenCalled();
+    expect(
+      screen.getByRole<HTMLButtonElement>('button', { name: 'Заповнити вручну' }).disabled,
+    ).toBe(false);
   });
 
   it('shows the operation content the caller passes in', () => {

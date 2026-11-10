@@ -31,8 +31,9 @@ export const states = {
     progressLabel: 'Хід обробки',
     done: (took: string) => `готово за ${took}`,
     safe: 'Дані цілі, нічого не втрачено.',
-    manual: 'Зробити вручну',
+    manual: 'Заповнити вручну',
     retry: 'Спробувати ще раз',
+    delete: 'Видалити картку',
   },
   errors: {
     offline: {

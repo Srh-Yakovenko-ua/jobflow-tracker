@@ -1,36 +1,41 @@
 'use client';
 
-import {
-  AI_JOB_STEPS,
-  type ApplicationResponse,
-  type JobStatus,
-  LIVE_LIMITS,
-} from '@jobflow/shared';
-import { useQuery, type UseQueryResult } from '@tanstack/react-query';
+import { AI_JOB_STEPS, type ApplicationResponse, type JobStatus } from '@jobflow/shared';
+import type { UseQueryResult } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
+import { useState } from 'react';
 
-import { applicationQueryOptions, jobQueryOptions } from '@/entities/application';
 import { type DraftReviewProps, reviewFieldsOf } from '@/features/edit-application';
-import { ApiError, LIVE_CLIENT_LIMITS, useLiveConnected } from '@/shared/api';
+import { ApiError } from '@/shared/api';
 import type { AiJob } from '@/shared/ui/async-state';
 
+import { failureReasonOf } from '../model/failure-reason';
+import { type Capture, type CaptureReads, useCapture } from '../model/use-capture';
 import { IDLE_VIEW } from './add-explainer';
-import { FAILED_VIEW, progressView, readyView, reviewView } from './capture-views';
+import type { CaptureFailureActions, CaptureFailureKind } from './capture-failure';
+import {
+  draftFormView,
+  failureMarkOf,
+  failureView,
+  progressView,
+  readFailedView,
+  readyView,
+} from './capture-views';
 import { LiveSection, type LiveView } from './live-section';
 
-export type Capture = Readonly<{
-  applicationId: ApplicationResponse['id'];
-  jobId: JobStatus['id'] | null;
-}>;
+export type CaptureProgressActions = Pick<CaptureFailureActions, 'onRetried' | 'onDeleted'>;
 
-export type CaptureProgressProps = Readonly<{ capture: Capture }>;
+export type CaptureProgressProps = Readonly<{ capture: Capture; actions: CaptureProgressActions }>;
 
 type JobStage = Readonly<{ job: UseQueryResult<JobStatus>; jobId: JobStatus['id'] | null }>;
 
 type CardStage = Readonly<{
-  application: UseQueryResult<ApplicationResponse>;
-  actions: DraftReviewProps['actions'];
+  reads: CaptureReads;
+  manual: boolean;
+  actions: CaptureFailureActions & DraftReviewProps['actions'];
 }>;
+
+type DraftStage = CardStage & Readonly<{ card: ApplicationResponse }>;
 
 const READING_CARD: AiJob = {
   status: 'processing',
@@ -38,9 +43,10 @@ const READING_CARD: AiJob = {
   steps: AI_JOB_STEPS.total,
 };
 
-function isRunning(job: JobStatus | undefined): boolean {
-  return job?.status === 'queued' || job?.status === 'processing';
-}
+const READING_VIEW = progressView({
+  job: READING_CARD,
+  parse: { aiStatus: 'processing', aiJobId: null },
+});
 
 function isGone(error: Error): boolean {
   return error instanceof ApiError && error.status === 404;
@@ -58,47 +64,79 @@ function aiJobOf(job: JobStatus | undefined): AiJob {
 }
 
 function jobView({ job, jobId }: JobStage): LiveView {
-  if (job.isError || job.data?.status === 'failed') return FAILED_VIEW;
+  if (job.data === undefined && job.errorUpdateCount > 0) {
+    return readFailedView(() => {
+      void job.refetch();
+    });
+  }
   const aiStatus = job.data?.status === 'processing' ? 'processing' : 'queued';
   return progressView({ job: aiJobOf(job.data), parse: { aiStatus, aiJobId: jobId } });
 }
 
-function cardView({ application, actions }: CardStage): LiveView {
-  const card = application.data;
-  if (card === undefined) {
-    if (!application.isError) {
-      return progressView({
-        job: READING_CARD,
-        parse: { aiStatus: 'processing', aiJobId: null },
-      });
-    }
-    return isGone(application.error) ? IDLE_VIEW : FAILED_VIEW;
-  }
-  if (!card.isDraft) return readyView(card);
-  if (card.aiParsed === null) return IDLE_VIEW;
-  return reviewFieldsOf(card) === null ? FAILED_VIEW : reviewView({ application: card, actions });
+function unreadCardView(application: UseQueryResult<ApplicationResponse>): LiveView {
+  if (!application.isError) return READING_VIEW;
+  if (isGone(application.error)) return IDLE_VIEW;
+  return readFailedView(() => {
+    void application.refetch();
+  });
 }
 
-export function CaptureProgress({ capture }: CaptureProgressProps) {
-  const { applicationId, jobId } = capture;
-  const router = useRouter();
-  const connected = useLiveConnected();
-  const job = useQuery({
-    ...jobQueryOptions(jobId ?? ''),
-    enabled: jobId !== null,
-    refetchInterval: ({ state }) => {
-      if (!isRunning(state.data)) return false;
-      return connected ? LIVE_CLIENT_LIMITS.slowPollMs : LIVE_LIMITS.pollFallbackMs;
-    },
+function failureOf({ card, reads }: DraftStage): CaptureFailureKind | null {
+  if (card.aiParsed !== null) {
+    return reviewFieldsOf(card) === null ? { reason: 'generic', parsed: true } : null;
+  }
+  const job = reads.job.data;
+  if (job?.status !== 'failed') return null;
+  return { reason: failureReasonOf(job.errorType), parsed: false };
+}
+
+function unfailedView({ card, reads, actions }: DraftStage): LiveView {
+  if (card.aiParsed !== null) {
+    return draftFormView({ id: 'review', mark: 'review', application: card, actions });
+  }
+  const rereading = reads.job.data?.status === 'done' && reads.application.isFetching;
+  return rereading ? READING_VIEW : IDLE_VIEW;
+}
+
+function draftView(stage: DraftStage): LiveView {
+  const failure = failureOf(stage);
+  if (failure === null) return unfailedView(stage);
+  const { card, actions } = stage;
+  if (!stage.manual) return failureView({ application: card, failure, actions });
+  return draftFormView({
+    id: 'manual',
+    mark: failureMarkOf(failure),
+    application: card,
+    actions,
   });
-  const parsed = jobId === null || job.data?.status === 'done';
-  const application = useQuery({ ...applicationQueryOptions(applicationId), enabled: parsed });
-  const actions = {
-    onConfirmed: () => {
-      router.push('/board');
+}
+
+function cardView(stage: CardStage): LiveView {
+  const card = stage.reads.application.data;
+  if (card === undefined) return unreadCardView(stage.reads.application);
+  return card.isDraft ? draftView({ ...stage, card }) : readyView(card);
+}
+
+export function CaptureProgress({ capture, actions }: CaptureProgressProps) {
+  const router = useRouter();
+  const reads = useCapture(capture);
+  const [manual, setManual] = useState(false);
+  const stage: CardStage = {
+    reads,
+    manual,
+    actions: {
+      ...actions,
+      onManual: () => {
+        setManual(true);
+      },
+      onConfirmed: () => {
+        router.push('/board');
+      },
     },
   };
   return (
-    <LiveSection view={parsed ? cardView({ application, actions }) : jobView({ job, jobId })} />
+    <LiveSection
+      view={reads.settled ? cardView(stage) : jobView({ job: reads.job, jobId: capture.jobId })}
+    />
   );
 }

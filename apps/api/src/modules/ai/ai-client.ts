@@ -1,4 +1,5 @@
 import {
+  AI_JOB_FAILURES,
   type AiCompleteOptions,
   aiCompleteRequestSchemas,
   type AiCompletion,
@@ -54,10 +55,10 @@ async function readBody(response: Response): Promise<unknown> {
 
 function toAiServiceError(error: unknown): unknown {
   if (error instanceof DOMException && error.name === 'TimeoutError') {
-    return new AiServiceError({ status: 504, type: 'ai_timeout', cause: error });
+    return new AiServiceError({ status: 504, type: AI_JOB_FAILURES.timeout, cause: error });
   }
   return error instanceof TypeError
-    ? new AiServiceError({ status: 503, type: 'not_ready', cause: error })
+    ? new AiServiceError({ status: 503, type: AI_JOB_FAILURES.notReady, cause: error })
     : error;
 }
 

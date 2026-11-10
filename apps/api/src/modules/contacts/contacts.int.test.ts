@@ -228,15 +228,15 @@ describe('the contacts routes', () => {
     },
   );
 
-  it('PATCH and DELETE answer a malformed contact id with 422', async () => {
+  it('PATCH and DELETE answer a malformed contact id with 422 at "contactId"', async () => {
     const contact = await olenaWithContact();
     const { patch, delete: remove } = contactRoutes({ ...contact, contactId: 'not-a-uuid' });
 
     const responses = await callAll(contact.accessToken, [patch, remove]);
 
     expect(responses.map(({ status, body }) => [status, errorPathsOf(body)])).toEqual([
-      [422, ['']],
-      [422, ['']],
+      [422, ['contactId']],
+      [422, ['contactId']],
     ]);
   });
 

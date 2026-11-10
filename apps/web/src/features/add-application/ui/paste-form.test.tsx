@@ -47,7 +47,13 @@ const TEXT_REFUSED = /^Встав текст вакансії, не довший
 
 const VACANCY = 'Senior QA Engineer\nKvit Software шукає тестувальника';
 
-const NOTHING: AddPrefill = { text: '', url: '', focusPaste: false, reviewId: null };
+const NOTHING: AddPrefill = {
+  text: '',
+  url: '',
+  focusPaste: false,
+  reviewId: null,
+  jobId: null,
+};
 
 const ROUNDS = [1, 2, 3, 4, 5, 6];
 

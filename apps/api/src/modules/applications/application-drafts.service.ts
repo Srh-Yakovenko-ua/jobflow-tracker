@@ -15,7 +15,7 @@ import {
   APPLICATION_EVENTS,
   type ApplicationCaptureRequestedPayload,
 } from './applications.events.js';
-import { ApplicationsRepository } from './applications.repository.js';
+import { ApplicationsRepository, type LockedDraft } from './applications.repository.js';
 import { ApplicationsService } from './applications.service.js';
 
 type InDraftTransaction = { tx: Prisma.TransactionClient };
@@ -32,6 +32,20 @@ export type DraftFill = InDraftTransaction & { applicationId: string; output: Va
 export type FilledDraft = { createdAt: Date; filledAt: Date };
 
 export type DraftConfirm = InDraftTransaction & { applicationId: string };
+
+export type DraftRetry = DraftConfirm;
+
+const NOT_A_DRAFT = 'Application is not a draft';
+
+function retryRefusalOf({ isDraft, parsed, hasText }: LockedDraft): string | null {
+  if (!isDraft) {
+    return NOT_A_DRAFT;
+  }
+  if (parsed) {
+    return 'Vacancy is already parsed';
+  }
+  return hasText ? null : 'Draft has no vacancy text';
+}
 
 @Injectable()
 export class ApplicationDraftsService {
@@ -102,10 +116,19 @@ export class ApplicationDraftsService {
     const draft = { id: applicationId, tx };
     if ((await this.repository.confirmDraft(userId, draft)) === 0) {
       const { isDraft } = owned(await this.repository.findOwned(userId, draft));
-      throw conflict(isDraft ? 'Vacancy parse is still running' : 'Application is not a draft');
+      throw conflict(isDraft ? 'Vacancy parse is still running' : NOT_A_DRAFT);
     }
     const event = { eventType: APPLICATION_EVENTS.updated, applicationId, fields: ['isDraft'] };
     await this.repository.recordEvent(userId, { event, tx });
     return confirmedAt;
+  }
+
+  async lockForRetry(userId: string, { applicationId, tx }: DraftRetry): Promise<string | null> {
+    const draft = owned(await this.repository.lockDraft(userId, { id: applicationId, tx }));
+    const refusal = retryRefusalOf(draft);
+    if (refusal !== null) {
+      throw conflict(refusal);
+    }
+    return draft.runningJobId;
   }
 }

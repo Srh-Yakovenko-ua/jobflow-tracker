@@ -7,6 +7,7 @@ import {
   capturePasteInputSchema,
   type CapturePasteResponse,
   capturePasteResponseSchema,
+  captureRetryResponseSchema,
   VACANCY_PARSE_LIMITS,
 } from '@jobflow/shared';
 
@@ -90,6 +91,22 @@ export const CAPTURE_OPENAPI_PATHS: RouteConfig[] = [
     responses: {
       204: { description: 'The Application is no longer a draft' },
       ...errorResponses([401, 403, 404, 409, 422]),
+    },
+  },
+  {
+    method: 'post',
+    path: '/capture/drafts/{id}/retry',
+    tags: ['capture'],
+    summary: 'Parse a draft again',
+    description:
+      'Queues a new vacancy parse of the text the draft keeps, in one transaction with the application.capture_requested event, and records no second captured timeline row. While a parse of the draft is queued or processing it answers that job and stores nothing, so a double click follows one job. Answers 409 for an Application that is not a draft ("Application is not a draft"), for a draft the parse has already filled ("Vacancy is already parsed") and for a draft without text ("Draft has no vacancy text"). A text whose parse named no company and no position is answered from the stored result and fails again without an AI call. Counts against the same hourly limit as POST /capture/paste.',
+    request: { params: applicationIdParams },
+    responses: {
+      202: {
+        description: 'The AI job to follow: the new one, or the one that is still running',
+        content: jsonContent(captureRetryResponseSchema, { jobId: ACCEPTED.jobId }),
+      },
+      ...errorResponses([401, 403, 404, 409, 422], 'ai'),
     },
   },
 ];

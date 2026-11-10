@@ -5,7 +5,7 @@ import { withoutUndefined } from '../../common/without-undefined.js';
 import { Prisma } from '../../generated/prisma/client.js';
 import { EFFECTIVE_STAGE_EVENTS } from '../../prisma/effective-stage-events.js';
 import type { InTransaction } from '../../prisma/in-transaction.js';
-import { UNSETTLED_AI_JOB_STATUSES } from '../../prisma/latest-ai-job.js';
+import { LATEST_AI_JOB_SELECT, UNSETTLED_AI_JOB_STATUSES } from '../../prisma/latest-ai-job.js';
 import { PrismaService } from '../../prisma/prisma.service.js';
 import type { DraftData } from './application-draft-fields.js';
 import { type ApplicationEvent, applicationEvent } from './applications.events.js';
@@ -93,6 +93,15 @@ export type FillDraft = ApplicationById & {
   data: Pick<DraftData, 'aiParsed'> & { isDraft: boolean };
 };
 
+type DraftFlags = { isDraft: boolean; parsed: boolean; hasText: boolean };
+
+export type LockedDraft = DraftFlags & { runningJobId: string | null };
+
+const RUNNING_PARSE = {
+  kind: 'vacancy_parse',
+  status: { in: UNSETTLED_AI_JOB_STATUSES },
+} satisfies Prisma.AiJobWhereInput;
+
 export type SoftDeleteApplication = ApplicationById & { deletedAt: Date };
 
 @Injectable()
@@ -176,6 +185,26 @@ export class ApplicationsRepository {
     return draft ?? null;
   }
 
+  async lockDraft(
+    userId: string,
+    { id, tx = this.prisma }: ApplicationById,
+  ): Promise<LockedDraft | null> {
+    const [draft] = await tx.$queryRaw<DraftFlags[]>`
+      SELECT is_draft AS "isDraft", ai_parsed IS NOT NULL AS "parsed",
+        raw_text IS NOT NULL AS "hasText"
+      FROM applications
+      WHERE id = ${id}::uuid AND user_id = ${userId}::uuid AND deleted_at IS NULL
+      FOR UPDATE`;
+    if (draft === undefined) {
+      return null;
+    }
+    const [running] = await tx.aiJob.findMany({
+      where: { ...RUNNING_PARSE, applicationId: id, userId },
+      ...LATEST_AI_JOB_SELECT,
+    });
+    return { ...draft, runningJobId: running?.id ?? null };
+  }
+
   async confirmDraft(userId: string, { id, tx = this.prisma }: ApplicationById): Promise<number> {
     const { count } = await tx.application.updateMany({
       where: {
@@ -183,7 +212,7 @@ export class ApplicationsRepository {
         userId,
         deletedAt: null,
         isDraft: true,
-        aiJobs: { none: { kind: 'vacancy_parse', status: { in: UNSETTLED_AI_JOB_STATUSES } } },
+        aiJobs: { none: RUNNING_PARSE },
       },
       data: { isDraft: false },
     });

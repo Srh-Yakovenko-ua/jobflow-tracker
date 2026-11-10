@@ -5,8 +5,10 @@ import {
   CAPTURE_BOOKMARKLET_LIMITS,
   captureBookmarkletInputSchema,
   capturePasteInputSchema,
+  captureRetryResponseSchema,
   captureTokenCreatedSchema,
   captureTokenListResponseSchema,
+  DRAFT_PLACEHOLDERS,
 } from './capture.js';
 
 const text = 'Senior Frontend Engineer у Grammarly\nReact, TypeScript\n';
@@ -90,6 +92,34 @@ const issued = {
   id: '0199f1a0-3c4d-7e5f-8a6b-7c8d9e0f1a2b',
   createdAt: '2026-11-10T09:00:00.000Z',
 };
+
+describe('captureRetryResponseSchema', () => {
+  const retried = { jobId: issued.id };
+
+  it('accepts the id of the job that parses the draft again', () => {
+    expect(captureRetryResponseSchema.parse(retried)).toEqual(retried);
+  });
+
+  it.each([
+    { label: 'a missing job id', input: {} },
+    { label: 'a job id that is not a uuid', input: { jobId: '76' } },
+  ])('refuses $label at jobId', ({ input }) => {
+    expect(issuePathsOf(captureRetryResponseSchema.safeParse(input))).toEqual(['jobId']);
+  });
+
+  it('carries the job id alone', () => {
+    expect(Object.keys(captureRetryResponseSchema.shape)).toEqual(['jobId']);
+  });
+});
+
+describe('DRAFT_PLACEHOLDERS', () => {
+  it('names an unparsed draft by the position and company placeholders', () => {
+    expect(DRAFT_PLACEHOLDERS).toEqual({
+      position: 'Без назви',
+      company: 'компанію не розпізнано',
+    });
+  });
+});
 
 describe('captureTokenCreatedSchema', () => {
   const created = { ...issued, token: 'Zm9vYmFyYmF6cXV4Zm9vYmFyYmF6cXV4Zm9vYmFyYmF6cXV4' };

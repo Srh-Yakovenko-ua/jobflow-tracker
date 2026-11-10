@@ -42,8 +42,9 @@ const STATE_ACTIONS = [
   'Встановити букмарклет',
   'Спробувати фоллоу-ап по 4 свіжих',
   'Заархівувати пошук',
-  'Зробити вручну',
+  'Заповнити вручну',
   'Спробувати ще раз',
+  'Видалити картку',
   'Спробувати зараз',
   'Обрати інший файл',
   'Перезавантажити',
@@ -92,21 +93,21 @@ describe('/dev/ui states from the empty states screen', () => {
     expect(meter.querySelectorAll('.bg-stage-screening')).toHaveLength(4);
   });
 
-  it('the failed AI job offers the manual path first and a retry second', () => {
+  it('the failed AI job offers the manual path first, a retry second and the delete last', () => {
     renderGallery();
 
     const failed = screen.getByText('AI не впорався').closest<HTMLElement>('[role="status"]');
     const labels = [...(failed?.querySelectorAll('button') ?? [])].map(
       (button) => button.textContent,
     );
-    expect(labels).toEqual(['Зробити вручну', 'Спробувати ще раз']);
+    expect(labels).toEqual(['Заповнити вручну', 'Спробувати ще раз', 'Видалити картку']);
   });
 
   it('every state action grows to a 44 px touch target under md and keeps its drawn height above', () => {
     renderGallery();
 
     const actions = STATE_ACTIONS.flatMap((name) => screen.getAllByRole('button', { name }));
-    expect(actions).toHaveLength(11);
+    expect(actions).toHaveLength(12);
     for (const action of actions) {
       expect(action.className).toContain('max-md:min-h-11');
       expect(action.className).toMatch(/\bh-control-(md|lg)\b/);

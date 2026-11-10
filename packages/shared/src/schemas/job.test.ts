@@ -1,13 +1,25 @@
 import { describe, expect, it } from 'vitest';
 
 import { buildJobStatus } from '../../testing/index.js';
-import { AI_JOB_STEPS } from '../ai-statuses.js';
+import { AI_JOB_FAILURES, AI_JOB_STEPS } from '../ai-statuses.js';
 import { issuePathsOf } from '../test/zod-issues.js';
 import { jobStatusSchema, jobUpdatedSchema } from './job.js';
 
 describe('AI_JOB_STEPS', () => {
   it('numbers queued, processing and done as steps 1, 2 and 3 of 3', () => {
     expect(AI_JOB_STEPS).toEqual({ queued: 1, processing: 2, done: 3, total: 3 });
+  });
+});
+
+describe('AI_JOB_FAILURES', () => {
+  it('names the error types a failed job answers besides the parse failures', () => {
+    expect(AI_JOB_FAILURES).toEqual({
+      budgetExceeded: 'budget_exceeded',
+      timeout: 'ai_timeout',
+      notReady: 'not_ready',
+      providerError: 'ai_provider_error',
+      rateLimited: 'rate_limited',
+    });
   });
 });
 

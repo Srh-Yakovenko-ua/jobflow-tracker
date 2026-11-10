@@ -1,6 +1,9 @@
+import { applicationIdSchema, capturePasteInputSchema } from '@jobflow/shared';
+import type { ArgumentMetadata } from '@nestjs/common';
 import { describe, expect, it } from 'vitest';
 
-import { toValidationError } from './validation.js';
+import { AppError } from './app-error.js';
+import { SchemaValidationPipe, toValidationError } from './validation.js';
 
 describe('toValidationError', () => {
   it('turns schema issues into a 422 validation_error with one entry per field', () => {
@@ -32,5 +35,34 @@ describe('toValidationError', () => {
     const error = toValidationError([{ message: 'Expected object' }]);
 
     expect(error.body.errors).toEqual([{ path: '', message: 'Expected object' }]);
+  });
+});
+
+describe('SchemaValidationPipe', () => {
+  const pipe = new SchemaValidationPipe();
+
+  const ID_PARAM: ArgumentMetadata = { type: 'param', data: 'id', schema: applicationIdSchema };
+
+  async function refusal(value: unknown, metadata: ArgumentMetadata) {
+    const error: unknown = await pipe.transform(value, metadata).catch((thrown: unknown) => thrown);
+    return error instanceof AppError
+      ? [error.body.status, error.body.errors?.map(({ path }) => path)]
+      : error;
+  }
+
+  it('names the route parameter a bare value was read from', async () => {
+    expect(await refusal('not-a-uuid', ID_PARAM)).toEqual([422, ['id']]);
+  });
+
+  it('keeps the field path of a body parsed whole', async () => {
+    const body: ArgumentMetadata = { type: 'body', schema: capturePasteInputSchema };
+
+    expect(await refusal({ text: ' ' }, body)).toEqual([422, ['text']]);
+  });
+
+  it('hands over the value the schema accepts', async () => {
+    const id = '0198c2f4-7a10-7c3e-9b1d-2f6a4e8c0d11';
+
+    expect(await pipe.transform(id, ID_PARAM)).toBe(id);
   });
 });

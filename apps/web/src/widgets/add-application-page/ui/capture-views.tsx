@@ -3,23 +3,54 @@
 import { AI_JOB_STEPS, type ApplicationResponse } from '@jobflow/shared';
 import Link from 'next/link';
 
-import { ParsingCard, type ParsingCardProps, PreviewCard } from '@/entities/application';
+import {
+  type DraftMark,
+  ParsingCard,
+  type ParsingCardProps,
+  PreviewCard,
+} from '@/entities/application';
 import { DraftReview, type DraftReviewProps } from '@/features/edit-application';
 import { uk } from '@/shared/i18n';
 import { cn } from '@/shared/lib/cn';
 import { type AiJob, AsyncState } from '@/shared/ui/async-state';
 import { buttonLinkClasses } from '@/shared/ui/button';
+import { LoadFailedPanel } from '@/shared/ui/error-panel';
 import { STATE_TEXT } from '@/shared/ui/state-text';
 import { TOUCH_HEIGHT } from '@/shared/ui/touch-height';
 
 import { EXPLAINER_COPY } from './add-explainer';
+import {
+  CaptureFailure,
+  type CaptureFailureKind,
+  type CaptureFailureProps,
+} from './capture-failure';
 import { LIVE_PANEL, LIVE_TITLE, type LiveView } from './live-section';
 
 export type ProgressViewInput = Readonly<{ job: AiJob; parse: ParsingCardProps['parse'] }>;
 
+export type DraftFormKind = 'review' | 'manual';
+
+export type DraftFormViewInput = Pick<DraftReviewProps, 'application' | 'actions'> &
+  Readonly<{ id: DraftFormKind; mark: DraftMark }>;
+
+type DraftFormLook = Readonly<{
+  title: string;
+  parsed: boolean;
+  view: NonNullable<DraftReviewProps['view']>;
+}>;
+
 const COPY = uk.add;
 
 const STATE_PANEL = 'overflow-hidden rounded-lg shadow-e1';
+
+const DRAFT_FORM: Record<DraftFormKind, DraftFormLook> = {
+  review: { title: COPY.review.title, parsed: true, view: {} },
+  manual: {
+    title: COPY.failed.manualTitle,
+    parsed: false,
+    view: { name: COPY.failed.manualTitle, focusField: 'company' },
+  },
+};
 
 function linkClasses(variant: 'primary' | 'outline'): string {
   return cn(buttonLinkClasses({ variant, size: 'lg' }), TOUCH_HEIGHT);
@@ -34,15 +65,9 @@ function ParsedEyebrow() {
   );
 }
 
-export const FAILED_VIEW: LiveView = {
-  id: 'failed',
-  preview: null,
-  panel: (
-    <div className={STATE_PANEL}>
-      <AsyncState job={{ status: 'failed' }} />
-    </div>
-  ),
-};
+export function failureMarkOf({ parsed }: CaptureFailureKind): DraftMark {
+  return parsed ? 'review' : 'failed';
+}
 
 export function progressView({ job, parse }: ProgressViewInput): LiveView {
   return {
@@ -56,19 +81,39 @@ export function progressView({ job, parse }: ProgressViewInput): LiveView {
   };
 }
 
-export function reviewView({ application, actions }: DraftReviewProps): LiveView {
+export function readFailedView(onRetry: () => void): LiveView {
+  return { id: 'read-failed', preview: null, panel: <LoadFailedPanel onRetry={onRetry} /> };
+}
+
+export function failureView(props: CaptureFailureProps): LiveView {
   return {
-    id: 'review',
-    preview: <PreviewCard application={application} />,
+    id: 'failed',
+    preview: (
+      <PreviewCard application={props.application} view={{ mark: failureMarkOf(props.failure) }} />
+    ),
+    panel: (
+      <div className={cn(STATE_PANEL, 'ring-1 ring-rejected')}>
+        <CaptureFailure {...props} />
+      </div>
+    ),
+  };
+}
+
+export function draftFormView({ id, mark, application, actions }: DraftFormViewInput): LiveView {
+  const look = DRAFT_FORM[id];
+  return {
+    id,
+    preview: <PreviewCard application={application} view={{ mark }} />,
     panel: (
       <div className={cn(LIVE_PANEL, 'inset-ring inset-ring-accent/25')}>
         <DraftReview
           application={application}
           actions={actions}
+          view={look.view}
           heading={
             <>
-              <ParsedEyebrow />
-              <h3 className={LIVE_TITLE}>{COPY.review.title}</h3>
+              {look.parsed && <ParsedEyebrow />}
+              <h3 className={LIVE_TITLE}>{look.title}</h3>
             </>
           }
         />

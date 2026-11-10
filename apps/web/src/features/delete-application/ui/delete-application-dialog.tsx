@@ -14,7 +14,7 @@ export type DeleteApplicationActions = Readonly<{ onCancel: () => void; onDelete
 export type DeleteApplicationDialogProps = Readonly<{
   application: ApplicationResponse | null;
   actions: DeleteApplicationActions;
-  handlers?: Pick<DialogContentHandlers, 'onCloseAutoFocus'>;
+  handlers?: Pick<DialogContentHandlers, 'onOpenAutoFocus' | 'onCloseAutoFocus'>;
 }>;
 
 const COPY = uk.applicationPage.deletion;
