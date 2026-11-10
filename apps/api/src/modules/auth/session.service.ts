@@ -4,9 +4,11 @@ import type { RefreshToken, SessionTokens } from '@jobflow/shared';
 import { Injectable, Logger } from '@nestjs/common';
 
 import { unauthorized } from '../../common/app-error.js';
+import { PrismaService } from '../../prisma/prisma.service.js';
 import { AccessTokens } from './access-tokens.js';
 import { hashRefreshToken, newRefreshToken, refreshExpiryFrom } from './refresh-tokens.js';
 import { SessionRepository } from './session.repository.js';
+import { UserTokens } from './user-tokens.js';
 
 export type IssuedSession = SessionTokens & { refreshToken: RefreshToken };
 
@@ -19,6 +21,8 @@ export class SessionService {
   constructor(
     private readonly repository: SessionRepository,
     private readonly accessTokens: AccessTokens,
+    private readonly tokens: UserTokens,
+    private readonly prisma: PrismaService,
   ) {}
 
   async start(userId: string): Promise<IssuedSession> {
@@ -60,7 +64,8 @@ export class SessionService {
   }
 
   async logoutAll(userId: string): Promise<void> {
-    await this.repository.revokeAll({ userId, now: new Date() });
+    const now = new Date();
+    await this.prisma.$transaction((tx) => this.tokens.revokeAll({ userId, now }, tx));
   }
 
   async familyOf({ userId, refreshToken }: PresentedToken): Promise<string | undefined> {

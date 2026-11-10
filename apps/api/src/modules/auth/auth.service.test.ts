@@ -5,7 +5,12 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { conflict } from '../../common/app-error.js';
 import { PrismaService } from '../../prisma/prisma.service.js';
 import { NEW_USER_SETTINGS, NEW_USER_SETTINGS_ROW } from '../../test/factories.js';
-import { FAKE_TRANSACTION, FakePrisma } from '../../test/fake-prisma.js';
+import {
+  FAKE_TRANSACTION,
+  FakePrisma,
+  type InTransaction,
+  RevokeAllRecorder,
+} from '../../test/fake-prisma.js';
 import {
   AuthRepository,
   type NewOAuthLink,
@@ -19,8 +24,6 @@ import { AuthService, type OAuthIdentity } from './auth.service.js';
 import { PasswordHasher } from './password-hasher.js';
 import type { RevokeAllInput } from './session.repository.js';
 import { UserTokens } from './user-tokens.js';
-
-type InTransaction<T> = T & { client: unknown };
 
 type StoredUser = UserCredentials & { oauthAccounts?: OAuthAccountKey[] };
 
@@ -36,15 +39,6 @@ const ANNA: AuthUser = {
   displayName: 'Анна',
   locale: 'uk',
 };
-
-class FakeUserTokens {
-  readonly revokedAll: InTransaction<RevokeAllInput>[] = [];
-
-  revokeAll(input: RevokeAllInput, client: unknown): Promise<void> {
-    this.revokedAll.push({ ...input, client });
-    return Promise.resolve();
-  }
-}
 
 class FakePasswordHasher {
   readonly verified: { digest: string; password: string }[] = [];
@@ -113,7 +107,7 @@ class FakeAuthRepository {
 
 async function authServiceWith(users: UserCredentials[] = [], profiles: UserProfile[] = []) {
   const repository = new FakeAuthRepository(users, profiles);
-  const tokens = new FakeUserTokens();
+  const tokens = new RevokeAllRecorder<RevokeAllInput>();
   const hasher = new FakePasswordHasher();
   const moduleRef = await Test.createTestingModule({
     providers: [AuthService, AuthRepository, UserTokens, PasswordHasher, PrismaService],

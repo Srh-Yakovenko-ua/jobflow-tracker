@@ -120,8 +120,13 @@ export const AUTH_OPENAPI_PATHS: RouteConfig[] = [
     path: '/auth/logout-all',
     tags: TAGS,
     summary: 'Sign out of every session',
+    description:
+      'Revokes every session of the user and the capture token of the bookmarklet, in one transaction.',
     responses: {
-      204: { description: 'Every session of the user is revoked', headers: clearedCookie },
+      204: {
+        description: 'Every session and the capture token of the user are revoked',
+        headers: clearedCookie,
+      },
       ...errorResponses([401, 403]),
     },
   },
