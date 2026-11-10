@@ -3,21 +3,35 @@ import { uk } from '@/shared/i18n';
 import { formatDuration } from '@/shared/lib/state-format';
 import type { ErrorToastContent } from '@/shared/ui/error-toast';
 
+export type AddLimit = 'parseLimit' | 'requestLimit';
+
 const COPY = uk.add.errors;
 
-export function parseLimitToast(retryAfterSeconds: number | undefined): ErrorToastContent {
+type LimitCopy = (typeof COPY)[AddLimit];
+
+const IDEMPOTENCY_CONFLICT = 'idempotency_conflict';
+
+function limitToast(copy: LimitCopy, retryAfterSeconds: number | undefined): ErrorToastContent {
   return {
-    title: COPY.parseLimit.title,
+    title: copy.title,
     description:
-      retryAfterSeconds === undefined
-        ? COPY.parseLimit.later
-        : COPY.parseLimit.wait(formatDuration(retryAfterSeconds)),
+      retryAfterSeconds === undefined ? copy.later : copy.wait(formatDuration(retryAfterSeconds)),
   };
 }
 
-export function addErrorToastOf(error: Error): ErrorToastContent {
-  if (!(error instanceof ApiError)) return uk.errors.saveFailed;
-  if (error.status === 409) return COPY.noActiveSearch;
-  if (error.status === 429) return parseLimitToast(error.retryAfterSeconds);
-  return uk.errors.saveFailed;
+export function parseLimitToast(retryAfterSeconds: number | undefined): ErrorToastContent {
+  return limitToast(COPY.parseLimit, retryAfterSeconds);
+}
+
+function conflictToast(error: ApiError): ErrorToastContent {
+  return error.body.type === IDEMPOTENCY_CONFLICT ? COPY.stillRunning : COPY.noActiveSearch;
+}
+
+export function addErrorToastOf(limit: AddLimit): (error: Error) => ErrorToastContent {
+  return (error) => {
+    if (!(error instanceof ApiError)) return uk.errors.saveFailed;
+    if (error.status === 409) return conflictToast(error);
+    if (error.status === 429) return limitToast(COPY[limit], error.retryAfterSeconds);
+    return uk.errors.saveFailed;
+  };
 }

@@ -1,4 +1,4 @@
-import { REJECTION_SIDES, SOURCE_LABELS, SOURCES } from '@jobflow/shared';
+import { REJECTION_SIDES } from '@jobflow/shared';
 import { useState } from 'react';
 
 import { uk } from '@/shared/i18n';
@@ -6,11 +6,6 @@ import { uk } from '@/shared/i18n';
 import type { ComboboxProps } from './combobox';
 import type { SelectOption } from './field-surface';
 import type { ChoiceOption } from './radio-group';
-
-export const SOURCE_OPTIONS: readonly SelectOption[] = SOURCES.map((source) => ({
-  value: source,
-  label: SOURCE_LABELS[source].labelUk,
-}));
 
 const STACK_OPTIONS: readonly SelectOption[] = [
   { value: 'react', label: 'React', meta: '18' },

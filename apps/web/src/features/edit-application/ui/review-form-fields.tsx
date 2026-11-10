@@ -8,7 +8,7 @@ import { useFieldError } from '@/shared/lib/use-field-error';
 import { Field, fieldLabelId, useField } from '@/shared/ui/field';
 import { Input } from '@/shared/ui/input';
 import { Select } from '@/shared/ui/select';
-import { SOURCE_OPTIONS } from '@/shared/ui/specimen-options';
+import { SOURCE_OPTIONS } from '@/shared/ui/source-options';
 
 import { NO_REVIEW, type ReviewedField, type ReviewFields } from '../lib/review-fields';
 import { ConfidenceChip, REVIEW_NAMES } from './confidence-chip';

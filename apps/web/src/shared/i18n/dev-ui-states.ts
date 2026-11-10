@@ -1,14 +1,9 @@
 import { board } from './board';
 
-const { emptySearch, filters, firstRun } = board;
+const { emptySearch, filters } = board;
 
 export const devUiStates = {
-  firstRun: {
-    index: '01',
-    title: 'Перший вхід · дошка на нулі',
-    addFirst: firstRun.addFirst,
-    bookmarklet: firstRun.bookmarklet,
-  },
+  firstRun: { index: '01', title: 'Перший вхід · дошка на нулі' },
   emptyScreens: {
     index: '02',
     title: 'Порожні стани решти екранів',

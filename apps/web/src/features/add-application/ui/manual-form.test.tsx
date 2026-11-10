@@ -7,8 +7,14 @@ import {
   type AddRoutesOptions,
   addsOnceOnDoubleClick,
   NO_ACTIVE_SEARCH,
+  TWO_MINUTES,
 } from '@/test/add-fixtures';
-import { ANY_IDEMPOTENCY_KEY, errorReply, validationReply } from '@/test/api-handlers';
+import {
+  ANY_IDEMPOTENCY_KEY,
+  errorReply,
+  rateLimitedReply,
+  validationReply,
+} from '@/test/api-handlers';
 import { descriptionOf } from '@/test/field-description';
 import { latch } from '@/test/latch';
 import { renderInApp } from '@/test/render-in-app';
@@ -154,5 +160,17 @@ describe('ManualForm', () => {
     expect(field(COMPANY).value).toBe('Kvit Software');
     expect(field(POSITION).value).toBe('Middle QA Engineer');
     expect(screen.queryByRole('button', { name: ANOTHER })).toBeNull();
+  });
+
+  it('a 429 says too many requests and does not mention parses', async () => {
+    const limited = () => rateLimitedReply(TWO_MINUTES);
+    const { user } = renderManualForm({ manual: { reply: limited } });
+
+    await sendRequired(user);
+
+    expect(await screen.findByText('Забагато запитів')).toBeDefined();
+    expect(screen.getByText('Спробуй через 2 хв. Усе введене лишилось у формі.')).toBeDefined();
+    expect(screen.queryByText(/розбор/i)).toBeNull();
+    expect(field(COMPANY).value).toBe('Kvit Software');
   });
 });

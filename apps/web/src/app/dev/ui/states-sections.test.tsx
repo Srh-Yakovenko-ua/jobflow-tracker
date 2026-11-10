@@ -38,8 +38,6 @@ const SPECIMEN_LINES = [
 ];
 
 const STATE_ACTIONS = [
-  'Додати першу вакансію',
-  'Встановити букмарклет',
   'Спробувати фоллоу-ап по 4 свіжих',
   'Заархівувати пошук',
   'Заповнити вручну',
@@ -107,7 +105,7 @@ describe('/dev/ui states from the empty states screen', () => {
     renderGallery();
 
     const actions = STATE_ACTIONS.flatMap((name) => screen.getAllByRole('button', { name }));
-    expect(actions).toHaveLength(12);
+    expect(actions).toHaveLength(10);
     for (const action of actions) {
       expect(action.className).toContain('max-md:min-h-11');
       expect(action.className).toMatch(/\bh-control-(md|lg)\b/);

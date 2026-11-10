@@ -4,7 +4,7 @@ import type { RequestHandler } from 'msw';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import type { AddQuery } from '@/features/add-application';
-import { addRoutes, FIRST_PASTE } from '@/test/add-fixtures';
+import { addRoutes, FIRST_PASTE, linkField, textField } from '@/test/add-fixtures';
 import { apiUrl, recordSentRequests } from '@/test/api-handlers';
 import {
   applicationRoute,
@@ -18,7 +18,7 @@ import { axeViolations } from '@/test/axe';
 import { captureTokenRoutes } from '@/test/capture-token-fixtures';
 import { failedJob, jobRoute } from '@/test/job-fixtures';
 import { push } from '@/test/navigation';
-import { renderInApp } from '@/test/render-in-app';
+import { renderViewInApp } from '@/test/render-in-app';
 import { server } from '@/test/server';
 import { meRoute } from '@/test/session-fixtures';
 
@@ -59,9 +59,9 @@ async function renderPage(query: AddQuery = {}, handlers: readonly RequestHandle
   const added = addRoutes();
   server.use(meRoute(), ...captureTokenRoutes().handlers, ...added.handlers, ...handlers);
   const sentRequests = recordSentRequests();
-  const user = renderInApp(<AddApplicationPage query={query} />);
+  const { user, view } = renderViewInApp(<AddApplicationPage query={query} />);
   await screen.findByRole('button', { name: 'Створити кнопку' });
-  return { user, sentRequests, sent: added.sent };
+  return { user, view, sentRequests, sent: added.sent };
 }
 
 async function renderFailedPage(query: AddQuery = { job: FAILED_JOB.id }) {
@@ -81,14 +81,6 @@ function cardReadsOf(sentRequests: ReturnType<typeof recordSentRequests>) {
   return sentRequests().filter(
     ({ url }) => typeof url === 'string' && url.startsWith(apiUrl('/applications/')),
   );
-}
-
-function textField() {
-  return screen.getByRole<HTMLTextAreaElement>('textbox', { name: 'Текст вакансії' });
-}
-
-function linkField() {
-  return screen.getByRole<HTMLInputElement>('textbox', { name: 'Посилання на вакансію' });
 }
 
 describe('AddApplicationPage', () => {
@@ -138,6 +130,25 @@ describe('AddApplicationPage', () => {
     expect(textField().value).toBe('');
     expect(document.activeElement).toBe(textField());
   });
+
+  it.each<{ name: string; query: AddQuery }>([
+    { name: 'a page opened without it', query: {} },
+    { name: 'a page already opened with it', query: { path: 'paste' } },
+  ])(
+    'path=paste arriving on $name moves the focus to the text field and keeps the typed text',
+    async ({ query }) => {
+      const { user, view } = await renderPage(query);
+      await user.type(textField(), 'Kvit шукає QA');
+      await user.click(screen.getByRole('textbox', { name: 'Компанія' }));
+
+      view.rerender(<AddApplicationPage query={{ path: 'paste' }} />);
+
+      await waitFor(() => {
+        expect(document.activeElement).toBe(textField());
+      });
+      expect(textField().value).toBe('Kvit шукає QA');
+    },
+  );
 
   it('a pasted vacancy brings the live panel into view, then its review, and the confirmation leads to the board', async () => {
     const parse = { job: buildJobStatus({ status: 'processing', step: 2, queue: null }) };

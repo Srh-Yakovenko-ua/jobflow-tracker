@@ -6,7 +6,8 @@ import { uk } from '@/shared/i18n';
 
 import { Combobox, type ComboboxView } from './combobox';
 import { Field } from './field';
-import { SOURCE_OPTIONS, useStackSpecimen } from './specimen-options';
+import { SOURCE_OPTIONS } from './source-options';
+import { useStackSpecimen } from './specimen-options';
 
 const SOURCE = uk.devUi.selects.source;
 const STACK = uk.devUi.selects.stack;

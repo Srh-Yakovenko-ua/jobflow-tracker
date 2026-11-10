@@ -6,7 +6,7 @@ import {
   capturePasteInputSchema,
   VACANCY_PARSE_LIMITS,
 } from '@jobflow/shared';
-import type { KeyboardEvent } from 'react';
+import { type KeyboardEvent, useEffect } from 'react';
 import { useForm, type UseFormReturn } from 'react-hook-form';
 import { z } from 'zod';
 
@@ -19,13 +19,13 @@ import { Kbd } from '@/shared/ui/kbd';
 import { STATE_TEXT } from '@/shared/ui/state-text';
 import { Textarea } from '@/shared/ui/textarea';
 
-import type { AddPrefill } from '../lib/add-prefill';
+import { type AddPrefill, addPrefillOf, type AddQuery } from '../lib/add-prefill';
 import { type CapturedDraft, usePasteApplication } from '../model/use-add-application';
 import { AddFlow, type AddStep } from './add-flow';
 import { AddForm } from './add-form';
 
 export type PasteFormProps = Readonly<{
-  prefill: AddPrefill;
+  query: AddQuery;
   actions?: { onCaptured: (capture: CapturedDraft) => void };
 }>;
 
@@ -37,6 +37,7 @@ type PasteFieldProps = Readonly<{ methods: PasteMethods; autoFocus: boolean }>;
 
 type PasteFieldsProps = Readonly<{
   step: AddStep;
+  query: AddQuery;
   initial: PasteValues;
   actions: PasteFormProps['actions'];
 }>;
@@ -107,12 +108,16 @@ function ShortcutHint() {
   );
 }
 
-function PasteFields({ step, initial, actions }: PasteFieldsProps) {
+function PasteFields({ step, query, initial, actions }: PasteFieldsProps) {
   const methods = useForm<PasteValues, unknown, CapturePasteInput>({
     mode: 'onTouched',
     defaultValues: initial,
     resolver,
   });
+  const { setFocus } = methods;
+  useEffect(() => {
+    if (addPrefillOf(query).focusPaste) setFocus('text');
+  }, [query, setFocus]);
   const mutation = usePasteApplication({
     form: { fields: FIELDS, setError: methods.setError, messages: ERRORS },
     onAdded: (added) => {
@@ -131,11 +136,17 @@ function PasteFields({ step, initial, actions }: PasteFieldsProps) {
   );
 }
 
-export function PasteForm({ prefill, actions }: PasteFormProps) {
+export function PasteForm({ query, actions }: PasteFormProps) {
+  const prefill = addPrefillOf(query);
   return (
     <AddFlow focusOnMount={prefill.focusPaste}>
       {(step) => (
-        <PasteFields step={step} initial={step.first ? prefill : BLANK} actions={actions} />
+        <PasteFields
+          step={step}
+          query={query}
+          initial={step.first ? prefill : BLANK}
+          actions={actions}
+        />
       )}
     </AddFlow>
   );

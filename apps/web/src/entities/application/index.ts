@@ -18,7 +18,7 @@ export { applicationKeys, jobKeys, timelineKeys } from './model/keys';
 export { useSilentCount } from './model/use-silent-count';
 export { ApplicationCard, type ApplicationCardProps } from './ui/application-card';
 export { SCHEDULED_EVENT_ICON } from './ui/event-icon';
-export { FirstRunState, type FirstRunStateProps } from './ui/first-run-state';
+export { FirstRunState } from './ui/first-run-state';
 export { NextEventChip, type NextEventChipProps } from './ui/next-event-chip';
 export { OutcomeBadge, type OutcomeBadgeProps } from './ui/outcome-badge';
 export { ParsingCard, type ParsingCardProps } from './ui/parsing-card';
