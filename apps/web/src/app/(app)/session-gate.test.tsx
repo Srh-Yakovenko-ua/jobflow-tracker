@@ -1,11 +1,11 @@
 import { useMutation } from '@tanstack/react-query';
-import { act, screen, waitFor, within } from '@testing-library/react';
+import { screen, waitFor, within } from '@testing-library/react';
 import { http } from 'msw/http';
 import { useState } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { userKeys } from '@/entities/user';
-import { API_CLIENT_LIMITS, apiClient, clearAccessToken, setAccessToken } from '@/shared/api';
+import { apiClient, clearAccessToken, setAccessToken } from '@/shared/api';
 import {
   freshSuggestionsRoute,
   OUTAGES,
@@ -16,6 +16,7 @@ import {
   SUGGESTIONS_REQUEST,
   suggestionsSession,
 } from '@/test/api-handlers';
+import { advancePastQueryRetries, fakeTimeouts } from '@/test/fake-timeouts';
 import { replace } from '@/test/navigation';
 import { QueryProbe, waitForQuery } from '@/test/query-status';
 import { renderInApp } from '@/test/render-in-app';
@@ -29,10 +30,6 @@ vi.mock('next/navigation', () => import('@/test/navigation'));
 const PAGE = 'signed-in page';
 
 const REQUEST_STATUS = 'request status';
-
-const STARTUP_ATTEMPTS = 2;
-
-const RETRY_PAUSE_MS = 1000;
 
 const LEAVE = 'leave the signed-in pages';
 
@@ -120,14 +117,10 @@ describe('SessionGate on app start', () => {
   it.each(OUTAGES)(
     'a refresh that $name shows the load failed panel, whose retry opens the page with no logout',
     async ({ reply }) => {
-      vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'], shouldAdvanceTime: true });
+      fakeTimeouts();
       server.use(http.post(REFRESH_URL, reply));
       const user = renderGate();
-      await act(() =>
-        vi.advanceTimersByTimeAsync(
-          STARTUP_ATTEMPTS * API_CLIENT_LIMITS.requestTimeoutMs + RETRY_PAUSE_MS,
-        ),
-      );
+      await advancePastQueryRetries();
 
       const panel = await screen.findByRole('alert');
       server.use(refreshRoute({ token: SESSION_TOKENS.fresh }));

@@ -6,7 +6,7 @@ import { uk } from '@/shared/i18n';
 import { cn } from '@/shared/lib/cn';
 import { TOUCH_HEIGHT } from '@/shared/ui/touch-height';
 
-import { SETTINGS_SECTIONS } from '../model/settings-items';
+import { sectionOfHash, SETTINGS_SECTIONS } from '../model/settings-items';
 
 const LINK =
   'touch-target flex h-10.5 items-center rounded-[9px] px-3 text-[14.5px] whitespace-nowrap transition-colors duration-(--duration-fast) ease-standard';
@@ -28,7 +28,7 @@ const noHash = () => '';
 
 export function SectionNav() {
   const hash = useSyncExternalStore(subscribe, hashOf, noHash);
-  const active = SETTINGS_SECTIONS.find((section) => section === hash) ?? SETTINGS_SECTIONS[0];
+  const active = sectionOfHash(hash);
   return (
     <nav aria-label={uk.settings.navLabel} className="md:sticky md:top-24">
       <ul className="flex flex-wrap gap-0.5 md:flex-col">

@@ -1,6 +1,7 @@
 import { DeleteAiResultsDialog } from '@/features/delete-ai-results';
 import { InstallBookmarklet } from '@/features/install-bookmarklet';
 import { uk } from '@/shared/i18n';
+import { SETTINGS_ANCHORS } from '@/shared/lib/settings-anchors';
 
 import { modelDataItems } from '../model/model-data-items';
 import type { SettingsItems } from '../model/settings-items';
@@ -35,7 +36,7 @@ export function AiPrivacySection({ items }: AiPrivacySectionProps) {
         </SettingsCard>
       </SettingsBlock>
       {items.captureToken && (
-        <SettingsBlock heading={uk.bookmarklet.heading}>
+        <SettingsBlock id={SETTINGS_ANCHORS.bookmarklet} heading={uk.bookmarklet.heading}>
           <SettingsCard className="px-5 py-4">
             <InstallBookmarklet />
           </SettingsCard>

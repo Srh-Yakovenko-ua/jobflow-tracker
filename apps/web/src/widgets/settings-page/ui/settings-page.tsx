@@ -2,6 +2,7 @@
 
 import type { MeResponse } from '@jobflow/shared';
 import { useQuery } from '@tanstack/react-query';
+import { useEffect } from 'react';
 
 import { meQueryOptions } from '@/entities/user';
 import { FEATURE_FLAGS } from '@/shared/config';
@@ -19,6 +20,9 @@ import { SectionNav } from './section-nav';
 const ITEMS = visibleSettingsItems(FEATURE_FLAGS);
 
 function SettingsContent({ me }: Readonly<{ me: MeResponse }>) {
+  useEffect(() => {
+    document.getElementById(window.location.hash.slice(1))?.scrollIntoView();
+  }, []);
   return (
     <div className="grid animate-fade-in items-start gap-6 md:grid-cols-[minmax(0,200px)_minmax(0,1fr)] md:gap-8">
       <SectionNav />

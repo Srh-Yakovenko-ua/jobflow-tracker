@@ -15,10 +15,10 @@ export function useRevokeCaptureTokensMutation() {
     mutationFn: revokeCaptureTokens,
     onSuccess: () => {
       showToast({ tone: 'success', ...COPY.done });
-      return queryClient.invalidateQueries({ queryKey: captureTokenKeys.all });
     },
     onError: () => {
       showErrorToast(COPY.failed);
     },
+    onSettled: () => queryClient.invalidateQueries({ queryKey: captureTokenKeys.all }),
   });
 }

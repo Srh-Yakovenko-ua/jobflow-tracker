@@ -11,7 +11,7 @@ describe('FirstRunState', () => {
   it('with no action of its own links to the bookmarklet install in the settings', () => {
     render(<FirstRunState />);
 
-    expect(screen.getByRole('link', INSTALL).getAttribute('href')).toBe('/settings#aiPrivacy');
+    expect(screen.getByRole('link', INSTALL).getAttribute('href')).toBe('/settings#bookmarklet');
   });
 
   it('with no action of its own offers Додати першу вакансію first, linked to /add', () => {
@@ -21,7 +21,7 @@ describe('FirstRunState', () => {
       screen.getAllByRole('link').map((link) => [link.textContent, link.getAttribute('href')]),
     ).toEqual([
       ['Додати першу вакансію', '/add'],
-      ['Встановити букмарклет', '/settings#aiPrivacy'],
+      ['Встановити букмарклет', '/settings#bookmarklet'],
     ]);
   });
 

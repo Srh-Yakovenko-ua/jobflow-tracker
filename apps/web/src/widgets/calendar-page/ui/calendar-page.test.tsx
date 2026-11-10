@@ -1,9 +1,8 @@
-import { act, fireEvent, screen, waitFor } from '@testing-library/react';
+import { fireEvent, screen, waitFor } from '@testing-library/react';
 import type { HttpResponseResolver } from 'msw';
 import { HttpResponse } from 'msw/http';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { API_CLIENT_LIMITS } from '@/shared/api';
 import { errorReply, OUTAGES } from '@/test/api-handlers';
 import { ACME_APPLICATION } from '@/test/application-fixtures';
 import { boardRoute, type ColumnCounts } from '@/test/board-fixtures';
@@ -14,6 +13,7 @@ import {
   KYIV_WEEK,
   scheduledItemOf,
 } from '@/test/calendar-fixtures';
+import { advancePastQueryRetries } from '@/test/fake-timeouts';
 import { stubMediaQuery } from '@/test/media-query';
 import { push } from '@/test/navigation';
 import { renderInApp } from '@/test/render-in-app';
@@ -50,8 +50,6 @@ const EMPTY_WEEK = 'Цього тижня співбесід немає';
 const NEXT_KYIV_WEEK = { from: '2026-11-08T22:00:00.000Z', to: '2026-11-15T22:00:00.000Z' };
 
 const TRANSIENT_RETRY_MS = 3000;
-
-const ME_ATTEMPTS = 2;
 
 type CalendarSetup = CalendarRouteOptions & {
   narrow?: boolean;
@@ -120,11 +118,7 @@ describe('CalendarPage', () => {
     async ({ reply }) => {
       pinScheduleClockWithTimeouts();
       const { sent } = renderCalendar({ me: reply });
-      await act(() =>
-        vi.advanceTimersByTimeAsync(
-          ME_ATTEMPTS * API_CLIENT_LIMITS.requestTimeoutMs + TRANSIENT_RETRY_MS,
-        ),
-      );
+      await advancePastQueryRetries();
 
       await waitFor(() => {
         expect(sent).toHaveLength(1);
