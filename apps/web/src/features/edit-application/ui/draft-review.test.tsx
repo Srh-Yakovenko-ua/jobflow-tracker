@@ -39,7 +39,7 @@ const SAVE_FAILED_TOAST = 'Це збій на нашому боці, збере�
 
 const COMPANY_ERROR = 'Вкажи компанію одним коротким рядком';
 
-const POSITION_ERROR = 'Вкажи посаду одним коротким рядком';
+const POSITION_ERROR = 'Вкажи позицію одним коротким рядком';
 
 const NO_QUOTE = 'Цитати в тексті вакансії не знайшлося';
 
@@ -129,9 +129,9 @@ describe('DraftReview', () => {
     expect(chip('Стек: точно').textContent).toBe('точно');
     expect(screen.queryByRole('button', { name: /^Джерело:/ })).toBeNull();
     expect(
-      screen.getByRole('textbox', { name: 'Зарплата від' }).closest('[data-confidence="check"]'),
+      screen.getByRole('textbox', { name: 'Зарплата від' }).closest('[data-field-tone="check"]'),
     ).not.toBeNull();
-    expect(companyField().closest('[data-confidence="check"]')).toBeNull();
+    expect(companyField().closest('[data-field-tone="check"]')).toBeNull();
     expect(
       screen.getByText('Вилка: у тексті написано «from 4700 to 5900 net».', { exact: true }),
     ).toBeDefined();

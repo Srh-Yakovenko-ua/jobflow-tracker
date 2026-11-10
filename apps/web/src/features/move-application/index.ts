@@ -2,6 +2,7 @@ export type { BulkMoveResult } from './lib/bulk-move-toast';
 export { canDragFrom, isLegalDrop, type StagePair } from './lib/drop-rules';
 export { nextStageOf } from './lib/next-stage';
 export { invalidateAfterMove } from './model/invalidate-after-move';
+export { MOVE_MUTATION_KEY } from './model/optimistic-move';
 export {
   type BulkMoveInput,
   type BulkMoveTarget,

@@ -1,8 +1,18 @@
-import { ApplicationCard } from '@/entities/application';
+import { type ApplicationResponse, DRAFT_PLACEHOLDERS } from '@jobflow/shared';
+
+import { ApplicationCard, FULL_APPLICATION, PreviewCard } from '@/entities/application';
 import { uk } from '@/shared/i18n';
 
 import { CARD_SPECIMENS } from './card-specimens';
 import { GallerySection, Specimen } from './gallery';
+
+const FAILED_PREVIEW: ApplicationResponse = {
+  ...FULL_APPLICATION,
+  ...DRAFT_PLACEHOLDERS,
+  id: '0b6f3c1e-5d2a-4c8e-9f10-000000000013',
+  isDraft: true,
+  matchScore: null,
+};
 
 export function CardsSection() {
   return (
@@ -13,6 +23,9 @@ export function CardsSection() {
             <ApplicationCard {...card} />
           </Specimen>
         ))}
+        <Specimen eyebrow={uk.devUi.cards.preview}>
+          <PreviewCard application={FAILED_PREVIEW} view={{ mark: 'failed' }} />
+        </Specimen>
       </div>
     </GallerySection>
   );

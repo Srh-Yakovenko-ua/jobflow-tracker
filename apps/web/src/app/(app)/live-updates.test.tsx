@@ -159,7 +159,7 @@ describe('LiveUpdates', () => {
     ).toEqual(refetched);
   });
 
-  it('a reconnect refetches every open application, job and timeline query, and nothing else', async () => {
+  it('a reconnect refetches nothing on open, and every open application, job and timeline query and nothing else once it has stayed open 10 s', async () => {
     fakeTimeouts();
     const { stream, source } = await pageWithOpenStream();
     act(() => {
@@ -171,6 +171,11 @@ describe('LiveUpdates', () => {
     expect(
       refetchedAfter(() => {
         second.open();
+      }),
+    ).toEqual([]);
+    expect(
+      refetchedAfter(() => {
+        vi.advanceTimersByTime(10_000);
       }),
     ).toEqual(REFETCHED_ON_RECONNECT);
   });

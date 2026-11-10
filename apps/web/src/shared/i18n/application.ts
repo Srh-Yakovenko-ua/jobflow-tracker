@@ -30,6 +30,7 @@ export const application = {
       `AI обробляє · крок ${String(step)} з ${String(total)}`,
     queued: 'у черзі',
     queuedEta: (eta: string) => `у черзі · ~${eta}`,
+    ordinal: (ordinal: number) => `Чернетка ${String(ordinal)}.`,
     review: 'перевір поля',
     failed: 'потрібні поля',
     textKept: 'текст збережено в нотатці',

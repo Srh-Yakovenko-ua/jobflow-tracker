@@ -1,12 +1,12 @@
 import { describe, expect, it } from 'vitest';
 
+import { JOB_ID } from '@/test/job-fixtures';
+
 import { addPrefillOf } from './add-prefill';
 
 const BLANK = { text: '', url: '', focusPaste: false, reviewId: null, jobId: null };
 
 const DRAFT_ID = '0b6f3c1e-5d2a-4c8e-9f10-000000000301';
-
-const JOB_ID = '0199f1a0-3c4d-7e5f-8a6b-7c8d9e0f1a2b';
 
 const TEXT_LIMIT = 20_000;
 

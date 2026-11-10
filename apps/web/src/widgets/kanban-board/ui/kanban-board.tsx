@@ -35,6 +35,7 @@ import { BoardToolbar } from './board-toolbar';
 import { ColumnCards } from './column-cards';
 import { BOARD_FRAME, STRIP_LOOK } from './column-frame';
 import { OutcomeLane } from './outcome-lane';
+import { ParsingStatus } from './parsing-status';
 
 const FOOTNOTES: Partial<Record<OpenStage, readonly string[]>> = { final: uk.board.finalNote };
 
@@ -109,6 +110,7 @@ function BoardColumns({ board, context, outcomes, stages }: BoardColumnsProps) {
   const shown = (stage: Stage) => stages.includes(stage);
   return (
     <BoardFrame busy={outcomes.load.filtersPending}>
+      <ParsingStatus count={context.parsingIds?.length ?? 0} />
       <BoardDnd board={board} context={context}>
         {OPEN_STAGES.filter(shown).map((stage) => (
           <BoardColumn key={stage} column={{ stage, count: columns[stage].count }}>

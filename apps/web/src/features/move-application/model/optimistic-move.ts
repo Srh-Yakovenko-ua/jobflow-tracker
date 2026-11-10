@@ -13,6 +13,8 @@ export type OptimisticMove = Readonly<{
 
 type BoardPatch = Omit<OptimisticMove, 'request'>;
 
+export const MOVE_MUTATION_KEY = ['application-move'] as const;
+
 const BOARDS = { queryKey: applicationKeys.boards() };
 
 async function patchBoards({ queryClient, move }: BoardPatch) {

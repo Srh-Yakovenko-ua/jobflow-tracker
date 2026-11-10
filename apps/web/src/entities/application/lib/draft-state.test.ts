@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest';
 
+import { JOB_ID } from '@/test/job-fixtures';
+
 import { FULL_CARD } from '../model/card-specimens';
 import { cardHrefOf, draftStateOf } from './draft-state';
-
-const JOB_ID = '0199f1a0-3c4d-7e5f-8a6b-7c8d9e0f1a2b';
 
 describe('draftStateOf', () => {
   it.each([

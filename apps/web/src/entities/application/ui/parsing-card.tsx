@@ -15,8 +15,11 @@ import { CARD_FRAME } from './card-frame';
 
 const COPY = uk.application.parsing;
 
+const PROCESSING_LINE = COPY.processing(AI_JOB_STEPS.processing, AI_JOB_STEPS.total);
+
 export type ParsingCardProps = Readonly<{
   parse: Pick<ApplicationCard, 'aiStatus' | 'aiJobId'>;
+  view?: Readonly<{ ordinal: number }> | undefined;
 }>;
 
 function QueueWait({ jobId }: Readonly<{ jobId: JobStatus['id'] }>) {
@@ -24,26 +27,31 @@ function QueueWait({ jobId }: Readonly<{ jobId: JobStatus['id'] }>) {
     ...jobQueryOptions(jobId),
     refetchInterval: LIVE_CLIENT_LIMITS.slowPollMs,
   });
-  const eta = job.isSuccess ? job.data.queue?.etaSeconds : undefined;
+  if (!job.isSuccess) return COPY.queued;
+  if (job.data.status === 'processing') return PROCESSING_LINE;
+  const eta = job.data.queue?.etaSeconds;
   return eta === undefined ? COPY.queued : COPY.queuedEta(formatDuration(eta));
 }
 
-function ParsingLine({ parse }: ParsingCardProps) {
-  if (parse.aiStatus !== 'queued') {
-    return COPY.processing(AI_JOB_STEPS.processing, AI_JOB_STEPS.total);
-  }
+function ParsingLine({ parse }: Pick<ParsingCardProps, 'parse'>) {
+  if (parse.aiStatus !== 'queued') return PROCESSING_LINE;
   return parse.aiJobId === null ? COPY.queued : <QueueWait jobId={parse.aiJobId} />;
 }
 
-export function ParsingCard({ parse }: ParsingCardProps) {
+export function ParsingCard({ parse, view }: ParsingCardProps) {
   const motion = useSkeletonMotion();
   return (
     <article className={cn(CARD_FRAME.article, 'gap-2.75 bg-surface text-ink shadow-e1')}>
-      <p role="status" className={CARD_FRAME.eyebrow}>
+      <p className={CARD_FRAME.eyebrow}>
         <span
           aria-hidden
           className={cn(CARD_FRAME.dot, motion === 'shimmer' && 'motion-safe:animate-pulse')}
         />
+        {view !== undefined && (
+          <>
+            <span className="sr-only">{COPY.ordinal(view.ordinal)}</span>{' '}
+          </>
+        )}
         <ParsingLine parse={parse} />
       </p>
       <FullCardBars motion={motion} />

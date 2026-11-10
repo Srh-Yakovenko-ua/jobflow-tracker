@@ -34,6 +34,8 @@ type PanelHeading = Readonly<{
 
 type PanelProps = Readonly<{ heading: PanelHeading; tone: PanelTone; children: ReactNode }>;
 
+type LocalCapture = Readonly<{ under: AddPrefill['reviewId']; capture: Capture | null }>;
+
 const COPY = uk.add;
 
 const PANEL_TONE: Record<PanelTone, string> = {
@@ -88,7 +90,13 @@ function writeCaptureToUrl({ applicationId, jobId }: CapturedDraft): void {
 }
 
 export function AddApplicationPage({ query }: AddApplicationPageProps) {
-  const [capture, setCapture] = useState(() => captureOf(addPrefillOf(query)));
+  const prefill = addPrefillOf(query);
+  const [local, setLocal] = useState<LocalCapture | null>(null);
+  const capture =
+    local !== null && local.under === prefill.reviewId ? local.capture : captureOf(prefill);
+  const setCapture = (next: Capture | null) => {
+    setLocal({ under: prefill.reviewId, capture: next });
+  };
   const liveRef = useRef<HTMLDivElement>(null);
   const onCaptured = (captured: CapturedDraft) => {
     setCapture(captured);

@@ -172,6 +172,17 @@ describe('/dev/ui application cards', () => {
     expect(specimenOf(CARDS.queued).getByText('до $6 200')).toBeDefined();
   });
 
+  it('the preview card of a failed draft carries потрібні поля and the kept text line, which no board card specimen shows', () => {
+    renderGallery();
+    const preview = specimenOf(CARDS.preview);
+
+    expect(preview.getByText('потрібні поля')).toBeDefined();
+    expect(preview.getByText('Без назви')).toBeDefined();
+    expect(screen.getAllByText('текст збережено в нотатці')).toEqual([
+      preview.getByText('текст збережено в нотатці'),
+    ]);
+  });
+
   it('a queued, running or failed AI job takes the score slot on the card', () => {
     renderGallery();
 

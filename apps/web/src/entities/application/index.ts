@@ -13,7 +13,7 @@ export { formatTimelineDate, type TimelineDateInput } from './lib/timeline-date'
 export type { ApplicationMove, MovingApplication } from './model/application-move';
 export type { ApplicationCardContext } from './model/card-context';
 export { CARD_DENSITIES, type CardDensity } from './model/card-density';
-export { FULL_CARD } from './model/card-specimens';
+export { FULL_APPLICATION, FULL_CARD } from './model/card-specimens';
 export { applicationKeys, jobKeys, timelineKeys } from './model/keys';
 export { useSilentCount } from './model/use-silent-count';
 export { ApplicationCard, type ApplicationCardProps } from './ui/application-card';

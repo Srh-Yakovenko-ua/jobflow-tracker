@@ -10,6 +10,12 @@ export type JobRouteOptions = {
   reply?: HttpResponseResolver;
 };
 
+export const JOB_ID = '0199f1a0-3c4d-7e5f-8a6b-7c8d9e0f1a2b';
+
+export const PROCESSING_JOB = buildJobStatus({ status: 'processing', step: 2, queue: null });
+
+export const DONE_JOB = buildJobStatus({ status: 'done', step: 3, queue: null });
+
 export function failedJob(errorType: JobStatus['errorType']): JobStatus {
   return buildJobStatus({ status: 'failed', step: 2, queue: null, errorType });
 }

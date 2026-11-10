@@ -16,7 +16,7 @@ import {
 } from '@/test/application-fixtures';
 import { axeViolations } from '@/test/axe';
 import { captureTokenRoutes } from '@/test/capture-token-fixtures';
-import { failedJob, jobRoute } from '@/test/job-fixtures';
+import { DONE_JOB, failedJob, jobRoute, PROCESSING_JOB } from '@/test/job-fixtures';
 import { push } from '@/test/navigation';
 import { renderViewInApp } from '@/test/render-in-app';
 import { server } from '@/test/server';
@@ -151,7 +151,7 @@ describe('AddApplicationPage', () => {
   );
 
   it('a pasted vacancy brings the live panel into view, then its review, and the confirmation leads to the board', async () => {
-    const parse = { job: buildJobStatus({ status: 'processing', step: 2, queue: null }) };
+    const parse = { job: PROCESSING_JOB };
     const jobs = jobRoute({ job: () => parse.job });
     const draft = { ...REVIEW_DRAFT, id: FIRST_PASTE.applicationId };
     const confirms = confirmRoute();
@@ -172,7 +172,7 @@ describe('AddApplicationPage', () => {
       scrolled.mock.contexts.filter((target) => target instanceof Element && target.contains(line)),
     ).toHaveLength(1);
     expect(jobs.sent[0]).toBe(FIRST_PASTE.jobId);
-    parse.job = buildJobStatus({ status: 'done', step: 3, queue: null });
+    parse.job = DONE_JOB;
     await user.click(await screen.findByRole('button', { name: CONFIRM }, POLLED));
 
     await waitFor(() => {
@@ -191,6 +191,20 @@ describe('AddApplicationPage', () => {
       'Senior React developer',
     );
     expect(document.activeElement).toBe(document.body);
+  });
+
+  it('review=<draft id> followed by an address with no review closes that review and brings the explainer back', async () => {
+    const { view } = await renderPage({ review: REVIEW_DRAFT.id }, [
+      applicationRoute({ application: REVIEW_DRAFT }).handler,
+    ]);
+    await screen.findByRole('form', { name: REVIEW });
+
+    view.rerender(<AddApplicationPage query={{}} />);
+
+    expect(await screen.findByRole('heading', { level: 3, name: ON_BOARD })).toBeDefined();
+    await waitFor(() => {
+      expect(screen.queryByRole('form', { name: REVIEW })).toBeNull();
+    });
   });
 
   it('review=<failed draft id>&job=<job id> asks that job and opens the AI failure with its reason and no accessibility violations', async () => {

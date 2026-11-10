@@ -6,7 +6,7 @@ import { showErrorToast } from '@/shared/ui/error-toast';
 import { undoLastMove } from '../api/undo-move';
 import { undoErrorMessage } from '../lib/undo-error-toast';
 import { invalidateAfterMove } from './invalidate-after-move';
-import { withOptimisticBoard } from './optimistic-move';
+import { MOVE_MUTATION_KEY, withOptimisticBoard } from './optimistic-move';
 
 function reverseOf({ application, toStage }: ApplicationMove): ApplicationMove {
   return {
@@ -18,6 +18,7 @@ function reverseOf({ application, toStage }: ApplicationMove): ApplicationMove {
 export function useUndoMoveMutation() {
   const queryClient = useQueryClient();
   return useMutation({
+    mutationKey: MOVE_MUTATION_KEY,
     mutationFn: (move: ApplicationMove) =>
       withOptimisticBoard({
         queryClient,
