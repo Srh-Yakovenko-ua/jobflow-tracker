@@ -55,6 +55,14 @@ export const illegalTransition = (detail: string) =>
     detail,
   });
 
+export const IDEMPOTENCY_CONFLICT = {
+  type: 'idempotency_conflict',
+  title: 'Idempotency-Key conflict',
+} as const;
+
+export const idempotencyConflict = (detail: string) =>
+  new AppError({ status: 409, ...IDEMPOTENCY_CONFLICT, detail });
+
 export const unauthorized = (detail?: string) => errorFor(401, detail);
 
 export const tokenExpired = () =>

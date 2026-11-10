@@ -2,7 +2,12 @@ import type { ResponseConfig, RouteConfig, ZodContentObject } from '@asteasoluti
 import { applicationIdSchema, errorResponseSchema, type UserSettings } from '@jobflow/shared';
 import { z } from 'zod';
 
-import { ERROR_TYPES, type ErrorBody, type ErrorStatus } from '../common/app-error.js';
+import {
+  ERROR_TYPES,
+  type ErrorBody,
+  type ErrorStatus,
+  IDEMPOTENCY_CONFLICT,
+} from '../common/app-error.js';
 import {
   IDEMPOTENCY_HEADER,
   IDEMPOTENCY_LIMITS,
@@ -64,7 +69,7 @@ const REPLAY_WINDOW_HOURS = IDEMPOTENCY_LIMITS.replayWindowMinutes / 60;
 
 export const idempotencyHeaders = z.object({
   [IDEMPOTENCY_HEADER]: idempotencyKeySchema.optional().meta({
-    description: `One key per submit, kept on its retries, 1 to ${String(IDEMPOTENCY_LIMITS.keyMaxLength)} characters. The same key with the same request within ${String(REPLAY_WINDOW_HOURS)} hours answers the first reply again and creates nothing; with another request, or while the first one still runs, it answers 409. A request that fails keeps nothing, so its retry runs again.`,
+    description: `One key per submit, kept on its retries, 1 to ${String(IDEMPOTENCY_LIMITS.keyMaxLength)} characters. The same key with the same request within ${String(REPLAY_WINDOW_HOURS)} hours answers the first reply again and creates nothing; with another request, or while the first one still runs, it answers 409 with type ${IDEMPOTENCY_CONFLICT.type}. A request that fails keeps nothing, so its retry runs again.`,
     example: '0199f3a0-1b2c-7d3e-8f40-5a6b7c8d9e0f',
   }),
 });
@@ -89,8 +94,10 @@ export function jsonContent<Schema extends z.ZodType>(
   return { 'application/json': { schema, example } };
 }
 
-function errorReply(status: ErrorStatus): ResponseConfig {
-  const { type, title } = ERROR_TYPES[status];
+function errorReply(
+  status: ErrorStatus,
+  { type, title }: Pick<ErrorBody, 'type' | 'title'> = ERROR_TYPES[status],
+): ResponseConfig {
   return {
     description: title,
     content: jsonContent(errorResponse, {
@@ -118,6 +125,10 @@ function rateLimitReply(policy: RateLimitPolicy): RouteResponses {
     },
   };
 }
+
+export const idempotencyConflictReply: RouteResponses = {
+  409: errorReply(409, IDEMPOTENCY_CONFLICT),
+};
 
 export function errorResponses(
   statuses: ErrorStatus[],
