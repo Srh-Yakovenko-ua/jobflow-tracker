@@ -5,6 +5,7 @@ import { sourceSchema } from '../sources.js';
 import { stageSchema } from '../stages.js';
 import { workModeSchema } from '../work-modes.js';
 import { isNonEmptyPatch, NON_EMPTY_PATCH_ISSUE } from './patch.js';
+import { withoutNul } from './text.js';
 
 export const applicationSchema = z.object({
   id: z.uuid(),
@@ -55,6 +56,7 @@ const applicationFieldsSchema = z.object({
   url: z
     .url({ protocol: /^https?$/ })
     .max(2048)
+    .check(withoutNul)
     .nullable(),
   source: sourceSchema,
   salaryMin: salarySchema,

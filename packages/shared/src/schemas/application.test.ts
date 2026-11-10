@@ -61,6 +61,11 @@ describe('createApplicationInputSchema', () => {
     { label: 'a currency outside ISO 4217', body: { currency: 'XYZ' }, path: 'currency' },
     { label: 'a javascript: url', body: { url: 'javascript:alert(1)' }, path: 'url' },
     { label: 'a url that is not a URL', body: { url: 'not a url' }, path: 'url' },
+    {
+      label: 'a url with a NUL character',
+      body: { url: 'https://djinni.co/jobs/7\u0000x' },
+      path: 'url',
+    },
     { label: '21 stack items', body: { stack: stackOf(21) }, path: 'stack' },
     { label: 'an empty stack item', body: { stack: ['React', '  '] }, path: 'stack.1' },
     { label: 'a missing company', body: { company: undefined }, path: 'company' },
@@ -108,6 +113,11 @@ describe('updateApplicationInputSchema', () => {
     },
     { label: 'a currency outside ISO 4217', body: { currency: 'XYZ' }, path: 'currency' },
     { label: 'a blank position', body: { position: '' }, path: 'position' },
+    {
+      label: 'a url with a NUL character',
+      body: { url: 'https://djinni.co/jobs/7\u0000x' },
+      path: 'url',
+    },
   ])('refuses $label', ({ body, path }) => {
     expect(issuePathsOf(updateApplicationInputSchema.safeParse(body))).toEqual([path]);
   });

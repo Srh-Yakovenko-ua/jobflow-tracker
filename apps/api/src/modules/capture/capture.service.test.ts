@@ -124,9 +124,10 @@ describe('CaptureService.bookmarklet', () => {
     ]);
   });
 
-  it('falls back to the text the browser read when the html holds no text', async () => {
-    const html = '<script>stolen()</script><div> </div>';
-
+  it.each([
+    { page: 'holds no text', html: '<script>stolen()</script><div> </div>' },
+    { page: 'nests 257 open tags', html: `${'<div>'.repeat(257)}stolen` },
+  ])('falls back to the text the browser read when the html $page', async ({ html }) => {
     expect(await openedInputOf({ title: 'React developer', text: 'Remote', html })).toMatchObject([
       { text: 'React developer\n\nRemote' },
     ]);

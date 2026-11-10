@@ -172,6 +172,11 @@ describe('the applications routes', () => {
     { case: 'a javascript: url', body: { url: 'javascript:alert(1)' }, path: 'url' },
     { case: 'a url that is not a url', body: { url: 'not-a-url' }, path: 'url' },
     {
+      case: 'a url with a NUL character',
+      body: { url: 'https://djinni.co/jobs/7\u0000x' },
+      path: 'url',
+    },
+    {
       case: '21 stack items',
       body: { stack: Array.from({ length: 21 }, (_, index) => `tech-${String(index)}`) },
       path: 'stack',

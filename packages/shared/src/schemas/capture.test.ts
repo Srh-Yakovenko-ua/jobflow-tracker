@@ -37,6 +37,11 @@ describe('capturePasteInputSchema', () => {
       input: { text, url: `https://djinni.co/${'a'.repeat(2048)}` },
       path: 'url',
     },
+    {
+      label: 'a url with a NUL character',
+      input: { text, url: 'https://djinni.co/jobs/7\u0000x' },
+      path: 'url',
+    },
   ])('refuses $label at $path', ({ input, path }) => {
     expect(issuePathsOf(capturePasteInputSchema.safeParse(input))).toEqual([path]);
   });
@@ -71,6 +76,11 @@ describe('captureBookmarkletInputSchema', () => {
     { label: 'a missing url', patch: { url: undefined }, path: 'url' },
     { label: 'a null url', patch: { url: null }, path: 'url' },
     { label: 'an ftp url', patch: { url: 'ftp://djinni.co/jobs/1' }, path: 'url' },
+    {
+      label: 'a url with a NUL character',
+      patch: { url: 'https://djinni.co/jobs/7\u0000x' },
+      path: 'url',
+    },
     { label: 'a blank title', patch: { title: ' \t' }, path: 'title' },
     { label: 'a title of 301 characters', patch: { title: 'н'.repeat(301) }, path: 'title' },
     { label: 'a blank text', patch: { text: '  \n\t' }, path: 'text' },

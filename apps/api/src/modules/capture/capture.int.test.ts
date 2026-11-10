@@ -370,6 +370,11 @@ describe('POST /api/v1/capture/paste', () => {
       input: { ...PASTE, url: 'ftp://jobs.example.test/7' },
       path: 'url',
     },
+    {
+      paste: 'with a NUL in the url',
+      input: { ...PASTE, url: 'https://jobs.example.test/7\u0000x' },
+      path: 'url',
+    },
   ])('answers 422 naming $path for a paste $paste and stores nothing', async ({ input, path }) => {
     const { accessToken } = await signedInWithSearch(testApp.prisma);
 
@@ -957,6 +962,11 @@ describe('POST /api/v1/capture/paste', () => {
     it.each([
       { page: 'without a url', change: { url: undefined }, path: 'url' },
       { page: 'with an ftp url', change: { url: 'ftp://djinni.co/jobs/7' }, path: 'url' },
+      {
+        page: 'with a NUL in the url',
+        change: { url: 'https://djinni.co/jobs/7\u0000x' },
+        path: 'url',
+      },
       { page: 'without a title', change: { title: undefined }, path: 'title' },
       { page: 'with a blank title', change: { title: ' ' }, path: 'title' },
       { page: 'with a title of 301 characters', change: { title: 'a'.repeat(301) }, path: 'title' },
