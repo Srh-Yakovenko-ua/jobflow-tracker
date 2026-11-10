@@ -1,7 +1,6 @@
 'use client';
 
 import Link from 'next/link';
-import type { ReactNode } from 'react';
 
 import { uk } from '@/shared/i18n';
 import { cn } from '@/shared/lib/cn';
@@ -29,14 +28,12 @@ function FirstRunLinks() {
   ));
 }
 
-export type FirstRunStateProps = Readonly<{ action?: ReactNode }>;
-
-export function FirstRunState({ action }: FirstRunStateProps) {
+export function FirstRunState() {
   return (
     <EmptyState
       content={COPY}
       view={{ size: 'page' }}
-      slots={{ figure: <DashedBars />, action: action ?? <FirstRunLinks /> }}
+      slots={{ figure: <DashedBars />, action: <FirstRunLinks /> }}
     />
   );
 }

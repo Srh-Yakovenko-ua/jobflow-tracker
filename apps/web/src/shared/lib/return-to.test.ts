@@ -2,6 +2,10 @@ import { describe, expect, it } from 'vitest';
 
 import { loginHref, safeReturnTo } from './return-to';
 
+const LINK_ONLY = '/add?url=https%3A%2F%2Fdjinni.co%2Fjobs%2F1';
+
+const LINK_KEPT = '/login?next=%2Fadd%3Furl%3Dhttps%253A%252F%252Fdjinni.co%252Fjobs%252F1';
+
 describe('safeReturnTo', () => {
   it.each([
     ['/applications/123', '/applications/123'],
@@ -41,11 +45,28 @@ describe('loginHref', () => {
     );
   });
 
-  it('keeps only the path when the query would make the address too long for a request header', () => {
-    const cyrillicLetter = '%D0%B0';
-
-    expect(loginHref(`/add?path=paste&text=${cyrillicLetter.repeat(2_139)}`)).toBe(
-      '/login?next=%2Fadd',
-    );
+  it.each([
+    {
+      name: 'keeps an address of exactly 4096 characters whole',
+      returnTo: `${LINK_ONLY}&text=${'%D0%B0'.repeat(401)}aaaaa`,
+      href: `${LINK_KEPT}%26text%3D${'%25D0%25B0'.repeat(401)}aaaaa`,
+    },
+    {
+      name: 'drops the text and keeps the link when the address has 4097 characters',
+      returnTo: `${LINK_ONLY}&text=${'%D0%B0'.repeat(401)}aaaaaa`,
+      href: LINK_KEPT,
+    },
+    {
+      name: 'drops a long Cyrillic text and keeps the paste path',
+      returnTo: `/add?path=paste&text=${'%D0%B0'.repeat(2_139)}`,
+      href: '/login?next=%2Fadd%3Fpath%3Dpaste',
+    },
+    {
+      name: 'keeps only the path when the address is too long even without the text',
+      returnTo: `/add?url=https%3A%2F%2Fdjinni.co%2F${'a'.repeat(4_100)}&text=x`,
+      href: '/login?next=%2Fadd',
+    },
+  ])('$name', ({ returnTo, href }) => {
+    expect(loginHref(returnTo)).toBe(href);
   });
 });

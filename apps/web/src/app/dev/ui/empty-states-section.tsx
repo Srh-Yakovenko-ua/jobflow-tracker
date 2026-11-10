@@ -22,23 +22,6 @@ const SCREEN_ACTION = cn(
   TOUCH_HEIGHT,
 );
 
-function FirstRunBoard() {
-  return (
-    <FirstRunState
-      action={
-        <>
-          <Button size="lg" className={TOUCH_HEIGHT}>
-            {FIRST_RUN.addFirst}
-          </Button>
-          <Button size="lg" variant="secondary" className={TOUCH_HEIGHT}>
-            {FIRST_RUN.bookmarklet}
-          </Button>
-        </>
-      }
-    />
-  );
-}
-
 function SearchFilters() {
   const [filters, setFilters] = useState<readonly string[]>(SCREENS.search.filters);
   return (
@@ -103,7 +86,7 @@ export function EmptyStatesSection() {
   return (
     <>
       <GallerySection header={FIRST_RUN}>
-        <FirstRunBoard />
+        <FirstRunState />
       </GallerySection>
       <GallerySection header={SCREENS}>
         <ScreenEmptyStates />

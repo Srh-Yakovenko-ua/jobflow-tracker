@@ -88,8 +88,7 @@ function writeCaptureToUrl({ applicationId, jobId }: CapturedDraft): void {
 }
 
 export function AddApplicationPage({ query }: AddApplicationPageProps) {
-  const prefill = addPrefillOf(query);
-  const [capture, setCapture] = useState(() => captureOf(prefill));
+  const [capture, setCapture] = useState(() => captureOf(addPrefillOf(query)));
   const liveRef = useRef<HTMLDivElement>(null);
   const onCaptured = (captured: CapturedDraft) => {
     setCapture(captured);
@@ -104,7 +103,7 @@ export function AddApplicationPage({ query }: AddApplicationPageProps) {
           <p className={STATE_TEXT.meta}>{COPY.bookmarklet.footnote}</p>
         </Panel>
         <Panel heading={COPY.paste} tone="plain">
-          <PasteForm prefill={prefill} actions={{ onCaptured }} />
+          <PasteForm query={query} actions={{ onCaptured }} />
         </Panel>
         <Panel heading={COPY.manual} tone="quiet">
           <ManualForm />

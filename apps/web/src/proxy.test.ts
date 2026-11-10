@@ -23,10 +23,10 @@ const CASES: ProxyCase[] = [
     location: `${ORIGIN}/login?next=%2Fapplications%2F123%3Ftab%3Dnotes`,
   },
   {
-    name: 'sends a signed-out bookmarklet fallback with a long Cyrillic text to login with only the add page in next',
+    name: 'sends a signed-out bookmarklet fallback with a long Cyrillic text to login with the link kept and the text dropped',
     path: `/add?url=https%3A%2F%2Fjobs.test%2F1&text=${'%D0%B0'.repeat(2_139)}`,
     signedIn: false,
-    location: `${ORIGIN}/login?next=%2Fadd`,
+    location: `${ORIGIN}/login?next=%2Fadd%3Furl%3Dhttps%253A%252F%252Fjobs.test%252F1`,
   },
   { name: 'lets a signed-in board through', path: '/board', signedIn: true, location: null },
   {

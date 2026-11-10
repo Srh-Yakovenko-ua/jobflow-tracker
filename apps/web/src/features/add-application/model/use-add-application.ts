@@ -21,7 +21,7 @@ import {
 import { uk } from '@/shared/i18n';
 import { showToast } from '@/shared/ui/toast';
 
-import { addErrorToastOf } from './add-error-toast';
+import { addErrorToastOf, type AddLimit } from './add-error-toast';
 
 export type AddedApplication = Readonly<{ possibleDuplicates: readonly PossibleDuplicate[] }>;
 
@@ -40,6 +40,7 @@ type AddRoute<Result extends AddedApplication> = Readonly<{
   path: string;
   schema: z.ZodType<Result>;
   toastDescription: string;
+  limit: AddLimit;
 }>;
 
 const ADDED_TOAST_ID = 'application-added';
@@ -53,6 +54,7 @@ const PASTE = {
   path: '/capture/paste',
   schema: capturePasteResponseSchema,
   toastDescription: uk.add.paste.added,
+  limit: 'parseLimit',
 } as const;
 
 const MANUAL = {
@@ -60,6 +62,7 @@ const MANUAL = {
   path: '/applications',
   schema: createApplicationResponseSchema,
   toastDescription: uk.add.manual.added,
+  limit: 'requestLimit',
 } as const;
 
 function useAddSave<Body, Values extends FieldValues, Result extends AddedApplication>(
@@ -79,7 +82,7 @@ function useAddSave<Body, Values extends FieldValues, Result extends AddedApplic
         idempotencyKey: submitKey.keyFor(body),
       }),
     form,
-    errorToast: addErrorToastOf,
+    errorToast: addErrorToastOf(route.limit),
     onSuccess: (added) => {
       submitKey.reset();
       void queryClient.invalidateQueries({ queryKey: applicationKeys.all });

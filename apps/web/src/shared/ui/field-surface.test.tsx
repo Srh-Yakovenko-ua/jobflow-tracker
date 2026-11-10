@@ -11,7 +11,7 @@ import { Input } from './input';
 import { NumberInput } from './number-input';
 import { PasswordInput } from './password-input';
 import { Select } from './select';
-import { SOURCE_OPTIONS } from './specimen-options';
+import { SOURCE_OPTIONS } from './source-options';
 import { TagInput } from './tag-input';
 
 const SOURCE = uk.devUi.selects.source;

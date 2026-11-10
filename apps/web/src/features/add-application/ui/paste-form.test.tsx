@@ -1,4 +1,5 @@
 import { screen, waitFor } from '@testing-library/react';
+import { HttpResponse } from 'msw/http';
 import { toast } from 'sonner';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
@@ -8,7 +9,10 @@ import {
   type AddRoutesOptions,
   addsOnceOnDoubleClick,
   FIRST_PASTE,
+  linkField,
   NO_ACTIVE_SEARCH,
+  STILL_RUNNING,
+  textField,
   TWO_MINUTES,
 } from '@/test/add-fixtures';
 import {
@@ -25,15 +29,11 @@ import { renderInApp } from '@/test/render-in-app';
 import { server } from '@/test/server';
 import { meRoute } from '@/test/session-fixtures';
 
-import type { AddPrefill } from '../lib/add-prefill';
+import type { AddQuery } from '../lib/add-prefill';
 import type { CapturedDraft } from '../model/use-add-application';
 import { PasteForm } from './paste-form';
 
-type PasteSetup = AddRoutesOptions & { prefill?: AddPrefill };
-
-const TEXT = 'Текст вакансії';
-
-const LINK = 'Посилання на вакансію';
+type PasteSetup = AddRoutesOptions & { query?: AddQuery };
 
 const SUBMIT = 'Розібрати текст';
 
@@ -47,33 +47,21 @@ const TEXT_REFUSED = /^Встав текст вакансії, не довший
 
 const VACANCY = 'Senior QA Engineer\nKvit Software шукає тестувальника';
 
-const NOTHING: AddPrefill = {
-  text: '',
-  url: '',
-  focusPaste: false,
-  reviewId: null,
-  jobId: null,
-};
+const NO_SEARCH_TITLE = 'Немає активного пошуку';
+
+const STILL_RUNNING_TITLE = 'Запит ще обробляється';
 
 const ROUNDS = [1, 2, 3, 4, 5, 6];
 
-function renderPasteForm({ prefill = NOTHING, ...routes }: PasteSetup = {}) {
+function renderPasteForm({ query = {}, ...routes }: PasteSetup = {}) {
   const added = addRoutes(routes);
   server.use(...added.handlers);
   const captured: CapturedDraft[] = [];
   const onCaptured = (capture: CapturedDraft) => {
     captured.push(capture);
   };
-  const user = renderInApp(<PasteForm prefill={prefill} actions={{ onCaptured }} />);
+  const user = renderInApp(<PasteForm query={query} actions={{ onCaptured }} />);
   return { user, sent: added.sent.pasted, captured };
-}
-
-function textField() {
-  return screen.getByRole<HTMLTextAreaElement>('textbox', { name: TEXT });
-}
-
-function linkField() {
-  return screen.getByRole<HTMLInputElement>('textbox', { name: LINK });
 }
 
 async function pasteVacancy(user: ReturnType<typeof renderInApp>, text = VACANCY) {
@@ -141,13 +129,8 @@ describe('PasteForm', () => {
   });
 
   it('"Додати ще одну" brings back a blank form with the focus in the text field, even after a prefill', async () => {
-    const prefill = {
-      ...NOTHING,
-      text: 'Kvit шукає QA',
-      url: 'https://djinni.co/jobs/1',
-      focusPaste: true,
-    };
-    const { user } = renderPasteForm({ prefill });
+    const query = { text: 'Kvit шукає QA', url: 'https://djinni.co/jobs/1' };
+    const { user } = renderPasteForm({ query });
     expect(textField().value).toBe('Kvit шукає QA');
     expect(linkField().value).toBe('https://djinni.co/jobs/1');
     expect(document.activeElement).toBe(textField());
@@ -226,30 +209,56 @@ describe('PasteForm', () => {
     expect(sent).toEqual([]);
   });
 
-  it('a 409 says there is no active search and keeps the typed text', async () => {
-    const { user } = renderPasteForm({ paste: { reply: () => errorReply(NO_ACTIVE_SEARCH) } });
+  it.each([
+    {
+      name: 'without an active search says there is none',
+      refusal: NO_ACTIVE_SEARCH,
+      title: NO_SEARCH_TITLE,
+      otherTitle: STILL_RUNNING_TITLE,
+    },
+    {
+      name: 'for a request that is still running says so',
+      refusal: STILL_RUNNING,
+      title: STILL_RUNNING_TITLE,
+      otherTitle: NO_SEARCH_TITLE,
+    },
+  ])('a 409 $name and keeps the typed text', async ({ refusal, title, otherTitle }) => {
+    const { user } = renderPasteForm({ paste: { reply: () => errorReply(refusal) } });
 
     await sendVacancy(user);
 
-    expect(await screen.findByText('Немає активного пошуку')).toBeDefined();
+    expect(await screen.findByText(title)).toBeDefined();
+    expect(screen.queryByText(otherTitle)).toBeNull();
     expect(textField().value).toBe(VACANCY);
     expect(screen.queryByRole('button', { name: ANOTHER })).toBeNull();
   });
 
-  it('a 429 says how long to wait and keeps the typed text', async () => {
-    const { user } = renderPasteForm({ paste: { reply: () => rateLimitedReply(TWO_MINUTES) } });
+  it.each([
+    {
+      name: 'with Retry-After says how long to wait',
+      headers: TWO_MINUTES,
+      wait: 'Спробуй через 2 хв. Усе введене лишилось у формі.',
+    },
+    {
+      name: 'without Retry-After says to try a little later',
+      headers: {},
+      wait: 'Спробуй трохи пізніше. Усе введене лишилось у формі.',
+    },
+  ])('a 429 $name and keeps the typed text', async ({ headers, wait }) => {
+    const { user } = renderPasteForm({ paste: { reply: () => rateLimitedReply(headers) } });
 
     await sendVacancy(user);
 
-    expect(
-      await screen.findByText('Спробуй через 2 хв. Усе введене лишилось у формі.'),
-    ).toBeDefined();
+    expect(await screen.findByText(wait)).toBeDefined();
+    expect(screen.getByText('Забагато розборів за годину')).toBeDefined();
     expect(textField().value).toBe(VACANCY);
   });
 
-  it('a 500 shows the save failure and keeps the typed text', async () => {
-    const down = () => errorReply({ status: 500, type: 'internal_error' });
-    const { user } = renderPasteForm({ paste: { reply: down } });
+  it.each([
+    { name: 'a 500', reply: () => errorReply({ status: 500, type: 'internal_error' }) },
+    { name: 'a refused connection', reply: () => HttpResponse.error() },
+  ])('$name shows the save failure and keeps the typed text', async ({ reply }) => {
+    const { user } = renderPasteForm({ paste: { reply } });
 
     await sendVacancy(user);
 

@@ -35,6 +35,10 @@ const ADDED_SERIAL_FROM = 950;
 
 const JOB_SERIAL_OFFSET = 20;
 
+const TEXT_LABEL = 'Текст вакансії';
+
+const LINK_LABEL = 'Посилання на вакансію';
+
 function pastedIdsOf(serial: number) {
   return { applicationId: fixtureIdOf(serial), jobId: fixtureIdOf(serial + JOB_SERIAL_OFFSET) };
 }
@@ -47,15 +51,29 @@ export const NO_ACTIVE_SEARCH = {
   detail: 'No active search',
 } as const;
 
+export const STILL_RUNNING = {
+  status: 409,
+  type: 'idempotency_conflict',
+  detail: 'A request with this Idempotency-Key is still in progress',
+} as const;
+
 export const TWO_MINUTES = { 'Retry-After': '120' } as const;
 
 export const ACME_DUPLICATE: PossibleDuplicate = {
   id: ACME_APPLICATION.id,
-  company: 'Acme Technologies',
-  position: 'Senior React Developer',
+  company: ACME_APPLICATION.company,
+  position: ACME_APPLICATION.position,
   appliedAt: '2026-10-12T09:00:00Z',
   stage: 'tech_interview',
 };
+
+export function textField() {
+  return screen.getByRole<HTMLTextAreaElement>('textbox', { name: TEXT_LABEL });
+}
+
+export function linkField() {
+  return screen.getByRole<HTMLInputElement>('textbox', { name: LINK_LABEL });
+}
 
 export type HeldAdd = Pick<HeldDoubleClick, 'user' | 'held' | 'sent'> & {
   submit: string;

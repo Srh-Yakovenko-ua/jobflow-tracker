@@ -6,7 +6,7 @@ import { uk } from '@/shared/i18n';
 
 import { Field } from './field';
 import { Select, type SelectProps } from './select';
-import { SOURCE_OPTIONS } from './specimen-options';
+import { SOURCE_OPTIONS } from './source-options';
 
 const COPY = uk.devUi.selects.source;
 

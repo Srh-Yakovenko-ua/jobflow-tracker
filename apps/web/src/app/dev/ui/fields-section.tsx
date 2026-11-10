@@ -11,7 +11,7 @@ import { Input } from '@/shared/ui/input';
 import { Kbd } from '@/shared/ui/kbd';
 import { NumberInput } from '@/shared/ui/number-input';
 import { Select } from '@/shared/ui/select';
-import { SOURCE_OPTIONS } from '@/shared/ui/specimen-options';
+import { SOURCE_OPTIONS } from '@/shared/ui/source-options';
 import { TagInput } from '@/shared/ui/tag-input';
 import { Textarea } from '@/shared/ui/textarea';
 

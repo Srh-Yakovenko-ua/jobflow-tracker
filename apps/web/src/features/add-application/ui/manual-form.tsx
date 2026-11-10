@@ -10,7 +10,7 @@ import { useFieldError } from '@/shared/lib/use-field-error';
 import { Field } from '@/shared/ui/field';
 import { Input } from '@/shared/ui/input';
 import { Select } from '@/shared/ui/select';
-import { SOURCE_OPTIONS } from '@/shared/ui/specimen-options';
+import { SOURCE_OPTIONS } from '@/shared/ui/source-options';
 
 import { useCreateApplication } from '../model/use-add-application';
 import { AddFlow, type AddStep } from './add-flow';
