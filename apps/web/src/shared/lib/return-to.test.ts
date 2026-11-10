@@ -40,4 +40,12 @@ describe('loginHref', () => {
       '/login?next=%2Fapplications%2F123%3Ftab%3Dnotes',
     );
   });
+
+  it('keeps only the path when the query would make the address too long for a request header', () => {
+    const cyrillicLetter = '%D0%B0';
+
+    expect(loginHref(`/add?path=paste&text=${cyrillicLetter.repeat(2_139)}`)).toBe(
+      '/login?next=%2Fadd',
+    );
+  });
 });

@@ -6,7 +6,7 @@ export const devUiStates = {
   firstRun: {
     index: '01',
     title: 'Перший вхід · дошка на нулі',
-    addFirst: 'Додати першу вакансію',
+    addFirst: firstRun.addFirst,
     bookmarklet: firstRun.bookmarklet,
   },
   emptyScreens: {

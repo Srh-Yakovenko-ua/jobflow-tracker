@@ -45,7 +45,7 @@ function renderShell() {
 }
 
 describe('AppShell', () => {
-  it('Tab walks the skip link, the collapse toggle, Дошка, Календар, Налаштування, the search and the user menu, and Enter collapses the sidebar', async () => {
+  it('Tab walks the skip link, the collapse toggle, Дошка, Календар, Налаштування, the search, Додати вакансію and the user menu, and Enter collapses the sidebar', async () => {
     server.use(meRoute(), silentBoardRoute({}));
     const { user, sidebar } = renderShell();
     const stops = [
@@ -55,6 +55,7 @@ describe('AppShell', () => {
       within(sidebar).getByRole('link', { name: SHELL.nav.calendar }),
       within(sidebar).getByRole('link', { name: SHELL.nav.settings }),
       screen.getByRole('combobox', { name: SHELL.search.label }),
+      screen.getByRole('link', { name: SHELL.addApplication }),
       screen.getByRole('button', { name: SHELL.userMenu }),
     ];
 
@@ -62,7 +63,7 @@ describe('AppShell', () => {
       await user.tab();
       expect(document.activeElement).toBe(stop);
     }
-    await user.keyboard('{Shift>}{Tab}{Tab}{Tab}{Tab}{Tab}{/Shift}');
+    await user.keyboard('{Shift>}{Tab}{Tab}{Tab}{Tab}{Tab}{Tab}{/Shift}');
     await user.keyboard('{Enter}');
 
     const toggle = within(sidebar).getByRole('button', { name: SHELL.expand });
@@ -112,12 +113,14 @@ describe('AppShell', () => {
     ).toBe('page');
   });
 
-  it('keeps Додати вакансію out while its page is behind the flag', async () => {
+  it('links Додати вакансію in the header to /add', async () => {
     server.use(meRoute(), silentBoardRoute({}));
     renderShell();
     await waitForQuery({ queryKey: userKeys.me(), status: 'success' });
 
-    expect(screen.queryByRole('link', { name: SHELL.addApplication })).toBeNull();
+    expect(screen.getByRole('link', { name: SHELL.addApplication }).getAttribute('href')).toBe(
+      '/add',
+    );
   });
 
   it('passes axe with every landmark named', async () => {

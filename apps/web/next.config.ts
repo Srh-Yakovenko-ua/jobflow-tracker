@@ -9,6 +9,13 @@ const nextConfig: NextConfig = {
   allowedDevOrigins: ['127.0.0.1'],
   output: 'standalone',
   outputFileTracingRoot: path.join(import.meta.dirname, '../..'),
+  headers: () =>
+    Promise.resolve([
+      {
+        source: '/:path*',
+        headers: [{ key: 'Cross-Origin-Opener-Policy', value: 'same-origin' }],
+      },
+    ]),
 };
 
 export default withTailwindMerge(nextConfig);

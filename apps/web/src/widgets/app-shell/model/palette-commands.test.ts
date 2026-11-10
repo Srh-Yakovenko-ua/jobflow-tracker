@@ -23,8 +23,9 @@ function actionsAt(...args: Parameters<typeof paletteActionsOf>) {
 }
 
 describe('shortcutsOf', () => {
-  it('keeps only G B and ? while add, analytics and reminders are behind their flags', () => {
+  it('keeps N, G B and ? while analytics and reminders are behind their flags', () => {
     expect(shortcutsOf(FEATURE_FLAGS).map((shortcut) => shortcut.id)).toEqual([
+      'add',
       'board',
       'shortcuts',
     ]);
@@ -53,8 +54,10 @@ describe('palettePagesOf', () => {
 });
 
 describe('paletteActionsOf', () => {
-  it('without a focused application and with the shipped flags offers only the theme and the cheat sheet', () => {
+  it('without a focused application and with the shipped flags offers add, paste, the theme and the cheat sheet', () => {
     expect(actionsAt(FEATURE_FLAGS, undefined)).toEqual([
+      ['add', { kind: 'navigate', href: '/add' }],
+      ['paste', { kind: 'navigate', href: '/add?path=paste' }],
       ['theme', { kind: 'theme' }],
       ['shortcuts', { kind: 'shortcuts' }],
     ]);
@@ -62,6 +65,8 @@ describe('paletteActionsOf', () => {
 
   it('a focused application adds the move', () => {
     expect(actionsAt(FEATURE_FLAGS, ACME_APPLICATION).map(([id]) => id)).toEqual([
+      'add',
+      'paste',
       'move',
       'theme',
       'shortcuts',
@@ -84,7 +89,12 @@ describe('paletteActionsOf', () => {
   });
 
   it('a rejected application has nowhere to move, so the move is left out', () => {
-    expect(actionsAt(FEATURE_FLAGS, REJECTED).map(([id]) => id)).toEqual(['theme', 'shortcuts']);
+    expect(actionsAt(FEATURE_FLAGS, REJECTED).map(([id]) => id)).toEqual([
+      'add',
+      'paste',
+      'theme',
+      'shortcuts',
+    ]);
   });
 });
 

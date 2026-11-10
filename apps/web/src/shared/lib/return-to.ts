@@ -7,6 +7,8 @@ export const AUTH_ROUTES = {
 
 const PROBE_ORIGIN = 'http://jobflow.invalid';
 
+const LOGIN_HREF_MAX_LENGTH = 4_096;
+
 const AUTH_PAGES: ReadonlySet<string> = new Set([AUTH_ROUTES.login, AUTH_ROUTES.register]);
 
 export function isAuthPage(pathname: string): boolean {
@@ -29,7 +31,12 @@ export function safeReturnTo(value: unknown): string {
   return `${url.pathname}${url.search}${url.hash}`;
 }
 
-export function loginHref(returnTo: string): string {
+function loginHrefFor(returnTo: string): string {
   const query = new URLSearchParams({ [AUTH_ROUTES.returnParam]: returnTo });
   return `${AUTH_ROUTES.login}?${query.toString()}`;
+}
+
+export function loginHref(returnTo: string): string {
+  const href = loginHrefFor(returnTo);
+  return href.length > LOGIN_HREF_MAX_LENGTH ? loginHrefFor(returnTo.replace(/\?.*$/s, '')) : href;
 }

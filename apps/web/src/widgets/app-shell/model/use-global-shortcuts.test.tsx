@@ -86,12 +86,15 @@ describe.each([
 });
 
 describe('global shortcuts', () => {
-  it('N, G A and G R do nothing while their pages are behind the flags, G B still works', () => {
+  it('G A and G R do nothing while their pages are behind the flags, N and G B still work', () => {
     const actions = listen({ flags: FEATURE_FLAGS });
 
     press([LATIN.n, LATIN.g, LATIN.a, LATIN.g, LATIN.r, LATIN.g, LATIN.b]);
 
-    expect(actions.onShortcut.mock.calls).toEqual([[{ kind: 'navigate', href: '/board' }]]);
+    expect(actions.onShortcut.mock.calls).toEqual([
+      [{ kind: 'navigate', href: '/add' }],
+      [{ kind: 'navigate', href: '/board' }],
+    ]);
   });
 
   it.each([
