@@ -1,14 +1,24 @@
 'use client';
 
-import type { ReactNode } from 'react';
+import { AnimatePresence } from 'motion/react';
+import { type ReactNode, useRef, useState } from 'react';
 
-import { addPrefillOf, type AddQuery, ManualForm, PasteForm } from '@/features/add-application';
+import {
+  type AddPrefill,
+  addPrefillOf,
+  type AddQuery,
+  type CapturedDraft,
+  ManualForm,
+  PasteForm,
+} from '@/features/add-application';
 import { InstallBookmarklet } from '@/features/install-bookmarklet';
 import { uk } from '@/shared/i18n';
 import { cn } from '@/shared/lib/cn';
+import { Fade } from '@/shared/ui/fade';
 import { STATE_TEXT } from '@/shared/ui/state-text';
 
 import { AddExplainer } from './add-explainer';
+import { type Capture, CaptureProgress } from './capture-progress';
 
 export type AddApplicationPageProps = Readonly<{ query: AddQuery }>;
 
@@ -65,8 +75,18 @@ function PageHeading() {
   );
 }
 
+function captureOf({ reviewId }: AddPrefill): Capture | null {
+  return reviewId === null ? null : { applicationId: reviewId, jobId: null };
+}
+
 export function AddApplicationPage({ query }: AddApplicationPageProps) {
   const prefill = addPrefillOf(query);
+  const [capture, setCapture] = useState(() => captureOf(prefill));
+  const liveRef = useRef<HTMLDivElement>(null);
+  const onCaptured = (captured: CapturedDraft) => {
+    setCapture(captured);
+    liveRef.current?.scrollIntoView({ block: 'nearest' });
+  };
   return (
     <div className="mx-auto flex w-full max-w-[1180px] animate-fade-in flex-col gap-10 pt-2.5 pb-16">
       <PageHeading />
@@ -76,13 +96,25 @@ export function AddApplicationPage({ query }: AddApplicationPageProps) {
           <p className={STATE_TEXT.meta}>{COPY.bookmarklet.footnote}</p>
         </Panel>
         <Panel heading={COPY.paste} tone="plain">
-          <PasteForm prefill={prefill} />
+          <PasteForm prefill={prefill} actions={{ onCaptured }} />
         </Panel>
         <Panel heading={COPY.manual} tone="quiet">
           <ManualForm />
         </Panel>
       </div>
-      <AddExplainer />
+      <div ref={liveRef} className="relative">
+        <AnimatePresence mode="popLayout" initial={false}>
+          {capture === null ? (
+            <Fade key="idle">
+              <AddExplainer />
+            </Fade>
+          ) : (
+            <Fade key={capture.applicationId}>
+              <CaptureProgress capture={capture} />
+            </Fade>
+          )}
+        </AnimatePresence>
+      </div>
     </div>
   );
 }

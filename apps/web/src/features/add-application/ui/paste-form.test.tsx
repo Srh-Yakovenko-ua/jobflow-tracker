@@ -7,6 +7,7 @@ import {
   addRoutes,
   type AddRoutesOptions,
   addsOnceOnDoubleClick,
+  FIRST_PASTE,
   NO_ACTIVE_SEARCH,
   TWO_MINUTES,
 } from '@/test/add-fixtures';
@@ -25,6 +26,7 @@ import { server } from '@/test/server';
 import { meRoute } from '@/test/session-fixtures';
 
 import type { AddPrefill } from '../lib/add-prefill';
+import type { CapturedDraft } from '../model/use-add-application';
 import { PasteForm } from './paste-form';
 
 type PasteSetup = AddRoutesOptions & { prefill?: AddPrefill };
@@ -45,15 +47,19 @@ const TEXT_REFUSED = /^Встав текст вакансії, не довший
 
 const VACANCY = 'Senior QA Engineer\nKvit Software шукає тестувальника';
 
-const NOTHING: AddPrefill = { text: '', url: '', focusPaste: false };
+const NOTHING: AddPrefill = { text: '', url: '', focusPaste: false, reviewId: null };
 
 const ROUNDS = [1, 2, 3, 4, 5, 6];
 
 function renderPasteForm({ prefill = NOTHING, ...routes }: PasteSetup = {}) {
   const added = addRoutes(routes);
   server.use(...added.handlers);
-  const user = renderInApp(<PasteForm prefill={prefill} />);
-  return { user, sent: added.sent.pasted };
+  const captured: CapturedDraft[] = [];
+  const onCaptured = (capture: CapturedDraft) => {
+    captured.push(capture);
+  };
+  const user = renderInApp(<PasteForm prefill={prefill} actions={{ onCaptured }} />);
+  return { user, sent: added.sent.pasted, captured };
 }
 
 function textField() {
@@ -82,7 +88,7 @@ describe('PasteForm', () => {
   });
 
   it('a pasted text goes out with a null url, then the added block takes the focus', async () => {
-    const { user, sent } = renderPasteForm();
+    const { user, sent, captured } = renderPasteForm();
 
     await sendVacancy(user);
 
@@ -90,6 +96,7 @@ describe('PasteForm', () => {
     expect(sent).toEqual([
       { body: { text: VACANCY, url: null }, idempotencyKey: ANY_IDEMPOTENCY_KEY },
     ]);
+    expect(captured).toEqual([FIRST_PASTE]);
     expect(document.activeElement).toBe(screen.getByRole('button', { name: ANOTHER }));
     expect(screen.getByRole('link', { name: 'До дошки' }).getAttribute('href')).toBe('/board');
     expect(screen.queryByText(DUPLICATE)).toBeNull();
@@ -128,7 +135,12 @@ describe('PasteForm', () => {
   });
 
   it('"Додати ще одну" brings back a blank form with the focus in the text field, even after a prefill', async () => {
-    const prefill = { text: 'Kvit шукає QA', url: 'https://djinni.co/jobs/1', focusPaste: true };
+    const prefill = {
+      ...NOTHING,
+      text: 'Kvit шукає QA',
+      url: 'https://djinni.co/jobs/1',
+      focusPaste: true,
+    };
     const { user } = renderPasteForm({ prefill });
     expect(textField().value).toBe('Kvit шукає QA');
     expect(linkField().value).toBe('https://djinni.co/jobs/1');

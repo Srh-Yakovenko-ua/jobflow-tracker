@@ -25,6 +25,13 @@ export const application = {
   stageNorm: (days: number) => `· норма ${String(days)}`,
   inFunnel: (days: string) => `${days} у воронці`,
   stackMore: (count: number) => `+${String(count)}`,
+  parsing: {
+    processing: (step: number, total: number) =>
+      `AI обробляє · крок ${String(step)} з ${String(total)}`,
+    queued: 'у черзі',
+    queuedEta: (eta: string) => `у черзі · ~${eta}`,
+    review: 'перевір поля',
+  },
   nextEvent: {
     today: 'сьогодні',
     tomorrow: 'завтра',

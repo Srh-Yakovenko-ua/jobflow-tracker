@@ -1,23 +1,13 @@
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
-import {
-  type ApplicationResponse,
-  STACK_MAX_ITEMS,
-  type UpdateApplicationInput,
-  WORK_MODES,
-} from '@jobflow/shared';
-import type { ComponentProps } from 'react';
-import { Controller, useForm, type UseFormReturn } from 'react-hook-form';
+import { type ApplicationResponse, WORK_MODES } from '@jobflow/shared';
+import { Controller, useForm } from 'react-hook-form';
 
 import { uk } from '@/shared/i18n';
-import { useFieldError } from '@/shared/lib/use-field-error';
-import { Field } from '@/shared/ui/field';
 import { InlineEditorForm } from '@/shared/ui/inline-editor-form';
-import { Input } from '@/shared/ui/input';
 import type { ChoiceOption } from '@/shared/ui/radio-group';
 import { SegmentedControl } from '@/shared/ui/segmented-control';
-import { TagInput } from '@/shared/ui/tag-input';
 
 import {
   type EditField,
@@ -26,6 +16,7 @@ import {
   formValuesOf,
 } from '../model/edit-form';
 import { useUpdateApplicationMutation } from '../model/use-update-application-mutation';
+import { AMOUNT_INPUT, EDIT_LABELS, type EditorForm, StackField, TextField } from './edit-fields';
 
 export type ApplicationEditFormProps = Readonly<{
   application: ApplicationResponse;
@@ -33,58 +24,27 @@ export type ApplicationEditFormProps = Readonly<{
   actions: { onDone: () => void };
 }>;
 
-type EditorForm = Readonly<{
-  methods: UseFormReturn<EditFormValues, unknown, UpdateApplicationInput | null>;
-  focusField: EditField;
-}>;
-
-type TextFieldName = Exclude<EditField, 'workMode' | 'stack'>;
-
-type TextFieldProps = Readonly<{
-  form: EditorForm;
-  name: TextFieldName;
-  input?: Pick<ComponentProps<'input'>, 'inputMode' | 'maxLength' | 'type'>;
-}>;
-
 type EditorPartProps = Readonly<{ form: EditorForm }>;
 
 const COPY = uk.applicationPage.editor;
-
-const LABELS: Readonly<Record<EditField, string>> = COPY.fields;
-
-const ERRORS: Readonly<Record<EditField, string>> = {
-  ...COPY.errors,
-  stack: COPY.stackLimit(STACK_MAX_ITEMS),
-};
 
 const WORK_MODE_OPTIONS: readonly ChoiceOption<EditFormValues['workMode']>[] = [
   { value: '', label: COPY.noWorkMode },
   ...WORK_MODES.map((mode) => ({ value: mode, label: uk.application.workModes[mode] })),
 ];
 
-const AMOUNT = { inputMode: 'numeric' } as const;
-
-function TextField({ form, name, input }: TextFieldProps) {
-  const error = useFieldError({ control: form.methods.control, name, messages: ERRORS });
-  return (
-    <Field label={LABELS[name]} footer={{ error }}>
-      <Input {...input} autoFocus={form.focusField === name} {...form.methods.register(name)} />
-    </Field>
-  );
-}
-
 function WorkModeField({ form }: EditorPartProps) {
   return (
     <div className="flex min-w-0 flex-col gap-1.5">
       <span aria-hidden className="label w-fit text-ink">
-        {LABELS.workMode}
+        {EDIT_LABELS.workMode}
       </span>
       <Controller
         control={form.methods.control}
         name="workMode"
         render={({ field }) => (
           <SegmentedControl
-            aria-label={LABELS.workMode}
+            aria-label={EDIT_LABELS.workMode}
             options={WORK_MODE_OPTIONS}
             value={field.value}
             onValueChange={field.onChange}
@@ -92,26 +52,6 @@ function WorkModeField({ form }: EditorPartProps) {
         )}
       />
     </div>
-  );
-}
-
-function StackField({ form }: EditorPartProps) {
-  const error = useFieldError({ control: form.methods.control, name: 'stack', messages: ERRORS });
-  return (
-    <Field label={LABELS.stack} footer={{ error }}>
-      <Controller
-        control={form.methods.control}
-        name="stack"
-        render={({ field }) => (
-          <TagInput
-            value={field.value}
-            onValueChange={field.onChange}
-            placeholder={COPY.stackPlaceholder}
-            autoFocus={form.focusField === 'stack'}
-          />
-        )}
-      />
-    </Field>
   );
 }
 
@@ -124,8 +64,8 @@ function EditorFields({ form }: EditorPartProps) {
       <TextField form={form} name="company" />
       <TextField form={form} name="location" />
       <div className="grid grid-cols-[1fr_1fr_6rem] gap-3.5 @xl:col-span-2">
-        <TextField form={form} name="salaryMin" input={AMOUNT} />
-        <TextField form={form} name="salaryMax" input={AMOUNT} />
+        <TextField form={form} name="salaryMin" input={AMOUNT_INPUT} />
+        <TextField form={form} name="salaryMax" input={AMOUNT_INPUT} />
         <TextField form={form} name="currency" input={{ maxLength: 3 }} />
       </div>
       <div className="@xl:col-span-2">

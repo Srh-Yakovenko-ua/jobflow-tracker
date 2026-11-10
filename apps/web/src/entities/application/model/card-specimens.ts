@@ -20,4 +20,5 @@ export const FULL_CARD: ApplicationCard = {
   stackCount: 4,
   nextScheduledEvent: null,
   aiStatus: 'done',
+  aiJobId: null,
 };

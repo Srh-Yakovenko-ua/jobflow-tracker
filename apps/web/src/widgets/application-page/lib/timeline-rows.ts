@@ -42,10 +42,11 @@ type Meta = TimelineItem['meta'];
 
 type MetaValue = Meta[string] | undefined;
 
-type MetaContext = {
+type Folded = { parsed: TimelineItem | undefined; confirmed: TimelineItem | undefined };
+
+type MetaContext = Folded & {
   meta: Meta;
   application: ApplicationResponse;
-  parsed: TimelineItem | undefined;
   note: Note | undefined;
 };
 
@@ -119,9 +120,16 @@ function stageMoveMeta({ meta, application }: MetaContext): string {
   return parts.filter((part) => part !== null).join(' ');
 }
 
+function capturedMeta({ parsed, confirmed }: MetaContext): string | null {
+  if (confirmed === undefined) {
+    return parsed?.title ?? null;
+  }
+  return parsed === undefined ? COPY.fieldsChecked.alone : COPY.fieldsChecked.after(parsed.title);
+}
+
 const LOOKS: Record<TimelineItemType, RowLook> = {
   stage_changed: { marker: stageMoveMarker, tone: 'strong', meta: stageMoveMeta },
-  captured: { marker: ringed, tone: 'medium', meta: ({ parsed }) => parsed?.title ?? null },
+  captured: { marker: ringed, tone: 'medium', meta: capturedMeta },
   ai_parsed: { marker: ringed, tone: 'muted', meta: noMeta },
   silence_started: {
     marker: () => ({ kind: 'silence' }),
@@ -141,11 +149,14 @@ const LOOKS: Record<TimelineItemType, RowLook> = {
   draft_confirmed: { marker: ringed, tone: 'muted', meta: noMeta },
 };
 
-function foldedParseOf(items: readonly TimelineItem[]): TimelineItem | undefined {
+function foldedOf(items: readonly TimelineItem[]): Folded {
   if (!items.some((item) => item.type === 'captured')) {
-    return undefined;
+    return { parsed: undefined, confirmed: undefined };
   }
-  return items.filter((item) => item.type === 'ai_parsed').at(-1);
+  return {
+    parsed: items.filter((item) => item.type === 'ai_parsed').at(-1),
+    confirmed: items.find((item) => item.type === 'draft_confirmed'),
+  };
 }
 
 export function timelineRowsOf({
@@ -153,17 +164,17 @@ export function timelineRowsOf({
   application,
   notes = [],
 }: TimelineRowsInput): TimelineRow[] {
-  const parsed = foldedParseOf(items);
+  const folded = foldedOf(items);
   const notesById = new Map(notes.map((note) => [note.id, note]));
   return items
-    .filter((item) => item !== parsed)
+    .filter((item) => item !== folded.parsed && item !== folded.confirmed)
     .map(({ id, type, occurredAt, title, meta }): TimelineRow => {
       const look = LOOKS[type];
       return {
         id,
         at: new Date(occurredAt),
         title,
-        meta: look.meta({ meta, application, parsed, note: notesById.get(id) }),
+        meta: look.meta({ ...folded, meta, application, note: notesById.get(id) }),
         metaFormat: type === 'note_added' ? 'note' : 'text',
         marker: look.marker(meta),
         tone: look.tone,

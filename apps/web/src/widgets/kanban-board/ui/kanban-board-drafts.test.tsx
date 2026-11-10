@@ -1,0 +1,128 @@
+import type { BoardCard } from '@jobflow/shared';
+import { buildJobStatus } from '@jobflow/shared/testing';
+import { screen, waitFor } from '@testing-library/react';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+
+import { apiUrl, recordSentRequests } from '@/test/api-handlers';
+import { cardIn, fixtureIdOf } from '@/test/board-fixtures';
+import { advanceBy as wait, fakeTimeoutsAndIntervals } from '@/test/fake-timeouts';
+import { jobRoute } from '@/test/job-fixtures';
+import { bringLiveStreamUp as openStream, closeLiveStreams } from '@/test/live-stream';
+import { columnNamed, renderBoard } from '@/test/render-board';
+import { server } from '@/test/server';
+
+vi.mock('next/link', () => import('@/test/link'));
+vi.mock('next/navigation', () => import('@/test/navigation'));
+
+const JOB_ID = '0199f1a0-3c4d-7e5f-8a6b-7c8d9e0f1a2b';
+
+const BOARD_URL = apiUrl('/applications/board');
+
+const PROCESSING_LINE = 'AI обробляє · крок 2 з 3';
+
+type Parse = Pick<BoardCard, 'aiStatus' | 'aiJobId'>;
+
+const PROCESSING: Parse = { aiStatus: 'processing', aiJobId: JOB_ID };
+
+function draftIn(serial: number, parse: Parse): BoardCard {
+  const position = `Draft ${String(serial)}`;
+  return { ...cardIn({ serial, stage: 'applied', position }), isDraft: true, ...parse };
+}
+
+function oneDraftBoard(parse: Parse) {
+  return { counts: { applied: 1 }, cards: [draftIn(301, parse)] };
+}
+
+function boardRequestsOf(sentRequests: ReturnType<typeof recordSentRequests>) {
+  return () =>
+    sentRequests().filter(({ url }) => typeof url === 'string' && url.startsWith(BOARD_URL));
+}
+
+afterEach(() => {
+  closeLiveStreams();
+  vi.useRealTimers();
+  vi.unstubAllGlobals();
+  vi.restoreAllMocks();
+});
+
+describe('KanbanBoard drafts', () => {
+  it('a queued draft in відгук shows its wait from the job route', async () => {
+    const jobs = jobRoute({ job: () => buildJobStatus({ queue: { ahead: 3, etaSeconds: 120 } }) });
+    server.use(jobs.handler);
+    renderBoard(oneDraftBoard({ aiStatus: 'queued', aiJobId: JOB_ID }));
+
+    const line = await screen.findByText('у черзі · ~2 хв');
+
+    expect(columnNamed('відгук 1').contains(line)).toBe(true);
+    expect(jobs.sent).toEqual([JOB_ID]);
+  });
+
+  it('a processing draft shows step 2 of 3 with none of its fields, and opens its own page', async () => {
+    renderBoard(oneDraftBoard(PROCESSING));
+
+    const link = (await screen.findByText(PROCESSING_LINE)).closest('a');
+
+    expect(screen.queryByText('Draft 301')).toBeNull();
+    expect(link?.getAttribute('href')).toBe(`/applications/${fixtureIdOf(301)}`);
+    expect(link?.dataset.scroll).toBe('false');
+  });
+
+  it('with the stream down the board asks again after 2 s, turns the parsed draft into a перевір поля card that opens the review, and stops asking', async () => {
+    fakeTimeoutsAndIntervals();
+    const parse = { done: false };
+    const boardRequests = boardRequestsOf(recordSentRequests());
+    renderBoard({
+      ...oneDraftBoard(PROCESSING),
+      liveCard: (card) => (parse.done ? { ...card, aiStatus: 'done' } : card),
+    });
+    await screen.findByText(PROCESSING_LINE);
+
+    parse.done = true;
+    await wait(2000);
+    const link = (await screen.findByText('перевір поля')).closest('a');
+
+    expect(screen.getByText('Draft 301')).toBeDefined();
+    expect(link?.getAttribute('href')).toBe(`/add?review=${fixtureIdOf(301)}#review`);
+    expect(link?.dataset.scroll).toBe('true');
+    await wait(30_000);
+    expect(boardRequests()).toHaveLength(2);
+  });
+
+  it('with the stream up the board asks again only after 10 s', async () => {
+    fakeTimeoutsAndIntervals();
+    await openStream();
+    const boardRequests = boardRequestsOf(recordSentRequests());
+    renderBoard(oneDraftBoard(PROCESSING));
+    await screen.findByText(PROCESSING_LINE);
+
+    await wait(8000);
+    expect(boardRequests()).toHaveLength(1);
+    await wait(2000);
+
+    await waitFor(() => {
+      expect(boardRequests()).toHaveLength(2);
+    });
+  });
+
+  it('a board with no parsing draft is asked once and never on a timer', async () => {
+    fakeTimeoutsAndIntervals();
+    const boardRequests = boardRequestsOf(recordSentRequests());
+    renderBoard(oneDraftBoard({ aiStatus: 'done', aiJobId: JOB_ID }));
+    await screen.findByText('перевір поля');
+
+    await wait(30_000);
+
+    expect(boardRequests()).toHaveLength(1);
+  });
+
+  it('20 parsing drafts in відгук stand still: no bar shimmers and no dot pulses', async () => {
+    const cards = Array.from({ length: 20 }, (_, slot) => draftIn(400 + slot, PROCESSING));
+    renderBoard({ counts: { applied: 20 }, cards });
+
+    expect(await screen.findAllByText(PROCESSING_LINE)).toHaveLength(20);
+
+    const applied = columnNamed('відгук 20');
+    expect(applied.querySelectorAll('[class*="animate-shimmer"]')).toHaveLength(0);
+    expect(applied.querySelectorAll('.motion-safe\\:animate-pulse')).toHaveLength(0);
+  });
+});

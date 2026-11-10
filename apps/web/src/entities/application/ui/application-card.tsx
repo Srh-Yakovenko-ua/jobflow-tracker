@@ -2,20 +2,22 @@ import {
   type ApplicationCard as ApplicationCardData,
   type BoardCard,
   isActiveStage,
-  SOURCE_LABELS,
 } from '@jobflow/shared';
 
 import { uk } from '@/shared/i18n';
 import { cn } from '@/shared/lib/cn';
 
 import { formatDaysInStage } from '../lib/days-in-stage';
-import { formatSalaryRange } from '../lib/salary';
+import { draftStateOf } from '../lib/draft-state';
 import type { ApplicationCardContext } from '../model/card-context';
 import type { CardDensity } from '../model/card-density';
+import { CardFooter } from './card-footer';
 import { CARD_FRAME } from './card-frame';
 import { CardHeading } from './card-heading';
 import { NextEventChip } from './next-event-chip';
 import { OfferCard } from './offer-card';
+import { ParsingCard } from './parsing-card';
+import { ReviewMark } from './review-mark';
 import { ScoreBadge } from './score-badge';
 import { SilenceIndicator } from './silence-indicator';
 import { STAGE_COLOR_CLASS } from './stage-color';
@@ -28,12 +30,12 @@ export type ApplicationCardProps = Readonly<{
   context: ApplicationCardContext;
 }>;
 
-type CardPartProps = Readonly<{ application: ApplicationCardData; silent: boolean }>;
-
 const CARD_LOOK = {
   live: 'bg-surface text-ink shadow-e1 duration-(--duration-base) ease-standard hover:shadow-e2 active:shadow-e1 motion-safe:transition-[translate,box-shadow] motion-safe:hover:-translate-y-0.75 motion-safe:active:translate-y-0',
   silent: 'bg-surface-2 text-ink-2 inset-ring inset-ring-line-soft',
 };
+
+const REVIEW_LOOK = 'animate-fade-in inset-ring inset-ring-accent/25';
 
 function StackTags({ application }: Readonly<{ application: ApplicationCardData }>) {
   const hidden = application.stackCount - application.stack.length;
@@ -74,34 +76,9 @@ function DaysInStage({
   );
 }
 
-function CardFooter({ application, silent }: CardPartProps) {
-  const salary = formatSalaryRange(application);
-  return (
-    <div className={CARD_FRAME.footer}>
-      <span
-        className={cn(
-          CARD_FRAME.salary,
-          salary !== null && 'tabular-nums',
-          salary !== null && !silent && 'font-medium',
-        )}
-      >
-        {salary ?? COPY.salary.unknown}
-      </span>
-      {application.silenceLevel === 'none' ? (
-        <span className="text-[10.5px] font-semibold tracking-[0.06em] uppercase">
-          {SOURCE_LABELS[application.source].labelUk}
-        </span>
-      ) : (
-        <SilenceIndicator application={application} />
-      )}
-    </div>
-  );
-}
+type FieldsCardProps = ApplicationCardProps & Readonly<{ review: boolean }>;
 
-export function ApplicationCard({ application, view, context }: ApplicationCardProps) {
-  if (application.currentStage === 'offer') {
-    return <OfferCard application={application} context={context} />;
-  }
+function FieldsCard({ application, view, context, review }: FieldsCardProps) {
   const silent = application.silenceLevel === 'silent';
   const showStack = view?.density !== 'compact' && application.stack.length > 0;
   return (
@@ -110,8 +87,10 @@ export function ApplicationCard({ application, view, context }: ApplicationCardP
         CARD_FRAME.article,
         CARD_LOOK[silent ? 'silent' : 'live'],
         showStack ? 'gap-2.75' : 'gap-2.5',
+        review && REVIEW_LOOK,
       )}
     >
+      {review && <ReviewMark />}
       <CardHeading
         application={application}
         badge={<ScoreBadge application={application} view={{ muted: silent }} />}
@@ -121,7 +100,27 @@ export function ApplicationCard({ application, view, context }: ApplicationCardP
         <NextEventChip event={application.nextScheduledEvent} context={context} />
       )}
       <DaysInStage application={application} context={context} />
-      <CardFooter application={application} silent={silent} />
+      <CardFooter
+        application={application}
+        view={{ muted: silent }}
+        aside={
+          application.silenceLevel === 'none' ? undefined : (
+            <SilenceIndicator application={application} />
+          )
+        }
+      />
     </article>
   );
+}
+
+export function ApplicationCard(card: ApplicationCardProps) {
+  const { application, context } = card;
+  const draft = draftStateOf(application);
+  if (draft === 'parsing') {
+    return <ParsingCard parse={application} />;
+  }
+  if (application.currentStage === 'offer') {
+    return <OfferCard application={application} context={context} />;
+  }
+  return <FieldsCard {...card} review={draft === 'review'} />;
 }

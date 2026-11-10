@@ -33,6 +33,7 @@ const CARD = {
   stackCount: 4,
   nextScheduledEvent: { kind: 'screening_call', startsAt: '2026-10-23T13:00:00.000Z' },
   aiStatus: 'processing',
+  aiJobId: '0199f4b1-2c3d-7e4f-8a51-6b7c8d9e0f1a',
 } satisfies ApplicationCard;
 
 const LIST_ITEM = {

@@ -97,6 +97,23 @@ export const FAILED_CARD: ApplicationCard = {
   salaryMax: 4600,
 };
 
+export const PARSING_CARD: ApplicationCard = {
+  ...PROCESSING_CARD,
+  id: '0b6f3c1e-5d2a-4c8e-9f10-000000000011',
+  currentStage: 'applied',
+  isDraft: true,
+};
+
+export const REVIEW_CARD: ApplicationCard = {
+  ...PARSING_CARD,
+  id: '0b6f3c1e-5d2a-4c8e-9f10-000000000012',
+  source: 'djinni',
+  matchScore: 73,
+  aiStatus: 'done',
+  salaryMin: 4700,
+  salaryMax: 5900,
+};
+
 export const LONG_TEXT_CARD: ApplicationCard = {
   ...FULL_CARD,
   ...NO_STACK,
@@ -163,6 +180,8 @@ export const CARD_SPECIMENS: readonly CardSpecimen[] = [
   { eyebrow: CARDS.queued, application: QUEUED_CARD, context: SPECIMEN_CONTEXT },
   { eyebrow: CARDS.processing, application: PROCESSING_CARD, context: SPECIMEN_CONTEXT },
   { eyebrow: CARDS.failed, application: FAILED_CARD, context: SPECIMEN_CONTEXT },
+  { eyebrow: CARDS.parsing, application: PARSING_CARD, context: SPECIMEN_CONTEXT },
+  { eyebrow: CARDS.review, application: REVIEW_CARD, context: SPECIMEN_CONTEXT },
 ];
 
 export type ScoreSpecimen = { caption: string; application: ScoreBadgeProps['application'] };

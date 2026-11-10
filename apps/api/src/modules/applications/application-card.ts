@@ -22,5 +22,6 @@ export function toApplicationCard(
       ? { kind: nextEvent.kind, startsAt: nextEvent.startsAt.toISOString() }
       : null,
     aiStatus: aiJobs[0]?.status ?? null,
+    aiJobId: aiJobs[0]?.id ?? null,
   };
 }

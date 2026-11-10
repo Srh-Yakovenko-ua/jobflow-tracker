@@ -4,6 +4,7 @@ import {
   moveApplicationInputSchema,
   updateApplicationInputSchema,
 } from '@jobflow/shared';
+import { buildVacancyParseOutput, vacancyFieldOf } from '@jobflow/shared/testing';
 import type { HttpResponseResolver } from 'msw';
 import { http, HttpResponse } from 'msw/http';
 
@@ -24,6 +25,34 @@ export type ApplicationRouteOptions = {
 export type UpdateRouteOptions = MoveRouteOptions & { application: ApplicationResponse };
 
 export type BoardCardRouteOptions = BoardRouteOptions & { cardRead?: HttpResponseResolver };
+
+type NoContentRouteOptions = MoveRouteOptions & { method: 'delete' | 'post'; path: string };
+
+export function checkFieldOf<Value>(value: Value, evidence: string) {
+  return { ...vacancyFieldOf(value, evidence), confidence: 'check' as const };
+}
+
+export const SALARY_IN_TEXT = 'from 4700\nto  5900 net';
+
+export const REVIEW_DRAFT = applicationResponseOf({
+  id: '0b6f3c1e-5d2a-4c8e-9f10-000000000301',
+  company: 'Acme',
+  position: 'Senior React developer',
+  source: 'other',
+  salaryMin: 4700,
+  salaryMax: 5900,
+  currency: 'USD',
+  stack: ['React'],
+  workMode: 'remote',
+  isDraft: true,
+  matchScore: null,
+  rawText: `Acme hires a Senior React developer\nMode: remote, stack: React.\nSalary: ${SALARY_IN_TEXT}`,
+  aiParsed: buildVacancyParseOutput({
+    salaryMin: checkFieldOf(4700, 'from 4700 to 5900 net'),
+    salaryMax: checkFieldOf(5900, 'from 4700 to 5900 net'),
+    currency: vacancyFieldOf('USD', null),
+  }),
+});
 
 export const ACME_APPLICATION = applicationResponseOf({
   id: '0b6f3c1e-5d2a-4c8e-9f10-000000000201',
@@ -85,10 +114,10 @@ export function updateRoute({ application, ...control }: UpdateRouteOptions) {
   return { handler, sent };
 }
 
-export function deleteRoute(control: MoveRouteOptions = {}) {
+function noContentRoute({ method, path, ...control }: NoContentRouteOptions) {
   const sent: string[] = [];
-  const handler = http.delete<{ id: string }>(apiUrl('/applications/:id'), (info) => {
-    sent.push(info.params.id);
+  const handler = http[method](apiUrl(path), (info) => {
+    sent.push(String(info.params.id));
     return heldReply({
       ...control,
       info,
@@ -96,4 +125,12 @@ export function deleteRoute(control: MoveRouteOptions = {}) {
     });
   });
   return { handler, sent };
+}
+
+export function deleteRoute(control: MoveRouteOptions = {}) {
+  return noContentRoute({ ...control, method: 'delete', path: '/applications/:id' });
+}
+
+export function confirmRoute(control: MoveRouteOptions = {}) {
+  return noContentRoute({ ...control, method: 'post', path: '/capture/drafts/:id/confirm' });
 }

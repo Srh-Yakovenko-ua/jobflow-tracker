@@ -24,9 +24,9 @@ function Bar({ motion, className }: BarProps) {
   return <span className={cn(BAR, FILL[motion], className)} />;
 }
 
-type CardBarsProps = Readonly<{ motion: SkeletonMotion }>;
+export type CardBarsProps = Readonly<{ motion: SkeletonMotion }>;
 
-function FullCardBars({ motion }: CardBarsProps) {
+export function FullCardBars({ motion }: CardBarsProps) {
   return (
     <>
       <Bar motion={motion} className="h-3.25 w-[78%]" />

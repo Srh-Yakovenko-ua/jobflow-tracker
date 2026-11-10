@@ -33,5 +33,9 @@ export const timeline = {
   reason: (label: string) => `Причина: ${label}.`,
   via: (source: string) => `Через ${source}.`,
   silenceMeta: 'Автоматична подія. Картка приглушилась на дошці.',
+  fieldsChecked: {
+    alone: 'Поля перевірено вручну',
+    after: (parse: string) => `${parse}, поля перевірено вручну`,
+  },
   empty: 'Подій ще немає',
 } as const;
