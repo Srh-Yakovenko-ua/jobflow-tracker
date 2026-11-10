@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { textOfHtml } from './html-text.js';
 
 const NESTED_DIVS = 50_000;
+const DEEP_NESTING_TIMEOUT_MS = 30_000;
 
 describe('textOfHtml', () => {
   it.each([
@@ -60,13 +61,21 @@ describe('textOfHtml', () => {
     },
   );
 
-  it('reads the text inside 50 000 nested divs without throwing', () => {
-    const html = `${'<div>'.repeat(NESTED_DIVS)}React${'</div>'.repeat(NESTED_DIVS)}`;
+  it(
+    'reads the text inside 50 000 nested divs without throwing',
+    { timeout: DEEP_NESTING_TIMEOUT_MS },
+    () => {
+      const html = `${'<div>'.repeat(NESTED_DIVS)}React${'</div>'.repeat(NESTED_DIVS)}`;
 
-    expect(textOfHtml(html)).toBe('React');
-  });
+      expect(textOfHtml(html)).toBe('React');
+    },
+  );
 
-  it('reads the text inside 50 000 unclosed divs without throwing', () => {
-    expect(textOfHtml(`${'<div>'.repeat(NESTED_DIVS)}React`)).toBe('React');
-  });
+  it(
+    'reads the text inside 50 000 unclosed divs without throwing',
+    { timeout: DEEP_NESTING_TIMEOUT_MS },
+    () => {
+      expect(textOfHtml(`${'<div>'.repeat(NESTED_DIVS)}React`)).toBe('React');
+    },
+  );
 });

@@ -22,6 +22,7 @@ jobs:
     outputs:
       code: ${{ steps.diff.outputs.code }}
       ai: ${{ steps.diff.outputs.ai }}
+      live_load: ${{ steps.diff.outputs.live_load }}
     steps:
       - uses: actions/checkout@v7.0.1
         with:
@@ -32,6 +33,7 @@ jobs:
         run: |
           code=true
           ai=true
+          live_load=false
           if files=$(git -c core.quotePath=false diff --name-only "$BASE" HEAD); then
             if ! grep -qvE '^docs/|\.md$' <<< "$files" && ! grep -qxF -e 'docs/diagrams/erd.md' -e 'docs/api/openapi.json' <<< "$files"; then
               code=false
@@ -39,9 +41,13 @@ jobs:
             if ! grep -qE '^(services/ai|packages/shared/src/ai)/' <<< "$files"; then
               ai=false
             fi
+            if grep -qxF 'apps/api/src/modules/live/live-load.int.test.ts' <<< "$files"; then
+              live_load=true
+            fi
           fi
           echo "code=$code" >> "$GITHUB_OUTPUT"
           echo "ai=$ai" >> "$GITHUB_OUTPUT"
+          echo "live_load=$live_load" >> "$GITHUB_OUTPUT"
 
   lint:
     runs-on: ubuntu-latest
@@ -105,7 +111,7 @@ jobs:
     needs: changes
     if: needs.changes.outputs.code == 'true'
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 20
     env:
       DATABASE_URL: postgresql://jobflow_app:jobflow_app@localhost:5432/jobflow_test
     services:
@@ -142,6 +148,11 @@ jobs:
       - run: pnpm test:int
         env:
           REDIS_URL: redis://localhost:6379
+      - name: Live load test twenty times in a row
+        if: github.event_name == 'pull_request' && needs.changes.outputs.live_load == 'true'
+        env:
+          REDIS_URL: redis://localhost:6379
+        run: for run in $(seq 20); do pnpm --filter @jobflow/api test:int live-load.int || exit 1; done
       - name: Schema matches the migrations
         run: pnpm --filter @jobflow/api exec prisma migrate diff --from-config-datasource --to-schema prisma/schema.prisma --exit-code
 
