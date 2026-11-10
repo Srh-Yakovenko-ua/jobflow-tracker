@@ -1,13 +1,8 @@
 import { isDeepStrictEqual } from 'node:util';
 
-import type { Application, VacancyParseOutput } from '@jobflow/shared';
+import { type Application, DRAFT_PLACEHOLDERS, type VacancyParseOutput } from '@jobflow/shared';
 
 import { withoutUndefined } from '../../common/without-undefined.js';
-
-const DRAFT_PLACEHOLDERS = {
-  position: 'Без назви',
-  company: 'компанію не розпізнано',
-} as const;
 
 type DraftNames = Pick<Application, 'company' | 'position' | 'source'>;
 

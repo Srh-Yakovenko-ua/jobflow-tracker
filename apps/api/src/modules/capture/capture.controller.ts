@@ -5,6 +5,7 @@ import {
   type CapturePasteInput,
   capturePasteInputSchema,
   type CapturePasteResponse,
+  type CaptureRetryResponse,
 } from '@jobflow/shared';
 import { Body, Controller, HttpCode, Param, Post, Req } from '@nestjs/common';
 import type { Request } from 'express';
@@ -51,5 +52,16 @@ export class CaptureController {
     @Param('id', { schema: applicationIdSchema }) id: string,
   ): Promise<void> {
     return this.capture.confirm(user.id, id);
+  }
+
+  @Post('drafts/:id/retry')
+  @HttpCode(202)
+  @RateLimit('ai')
+  retry(
+    @CurrentUser() user: AccessUser,
+    @Param('id', { schema: applicationIdSchema }) id: string,
+    @Req() req: Request,
+  ): Promise<CaptureRetryResponse> {
+    return this.capture.retry(user.id, { applicationId: id, requestId: readRequestId(req) });
   }
 }

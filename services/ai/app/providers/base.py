@@ -6,7 +6,7 @@ from typing import Any, Literal, Protocol
 from loguru import logger
 
 from app.contracts.embed_request import EmbedRequest
-from app.core.errors import AppError, timeout_error
+from app.core.errors import AppError, provider_error, timeout_error
 
 
 @dataclass(frozen=True, kw_only=True)
@@ -76,4 +76,4 @@ def vendor_errors(errors: VendorErrors, vendor: VendorSettings) -> Iterator[None
         raise AppError(429, detail="The AI provider is rate limiting") from error
     except errors.failed as error:
         logger.warning("vendor error", model=vendor.model, error=type(error).__name__)
-        raise AppError(502, detail="The AI provider failed") from error
+        raise provider_error() from error

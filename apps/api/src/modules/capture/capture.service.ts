@@ -3,6 +3,7 @@ import {
   type CaptureMethod,
   type CapturePasteInput,
   type CapturePasteResponse,
+  type CaptureRetryResponse,
   VACANCY_PARSE_LIMITS,
 } from '@jobflow/shared';
 import { Injectable } from '@nestjs/common';
@@ -16,6 +17,8 @@ import { textOfHtml } from './html-text.js';
 export type PasteCapture = { input: CapturePasteInput; requestId: string };
 
 export type BookmarkletCapture = { input: CaptureBookmarkletInput; requestId: string };
+
+export type DraftRetryRequest = { applicationId: string; requestId: string };
 
 type Capture = PasteCapture & { method: CaptureMethod };
 
@@ -55,6 +58,21 @@ export class CaptureService {
         occurredAt: confirmedAt,
         tx,
       });
+    });
+  }
+
+  retry(
+    userId: string,
+    { applicationId, requestId }: DraftRetryRequest,
+  ): Promise<CaptureRetryResponse> {
+    return this.prisma.$transaction(async (tx) => {
+      const runningJobId = await this.drafts.lockForRetry(userId, { applicationId, tx });
+      if (runningJobId !== null) {
+        return { jobId: runningJobId };
+      }
+      const jobId = await this.ai.createJob(userId, { kind: 'vacancy_parse', applicationId, tx });
+      await this.drafts.announce(userId, { applicationId, aiJobId: jobId, requestId, tx });
+      return { jobId };
     });
   }
 

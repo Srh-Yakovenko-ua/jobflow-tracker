@@ -27,6 +27,7 @@ export function specimenNoop(): undefined {
 export const SPECIMEN_ACTIONS: AsyncStateActions = {
   onRetry: specimenNoop,
   onManual: specimenNoop,
+  onDelete: specimenNoop,
 };
 
 export const OFFLINE_SYNCED_AT = new Date('2026-09-07T12:42:00Z');

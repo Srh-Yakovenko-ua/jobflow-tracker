@@ -1,7 +1,7 @@
 import type { CaptureBookmarkletInput } from '@jobflow/shared';
 import { describe, expect, it } from 'vitest';
 
-import { conflict } from '../../common/app-error.js';
+import { conflict, notFound } from '../../common/app-error.js';
 import { AI_JOB_ID, FakeAiRepository, VACANCY_TEXT } from '../../test/ai.js';
 import {
   BOOKMARKLET,
@@ -20,6 +20,25 @@ import { TimelineService } from '../events/index.js';
 import { CaptureService } from './capture.service.js';
 
 const CAPTURE = { input: PASTE, requestId: 'req-capture-1' };
+
+const RETRY = { applicationId: APPLICATION_ID, requestId: 'req-capture-1' };
+
+const RUNNING_JOB_ID = '0199f0a0-0000-7000-8000-000000000202';
+
+const QUEUED_PARSE = {
+  userId: OLENA_ID,
+  status: 'queued',
+  step: 1,
+  applicationId: APPLICATION_ID,
+};
+
+const ANNOUNCED_PARSE = {
+  userId: OLENA_ID,
+  applicationId: APPLICATION_ID,
+  aiJobId: AI_JOB_ID,
+  requestId: 'req-capture-1',
+  tx,
+};
 
 async function serviceWith() {
   const drafts = new FakeApplicationDrafts();
@@ -55,12 +74,7 @@ describe('CaptureService.paste', () => {
 
     expect(drafts.steps).toEqual(['duplicates', 'open']);
     expect(drafts.opened).toEqual([{ userId: OLENA_ID, input: PASTE, tx }]);
-    expect(ai.jobs.get(AI_JOB_ID)).toEqual({
-      userId: OLENA_ID,
-      status: 'queued',
-      step: 1,
-      applicationId: APPLICATION_ID,
-    });
+    expect(ai.jobs.get(AI_JOB_ID)).toEqual(QUEUED_PARSE);
     expect(timeline.events).toEqual([
       {
         userId: OLENA_ID,
@@ -71,15 +85,7 @@ describe('CaptureService.paste', () => {
         tx,
       },
     ]);
-    expect(drafts.announced).toEqual([
-      {
-        userId: OLENA_ID,
-        applicationId: APPLICATION_ID,
-        aiJobId: AI_JOB_ID,
-        requestId: 'req-capture-1',
-        tx,
-      },
-    ]);
+    expect(drafts.announced).toEqual([ANNOUNCED_PARSE]);
   });
 
   it('writes no ai job, timeline row or event when no search is active', async () => {
@@ -152,6 +158,43 @@ describe('CaptureService.bookmarklet', () => {
     expect(timeline.events.map(({ kind, payload }) => ({ kind, payload }))).toEqual([
       { kind: 'captured', payload: { method: 'bookmarklet' } },
     ]);
+  });
+});
+
+describe('CaptureService.retry', () => {
+  it('locks the draft, queues a new ai job and announces it in one transaction, with no second captured row', async () => {
+    const { drafts, ai, timeline, service } = await serviceWith();
+
+    await expect(service.retry(OLENA_ID, RETRY)).resolves.toEqual({ jobId: AI_JOB_ID });
+
+    expect(drafts.lockedForRetry).toEqual([
+      { userId: OLENA_ID, applicationId: APPLICATION_ID, tx },
+    ]);
+    expect(ai.jobs.get(AI_JOB_ID)).toEqual(QUEUED_PARSE);
+    expect(drafts.announced).toEqual([ANNOUNCED_PARSE]);
+    expect(timeline.events).toEqual([]);
+  });
+
+  it('answers the vacancy parse that is still running and writes no ai job or event', async () => {
+    const { drafts, ai, service } = await serviceWith();
+    drafts.runningJobId = RUNNING_JOB_ID;
+
+    await expect(service.retry(OLENA_ID, RETRY)).resolves.toEqual({ jobId: RUNNING_JOB_ID });
+
+    expect([ai.jobs.size, drafts.announced]).toEqual([0, []]);
+  });
+
+  it.each([
+    notFound('Application not found'),
+    conflict('Application is not a draft'),
+    conflict('Vacancy is already parsed'),
+  ])('writes no ai job or event when the draft answers "$body.detail"', async (refusal) => {
+    const { drafts, ai, service } = await serviceWith();
+    drafts.refusal = refusal;
+
+    await expect(service.retry(OLENA_ID, RETRY)).rejects.toBe(refusal);
+
+    expect([ai.jobs.size, drafts.announced]).toEqual([0, []]);
   });
 });
 

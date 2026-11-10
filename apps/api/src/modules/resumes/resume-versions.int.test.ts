@@ -50,17 +50,17 @@ const MALFORMED_REQUESTS: { case: string; route: (applicationId: string) => Rout
     {
       case: 'DELETE of a malformed version id',
       route: () => ({ method: 'delete', path: resumeVersionPath(MALFORMED_ID) }),
-      at: '',
+      at: 'id',
     },
     {
       case: 'activating a malformed version id',
       route: () => ({ method: 'post', path: activationPath(MALFORMED_ID) }),
-      at: '',
+      at: 'id',
     },
     {
       case: 'the download of a malformed version id',
       route: () => ({ method: 'get', path: downloadPath(MALFORMED_ID) }),
-      at: '',
+      at: 'id',
     },
     {
       case: 'a relink of a malformed application id',
@@ -69,7 +69,7 @@ const MALFORMED_REQUESTS: { case: string; route: (applicationId: string) => Rout
         path: resumeLinkPath(MALFORMED_ID),
         body: { resumeVersionId: MISSING_ID },
       }),
-      at: '',
+      at: 'id',
     },
     {
       case: 'a relink to a malformed version id',

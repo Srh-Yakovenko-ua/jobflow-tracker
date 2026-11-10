@@ -27,7 +27,14 @@ export type AiJobOf<Status extends AiJobStatus> = Readonly<
 
 export type AiJob = { [Status in AiJobStatus]: AiJobOf<Status> }[AiJobStatus];
 
-export type AsyncStateActions = { onRetry: () => void; onManual: () => void };
+export type AsyncStateActions = {
+  onManual: () => void;
+  onRetry?: (() => void) | undefined;
+  onDelete?: (() => void) | undefined;
+  retrying?: boolean | undefined;
+};
+
+const DELETE_LOOK = 'text-ink-3 not-disabled:hover:bg-surface-3 not-disabled:hover:text-ink';
 
 type JobLook<Status extends AiJobStatus> = {
   tone: string;
@@ -48,19 +55,19 @@ function queuedLine(job: AiJobOf<'queued'>): string {
 }
 
 const LOOKS: { [Status in AiJobStatus]: JobLook<Status> } = {
-  queued: { tone: 'text-link', marker: WAITING_DOT, line: queuedLine },
+  queued: { tone: 'label text-link', marker: WAITING_DOT, line: queuedLine },
   processing: {
-    tone: 'text-link',
+    tone: 'label text-link',
     marker: WAITING_DOT,
     line: (job) => COPY.processing(job.step, job.steps),
   },
   done: {
-    tone: 'text-offer',
+    tone: 'label text-offer',
     marker: <Dot className="bg-offer" />,
     line: (job) => COPY.done(formatDuration(job.tookSeconds)),
   },
   failed: {
-    tone: 'text-danger',
+    tone: cn('font-ui text-danger', STATE_TEXT.eyebrow),
     marker: <CircleMinus aria-hidden size={16} strokeWidth={1.9} className="flex-none" />,
     line: () => COPY.status.failed,
   },
@@ -69,7 +76,7 @@ const LOOKS: { [Status in AiJobStatus]: JobLook<Status> } = {
 function StatusLine<Status extends AiJobStatus>({ job }: Readonly<{ job: AiJobOf<Status> }>) {
   const look: JobLook<Status> = LOOKS[job.status];
   return (
-    <p className={cn('label flex items-center gap-2.25 tabular-nums', look.tone)}>
+    <p className={cn('flex items-center gap-2.25 tabular-nums', look.tone)}>
       {look.marker}
       <span className="min-w-0">{look.line(job)}</span>
     </p>
@@ -101,9 +108,25 @@ function FailedFooter({ actions }: Readonly<{ actions?: AsyncStateActions | unde
           <Button className={TOUCH_HEIGHT} onClick={actions.onManual}>
             {COPY.manual}
           </Button>
-          <Button variant="secondary" className={TOUCH_HEIGHT} onClick={actions.onRetry}>
-            {COPY.retry}
-          </Button>
+          {actions.onRetry && (
+            <Button
+              variant="secondary"
+              loading={actions.retrying === true}
+              className={TOUCH_HEIGHT}
+              onClick={actions.onRetry}
+            >
+              {COPY.retry}
+            </Button>
+          )}
+          {actions.onDelete && (
+            <Button
+              variant="ghost"
+              className={cn(TOUCH_HEIGHT, DELETE_LOOK)}
+              onClick={actions.onDelete}
+            >
+              {COPY.delete}
+            </Button>
+          )}
         </div>
       )}
     </>

@@ -52,7 +52,11 @@ export class CaptureParseService {
 
   private async keepText(userId: string, applicationId: string): Promise<void> {
     const body = await this.drafts.findRawText(userId, applicationId);
-    if (body !== null) {
+    if (body === null) {
+      return;
+    }
+    const { items } = await this.notes.list(userId, applicationId);
+    if (!items.some((note) => note.body === body)) {
       await this.notes.create(userId, { applicationId, input: { body } });
     }
   }

@@ -10,6 +10,7 @@ import {
   applicationRoute,
   checkFieldOf,
   confirmRoute,
+  FAILED_DRAFT,
   REVIEW_DRAFT,
   SALARY_IN_TEXT,
   updateRoute,
@@ -21,7 +22,7 @@ import { latch } from '@/test/latch';
 import { renderInApp } from '@/test/render-in-app';
 import { server } from '@/test/server';
 
-import { DraftReview } from './draft-review';
+import { DraftReview, type DraftReviewProps } from './draft-review';
 
 vi.mock('next/link', () => import('@/test/link'));
 
@@ -29,6 +30,7 @@ type ReviewSetup = {
   application?: ApplicationResponse;
   update?: MoveRouteOptions;
   confirm?: MoveRouteOptions;
+  view?: DraftReviewProps['view'];
 };
 
 const CONFIRM = 'Підтвердити і на дошку';
@@ -37,6 +39,8 @@ const SAVE_FAILED_TOAST = 'Це збій на нашому боці, збере�
 
 const COMPANY_ERROR = 'Вкажи компанію одним коротким рядком';
 
+const POSITION_ERROR = 'Вкажи посаду одним коротким рядком';
+
 const NO_QUOTE = 'Цитати в тексті вакансії не знайшлося';
 
 function DetailReader({ application }: Readonly<{ application: ApplicationResponse }>) {
@@ -44,7 +48,12 @@ function DetailReader({ application }: Readonly<{ application: ApplicationRespon
   return null;
 }
 
-function renderReview({ application = REVIEW_DRAFT, update = {}, confirm = {} }: ReviewSetup = {}) {
+function renderReview({
+  application = REVIEW_DRAFT,
+  update = {},
+  confirm = {},
+  view = {},
+}: ReviewSetup = {}) {
   const detail = applicationRoute({ application });
   const updates = updateRoute({ application, ...update });
   const confirms = confirmRoute(confirm);
@@ -54,7 +63,7 @@ function renderReview({ application = REVIEW_DRAFT, update = {}, confirm = {} }:
   const user = renderInApp(
     <>
       <DetailReader application={application} />
-      <DraftReview application={application} actions={{ onConfirmed }} />
+      <DraftReview application={application} actions={{ onConfirmed }} view={view} />
     </>,
   );
   const confirmUntilReported = async () => {
@@ -78,8 +87,25 @@ function chip(name: string): HTMLElement {
   return screen.getByRole('button', { name });
 }
 
-function companyField(): HTMLElement {
+function companyField(): HTMLInputElement {
   return screen.getByRole('textbox', { name: 'Компанія' });
+}
+
+function positionField(): HTMLInputElement {
+  return screen.getByRole('textbox', { name: 'Позиція' });
+}
+
+function countCompanyMarkedAlone(): () => number {
+  let seen = 0;
+  const observer = new MutationObserver(() => {
+    const companyMarked = descriptionOf(companyField()) === COMPANY_ERROR;
+    if (companyMarked && descriptionOf(positionField()) !== POSITION_ERROR) seen += 1;
+  });
+  observer.observe(document.body, { subtree: true, childList: true, attributes: true });
+  return () => {
+    observer.disconnect();
+    return seen;
+  };
 }
 
 async function tooltipOf(name: string): Promise<string | null> {
@@ -225,6 +251,91 @@ describe('DraftReview', () => {
       expect(onConfirmed).toHaveBeenCalledTimes(1);
     });
     expect(confirms).toEqual([REVIEW_DRAFT.id]);
+  });
+
+  it('a draft that still carries the placeholder names starts with company and position empty', () => {
+    renderReview({ application: FAILED_DRAFT });
+
+    expect(companyField().value).toBe('');
+    expect(positionField().value).toBe('');
+    expect(screen.queryByDisplayValue('Без назви')).toBeNull();
+  });
+
+  it('a draft the AI read nothing from labels the stack field Стек with no recognised count', () => {
+    renderReview({ application: FAILED_DRAFT });
+
+    expect(screen.getByText('Стек')).toBeDefined();
+    expect(screen.queryByText(/розпізнано/)).toBeNull();
+  });
+
+  it('a confirmation with both names left empty marks each field and sends nothing', async () => {
+    const { user, onConfirmed, writes } = renderReview({ application: FAILED_DRAFT });
+
+    await user.click(screen.getByRole('button', { name: CONFIRM }));
+
+    await waitFor(() => {
+      expect(descriptionOf(companyField())).toBe(COMPANY_ERROR);
+    });
+    expect(descriptionOf(positionField())).toBe(POSITION_ERROR);
+    expect(writes()).toEqual([]);
+    expect(onConfirmed).not.toHaveBeenCalled();
+  });
+
+  it('a press on the confirm button from the empty company field marks nothing until the click lands, then both names at once with focus back in the company', async () => {
+    const { user, writes } = renderReview({
+      application: FAILED_DRAFT,
+      view: { focusField: 'company' },
+    });
+    const companyMarkedAlone = countCompanyMarkedAlone();
+    const confirm = screen.getByRole('button', { name: CONFIRM });
+
+    await user.pointer({ keys: '[MouseLeft>]', target: confirm });
+    await user.pointer({ keys: '[/MouseLeft]', target: confirm });
+
+    await waitFor(() => {
+      expect(descriptionOf(positionField())).toBe(POSITION_ERROR);
+    });
+    expect(descriptionOf(companyField())).toBe(COMPANY_ERROR);
+    expect(document.activeElement).toBe(companyField());
+    expect(companyMarkedAlone()).toBe(0);
+    expect(writes()).toEqual([]);
+  });
+
+  it('a typed company alone still asks for the position', async () => {
+    const { user, writes } = renderReview({ application: FAILED_DRAFT });
+    await user.type(companyField(), 'Kvit');
+
+    await user.click(screen.getByRole('button', { name: CONFIRM }));
+
+    await waitFor(() => {
+      expect(descriptionOf(positionField())).toBe(POSITION_ERROR);
+    });
+    expect(descriptionOf(companyField())).not.toBe(COMPANY_ERROR);
+    expect(writes()).toEqual([]);
+  });
+
+  it('both names typed over the placeholders are saved first and confirmed after', async () => {
+    const { user, confirmUntilReported, updates, writes } = renderReview({
+      application: FAILED_DRAFT,
+    });
+    await user.type(companyField(), 'Kvit');
+    await user.type(positionField(), 'Middle QA');
+
+    await confirmUntilReported();
+
+    expect(writes()).toEqual(['PATCH', 'POST']);
+    expect(updates).toEqual([{ company: 'Kvit', position: 'Middle QA' }]);
+  });
+
+  it('carries the form name and starts in the field the caller asks for', () => {
+    renderReview({
+      application: FAILED_DRAFT,
+      view: { name: 'Заповни компанію і позицію', focusField: 'company' },
+    });
+
+    expect(screen.getByRole('form', { name: 'Заповни компанію і позицію' })).toBeDefined();
+    expect(screen.queryByRole('form', { name: 'Перевір поля і готово' })).toBeNull();
+    expect(document.activeElement).toBe(companyField());
   });
 
   it('Відкрити повну картку leads to the card page', () => {

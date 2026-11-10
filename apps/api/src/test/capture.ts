@@ -12,6 +12,7 @@ import type {
   ApplicationRow,
   DraftConfirm,
   DraftFill,
+  DraftRetry,
   FilledDraft,
   OpenDraft,
   OpenedDraft,
@@ -31,6 +32,8 @@ import { minutesBefore, NOW } from './time.js';
 export const CAPTURE_PASTE_PATH = '/api/v1/capture/paste';
 
 export const draftConfirmPath = (id: string) => `/api/v1/capture/drafts/${id}/confirm`;
+
+export const draftRetryPath = (id: string) => `/api/v1/capture/drafts/${id}/retry`;
 
 export type DraftConfirmRequest = Pick<SignedInApplication, 'id'> & { accessToken?: string };
 
@@ -129,6 +132,10 @@ export function postConfirm(app: NestExpressApplication, { accessToken, id }: Dr
   return callRoute(app, { method: 'post', path: draftConfirmPath(id), accessToken });
 }
 
+export function postRetry(app: NestExpressApplication, { accessToken, id }: DraftConfirmRequest) {
+  return callRoute(app, { method: 'post', path: draftRetryPath(id), accessToken });
+}
+
 export class FakeApplicationDrafts {
   readonly steps: string[] = [];
 
@@ -139,6 +146,10 @@ export class FakeApplicationDrafts {
   readonly fills: ByUser<DraftFill>[] = [];
 
   readonly confirmed: ByUser<DraftConfirm>[] = [];
+
+  readonly lockedForRetry: ByUser<DraftRetry>[] = [];
+
+  runningJobId: string | null = null;
 
   refusal: Error | undefined;
 
@@ -179,5 +190,13 @@ export class FakeApplicationDrafts {
     }
     this.confirmed.push({ userId, ...draft });
     return Promise.resolve(NOW);
+  }
+
+  lockForRetry(userId: string, draft: DraftRetry): Promise<string | null> {
+    if (this.refusal !== undefined) {
+      return Promise.reject(this.refusal);
+    }
+    this.lockedForRetry.push({ userId, ...draft });
+    return Promise.resolve(this.runningJobId);
   }
 }

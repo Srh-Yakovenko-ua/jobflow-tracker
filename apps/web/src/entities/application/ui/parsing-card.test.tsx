@@ -84,7 +84,7 @@ describe('ParsingCard', () => {
 
   it('a queued draft whose job route fails keeps the plain у черзі', async () => {
     const jobs = jobRoute({
-      job: buildJobStatus,
+      job: () => buildJobStatus(),
       reply: () => errorReply({ status: 404, type: 'not_found' }),
     });
     server.use(jobs.handler);

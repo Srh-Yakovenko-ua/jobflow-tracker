@@ -1,4 +1,5 @@
 import {
+  AI_JOB_FAILURES,
   AI_KIND_SCHEMAS,
   AI_PROMPT_VERSIONS,
   type AiKind,
@@ -14,7 +15,7 @@ import { UnrecoverableError } from 'bullmq';
 import { Clock } from '../../common/clock.js';
 import type { Env } from '../../config/env.js';
 import type { jobFields } from '../../queues/processed-job.js';
-import { AI_JOB_ERRORS, type AiCompleteJob } from './ai.jobs.js';
+import type { AiCompleteJob } from './ai.jobs.js';
 import { AiRepository, type CreateAiJob } from './ai.repository.js';
 import { budgetWindow } from './ai-budget.js';
 import { AiClient } from './ai-client.js';
@@ -126,7 +127,7 @@ export class AiService {
     if (usage.calls < this.budget.dailyCalls && usage.tokens < this.budget.monthlyTokens) {
       return this.call(run);
     }
-    const errorType = AI_JOB_ERRORS.budgetExceeded;
+    const errorType = AI_JOB_FAILURES.budgetExceeded;
     await this.fail(run, errorType);
     this.logger.warn({ ...traceOf(run), ...usage }, 'ai budget exceeded');
     throw new UnrecoverableError(errorType);

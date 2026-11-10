@@ -10,7 +10,7 @@ import { Input } from '@/shared/ui/input';
 import { Select } from '@/shared/ui/select';
 import { SOURCE_OPTIONS } from '@/shared/ui/specimen-options';
 
-import type { ReviewedField, ReviewFields } from '../lib/review-fields';
+import { NO_REVIEW, type ReviewedField, type ReviewFields } from '../lib/review-fields';
 import { ConfidenceChip, REVIEW_NAMES } from './confidence-chip';
 import {
   AMOUNT_INPUT,
@@ -26,13 +26,15 @@ export type SourcePick = Readonly<{ value: Source; onChange: (source: Source) =>
 export type ReviewFormFieldsProps = Readonly<{
   form: EditorForm;
   application: ApplicationResponse;
-  reviews: ReviewFields;
+  reviews: ReviewFields | null;
   source: SourcePick;
 }>;
 
-type ReviewedProps = Readonly<{ field: ReviewedField; reviews: ReviewFields; children: ReactNode }>;
+type Reviews = Readonly<{ reviews: ReviewFields }>;
 
-type SalaryFieldProps = Pick<ReviewFormFieldsProps, 'form' | 'application' | 'reviews'>;
+type ReviewedProps = Reviews & Readonly<{ field: ReviewedField; children: ReactNode }>;
+
+type SalaryFieldProps = Pick<ReviewFormFieldsProps, 'form' | 'application'> & Reviews;
 
 const COPY = uk.add.review;
 
@@ -88,7 +90,7 @@ function SalaryField({ form, application, reviews }: SalaryFieldProps) {
   );
 }
 
-function SourceField({ source, reviews }: Pick<ReviewFormFieldsProps, 'source' | 'reviews'>) {
+function SourceField({ source, reviews }: Pick<ReviewFormFieldsProps, 'source'> & Reviews) {
   return (
     <Field label={REVIEW_NAMES.source} aside={<ConfidenceChip field="source" reviews={reviews} />}>
       <Select
@@ -103,7 +105,13 @@ function SourceField({ source, reviews }: Pick<ReviewFormFieldsProps, 'source' |
   );
 }
 
-export function ReviewFormFields({ form, application, reviews, source }: ReviewFormFieldsProps) {
+export function ReviewFormFields({
+  form,
+  application,
+  reviews: parsed,
+  source,
+}: ReviewFormFieldsProps) {
+  const reviews = parsed ?? NO_REVIEW;
   const chipOf = (field: ReviewedField) => <ConfidenceChip field={field} reviews={reviews} />;
   return (
     <>
@@ -133,7 +141,7 @@ export function ReviewFormFields({ form, application, reviews, source }: ReviewF
         <StackField
           form={form}
           view={{
-            label: COPY.stack(application.stack.length),
+            label: parsed === null ? REVIEW_NAMES.stack : COPY.stack(application.stack.length),
             placeholder: COPY.addStack,
             aside: chipOf('stack'),
           }}

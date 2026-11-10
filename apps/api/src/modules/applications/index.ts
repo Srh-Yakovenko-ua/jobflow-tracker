@@ -2,6 +2,7 @@ export type {
   AnnouncedCapture,
   DraftConfirm,
   DraftFill,
+  DraftRetry,
   FilledDraft,
   OpenDraft,
   OpenedDraft,

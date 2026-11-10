@@ -26,6 +26,7 @@ import {
   ApplicationsRepository,
   type DraftRow,
   type FillDraft,
+  type LockedDraft,
   type RecordApplicationEvent,
   type UpdateApplicationById,
 } from './applications.repository.js';
@@ -83,6 +84,8 @@ class FakeDraftsRepository extends RecordedEvents<RecordApplicationEvent> {
 
   readonly confirmed: ByUser<ApplicationById>[] = [];
 
+  readonly locked: ByUser<ApplicationById>[] = [];
+
   parseRunning = false;
 
   constructor(private readonly row: ApplicationRow) {
@@ -102,6 +105,20 @@ class FakeDraftsRepository extends RecordedEvents<RecordApplicationEvent> {
   updateOwned(userId: string, input: UpdateApplicationById): Promise<number> {
     this.updates.push({ userId, ...input });
     return Promise.resolve(1);
+  }
+
+  async lockDraft(userId: string, input: ApplicationById): Promise<LockedDraft | null> {
+    const row = await this.findOwned(userId, input);
+    if (row === null) {
+      return null;
+    }
+    this.locked.push({ userId, ...input });
+    return {
+      isDraft: row.isDraft,
+      parsed: row.aiParsed !== null,
+      hasText: row.rawText !== null,
+      runningJobId: this.parseRunning ? AI_JOB_ID : null,
+    };
   }
 
   async confirmDraft(userId: string, input: ApplicationById): Promise<number> {
@@ -412,5 +429,60 @@ describe('ApplicationDraftsService.confirm', () => {
     ).rejects.toMatchObject(APPLICATION_NOT_FOUND);
 
     expect([repository.confirmed, repository.events]).toEqual([[], []]);
+  });
+});
+
+describe('ApplicationDraftsService.lockForRetry', () => {
+  it('locks the draft in the transaction and names no running parse once the parse has failed', async () => {
+    const { repository, service, within } = await serviceWith();
+
+    await expect(
+      within((client) => service.lockForRetry(OLENA_ID, { ...CONFIRM, tx: client })),
+    ).resolves.toBeNull();
+
+    expect(repository.locked).toEqual([{ userId: OLENA_ID, id: APPLICATION_ID, tx }]);
+  });
+
+  it('answers the id of the vacancy parse that is still queued or processing', async () => {
+    const { repository, service, within } = await serviceWith();
+    repository.parseRunning = true;
+
+    await expect(
+      within((client) => service.lockForRetry(OLENA_ID, { ...CONFIRM, tx: client })),
+    ).resolves.toBe(AI_JOB_ID);
+  });
+
+  it.each([
+    {
+      card: 'that is not a draft',
+      row: { ...DRAFT_ROW, isDraft: false },
+      detail: 'Application is not a draft',
+    },
+    {
+      card: 'whose vacancy is already parsed',
+      row: { ...DRAFT_ROW, aiParsed: { company: 'Acme' } },
+      detail: 'Vacancy is already parsed',
+    },
+    {
+      card: 'that keeps no vacancy text',
+      row: { ...DRAFT_ROW, rawText: null },
+      detail: 'Draft has no vacancy text',
+    },
+  ])('refuses to parse a card $card again with 409', async ({ row, detail }) => {
+    const { service, within } = await serviceWith(row);
+
+    await expect(
+      within((client) => service.lockForRetry(OLENA_ID, { ...CONFIRM, tx: client })),
+    ).rejects.toMatchObject({ body: { status: 409, detail } });
+  });
+
+  it.each(MISSING_TARGETS)('answers 404 for $case and locks nothing', async ({ userId, id }) => {
+    const { repository, service, within } = await serviceWith();
+
+    await expect(
+      within((client) => service.lockForRetry(userId, { applicationId: id, tx: client })),
+    ).rejects.toMatchObject(APPLICATION_NOT_FOUND);
+
+    expect(repository.locked).toEqual([]);
   });
 });
