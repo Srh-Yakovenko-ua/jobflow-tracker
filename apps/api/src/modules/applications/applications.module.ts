@@ -1,10 +1,13 @@
 import { Module } from '@nestjs/common';
 
 import { Clock } from '../../common/clock.js';
+import { OutboxWorkerModule } from '../../outbox/outbox.module.js';
+import { LiveModule } from '../live/index.js';
 import { ApplicationDraftsService } from './application-drafts.service.js';
 import { ApplicationDuplicatesRepository } from './application-duplicates.repository.js';
 import { ApplicationListRepository } from './application-list.repository.js';
 import { ApplicationListService } from './application-list.service.js';
+import { ApplicationLiveSubscriber } from './application-live.subscriber.js';
 import { ApplicationSearchRepository } from './application-search.repository.js';
 import { ApplicationsController } from './applications.controller.js';
 import { ApplicationsRepository } from './applications.repository.js';
@@ -33,3 +36,9 @@ import { StageTransitionService } from './stage-transition.service.js';
   exports: [ApplicationsService, ApplicationDraftsService, SearchApplicationsService],
 })
 export class ApplicationsModule {}
+
+@Module({
+  imports: [OutboxWorkerModule, LiveModule],
+  providers: [ApplicationLiveSubscriber],
+})
+export class ApplicationsWorkerModule {}

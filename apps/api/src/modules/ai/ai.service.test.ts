@@ -1,3 +1,4 @@
+import type { JobUpdated } from '@jobflow/shared';
 import { ConfigService } from '@nestjs/config';
 import { UnrecoverableError } from 'bullmq';
 import { beforeEach, describe, expect, it } from 'vitest';
@@ -42,18 +43,22 @@ const NOTE_JOB: AiCompleteJob = { ...VACANCY_JOB, input: { text: VACANCY_TEXT, .
 
 const INVALID_OUTPUT = { status: 422, type: 'ai_invalid_output' };
 
-type AttemptOptions = Partial<Pick<AiCompleteAttempt, 'job' | 'finalAttempt' | 'settled'>>;
+type AttemptOptions = Partial<
+  Pick<AiCompleteAttempt, 'job' | 'finalAttempt' | 'settled' | 'progressed'>
+>;
 
 function attemptOf({
   job = VACANCY_JOB,
   finalAttempt = false,
   settled = new SettledAiJobs().record,
+  progressed = () => Promise.resolve(),
 }: AttemptOptions = {}): AiCompleteAttempt {
   return {
     job,
     finalAttempt,
     logFields: { jobId: job.aiJobId, queue: 'ai', jobName: 'ai.complete' },
     settled,
+    progressed,
   };
 }
 
@@ -75,13 +80,17 @@ async function serviceWithFakes(nodeEnv: Env['NODE_ENV'] = 'development') {
 const failedJob = (errorType: string): FakeAiJob => ({
   userId: OLENA_ID,
   status: 'failed',
+  step: 2,
   errorType,
   finishedAt: NOW,
 });
 
+const PROCESSING: FakeAiJob = { userId: OLENA_ID, status: 'processing', step: 2 };
+
 const doneJob = (aiResultId: string): FakeAiJob => ({
   userId: OLENA_ID,
   status: 'done',
+  step: 3,
   aiResultId,
   finishedAt: NOW,
 });
@@ -254,7 +263,7 @@ describe('AiService.complete', () => {
     await expect(service.complete(attemptOf())).rejects.toBe(NOT_READY);
 
     expect(repository.results.size).toBe(0);
-    expect(repository.jobs.get(AI_JOB_ID)).toEqual({ userId: OLENA_ID, status: 'processing' });
+    expect(repository.jobs.get(AI_JOB_ID)).toEqual(PROCESSING);
   });
 
   it('fails the job with not_ready when a 503 comes on the last attempt and rethrows it', async () => {
@@ -339,8 +348,6 @@ describe('AiService.complete', () => {
 });
 
 describe('AiService.complete settling the job', () => {
-  const PROCESSING: FakeAiJob = { userId: OLENA_ID, status: 'processing' };
-
   it('hands the output to the settle callback while the job is still processing, then finishes it', async () => {
     const { repository, service } = await serviceWithFakes();
     const seen: { outcome: SettledAiJob; job: FakeAiJob | undefined }[] = [];
@@ -459,6 +466,81 @@ describe('AiService.complete settling the job', () => {
   });
 });
 
+describe('AiService.complete reporting progress', () => {
+  const UPDATE = { id: AI_JOB_ID, kind: 'vacancy_parse', errorType: null, applicationId: null };
+  const PROCESSING_UPDATE = { ...UPDATE, status: 'processing', step: 2 };
+
+  function progressOf(repository: FakeAiRepository) {
+    const seen: { update: JobUpdated; job: FakeAiJob | undefined }[] = [];
+    const progressed = (update: JobUpdated) => {
+      seen.push({ update, job: repository.jobs.get(AI_JOB_ID) });
+      return Promise.resolve();
+    };
+    return { seen, progressed };
+  }
+
+  it('reports processing once the job has started and done once it is stored as finished', async () => {
+    const { repository, service } = await serviceWithFakes();
+    const { seen, progressed } = progressOf(repository);
+
+    await service.complete(attemptOf({ progressed }));
+
+    expect(seen).toEqual([
+      { update: PROCESSING_UPDATE, job: PROCESSING },
+      { update: { ...UPDATE, status: 'done', step: 3 }, job: doneJob('ai-result-1') },
+    ]);
+  });
+
+  it('reports the application of the job in every update', async () => {
+    const { repository, service } = await serviceWithFakes();
+    const { seen, progressed } = progressOf(repository);
+    const job = { ...VACANCY_JOB, applicationId: APPLICATION_ID };
+
+    await service.complete(attemptOf({ job, progressed }));
+
+    expect(seen.map(({ update }) => update.applicationId)).toEqual([
+      APPLICATION_ID,
+      APPLICATION_ID,
+    ]);
+  });
+
+  it('reports failed with budget_exceeded at step 2 once the job is stored as failed', async () => {
+    const { repository, service } = await serviceWithFakes();
+    const { seen, progressed } = progressOf(repository);
+    repository.usage = { calls: 3, tokens: 0 };
+
+    await service.complete(attemptOf({ progressed })).catch(() => undefined);
+
+    expect(seen).toEqual([
+      { update: PROCESSING_UPDATE, job: PROCESSING },
+      {
+        update: { ...UPDATE, status: 'failed', step: 2, errorType: 'budget_exceeded' },
+        job: failedJob('budget_exceeded'),
+      },
+    ]);
+  });
+
+  it('reports only processing while a 503 is still retried', async () => {
+    const { repository, ai, service } = await serviceWithFakes();
+    const { seen, progressed } = progressOf(repository);
+    ai.answer = () => Promise.reject(NOT_READY);
+
+    await service.complete(attemptOf({ progressed })).catch(() => undefined);
+
+    expect(seen.map(({ update }) => update)).toEqual([PROCESSING_UPDATE]);
+  });
+
+  it("reports nothing for a job it skips because it is another user's", async () => {
+    const { repository, service } = await serviceWithFakes();
+    const { seen, progressed } = progressOf(repository);
+    repository.jobs.set(AI_JOB_ID, { userId: BOHDAN_ID, status: 'queued' });
+
+    await service.complete(attemptOf({ progressed }));
+
+    expect(seen).toEqual([]);
+  });
+});
+
 describe('AiService.createJob', () => {
   it("queues a job for the user's application and returns its id", async () => {
     const { repository, service } = await serviceWithFakes();
@@ -472,6 +554,7 @@ describe('AiService.createJob', () => {
     expect(repository.jobs.get(AI_JOB_ID)).toEqual({
       userId: OLENA_ID,
       status: 'queued',
+      step: 1,
       applicationId: APPLICATION_ID,
     });
   });

@@ -1,9 +1,11 @@
+import { LIVE_EVENTS } from '@jobflow/shared';
 import { OnWorkerEvent, Processor, WorkerHost } from '@nestjs/bullmq';
 import { Logger } from '@nestjs/common';
 import { UnrecoverableError } from 'bullmq';
 
 import { failedJobFields, jobFields, type ProcessedJob } from '../../queues/processed-job.js';
 import { DEFAULT_JOB_OPTIONS, QUEUES } from '../../queues/queues.js';
+import { LivePublisher } from '../live/index.js';
 import { AI_JOBS, type AiCompleteJob, aiCompleteJobSchema } from './ai.jobs.js';
 import { type AiOutcome, AiService } from './ai.service.js';
 import { AiJobRouter } from './ai-job-router.js';
@@ -19,16 +21,20 @@ export class AiProcessor extends WorkerHost {
   constructor(
     private readonly ai: AiService,
     private readonly router: AiJobRouter,
+    private readonly live: LivePublisher,
   ) {
     super();
   }
 
   async process(job: ProcessedJob): Promise<AiOutcome | null> {
+    const parsed = this.parse(job);
     return this.ai.complete({
-      job: this.parse(job),
+      job: parsed,
       finalAttempt: job.attemptsMade + 1 >= DEFAULT_JOB_OPTIONS.attempts,
       logFields: jobFields(job),
       settled: (outcome) => this.router.route(outcome),
+      progressed: (update) =>
+        this.live.publish(parsed.userId, { type: LIVE_EVENTS.jobUpdated, data: update }),
     });
   }
 

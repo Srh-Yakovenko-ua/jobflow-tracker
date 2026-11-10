@@ -121,6 +121,54 @@ describe('AiRepository job changes on Postgres', () => {
   });
 });
 
+describe('AiRepository job steps and findJob on Postgres', () => {
+  it('stores step 1 for a created job, 2 once started, 3 once finished, and keeps 2 on a failed job', async () => {
+    const { userId, applicationId } = await createOwnedApplication(database.prisma);
+    const aiResultId = await createAiResult(database.prisma, { userId });
+    const repository = aiRepository();
+    const stepOf = async (id: string) => (await repository.findJob(userId, id))?.step;
+    const create = () => repository.createJob(userId, { kind: 'vacancy_parse', applicationId });
+
+    const [finished, failed] = [await create(), await create()];
+    const created = await stepOf(finished);
+    await repository.startJob(userId, { id: finished, now: NOW });
+    await repository.startJob(userId, { id: failed, now: NOW });
+    const started = await stepOf(finished);
+    await repository.finishJob(userId, { id: finished, aiResultId, now: NOW });
+    await repository.failJob(userId, { id: failed, errorType: 'ai_timeout', now: NOW });
+
+    expect([created, started, await stepOf(finished), await stepOf(failed)]).toEqual([1, 2, 3, 2]);
+  });
+
+  it("finds the owner's job with its status fields and no job for another user", async () => {
+    const olena = await createOwnedApplication(database.prisma);
+    const bohdan = await createUser(database.prisma);
+    const { userId, applicationId } = olena;
+    const id = await createAiJob(database.prisma, {
+      userId,
+      applicationId,
+      status: 'failed',
+      step: 2,
+      errorType: 'budget_exceeded',
+    });
+
+    const [own, foreign] = [
+      await aiRepository().findJob(userId, id),
+      await aiRepository().findJob(bohdan.id, id),
+    ];
+
+    expect(own).toEqual({
+      id,
+      kind: 'vacancy_parse',
+      status: 'failed',
+      step: 2,
+      errorType: 'budget_exceeded',
+      applicationId,
+    });
+    expect(foreign).toBeNull();
+  });
+});
+
 describe('AiRepository.saveResult on Postgres', () => {
   it('adds the tokens of a success to the failed result it replaces and stamps it with the passed now', async () => {
     const { id: userId } = await createUser(database.prisma);

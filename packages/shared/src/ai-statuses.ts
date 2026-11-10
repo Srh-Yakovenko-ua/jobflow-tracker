@@ -6,6 +6,8 @@ export const aiJobStatusSchema = z.enum(AI_JOB_STATUSES);
 
 export type AiJobStatus = z.infer<typeof aiJobStatusSchema>;
 
+export const AI_JOB_STEPS = { queued: 1, processing: 2, done: 3, total: 3 } as const;
+
 export const AI_RESULT_STATUSES = ['succeeded', 'failed'] as const;
 
 export const aiResultStatusSchema = z.enum(AI_RESULT_STATUSES);

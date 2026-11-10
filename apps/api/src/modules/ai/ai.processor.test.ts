@@ -12,10 +12,12 @@ import {
   VACANCY_COMPLETION,
   VACANCY_JOB,
 } from '../../test/ai.js';
+import { RecordingLivePublisher } from '../../test/live.js';
 import { memoryLog } from '../../test/memory-log.js';
 import { processedJob } from '../../test/processed-job.js';
 import { compileProcessorModule } from '../../test/processor.js';
 import { APPLICATION_ID, OLENA_ID } from '../../test/service-fixtures.js';
+import { LivePublisher } from '../live/index.js';
 import { AiProcessor } from './ai.processor.js';
 import { AiRepository } from './ai.repository.js';
 import { AiService } from './ai.service.js';
@@ -34,6 +36,7 @@ function aiJob(data: unknown, name = 'ai.complete') {
 describe('AiProcessor', () => {
   const ai = new FakeAiClient();
   const repository = new FakeAiRepository();
+  const live = new RecordingLivePublisher();
   let moduleRef: TestingModule;
   let processor: AiProcessor;
 
@@ -45,6 +48,7 @@ describe('AiProcessor', () => {
       Clock,
       { provide: AiClient, useValue: ai },
       { provide: AiRepository, useValue: repository },
+      { provide: LivePublisher, useValue: live },
     ]);
     processor = moduleRef.get(AiProcessor);
     moduleRef.get(AiJobRouter).subscribe('vacancy_parse', settledJobs.record);
@@ -53,6 +57,7 @@ describe('AiProcessor', () => {
   beforeEach(() => {
     log.lines.length = 0;
     settledJobs.outcomes.length = 0;
+    live.published.length = 0;
     ai.calls.length = 0;
     ai.answer = () => Promise.resolve(VACANCY_COMPLETION);
     repository.jobs.clear();
@@ -93,6 +98,40 @@ describe('AiProcessor', () => {
 
     expect(settledJobs.outcomes).toEqual([
       { job, status: 'done', output: VACANCY_COMPLETION.output },
+    ]);
+  });
+
+  it("publishes job.updated to the job's user when the job starts and when it is done", async () => {
+    const update = { id: AI_JOB_ID, kind: 'vacancy_parse', applicationId: APPLICATION_ID };
+
+    await processor.process(aiJob({ ...VACANCY_JOB, applicationId: APPLICATION_ID }));
+
+    expect(live.published).toEqual([
+      {
+        userId: OLENA_ID,
+        event: {
+          type: 'job.updated',
+          data: { ...update, status: 'processing', step: 2, errorType: null },
+        },
+      },
+      {
+        userId: OLENA_ID,
+        event: {
+          type: 'job.updated',
+          data: { ...update, status: 'done', step: 3, errorType: null },
+        },
+      },
+    ]);
+  });
+
+  it('publishes job.updated as failed with the error type when the last attempt fails', async () => {
+    ai.answer = () => Promise.reject(new AiServiceError({ status: 503, type: 'not_ready' }));
+
+    await processor.process({ ...aiJob(VACANCY_JOB), attemptsMade: 2 }).catch(() => undefined);
+
+    expect(live.published.map(({ event }) => event.data)).toEqual([
+      expect.objectContaining({ status: 'processing', step: 2, errorType: null }),
+      expect.objectContaining({ status: 'failed', step: 2, errorType: 'not_ready' }),
     ]);
   });
 

@@ -53,6 +53,14 @@
       "description": "Draft Applications captured from a vacancy and parsed by AI"
     },
     {
+      "name": "jobs",
+      "description": "The status of background jobs of the signed-in user"
+    },
+    {
+      "name": "live",
+      "description": "Live updates over Server-Sent Events and their one-time ticket"
+    },
+    {
       "name": "dev",
       "description": "Development and test only"
     }
@@ -15293,6 +15301,487 @@
                   "type": "internal_error",
                   "title": "Internal error",
                   "status": 500,
+                  "requestId": "0199f0c4-5d2e-7b31-8c4f-6a7b8c9d0e1f"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/jobs/{id}": {
+      "get": {
+        "tags": [
+          "jobs"
+        ],
+        "summary": "The status of a background job of the signed-in user",
+        "description": "Answers the job a 202 named by jobId. The same fields without queue and totalSteps arrive as job.updated on GET /events/stream; this route is the fallback the client polls while the stream is down. Another user's job answers 404.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "example": "0199f4b1-2c3d-7e4f-8a51-6b7c8d9e0f1a"
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The job and how far it got",
+            "content": {
+              "application/json": {
+                "example": {
+                  "id": "0199f4b1-2c3d-7e4f-8a51-6b7c8d9e0f1a",
+                  "kind": "vacancy_parse",
+                  "status": "queued",
+                  "step": 1,
+                  "totalSteps": 3,
+                  "queue": {
+                    "ahead": 2,
+                    "etaSeconds": 20
+                  },
+                  "errorType": null,
+                  "applicationId": "0199f0c4-6e3f-7c42-9d50-7b8c9d0e1f2a"
+                },
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "format": "uuid",
+                      "description": "The ai_jobs row, written by AiRepository.createJob and returned as jobId by the 202 that queued the work."
+                    },
+                    "kind": {
+                      "type": "string",
+                      "description": "The AI kind, written by AiRepository.createJob."
+                    },
+                    "status": {
+                      "type": "string",
+                      "enum": [
+                        "queued",
+                        "processing",
+                        "done",
+                        "failed"
+                      ],
+                      "description": "Written by AiRepository: queued by createJob, processing by startJob, done by finishJob, failed by failJob."
+                    },
+                    "step": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 3,
+                      "description": "The step reached out of totalSteps, written by AiRepository: 1 by createJob, 2 by startJob, 3 by finishJob. A failed job keeps the step it reached. 0 on a job stored before steps were written."
+                    },
+                    "totalSteps": {
+                      "type": "number",
+                      "enum": [
+                        3
+                      ],
+                      "description": "The number of steps of every job, added by AiJobStatusService.find."
+                    },
+                    "queue": {
+                      "type": [
+                        "object",
+                        "null"
+                      ],
+                      "properties": {
+                        "ahead": {
+                          "type": "integer",
+                          "minimum": 0
+                        },
+                        "etaSeconds": {
+                          "type": "integer",
+                          "minimum": 0
+                        }
+                      },
+                      "required": [
+                        "ahead",
+                        "etaSeconds"
+                      ],
+                      "description": "While the job is queued: the queued jobs created before it and the estimated wait, computed by AiService.queuePosition. Null in every other status."
+                    },
+                    "errorType": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "description": "Why the job failed, written by AiRepository.failJob. Null unless failed."
+                    },
+                    "applicationId": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "format": "uuid",
+                      "description": "The Application the job works on, written by AiRepository.createJob. Null for a job that works on no Application."
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "kind",
+                    "status",
+                    "step",
+                    "totalSteps",
+                    "queue",
+                    "errorType",
+                    "applicationId"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "example": {
+                  "type": "unauthorized",
+                  "title": "Unauthorized",
+                  "status": 401,
+                  "requestId": "0199f0c4-5d2e-7b31-8c4f-6a7b8c9d0e1f"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "example": {
+                  "type": "forbidden",
+                  "title": "Forbidden",
+                  "status": 403,
+                  "requestId": "0199f0c4-5d2e-7b31-8c4f-6a7b8c9d0e1f"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "example": {
+                  "type": "not_found",
+                  "title": "Not found",
+                  "status": 404,
+                  "requestId": "0199f0c4-5d2e-7b31-8c4f-6a7b8c9d0e1f"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Invalid request",
+            "content": {
+              "application/json": {
+                "example": {
+                  "type": "validation_error",
+                  "title": "Invalid request",
+                  "status": 422,
+                  "errors": [
+                    {
+                      "path": "email",
+                      "message": "Invalid input: expected string, received undefined"
+                    }
+                  ],
+                  "requestId": "0199f0c4-5d2e-7b31-8c4f-6a7b8c9d0e1f"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too many requests: 300 per 60 s by default (RATE_LIMIT_API_PER_MINUTE)",
+            "headers": {
+              "Retry-After": {
+                "schema": {
+                  "type": "integer",
+                  "exclusiveMinimum": 0,
+                  "description": "Seconds until the limit window resets"
+                },
+                "required": true,
+                "description": "Seconds until the limit window resets"
+              }
+            },
+            "content": {
+              "application/json": {
+                "example": {
+                  "type": "rate_limited",
+                  "title": "Too many requests",
+                  "status": 429,
+                  "requestId": "0199f0c4-5d2e-7b31-8c4f-6a7b8c9d0e1f"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal error",
+            "content": {
+              "application/json": {
+                "example": {
+                  "type": "internal_error",
+                  "title": "Internal error",
+                  "status": 500,
+                  "requestId": "0199f0c4-5d2e-7b31-8c4f-6a7b8c9d0e1f"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/events/ticket": {
+      "post": {
+        "tags": [
+          "live"
+        ],
+        "summary": "Issue a one-time ticket for the live stream",
+        "description": "EventSource cannot send an Authorization header, so the client asks for a ticket with its access token and opens the stream with the ticket. LiveTicketsService.issue stores only the SHA-256 of the ticket in Redis for 30 s, and the first stream that presents it deletes it. A capture token answers 403. Answers 503 while Redis is not reachable; the client then polls GET /jobs/{id} every 2000 ms.",
+        "responses": {
+          "201": {
+            "description": "The ticket and its lifetime in seconds",
+            "content": {
+              "application/json": {
+                "example": {
+                  "ticket": "Zr1pQ0c3vJm8sN2xLk5yT7uWb4aHd6eFg9iKoP1qRsU",
+                  "expiresInSeconds": 30
+                },
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "ticket": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "expiresInSeconds": {
+                      "type": "integer"
+                    }
+                  },
+                  "required": [
+                    "ticket",
+                    "expiresInSeconds"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "example": {
+                  "type": "unauthorized",
+                  "title": "Unauthorized",
+                  "status": 401,
+                  "requestId": "0199f0c4-5d2e-7b31-8c4f-6a7b8c9d0e1f"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "example": {
+                  "type": "forbidden",
+                  "title": "Forbidden",
+                  "status": 403,
+                  "requestId": "0199f0c4-5d2e-7b31-8c4f-6a7b8c9d0e1f"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too many requests: 300 per 60 s by default (RATE_LIMIT_API_PER_MINUTE)",
+            "headers": {
+              "Retry-After": {
+                "schema": {
+                  "type": "integer",
+                  "exclusiveMinimum": 0,
+                  "description": "Seconds until the limit window resets"
+                },
+                "required": true,
+                "description": "Seconds until the limit window resets"
+              }
+            },
+            "content": {
+              "application/json": {
+                "example": {
+                  "type": "rate_limited",
+                  "title": "Too many requests",
+                  "status": 429,
+                  "requestId": "0199f0c4-5d2e-7b31-8c4f-6a7b8c9d0e1f"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal error",
+            "content": {
+              "application/json": {
+                "example": {
+                  "type": "internal_error",
+                  "title": "Internal error",
+                  "status": 500,
+                  "requestId": "0199f0c4-5d2e-7b31-8c4f-6a7b8c9d0e1f"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Service not ready",
+            "content": {
+              "application/json": {
+                "example": {
+                  "type": "not_ready",
+                  "title": "Service not ready",
+                  "status": 503,
+                  "requestId": "0199f0c4-5d2e-7b31-8c4f-6a7b8c9d0e1f"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/events/stream": {
+      "get": {
+        "tags": [
+          "live"
+        ],
+        "summary": "Live updates of the signed-in user as Server-Sent Events",
+        "description": "Takes the ticket that LiveTicketsService.issue wrote, not an access token. Pushes job.updated, application.updated, notification.created of the ticket's user, each with a uuid id, the event name and a JSON data line: job.updated carries the job status without queue and totalSteps, application.updated carries applicationId and the changed fields, notification.created carries notificationId. A comment line \": heartbeat\" follows every 25 s and carries no id. The server ends the stream after 900 s, on shutdown and when Redis stops answering; the client asks for a new ticket, reconnects and refetches, because Last-Event-ID is not replayed. A missing, unknown, used or expired ticket answers 401, Redis out of reach answers 503. A rate limit reached on this route arrives as an \"error\" event on the open stream.",
+        "security": [],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "maxLength": 128,
+              "default": "",
+              "description": "The ticket from POST /events/ticket, written by LiveTicketsService.issue. It opens one stream once.",
+              "example": "Zr1pQ0c3vJm8sN2xLk5yT7uWb4aHd6eFg9iKoP1qRsU"
+            },
+            "required": false,
+            "description": "The ticket from POST /events/ticket, written by LiveTicketsService.issue. It opens one stream once.",
+            "name": "ticket",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The open event stream",
+            "content": {
+              "text/event-stream": {
+                "example": "id: 0199f4b1-2c3d-7e4f-8a51-6b7c8d9e0f1b\nevent: job.updated\ndata: {\"id\":\"0199f4b1-2c3d-7e4f-8a51-6b7c8d9e0f1a\",\"kind\":\"vacancy_parse\",\"status\":\"done\",\"step\":3,\"errorType\":null,\"applicationId\":\"0199f0c4-6e3f-7c42-9d50-7b8c9d0e1f2a\"}\n\n: heartbeat\n\n",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "example": {
+                  "type": "unauthorized",
+                  "title": "Unauthorized",
+                  "status": 401,
+                  "requestId": "0199f0c4-5d2e-7b31-8c4f-6a7b8c9d0e1f"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too many requests: 300 per 60 s by default (RATE_LIMIT_API_PER_MINUTE)",
+            "headers": {
+              "Retry-After": {
+                "schema": {
+                  "type": "integer",
+                  "exclusiveMinimum": 0,
+                  "description": "Seconds until the limit window resets"
+                },
+                "required": true,
+                "description": "Seconds until the limit window resets"
+              }
+            },
+            "content": {
+              "application/json": {
+                "example": {
+                  "type": "rate_limited",
+                  "title": "Too many requests",
+                  "status": 429,
+                  "requestId": "0199f0c4-5d2e-7b31-8c4f-6a7b8c9d0e1f"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal error",
+            "content": {
+              "application/json": {
+                "example": {
+                  "type": "internal_error",
+                  "title": "Internal error",
+                  "status": 500,
+                  "requestId": "0199f0c4-5d2e-7b31-8c4f-6a7b8c9d0e1f"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Service not ready",
+            "content": {
+              "application/json": {
+                "example": {
+                  "type": "not_ready",
+                  "title": "Service not ready",
+                  "status": 503,
                   "requestId": "0199f0c4-5d2e-7b31-8c4f-6a7b8c9d0e1f"
                 },
                 "schema": {

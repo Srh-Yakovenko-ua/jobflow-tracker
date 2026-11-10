@@ -12,7 +12,7 @@ import {
 import { getQueueToken } from '@nestjs/bullmq';
 import type { INestApplicationContext } from '@nestjs/common';
 import type { Queue } from 'bullmq';
-import { afterAll, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterAll, beforeEach, describe, expect, it, onTestFinished, vi } from 'vitest';
 
 import type { Prisma } from '../../generated/prisma/client.js';
 import { DomainEventRouter } from '../../outbox/domain-event-router.js';
@@ -56,9 +56,11 @@ import {
 import { createUser } from '../../test/factories.js';
 import { callRoute, errorPathsOf, statusAndDetail } from '../../test/http.js';
 import { expectReplayedCreate } from '../../test/idempotency.js';
+import { liveEventsOf, liveHubSubscribed, openLiveStream } from '../../test/live.js';
 import { memoryLog, withLogSink } from '../../test/memory-log.js';
 import { outboxRows } from '../../test/outbox.js';
 import { expectRateLimited } from '../../test/rate-limit.js';
+import type { SseStream } from '../../test/sse.js';
 import { useTestWorkers } from '../../test/worker.js';
 import { AiClient, AiServiceError } from '../ai/index.js';
 import { ApplicationDraftsService } from '../applications/index.js';
@@ -135,6 +137,14 @@ const AI_QUEUE_AFTER_ONE_PARSE = { waiting: 0, active: 0, delayed: 0, completed:
 const WORKER_TEST = { timeout: 30_000 };
 
 const SETTLED = { timeout: 20_000 };
+
+const doneFrameOf = ({ frames }: SseStream) =>
+  frames.find(({ data = '' }) => data.includes('"done"'));
+
+const pushedTo = ({ frames }: SseStream, type: string) =>
+  liveEventsOf(frames)
+    .filter((event) => event.type === type)
+    .map(({ data }) => data);
 
 const log = memoryLog();
 
@@ -450,6 +460,42 @@ describe('POST /api/v1/capture/paste', () => {
       expect(new Set(ai.calls.map(({ input }) => input))).toEqual(
         new Set(SIX_VACANCIES.map((text) => ({ text }))),
       );
+    },
+  );
+
+  it(
+    'pushes job.updated done at step 3 within a second of the AI answer, once GET /applications/:id returns the parsed fields, and then application.updated',
+    WORKER_TEST,
+    async () => {
+      const { userId, accessToken } = await signedInWithSearch(testApp.prisma);
+      await liveHubSubscribed(testApp.app);
+      const stream = await openLiveStream(testApp.app, { id: userId });
+      onTestFinished(() => stream.close());
+      let answeredAt = Number.NaN;
+      ai.answer = () => {
+        answeredAt = Date.now();
+        return Promise.resolve(VACANCY_COMPLETION);
+      };
+      const { applicationId, jobId } = await paste(accessToken);
+
+      await relayingWorker();
+
+      await expect.poll(() => doneFrameOf(stream)?.receivedAt, SETTLED).toBeTypeOf('number');
+      const read = await callRoute(testApp.app, {
+        method: 'get',
+        path: applicationPath(applicationId),
+        accessToken,
+      });
+      const update = { id: jobId, kind: 'vacancy_parse', errorType: null, applicationId };
+      expect(read.body).toMatchObject({ ...PARSED_VACANCY_COLUMNS, isDraft: false });
+      expect(pushedTo(stream, 'job.updated')).toEqual([
+        { ...update, status: 'processing', step: 2 },
+        { ...update, status: 'done', step: 3 },
+      ]);
+      expect((doneFrameOf(stream)?.receivedAt ?? Infinity) - answeredAt).toBeLessThan(1000);
+      await expect
+        .poll(() => pushedTo(stream, 'application.updated'), SETTLED)
+        .toEqual([{ applicationId, fields: [...FILL_FIELDS, 'isDraft'] }]);
     },
   );
 

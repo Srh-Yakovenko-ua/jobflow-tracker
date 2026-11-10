@@ -108,6 +108,14 @@ describe('request logs', () => {
     expect(log.lines.join('\n')).not.toMatch(/secret-|\?code=/);
   });
 
+  it('keeps a live ticket out of the logged url and query', async () => {
+    await request(app.getHttpServer()).get('/api/v1/probe').query({ ticket: 'secret-ticket' });
+
+    const completed = log.parsed().find((line) => line.msg === 'request completed');
+    expect(completed?.req).toMatchObject({ url: '/api/v1/probe', query: { ticket: '[Redacted]' } });
+    expect(log.lines.join('\n')).not.toContain('secret-');
+  });
+
   it('writes no request line for the health check', async () => {
     await request(app.getHttpServer()).get('/api/v1/health');
 

@@ -58,6 +58,7 @@ describe('CaptureService.paste', () => {
     expect(ai.jobs.get(AI_JOB_ID)).toEqual({
       userId: OLENA_ID,
       status: 'queued',
+      step: 1,
       applicationId: APPLICATION_ID,
     });
     expect(timeline.events).toEqual([
