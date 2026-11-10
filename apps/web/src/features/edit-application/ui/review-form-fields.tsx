@@ -6,6 +6,7 @@ import { type ReactNode, useId } from 'react';
 import { uk } from '@/shared/i18n';
 import { useFieldError } from '@/shared/lib/use-field-error';
 import { Field, fieldLabelId, useField } from '@/shared/ui/field';
+import { FIELD_TONE } from '@/shared/ui/field-surface';
 import { Input } from '@/shared/ui/input';
 import { Select } from '@/shared/ui/select';
 import { SOURCE_OPTIONS } from '@/shared/ui/source-options';
@@ -41,8 +42,9 @@ const COPY = uk.add.review;
 const SOURCE_GROUPS = [{ options: SOURCE_OPTIONS }] as const;
 
 function Reviewed({ field, reviews, children }: ReviewedProps) {
+  const tone = reviews[field].confidence === 'check' ? FIELD_TONE.check : undefined;
   return (
-    <div data-confidence={reviews[field].confidence} className="min-w-0">
+    <div {...tone} className="min-w-0">
       {children}
     </div>
   );
@@ -127,7 +129,11 @@ export function ReviewFormFields({
           <TextField
             form={form}
             name="position"
-            view={{ label: REVIEW_NAMES.position, aside: chipOf('position') }}
+            view={{
+              label: REVIEW_NAMES.position,
+              aside: chipOf('position'),
+              error: uk.add.manual.errors.position,
+            }}
           />
         </Reviewed>
         <Reviewed field="salary" reviews={reviews}>

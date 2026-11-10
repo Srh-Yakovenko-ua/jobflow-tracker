@@ -21,10 +21,18 @@ import {
 import type { MoveRouteOptions } from '@/test/board-fixtures';
 import { advanceBy, fakeTimeoutsAndIntervals } from '@/test/fake-timeouts';
 import { descriptionOf } from '@/test/field-description';
-import { failedJob, jobRoute, type JobRouteOptions } from '@/test/job-fixtures';
+import {
+  DONE_JOB as DONE,
+  failedJob,
+  JOB_ID,
+  jobRoute,
+  type JobRouteOptions,
+  PROCESSING_JOB as PROCESSING,
+} from '@/test/job-fixtures';
 import { latch } from '@/test/latch';
 import { bringLiveStreamUp, closeLiveStreams } from '@/test/live-stream';
 import { push } from '@/test/navigation';
+import { QueryProbe } from '@/test/query-status';
 import { renderViewInApp } from '@/test/render-in-app';
 import { server } from '@/test/server';
 
@@ -48,15 +56,9 @@ type OutageReplies = { down: HttpResponseResolver; up: HttpResponseResolver };
 
 type PolledOutage = { outage: Outage; jobReads: readonly string[] };
 
-const JOB_ID = '0199f1a0-3c4d-7e5f-8a6b-7c8d9e0f1a2b';
-
 const RETRIED_JOB_ID = '0199f1a0-3c4d-7e5f-8a6b-7c8d9e0f1a2c';
 
 const QUEUED = buildJobStatus();
-
-const PROCESSING = buildJobStatus({ status: 'processing', step: 2, queue: null });
-
-const DONE = buildJobStatus({ status: 'done', step: 3, queue: null });
 
 const FAILED = failedJob('ai_timeout');
 
@@ -301,6 +303,22 @@ describe('CaptureProgress', () => {
     expect(jobReads).toEqual([]);
   });
 
+  it('a draft opened with no job keeps no job query under an empty id', async () => {
+    server.use(applicationRoute({ application: REVIEW_DRAFT }).handler);
+    renderViewInApp(
+      <>
+        <CaptureProgress
+          capture={{ applicationId: REVIEW_DRAFT.id, jobId: null }}
+          actions={{ onRetried: vi.fn(), onDeleted: vi.fn() }}
+        />
+        <QueryProbe queryKey={['jobs', '']} />
+      </>,
+    );
+
+    expect(await screen.findByRole('form', { name: REVIEW })).toBeDefined();
+    expect(screen.getByLabelText('query ["jobs",""]').textContent).toBe('absent');
+  });
+
   it('a parsed card that is no draft any more offers the board and the card instead of the review', async () => {
     renderProgress({ job: () => DONE, application: { ...REVIEW_DRAFT, isDraft: false } });
 
@@ -429,7 +447,7 @@ describe('CaptureProgress', () => {
     await waitFor(() => {
       expect(descriptionOf(company)).toBe('Вкажи компанію одним коротким рядком');
     });
-    expect(descriptionOf(position)).toBe('Вкажи посаду одним коротким рядком');
+    expect(descriptionOf(position)).toBe('Вкажи позицію одним коротким рядком');
     expect(updates).toEqual([]);
     expect(confirms).toEqual([]);
   });

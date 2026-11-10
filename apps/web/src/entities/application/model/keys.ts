@@ -23,7 +23,7 @@ export const applicationKeys = {
 
 export const jobKeys = {
   all: ['jobs'] as const,
-  detail: (id: JobStatus['id']) => [...jobKeys.all, id] as const,
+  detail: (id: JobStatus['id'] | null) => [...jobKeys.all, id] as const,
 };
 
 export const timelineKeys = {

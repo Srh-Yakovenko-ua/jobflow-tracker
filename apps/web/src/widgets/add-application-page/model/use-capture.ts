@@ -1,10 +1,10 @@
 'use client';
 
-import { type ApplicationResponse, type JobStatus, LIVE_LIMITS } from '@jobflow/shared';
+import type { ApplicationResponse, JobStatus } from '@jobflow/shared';
 import { useQuery, type UseQueryResult } from '@tanstack/react-query';
 
 import { applicationQueryOptions, jobQueryOptions } from '@/entities/application';
-import { LIVE_CLIENT_LIMITS, useLiveConnected } from '@/shared/api';
+import { useLivePollMs } from '@/shared/api';
 
 export type Capture = Readonly<{
   applicationId: ApplicationResponse['id'];
@@ -22,14 +22,10 @@ function isSettled(job: JobStatus | undefined): boolean {
 }
 
 export function useCapture({ applicationId, jobId }: Capture): CaptureReads {
-  const connected = useLiveConnected();
+  const pollMs = useLivePollMs();
   const job = useQuery({
-    ...jobQueryOptions(jobId ?? ''),
-    enabled: jobId !== null,
-    refetchInterval: ({ state }) => {
-      if (isSettled(state.data)) return false;
-      return connected ? LIVE_CLIENT_LIMITS.slowPollMs : LIVE_LIMITS.pollFallbackMs;
-    },
+    ...jobQueryOptions(jobId),
+    refetchInterval: ({ state }) => (isSettled(state.data) ? false : pollMs),
   });
   const settled = jobId === null || isSettled(job.data);
   const application = useQuery({

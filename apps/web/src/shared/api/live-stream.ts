@@ -1,6 +1,12 @@
 'use client';
 
-import { LIVE_EVENTS, type LiveEvent, liveEventSchema, liveTicketSchema } from '@jobflow/shared';
+import {
+  LIVE_EVENTS,
+  LIVE_LIMITS,
+  type LiveEvent,
+  liveEventSchema,
+  liveTicketSchema,
+} from '@jobflow/shared';
 import { useSyncExternalStore } from 'react';
 
 import { config } from '@/shared/config';
@@ -24,6 +30,7 @@ type LiveStream = {
   handlers: LiveStreamHandlers;
   closed: boolean;
   everOpened: boolean;
+  unsettled: 'first' | 'reopened' | undefined;
   retryMs: number;
   source: EventSource | undefined;
   timer: ReturnType<typeof setTimeout> | undefined;
@@ -35,20 +42,22 @@ const TICKET_REQUEST = {
   schema: liveTicketSchema,
 } as const;
 
-type Connection = 'up' | 'down';
-
-const live: { connection: Connection } = { connection: 'down' };
+const openStreams = new Set<LiveStream>();
 
 const { subscribe, notify } = createListeners();
 
-function setConnection(connection: Connection): void {
-  if (live.connection === connection) return;
-  live.connection = connection;
-  notify();
+function isConnected(): boolean {
+  return openStreams.size > 0;
 }
 
-function isConnected(): boolean {
-  return live.connection === 'up';
+function raise(stream: LiveStream): void {
+  const wasConnected = isConnected();
+  openStreams.add(stream);
+  if (!wasConnected) notify();
+}
+
+function lower(stream: LiveStream): void {
+  if (openStreams.delete(stream) && !isConnected()) notify();
 }
 
 function notConnectedOnServer(): boolean {
@@ -59,7 +68,8 @@ function drop(stream: LiveStream): void {
   clearTimeout(stream.timer);
   stream.source?.close();
   stream.source = undefined;
-  setConnection('down');
+  stream.unsettled = undefined;
+  lower(stream);
 }
 
 function retryLater(stream: LiveStream): void {
@@ -71,14 +81,25 @@ function retryLater(stream: LiveStream): void {
   stream.retryMs = Math.min(stream.retryMs * 2, LIVE_CLIENT_LIMITS.retryMaxMs);
 }
 
-function markOpen(stream: LiveStream): void {
+function settle(stream: LiveStream): void {
+  const { unsettled } = stream;
+  if (unsettled === undefined) return;
   clearTimeout(stream.timer);
+  stream.unsettled = undefined;
   stream.retryMs = LIVE_CLIENT_LIMITS.retryMinMs;
-  setConnection('up');
-  if (stream.everOpened) {
+  if (unsettled === 'reopened') {
     stream.handlers.onReconnect();
   }
+}
+
+function markOpen(stream: LiveStream): void {
+  clearTimeout(stream.timer);
+  raise(stream);
+  stream.unsettled = stream.everOpened ? 'reopened' : 'first';
   stream.everOpened = true;
+  stream.timer = setTimeout(() => {
+    settle(stream);
+  }, LIVE_CLIENT_LIMITS.connectTimeoutMs);
 }
 
 function eventOf(frame: MessageEvent<unknown>): LiveEvent | undefined {
@@ -100,6 +121,7 @@ function listen(stream: LiveStream, source: EventSource): void {
   });
   for (const name of Object.values(LIVE_EVENTS)) {
     source.addEventListener(name, (frame: MessageEvent<unknown>) => {
+      settle(stream);
       const event = eventOf(frame);
       if (event !== undefined) {
         stream.handlers.onEvent(event);
@@ -119,6 +141,7 @@ async function connect(stream: LiveStream): Promise<void> {
     }, LIVE_CLIENT_LIMITS.connectTimeoutMs);
     listen(stream, source);
   } catch {
+    if (stream.closed) return;
     retryLater(stream);
   }
 }
@@ -128,6 +151,7 @@ export function openLiveStream(handlers: LiveStreamHandlers): () => void {
     handlers,
     closed: false,
     everOpened: false,
+    unsettled: undefined,
     retryMs: LIVE_CLIENT_LIMITS.retryMinMs,
     source: undefined,
     timer: undefined,
@@ -141,4 +165,8 @@ export function openLiveStream(handlers: LiveStreamHandlers): () => void {
 
 export function useLiveConnected(): boolean {
   return useSyncExternalStore(subscribe, isConnected, notConnectedOnServer);
+}
+
+export function useLivePollMs(): number {
+  return useLiveConnected() ? LIVE_CLIENT_LIMITS.slowPollMs : LIVE_LIMITS.pollFallbackMs;
 }

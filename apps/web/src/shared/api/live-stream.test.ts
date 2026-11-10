@@ -13,8 +13,10 @@ import {
   stubEventSource,
 } from '@/test/fake-event-source';
 import { fakeTimeouts } from '@/test/fake-timeouts';
+import { latch } from '@/test/latch';
 import { server } from '@/test/server';
 
+import { apiClient } from './clients';
 import { openLiveStream, useLiveConnected } from './live-stream';
 
 const JOB_DONE: LiveEvent = {
@@ -126,10 +128,27 @@ describe('openLiveStream', () => {
     await wait(2000);
     const third = await stream.source(2);
     third.open();
+    third.send(JOB_DONE);
     third.fail();
     await wait(2000);
 
     expect((await stream.source(3)).url).toBe(streamUrlFor('ticket-4'));
+  });
+
+  it('a stream that opens and then errors three times in a row waits 2 s, 4 s and 8 s, and never calls onReconnect', async () => {
+    fakeTimeouts();
+    const { stream, tickets, onReconnect } = connect();
+    for (const [index, pause] of [2000, 4000, 8000].entries()) {
+      const source = await stream.source(index);
+      source.open();
+      source.fail();
+      await wait(pause - 1000);
+      expect(tickets.issued).toHaveLength(index + 1);
+      await wait(1000);
+    }
+
+    expect((await stream.source(3)).url).toBe(streamUrlFor('ticket-4'));
+    expect(onReconnect).not.toHaveBeenCalled();
   });
 
   it('never waits longer than 30 s between connects', async () => {
@@ -167,6 +186,7 @@ describe('openLiveStream', () => {
     first.fail();
     await wait(2000);
     (await stream.source(1)).open();
+    await wait(10_000);
 
     expect(onReconnect).toHaveBeenCalledTimes(1);
   });
@@ -227,5 +247,31 @@ describe('useLiveConnected', () => {
     });
 
     expect(result.current).toBe(false);
+  });
+
+  it('stays true for a second open stream when a closed stream has its ticket request refused late', async () => {
+    const held = latch();
+    const asked = vi.spyOn(apiClient, 'request');
+    const refuse = vi.fn(async () => {
+      await held.reached;
+      return errorReply({ status: 503, type: 'not_ready' });
+    });
+    const closed = connect(http.post(LIVE_TICKET_URL, refuse, { once: true }));
+    await waitFor(() => {
+      expect(refuse).toHaveBeenCalledTimes(1);
+    });
+    closed.close();
+    const { stream } = connect();
+    const { result } = renderHook(() => useLiveConnected());
+    const source = await stream.source(0);
+    act(() => {
+      source.open();
+    });
+
+    const ticketRequests = asked.mock.results.map((result): unknown => result.value);
+    held.release();
+    await act(() => Promise.allSettled(ticketRequests));
+
+    expect(result.current).toBe(true);
   });
 });

@@ -17,7 +17,12 @@ export type EditorForm = Readonly<{
   focusField?: EditField;
 }>;
 
-export type EditFieldView = Readonly<{ label?: string; aside?: ReactNode; placeholder?: string }>;
+export type EditFieldView = Readonly<{
+  label?: string;
+  aside?: ReactNode;
+  placeholder?: string;
+  error?: string;
+}>;
 
 export type TextFieldName = Exclude<EditField, 'workMode' | 'stack'>;
 
@@ -42,7 +47,8 @@ export const EDIT_ERRORS: Readonly<Record<EditField, string>> = {
 export const AMOUNT_INPUT = { inputMode: 'numeric' } as const;
 
 export function TextField({ form, name, input, view = {} }: TextFieldProps) {
-  const error = useFieldError({ control: form.methods.control, name, messages: EDIT_ERRORS });
+  const messages = view.error === undefined ? EDIT_ERRORS : { ...EDIT_ERRORS, [name]: view.error };
+  const error = useFieldError({ control: form.methods.control, name, messages });
   return (
     <Field label={view.label ?? EDIT_LABELS[name]} aside={view.aside} footer={{ error }}>
       <Input {...input} autoFocus={form.focusField === name} {...form.methods.register(name)} />

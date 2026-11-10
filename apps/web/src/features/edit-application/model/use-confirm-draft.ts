@@ -46,10 +46,9 @@ export function useConfirmDraft({
     onSuccess: (outcome) => {
       refresh(applicationKeys.detail(applicationId));
       refresh(applicationKeys.boards());
-      if (outcome === 'stale') return;
       refresh(applicationKeys.lists());
       refresh(timelineKeys.detail(applicationId));
-      actions.onConfirmed();
+      if (outcome === 'confirmed') actions.onConfirmed();
     },
   });
 }

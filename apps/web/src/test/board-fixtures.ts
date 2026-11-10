@@ -16,7 +16,7 @@ import {
 import type { HttpResponseResolver } from 'msw';
 import { http, HttpResponse } from 'msw/http';
 
-import { FULL_CARD } from '@/entities/application';
+import { FULL_APPLICATION, FULL_CARD } from '@/entities/application';
 
 import { apiUrl, errorReply } from './api-handlers';
 import type { Latch } from './latch';
@@ -118,19 +118,7 @@ export const DESIGN_BOARD_HEADINGS: readonly string[] = [
 ];
 
 export function applicationResponseOf(fields: Partial<ApplicationResponse>): ApplicationResponse {
-  return applicationResponseSchema.parse({
-    ...FULL_CARD,
-    searchId: '0b6f3c1e-5d2a-4c8e-9f10-0000000000ff',
-    url: null,
-    location: null,
-    workMode: null,
-    resumeVersionId: null,
-    aiParsed: null,
-    rawText: null,
-    createdAt: FULL_CARD.lastEventAt,
-    updatedAt: FULL_CARD.lastEventAt,
-    ...fields,
-  });
+  return applicationResponseSchema.parse({ ...FULL_APPLICATION, ...fields });
 }
 
 export function moveRoute(control: MoveRouteOptions = {}) {

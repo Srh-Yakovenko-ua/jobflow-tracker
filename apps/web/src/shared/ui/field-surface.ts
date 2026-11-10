@@ -3,7 +3,9 @@ import { cn } from '@/shared/lib/cn';
 import { TOUCH_HEIGHT } from './touch-height';
 
 const BOX =
-  'rounded-md bg-surface-2 text-body text-ink shadow-flat transition-[background-color,box-shadow] duration-(--duration-fast) ease-standard in-data-[confidence=check]:bg-stage-final/10 in-data-[confidence=check]:inset-ring in-data-[confidence=check]:inset-ring-stage-final data-invalid:bg-danger/4 data-invalid:inset-ring data-invalid:inset-ring-danger/60 data-disabled:cursor-not-allowed data-disabled:border-[1.5px] data-disabled:border-dashed data-disabled:border-line data-disabled:bg-surface-3 data-disabled:text-ink-3 data-disabled:shadow-none';
+  'rounded-md bg-surface-2 text-body text-ink shadow-flat transition-[background-color,box-shadow] duration-(--duration-fast) ease-standard in-data-[field-tone=check]:bg-stage-final/10 in-data-[field-tone=check]:inset-ring in-data-[field-tone=check]:inset-ring-stage-final data-invalid:bg-danger/4 data-invalid:inset-ring data-invalid:inset-ring-danger/60 data-disabled:cursor-not-allowed data-disabled:border-[1.5px] data-disabled:border-dashed data-disabled:border-line data-disabled:bg-surface-3 data-disabled:text-ink-3 data-disabled:shadow-none';
+
+export const FIELD_TONE = { check: { 'data-field-tone': 'check' } } as const;
 
 export const FIELD_SURFACE = {
   shell: cn(

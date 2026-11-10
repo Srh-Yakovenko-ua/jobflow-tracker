@@ -7,6 +7,7 @@ import { uk } from '@/shared/i18n';
 import { cn } from '@/shared/lib/cn';
 import { ClearButton } from '@/shared/ui/clear-button';
 import { Field } from '@/shared/ui/field';
+import { FIELD_TONE } from '@/shared/ui/field-surface';
 import { Input } from '@/shared/ui/input';
 import { Kbd } from '@/shared/ui/kbd';
 import { NumberInput } from '@/shared/ui/number-input';
@@ -24,6 +25,8 @@ const SALARY_MEDIAN = 4900;
 const NOTE_LIMIT = 2000;
 
 const WIDE_TILE = 'min-w-0 sm:col-span-2';
+
+const ASIDE_MARK = 'font-ui text-[10px] leading-[1.4] font-semibold text-offer';
 
 function SearchField() {
   const [query, setQuery] = useState('');
@@ -152,6 +155,18 @@ export function FieldsSection() {
         <Field label={COPY.score.label} footer={{ hint: COPY.score.hint }}>
           <Input disabled placeholder={COPY.score.placeholder} />
         </Field>
+        <Field
+          label={COPY.aside.label}
+          aside={<span className={ASIDE_MARK}>{COPY.aside.mark}</span>}
+          footer={{ hint: COPY.aside.hint }}
+        >
+          <Input defaultValue="Senior React developer" />
+        </Field>
+        <div {...FIELD_TONE.check} className="min-w-0">
+          <Field label={COPY.tone.label} footer={{ hint: COPY.tone.hint }}>
+            <Input inputMode="numeric" defaultValue="4700" className="tabular-nums" />
+          </Field>
+        </div>
       </div>
     </GallerySection>
   );

@@ -4,17 +4,17 @@ import { screen, waitFor } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { apiUrl, recordSentRequests } from '@/test/api-handlers';
+import { startDrag } from '@/test/board-drag';
 import { cardIn, fixtureIdOf } from '@/test/board-fixtures';
 import { advanceBy as wait, fakeTimeoutsAndIntervals } from '@/test/fake-timeouts';
-import { jobRoute } from '@/test/job-fixtures';
+import { JOB_ID, jobRoute } from '@/test/job-fixtures';
+import { latch } from '@/test/latch';
 import { bringLiveStreamUp as openStream, closeLiveStreams } from '@/test/live-stream';
-import { columnNamed, renderBoard } from '@/test/render-board';
+import { boardReadyToDrag, columnNamed, renderBoard } from '@/test/render-board';
 import { server } from '@/test/server';
 
 vi.mock('next/link', () => import('@/test/link'));
 vi.mock('next/navigation', () => import('@/test/navigation'));
-
-const JOB_ID = '0199f1a0-3c4d-7e5f-8a6b-7c8d9e0f1a2b';
 
 const BOARD_URL = apiUrl('/applications/board');
 
@@ -133,6 +133,51 @@ describe('KanbanBoard drafts', () => {
       expect(boardRequests()).toHaveLength(1);
     },
   );
+
+  it('while a move is on its way the board is never asked on its timer, and the timer comes back once the move lands', async () => {
+    fakeTimeoutsAndIntervals();
+    const held = latch();
+    const boardRequests = boardRequestsOf(recordSentRequests());
+    const moved = cardIn({ serial: 302, stage: 'applied', position: 'Senior Frontend Engineer' });
+    const { moves } = await boardReadyToDrag({
+      board: { counts: { applied: 2 }, cards: [draftIn(301, PROCESSING), moved] },
+      move: { latch: held },
+    });
+
+    const drag = startDrag(screen.getByText('Senior Frontend Engineer'));
+    drag.over(columnNamed('скринінг 0'));
+    drag.drop();
+    await waitFor(() => {
+      expect(moves).toEqual([{ fromStage: 'applied', toStage: 'screening' }]);
+    });
+    const asked = boardRequests().length;
+    await wait(6500);
+
+    expect(boardRequests()).toHaveLength(asked);
+    held.release();
+    await waitFor(() => {
+      expect(boardRequests()).toHaveLength(asked + 1);
+    });
+    await wait(2000);
+    await waitFor(() => {
+      expect(boardRequests()).toHaveLength(asked + 2);
+    });
+  });
+
+  it('three parsing drafts are counted in one status region, and each link is named by its place among them', async () => {
+    const cards = [501, 502, 503].map((serial) => draftIn(serial, PROCESSING));
+    renderBoard({ counts: { applied: 3 }, cards });
+    await screen.findAllByText(PROCESSING_LINE);
+
+    const regions = document.querySelectorAll('[role="status"]:not([aria-live="assertive"])');
+    const hrefOf = (name: string) => screen.getByRole('link', { name }).getAttribute('href');
+
+    expect(regions).toHaveLength(1);
+    expect(regions[0]?.textContent).toBe('AI розбирає 3 чернетки');
+    expect(hrefOf(`Чернетка 1. ${PROCESSING_LINE}`)).toBe(`/applications/${fixtureIdOf(501)}`);
+    expect(hrefOf(`Чернетка 2. ${PROCESSING_LINE}`)).toBe(`/applications/${fixtureIdOf(502)}`);
+    expect(hrefOf(`Чернетка 3. ${PROCESSING_LINE}`)).toBe(`/applications/${fixtureIdOf(503)}`);
+  });
 
   it('20 parsing drafts in відгук stand still: no bar shimmers and no dot pulses', async () => {
     const cards = Array.from({ length: 20 }, (_, slot) => draftIn(400 + slot, PROCESSING));

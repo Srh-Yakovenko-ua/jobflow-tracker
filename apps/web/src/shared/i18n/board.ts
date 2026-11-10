@@ -18,6 +18,12 @@ const VACANCIES = {
   other: 'вакансій',
 } as const satisfies PluralForms;
 
+const DRAFTS = {
+  one: 'чернетку',
+  few: 'чернетки',
+  other: 'чернеток',
+} as const satisfies PluralForms;
+
 type StageNames = { from: string; to: string };
 
 type DropNames = { position: string; stage: string | undefined };
@@ -160,6 +166,7 @@ export const board = {
   moreBelow: (count: number) => `ще ${countedUk(count, CARDS_BELOW)}`,
   finalNote: ['Тут буває тісно рідко.', 'Це нормально.'],
   columnEmpty: ['тут поки порожньо'],
+  parsing: (count: number) => `AI розбирає ${countedUk(count, DRAFTS)}`,
   filters,
   emptySearch,
   move,

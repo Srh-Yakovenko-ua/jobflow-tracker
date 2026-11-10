@@ -17,7 +17,7 @@ import { CARD_FRAME } from './card-frame';
 import { CardHeading } from './card-heading';
 import { NextEventChip } from './next-event-chip';
 import { OfferCard } from './offer-card';
-import { ParsingCard } from './parsing-card';
+import { ParsingCard, type ParsingCardProps } from './parsing-card';
 import { type DraftMark, ReviewMark, TextKeptLine } from './review-mark';
 import { ScoreBadge } from './score-badge';
 import { SilenceIndicator } from './silence-indicator';
@@ -137,11 +137,16 @@ function markOf(draft: DraftState): DraftMark | null {
   return draft === 'review' || draft === 'failed' ? draft : null;
 }
 
+function parsingViewOf({ application, context }: ApplicationCardProps): ParsingCardProps['view'] {
+  const place = context.parsingIds?.indexOf(application.id) ?? -1;
+  return place < 0 ? undefined : { ordinal: place + 1 };
+}
+
 export function ApplicationCard(card: ApplicationCardProps) {
   const { application, context } = card;
   const draft = draftStateOf(application);
   if (draft === 'parsing') {
-    return <ParsingCard parse={application} />;
+    return <ParsingCard parse={application} view={parsingViewOf(card)} />;
   }
   if (application.currentStage === 'offer') {
     return <OfferCard application={application} context={context} />;

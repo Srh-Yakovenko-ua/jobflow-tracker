@@ -53,6 +53,8 @@ export const devUi = {
       placeholder: 'Після AI-розбору',
       hint: 'disabled · залежить від CV',
     },
+    aside: { label: 'Позиція · aside', mark: 'точно', hint: 'позначка стоїть поруч із лейблом' },
+    tone: { label: 'Вилка · перевір', hint: 'тон check: значення варто перевірити' },
   },
   selects: {
     index: '07',

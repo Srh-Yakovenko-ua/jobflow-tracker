@@ -4,7 +4,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { errorReply, recordSentRequests } from '@/test/api-handlers';
 import { fakeTimeoutsAndIntervals } from '@/test/fake-timeouts';
-import { jobRoute } from '@/test/job-fixtures';
+import { JOB_ID, jobRoute, PROCESSING_JOB } from '@/test/job-fixtures';
 import { QueryProbe, waitForQuery } from '@/test/query-status';
 import { renderViewInApp } from '@/test/render-in-app';
 import { server } from '@/test/server';
@@ -14,8 +14,6 @@ import { FULL_CARD } from '../model/card-specimens';
 import { jobKeys } from '../model/keys';
 import { ApplicationCard } from './application-card';
 import { ParsingCard, type ParsingCardProps } from './parsing-card';
-
-const JOB_ID = '0199f1a0-3c4d-7e5f-8a6b-7c8d9e0f1a2b';
 
 const CONTEXT: ApplicationCardContext = {
   now: new Date('2026-10-23T09:00:00.000Z'),
@@ -38,8 +36,8 @@ function moving(container: HTMLElement) {
   };
 }
 
-function statusLine(): string | null {
-  return screen.getByRole('status').textContent;
+function cardLine(): HTMLElement | null {
+  return screen.getByRole('article').querySelector('p');
 }
 
 afterEach(() => {
@@ -48,12 +46,20 @@ afterEach(() => {
 });
 
 describe('ParsingCard', () => {
-  it('a processing draft reads step 2 of 3 and asks the job route nothing', () => {
+  it('a processing draft reads step 2 of 3 as plain text, not a status region, and asks the job route nothing', () => {
     const sentRequests = recordSentRequests();
     renderViewInApp(<ParsingCard parse={PROCESSING} />);
 
-    expect(statusLine()).toBe('AI обробляє · крок 2 з 3');
+    expect(cardLine()?.textContent).toBe('AI обробляє · крок 2 з 3');
+    expect(screen.queryByRole('status')).toBeNull();
     expect(sentRequests()).toEqual([]);
+  });
+
+  it('a draft given its place among the parsing drafts reads it to a screen reader before the line', () => {
+    renderViewInApp(<ParsingCard parse={PROCESSING} view={{ ordinal: 2 }} />);
+
+    expect(cardLine()?.textContent).toBe('Чернетка 2. AI обробляє · крок 2 з 3');
+    expect(screen.getByText('Чернетка 2.').className).toBe('sr-only');
   });
 
   it('a queued draft reads у черзі, then its wait once the job route answers', async () => {
@@ -61,8 +67,17 @@ describe('ParsingCard', () => {
     server.use(jobs.handler);
     renderViewInApp(<ParsingCard parse={QUEUED} />);
 
-    expect(statusLine()).toBe('у черзі');
-    expect(await screen.findByText('у черзі · ~2 хв')).toBe(screen.getByRole('status'));
+    expect(cardLine()?.textContent).toBe('у черзі');
+    expect(await screen.findByText('у черзі · ~2 хв')).toBe(cardLine());
+    expect(jobs.sent).toEqual([JOB_ID]);
+  });
+
+  it('a queued draft whose job already answers processing reads step 2 of 3', async () => {
+    const jobs = jobRoute({ job: () => PROCESSING_JOB });
+    server.use(jobs.handler);
+    renderViewInApp(<ParsingCard parse={QUEUED} />);
+
+    expect(await screen.findByText('AI обробляє · крок 2 з 3')).toBe(cardLine());
     expect(jobs.sent).toEqual([JOB_ID]);
   });
 
@@ -97,14 +112,14 @@ describe('ParsingCard', () => {
 
     await waitForQuery({ queryKey: jobKeys.detail(JOB_ID), status: 'error' });
 
-    expect(screen.getByText('у черзі').getAttribute('role')).toBe('status');
+    expect(screen.getByText('у черзі')).toBe(cardLine());
   });
 
   it('a queued draft with no job id reads у черзі and asks nothing', () => {
     const sentRequests = recordSentRequests();
     renderViewInApp(<ParsingCard parse={{ aiStatus: 'queued', aiJobId: null }} />);
 
-    expect(statusLine()).toBe('у черзі');
+    expect(cardLine()?.textContent).toBe('у черзі');
     expect(sentRequests()).toEqual([]);
   });
 
@@ -129,7 +144,7 @@ describe('ApplicationCard for a draft', () => {
       />,
     );
 
-    expect(statusLine()).toBe('AI обробляє · крок 2 з 3');
+    expect(cardLine()?.textContent).toBe('AI обробляє · крок 2 з 3');
     expect(screen.queryByText('Senior Frontend Engineer')).toBeNull();
   });
 

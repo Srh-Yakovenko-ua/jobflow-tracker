@@ -2,22 +2,29 @@ import {
   type ApplicationBoardQuery,
   type ApplicationBoardResponse,
   type ApplicationFilters,
-  LIVE_LIMITS,
   OUTCOME_STAGES,
   type OutcomeStage,
 } from '@jobflow/shared';
-import { hashKey, keepPreviousData, useQuery } from '@tanstack/react-query';
+import {
+  hashKey,
+  keepPreviousData,
+  useIsMutating,
+  useQuery,
+  useQueryClient,
+} from '@tanstack/react-query';
 import { useState } from 'react';
 
 import {
   type ApplicationCardContext,
   applicationKeys,
   boardQueryOptions,
-  draftStateOf,
 } from '@/entities/application';
 import { useUserTimeZone } from '@/entities/user';
 import { useSentFilters } from '@/features/filter-applications';
-import { LIVE_CLIENT_LIMITS, useLiveConnected } from '@/shared/api';
+import { MOVE_MUTATION_KEY } from '@/features/move-application';
+import { useLivePollMs } from '@/shared/api';
+
+import { parsingCardsOf } from './board-lookup';
 
 export type BoardLoad = Readonly<{
   failed: boolean;
@@ -34,6 +41,8 @@ type ArrivalInput = Readonly<{ query: ApplicationBoardQuery; arrived: boolean }>
 
 type SearchInput = Readonly<{ filters: ApplicationFilters; shown: ApplicationBoardQuery }>;
 
+const MOVING = { mutationKey: MOVE_MUTATION_KEY };
+
 function boardQueryOf({ expanded, filters }: BoardQueryInput): ApplicationBoardQuery {
   return {
     source: filters.source,
@@ -43,16 +52,6 @@ function boardQueryOf({ expanded, filters }: BoardQueryInput): ApplicationBoardQ
     salaryFrom: filters.salaryFrom,
     expand: expanded.length === 0 ? undefined : [...expanded],
   };
-}
-
-function hasParsingCard(board: ApplicationBoardResponse | undefined): boolean {
-  return Object.values(board?.columns ?? {}).some(({ items }) =>
-    (items ?? []).some((card) => draftStateOf(card) === 'parsing'),
-  );
-}
-
-function useParsingPollMs(): number {
-  return useLiveConnected() ? LIVE_CLIENT_LIMITS.slowPollMs : LIVE_LIMITS.pollFallbackMs;
 }
 
 function toggled(expanded: readonly OutcomeStage[], stage: OutcomeStage): OutcomeStage[] {
@@ -79,24 +78,34 @@ function searchOf({ filters, shown }: SearchInput): BoardSearchState {
   return { filtered: filters.stage !== undefined || sent, q: shown.q };
 }
 
+function useBoardPollMs() {
+  const pollMs = useLivePollMs();
+  const queryClient = useQueryClient();
+  useIsMutating(MOVING);
+  return (board: ApplicationBoardResponse | undefined) =>
+    queryClient.isMutating(MOVING) === 0 && parsingCardsOf(board).length > 0 ? pollMs : false;
+}
+
 export function useKanbanBoard() {
   const filters = useSentFilters();
   const [expanded, setExpanded] = useState<OutcomeStage[]>([]);
   const [mountedAt] = useState(Date.now);
   const query = boardQueryOf({ expanded, filters });
-  const parsingPollMs = useParsingPollMs();
+  const pollMsOf = useBoardPollMs();
   const board = useQuery({
     ...boardQueryOptions(query),
     placeholderData: keepPreviousData,
-    refetchInterval: ({ state }) => (hasParsingCard(state.data) ? parsingPollMs : false),
+    refetchInterval: ({ state }) => pollMsOf(state.data),
   });
   const arrived = board.data !== undefined && !board.isPlaceholderData;
   const shown = useLastArrived({ query, arrived });
   const fallback = useQuery({ ...boardQueryOptions(shown), enabled: false });
   const timeZone = useUserTimeZone();
+  const data = board.data ?? fallback.data;
   const context: ApplicationCardContext = {
     now: new Date(Math.max(board.dataUpdatedAt, mountedAt)),
     timeZone,
+    parsingIds: parsingCardsOf(data).map((card) => card.id),
   };
   const failed = board.isError && !board.isFetching;
   const filtersChanged = filtersHashOf(query) !== filtersHashOf(shown);
@@ -111,7 +120,6 @@ export function useKanbanBoard() {
   const onToggle = (stage: OutcomeStage) => {
     setExpanded(toggled(expanded, stage));
   };
-  const data = board.data ?? fallback.data;
   const search = searchOf({ filters, shown });
   return { data, context, outcomes: { expanded, onToggle, load }, search };
 }

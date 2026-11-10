@@ -33,4 +33,17 @@ describe('FieldsSection', () => {
     expect(search.value).toBe('');
     expect(document.activeElement).toBe(search);
   });
+
+  it('the check tone specimen wraps its input in the kit tone attribute, and the aside sits beside its label', () => {
+    render(<FieldsSection />);
+
+    const toned = screen.getByRole('textbox', { name: 'Вилка · перевір' });
+    expect(toned.closest('[data-field-tone="check"]')).not.toBeNull();
+    expect(
+      screen.getByRole('textbox', { name: 'Компанія' }).closest('[data-field-tone]'),
+    ).toBeNull();
+    expect(screen.getByText('точно').parentElement).toBe(
+      screen.getByText('Позиція · aside').parentElement,
+    );
+  });
 });

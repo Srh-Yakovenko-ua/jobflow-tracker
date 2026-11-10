@@ -30,7 +30,9 @@ export function ConfidenceChip({ field, reviews }: ConfidenceChipProps) {
   return (
     <Tooltip
       side="right"
-      content={<span className="whitespace-pre-wrap">{quote ?? COPY.evidenceMissing}</span>}
+      content={
+        <span className="wrap-anywhere whitespace-pre-wrap">{quote ?? COPY.evidenceMissing}</span>
+      }
     >
       <button
         type="button"
