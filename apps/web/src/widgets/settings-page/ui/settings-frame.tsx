@@ -4,6 +4,7 @@ import type { ReactNode } from 'react';
 import type { SettingsSave } from '@/features/update-settings';
 import { uk } from '@/shared/i18n';
 import { cn } from '@/shared/lib/cn';
+import type { SettingsAnchor } from '@/shared/lib/settings-anchors';
 
 import type { SettingsSectionId } from '../model/settings-items';
 
@@ -21,13 +22,17 @@ export type SettingsHeading = { title: string; description?: string };
 
 export type SettingsBlockProps = Readonly<{
   heading: SettingsHeading;
+  id?: SettingsAnchor;
   status?: ReactNode;
   children: ReactNode;
 }>;
 
-export function SettingsBlock({ heading, status, children }: SettingsBlockProps) {
+export function SettingsBlock({ heading, id, status, children }: SettingsBlockProps) {
   return (
-    <div className={cn('flex flex-col', heading.description === undefined ? 'gap-3.5' : 'gap-4')}>
+    <div
+      id={id}
+      className={cn('flex flex-col', heading.description === undefined ? 'gap-3.5' : 'gap-4')}
+    >
       <div className="flex flex-col gap-1.25">
         <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
           <h2 className="font-display text-[24px] leading-[1.2] font-medium">{heading.title}</h2>

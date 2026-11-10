@@ -1,4 +1,5 @@
 import type { FeatureFlags } from '@/shared/config';
+import type { SettingsAnchor } from '@/shared/lib/settings-anchors';
 
 export const SILENCE_PRESETS = [3, 7, 14, 21] as const;
 
@@ -13,6 +14,19 @@ export const SETTINGS_SECTIONS = [
 ] as const;
 
 export type SettingsSectionId = (typeof SETTINGS_SECTIONS)[number];
+
+const ANCHOR_SECTIONS = { bookmarklet: 'aiPrivacy' } as const satisfies Record<
+  SettingsAnchor,
+  SettingsSectionId
+>;
+
+export function sectionOfHash(hash: string): SettingsSectionId {
+  return (
+    SETTINGS_SECTIONS.find((section) => section === hash) ??
+    Object.entries(ANCHOR_SECTIONS).find(([anchor]) => anchor === hash)?.[1] ??
+    SETTINGS_SECTIONS[0]
+  );
+}
 
 const GATED_ITEMS = {
   notifyPush: 'browserPush',

@@ -15,6 +15,7 @@ export function useCreateCaptureTokenMutation() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: createCaptureToken,
+    gcTime: 0,
     onSuccess: () => {
       const replaced = queryClient.getQueryData(LIST_KEY)?.items ?? [];
       showToast({

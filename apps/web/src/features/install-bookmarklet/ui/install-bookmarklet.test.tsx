@@ -1,8 +1,8 @@
 import { bookmarkletHref } from '@jobflow/bookmarklet';
-import { focusManager } from '@tanstack/react-query';
-import { act, fireEvent, screen, waitFor } from '@testing-library/react';
+import { focusManager, useMutationState } from '@tanstack/react-query';
+import { fireEvent, screen, waitFor } from '@testing-library/react';
 import type { UserEvent } from '@testing-library/user-event';
-import { HttpResponse } from 'msw';
+import { HttpResponse, type HttpResponseResolver } from 'msw';
 import { delay } from 'msw/utils/delay';
 import { toast } from 'sonner';
 import { afterEach, describe, expect, it, vi } from 'vitest';
@@ -16,9 +16,9 @@ import {
   UNUSED_TOKEN,
   USED_TOKEN,
 } from '@/test/capture-token-fixtures';
-import { fakeTimeouts } from '@/test/fake-timeouts';
+import { advanceBy, advancePastQueryRetries, fakeTimeouts } from '@/test/fake-timeouts';
 import { QueryProbe, waitForQuery } from '@/test/query-status';
-import { renderInApp } from '@/test/render-in-app';
+import { renderInApp, renderViewInApp } from '@/test/render-in-app';
 import { server } from '@/test/server';
 import { meRoute } from '@/test/session-fixtures';
 
@@ -32,6 +32,14 @@ const LIST_KEY = captureTokenKeys.list();
 const CREATE = { name: 'Створити кнопку' } as const;
 
 const LINK = { name: 'JobFlow' } as const;
+
+const LINK_BEHIND_DIALOG = { ...LINK, hidden: true } as const;
+
+const CANCEL = { name: 'Скасувати' } as const;
+
+const SHOWN_ONCE = /Кнопку видно лише одразу після створення/;
+
+const HELD_MUTATION_DATA = 'mutation data held in the cache';
 
 const REGENERATE: ConfirmCopy = {
   trigger: 'Нова кнопка',
@@ -51,13 +59,9 @@ const NEVER_USED = 'ще не спрацьовував';
 
 const CREATE_FAILED = 'Не вдалося створити кнопку';
 
+const REVOKE_FAILED = 'Не вдалося вимкнути букмарклет';
+
 const SERVER_ERROR = () => errorReply({ status: 500, type: 'internal_error' });
-
-const LIST_ATTEMPTS = 2;
-
-const RETRY_PAUSE_MS = 1_000;
-
-const LIST_GIVES_UP_MS = LIST_ATTEMPTS * API_CLIENT_LIMITS.requestTimeoutMs + RETRY_PAUSE_MS;
 
 const LIST_OUTAGE_SHOWS = {
   error: () => screen.getByRole('alert'),
@@ -68,6 +72,16 @@ const CREATE_OUTAGE_SHOWS = {
   error: () => screen.findByText(CREATE_FAILED),
   pending: () => screen.findByRole('button', { ...CREATE, busy: true }),
 } as const;
+
+const REGENERATE_OUTAGE_SHOWS = {
+  error: () => screen.findByText(CREATE_FAILED),
+  pending: () => screen.findByRole('button', { name: REGENERATE.press, busy: true }),
+} as const;
+
+function HeldMutationData() {
+  const held = useMutationState({ select: (mutation) => mutation.state.data });
+  return <output aria-label={HELD_MUTATION_DATA}>{JSON.stringify(held)}</output>;
+}
 
 function hrefOf(token: string): string {
   return bookmarkletHref({
@@ -89,8 +103,8 @@ function renderSection(options?: CaptureTokenRoutesOptions) {
   return { user, ...routes };
 }
 
-async function renderWithButton() {
-  const view = renderSection();
+async function renderWithButton(options?: CaptureTokenRoutesOptions) {
+  const view = renderSection(options);
   await view.user.click(await screen.findByRole('button', CREATE));
   const link = await screen.findByRole('link', LINK);
   return { ...view, link };
@@ -104,7 +118,7 @@ async function openConfirm(user: UserEvent, copy: ConfirmCopy) {
 async function cancelConfirm(user: UserEvent, copy: ConfirmCopy) {
   const dialog = await openConfirm(user, copy);
   const warning = dialog.textContent;
-  await user.click(screen.getByRole('button', { name: 'Скасувати' }));
+  await user.click(screen.getByRole('button', CANCEL));
   return { warning, open: screen.queryByRole('dialog') };
 }
 
@@ -116,6 +130,12 @@ async function confirm(user: UserEvent, copy: ConfirmCopy) {
 function returnToTab() {
   focusManager.setFocused(false);
   focusManager.setFocused(true);
+}
+
+function createButtonOnceListEmpties({ store }: Pick<ReturnType<typeof renderSection>, 'store'>) {
+  store.items = [];
+  returnToTab();
+  return screen.findByRole('button', CREATE);
 }
 
 afterEach(() => {
@@ -150,7 +170,7 @@ describe('InstallBookmarklet', () => {
     fakeTimeouts();
     renderSection({ replies: { list: () => delay('infinite') } });
 
-    await act(() => vi.advanceTimersByTimeAsync(LIST_GIVES_UP_MS));
+    await advancePastQueryRetries();
 
     expect(await screen.findByRole('alert')).toBeDefined();
     expect(screen.getByRole('button', { name: 'Спробувати ще раз' })).toBeDefined();
@@ -284,6 +304,24 @@ describe('InstallBookmarklet', () => {
     ).toBeDefined();
   });
 
+  it.each(OUTAGES)(
+    'when Створити нову $name the link stays with the capture token it had',
+    async ({ reply, settled }) => {
+      const posts: (HttpResponseResolver | undefined)[] = [undefined, reply];
+      const { user } = await renderWithButton({
+        replies: { create: (info) => posts.shift()?.(info) },
+      });
+
+      await confirm(user, REGENERATE);
+
+      expect(await REGENERATE_OUTAGE_SHOWS[settled]()).toBeDefined();
+      expect(screen.getByRole('link', LINK_BEHIND_DIALOG).getAttribute('href')).toBe(
+        hrefOf('capture-token-one'),
+      );
+      expect(screen.queryByText(SHOWN_ONCE)).toBeNull();
+    },
+  );
+
   it('the installed state has no accessibility violations', async () => {
     await renderWithButton();
     await screen.findByText(NEVER_USED);
@@ -335,6 +373,30 @@ describe('InstallBookmarklet', () => {
     });
   });
 
+  it('a create button that a background refetch brings after a failed Вимкнути takes no focus', async () => {
+    const view = renderSection({ items: [USED_TOKEN], replies: { revoke: SERVER_ERROR } });
+    await confirm(view.user, REVOKE);
+    await screen.findByRole('button', { name: REVOKE.press, busy: false });
+    await view.user.click(screen.getByRole('button', CANCEL));
+
+    const create = await createButtonOnceListEmpties(view);
+
+    expect(create.isConnected).toBe(true);
+    expect(document.activeElement).toBe(document.body);
+  });
+
+  it('a create button that a background refetch brings after Вимкнути and a new button takes no focus', async () => {
+    const view = renderSection({ items: [USED_TOKEN] });
+    await confirm(view.user, REVOKE);
+    await view.user.click(await screen.findByRole('button', CREATE));
+    await screen.findByRole('link', LINK);
+
+    const create = await createButtonOnceListEmpties(view);
+
+    expect(create.isConnected).toBe(true);
+    expect(document.activeElement).toBe(document.body);
+  });
+
   it('a capture token the server already revoked counts as switched off', async () => {
     const { user } = renderSection({
       items: [USED_TOKEN],
@@ -344,20 +406,43 @@ describe('InstallBookmarklet', () => {
     await confirm(user, REVOKE);
 
     expect(await screen.findByText('Букмарклет вимкнено')).toBeDefined();
-    expect(screen.queryByText('Не вдалося вимкнути букмарклет')).toBeNull();
+    expect(screen.queryByText(REVOKE_FAILED)).toBeNull();
   });
 
-  it('a failed Вимкнути says the old bookmark may still work and keeps the dialog open', async () => {
-    const { user, sent } = renderSection({
-      items: [USED_TOKEN],
-      replies: { revoke: SERVER_ERROR },
+  it.each(OUTAGES)(
+    'when Вимкнути $name it says the old bookmark may still work, keeps the dialog open and its buttons usable',
+    async ({ reply, settled }) => {
+      fakeTimeouts();
+      const { user, sent } = renderSection({ items: [USED_TOKEN], replies: { revoke: reply } });
+
+      await confirm(user, REVOKE);
+      if (settled === 'pending') await advanceBy(API_CLIENT_LIMITS.requestTimeoutMs);
+
+      expect(await screen.findByText(REVOKE_FAILED)).toBeDefined();
+      expect(screen.getByRole('dialog', { name: REVOKE.dialog })).toBeDefined();
+      expect(sent).toEqual([`DELETE ${USED_TOKEN.id}`]);
+      expect(await screen.findByRole('button', { name: REVOKE.press, busy: false })).toHaveProperty(
+        'disabled',
+        false,
+      );
+      await user.click(screen.getByRole('button', CANCEL));
+      expect(screen.queryByRole('dialog')).toBeNull();
+    },
+  );
+
+  it('with two capture tokens and one DELETE failing, reads the list again and shows the token that is left', async () => {
+    const { user } = renderSection({
+      items: [USED_TOKEN, UNUSED_TOKEN],
+      replies: {
+        revoke: ({ params }) => (params.id === UNUSED_TOKEN.id ? SERVER_ERROR() : undefined),
+      },
     });
 
     await confirm(user, REVOKE);
 
-    expect(await screen.findByText('Не вдалося вимкнути букмарклет')).toBeDefined();
-    expect(screen.getByRole('dialog', { name: REVOKE.dialog })).toBeDefined();
-    expect(sent).toEqual([`DELETE ${USED_TOKEN.id}`]);
+    expect(await screen.findByText(REVOKE_FAILED)).toBeDefined();
+    expect(await screen.findByText(NEVER_USED)).toBeDefined();
+    expect(screen.queryByText(USED_AT_IN_KYIV)).toBeNull();
   });
 
   it.each(OUTAGES)(
@@ -384,6 +469,25 @@ describe('InstallBookmarklet', () => {
     expect(await screen.findByRole('link', LINK)).toBeDefined();
   });
 
+  it('leaving the section drops the capture token from the mutation cache', async () => {
+    server.use(meRoute(), ...captureTokenRoutes().handlers);
+    const { user, view } = renderViewInApp(
+      <>
+        <HeldMutationData />
+        <InstallBookmarklet />
+      </>,
+    );
+    await user.click(await screen.findByRole('button', CREATE));
+    await screen.findByRole('link', LINK);
+    expect(screen.getByLabelText(HELD_MUTATION_DATA).textContent).toContain('capture-token-one');
+
+    view.rerender(<HeldMutationData />);
+
+    await waitFor(() => {
+      expect(screen.getByLabelText(HELD_MUTATION_DATA).textContent).toBe('[]');
+    });
+  });
+
   it('explains what the bookmarklet sends, who can read its token, what to do on a leak and the local network prompt', async () => {
     renderSection();
     await waitForQuery({ queryKey: LIST_KEY, status: 'success' });
@@ -400,10 +504,20 @@ describe('InstallBookmarklet', () => {
       screen.getByText(/створи нову кнопку: старий токен одразу перестане діяти/),
     ).toBeDefined();
     expect(
-      screen.getByText(/Зміна пароля теж вимикає букмарклет, а «Вийти на всіх пристроях» ні\./),
+      screen.getByText(
+        /Цей токен уміє створювати чернетки, а у відповідь показує, чи вакансія з такою адресою вже є у твоїй воронці: компанію, посаду, етап і дату відгуку\./,
+      ),
+    ).toBeDefined();
+    expect(
+      screen.getByText(/Зміна пароля і «Вийти на всіх пристроях» теж вимикають букмарклет\./),
     ).toBeDefined();
     expect(
       screen.getByText(/браузер може спитати дозвіл на доступ до локальної мережі/),
+    ).toBeDefined();
+    expect(
+      screen.getByText(
+        /Дозвіл отримує весь цей сайт, а не лише букмарклет\. Забрати його можна в налаштуваннях сайту в браузері\./,
+      ),
     ).toBeDefined();
   });
 });

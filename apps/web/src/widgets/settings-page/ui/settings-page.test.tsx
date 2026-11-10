@@ -28,6 +28,7 @@ const REVOKE_BOOKMARKLET = { name: 'Вимкнути букмарклет' } as 
 
 afterEach(() => {
   window.location.hash = '';
+  vi.restoreAllMocks();
 });
 
 describe('SettingsPage', () => {
@@ -77,6 +78,45 @@ describe('SettingsPage', () => {
     await waitFor(() => {
       expect(within(nav).getByRole('link', { current: 'location' }).textContent).toBe('Акаунт');
     });
+  });
+
+  it('the nav marks AI та приватність when the address carries the bookmarklet anchor', async () => {
+    window.location.hash = '#bookmarklet';
+    await renderLoadedSettings();
+
+    const nav = within(screen.getByRole('navigation', { name: 'Розділи налаштувань' }));
+
+    expect(nav.getByRole('link', { current: 'location' }).textContent).toBe('AI та приватність');
+  });
+
+  it('a cold load with the bookmarklet anchor scrolls to the bookmarklet block once the settings arrive, not while the skeleton shows', async () => {
+    window.location.hash = '#bookmarklet';
+    const scrolled = vi.spyOn(Element.prototype, 'scrollIntoView');
+    renderSettingsPage();
+    expect(screen.getByText('Завантаження…')).toBeDefined();
+    expect(scrolled).not.toHaveBeenCalled();
+
+    await waitForQuery({ queryKey: userKeys.me(), status: 'success' });
+
+    expect(scrolled.mock.contexts).toHaveLength(1);
+    expect(scrolled.mock.contexts[0]).toBe(document.getElementById('bookmarklet'));
+  });
+
+  it('a load with no anchor in the address scrolls nowhere', async () => {
+    const scrolled = vi.spyOn(Element.prototype, 'scrollIntoView');
+
+    await renderLoadedSettings();
+
+    expect(screen.getByRole('region', { name: 'Акаунт' })).toBeDefined();
+    expect(scrolled).not.toHaveBeenCalled();
+  });
+
+  it('the bookmarklet heading sits inside the block that carries the bookmarklet anchor', async () => {
+    await renderLoadedSettings();
+
+    const heading = screen.getByRole('heading', { level: 2, name: 'Букмарклет' });
+
+    expect(heading.closest('[id]')?.id).toBe('bookmarklet');
   });
 
   it('leaves out every control whose delivery is not built yet', async () => {
