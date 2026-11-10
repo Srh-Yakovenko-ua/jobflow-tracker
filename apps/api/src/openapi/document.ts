@@ -56,7 +56,7 @@ const TAGS = [
 ];
 
 const DESCRIPTION =
-  'Errors share one shape with a requestId. Every route is rate limited and answers 429 with Retry-After.';
+  'Errors share one shape with a requestId. Every route except GET /events/stream is rate limited and answers 429 with Retry-After.';
 
 export function buildOpenApiDocument(): OpenApiDocument {
   const registry = new OpenAPIRegistry();

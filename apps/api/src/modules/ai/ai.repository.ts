@@ -97,11 +97,12 @@ export class AiRepository {
     return count;
   }
 
-  async finishJob(userId: string, { id, aiResultId, now }: FinishAiJob): Promise<void> {
-    await this.prisma.aiJob.updateMany({
+  async finishJob(userId: string, { id, aiResultId, now }: FinishAiJob): Promise<number> {
+    const { count } = await this.prisma.aiJob.updateMany({
       where: { id, userId, status: 'processing' },
       data: { status: 'done', step: AI_JOB_STEPS.done, aiResultId, finishedAt: now },
     });
+    return count;
   }
 
   async failJob(userId: string, { id, errorType, now }: FailAiJob): Promise<number> {

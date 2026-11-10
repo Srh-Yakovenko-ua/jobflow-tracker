@@ -163,16 +163,25 @@ export class AiService {
       throw new UnrecoverableError(failure);
     }
     await settled({ job, status: 'done', output });
-    await this.repository.finishJob(job.userId, { id: job.aiJobId, aiResultId, now });
-    await progressed(jobUpdateOf({ job, status: 'done' }));
+    const finished = await this.repository.finishJob(job.userId, {
+      id: job.aiJobId,
+      aiResultId,
+      now,
+    });
+    if (finished === 1) {
+      await progressed(jobUpdateOf({ job, status: 'done' }));
+    }
   }
 
   private async fail(run: AiRun, errorType: string): Promise<void> {
     const { job, now } = run;
     const failed = await this.repository.failJob(job.userId, { id: job.aiJobId, errorType, now });
     if (failed === 1) {
-      await run.settled({ job, status: 'failed', errorType });
-      await run.progressed(jobUpdateOf({ job, status: 'failed', errorType }));
+      try {
+        await run.settled({ job, status: 'failed', errorType });
+      } finally {
+        await run.progressed(jobUpdateOf({ job, status: 'failed', errorType }));
+      }
     }
   }
 

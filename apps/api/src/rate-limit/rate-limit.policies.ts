@@ -56,3 +56,7 @@ export const RATE_LIMIT_POLICIES = {
 export type RateLimitPolicy = keyof typeof RATE_LIMIT_POLICIES;
 
 export const DEFAULT_RATE_LIMIT_POLICY = 'api' satisfies RateLimitPolicy;
+
+export const UNLIMITED_ROUTE = 'unlimited';
+
+export type RouteRateLimit = RateLimitPolicy | typeof UNLIMITED_ROUTE;

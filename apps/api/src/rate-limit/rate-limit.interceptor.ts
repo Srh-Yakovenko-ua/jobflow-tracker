@@ -13,7 +13,8 @@ import { RATE_LIMIT_POLICY } from './rate-limit.decorator.js';
 import {
   DEFAULT_RATE_LIMIT_POLICY,
   RATE_LIMIT_POLICIES,
-  type RateLimitPolicy,
+  type RouteRateLimit,
+  UNLIMITED_ROUTE,
 } from './rate-limit.policies.js';
 import { RateLimitService } from './rate-limit.service.js';
 
@@ -26,6 +27,9 @@ export class RateLimitInterceptor implements NestInterceptor {
 
   async intercept(context: ExecutionContext, next: CallHandler): Promise<Observable<unknown>> {
     const policy = this.policyOf(context);
+    if (policy === UNLIMITED_ROUTE) {
+      return next.handle();
+    }
     const http = context.switchToHttp();
     const key = RATE_LIMIT_POLICIES[policy].keyOf(http.getRequest<Request>());
     const outcome = await this.limits.consume(policy, key);
@@ -36,10 +40,10 @@ export class RateLimitInterceptor implements NestInterceptor {
     return next.handle();
   }
 
-  private policyOf(context: ExecutionContext): RateLimitPolicy {
+  private policyOf(context: ExecutionContext): RouteRateLimit {
     const targets = [context.getHandler(), context.getClass()];
     return (
-      this.reflector.getAllAndOverride<RateLimitPolicy | undefined>(RATE_LIMIT_POLICY, targets) ??
+      this.reflector.getAllAndOverride<RouteRateLimit | undefined>(RATE_LIMIT_POLICY, targets) ??
       DEFAULT_RATE_LIMIT_POLICY
     );
   }

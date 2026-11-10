@@ -1,11 +1,23 @@
+import { LIVE_EVENTS } from '@jobflow/shared';
+import { buildJobUpdate } from '@jobflow/shared/testing';
 import type { Response } from 'supertest';
-import { afterAll, describe, expect, it, vi } from 'vitest';
+import { afterAll, describe, expect, it, onTestFinished, vi } from 'vitest';
 
 import type { User } from '../generated/prisma/client.js';
+import { LivePublisher } from '../modules/live/index.js';
 import { rateLimitedTestingModule, useTestApp } from '../test/app.js';
-import { authAs } from '../test/auth.js';
+import { accessTokenFor, authAs } from '../test/auth.js';
 import { createUser, randomEmail } from '../test/factories.js';
+import { callRoute } from '../test/http.js';
+import {
+  issueLiveTicket,
+  LIVE_PATHS,
+  liveEventsOf,
+  liveHubSubscribed,
+  streamPathOf,
+} from '../test/live.js';
 import { expectRateLimited, postFrom, randomClientIp } from '../test/rate-limit.js';
+import { openSse } from '../test/sse.js';
 
 vi.hoisted(() => {
   vi.stubEnv('RATE_LIMIT_LOGIN_PER_MINUTE', '2');
@@ -65,5 +77,31 @@ describe('rate limits taken from the environment', () => {
 
     expect(statuses).toEqual([401, 401, 429]);
     expectRateLimited(third, { windowSeconds: 60 });
+  });
+
+  it('answers 429 to a ticket request over the api limit, and a stream opened with an earlier ticket still delivers', async () => {
+    const user = await createUser(testApp.prisma);
+    const jobUpdate = buildJobUpdate({ status: 'failed', step: 2, errorType: 'ai_timeout' });
+    await liveHubSubscribed(testApp.app);
+    const first = await issueLiveTicket(testApp.app, user);
+    await issueLiveTicket(testApp.app, user);
+    await issueLiveTicket(testApp.app, user);
+
+    const overTheLimit = await callRoute(testApp.app, {
+      method: 'post',
+      path: LIVE_PATHS.ticket,
+      accessToken: await accessTokenFor(user),
+    });
+    const stream = await openSse(testApp.app, { path: streamPathOf(first.ticket) });
+    onTestFinished(() => stream.close());
+    await testApp.app
+      .get(LivePublisher)
+      .publish(user.id, { type: LIVE_EVENTS.jobUpdated, data: jobUpdate });
+
+    expectRateLimited(overTheLimit, { windowSeconds: 60 });
+    expect(stream.status).toBe(200);
+    await expect
+      .poll(() => liveEventsOf(stream.frames))
+      .toMatchObject([{ type: 'job.updated', data: jobUpdate }]);
   });
 });

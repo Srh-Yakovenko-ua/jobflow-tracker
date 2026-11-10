@@ -13,6 +13,8 @@ import {
   DEFAULT_RATE_LIMIT_POLICY,
   RATE_LIMIT_POLICIES,
   type RateLimitPolicy,
+  type RouteRateLimit,
+  UNLIMITED_ROUTE,
 } from '../rate-limit/rate-limit.policies.js';
 
 export type RouteResponses = RouteConfig['responses'];
@@ -107,17 +109,23 @@ function rateLimitDescription(policy: RateLimitPolicy): string {
   return `${ERROR_TYPES[429].title}: ${String(limit)} per ${String(durationSeconds)} s by default (${envKey})`;
 }
 
-export function errorResponses(
-  statuses: ErrorStatus[],
-  policy: RateLimitPolicy = DEFAULT_RATE_LIMIT_POLICY,
-): RouteResponses {
+function rateLimitReply(policy: RateLimitPolicy): RouteResponses {
   return {
-    ...Object.fromEntries(statuses.map((status) => [status, errorReply(status)])),
     429: {
       ...errorReply(429),
       description: rateLimitDescription(policy),
       headers: retryAfterHeaders,
     },
+  };
+}
+
+export function errorResponses(
+  statuses: ErrorStatus[],
+  policy: RouteRateLimit = DEFAULT_RATE_LIMIT_POLICY,
+): RouteResponses {
+  return {
+    ...Object.fromEntries(statuses.map((status) => [status, errorReply(status)])),
+    ...(policy === UNLIMITED_ROUTE ? {} : rateLimitReply(policy)),
     500: errorReply(500),
   };
 }
