@@ -9,6 +9,7 @@ const nextConfig: NextConfig = {
   allowedDevOrigins: ['127.0.0.1'],
   output: 'standalone',
   outputFileTracingRoot: path.join(import.meta.dirname, '../..'),
+  experimental: { validateRSCRequestHeaders: false },
   headers: () =>
     Promise.resolve([
       {
