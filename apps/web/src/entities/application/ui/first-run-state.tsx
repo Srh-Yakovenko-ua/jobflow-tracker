@@ -11,17 +11,21 @@ import { TOUCH_HEIGHT } from '@/shared/ui/touch-height';
 
 const COPY = uk.board.firstRun;
 
-const INSTALL_HREF = '/settings#aiPrivacy';
+const LINKS = [
+  { id: 'addFirst', href: '/add', variant: 'primary' },
+  { id: 'bookmarklet', href: '/settings#aiPrivacy', variant: 'secondary' },
+] as const;
 
-function InstallLink() {
-  return (
+function FirstRunLinks() {
+  return LINKS.map((link) => (
     <Link
-      href={INSTALL_HREF}
-      className={cn(buttonLinkClasses({ variant: 'secondary', size: 'lg' }), TOUCH_HEIGHT)}
+      key={link.id}
+      href={link.href}
+      className={cn(buttonLinkClasses({ variant: link.variant, size: 'lg' }), TOUCH_HEIGHT)}
     >
-      {COPY.bookmarklet}
+      {COPY[link.id]}
     </Link>
-  );
+  ));
 }
 
 export type FirstRunStateProps = Readonly<{ action?: ReactNode }>;
@@ -31,7 +35,7 @@ export function FirstRunState({ action }: FirstRunStateProps) {
     <EmptyState
       content={COPY}
       view={{ size: 'page' }}
-      slots={{ figure: <DashedBars />, action: action ?? <InstallLink /> }}
+      slots={{ figure: <DashedBars />, action: action ?? <FirstRunLinks /> }}
     />
   );
 }

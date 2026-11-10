@@ -14,6 +14,17 @@ describe('FirstRunState', () => {
     expect(screen.getByRole('link', INSTALL).getAttribute('href')).toBe('/settings#aiPrivacy');
   });
 
+  it('with no action of its own offers Додати першу вакансію first, linked to /add', () => {
+    render(<FirstRunState />);
+
+    expect(
+      screen.getAllByRole('link').map((link) => [link.textContent, link.getAttribute('href')]),
+    ).toEqual([
+      ['Додати першу вакансію', '/add'],
+      ['Встановити букмарклет', '/settings#aiPrivacy'],
+    ]);
+  });
+
   it('shows the action it is given instead of the install link', () => {
     render(<FirstRunState action={<button type="button">Додати першу вакансію</button>} />);
 

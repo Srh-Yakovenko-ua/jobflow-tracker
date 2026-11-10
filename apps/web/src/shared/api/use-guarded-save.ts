@@ -2,7 +2,7 @@ import { type MutationKey, useMutation, useQueryClient } from '@tanstack/react-q
 import type { FieldValues } from 'react-hook-form';
 
 import { uk } from '@/shared/i18n';
-import { showErrorToast } from '@/shared/ui/error-toast';
+import { type ErrorToastContent, showErrorToast } from '@/shared/ui/error-toast';
 
 import { ApiError } from './api-error';
 import { applyFieldErrors, type ApplyFieldErrorsOptions } from './field-errors';
@@ -12,6 +12,7 @@ type GuardedSaveOptions<Body, Values extends FieldValues, Result> = Readonly<{
   request: (body: Body) => Promise<Result>;
   form: Omit<ApplyFieldErrorsOptions<Values>, 'error'>;
   onSuccess: (result: Result) => unknown;
+  errorToast?: (error: Error) => ErrorToastContent;
 }>;
 
 export type GuardedSave<Body> = Readonly<{
@@ -25,6 +26,7 @@ export function useGuardedSave<Body, Values extends FieldValues, Result>({
   request,
   form,
   onSuccess,
+  errorToast,
 }: GuardedSaveOptions<Body, Values, Result>): GuardedSave<Body> {
   const queryClient = useQueryClient();
   const mutation = useMutation({
@@ -36,7 +38,7 @@ export function useGuardedSave<Body, Values extends FieldValues, Result>({
         applyFieldErrors({ error, ...form });
         return;
       }
-      showErrorToast(uk.errors.saveFailed);
+      showErrorToast(errorToast?.(error) ?? uk.errors.saveFailed);
     },
   });
   return {

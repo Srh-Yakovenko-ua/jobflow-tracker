@@ -197,7 +197,7 @@ describe('CommandPalette', () => {
     });
   });
 
-  it('with the shipped flags it offers the four pages, then the move, the theme and the cheat sheet for the focused card', async () => {
+  it('with the shipped flags it offers the four pages, then add, paste, the move, the theme and the cheat sheet for the focused card', async () => {
     paletteRoutes();
     const { user } = await renderWithFocusedCard();
 
@@ -209,6 +209,8 @@ describe('CommandPalette', () => {
       'Календар',
       'Налаштування',
       'Таблиця',
+      'Додати вакансію',
+      'Вставити текст вакансії',
       'Перемістити в…',
       'Перемкнути тему',
       'Гарячі клавіші',
