@@ -1,0 +1,9 @@
+{
+  "extends": "@jobflow/config/tsconfig.base.json",
+  "compilerOptions": {
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "noEmit": true,
+    "resolveJsonModule": true
+  },
+  "include": ["src", "build", "tsup.config.ts"]
+}
