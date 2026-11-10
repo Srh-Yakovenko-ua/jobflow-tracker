@@ -2,14 +2,20 @@ import { randomUUID } from 'node:crypto';
 
 import { errorResponseSchema, type TokenScope, USER_TOKEN_SCOPES } from '@jobflow/shared';
 import { Controller, Get, HttpCode, Post } from '@nestjs/common';
+import type { NestExpressApplication } from '@nestjs/platform-express';
 import request from 'supertest';
-import { describe, expect, it } from 'vitest';
+import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
-import { appTestingModule, useTestApp } from '../../test/app.js';
+import { DEPENDENCY_LIMITS } from '../../common/probe.js';
+import type { PrismaService } from '../../prisma/prisma.service.js';
+import { appTestingModule, startTestApp, useTestApp } from '../../test/app.js';
 import { accessTokenFor, cacheControlOf, serviceTokenFor } from '../../test/auth.js';
 import { captureAuthorization, signedInWithCaptureToken } from '../../test/capture.js';
+import { configuredDatabaseUrl, prismaAt } from '../../test/database.js';
 import { statusAndDetail } from '../../test/http.js';
+import { startTcpProxy, type TcpProxy } from '../../test/tcp-proxy.js';
 import type { AccessUser } from './access-tokens.js';
+import { CaptureTokensRepository } from './capture-tokens.repository.js';
 import { CurrentUser } from './current-user.decorator.js';
 import { Public } from './public.decorator.js';
 import { RequireScope } from './require-scope.decorator.js';
@@ -178,5 +184,70 @@ describe('the global access token guard', () => {
       expect(statusAndDetail(response)).toEqual([401, detail]);
       expect(response.get('www-authenticate')).toBe(challenge);
     },
+  );
+});
+
+const LOOKUP_LIMITS_MS = {
+  refused: DEPENDENCY_LIMITS.connectTimeoutMs + 1500,
+  silent: DEPENDENCY_LIMITS.queryTimeoutMs + 2000,
+} as const;
+
+function probeAppWithCaptureTokensAt(prisma: PrismaService): Promise<NestExpressApplication> {
+  return startTestApp(
+    appTestingModule({ controllers: [GuardProbeController] })
+      .overrideProvider(CaptureTokensRepository)
+      .useValue(new CaptureTokensRepository(prisma)),
+  );
+}
+
+async function expectInternalErrorWithoutChallenge(app: NestExpressApplication): Promise<void> {
+  const response = await request(app.getHttpServer())
+    .post('/api/v1/guard-probe/capture')
+    .set('authorization', 'Capture any-capture-token');
+
+  expect(response.status).toBe(500);
+  expect(errorResponseSchema.parse(response.body).type).toBe('internal_error');
+  expect(response.get('www-authenticate')).toBeUndefined();
+}
+
+describe('the capture token lookup while Postgres refuses the connection', () => {
+  const prisma = prismaAt('postgresql://u:p@127.0.0.1:1/x');
+  let app: NestExpressApplication;
+
+  beforeAll(async () => {
+    app = await probeAppWithCaptureTokensAt(prisma);
+  });
+
+  afterAll(async () => {
+    await app.close();
+    await prisma.$disconnect();
+  });
+
+  it('answers 500 without a challenge', { timeout: LOOKUP_LIMITS_MS.refused }, () =>
+    expectInternalErrorWithoutChallenge(app),
+  );
+});
+
+describe('the capture token lookup while Postgres keeps the connection and never answers', () => {
+  let proxy: TcpProxy;
+  let prisma: PrismaService;
+  let app: NestExpressApplication;
+
+  beforeAll(async () => {
+    proxy = await startTcpProxy(await configuredDatabaseUrl());
+    prisma = prismaAt(proxy.url);
+    await prisma.$queryRaw`SELECT 1`;
+    proxy.silence();
+    app = await probeAppWithCaptureTokensAt(prisma);
+  });
+
+  afterAll(async () => {
+    await app.close();
+    await proxy.close();
+    await prisma.$disconnect();
+  });
+
+  it('answers 500 without a challenge', { timeout: LOOKUP_LIMITS_MS.silent }, () =>
+    expectInternalErrorWithoutChallenge(app),
   );
 });

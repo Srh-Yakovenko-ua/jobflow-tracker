@@ -3,7 +3,7 @@ import { type CanActivate, type ExecutionContext, Injectable } from '@nestjs/com
 import { Reflector } from '@nestjs/core';
 import type { Request, Response } from 'express';
 
-import { forbidden, unauthorized } from '../../common/app-error.js';
+import { AppError, forbidden, unauthorized } from '../../common/app-error.js';
 import type { AccessUser } from './access-tokens.js';
 import { type Credentials, CredentialsService } from './credentials.service.js';
 import { IS_PUBLIC } from './public.decorator.js';
@@ -61,7 +61,9 @@ export class JwtAuthGuard implements CanActivate {
     try {
       return await this.credentials.verify(credentials);
     } catch (error) {
-      res.set('WWW-Authenticate', CHALLENGE[credentials.scheme]);
+      if (error instanceof AppError && error.status === 401) {
+        res.set('WWW-Authenticate', CHALLENGE[credentials.scheme]);
+      }
       throw error;
     }
   }

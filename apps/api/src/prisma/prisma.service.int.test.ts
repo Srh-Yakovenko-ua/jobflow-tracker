@@ -1,18 +1,13 @@
-import { ConfigService } from '@nestjs/config';
-import { Test } from '@nestjs/testing';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 import { DEPENDENCY_LIMITS } from '../common/probe.js';
-import { type AppConfig, configModule } from '../config/app-config.js';
+import { configuredDatabaseUrl, prismaAt } from '../test/database.js';
 import { outcomeWithin, startTcpProxy, type TcpProxy } from '../test/tcp-proxy.js';
-import { PrismaService } from './prisma.service.js';
+import type { PrismaService } from './prisma.service.js';
 
 const REFUSED_LIMIT_MS = DEPENDENCY_LIMITS.connectTimeoutMs + 500;
 
 const SILENT_LIMIT_MS = DEPENDENCY_LIMITS.queryTimeoutMs + 1000;
-
-const prismaAt = (databaseUrl: string) =>
-  new PrismaService(new ConfigService({ DATABASE_URL: databaseUrl }));
 
 describe('PrismaService while Postgres refuses the connection', () => {
   const prisma = prismaAt('postgresql://u:p@127.0.0.1:1/x');
@@ -29,11 +24,7 @@ describe('PrismaService while Postgres keeps the connection and never answers', 
   let prisma: PrismaService;
 
   beforeAll(async () => {
-    const moduleRef = await Test.createTestingModule({ imports: [configModule] }).compile();
-    const databaseUrl = moduleRef
-      .get<AppConfig>(ConfigService)
-      .get('DATABASE_URL', { infer: true });
-    proxy = await startTcpProxy(databaseUrl);
+    proxy = await startTcpProxy(await configuredDatabaseUrl());
     prisma = prismaAt(proxy.url);
   });
 

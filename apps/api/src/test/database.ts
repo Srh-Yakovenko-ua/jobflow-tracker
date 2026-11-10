@@ -1,7 +1,8 @@
+import { ConfigService } from '@nestjs/config';
 import { Test, type TestingModule } from '@nestjs/testing';
 import { afterAll, beforeAll, beforeEach, expect } from 'vitest';
 
-import { configModule } from '../config/app-config.js';
+import { type AppConfig, configModule } from '../config/app-config.js';
 import type { Prisma } from '../generated/prisma/client.js';
 import { PrismaModule } from '../prisma/prisma.module.js';
 import { PrismaService } from '../prisma/prisma.service.js';
@@ -14,6 +15,15 @@ export type RowLockQueue<T> = {
   readonly lock: Prisma.Sql;
   readonly calls: readonly (() => Promise<T>)[];
 };
+
+export function prismaAt(databaseUrl: string): PrismaService {
+  return new PrismaService(new ConfigService({ DATABASE_URL: databaseUrl }));
+}
+
+export async function configuredDatabaseUrl(): Promise<string> {
+  const moduleRef = await Test.createTestingModule({ imports: [configModule] }).compile();
+  return moduleRef.get<AppConfig>(ConfigService).get('DATABASE_URL', { infer: true });
+}
 
 export function assertTestDatabase(name: string): void {
   if (!TEST_DATABASE_NAME.test(name)) {
