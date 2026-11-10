@@ -39,6 +39,8 @@ const SAVE_FAILED_TOAST = 'Це збій на нашому боці, збере�
 
 const COMPANY_ERROR = 'Вкажи компанію одним коротким рядком';
 
+const POSITION_ERROR = 'Вкажи посаду одним коротким рядком';
+
 const NO_QUOTE = 'Цитати в тексті вакансії не знайшлося';
 
 function DetailReader({ application }: Readonly<{ application: ApplicationResponse }>) {
@@ -91,6 +93,19 @@ function companyField(): HTMLInputElement {
 
 function positionField(): HTMLInputElement {
   return screen.getByRole('textbox', { name: 'Позиція' });
+}
+
+function countCompanyMarkedAlone(): () => number {
+  let seen = 0;
+  const observer = new MutationObserver(() => {
+    const companyMarked = descriptionOf(companyField()) === COMPANY_ERROR;
+    if (companyMarked && descriptionOf(positionField()) !== POSITION_ERROR) seen += 1;
+  });
+  observer.observe(document.body, { subtree: true, childList: true, attributes: true });
+  return () => {
+    observer.disconnect();
+    return seen;
+  };
 }
 
 async function tooltipOf(name: string): Promise<string | null> {
@@ -261,9 +276,29 @@ describe('DraftReview', () => {
     await waitFor(() => {
       expect(descriptionOf(companyField())).toBe(COMPANY_ERROR);
     });
-    expect(descriptionOf(positionField())).toBe('Вкажи посаду одним коротким рядком');
+    expect(descriptionOf(positionField())).toBe(POSITION_ERROR);
     expect(writes()).toEqual([]);
     expect(onConfirmed).not.toHaveBeenCalled();
+  });
+
+  it('a press on the confirm button from the empty company field marks nothing until the click lands, then both names at once with focus back in the company', async () => {
+    const { user, writes } = renderReview({
+      application: FAILED_DRAFT,
+      view: { focusField: 'company' },
+    });
+    const companyMarkedAlone = countCompanyMarkedAlone();
+    const confirm = screen.getByRole('button', { name: CONFIRM });
+
+    await user.pointer({ keys: '[MouseLeft>]', target: confirm });
+    await user.pointer({ keys: '[/MouseLeft]', target: confirm });
+
+    await waitFor(() => {
+      expect(descriptionOf(positionField())).toBe(POSITION_ERROR);
+    });
+    expect(descriptionOf(companyField())).toBe(COMPANY_ERROR);
+    expect(document.activeElement).toBe(companyField());
+    expect(companyMarkedAlone()).toBe(0);
+    expect(writes()).toEqual([]);
   });
 
   it('a typed company alone still asks for the position', async () => {
@@ -273,7 +308,7 @@ describe('DraftReview', () => {
     await user.click(screen.getByRole('button', { name: CONFIRM }));
 
     await waitFor(() => {
-      expect(descriptionOf(positionField())).toBe('Вкажи посаду одним коротким рядком');
+      expect(descriptionOf(positionField())).toBe(POSITION_ERROR);
     });
     expect(descriptionOf(companyField())).not.toBe(COMPANY_ERROR);
     expect(writes()).toEqual([]);
