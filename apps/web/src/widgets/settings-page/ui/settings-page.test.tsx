@@ -22,7 +22,9 @@ vi.mock('next/navigation', () => import('@/test/navigation'));
 
 const SECTIONS = ['Пошук і тиша', 'Повідомлення', 'AI та приватність', 'Вигляд і тема', 'Акаунт'];
 
-const HIDDEN_ITEMS = ['Пуші в браузері', 'Листи на пошту', 'Токен букмарклета', 'Видалити акаунт'];
+const HIDDEN_ITEMS = ['Пуші в браузері', 'Листи на пошту', 'Видалити акаунт'];
+
+const REVOKE_BOOKMARKLET = { name: 'Вимкнути букмарклет' } as const;
 
 afterEach(() => {
   window.location.hash = '';
@@ -96,8 +98,10 @@ describe('SettingsPage', () => {
     await renderLoadedSettings();
     const aiPrivacy = regionOf('AI та приватність');
 
+    const modelData = within(aiPrivacy).getByRole('list', { name: 'Що бачить модель' });
+
     expect(
-      within(aiPrivacy)
+      within(modelData)
         .getAllByRole('listitem')
         .map((item) => item.textContent),
     ).toEqual([
@@ -108,14 +112,26 @@ describe('SettingsPage', () => {
     ).toBeDefined();
   });
 
-  it('asks only for the session and the suggestions on open', async () => {
+  it('holds the bookmarklet block with the state of the active capture token and its controls', async () => {
+    await renderLoadedSettings();
+    const aiPrivacy = within(regionOf('AI та приватність'));
+
+    expect(aiPrivacy.getByRole('heading', { level: 2, name: 'Букмарклет' })).toBeDefined();
+    expect(await aiPrivacy.findByText('10.11, 01:15')).toBeDefined();
+    expect(aiPrivacy.getByRole('button', REVOKE_BOOKMARKLET)).toBeDefined();
+    expect(aiPrivacy.getByRole('button', { name: 'Нова кнопка' })).toBeDefined();
+  });
+
+  it('asks only for the session, the suggestions and the capture tokens on open, and creates no token', async () => {
     const sent = recordSentRequests();
     await renderLoadedSettings();
     await waitForQuery({ queryKey: SUGGESTIONS_KEY, status: 'success' });
+    await screen.findByRole('button', REVOKE_BOOKMARKLET);
 
-    expect(sent().map((request) => request.url)).toEqual([
-      apiUrl('/auth/me'),
-      apiUrl('/settings/suggestions'),
+    expect(sent().map(({ method, url }) => ({ method, url }))).toEqual([
+      { method: 'GET', url: apiUrl('/auth/me') },
+      { method: 'GET', url: apiUrl('/settings/suggestions') },
+      { method: 'GET', url: apiUrl('/capture/tokens') },
     ]);
   });
 

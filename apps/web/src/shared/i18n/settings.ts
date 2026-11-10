@@ -119,10 +119,6 @@ export const settings = {
         description: "Усе лишилось як було. Перевір з'єднання і спробуй ще раз.",
       },
     },
-    captureToken: {
-      title: 'Токен букмарклета',
-      description: 'Букмарклет створює чернетки цим токеном. Новий токен вимикає старий.',
-    },
   },
   appearance: { title: 'Тема' },
   singleKeyShortcuts: {

@@ -5,9 +5,16 @@ import { parseWebConfig } from './web-config';
 describe('parseWebConfig', () => {
   it('falls back to the local API and analytics ports when nothing is set', () => {
     expect(parseWebConfig({})).toEqual({
+      apiUrl: 'http://localhost:4000',
       apiBaseUrl: 'http://localhost:4000/api/v1',
       analyticsBaseUrl: 'http://localhost:8000',
     });
+  });
+
+  it('gives the bookmarklet an API origin without the trailing slash', () => {
+    expect(parseWebConfig({ NEXT_PUBLIC_API_URL: 'http://localhost:4000/' }).apiUrl).toBe(
+      'http://localhost:4000',
+    );
   });
 
   it('joins /api/v1 to the given API origin without a double slash', () => {
@@ -17,6 +24,7 @@ describe('parseWebConfig', () => {
     });
 
     expect(config).toEqual({
+      apiUrl: 'http://127.0.0.1:4100',
       apiBaseUrl: 'http://127.0.0.1:4100/api/v1',
       analyticsBaseUrl: 'https://analytics.test',
     });

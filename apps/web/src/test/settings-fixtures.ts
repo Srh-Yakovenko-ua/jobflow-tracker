@@ -9,6 +9,11 @@ import { http, HttpResponse } from 'msw/http';
 
 import { apiUrl, SUGGESTIONS, SUGGESTIONS_REQUEST } from './api-handlers';
 import { heldReply, type MoveRouteOptions } from './board-fixtures';
+import {
+  captureTokenRoutes,
+  type CaptureTokenRoutesOptions,
+  USED_TOKEN,
+} from './capture-token-fixtures';
 import { meRoute, meWithSettings } from './session-fixtures';
 
 export const SETTINGS_URL = apiUrl('/settings');
@@ -20,6 +25,7 @@ export type SettingsRoutesOptions = {
   patch?: MoveRouteOptions;
   suggestions?: HttpResponseResolver;
   me?: HttpResponseResolver;
+  captureTokens?: CaptureTokenRoutesOptions;
 };
 
 export function settingsRoutes({
@@ -27,6 +33,7 @@ export function settingsRoutes({
   patch = {},
   suggestions = () => HttpResponse.json(SUGGESTIONS),
   me,
+  captureTokens = { items: [USED_TOKEN] },
 }: SettingsRoutesOptions = {}) {
   const store: { me: MeResponse } = { me: meWithSettings(settings) };
   const patches: unknown[] = [];
@@ -46,6 +53,7 @@ export function settingsRoutes({
       return heldReply({ ...patch, info, fallback: () => saved(body) });
     }),
     http.get(SUGGESTIONS_URL, suggestions),
+    ...captureTokenRoutes(captureTokens).handlers,
   ];
   return { handlers, patches, store };
 }
