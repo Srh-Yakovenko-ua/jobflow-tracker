@@ -1,9 +1,13 @@
 const VACANCY_BLOCKS = ['.b-vacancy', '.l-vacancy', '.job-post-page', 'article', 'main'];
 const PAGE_CHROME = 'nav,footer';
-const NOT_VACANCY_TEXT = `${PAGE_CHROME},script,style,noscript`;
+const NOT_VACANCY_TEXT = `${PAGE_CHROME},noscript`;
 
 function textOutsideChrome(node: Element): string {
-  if (!(node instanceof HTMLElement) || node.matches(NOT_VACANCY_TEXT)) {
+  if (
+    !(node instanceof HTMLElement) ||
+    node.matches(NOT_VACANCY_TEXT) ||
+    getComputedStyle(node).display === 'none'
+  ) {
     return '';
   }
   if (!node.querySelector(PAGE_CHROME)) {

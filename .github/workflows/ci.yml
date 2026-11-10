@@ -93,7 +93,8 @@ jobs:
             echo ''
             echo '| package | lines | branches | functions | statements |'
             echo '| --- | --- | --- | --- | --- |'
-            for summary in apps/*/coverage/coverage-summary.json packages/*/coverage/coverage-summary.json; do
+            for summary in apps/*/coverage/coverage-summary.json packages/*/coverage/coverage-summary.json bookmarklet/coverage/coverage-summary.json; do
+              [[ -f $summary ]] || continue
               package=$(basename "$(dirname "$(dirname "$summary")")")
               jq -r --arg package "$package" '"| \($package) | \(.total.lines.pct)% | \(.total.branches.pct)% | \(.total.functions.pct)% | \(.total.statements.pct)% |"' "$summary"
             done
@@ -105,6 +106,7 @@ jobs:
           path: |
             apps/*/coverage
             packages/*/coverage
+            bookmarklet/coverage
           if-no-files-found: ignore
 
   integration:

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { bookmarkletHref } from './href.js';
+import { type BookmarkletConfig, bookmarkletHref } from './href.js';
 import { javascriptUrlOf } from './javascript-url.js';
 import { ADDED_BODY, CONFIG, stubFetch } from './test/api.js';
 import { DOU_PAGE } from './test/fixtures/pages.js';
@@ -9,6 +9,7 @@ import { mountPage, shownToast, toastLinkHref } from './test/page.js';
 declare const BOOKMARKLET_CODE: string;
 
 const PLACEHOLDER = '__JOBFLOW_CONFIG__';
+const CARD_URL = 'http://localhost:3000/applications/6f1c2b1e-5a0d-4c5e-9b7a-2f4d8e1a3c10';
 
 function storedCodeOf(href: string): string {
   return decodeURIComponent(new URL(href).href.slice('javascript:'.length));
@@ -20,6 +21,13 @@ function runScript(code: string): void {
     throw new Error('The bookmarklet code did not parse into a function');
   }
   Reflect.apply(script, undefined, []);
+}
+
+function runStored(config: BookmarkletConfig) {
+  mountPage(DOU_PAGE);
+  const fetchStub = stubFetch({ status: 202, body: ADDED_BODY });
+  runScript(storedCodeOf(bookmarkletHref(config)));
+  return fetchStub;
 }
 
 describe('javascriptUrlOf', () => {
@@ -65,16 +73,24 @@ describe('bookmarkletHref', () => {
     );
   });
 
-  it('runs in a page as the stored code and shows the added toast', async () => {
-    mountPage(DOU_PAGE);
-    const fetchStub = stubFetch({ status: 202, body: ADDED_BODY });
+  it('posts to a path with one slash when the addresses end in a slash', async () => {
+    const fetchStub = runStored({
+      ...CONFIG,
+      apiUrl: 'http://localhost:4000/',
+      webUrl: 'http://localhost:3000//',
+    });
 
-    runScript(storedCodeOf(bookmarkletHref(CONFIG)));
+    await expect
+      .poll(() => fetchStub.mock.calls[0]?.[0])
+      .toBe('http://localhost:4000/api/v1/capture/bookmarklet');
+    await expect.poll(toastLinkHref).toBe(CARD_URL);
+  });
+
+  it('runs in a page as the stored code and shows the added toast', async () => {
+    const fetchStub = runStored(CONFIG);
 
     await expect.poll(() => shownToast().textContent).toContain('Додано в JobFlow · AI розбирає');
-    expect(toastLinkHref()).toBe(
-      'http://localhost:3000/applications/6f1c2b1e-5a0d-4c5e-9b7a-2f4d8e1a3c10',
-    );
+    expect(toastLinkHref()).toBe(CARD_URL);
     expect(fetchStub.mock.calls[0]?.[1].headers).toMatchObject({
       Authorization: `Capture ${CONFIG.token}`,
     });

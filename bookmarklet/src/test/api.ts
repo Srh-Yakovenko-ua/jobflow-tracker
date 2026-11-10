@@ -1,4 +1,4 @@
-import type { CapturePasteResponse, PossibleDuplicate } from '@jobflow/shared';
+import type { CapturePasteResponse, ErrorResponse, PossibleDuplicate } from '@jobflow/shared';
 import { vi } from 'vitest';
 
 import type { BookmarkletConfig } from '../href.js';
@@ -26,6 +26,11 @@ export const DUPLICATE: PossibleDuplicate = {
 export type FetchReply = { status: number; body?: unknown; headers?: Record<string, string> };
 
 export type FetchBehaviour = FetchReply | Error | 'silent';
+
+export function conflictReply(type: ErrorResponse['type']): FetchReply {
+  const body: ErrorResponse = { type, title: 'Conflict', status: 409, requestId: 'req-1' };
+  return { status: 409, body };
+}
 
 function replyTo(behaviour: FetchBehaviour) {
   if (behaviour === 'silent') {

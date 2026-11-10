@@ -1,9 +1,17 @@
 import { afterEach, beforeEach, describe, expect, it, type MockInstance, vi } from 'vitest';
 
 import { run } from './run.js';
-import { ADDED_BODY, CONFIG, DUPLICATE, type FetchReply, stubFetch } from './test/api.js';
+import {
+  ADDED_BODY,
+  CONFIG,
+  conflictReply,
+  DUPLICATE,
+  type FetchReply,
+  stubFetch,
+} from './test/api.js';
 import { LINKEDIN_PAGE } from './test/fixtures/pages.js';
 import { mountPage, shownToast, toastHosts, toastLinkHref } from './test/page.js';
+import { toastIsBusy } from './toast.js';
 
 const NOW = new Date('2026-11-10T12:00:00.000Z');
 const SUCCESS = 'Додано в JobFlow · AI розбирає';
@@ -71,6 +79,24 @@ describe('run', () => {
     );
   });
 
+  it('ends in the failed toast when the duplicate date is unreadable, and takes the next click', async () => {
+    const unreadable = { ...DUPLICATE, appliedAt: 'yesterday' };
+    const fetchStub = stubFetch({
+      status: 202,
+      body: { ...ADDED_BODY, possibleDuplicates: [unreadable] },
+    });
+
+    await run(CONFIG);
+
+    expect(shownToast().textContent).toBe('Не вдалося додатиДодати вручну');
+    expect(toastIsBusy()).toBe(false);
+    expectAddUrl(toastLinkHref());
+
+    await run(CONFIG);
+
+    expect(fetchStub).toHaveBeenCalledTimes(2);
+  });
+
   it('shows the sending toast and ignores a second click while the first is in flight', async () => {
     const fetchStub = stubFetch('silent');
 
@@ -121,15 +147,26 @@ describe('run', () => {
       href: 'http://localhost:3000/settings',
     },
     {
-      name: 'a conflict',
-      reply: { status: 409 },
-      text: 'Немає активного пошуку або цю сторінку сьогодні вже доданоВідкрити дошку',
+      name: 'no active search',
+      reply: conflictReply('conflict'),
+      text: 'Немає активного пошукуВідкрити дошку',
+      href: 'http://localhost:3000/board',
+    },
+    {
+      name: 'a page already added today',
+      reply: conflictReply('idempotency_conflict'),
+      text: 'Вже додано сьогодніВідкрити дошку',
       href: 'http://localhost:3000/board',
     },
     {
       name: 'a rate limit',
       reply: { status: 429, headers: { 'Retry-After': '90' } },
       text: 'Забагато запитів, спробуй через 2 хвилини',
+    },
+    {
+      name: 'a rate limit with an endless wait',
+      reply: { status: 429, headers: { 'Retry-After': 'Infinity' } },
+      text: 'Забагато запитів, спробуй через 1 хвилину',
     },
   ])('answers $name with its own toast that stays', async ({ reply, text, href }) => {
     stubFetch(reply);

@@ -92,4 +92,17 @@ describe('pageTextOf', () => {
 
     expect(pageTextOf(document)).toBe('Опис вакансії');
   });
+
+  it('walks the body and leaves out what the page does not render', () => {
+    mountPage({
+      html: `
+        <style>.collapsed{display:none}</style>
+        <nav>Меню</nav>
+        <div><p>Опис вакансії</p></div>
+        <div hidden>Прихований лічильник</div>
+        <div class="collapsed">Згорнутий блок</div>`,
+    });
+
+    expect(pageTextOf(document)).toBe('Опис вакансії');
+  });
 });
