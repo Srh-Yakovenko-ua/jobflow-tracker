@@ -1544,9 +1544,10 @@
           "auth"
         ],
         "summary": "Sign out of every session",
+        "description": "Revokes every session of the user and the capture token of the bookmarklet, in one transaction.",
         "responses": {
           "204": {
-            "description": "Every session of the user is revoked",
+            "description": "Every session and the capture token of the user are revoked",
             "headers": {
               "Set-Cookie": {
                 "schema": {

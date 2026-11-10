@@ -21,6 +21,8 @@ import {
   signIn,
   signUp,
 } from '../../test/auth.js';
+import { bookmarkletStatus, signedInWithCaptureToken } from '../../test/capture.js';
+import { callRoute } from '../../test/http.js';
 import { memoryLog, withLogSink } from '../../test/memory-log.js';
 import { hashRefreshToken } from './refresh-tokens.js';
 
@@ -161,6 +163,22 @@ describe('refresh token rotation and revocation', () => {
     const rows = await testApp.prisma.refreshToken.findMany({ where: { userId: first.user.id } });
     expect(rows.map((row) => row.revokedAt instanceof Date)).toEqual([true, true]);
     expect((await refreshWith(testApp.app, bohdan)).status).toBe(200);
+  });
+
+  it("ends the user's capture token on logout everywhere and leaves another user's working", async () => {
+    const olena = await signedInWithCaptureToken(testApp);
+    const bohdan = await signedInWithCaptureToken(testApp);
+    expect(await bookmarkletStatus(testApp.app, olena.captureToken)).toBe(202);
+
+    const response = await callRoute(testApp.app, {
+      method: 'post',
+      path: '/api/v1/auth/logout-all',
+      accessToken: olena.accessToken,
+    });
+
+    expect(response.status).toBe(204);
+    expect(await bookmarkletStatus(testApp.app, olena.captureToken)).toBe(401);
+    expect(await bookmarkletStatus(testApp.app, bohdan.captureToken)).toBe(202);
   });
 
   it('refuses logout everywhere without an access token with 401', async () => {

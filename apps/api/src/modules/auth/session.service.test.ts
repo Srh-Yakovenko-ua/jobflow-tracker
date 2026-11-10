@@ -1,19 +1,25 @@
 import { refreshTokenSchema } from '@jobflow/shared';
-import { Test } from '@nestjs/testing';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { z } from 'zod';
 
+import {
+  FAKE_TRANSACTION,
+  fakeTransactionModule,
+  RevokeAllRecorder,
+} from '../../test/fake-prisma.js';
 import { AccessTokens } from './access-tokens.js';
+import { CaptureTokensRepository } from './capture-tokens.repository.js';
 import { hashRefreshToken } from './refresh-tokens.js';
 import {
   type NewRefreshToken,
   type OwnedToken,
+  type RevokeAllInput,
   type RotateInput,
   type RotateOutcome,
   SessionRepository,
-  type UserAt,
 } from './session.repository.js';
 import { SessionService } from './session.service.js';
+import { UserTokens } from './user-tokens.js';
 
 const USER_ID = '0199f0a0-0000-7000-8000-000000000001';
 const FAMILY_ID = '0199f0a0-0000-7000-8000-0000000000f1';
@@ -24,11 +30,10 @@ const INVALID_REFRESH = {
   body: { status: 401, type: 'unauthorized', detail: 'Invalid refresh token' },
 };
 
-class FakeSessionRepository {
+class FakeSessionRepository extends RevokeAllRecorder<RevokeAllInput> {
   readonly inserted: NewRefreshToken[] = [];
   readonly rotations: RotateInput[] = [];
   readonly familyRevokes: string[] = [];
-  readonly revokedAll: UserAt[] = [];
   readonly families = new Map<string, string>();
   outcome: RotateOutcome = { status: 'invalid' };
 
@@ -47,11 +52,6 @@ class FakeSessionRepository {
     return Promise.resolve();
   }
 
-  revokeAll(input: UserAt): Promise<void> {
-    this.revokedAll.push(input);
-    return Promise.resolve();
-  }
-
   familyOf({ tokenHash }: OwnedToken): Promise<string | undefined> {
     return Promise.resolve(this.families.get(tokenHash));
   }
@@ -65,15 +65,25 @@ class FakeAccessTokens {
 
 async function sessionServiceWith() {
   const repository = new FakeSessionRepository();
-  const moduleRef = await Test.createTestingModule({
-    providers: [SessionService, SessionRepository, AccessTokens],
+  const captureTokens = new RevokeAllRecorder<RevokeAllInput>();
+  const moduleRef = await fakeTransactionModule({
+    providers: [
+      SessionService,
+      SessionRepository,
+      AccessTokens,
+      UserTokens,
+      CaptureTokensRepository,
+    ],
+    now: NOW,
   })
     .overrideProvider(SessionRepository)
     .useValue(repository)
+    .overrideProvider(CaptureTokensRepository)
+    .useValue(captureTokens)
     .overrideProvider(AccessTokens)
     .useValue(new FakeAccessTokens())
     .compile();
-  return { repository, service: moduleRef.get(SessionService) };
+  return { repository, captureTokens, service: moduleRef.get(SessionService) };
 }
 
 beforeEach(() => {
@@ -165,12 +175,17 @@ describe('SessionService.logout', () => {
     expect(repository.familyRevokes).toEqual([]);
   });
 
-  it('revokes every family of the user on logout everywhere', async () => {
-    const { repository, service } = await sessionServiceWith();
+  it('revokes every family and the capture tokens of the user in one transaction on logout everywhere', async () => {
+    const { repository, captureTokens, service } = await sessionServiceWith();
 
     await service.logoutAll(USER_ID);
 
-    expect(repository.revokedAll).toEqual([{ userId: USER_ID, now: NOW }]);
+    expect(repository.revokedAll).toEqual([
+      { userId: USER_ID, now: NOW, client: FAKE_TRANSACTION },
+    ]);
+    expect(captureTokens.revokedAll).toEqual([
+      { userId: USER_ID, now: NOW, client: FAKE_TRANSACTION },
+    ]);
   });
 });
 

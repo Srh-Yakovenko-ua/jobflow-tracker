@@ -82,7 +82,7 @@ export class SessionRepository {
 
   async revokeAll(
     { userId, now, keepFamilyId }: RevokeAllInput,
-    client: Prisma.TransactionClient = this.prisma,
+    client: Prisma.TransactionClient,
   ): Promise<void> {
     const otherFamilies = keepFamilyId === undefined ? {} : { familyId: { not: keepFamilyId } };
     await revoke(client, { where: { userId, ...otherFamilies }, now });

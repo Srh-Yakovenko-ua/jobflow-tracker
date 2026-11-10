@@ -7,6 +7,17 @@ import { fixedClock } from './time.js';
 
 export const FAKE_TRANSACTION = { name: 'fake transaction' };
 
+export type InTransaction<T> = T & { client: unknown };
+
+export class RevokeAllRecorder<Input extends object> {
+  readonly revokedAll: InTransaction<Input>[] = [];
+
+  revokeAll(input: Input, client: unknown): Promise<void> {
+    this.revokedAll.push({ ...input, client });
+    return Promise.resolve();
+  }
+}
+
 export type FakeTransactionModule = { providers: Provider[] } & (
   { now: Date } | { clock: Pick<Clock, 'now'> }
 );
