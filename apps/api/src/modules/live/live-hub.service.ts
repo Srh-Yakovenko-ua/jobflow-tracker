@@ -50,6 +50,9 @@ export class LiveHub implements OnModuleDestroy {
     this.subscriber.on('error', (error: Error) => {
       this.logger.warn({ err: error.message }, 'live subscriber connection error');
     });
+    this.subscriber.on('close', () => {
+      this.closed.next();
+    });
     this.subscriber.on('ready', () => void this.subscribe());
     this.subscriber.on('pmessage', (...[, channel, message]: [string, string, string]) => {
       this.receive(channel.slice(LIVE_CHANNEL.prefix.length), message);

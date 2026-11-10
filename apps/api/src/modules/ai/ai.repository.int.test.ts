@@ -115,8 +115,9 @@ describe('AiRepository job changes on Postgres', () => {
     const id = await createAiJob(database.prisma, { userId, applicationId, status });
     const before = await storedAiJob(database.prisma, id);
 
-    await apply(aiRepository(), { userId: owners.olena.userId, id, aiResultId });
+    const changed = await apply(aiRepository(), { userId: owners.olena.userId, id, aiResultId });
 
+    expect(changed).toBe(0);
     expect(await storedAiJob(database.prisma, id)).toEqual(before);
   });
 });
@@ -134,10 +135,11 @@ describe('AiRepository job steps and findJob on Postgres', () => {
     await repository.startJob(userId, { id: finished, now: NOW });
     await repository.startJob(userId, { id: failed, now: NOW });
     const started = await stepOf(finished);
-    await repository.finishJob(userId, { id: finished, aiResultId, now: NOW });
+    const finishedRows = await repository.finishJob(userId, { id: finished, aiResultId, now: NOW });
     await repository.failJob(userId, { id: failed, errorType: 'ai_timeout', now: NOW });
 
     expect([created, started, await stepOf(finished), await stepOf(failed)]).toEqual([1, 2, 3, 2]);
+    expect(finishedRows).toBe(1);
   });
 
   it("finds the owner's job with its status fields and no job for another user", async () => {

@@ -221,11 +221,9 @@ export class FakeAiRepository {
     return this.reached(() => this.moveJob(userId, { id, from: ['queued', 'processing'], to }));
   }
 
-  finishJob(userId: string, { id, aiResultId, now }: FinishAiJob): Promise<void> {
+  finishJob(userId: string, { id, aiResultId, now }: FinishAiJob): Promise<number> {
     const to = { status: 'done', step: 3, aiResultId, finishedAt: now } as const;
-    return this.reached(() => {
-      this.moveJob(userId, { id, from: ['processing'], to });
-    });
+    return this.reached(() => this.moveJob(userId, { id, from: ['processing'], to }));
   }
 
   failJob(userId: string, { id, errorType, now }: FailAiJob): Promise<number> {

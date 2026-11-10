@@ -166,6 +166,15 @@ describe('LiveHub', () => {
     expect(reconnected.messages).toHaveLength(1);
   });
 
+  it('ends every open stream when its subscriber connection closes', () => {
+    const olena = opened(hub, OLENA_ID);
+    const bohdan = opened(hub, BOHDAN_ID);
+
+    redis.subscriber.emit('close');
+
+    expect([olena.ended, bohdan.ended]).toEqual([true, true]);
+  });
+
   it('keeps the streams open while Redis answers at a heartbeat', async () => {
     const olena = opened(hub, OLENA_ID);
 

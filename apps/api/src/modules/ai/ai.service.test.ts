@@ -520,6 +520,34 @@ describe('AiService.complete reporting progress', () => {
     ]);
   });
 
+  it('reports failed with the error type when the settle callback throws on a final failure', async () => {
+    const { repository, ai, service } = await serviceWithFakes();
+    const { seen, progressed } = progressOf(repository);
+    const refused = new Error('connect ECONNREFUSED 127.0.0.1:5432');
+    ai.answer = () => Promise.reject(new AiServiceError(INVALID_OUTPUT));
+    const settled = () => Promise.reject(refused);
+
+    await expect(service.complete(attemptOf({ settled, progressed }))).rejects.toBe(refused);
+
+    expect(seen.map(({ update }) => update)).toEqual([
+      PROCESSING_UPDATE,
+      { ...UPDATE, status: 'failed', step: 2, errorType: 'ai_invalid_output' },
+    ]);
+  });
+
+  it('reports no done when the job is gone by the time it finishes', async () => {
+    const { repository, service } = await serviceWithFakes();
+    const { seen, progressed } = progressOf(repository);
+    const settled = () => {
+      repository.jobs.delete(AI_JOB_ID);
+      return Promise.resolve();
+    };
+
+    await service.complete(attemptOf({ settled, progressed }));
+
+    expect(seen.map(({ update }) => update)).toEqual([PROCESSING_UPDATE]);
+  });
+
   it('reports only processing while a 503 is still retried', async () => {
     const { repository, ai, service } = await serviceWithFakes();
     const { seen, progressed } = progressOf(repository);

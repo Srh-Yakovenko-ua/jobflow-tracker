@@ -50,6 +50,10 @@ const PATH_PARAMS = ROUTES.flatMap(({ name, route }) =>
 
 const BEARER_ROUTES = ROUTES.filter(({ route }) => route.security === undefined);
 
+const UNLIMITED_ROUTE_NAME = 'GET /events/stream';
+
+const LIMITED_ROUTES = ROUTES.filter(({ name }) => name !== UNLIMITED_ROUTE_NAME);
+
 const CAPTURE_TOKEN_ROUTES = ROUTES.filter(({ route }) =>
   (route.security ?? []).some((scheme) => 'captureToken' in scheme),
 ).map(({ name }) => name);
@@ -119,10 +123,18 @@ describe('the OpenAPI document', () => {
     expect(Object.keys(route.responses)).toEqual(expect.arrayContaining(['401', '403']));
   });
 
-  it.each(ROUTES)('documents 429 with a Retry-After header on $name', ({ route }) => {
+  it.each(LIMITED_ROUTES)('documents 429 with a Retry-After header on $name', ({ route }) => {
     const headers = z.instanceof(z.ZodObject).parse(replyOf(route, 429)?.headers);
 
     expect(Object.keys(headers.shape)).toEqual(['Retry-After']);
+  });
+
+  it('lists no 429 on the live stream, the one route outside the rate limiter', () => {
+    const stream = ROUTES.filter(({ name }) => name === UNLIMITED_ROUTE_NAME);
+
+    expect(stream.map(({ route }) => Object.keys(route.responses))).toEqual([
+      ['200', '401', '500', '503'],
+    ]);
   });
 
   it.each([
