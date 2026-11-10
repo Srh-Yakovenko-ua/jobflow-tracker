@@ -1,4 +1,4 @@
-import { type CaptureOutcome, payloadOf, sendCapture } from './capture.js';
+import { type CaptureOutcome, FAILED, payloadOf, sendCapture } from './capture.js';
 import { copyOf, duplicateMessageOf, retryMessageOf } from './copy.js';
 import type { CopyKey } from './copy-uk.js';
 import { addUrlOf, openFallback } from './fallback.js';
@@ -17,9 +17,12 @@ const SUCCESS_HIDE_MS = 8000;
 
 const ADD_BY_HAND: RefusalToast = { title: 'failed', label: 'addByHand' };
 
+const OPEN_BOARD = { label: 'openBoard', path: '/board' } as const;
+
 const REFUSAL_TOASTS: Record<Refusal, RefusalToast> = {
   unauthorized: { title: 'unauthorized', label: 'newBookmarklet', path: '/settings' },
-  conflict: { title: 'conflict', label: 'openBoard', path: '/board' },
+  conflict: { ...OPEN_BOARD, title: 'conflict' },
+  repeated: { ...OPEN_BOARD, title: 'repeated' },
   failed: ADD_BY_HAND,
   unreachable: ADD_BY_HAND,
 };
@@ -51,12 +54,16 @@ export async function run(config: BookmarkletConfig): Promise<void> {
   const { webUrl } = config;
   const now = new Date();
   const payload = payloadOf(document);
-  const addUrl = addUrlOf({ webUrl, payload });
+  const context = { webUrl, addUrl: addUrlOf({ webUrl, payload }), now };
   showToast({ title: copyOf('sending'), busy: true });
-  const outcome = await sendCapture({ config, payload, date: now });
-  if (outcome.kind === 'unreachable' && openFallback(addUrl)) {
-    hideToast();
-    return;
+  try {
+    const outcome = await sendCapture({ config, payload, date: now });
+    if (outcome.kind === 'unreachable' && openFallback(context.addUrl)) {
+      hideToast();
+      return;
+    }
+    showToast(toastOf(outcome, context));
+  } catch {
+    showToast(toastOf(FAILED, context));
   }
-  showToast(toastOf(outcome, { webUrl, addUrl, now }));
 }

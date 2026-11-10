@@ -2,7 +2,14 @@ import { CAPTURE_BOOKMARKLET_LIMITS, type CaptureBookmarkletInput } from '@jobfl
 import { describe, expect, it } from 'vitest';
 
 import { idempotencyKeyOf, payloadOf, sendCapture } from './capture.js';
-import { ADDED_BODY, CONFIG, DUPLICATE, type FetchReply, stubFetch } from './test/api.js';
+import {
+  ADDED_BODY,
+  CONFIG,
+  conflictReply,
+  DUPLICATE,
+  type FetchReply,
+  stubFetch,
+} from './test/api.js';
 import { DJINNI_PAGE } from './test/fixtures/pages.js';
 import { elementOf, mountPage } from './test/page.js';
 
@@ -74,9 +81,9 @@ describe('idempotencyKeyOf', () => {
   });
 
   it('pads a short hash to eight hex digits', () => {
-    expect(idempotencyKeyOf({ url: PAYLOAD.url, date: DATE })).toMatch(
-      /^bm-\d{4}-\d{2}-\d{2}-[0-9a-f]{8}$/,
-    );
+    const url = 'https://djinni.co/jobs/15-python-engineer/';
+
+    expect(idempotencyKeyOf({ url, date: DATE })).toBe('bm-2026-11-10-0d2333d8');
   });
 
   it('stays the same for one url through one UTC day', () => {
@@ -133,7 +140,23 @@ describe('sendCapture', () => {
       },
     },
     { name: 'a revoked token', reply: { status: 401 }, outcome: { kind: 'unauthorized' } },
-    { name: 'a conflict', reply: { status: 409 }, outcome: { kind: 'conflict' } },
+    { name: 'a conflict without a type', reply: { status: 409 }, outcome: { kind: 'conflict' } },
+    { name: 'no active search', reply: conflictReply('conflict'), outcome: { kind: 'conflict' } },
+    {
+      name: 'the same page sent again today',
+      reply: conflictReply('idempotency_conflict'),
+      outcome: { kind: 'repeated' },
+    },
+    {
+      name: 'a rate limit with an endless Retry-After',
+      reply: { status: 429, headers: { 'Retry-After': 'Infinity' } },
+      outcome: { kind: 'rateLimited', retryAfterSeconds: 60 },
+    },
+    {
+      name: 'a rate limit with a negative Retry-After',
+      reply: { status: 429, headers: { 'Retry-After': '-5' } },
+      outcome: { kind: 'rateLimited', retryAfterSeconds: 60 },
+    },
     {
       name: 'a rate limit with Retry-After',
       reply: { status: 429, headers: { 'Retry-After': '90' } },

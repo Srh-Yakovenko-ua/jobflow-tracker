@@ -15,9 +15,16 @@ const BLOCK_TAGS = new Set([
   'UL',
 ]);
 
+function isRendered(element: Element): boolean {
+  return element.tagName !== 'NOSCRIPT' && getComputedStyle(element).display !== 'none';
+}
+
 function renderedTextOf(node: Node): string {
   if (!(node instanceof HTMLElement)) {
     return (node.textContent ?? '').replace(/\s+/g, ' ');
+  }
+  if (!isRendered(node)) {
+    return '';
   }
   const text = Array.from(node.childNodes, renderedTextOf).join('');
   return BLOCK_TAGS.has(node.tagName) ? `\n${text}\n` : text;
@@ -26,6 +33,9 @@ function renderedTextOf(node: Node): string {
 Object.defineProperty(HTMLElement.prototype, 'innerText', {
   configurable: true,
   get(this: HTMLElement) {
+    if (!isRendered(this)) {
+      return this.textContent;
+    }
     return renderedTextOf(this)
       .split('\n')
       .map((line) => line.trim())

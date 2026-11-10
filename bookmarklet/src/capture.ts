@@ -17,7 +17,7 @@ export type CaptureOutcome =
       duplicate?: DuplicateHint;
     }
   | { kind: 'rateLimited'; retryAfterSeconds: number }
-  | { kind: 'unauthorized' | 'conflict' | 'failed' | 'unreachable' };
+  | { kind: 'unauthorized' | 'conflict' | 'repeated' | 'failed' | 'unreachable' };
 
 export type CaptureRequest = {
   config: BookmarkletConfig;
@@ -27,7 +27,7 @@ export type CaptureRequest = {
 
 const REQUEST_TIMEOUT_MS = 20_000;
 const DEFAULT_RETRY_SECONDS = 60;
-const FAILED: CaptureOutcome = { kind: 'failed' };
+export const FAILED: CaptureOutcome = { kind: 'failed' };
 const REFUSALS: Record<number, CaptureOutcome> = {
   401: { kind: 'unauthorized' },
   409: { kind: 'conflict' },
@@ -87,13 +87,17 @@ function addedOf(body: unknown): CaptureOutcome {
 }
 
 async function outcomeOf(response: Response): Promise<CaptureOutcome> {
+  const body: unknown = await response.json().catch(() => null);
   if (response.ok) {
-    const body: unknown = await response.json().catch(() => null);
     return addedOf(body);
   }
   if (response.status === 429) {
-    const retryAfterSeconds = Number(response.headers.get('Retry-After')) || DEFAULT_RETRY_SECONDS;
+    const seconds = Number(response.headers.get('Retry-After'));
+    const retryAfterSeconds = seconds > 0 && seconds < Infinity ? seconds : DEFAULT_RETRY_SECONDS;
     return { kind: 'rateLimited', retryAfterSeconds };
+  }
+  if (response.status === 409 && isRecord(body) && body.type === 'idempotency_conflict') {
+    return { kind: 'repeated' };
   }
   return REFUSALS[response.status] ?? FAILED;
 }
