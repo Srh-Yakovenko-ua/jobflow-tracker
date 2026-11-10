@@ -4,6 +4,7 @@
 !pnpm-workspace.yaml
 !turbo.json
 !apps/web
+!bookmarklet
 !packages/config
 !packages/shared
 **/node_modules

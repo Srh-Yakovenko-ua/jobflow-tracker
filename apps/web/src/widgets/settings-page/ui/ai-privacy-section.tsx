@@ -1,4 +1,5 @@
 import { DeleteAiResultsDialog } from '@/features/delete-ai-results';
+import { InstallBookmarklet } from '@/features/install-bookmarklet';
 import { uk } from '@/shared/i18n';
 
 import { modelDataItems } from '../model/model-data-items';
@@ -19,7 +20,10 @@ export function AiPrivacySection({ items }: AiPrivacySectionProps) {
         <SettingsCard className="divide-y divide-line-soft">
           <div className="flex flex-col gap-2.5 px-5 py-4">
             <h3 className="text-[14.5px] leading-[1.4] font-semibold">{COPY.modelData.title}</h3>
-            <ul className="flex list-disc flex-col gap-1.5 ps-5 text-[13.5px] leading-[1.55] text-ink-2">
+            <ul
+              aria-label={COPY.modelData.title}
+              className="flex list-disc flex-col gap-1.5 ps-5 text-[13.5px] leading-[1.55] text-ink-2"
+            >
               {MODEL_DATA.map((item) => (
                 <li key={item.id}>{item.text}</li>
               ))}
@@ -28,9 +32,15 @@ export function AiPrivacySection({ items }: AiPrivacySectionProps) {
           {items.aiDataDeletion && (
             <SettingNote copy={COPY.dataDeletion} action={<DeleteAiResultsDialog />} />
           )}
-          {items.captureToken && <SettingNote copy={COPY.captureToken} />}
         </SettingsCard>
       </SettingsBlock>
+      {items.captureToken && (
+        <SettingsBlock heading={uk.bookmarklet.heading}>
+          <SettingsCard className="px-5 py-4">
+            <InstallBookmarklet />
+          </SettingsCard>
+        </SettingsBlock>
+      )}
     </SettingsSection>
   );
 }

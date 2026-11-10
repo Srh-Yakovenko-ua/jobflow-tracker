@@ -1,13 +1,13 @@
 import { board } from './board';
 
-const { emptySearch, filters } = board;
+const { emptySearch, filters, firstRun } = board;
 
 export const devUiStates = {
   firstRun: {
     index: '01',
     title: 'Перший вхід · дошка на нулі',
     addFirst: 'Додати першу вакансію',
-    bookmarklet: 'Встановити букмарклет',
+    bookmarklet: firstRun.bookmarklet,
   },
   emptyScreens: {
     index: '02',

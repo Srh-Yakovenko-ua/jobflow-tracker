@@ -9,7 +9,7 @@ const webConfigSchema = z.object({
 
 type WebEnv = Partial<Record<keyof z.input<typeof webConfigSchema>, string | undefined>>;
 
-export type WebConfig = { apiBaseUrl: string; analyticsBaseUrl: string };
+export type WebConfig = { apiUrl: string; apiBaseUrl: string; analyticsBaseUrl: string };
 
 function withoutTrailingSlash(url: string): string {
   return url.replace(/\/+$/, '');
@@ -21,8 +21,10 @@ export function parseWebConfig(env: WebEnv): WebConfig {
   if (!result.success) {
     throw new Error(`Invalid web config:\n${z.prettifyError(result.error)}`);
   }
+  const apiUrl = withoutTrailingSlash(result.data.NEXT_PUBLIC_API_URL);
   return {
-    apiBaseUrl: `${withoutTrailingSlash(result.data.NEXT_PUBLIC_API_URL)}/api/v1`,
+    apiUrl,
+    apiBaseUrl: `${apiUrl}/api/v1`,
     analyticsBaseUrl: withoutTrailingSlash(result.data.NEXT_PUBLIC_ANALYTICS_URL),
   };
 }

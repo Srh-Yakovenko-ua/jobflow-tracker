@@ -5,6 +5,7 @@ import { applicationPage } from './application-page';
 import { applicationsTable } from './applications-table';
 import { auth } from './auth';
 import { board } from './board';
+import { bookmarklet } from './bookmarklet';
 import { calendar } from './calendar';
 import { calendarPage } from './calendar-page';
 import { contact } from './contact';
@@ -65,6 +66,7 @@ export const uk = {
   },
   auth,
   board,
+  bookmarklet,
   applicationsTable,
   calendarPage,
   settings,

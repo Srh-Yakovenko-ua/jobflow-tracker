@@ -7,16 +7,18 @@ COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 COPY apps/web/package.json apps/web/
 COPY packages/shared/package.json packages/shared/
 COPY packages/config/package.json packages/config/
+COPY bookmarklet/package.json bookmarklet/
 RUN HUSKY=0 pnpm install --frozen-lockfile --filter @jobflow/web...
 
 FROM deps AS source
 COPY turbo.json ./
 COPY packages/config packages/config
 COPY packages/shared packages/shared
+COPY bookmarklet bookmarklet
 COPY apps/web apps/web
 
 FROM source AS dev
-RUN pnpm --filter @jobflow/shared build
+RUN pnpm --filter @jobflow/shared build && pnpm --filter @jobflow/bookmarklet build
 EXPOSE 3000
 CMD ["pnpm", "--filter", "@jobflow/web", "exec", "next", "dev", "--hostname", "0.0.0.0", "--port", "3000"]
 

@@ -27,7 +27,7 @@ export const FEATURE_FLAGS: FeatureFlags = {
   followUp: false,
   browserPush: false,
   emailNotifications: false,
-  captureToken: false,
+  captureToken: true,
   aiDataDeletion: true,
   accountDeletion: false,
 };
