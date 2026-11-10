@@ -77,6 +77,7 @@ export const applicationCardSchema = applicationResponseSchema
     stackCount: z.int32().min(0),
     nextScheduledEvent: scheduledEventSlotSchema.nullable(),
     aiStatus: aiJobStatusSchema.nullable(),
+    aiJobId: z.uuid().nullable(),
   });
 
 export const searchSnippetSchema = z

@@ -4471,6 +4471,7 @@
                         "startsAt": "2026-10-23T13:00:00.000Z"
                       },
                       "aiStatus": "processing",
+                      "aiJobId": "0199f4b1-2c3d-7e4f-8a51-6b7c8d9e0f1a",
                       "snippet": [
                         {
                           "text": "Go, Kubernetes, gRPC … Шукаємо досвід з ",
@@ -4644,6 +4645,13 @@
                               null
                             ]
                           },
+                          "aiJobId": {
+                            "type": [
+                              "string",
+                              "null"
+                            ],
+                            "format": "uuid"
+                          },
                           "snippet": {
                             "type": [
                               "array",
@@ -4687,6 +4695,7 @@
                           "stackCount",
                           "nextScheduledEvent",
                           "aiStatus",
+                          "aiJobId",
                           "snippet"
                         ]
                       }
@@ -6762,7 +6771,8 @@
                             "kind": "screening_call",
                             "startsAt": "2026-10-23T13:00:00.000Z"
                           },
-                          "aiStatus": "processing"
+                          "aiStatus": "processing",
+                          "aiJobId": "0199f4b1-2c3d-7e4f-8a51-6b7c8d9e0f1a"
                         }
                       ]
                     },
@@ -6960,6 +6970,13 @@
                                       null
                                     ]
                                   },
+                                  "aiJobId": {
+                                    "type": [
+                                      "string",
+                                      "null"
+                                    ],
+                                    "format": "uuid"
+                                  },
                                   "snippet": {
                                     "type": "array",
                                     "items": {
@@ -6999,7 +7016,8 @@
                                   "stack",
                                   "stackCount",
                                   "nextScheduledEvent",
-                                  "aiStatus"
+                                  "aiStatus",
+                                  "aiJobId"
                                 ]
                               }
                             }
@@ -7171,6 +7189,13 @@
                                       null
                                     ]
                                   },
+                                  "aiJobId": {
+                                    "type": [
+                                      "string",
+                                      "null"
+                                    ],
+                                    "format": "uuid"
+                                  },
                                   "snippet": {
                                     "type": "array",
                                     "items": {
@@ -7210,7 +7235,8 @@
                                   "stack",
                                   "stackCount",
                                   "nextScheduledEvent",
-                                  "aiStatus"
+                                  "aiStatus",
+                                  "aiJobId"
                                 ]
                               }
                             }
@@ -7382,6 +7408,13 @@
                                       null
                                     ]
                                   },
+                                  "aiJobId": {
+                                    "type": [
+                                      "string",
+                                      "null"
+                                    ],
+                                    "format": "uuid"
+                                  },
                                   "snippet": {
                                     "type": "array",
                                     "items": {
@@ -7421,7 +7454,8 @@
                                   "stack",
                                   "stackCount",
                                   "nextScheduledEvent",
-                                  "aiStatus"
+                                  "aiStatus",
+                                  "aiJobId"
                                 ]
                               }
                             }
@@ -7593,6 +7627,13 @@
                                       null
                                     ]
                                   },
+                                  "aiJobId": {
+                                    "type": [
+                                      "string",
+                                      "null"
+                                    ],
+                                    "format": "uuid"
+                                  },
                                   "snippet": {
                                     "type": "array",
                                     "items": {
@@ -7632,7 +7673,8 @@
                                   "stack",
                                   "stackCount",
                                   "nextScheduledEvent",
-                                  "aiStatus"
+                                  "aiStatus",
+                                  "aiJobId"
                                 ]
                               }
                             }
@@ -7804,6 +7846,13 @@
                                       null
                                     ]
                                   },
+                                  "aiJobId": {
+                                    "type": [
+                                      "string",
+                                      "null"
+                                    ],
+                                    "format": "uuid"
+                                  },
                                   "snippet": {
                                     "type": "array",
                                     "items": {
@@ -7843,7 +7892,8 @@
                                   "stack",
                                   "stackCount",
                                   "nextScheduledEvent",
-                                  "aiStatus"
+                                  "aiStatus",
+                                  "aiJobId"
                                 ]
                               }
                             }
@@ -8015,6 +8065,13 @@
                                       null
                                     ]
                                   },
+                                  "aiJobId": {
+                                    "type": [
+                                      "string",
+                                      "null"
+                                    ],
+                                    "format": "uuid"
+                                  },
                                   "snippet": {
                                     "type": "array",
                                     "items": {
@@ -8054,7 +8111,8 @@
                                   "stack",
                                   "stackCount",
                                   "nextScheduledEvent",
-                                  "aiStatus"
+                                  "aiStatus",
+                                  "aiJobId"
                                 ]
                               }
                             }
@@ -8226,6 +8284,13 @@
                                       null
                                     ]
                                   },
+                                  "aiJobId": {
+                                    "type": [
+                                      "string",
+                                      "null"
+                                    ],
+                                    "format": "uuid"
+                                  },
                                   "snippet": {
                                     "type": "array",
                                     "items": {
@@ -8265,7 +8330,8 @@
                                   "stack",
                                   "stackCount",
                                   "nextScheduledEvent",
-                                  "aiStatus"
+                                  "aiStatus",
+                                  "aiJobId"
                                 ]
                               }
                             }
@@ -8437,6 +8503,13 @@
                                       null
                                     ]
                                   },
+                                  "aiJobId": {
+                                    "type": [
+                                      "string",
+                                      "null"
+                                    ],
+                                    "format": "uuid"
+                                  },
                                   "snippet": {
                                     "type": "array",
                                     "items": {
@@ -8476,7 +8549,8 @@
                                   "stack",
                                   "stackCount",
                                   "nextScheduledEvent",
-                                  "aiStatus"
+                                  "aiStatus",
+                                  "aiJobId"
                                 ]
                               }
                             }

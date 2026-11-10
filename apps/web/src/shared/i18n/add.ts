@@ -72,11 +72,32 @@ export const add = {
   explainer: {
     eyebrow: 'Що відбувається після кліку',
     title: 'Обробка йде у фоні',
-    processing: 'AI обробляє',
     panel: {
       title: 'Картка вже на дошці',
       body: (stage: string) =>
         `Ти нічого не чекаєш: картка-скелетон стоїть у колонці «${stage}», а розбір іде у черзі. Можна закрити цю сторінку, піти додавати наступну вакансію або зайти в аналітику. На дошці з'явиться готова картка.`,
     },
+  },
+  review: {
+    title: 'Перевір поля і готово',
+    eyebrow: (step: number, total: number) =>
+      `крок ${String(step)} з ${String(total)} · розпізнано`,
+    confidence: { exact: 'точно', check: 'перевір' },
+    chip: (label: string, mark: string) => `${label}: ${mark}`,
+    salary: (currency: string | null) => (currency === null ? 'Вилка' : `Вилка, ${currency}`),
+    stack: (count: number) => `Стек · розпізнано ${String(count)} із тексту`,
+    addStack: '+ додати',
+    lead: 'У підсвічених жовтим полях AI не впевнений.',
+    note: (label: string, quote: string | null) =>
+      quote === null
+        ? `${label}: цитати в тексті вакансії не знайшлося.`
+        : `${label}: у тексті написано «${quote}».`,
+    evidenceMissing: 'Цитати в тексті вакансії не знайшлося',
+    confirm: 'Підтвердити і на дошку',
+    open: 'Відкрити повну картку',
+  },
+  ready: {
+    title: 'Картка готова',
+    toCard: 'Відкрити картку',
   },
 } as const;

@@ -1,5 +1,6 @@
 import {
   type CapturePasteInput,
+  type CapturePasteResponse,
   capturePasteResponseSchema,
   type CreateApplicationInput,
   createApplicationResponseSchema,
@@ -24,9 +25,14 @@ import { addErrorToastOf } from './add-error-toast';
 
 export type AddedApplication = Readonly<{ possibleDuplicates: readonly PossibleDuplicate[] }>;
 
-export type AddSaveOptions<Values extends FieldValues> = Readonly<{
+export type CapturedDraft = Pick<CapturePasteResponse, 'applicationId' | 'jobId'>;
+
+export type AddSaveOptions<
+  Values extends FieldValues,
+  Result extends AddedApplication = AddedApplication,
+> = Readonly<{
   form: Omit<ApplyFieldErrorsOptions<Values>, 'error'>;
-  onAdded: (added: AddedApplication) => void;
+  onAdded: (added: Result) => void;
 }>;
 
 type AddRoute<Result extends AddedApplication> = Readonly<{
@@ -58,7 +64,7 @@ const MANUAL = {
 
 function useAddSave<Body, Values extends FieldValues, Result extends AddedApplication>(
   route: AddRoute<Result>,
-  { form, onAdded }: AddSaveOptions<Values>,
+  { form, onAdded }: AddSaveOptions<Values, Result>,
 ): GuardedSave<Body> {
   const queryClient = useQueryClient();
   const submitKey = useSubmitKey();
@@ -87,7 +93,7 @@ function useAddSave<Body, Values extends FieldValues, Result extends AddedApplic
 }
 
 export function usePasteApplication<Values extends FieldValues>(
-  options: AddSaveOptions<Values>,
+  options: AddSaveOptions<Values, CapturePasteResponse>,
 ): GuardedSave<CapturePasteInput> {
   return useAddSave(PASTE, options);
 }

@@ -20,6 +20,7 @@ export type FieldProps = Readonly<{
   label: ReactNode;
   children: ReactNode;
   footer?: FieldFooter;
+  aside?: ReactNode;
 }>;
 
 export type FieldControlProps = {
@@ -62,7 +63,7 @@ function CounterText({ counter }: Readonly<{ counter: FieldCounter }>) {
   );
 }
 
-export function Field({ label, children, footer = {} }: FieldProps) {
+export function Field({ label, children, footer = {}, aside }: FieldProps) {
   const { hint, error, counter } = footer;
   const id = useId();
   const footerId = `${id}-footer`;
@@ -72,11 +73,21 @@ export function Field({ label, children, footer = {} }: FieldProps) {
     ...(hasFooter && { 'aria-describedby': footerId }),
     ...(Boolean(error) && { 'aria-invalid': true }),
   };
+  const labelled = (
+    <label id={fieldLabelId(id)} htmlFor={id} className="label w-fit text-ink">
+      {label}
+    </label>
+  );
   return (
     <div className="flex min-w-0 flex-col gap-1.5">
-      <label id={fieldLabelId(id)} htmlFor={id} className="label w-fit text-ink">
-        {label}
-      </label>
+      {aside === undefined ? (
+        labelled
+      ) : (
+        <div className="flex min-w-0 items-center gap-1.75">
+          {labelled}
+          {aside}
+        </div>
+      )}
       <FieldContext value={control}>{children}</FieldContext>
       {hasFooter && (
         <div id={footerId} className="caption flex items-start justify-between gap-3">

@@ -2,7 +2,9 @@ import { describe, expect, it } from 'vitest';
 
 import { addPrefillOf } from './add-prefill';
 
-const BLANK = { text: '', url: '', focusPaste: false };
+const BLANK = { text: '', url: '', focusPaste: false, reviewId: null };
+
+const DRAFT_ID = '0b6f3c1e-5d2a-4c8e-9f10-000000000301';
 
 const TEXT_LIMIT = 20_000;
 
@@ -14,7 +16,7 @@ describe('addPrefillOf', () => {
   it('the bookmarklet fallback fills the text and its http url and asks for focus', () => {
     const query = { text: 'Senior QA\n\nKvit Software шукає', url: 'https://djinni.co/jobs/1' };
 
-    expect(addPrefillOf(query)).toEqual({ ...query, focusPaste: true });
+    expect(addPrefillOf(query)).toEqual({ ...query, focusPaste: true, reviewId: null });
   });
 
   it.each([
@@ -46,5 +48,19 @@ describe('addPrefillOf', () => {
 
   it.each(['manual', ['paste', 'paste']])('path %j leaves focus alone', (path) => {
     expect(addPrefillOf({ path })).toEqual(BLANK);
+  });
+
+  it('review=<application id> names the draft to review', () => {
+    expect(addPrefillOf({ review: DRAFT_ID })).toEqual({ ...BLANK, reviewId: DRAFT_ID });
+  });
+
+  it('a draft under review keeps the focus out of the paste form, whatever else the query asks', () => {
+    const query = { review: DRAFT_ID, path: 'paste', text: 'Kvit шукає QA' };
+
+    expect(addPrefillOf(query)).toMatchObject({ focusPaste: false, reviewId: DRAFT_ID });
+  });
+
+  it.each(['garbage', '', '301', [DRAFT_ID, DRAFT_ID]])('review %j names no draft', (review) => {
+    expect(addPrefillOf({ review })).toEqual(BLANK);
   });
 });

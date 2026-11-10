@@ -10,6 +10,7 @@ import { Test } from '@nestjs/testing';
 import { describe, expect, it } from 'vitest';
 
 import { Clock } from '../../common/clock.js';
+import { AI_JOB_ID } from '../../test/ai.js';
 import { BOHDAN_ID, OLENA_ID, SEARCH_ID } from '../../test/service-fixtures.js';
 import { daysBefore, fixedClock, NOW } from '../../test/time.js';
 import { applicationCursorSchema, type ApplicationListRequest } from './application-cursor.js';
@@ -81,7 +82,7 @@ const CARD_ROW: CardRow = {
   createdAt: daysBefore(10),
   stageEvents: [{ occurredAt: daysBefore(6) }],
   scheduledEvents: [{ kind: 'screening_call', startsAt: new Date('2026-10-22T13:00:00.000Z') }],
-  aiJobs: [{ status: 'processing' }],
+  aiJobs: [{ id: AI_JOB_ID, status: 'processing' }],
 };
 
 const rowAt = (stage: Stage, index: number): CardRow => ({
@@ -625,7 +626,7 @@ describe('ApplicationListService.reasonsSummary', () => {
 });
 
 describe('the application card', () => {
-  it('carries the applied date, the first three stack items, the full stack count, the next event, the AI status and the timing', async () => {
+  it('carries the applied date, the first three stack items, the full stack count, the next event, the AI status, the id of its AI job and the timing', async () => {
     const { service } = await serviceWith();
 
     const page = await service.list(OLENA_ID, FIRST_PAGE);
@@ -648,6 +649,7 @@ describe('the application card', () => {
         stackCount: 5,
         nextScheduledEvent: { kind: 'screening_call', startsAt: '2026-10-22T13:00:00.000Z' },
         aiStatus: 'processing',
+        aiJobId: AI_JOB_ID,
         daysInStage: 6,
         daysSinceLastEvent: 4,
         silenceLevel: 'warn',
@@ -675,6 +677,7 @@ describe('the application card', () => {
       stackCount: 1,
       nextScheduledEvent: null,
       aiStatus: null,
+      aiJobId: null,
       daysInStage: 10,
       silenceLevel: 'silent',
     });

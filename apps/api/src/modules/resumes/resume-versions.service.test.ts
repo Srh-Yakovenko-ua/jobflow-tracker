@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { FileStorage } from '../../storage/file-storage.js';
+import { AI_JOB_ID } from '../../test/ai.js';
 import { FAKE_TRANSACTION, fakeTransactionModule } from '../../test/fake-prisma.js';
 import { FAKE_STORAGE_URL, FakeFileStorage } from '../../test/file-storage.js';
 import { type ByUser } from '../../test/recorded-events.js';
@@ -33,7 +34,7 @@ const STORED_ROW: ResumeVersionRow = {
   sizeBytes: 52_000,
   uploadedAt: daysBefore(2),
   storageKey: STORAGE_KEY,
-  aiJobs: [{ status: 'processing' }],
+  aiJobs: [{ id: AI_JOB_ID, status: 'processing' }],
 };
 
 const VERSION_NOT_FOUND = {

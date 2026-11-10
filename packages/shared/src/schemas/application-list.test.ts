@@ -33,6 +33,7 @@ const CARD = {
   stackCount: 5,
   nextScheduledEvent: { kind: 'screening_call', startsAt: '2026-10-22T13:00:00.000Z' },
   aiStatus: 'done',
+  aiJobId: '0199f1a4-6f70-7182-9d9e-0f1a2b3c4d5e',
 } satisfies ApplicationCard;
 
 const SNIPPET = [
@@ -146,8 +147,16 @@ describe('applicationBoardQuerySchema', () => {
 
 describe('applicationCardSchema', () => {
   it('accepts a card with three stack items, no salary, no applied date and no AI job', () => {
-    const card = { ...CARD, appliedAt: null, aiStatus: null, nextScheduledEvent: null };
+    const noJob = { aiStatus: null, aiJobId: null };
+    const card = { ...CARD, ...noJob, appliedAt: null, nextScheduledEvent: null };
     expect(applicationCardSchema.parse(card)).toEqual(card);
+  });
+
+  it('carries the id of its latest AI job, or null, and refuses a card without the key', () => {
+    const { aiJobId, ...withoutJobId } = CARD;
+    expect(applicationCardSchema.parse(CARD).aiJobId).toBe(aiJobId);
+    expect(applicationCardSchema.parse({ ...withoutJobId, aiJobId: null }).aiJobId).toBeNull();
+    expect(issuePathsOf(applicationCardSchema.safeParse(withoutJobId))).toEqual(['aiJobId']);
   });
 
   it('refuses a fourth stack item', () => {

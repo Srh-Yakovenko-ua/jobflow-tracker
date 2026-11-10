@@ -463,9 +463,9 @@ describe('the application list and board routes', () => {
     ] as const) {
       await createScheduledEvent(testApp.prisma, { applicationId: cardId, ...event });
     }
-    for (const status of ['failed', 'processing'] as const) {
-      await createAiJob(testApp.prisma, { userId: olena.userId, applicationId: cardId, status });
-    }
+    const jobOfCard = { userId: olena.userId, applicationId: cardId };
+    await createAiJob(testApp.prisma, { ...jobOfCard, status: 'failed' });
+    const aiJobId = await createAiJob(testApp.prisma, { ...jobOfCard, status: 'processing' });
 
     const list = await listApplications(testApp.app, { accessToken: olena.accessToken });
     const board = await getApplicationBoard(testApp.app, { accessToken: olena.accessToken });
@@ -490,6 +490,7 @@ describe('the application list and board routes', () => {
       stackCount: 5,
       nextScheduledEvent: { kind: 'screening_call', startsAt: '2026-10-22T13:00:00.000Z' },
       aiStatus: 'processing',
+      aiJobId,
     } satisfies ApplicationCard;
     expect(list.items[0]).toEqual({ ...card, snippet: null });
     expect(board.columns.screening.items).toEqual([card]);
@@ -500,6 +501,7 @@ describe('the application list and board routes', () => {
       stackCount: 0,
       nextScheduledEvent: null,
       aiStatus: null,
+      aiJobId: null,
       daysInStage: 5,
     });
   });

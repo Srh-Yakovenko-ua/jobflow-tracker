@@ -42,6 +42,8 @@ export const devUiDomain = {
     queued: 'score у черзі · лише максимум',
     processing: 'score рахується',
     failed: 'score · помилка AI',
+    parsing: 'чернетка · AI розбирає',
+    review: 'чернетка · перевір поля',
     norm: 'днів на етапі · норма',
     long: 'що зламається · довгі назви',
     warn: 'тиша наближається',

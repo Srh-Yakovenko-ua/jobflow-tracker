@@ -3,7 +3,10 @@ import type { ReactNode } from 'react';
 
 import { SearchSnippet } from './search-snippet';
 
-export type CardHeadingProps = Readonly<{ application: BoardCard; badge: ReactNode }>;
+export type CardHeadingProps = Readonly<{
+  application: Pick<BoardCard, 'position' | 'company'> & { snippet?: BoardCard['snippet'] };
+  badge: ReactNode;
+}>;
 
 export function CardHeading({ application, badge }: CardHeadingProps) {
   return (

@@ -285,13 +285,14 @@ describe('POST /api/v1/capture/paste', () => {
     expect(ai.calls).toEqual([]);
   });
 
-  it('shows the draft on the board in the applied column with a queued ai status', async () => {
+  it('shows the draft on the board in the applied column with a queued ai status and the id of the ai job the paste answered with', async () => {
     const { accessToken } = await signedInWithSearch(testApp.prisma);
 
-    const { applicationId } = await paste(accessToken);
+    const { applicationId, jobId } = await paste(accessToken);
 
-    expect(await boardCardOf(accessToken)).toEqual([
-      { id: applicationId, isDraft: true, aiStatus: 'queued' },
+    const { columns } = await getApplicationBoard(testApp.app, { accessToken });
+    expect(columns.applied.items).toMatchObject([
+      { id: applicationId, isDraft: true, aiStatus: 'queued', aiJobId: jobId },
     ]);
   });
 

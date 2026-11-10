@@ -106,11 +106,36 @@ describe('timelineRowsOf', () => {
     ]);
   });
 
-  it('a confirmed draft reads as a muted ringed row with the title the API gave it', () => {
+  it('a confirmed draft with no capture row reads as a muted ringed row with the title the API gave it', () => {
     const title = 'Поля перевірено вручну';
 
     expect(looksOf([itemOf({ type: 'draft_confirmed', meta: {}, title })])).toEqual([
       { title, meta: null, marker: RING, tone: 'muted' },
+    ]);
+  });
+
+  it('a confirmed draft folds into the capture row after the AI parse time and loses its own row', () => {
+    const confirmed = itemOf({ type: 'draft_confirmed', meta: {} });
+
+    expect(looksOf([confirmed, ...DESIGN_TIMELINE.items]).at(-1)).toEqual({
+      title: 'Картку створено букмарклетом',
+      meta: 'AI розібрав опис за 6 секунд, поля перевірено вручну',
+      marker: RING,
+      tone: 'medium',
+    });
+    expect(looksOf([confirmed, ...DESIGN_TIMELINE.items])).toHaveLength(8);
+  });
+
+  it('a draft confirmed with no parse row leaves only the capture row, saying the fields were checked', () => {
+    const confirmed = itemOf({ type: 'draft_confirmed', meta: {} });
+    const captured = itemOf({
+      type: 'captured',
+      meta: { method: 'paste' },
+      title: 'Картку створено',
+    });
+
+    expect(looksOf([confirmed, captured])).toEqual([
+      { title: 'Картку створено', meta: 'Поля перевірено вручну', marker: RING, tone: 'medium' },
     ]);
   });
 

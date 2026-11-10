@@ -1,10 +1,24 @@
-import { capturePasteInputSchema, VACANCY_PARSE_LIMITS } from '@jobflow/shared';
+import {
+  applicationIdSchema,
+  capturePasteInputSchema,
+  VACANCY_PARSE_LIMITS,
+} from '@jobflow/shared';
 
 type QueryValue = string | string[] | undefined;
 
-export type AddQuery = Readonly<{ url?: QueryValue; text?: QueryValue; path?: QueryValue }>;
+export type AddQuery = Readonly<{
+  url?: QueryValue;
+  text?: QueryValue;
+  path?: QueryValue;
+  review?: QueryValue;
+}>;
 
-export type AddPrefill = Readonly<{ text: string; url: string; focusPaste: boolean }>;
+export type AddPrefill = Readonly<{
+  text: string;
+  url: string;
+  focusPaste: boolean;
+  reviewId: string | null;
+}>;
 
 const PASTE_PATH = 'paste';
 
@@ -20,5 +34,7 @@ function urlOf(value: QueryValue): string {
 export function addPrefillOf(query: AddQuery): AddPrefill {
   const text = textOf(query.text);
   const url = urlOf(query.url);
-  return { text, url, focusPaste: query.path === PASTE_PATH || text !== '' || url !== '' };
+  const reviewId = applicationIdSchema.safeParse(query.review).data ?? null;
+  const pasteAsked = query.path === PASTE_PATH || text !== '' || url !== '';
+  return { text, url, focusPaste: pasteAsked && reviewId === null, reviewId };
 }

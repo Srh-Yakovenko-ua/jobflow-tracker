@@ -1,6 +1,8 @@
 import {
   type ApplicationBoardQuery,
+  type ApplicationBoardResponse,
   type ApplicationFilters,
+  LIVE_LIMITS,
   OUTCOME_STAGES,
   type OutcomeStage,
 } from '@jobflow/shared';
@@ -11,9 +13,11 @@ import {
   type ApplicationCardContext,
   applicationKeys,
   boardQueryOptions,
+  draftStateOf,
 } from '@/entities/application';
 import { useUserTimeZone } from '@/entities/user';
 import { useSentFilters } from '@/features/filter-applications';
+import { LIVE_CLIENT_LIMITS, useLiveConnected } from '@/shared/api';
 
 export type BoardLoad = Readonly<{
   failed: boolean;
@@ -39,6 +43,16 @@ function boardQueryOf({ expanded, filters }: BoardQueryInput): ApplicationBoardQ
     salaryFrom: filters.salaryFrom,
     expand: expanded.length === 0 ? undefined : [...expanded],
   };
+}
+
+function hasParsingCard(board: ApplicationBoardResponse | undefined): boolean {
+  return Object.values(board?.columns ?? {}).some(({ items }) =>
+    (items ?? []).some((card) => draftStateOf(card) === 'parsing'),
+  );
+}
+
+function useParsingPollMs(): number {
+  return useLiveConnected() ? LIVE_CLIENT_LIMITS.slowPollMs : LIVE_LIMITS.pollFallbackMs;
 }
 
 function toggled(expanded: readonly OutcomeStage[], stage: OutcomeStage): OutcomeStage[] {
@@ -70,7 +84,12 @@ export function useKanbanBoard() {
   const [expanded, setExpanded] = useState<OutcomeStage[]>([]);
   const [mountedAt] = useState(Date.now);
   const query = boardQueryOf({ expanded, filters });
-  const board = useQuery({ ...boardQueryOptions(query), placeholderData: keepPreviousData });
+  const parsingPollMs = useParsingPollMs();
+  const board = useQuery({
+    ...boardQueryOptions(query),
+    placeholderData: keepPreviousData,
+    refetchInterval: ({ state }) => (hasParsingCard(state.data) ? parsingPollMs : false),
+  });
   const arrived = board.data !== undefined && !board.isPlaceholderData;
   const shown = useLastArrived({ query, arrived });
   const fallback = useQuery({ ...boardQueryOptions(shown), enabled: false });

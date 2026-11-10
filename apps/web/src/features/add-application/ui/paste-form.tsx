@@ -20,11 +20,14 @@ import { STATE_TEXT } from '@/shared/ui/state-text';
 import { Textarea } from '@/shared/ui/textarea';
 
 import type { AddPrefill } from '../lib/add-prefill';
-import { usePasteApplication } from '../model/use-add-application';
+import { type CapturedDraft, usePasteApplication } from '../model/use-add-application';
 import { AddFlow, type AddStep } from './add-flow';
 import { AddForm } from './add-form';
 
-export type PasteFormProps = Readonly<{ prefill: AddPrefill }>;
+export type PasteFormProps = Readonly<{
+  prefill: AddPrefill;
+  actions?: { onCaptured: (capture: CapturedDraft) => void };
+}>;
 
 type PasteValues = Pick<AddPrefill, 'text' | 'url'>;
 
@@ -32,7 +35,11 @@ type PasteMethods = UseFormReturn<PasteValues, unknown, CapturePasteInput>;
 
 type PasteFieldProps = Readonly<{ methods: PasteMethods; autoFocus: boolean }>;
 
-type PasteFieldsProps = Readonly<{ step: AddStep; initial: PasteValues }>;
+type PasteFieldsProps = Readonly<{
+  step: AddStep;
+  initial: PasteValues;
+  actions: PasteFormProps['actions'];
+}>;
 
 const COPY = uk.add.paste;
 
@@ -100,7 +107,7 @@ function ShortcutHint() {
   );
 }
 
-function PasteFields({ step, initial }: PasteFieldsProps) {
+function PasteFields({ step, initial, actions }: PasteFieldsProps) {
   const methods = useForm<PasteValues, unknown, CapturePasteInput>({
     mode: 'onTouched',
     defaultValues: initial,
@@ -108,7 +115,10 @@ function PasteFields({ step, initial }: PasteFieldsProps) {
   });
   const mutation = usePasteApplication({
     form: { fields: FIELDS, setError: methods.setError, messages: ERRORS },
-    onAdded: step.onAdded,
+    onAdded: (added) => {
+      step.onAdded(added);
+      actions?.onCaptured({ applicationId: added.applicationId, jobId: added.jobId });
+    },
   });
   return (
     <AddForm
@@ -121,10 +131,12 @@ function PasteFields({ step, initial }: PasteFieldsProps) {
   );
 }
 
-export function PasteForm({ prefill }: PasteFormProps) {
+export function PasteForm({ prefill, actions }: PasteFormProps) {
   return (
     <AddFlow focusOnMount={prefill.focusPaste}>
-      {(step) => <PasteFields step={step} initial={step.first ? prefill : BLANK} />}
+      {(step) => (
+        <PasteFields step={step} initial={step.first ? prefill : BLANK} actions={actions} />
+      )}
     </AddFlow>
   );
 }

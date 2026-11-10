@@ -35,6 +35,12 @@ const ADDED_SERIAL_FROM = 950;
 
 const JOB_SERIAL_OFFSET = 20;
 
+function pastedIdsOf(serial: number) {
+  return { applicationId: fixtureIdOf(serial), jobId: fixtureIdOf(serial + JOB_SERIAL_OFFSET) };
+}
+
+export const FIRST_PASTE = pastedIdsOf(ADDED_SERIAL_FROM + 1);
+
 export const NO_ACTIVE_SEARCH = {
   status: 409,
   type: 'conflict',
@@ -82,11 +88,7 @@ export function addRoutes({ paste = {}, manual = {}, duplicates = [] }: AddRoute
       sent: pasted,
       replyOf: (serial) =>
         HttpResponse.json<CapturePasteResponse>(
-          {
-            applicationId: fixtureIdOf(serial),
-            jobId: fixtureIdOf(serial + JOB_SERIAL_OFFSET),
-            possibleDuplicates,
-          },
+          { ...pastedIdsOf(serial), possibleDuplicates },
           { status: 202 },
         ),
     }),
