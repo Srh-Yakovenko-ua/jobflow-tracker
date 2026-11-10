@@ -1,0 +1,33 @@
+{
+  "name": "@jobflow/bookmarklet",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "files": [
+    "dist"
+  ],
+  "exports": {
+    ".": {
+      "types": "./dist/href.d.ts",
+      "import": "./dist/href.js"
+    }
+  },
+  "scripts": {
+    "build": "tsup",
+    "lint": "eslint . --max-warnings 0",
+    "typecheck": "tsgo -p . --noEmit",
+    "test": "vitest run --coverage",
+    "test:watch": "vitest watch"
+  },
+  "devDependencies": {
+    "@jobflow/config": "workspace:*",
+    "@jobflow/shared": "workspace:*",
+    "@vitest/coverage-v8": "^4.1.12",
+    "esbuild": "^0.28.2",
+    "eslint": "^10.13.0",
+    "jsdom": "30.1.3",
+    "tsup": "^9.0.0",
+    "typescript": "~6.0.3",
+    "vitest": "^4.1.12"
+  }
+}
