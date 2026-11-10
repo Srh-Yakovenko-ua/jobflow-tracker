@@ -1,4 +1,4 @@
-import type { AiKind, AiResultStatus } from '@jobflow/shared';
+import { AI_JOB_STEPS, type AiKind, type AiResultStatus } from '@jobflow/shared';
 import { Injectable } from '@nestjs/common';
 
 import { Prisma } from '../../generated/prisma/client.js';
@@ -14,6 +14,17 @@ const COUNTED_RESULTS = [
   { status: 'succeeded' },
   { error: { in: [...AI_BUDGET.countedFailures] } },
 ] satisfies Prisma.AiResultWhereInput[];
+
+export const AI_JOB_SELECT = {
+  id: true,
+  kind: true,
+  status: true,
+  step: true,
+  errorType: true,
+  applicationId: true,
+} satisfies Prisma.AiJobSelect;
+
+export type AiJobRow = Prisma.AiJobGetPayload<{ select: typeof AI_JOB_SELECT }>;
 
 export type CachedAiResult = { id: string; output: unknown };
 
@@ -72,7 +83,7 @@ export class AiRepository {
     { kind, applicationId, tx = this.prisma }: CreateAiJob,
   ): Promise<string> {
     const { id } = await tx.aiJob.create({
-      data: { userId, kind, applicationId },
+      data: { userId, kind, applicationId, step: AI_JOB_STEPS.queued },
       select: { id: true },
     });
     return id;
@@ -81,7 +92,7 @@ export class AiRepository {
   async startJob(userId: string, { id, now }: AiJobChange): Promise<number> {
     const { count } = await this.prisma.aiJob.updateMany({
       where: { id, userId, status: { in: UNSETTLED_AI_JOB_STATUSES } },
-      data: { status: 'processing', startedAt: now },
+      data: { status: 'processing', step: AI_JOB_STEPS.processing, startedAt: now },
     });
     return count;
   }
@@ -89,7 +100,7 @@ export class AiRepository {
   async finishJob(userId: string, { id, aiResultId, now }: FinishAiJob): Promise<void> {
     await this.prisma.aiJob.updateMany({
       where: { id, userId, status: 'processing' },
-      data: { status: 'done', aiResultId, finishedAt: now },
+      data: { status: 'done', step: AI_JOB_STEPS.done, aiResultId, finishedAt: now },
     });
   }
 
@@ -99,6 +110,10 @@ export class AiRepository {
       data: { status: 'failed', errorType, finishedAt: now },
     });
     return count;
+  }
+
+  findJob(userId: string, id: string): Promise<AiJobRow | null> {
+    return this.prisma.aiJob.findFirst({ where: { id, userId }, select: AI_JOB_SELECT });
   }
 
   findCachedResult(

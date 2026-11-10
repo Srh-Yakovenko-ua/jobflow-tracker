@@ -8,6 +8,8 @@ import { CAPTURE_OPENAPI_PATHS } from '../modules/capture/index.js';
 import { CONTACTS_OPENAPI_PATHS } from '../modules/contacts/index.js';
 import { TIMELINE_OPENAPI_PATHS } from '../modules/events/index.js';
 import { HEALTH_OPENAPI_PATHS } from '../modules/health/index.js';
+import { JOBS_OPENAPI_PATHS } from '../modules/jobs/index.js';
+import { LIVE_OPENAPI_PATHS } from '../modules/live/index.js';
 import { MAINTENANCE_OPENAPI_PATHS } from '../modules/maintenance/index.js';
 import { NOTES_OPENAPI_PATHS } from '../modules/notes/index.js';
 import { RESUMES_OPENAPI_PATHS } from '../modules/resumes/index.js';
@@ -30,6 +32,8 @@ export const API_OPENAPI_PATHS = [
   ...RESUMES_OPENAPI_PATHS,
   ...AI_OPENAPI_PATHS,
   ...CAPTURE_OPENAPI_PATHS,
+  ...JOBS_OPENAPI_PATHS,
+  ...LIVE_OPENAPI_PATHS,
   ...MAINTENANCE_OPENAPI_PATHS,
 ];
 
@@ -46,6 +50,8 @@ const TAGS = [
   },
   { name: 'ai', description: 'The AI results of the signed-in user' },
   { name: 'capture', description: 'Draft Applications captured from a vacancy and parsed by AI' },
+  { name: 'jobs', description: 'The status of background jobs of the signed-in user' },
+  { name: 'live', description: 'Live updates over Server-Sent Events and their one-time ticket' },
   { name: 'dev', description: 'Development and test only' },
 ];
 

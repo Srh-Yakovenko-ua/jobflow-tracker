@@ -3,10 +3,12 @@ import { randomUUID } from 'node:crypto';
 import { errorResponseSchema, type PaginationQuery, paginationQuerySchema } from '@jobflow/shared';
 import { Body, Controller, Get, Post, Query } from '@nestjs/common';
 import type { NestExpressApplication } from '@nestjs/platform-express';
+import { EMPTY } from 'rxjs';
 import request from 'supertest';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 
 import { Public } from './modules/auth/index.js';
+import { LiveHub } from './modules/live/index.js';
 import { buildOpenApiDocument } from './openapi/document.js';
 import { PrismaService } from './prisma/prisma.service.js';
 import { RedisService } from './redis/redis.service.js';
@@ -59,6 +61,8 @@ function startApp({ redis, postgres }: Dependencies): Promise<NestExpressApplica
     withLogSink(stubQueues(appTestingModule({ controllers: [ProbeController] })), log.sink)
       .overrideProvider(RedisService)
       .useValue(redis)
+      .overrideProvider(LiveHub)
+      .useValue({ stream: () => EMPTY })
       .overrideProvider(PrismaService)
       .useValue(postgres),
   );

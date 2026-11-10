@@ -14,6 +14,8 @@ import { CaptureModule } from './modules/capture/index.js';
 import { ContactsModule } from './modules/contacts/index.js';
 import { EventsModule } from './modules/events/index.js';
 import { HealthModule } from './modules/health/index.js';
+import { JobsModule } from './modules/jobs/index.js';
+import { LiveStreamModule } from './modules/live/index.js';
 import { MaintenanceModule } from './modules/maintenance/index.js';
 import { NotesModule } from './modules/notes/index.js';
 import { ResumesModule } from './modules/resumes/index.js';
@@ -47,6 +49,8 @@ import { RedisModule } from './redis/redis.module.js';
     AiModule,
     CaptureModule,
     ResumesModule,
+    JobsModule,
+    LiveStreamModule,
   ],
   providers: [
     { provide: APP_FILTER, useClass: AppExceptionFilter },

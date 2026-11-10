@@ -25,10 +25,12 @@ import {
   createOwnedApplication,
   type OwnedApplication,
 } from '../../test/factories.js';
+import { RecordingLivePublisher } from '../../test/live.js';
 import { memoryLog } from '../../test/memory-log.js';
 import { processedJob } from '../../test/processed-job.js';
 import { compileProcessorModule } from '../../test/processor.js';
 import { minutesBefore, NOW, settableClock } from '../../test/time.js';
+import { LivePublisher } from '../live/index.js';
 import { AI_JOBS, type AiCompleteJob } from './ai.jobs.js';
 import { AiProcessor } from './ai.processor.js';
 import { AiRepository } from './ai.repository.js';
@@ -99,6 +101,7 @@ beforeAll(async () => {
       useValue: new ConfigService(validateEnv({ ...exampleEnv, ...BUDGET })),
     },
     { provide: AiClient, useValue: ai },
+    { provide: LivePublisher, useValue: new RecordingLivePublisher() },
   ]);
   moduleRef.get(AiJobRouter).subscribe('vacancy_parse', settledJobs.record);
 });

@@ -13,6 +13,7 @@ import type {
   AiCompleteCall,
   AiCompleteJob,
   AiJobChange,
+  AiJobRow,
   AiResultKey,
   BudgetUsage,
   BudgetWindow,
@@ -175,6 +176,7 @@ export class SettledAiJobs {
 export type FakeAiJob = {
   userId: string;
   status: AiJobStatus;
+  step?: number;
   applicationId?: string;
   aiResultId?: string;
   errorType?: string;
@@ -204,23 +206,23 @@ export class FakeAiRepository {
   refusal: Error | undefined;
 
   queueJob(userId: string, id = AI_JOB_ID): void {
-    this.jobs.set(id, { userId, status: 'queued' });
+    this.jobs.set(id, { userId, status: 'queued', step: 1 });
   }
 
   createJob(userId: string, { applicationId }: CreateAiJob): Promise<string> {
     return this.reached(() => {
-      this.jobs.set(AI_JOB_ID, { userId, status: 'queued', applicationId });
+      this.jobs.set(AI_JOB_ID, { userId, status: 'queued', step: 1, applicationId });
       return AI_JOB_ID;
     });
   }
 
   startJob(userId: string, { id }: AiJobChange): Promise<number> {
-    const to = { status: 'processing' } as const;
+    const to = { status: 'processing', step: 2 } as const;
     return this.reached(() => this.moveJob(userId, { id, from: ['queued', 'processing'], to }));
   }
 
   finishJob(userId: string, { id, aiResultId, now }: FinishAiJob): Promise<void> {
-    const to = { status: 'done', aiResultId, finishedAt: now } as const;
+    const to = { status: 'done', step: 3, aiResultId, finishedAt: now } as const;
     return this.reached(() => {
       this.moveJob(userId, { id, from: ['processing'], to });
     });
@@ -229,6 +231,17 @@ export class FakeAiRepository {
   failJob(userId: string, { id, errorType, now }: FailAiJob): Promise<number> {
     const to = { status: 'failed', errorType, finishedAt: now } as const;
     return this.reached(() => this.moveJob(userId, { id, from: ['processing'], to }));
+  }
+
+  findJob(userId: string, id: string): Promise<AiJobRow | null> {
+    return this.reached(() => {
+      const job = this.jobs.get(id);
+      if (job?.userId !== userId) {
+        return null;
+      }
+      const { status, step = 0, errorType = null, applicationId = null } = job;
+      return { id, kind: 'vacancy_parse', status, step, errorType, applicationId };
+    });
   }
 
   findCachedResult(userId: string, key: AiResultKey): Promise<CachedAiResult | null> {

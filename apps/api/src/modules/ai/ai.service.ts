@@ -3,6 +3,7 @@ import {
   AI_PROMPT_VERSIONS,
   type AiKind,
   type AiKindOutput,
+  type JobUpdated,
   vacancyParseFailure,
   vacancyParseOutputSchema,
 } from '@jobflow/shared';
@@ -19,6 +20,7 @@ import { budgetWindow } from './ai-budget.js';
 import { AiClient } from './ai-client.js';
 import { aiInputHash } from './ai-input-hash.js';
 import type { SettledAiJob } from './ai-job-router.js';
+import { jobUpdateOf } from './ai-job-update.js';
 import { AiPayloadError, privatePayloadPaths } from './ai-payload-guard.js';
 import { type AiQueuePosition, queueEstimate } from './ai-queue-estimate.js';
 import { AiServiceError } from './ai-service-error.js';
@@ -28,6 +30,7 @@ export type AiCompleteAttempt = {
   finalAttempt: boolean;
   logFields: ReturnType<typeof jobFields>;
   settled: (outcome: SettledAiJob) => Promise<void>;
+  progressed: (update: JobUpdated) => Promise<void>;
 };
 
 export type AiOutcome = { aiResultId: string; output: AiKindOutput<AiKind>; cached: boolean };
@@ -85,6 +88,7 @@ export class AiService {
       this.logger.log(traceOf(attempt), 'ai job skipped');
       return null;
     }
+    await attempt.progressed(jobUpdateOf({ job: attempt.job, status: 'processing' }));
     const run = { ...attempt, now, inputHash: aiInputHash(attempt.job) };
     return (await this.fromCache(run)) ?? this.callWithinBudget(run);
   }
@@ -151,7 +155,7 @@ export class AiService {
   }
 
   private async finish(run: AiRun, { aiResultId, output }: AiAnswer): Promise<void> {
-    const { job, now, settled } = run;
+    const { job, now, settled, progressed } = run;
     const failure = OUTPUT_FAILURES[job.kind](output);
     if (failure !== null) {
       await this.fail(run, failure);
@@ -159,12 +163,15 @@ export class AiService {
     }
     await settled({ job, status: 'done', output });
     await this.repository.finishJob(job.userId, { id: job.aiJobId, aiResultId, now });
+    await progressed(jobUpdateOf({ job, status: 'done' }));
   }
 
-  private async fail({ job, now, settled }: AiRun, errorType: string): Promise<void> {
+  private async fail(run: AiRun, errorType: string): Promise<void> {
+    const { job, now } = run;
     const failed = await this.repository.failJob(job.userId, { id: job.aiJobId, errorType, now });
     if (failed === 1) {
-      await settled({ job, status: 'failed', errorType });
+      await run.settled({ job, status: 'failed', errorType });
+      await run.progressed(jobUpdateOf({ job, status: 'failed', errorType }));
     }
   }
 
