@@ -37,6 +37,7 @@ type OpenClaimCase = {
   claimedAt: Date;
   hashOf: (application: SignedInApplication) => string;
   outcome: unknown[];
+  type: string | undefined;
   notes: string[];
   claimsOpen: boolean[];
 };
@@ -60,6 +61,7 @@ const OPEN_CLAIM_CASES: OpenClaimCase[] = [
     claimedAt: minutesBefore(2),
     hashOf: firstNoteHash,
     outcome: [201, undefined],
+    type: undefined,
     notes: [FIRST.body],
     claimsOpen: [false],
   },
@@ -68,6 +70,7 @@ const OPEN_CLAIM_CASES: OpenClaimCase[] = [
     claimedAt: NOW,
     hashOf: firstNoteHash,
     outcome: IN_PROGRESS,
+    type: 'idempotency_conflict',
     notes: [],
     claimsOpen: [true],
   },
@@ -76,6 +79,7 @@ const OPEN_CLAIM_CASES: OpenClaimCase[] = [
     claimedAt: NOW,
     hashOf: () => 'another-request',
     outcome: MISMATCH,
+    type: 'idempotency_conflict',
     notes: [],
     claimsOpen: [true],
   },
@@ -131,7 +135,7 @@ describe('an Idempotency-Key on the create POSTs', () => {
 
   it.each(OPEN_CLAIM_CASES)(
     'answers a POST over an open claim $case',
-    async ({ claimedAt, hashOf, outcome, notes, claimsOpen }) => {
+    async ({ claimedAt, hashOf, outcome, type, notes, claimsOpen }) => {
       const { userId, accessToken } = await signedInWithSearch(testApp.prisma);
       const { id } = await createApplication(testApp.app, { accessToken, input: ROMASHKA });
       const key = randomUUID();
@@ -141,6 +145,7 @@ describe('an Idempotency-Key on the create POSTs', () => {
 
       const claims = await testApp.prisma.idempotencyKey.findMany({ select: { response: true } });
       expect(statusAndDetail(response)).toEqual(outcome);
+      expect(errorResponseSchema.safeParse(response.body).data?.type).toBe(type);
       expect(await noteBodies()).toEqual(notes);
       expect(claims.map((claim) => claim.response === null)).toEqual(claimsOpen);
     },
@@ -190,8 +195,8 @@ describe('an Idempotency-Key on the create POSTs', () => {
 
     expect(first.status).toBe(201);
     expect(errorOf(second)).toEqual({
-      type: 'conflict',
-      title: 'Conflict',
+      type: 'idempotency_conflict',
+      title: 'Idempotency-Key conflict',
       status: 409,
       detail: 'Idempotency-Key was already used with another request',
       requestId: second.get('x-request-id'),

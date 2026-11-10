@@ -17,6 +17,7 @@ import {
   errorResponses,
   EXAMPLE_CHILD_ROW,
   EXAMPLE_EDITED_AT,
+  idempotencyConflictReply,
   idempotencyHeaders,
   jsonContent,
 } from '../../openapi/route.js';
@@ -85,7 +86,8 @@ const EVENT_ROUTES: RouteConfig[] = [
         description: 'The planned event',
         content: jsonContent(scheduledEventSchema, SCHEDULED_EVENT),
       },
-      ...errorResponses([400, 401, 403, 404, 409, 422]),
+      ...errorResponses([400, 401, 403, 404, 422]),
+      ...idempotencyConflictReply,
     },
   },
   {

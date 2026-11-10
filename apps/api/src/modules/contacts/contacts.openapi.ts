@@ -15,6 +15,7 @@ import {
   errorResponses,
   EXAMPLE_CHILD_ROW,
   EXAMPLE_EDITED_AT,
+  idempotencyConflictReply,
   idempotencyHeaders,
   jsonContent,
 } from '../../openapi/route.js';
@@ -82,7 +83,8 @@ export const CONTACTS_OPENAPI_PATHS: RouteConfig[] = [
     },
     responses: {
       201: { description: 'The created contact', content: jsonContent(contactSchema, CONTACT) },
-      ...errorResponses([400, 401, 403, 404, 409, 422]),
+      ...errorResponses([400, 401, 403, 404, 422]),
+      ...idempotencyConflictReply,
     },
   },
   {

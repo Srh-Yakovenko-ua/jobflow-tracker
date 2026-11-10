@@ -170,13 +170,33 @@ describe('the OpenAPI document', () => {
     '/applications/{id}/scheduled-events',
     '/capture/paste',
     '/capture/bookmarklet',
+    '/resumes/versions',
   ])('documents the optional Idempotency-Key header and its 409 on POST %s', (path) => {
     const post = buildOpenApiDocument().paths?.[path]?.post;
+    const keyHeader = post?.parameters?.find(
+      (parameter) => 'name' in parameter && parameter.name === 'Idempotency-Key',
+    );
 
     expect(post?.parameters).toContainEqual(
       expect.objectContaining({ in: 'header', name: 'Idempotency-Key', required: false }),
     );
     expect(Object.keys(post?.responses ?? {})).toContain('409');
+    expect(keyHeader).toHaveProperty(
+      'description',
+      expect.stringContaining('409 with type idempotency_conflict'),
+    );
+  });
+
+  it.each([
+    { name: 'POST /applications/{id}/notes', type: 'idempotency_conflict' },
+    { name: 'POST /applications/{id}/contacts', type: 'idempotency_conflict' },
+    { name: 'POST /applications/{id}/scheduled-events', type: 'idempotency_conflict' },
+    { name: 'POST /applications', type: 'conflict' },
+    { name: 'POST /capture/paste', type: 'conflict' },
+    { name: 'POST /capture/bookmarklet', type: 'conflict' },
+    { name: 'POST /resumes/versions', type: 'conflict' },
+  ])('gives the 409 example of the keyed $name the type $type', ({ name, type }) => {
+    expect(exampleAt(`${name} 409`)).toMatchObject({ type, status: 409 });
   });
 
   it('takes the capture token, sent as Authorization: Capture, on POST /capture/bookmarklet alone', () => {

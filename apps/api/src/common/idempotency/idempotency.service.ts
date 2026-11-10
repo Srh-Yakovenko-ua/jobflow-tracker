@@ -1,7 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 
 import { addMinutes } from '../add-minutes.js';
-import { conflict } from '../app-error.js';
+import { idempotencyConflict } from '../app-error.js';
 import { Clock } from '../clock.js';
 import {
   type IdempotencyKeyRow,
@@ -22,9 +22,11 @@ export type ClaimResult = { claimed: true } | { claimed: false; reply: StoredRep
 
 function replyOf(holder: IdempotencyKeyRow | null, requestHash: string): StoredReply {
   if (holder !== null && holder.requestHash !== requestHash) {
-    throw conflict(IDEMPOTENCY_CONFLICTS.mismatch);
+    throw idempotencyConflict(IDEMPOTENCY_CONFLICTS.mismatch);
   }
-  if (holder === null || holder.response === null) throw conflict(IDEMPOTENCY_CONFLICTS.inProgress);
+  if (holder === null || holder.response === null) {
+    throw idempotencyConflict(IDEMPOTENCY_CONFLICTS.inProgress);
+  }
   return storedReplySchema.parse(holder.response);
 }
 
