@@ -64,7 +64,7 @@ function draftValuesOf(application: ApplicationResponse): EditFormValues {
 export function DraftReview({ application, actions, heading, view = {} }: DraftReviewProps) {
   const [source, setSource] = useState(application.source);
   const methods = useForm({
-    mode: 'onSubmit',
+    mode: 'onTouched',
     defaultValues: draftValuesOf(application),
     resolver: zodResolver(editFormSchemaOf(application)),
   });

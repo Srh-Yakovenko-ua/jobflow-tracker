@@ -79,7 +79,10 @@ const STATE_SPECIMENS: readonly StateSpecimen[] = [
 function StateSelect({ specimen }: Readonly<{ specimen: StateSpecimen }>) {
   const [value, setValue] = useState(specimen.value ?? '');
   return (
-    <Field label={specimen.caption} footer={{ error: specimen.error }}>
+    <Field
+      label={specimen.caption}
+      {...(specimen.error !== undefined && { footer: { error: specimen.error } })}
+    >
       <Select groups={STAGE_GROUPS} value={value} onValueChange={setValue} view={specimen.view} />
     </Field>
   );
