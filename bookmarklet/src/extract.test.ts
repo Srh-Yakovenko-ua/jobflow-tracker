@@ -60,8 +60,17 @@ describe('pageTextOf', () => {
     expect(pageTextOf(document)).toBe('Опис вакансії');
   });
 
-  it('skips an empty block and reads the next one', () => {
-    mountPage({ html: '<article></article><main><p>Опис вакансії</p></main>' });
+  it.each([
+    ['an empty', '<article></article>'],
+    ['a hidden', '<article hidden><p>Прихований анонс</p></article>'],
+  ])('passes over %s article and reads the main', (_name, article) => {
+    mountPage({ html: `${article}<main><p>Опис вакансії</p></main>` });
+
+    expect(pageTextOf(document)).toBe('Опис вакансії');
+  });
+
+  it('keeps the text that lies in the body beside nav and footer', () => {
+    mountPage({ html: '<nav>Меню</nav>Опис вакансії<footer>Юридична інформація</footer>' });
 
     expect(pageTextOf(document)).toBe('Опис вакансії');
   });

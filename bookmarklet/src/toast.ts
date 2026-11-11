@@ -59,8 +59,8 @@ function closeButton(): HTMLButtonElement {
   const button = document.createElement('button');
   const icon = document.createElementNS(SVG, 'svg');
   const cross = document.createElementNS(SVG, 'path');
-  cross.setAttribute('d', 'M18 6 6 18M6 6l12 12');
-  icon.setAttribute('viewBox', '0 0 24 24');
+  cross.setAttribute('d', 'M18,6,6,18M6,6l12,12');
+  icon.setAttribute('viewBox', '0,0,24,24');
   icon.append(cross);
   button.setAttribute('aria-label', copyOf('close'));
   button.append(icon);

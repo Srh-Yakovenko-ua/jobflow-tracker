@@ -96,7 +96,7 @@ async function outcomeOf(response: Response): Promise<CaptureOutcome> {
     const retryAfterSeconds = seconds > 0 && seconds < Infinity ? seconds : DEFAULT_RETRY_SECONDS;
     return { kind: 'rateLimited', retryAfterSeconds };
   }
-  if (response.status === 409 && isRecord(body) && body.type === 'idempotency_conflict') {
+  if (isRecord(body) && body.type === 'idempotency_conflict') {
     return { kind: 'repeated' };
   }
   return REFUSALS[response.status] ?? FAILED;

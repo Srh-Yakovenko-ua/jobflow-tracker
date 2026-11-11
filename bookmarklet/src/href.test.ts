@@ -73,13 +73,15 @@ describe('bookmarkletHref', () => {
     );
   });
 
-  it('posts to a path with one slash when the addresses end in a slash', async () => {
-    const fetchStub = runStored({
+  it('stores the addresses without a trailing slash and posts to a path with one slash', async () => {
+    const config = {
       ...CONFIG,
       apiUrl: 'http://localhost:4000/',
       webUrl: 'http://localhost:3000//',
-    });
+    };
+    const fetchStub = runStored(config);
 
+    expect(storedCodeOf(bookmarkletHref(config))).toContain('"webUrl":"http://localhost:3000"}');
     await expect
       .poll(() => fetchStub.mock.calls[0]?.[0])
       .toBe('http://localhost:4000/api/v1/capture/bookmarklet');

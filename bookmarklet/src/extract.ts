@@ -2,7 +2,10 @@ const VACANCY_BLOCKS = ['.b-vacancy', '.l-vacancy', '.job-post-page', 'article',
 const PAGE_CHROME = 'nav,footer';
 const NOT_VACANCY_TEXT = `${PAGE_CHROME},noscript`;
 
-function textOutsideChrome(node: Element): string {
+function textOutsideChrome(node: Node | null): string {
+  if (node instanceof Text) {
+    return node.data.trim();
+  }
   if (
     !(node instanceof HTMLElement) ||
     node.matches(NOT_VACANCY_TEXT) ||
@@ -13,7 +16,7 @@ function textOutsideChrome(node: Element): string {
   if (!node.querySelector(PAGE_CHROME)) {
     return node.innerText.trim();
   }
-  return Array.from(node.children, textOutsideChrome).filter(Boolean).join('\n');
+  return Array.from(node.childNodes, textOutsideChrome).filter(Boolean).join('\n');
 }
 
 export function pageTextOf(page: Document): string {
@@ -22,7 +25,7 @@ export function pageTextOf(page: Document): string {
     return selected;
   }
   for (const selector of VACANCY_BLOCKS) {
-    const text = page.querySelector<HTMLElement>(selector)?.innerText.trim();
+    const text = textOutsideChrome(page.querySelector(selector));
     if (text) {
       return text;
     }

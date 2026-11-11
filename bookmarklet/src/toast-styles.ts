@@ -4,7 +4,7 @@ const { look } = SHARED;
 
 export const TOAST_STYLES =
   ':host{all:initial!important}' +
-  `[role]{${look.light};position:fixed;top:16px;right:16px;z-index:2147483647;box-sizing:border-box;display:flex;align-items:flex-start;gap:4px;width:min(360px,calc(100vw - 32px));padding:14px 6px 14px 16px;border-radius:${look.radius};background:var(--s);color:var(--i);font:600 14px/1.35 ${look.font},system-ui,sans-serif;box-shadow:${look.shadow},inset 0 0 0 1px var(--l)}` +
+  `[role]{${look.light};position:fixed;top:16px;right:16px;z-index:2147483647;box-sizing:border-box;display:flex;align-items:flex-start;gap:4px;width:min(360px,100vw - 32px);padding:14px 6px 14px 16px;border-radius:${look.radius};background:var(--s);color:var(--i);font:600 14px/1.35 ${look.font},system-ui,sans-serif;box-shadow:${look.shadow},inset 0 0 0 1px var(--l)}` +
   'div div{flex:1;min-width:0;display:grid;justify-items:start;gap:2px}' +
   'p{margin:0}' +
   'p+p{font-weight:400;font-size:12.5px;line-height:1.5;color:var(--m)}' +
