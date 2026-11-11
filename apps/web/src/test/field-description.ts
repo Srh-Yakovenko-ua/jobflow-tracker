@@ -1,4 +1,5 @@
 export function descriptionOf(control: HTMLElement): string | null | undefined {
   const describedBy = control.getAttribute('aria-describedby') ?? '';
-  return document.getElementById(describedBy)?.textContent;
+  const description = document.getElementById(describedBy)?.textContent;
+  return description === '' ? undefined : description;
 }

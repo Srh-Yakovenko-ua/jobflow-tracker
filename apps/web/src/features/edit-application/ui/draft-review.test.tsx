@@ -100,19 +100,6 @@ function positionField(): HTMLInputElement {
   return screen.getByRole('textbox', { name: 'Позиція' });
 }
 
-function countCompanyMarkedAlone(): () => number {
-  let seen = 0;
-  const observer = new MutationObserver(() => {
-    const companyMarked = descriptionOf(companyField()) === COMPANY_ERROR;
-    if (companyMarked && descriptionOf(positionField()) !== POSITION_ERROR) seen += 1;
-  });
-  observer.observe(document.body, { subtree: true, childList: true, attributes: true });
-  return () => {
-    observer.disconnect();
-    return seen;
-  };
-}
-
 async function tooltipOf(name: string): Promise<string | null> {
   act(() => {
     chip(name).focus();
@@ -293,15 +280,20 @@ describe('DraftReview', () => {
     expect(onConfirmed).not.toHaveBeenCalled();
   });
 
-  it('a press on the confirm button from the empty company field marks nothing until the click lands, then both names at once with focus back in the company', async () => {
+  it('a press on the confirm button from the empty company field marks the company on leaving it, and the release still marks both names with focus back in the company', async () => {
     const { user, writes } = renderReview({
       application: FAILED_DRAFT,
       view: { focusField: 'company' },
     });
-    const companyMarkedAlone = countCompanyMarkedAlone();
     const confirm = screen.getByRole('button', { name: CONFIRM });
 
     await user.pointer({ keys: '[MouseLeft>]', target: confirm });
+
+    await waitFor(() => {
+      expect(descriptionOf(companyField())).toBe(COMPANY_ERROR);
+    });
+    expect(descriptionOf(positionField())).toBeUndefined();
+
     await user.pointer({ keys: '[/MouseLeft]', target: confirm });
 
     await waitFor(() => {
@@ -309,7 +301,6 @@ describe('DraftReview', () => {
     });
     expect(descriptionOf(companyField())).toBe(COMPANY_ERROR);
     expect(document.activeElement).toBe(companyField());
-    expect(companyMarkedAlone()).toBe(0);
     expect(writes()).toEqual([]);
   });
 

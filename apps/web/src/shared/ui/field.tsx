@@ -44,8 +44,12 @@ function FieldMessage({ hint, error }: Pick<FieldFooter, 'hint' | 'error'>) {
     <span aria-live="polite" className="flex min-w-0 items-start gap-1.5">
       {error ? (
         <>
-          <CircleAlert aria-hidden size={14} className="mt-px flex-none text-danger" />
-          <span className="text-danger">{error}</span>
+          <CircleAlert
+            aria-hidden
+            size={14}
+            className="mt-px flex-none animate-fade-in text-danger"
+          />
+          <span className="animate-fade-in text-danger">{error}</span>
         </>
       ) : (
         <span className="text-ink-3">{hint}</span>
@@ -63,11 +67,11 @@ function CounterText({ counter }: Readonly<{ counter: FieldCounter }>) {
   );
 }
 
-export function Field({ label, children, footer = {}, aside }: FieldProps) {
-  const { hint, error, counter } = footer;
+export function Field({ label, children, footer, aside }: FieldProps) {
+  const { hint, error, counter } = footer ?? {};
   const id = useId();
   const footerId = `${id}-footer`;
-  const hasFooter = Boolean(hint ?? error) || counter !== undefined;
+  const hasFooter = footer !== undefined;
   const control: FieldControlProps = {
     id,
     ...(hasFooter && { 'aria-describedby': footerId }),
@@ -90,7 +94,7 @@ export function Field({ label, children, footer = {}, aside }: FieldProps) {
       )}
       <FieldContext value={control}>{children}</FieldContext>
       {hasFooter && (
-        <div id={footerId} className="caption flex items-start justify-between gap-3">
+        <div id={footerId} className="caption flex min-h-lh items-start justify-between gap-3">
           <FieldMessage hint={hint} error={error} />
           {counter && <CounterText counter={counter} />}
         </div>
