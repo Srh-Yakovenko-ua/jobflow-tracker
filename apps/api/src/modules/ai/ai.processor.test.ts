@@ -142,6 +142,32 @@ describe('AiProcessor', () => {
     ]);
   });
 
+  it.each([
+    {
+      routed: 'one failed outcome',
+      attempt: 'on a retry',
+      attemptsMade: 1,
+      outcomes: [{ job: VACANCY_JOB, status: 'failed', errorType: 'ai_invalid_output' }],
+    },
+    { routed: 'nothing', attempt: 'on a first delivery', attemptsMade: 0, outcomes: [] },
+  ])(
+    'routes $routed for a job found already failed $attempt, publishes nothing and calls nothing',
+    async ({ attemptsMade, outcomes }) => {
+      repository.jobs.set(AI_JOB_ID, {
+        userId: OLENA_ID,
+        status: 'failed',
+        step: 2,
+        errorType: 'ai_invalid_output',
+      });
+
+      await expect(processor.process({ ...aiJob(VACANCY_JOB), attemptsMade })).resolves.toBeNull();
+
+      expect(settledJobs.outcomes).toEqual(outcomes);
+      expect(live.published).toEqual([]);
+      expect(ai.calls).toEqual([]);
+    },
+  );
+
   it('fails the job as unrecoverable when services/ai refuses it with 422', async () => {
     ai.answer = () =>
       Promise.reject(new AiServiceError({ status: 422, type: 'ai_invalid_output' }));

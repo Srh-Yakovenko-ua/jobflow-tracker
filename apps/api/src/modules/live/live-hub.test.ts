@@ -175,6 +175,53 @@ describe('LiveHub', () => {
     expect([olena.ended, bohdan.ended]).toEqual([true, true]);
   });
 
+  it('ends a stream opened after its subscriber connection closed once the subscription is back', async () => {
+    redis.subscriber.emit('close');
+    const olena = opened(hub, OLENA_ID);
+
+    redis.subscriber.emit('ready');
+    await vi.advanceTimersByTimeAsync(0);
+
+    expect(olena.ended).toBe(true);
+  });
+
+  it('keeps a stream opened after its connection closed until a subscription succeeds, past a refused one', async () => {
+    redis.subscriber.emit('close');
+    const olena = opened(hub, OLENA_ID);
+    redis.subscriber.refusal = new Error('Connection is closed.');
+
+    redis.subscriber.emit('ready');
+    await vi.advanceTimersByTimeAsync(0);
+    const afterRefusal = olena.ended;
+    redis.subscriber.refusal = undefined;
+    redis.subscriber.emit('ready');
+    await vi.advanceTimersByTimeAsync(0);
+
+    expect([afterRefusal, olena.ended]).toEqual([false, true]);
+  });
+
+  it('keeps a stream opened before the first subscription at boot open and hands it the events after it', async () => {
+    const olena = opened(hub, OLENA_ID);
+
+    redis.subscriber.emit('ready');
+    await vi.advanceTimersByTimeAsync(0);
+    redis.subscriber.deliver(OLENA_ID, JSON.stringify(JOB_DONE));
+
+    expect(olena.messages).toHaveLength(1);
+    expect(olena.ended).toBe(false);
+  });
+
+  it('keeps a stream opened under a live subscription open when the subscriber subscribes again', async () => {
+    redis.subscriber.emit('ready');
+    await vi.advanceTimersByTimeAsync(0);
+    const olena = opened(hub, OLENA_ID);
+
+    redis.subscriber.emit('ready');
+    await vi.advanceTimersByTimeAsync(0);
+
+    expect(olena.ended).toBe(false);
+  });
+
   it('keeps the streams open while Redis answers at a heartbeat', async () => {
     const olena = opened(hub, OLENA_ID);
 

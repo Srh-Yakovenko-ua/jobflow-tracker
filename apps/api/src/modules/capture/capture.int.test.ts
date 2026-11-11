@@ -73,6 +73,7 @@ import {
   applicationCaptureRequestedPayloadSchema,
   ApplicationDraftsService,
 } from '../applications/index.js';
+import { NotesService } from '../notes/index.js';
 
 vi.hoisted(() => {
   vi.stubEnv('RATE_LIMIT_AI_PER_HOUR', '6');
@@ -189,11 +190,31 @@ const log = memoryLog();
 
 const ai = new FakeAiClient();
 
-const failureLogged = (aiJobId: string) =>
-  log.parsed().some((line) => line.msg === 'ai job failed' && line.aiJobId === aiJobId);
+const loggedFor = (aiJobId: string, msg: string) =>
+  log.parsed().some((line) => line.msg === msg && line.aiJobId === aiJobId);
 
 const expectFailureLogged = (aiJobId: string) =>
-  expect.poll(() => failureLogged(aiJobId), SETTLED).toBe(true);
+  expect.poll(() => loggedFor(aiJobId, 'ai job failed'), SETTLED).toBe(true);
+
+const refusedNoteWrite = () => new Error('connect ECONNREFUSED 127.0.0.1:5432');
+
+const SETTLE_HOOK_FAULTS = [
+  {
+    fault: 'the note write is refused once',
+    inject: (notes: NotesService) =>
+      vi.spyOn(notes, 'create').mockRejectedValueOnce(refusedNoteWrite()),
+  },
+  {
+    fault: 'the hook throws once after the note is written',
+    inject: (notes: NotesService) => {
+      const create = notes.create.bind(notes);
+      return vi.spyOn(notes, 'create').mockImplementationOnce(async (...call) => {
+        await create(...call);
+        throw refusedNoteWrite();
+      });
+    },
+  },
+];
 
 describe('POST /api/v1/capture/paste', () => {
   const testApp = useTestApp(() =>
@@ -248,10 +269,17 @@ describe('POST /api/v1/capture/paste', () => {
     }));
   }
 
-  async function relayingWorker(): Promise<INestApplicationContext> {
+  async function startedWorker(): Promise<INestApplicationContext> {
     const compiled = await workers.compile();
-    const worker = await compiled.init();
-    await worker.get(OutboxRelayService, { strict: false }).relay();
+    return compiled.init();
+  }
+
+  const relay = (worker: INestApplicationContext) =>
+    worker.get(OutboxRelayService, { strict: false }).relay();
+
+  async function relayingWorker(): Promise<INestApplicationContext> {
+    const worker = await startedWorker();
+    await relay(worker);
     return worker;
   }
 
@@ -609,6 +637,31 @@ describe('POST /api/v1/capture/paste', () => {
     },
   );
 
+  it.each(SETTLE_HOOK_FAULTS)(
+    'keeps the pasted text as one note after the BullMQ retry when $fault on a final failure',
+    WORKER_TEST,
+    async ({ inject }) => {
+      ai.answer = refusedByAi;
+      const { accessToken } = await signedInWithSearch(testApp.prisma);
+      const captured = await paste(accessToken);
+      const worker = await startedWorker();
+      inject(worker.get(NotesService, { strict: false }));
+
+      await relay(worker);
+
+      await expect
+        .poll(() => loggedFor(captured.jobId, 'ai failed job settled again'), SETTLED)
+        .toBe(true);
+      expect(await notesOf(captured.applicationId)).toEqual([{ body: VACANCY_TEXT }]);
+      expect(await storedAiJob(testApp.prisma, captured.jobId)).toMatchObject({
+        status: 'failed',
+        errorType: 'ai_invalid_output',
+      });
+      expect(await kindsOf(captured.applicationId)).toEqual(['captured', 'note_added']);
+      expect(ai.calls).toHaveLength(1);
+    },
+  );
+
   describe('POST /api/v1/capture/drafts/:id/confirm', () => {
     it(
       'clears the draft flag of a parsed draft with a field to check, records draft_confirmed and application.updated, and answers 409 to a second confirm',
@@ -709,7 +762,7 @@ describe('POST /api/v1/capture/paste', () => {
     async function retriedInWorker(worker: INestApplicationContext, draft: FailedDraft) {
       await expectTextKeptAsNote(draft.applicationId);
       const { jobId } = await retried(draft.accessToken, draft.applicationId);
-      await worker.get(OutboxRelayService, { strict: false }).relay();
+      await relay(worker);
       return jobId;
     }
 

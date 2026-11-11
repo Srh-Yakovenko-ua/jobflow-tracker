@@ -137,25 +137,28 @@ function storedResults(where: { userId: string }) {
 }
 
 describe('AiRepository job changes on Postgres', () => {
-  it.each(GUARDED_CHANGES)('$change leaves $job untouched', async ({ apply, owner, status }) => {
-    const owners = {
-      olena: await createOwnedApplication(database.prisma),
-      bohdan: await createOwnedApplication(database.prisma),
-    };
-    const { userId, applicationId } = owners[owner];
-    const aiResultId = await createAiResult(database.prisma, { userId });
-    const id = await createAiJob(database.prisma, { userId, applicationId, status });
-    const before = await storedAiJob(database.prisma, id);
+  it.each(GUARDED_CHANGES)(
+    '$change answers 0 and leaves $job untouched',
+    async ({ apply, owner, status }) => {
+      const owners = {
+        olena: await createOwnedApplication(database.prisma),
+        bohdan: await createOwnedApplication(database.prisma),
+      };
+      const { userId, applicationId } = owners[owner];
+      const aiResultId = await createAiResult(database.prisma, { userId });
+      const id = await createAiJob(database.prisma, { userId, applicationId, status });
+      const before = await storedAiJob(database.prisma, id);
 
-    const changed = await apply(aiRepository(), { userId: owners.olena.userId, id, aiResultId });
+      const changed = await apply(aiRepository(), { userId: owners.olena.userId, id, aiResultId });
 
-    expect(changed).toBe(0);
-    expect(await storedAiJob(database.prisma, id)).toEqual(before);
-  });
+      expect(changed).toBe(0);
+      expect(await storedAiJob(database.prisma, id)).toEqual(before);
+    },
+  );
 });
 
 describe('AiRepository job steps and findJob on Postgres', () => {
-  it('stores step 1 for a created job, 2 once started, 3 once finished, and keeps 2 on a failed job', async () => {
+  it('stores step 1 for a created job, 2 once started, 3 once finished, and keeps 2 on a failed job, and finishJob answers 1 for the started job', async () => {
     const { userId, applicationId } = await createOwnedApplication(database.prisma);
     const aiResultId = await createAiResult(database.prisma, { userId });
     const repository = aiRepository();
