@@ -5,7 +5,7 @@ import { sourceSchema } from '../sources.js';
 import { stageSchema } from '../stages.js';
 import { workModeSchema } from '../work-modes.js';
 import { isNonEmptyPatch, NON_EMPTY_PATCH_ISSUE } from './patch.js';
-import { withoutNul } from './text.js';
+import { plainTextSchema, withoutNul } from './text.js';
 
 export const applicationSchema = z.object({
   id: z.uuid(),
@@ -39,9 +39,9 @@ export const STACK_MAX_ITEMS = 20;
 
 export const STAGE_CHANGE_HINT = 'Stage changes go through POST /applications/:id/events';
 
-const textSchema = z.string().trim().min(1).max(200);
+const textSchema = plainTextSchema(200);
 const salarySchema = z.int32().nonnegative().nullable();
-const stackSchema = z.array(z.string().trim().min(1).max(50)).max(STACK_MAX_ITEMS);
+const stackSchema = z.array(plainTextSchema(50)).max(STACK_MAX_ITEMS);
 
 export const currencySchema = z
   .string()

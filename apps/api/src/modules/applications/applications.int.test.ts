@@ -176,6 +176,18 @@ describe('the applications routes', () => {
       body: { url: 'https://djinni.co/jobs/7\u0000x' },
       path: 'url',
     },
+    { case: 'a company with a NUL character', body: { company: 'Ро\u0000машка' }, path: 'company' },
+    {
+      case: 'a position with a NUL character',
+      body: { position: 'Front\u0000end Engineer' },
+      path: 'position',
+    },
+    { case: 'a location with a NUL character', body: { location: 'Ки\u0000їв' }, path: 'location' },
+    {
+      case: 'a stack item with a NUL character',
+      body: { stack: ['React', 'Type\u0000Script'] },
+      path: 'stack.1',
+    },
     {
       case: '21 stack items',
       body: { stack: Array.from({ length: 21 }, (_, index) => `tech-${String(index)}`) },
@@ -284,6 +296,11 @@ describe('the applications routes', () => {
       case: 'a stage change next to another field',
       body: { currentStage: 'screening', company: 'Нова назва' },
       error: { path: 'currentStage', message: STAGE_CHANGE_HINT },
+    },
+    {
+      case: 'a company with a NUL character',
+      body: { company: 'Ро\u0000машка' },
+      error: { path: 'company', message: 'Text must not contain NUL characters' },
     },
   ])(
     'PATCH answers $case with 422 on "$error.path", keeps the stage and records no change',

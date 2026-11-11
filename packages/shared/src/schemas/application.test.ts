@@ -68,6 +68,26 @@ describe('createApplicationInputSchema', () => {
     },
     { label: '21 stack items', body: { stack: stackOf(21) }, path: 'stack' },
     { label: 'an empty stack item', body: { stack: ['React', '  '] }, path: 'stack.1' },
+    {
+      label: 'a stack item with a NUL character',
+      body: { stack: ['React', 'Type\u0000Script'] },
+      path: 'stack.1',
+    },
+    {
+      label: 'a company with a NUL character',
+      body: { company: 'Ро\u0000машка' },
+      path: 'company',
+    },
+    {
+      label: 'a position with a NUL character',
+      body: { position: 'Front\u0000end Engineer' },
+      path: 'position',
+    },
+    {
+      label: 'a location with a NUL character',
+      body: { location: 'Ки\u0000їв' },
+      path: 'location',
+    },
     { label: 'a missing company', body: { company: undefined }, path: 'company' },
     { label: 'a missing position', body: { position: undefined }, path: 'position' },
     { label: 'a blank company', body: { company: '   ' }, path: 'company' },
@@ -117,6 +137,11 @@ describe('updateApplicationInputSchema', () => {
       label: 'a url with a NUL character',
       body: { url: 'https://djinni.co/jobs/7\u0000x' },
       path: 'url',
+    },
+    {
+      label: 'a company with a NUL character',
+      body: { company: 'Ро\u0000машка' },
+      path: 'company',
     },
   ])('refuses $label', ({ body, path }) => {
     expect(issuePathsOf(updateApplicationInputSchema.safeParse(body))).toEqual([path]);
