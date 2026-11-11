@@ -47,6 +47,7 @@ describe('palettePagesOf', () => {
     expect(palettePagesOf(FEATURE_FLAGS).map((page) => [page.label, page.href])).toEqual([
       ['Дошка', '/board'],
       ['Календар', '/calendar'],
+      ['Резюме', '/resumes'],
       ['Налаштування', '/settings'],
       ['Таблиця', '/applications'],
     ]);

@@ -99,14 +99,26 @@ export function validationReply(errors?: ErrorResponse['errors']) {
   return errorReply({ status: 422, type: 'validation_error', errors });
 }
 
+export const REFUSED_CONNECTION: Outage = {
+  name: 'refuses the connection',
+  reply: () => HttpResponse.error(),
+  settled: 'error',
+};
+
+export const NEVER_ANSWERS: Outage = {
+  name: 'never answers',
+  reply: () => delay('infinite'),
+  settled: 'pending',
+};
+
 export const OUTAGES: readonly Outage[] = [
   {
     name: 'answers 500',
     reply: () => errorReply({ status: 500, type: 'internal_error' }),
     settled: 'error',
   },
-  { name: 'refuses the connection', reply: () => HttpResponse.error(), settled: 'error' },
-  { name: 'never answers', reply: () => delay('infinite'), settled: 'pending' },
+  REFUSED_CONNECTION,
+  NEVER_ANSWERS,
 ];
 
 export function refusedRefreshRoute() {

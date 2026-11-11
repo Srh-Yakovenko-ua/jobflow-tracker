@@ -6,10 +6,11 @@ import { EVERY_FLAG_ON } from '@/test/feature-flags';
 import { activeHrefOf, NAV_ITEMS, visibleNavItems } from './nav-items';
 
 describe('visibleNavItems', () => {
-  it('shows the board, the calendar and settings while no other page has shipped', () => {
+  it('shows the shipped pages: the board, the calendar, resumes and settings', () => {
     expect(visibleNavItems(FEATURE_FLAGS).map((item) => item.id)).toEqual([
       'board',
       'calendar',
+      'resumes',
       'settings',
     ]);
   });

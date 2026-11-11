@@ -4,6 +4,7 @@ import {
   formatClock,
   formatDayMonth,
   formatDuration,
+  formatFileSize,
   formatIncidentTime,
   formatMegabytes,
 } from './state-format';
@@ -34,6 +35,22 @@ describe('formatMegabytes', () => {
     expect(formatMegabytes(5 * MEBIBYTE)).toBe('5');
     expect(formatMegabytes(5 * MEBIBYTE + 1)).toBe('5,1');
   });
+});
+
+describe('formatFileSize', () => {
+  it.each([
+    [0, '0 КБ'],
+    [219_136, '214 КБ'],
+    [MEBIBYTE - 1, '1024 КБ'],
+    [MEBIBYTE, '1 МБ'],
+    [1_258_291, '1,2 МБ'],
+    [5 * MEBIBYTE, '5 МБ'],
+  ])(
+    'a %i byte resume reads "%s": whole КБ rounded up under 1 MiB, МБ from it',
+    (bytes, expected) => {
+      expect(formatFileSize(bytes)).toBe(expected);
+    },
+  );
 });
 
 describe('formatClock', () => {
