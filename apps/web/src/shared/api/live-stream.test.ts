@@ -116,7 +116,7 @@ describe('openLiveStream', () => {
     expect(tickets.issued).toEqual(['ticket-1']);
   });
 
-  it('doubles the wait after each failed connect and starts from 2 s again once a stream has opened', async () => {
+  it('doubles the wait after each failed connect and starts from 2 s again once an opened stream has delivered a frame', async () => {
     fakeTimeouts();
     const { stream, tickets } = connect();
     (await stream.source(0)).fail();
@@ -176,7 +176,7 @@ describe('openLiveStream', () => {
     expect((await stream.source(0)).url).toBe(streamUrlFor('ticket-1'));
   });
 
-  it('calls onReconnect on every open but the first', async () => {
+  it('calls onReconnect once a reopened stream has stayed open 10 s, never for the first open', async () => {
     fakeTimeouts();
     const { stream, onReconnect } = connect();
     const first = await stream.source(0);
@@ -186,6 +186,23 @@ describe('openLiveStream', () => {
     first.fail();
     await wait(2000);
     (await stream.source(1)).open();
+    await wait(10_000);
+
+    expect(onReconnect).toHaveBeenCalledTimes(1);
+  });
+
+  it('a reopened stream that delivers a frame calls onReconnect once, and the settle timer does not call it again', async () => {
+    fakeTimeouts();
+    const { stream, onReconnect } = connect();
+    const first = await stream.source(0);
+    first.open();
+    first.fail();
+    await wait(2000);
+    const reopened = await stream.source(1);
+
+    reopened.open();
+    reopened.send(JOB_DONE);
+    expect(onReconnect).toHaveBeenCalledTimes(1);
     await wait(10_000);
 
     expect(onReconnect).toHaveBeenCalledTimes(1);

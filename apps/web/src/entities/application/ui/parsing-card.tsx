@@ -1,7 +1,8 @@
 'use client';
 
 import { AI_JOB_STEPS, type ApplicationCard, type JobStatus } from '@jobflow/shared';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useEffect } from 'react';
 
 import { LIVE_CLIENT_LIMITS } from '@/shared/api';
 import { uk } from '@/shared/i18n';
@@ -11,6 +12,8 @@ import { FullCardBars } from '@/shared/ui/skeleton';
 import { useSkeletonMotion } from '@/shared/ui/skeleton-motion';
 
 import { jobQueryOptions } from '../api/job';
+import { jobFinished } from '../lib/job-finished';
+import { applicationKeys } from '../model/keys';
 import { CARD_FRAME } from './card-frame';
 
 const COPY = uk.application.parsing;
@@ -23,12 +26,18 @@ export type ParsingCardProps = Readonly<{
 }>;
 
 function QueueWait({ jobId }: Readonly<{ jobId: JobStatus['id'] }>) {
+  const queryClient = useQueryClient();
   const job = useQuery({
     ...jobQueryOptions(jobId),
-    refetchInterval: LIVE_CLIENT_LIMITS.slowPollMs,
+    refetchInterval: ({ state }) =>
+      jobFinished(state.data) ? false : LIVE_CLIENT_LIMITS.slowPollMs,
   });
+  const finished = jobFinished(job.data);
+  useEffect(() => {
+    if (finished) void queryClient.invalidateQueries({ queryKey: applicationKeys.boards() });
+  }, [finished, queryClient]);
   if (!job.isSuccess) return COPY.queued;
-  if (job.data.status === 'processing') return PROCESSING_LINE;
+  if (finished || job.data.status === 'processing') return PROCESSING_LINE;
   const eta = job.data.queue?.etaSeconds;
   return eta === undefined ? COPY.queued : COPY.queuedEta(formatDuration(eta));
 }

@@ -1,5 +1,6 @@
 import { buildJobStatus } from '@jobflow/shared/testing';
-import { screen, waitFor, within } from '@testing-library/react';
+import { act, type RenderResult, screen, waitFor, within } from '@testing-library/react';
+import type { UserEvent } from '@testing-library/user-event';
 import type { RequestHandler } from 'msw';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
@@ -17,7 +18,7 @@ import {
 import { axeViolations } from '@/test/axe';
 import { captureTokenRoutes } from '@/test/capture-token-fixtures';
 import { DONE_JOB, failedJob, jobRoute, PROCESSING_JOB } from '@/test/job-fixtures';
-import { push } from '@/test/navigation';
+import { navigateTo, push } from '@/test/navigation';
 import { renderViewInApp } from '@/test/render-in-app';
 import { server } from '@/test/server';
 import { meRoute } from '@/test/session-fixtures';
@@ -55,8 +56,31 @@ const RETRIED_JOB_ID = '0199f1a0-3c4d-7e5f-8a6b-7c8d9e0f1a3d';
 
 const FAILED_ADDRESS = `/add?review=${FAILED_DRAFT.id}&job=${FAILED_JOB.id}#review`;
 
+const PASTED_ADDRESS = `/add?review=${FIRST_PASTE.applicationId}&job=${FIRST_PASTE.jobId}`;
+
+const PROCESSING_LINE = 'крок 2 з 3 · обробляється';
+
 function addressNow(): string {
   return `${window.location.pathname}${window.location.search}${window.location.hash}`;
+}
+
+async function pasteVacancy(user: UserEvent) {
+  await user.click(textField());
+  await user.paste('Acme hires a Senior React developer');
+  await user.click(screen.getByRole('button', { name: 'Розібрати текст' }));
+  return screen.findByText(PROCESSING_LINE);
+}
+
+async function explainerOnBareAdd(view: RenderResult, gone: () => HTMLElement | null) {
+  view.rerender(<AddApplicationPage query={{}} />);
+  expect(await screen.findByRole('heading', { level: 3, name: ON_BOARD })).toBeDefined();
+  await waitFor(() => {
+    expect(gone()).toBeNull();
+  });
+}
+
+function processingPasteRoute() {
+  return jobRoute({ job: () => PROCESSING_JOB, owner: FIRST_PASTE.applicationId }).handler;
 }
 
 async function renderPage(query: AddQuery = {}, handlers: readonly RequestHandler[] = []) {
@@ -169,11 +193,7 @@ describe('AddApplicationPage', () => {
       confirms.handler,
     ]);
 
-    await user.click(textField());
-    await user.paste('Acme hires a Senior React developer');
-    await user.click(screen.getByRole('button', { name: 'Розібрати текст' }));
-
-    const line = await screen.findByText('крок 2 з 3 · обробляється');
+    const line = await pasteVacancy(user);
     expect(scrolled).toHaveBeenCalledWith({ block: 'nearest' });
     expect(
       scrolled.mock.contexts.filter((target) => target instanceof Element && target.contains(line)),
@@ -186,6 +206,40 @@ describe('AddApplicationPage', () => {
       expect(push).toHaveBeenCalledWith('/board');
     });
     expect(confirms.sent).toEqual([FIRST_PASTE.applicationId]);
+  });
+
+  it('a paste on a bare /add puts the draft and its job in the address, and opening /add again shows no draft', async () => {
+    window.history.replaceState(null, '', '/add');
+    const { user, view } = await renderPage({}, [processingPasteRoute()]);
+
+    await pasteVacancy(user);
+    expect(addressNow()).toBe(PASTED_ADDRESS);
+    act(() => {
+      navigateTo('/add');
+    });
+
+    await explainerOnBareAdd(view, () => screen.queryByText(PROCESSING_LINE));
+  });
+
+  it('a draft pasted under the review of another draft stays in the panel once the address moves to it', async () => {
+    window.history.replaceState(null, '', `/add?review=${REVIEW_DRAFT.id}`);
+    const { user, view } = await renderPage({ review: REVIEW_DRAFT.id }, [
+      processingPasteRoute(),
+      applicationRoute({ application: REVIEW_DRAFT }).handler,
+    ]);
+    await screen.findByRole('form', { name: REVIEW });
+
+    await pasteVacancy(user);
+    expect(addressNow()).toBe(PASTED_ADDRESS);
+    act(() => {
+      navigateTo(`/add?review=${FIRST_PASTE.applicationId}#review`);
+    });
+    view.rerender(<AddApplicationPage query={{ review: FIRST_PASTE.applicationId }} />);
+
+    await waitFor(() => {
+      expect(screen.queryByRole('form', { name: REVIEW })).toBeNull();
+    });
+    expect(screen.getByText(PROCESSING_LINE)).toBeDefined();
   });
 
   it('review=<draft id> opens the review of that draft and leaves the paste field alone', async () => {
@@ -206,12 +260,7 @@ describe('AddApplicationPage', () => {
     ]);
     await screen.findByRole('form', { name: REVIEW });
 
-    view.rerender(<AddApplicationPage query={{}} />);
-
-    expect(await screen.findByRole('heading', { level: 3, name: ON_BOARD })).toBeDefined();
-    await waitFor(() => {
-      expect(screen.queryByRole('form', { name: REVIEW })).toBeNull();
-    });
+    await explainerOnBareAdd(view, () => screen.queryByRole('form', { name: REVIEW }));
   });
 
   it('review=<failed draft id>&job=<job id> asks that job and opens the AI failure with its reason and no accessibility violations', async () => {

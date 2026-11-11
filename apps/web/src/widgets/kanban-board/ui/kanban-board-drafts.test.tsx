@@ -7,7 +7,7 @@ import { apiUrl, recordSentRequests } from '@/test/api-handlers';
 import { startDrag } from '@/test/board-drag';
 import { cardIn, fixtureIdOf } from '@/test/board-fixtures';
 import { advanceBy as wait, fakeTimeoutsAndIntervals } from '@/test/fake-timeouts';
-import { JOB_ID, jobRoute } from '@/test/job-fixtures';
+import { DONE_JOB, JOB_ID, jobRoute } from '@/test/job-fixtures';
 import { latch } from '@/test/latch';
 import { bringLiveStreamUp as openStream, closeLiveStreams } from '@/test/live-stream';
 import { boardReadyToDrag, columnNamed, renderBoard } from '@/test/render-board';
@@ -54,6 +54,24 @@ describe('KanbanBoard drafts', () => {
     const line = await screen.findByText('у черзі · ~2 хв');
 
     expect(columnNamed('відгук 1').contains(line)).toBe(true);
+    expect(jobs.sent).toEqual([JOB_ID]);
+  });
+
+  it('a queued draft whose job is done shows step 2 of 3 and asks for the board once, not on every answer', async () => {
+    fakeTimeoutsAndIntervals();
+    await openStream();
+    const jobs = jobRoute({ job: () => DONE_JOB });
+    server.use(jobs.handler);
+    const boardRequests = boardRequestsOf(recordSentRequests());
+    renderBoard(oneDraftBoard({ aiStatus: 'queued', aiJobId: JOB_ID }));
+
+    expect(await screen.findByText(PROCESSING_LINE)).toBeDefined();
+    await waitFor(() => {
+      expect(boardRequests()).toHaveLength(2);
+    });
+    await wait(5000);
+
+    expect(boardRequests()).toHaveLength(2);
     expect(jobs.sent).toEqual([JOB_ID]);
   });
 

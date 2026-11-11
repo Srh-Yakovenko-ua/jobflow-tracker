@@ -5,13 +5,7 @@ import {
   OUTCOME_STAGES,
   type OutcomeStage,
 } from '@jobflow/shared';
-import {
-  hashKey,
-  keepPreviousData,
-  useIsMutating,
-  useQuery,
-  useQueryClient,
-} from '@tanstack/react-query';
+import { hashKey, keepPreviousData, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 
 import {
@@ -21,7 +15,7 @@ import {
 } from '@/entities/application';
 import { useUserTimeZone } from '@/entities/user';
 import { useSentFilters } from '@/features/filter-applications';
-import { MOVE_MUTATION_KEY } from '@/features/move-application';
+import { isMovePending, useRerenderOnMoveChange } from '@/features/move-application';
 import { useLivePollMs } from '@/shared/api';
 
 import { parsingCardsOf } from './board-lookup';
@@ -40,8 +34,6 @@ type BoardQueryInput = Readonly<{ expanded: readonly OutcomeStage[]; filters: Ap
 type ArrivalInput = Readonly<{ query: ApplicationBoardQuery; arrived: boolean }>;
 
 type SearchInput = Readonly<{ filters: ApplicationFilters; shown: ApplicationBoardQuery }>;
-
-const MOVING = { mutationKey: MOVE_MUTATION_KEY };
 
 function boardQueryOf({ expanded, filters }: BoardQueryInput): ApplicationBoardQuery {
   return {
@@ -81,9 +73,9 @@ function searchOf({ filters, shown }: SearchInput): BoardSearchState {
 function useBoardPollMs() {
   const pollMs = useLivePollMs();
   const queryClient = useQueryClient();
-  useIsMutating(MOVING);
+  useRerenderOnMoveChange();
   return (board: ApplicationBoardResponse | undefined) =>
-    queryClient.isMutating(MOVING) === 0 && parsingCardsOf(board).length > 0 ? pollMs : false;
+    !isMovePending(queryClient) && parsingCardsOf(board).length > 0 ? pollMs : false;
 }
 
 export function useKanbanBoard() {

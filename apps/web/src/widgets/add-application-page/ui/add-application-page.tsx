@@ -1,6 +1,7 @@
 'use client';
 
 import { AnimatePresence } from 'motion/react';
+import { useSearchParams } from 'next/navigation';
 import { type ReactNode, useRef, useState } from 'react';
 
 import {
@@ -96,15 +97,18 @@ function writeCaptureToUrl(captured: CapturedDraft | null): void {
 
 export function AddApplicationPage({ query }: AddApplicationPageProps) {
   const prefill = addPrefillOf(query);
+  const search = useSearchParams();
+  const addressReview = addPrefillOf({ review: search.get('review') ?? undefined }).reviewId;
   const [local, setLocal] = useState<LocalCapture | null>(null);
   const capture =
-    local !== null && local.under === prefill.reviewId ? local.capture : captureOf(prefill);
-  const setCapture = (next: Capture | null) => {
-    setLocal({ under: prefill.reviewId, capture: next });
+    local !== null && local.under === addressReview ? local.capture : captureOf(prefill);
+  const show = (next: CapturedDraft | null) => {
+    writeCaptureToUrl(next);
+    setLocal({ under: next?.applicationId ?? null, capture: next });
   };
   const liveRef = useRef<HTMLDivElement>(null);
   const onCaptured = (captured: CapturedDraft) => {
-    setCapture(captured);
+    show(captured);
     liveRef.current?.scrollIntoView({ block: 'nearest' });
   };
   return (
@@ -134,13 +138,10 @@ export function AddApplicationPage({ query }: AddApplicationPageProps) {
                 capture={capture}
                 actions={{
                   onRetried: (jobId) => {
-                    const retried = { ...capture, jobId };
-                    setCapture(retried);
-                    writeCaptureToUrl(retried);
+                    show({ ...capture, jobId });
                   },
                   onDeleted: () => {
-                    setCapture(null);
-                    writeCaptureToUrl(null);
+                    show(null);
                   },
                 }}
               />

@@ -5,6 +5,7 @@ import { type QueryKey, useQueryClient } from '@tanstack/react-query';
 import { useEffect } from 'react';
 
 import { applicationKeys, jobKeys, timelineKeys } from '@/entities/application';
+import { isMovePending } from '@/features/move-application';
 import { openLiveStream } from '@/shared/api';
 
 const MISSED_WHILE_AWAY: readonly QueryKey[] = [applicationKeys.all, jobKeys.all, timelineKeys.all];
@@ -38,8 +39,13 @@ export function LiveUpdates() {
   const queryClient = useQueryClient();
   useEffect(() => {
     const refetch = (queryKeys: readonly QueryKey[]) => {
+      const moving = isMovePending(queryClient);
       for (const queryKey of queryKeys) {
-        void queryClient.invalidateQueries({ queryKey });
+        const settlesWithMove = moving && queryKey[0] === applicationKeys.all[0];
+        void queryClient.invalidateQueries({
+          queryKey,
+          refetchType: settlesWithMove ? 'none' : 'active',
+        });
       }
     };
     return openLiveStream({
