@@ -5,8 +5,6 @@ import {
   type AiKind,
   type AiKindOutput,
   type JobUpdated,
-  vacancyParseFailure,
-  vacancyParseOutputSchema,
 } from '@jobflow/shared';
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
@@ -19,6 +17,7 @@ import type { AiCompleteJob } from './ai.jobs.js';
 import { AiRepository, type CreateAiJob } from './ai.repository.js';
 import { budgetWindow } from './ai-budget.js';
 import { AiClient } from './ai-client.js';
+import { FAILED_CALL, isFinal, OUTPUT_FAILURES } from './ai-failures.js';
 import { aiInputHash } from './ai-input-hash.js';
 import type { SettledAiJob } from './ai-job-router.js';
 import { jobUpdateOf } from './ai-job-update.js';
@@ -29,6 +28,7 @@ import { AiServiceError } from './ai-service-error.js';
 export type AiCompleteAttempt = {
   job: AiCompleteJob;
   finalAttempt: boolean;
+  retried: boolean;
   logFields: ReturnType<typeof jobFields>;
   settled: (outcome: SettledAiJob) => Promise<void>;
   progressed: (update: JobUpdated) => Promise<void>;
@@ -41,21 +41,6 @@ export type AiJobOfUser = { userId: string; aiJobId: string };
 type AiRun = AiCompleteAttempt & { now: Date; inputHash: string };
 
 type AiAnswer = Pick<AiOutcome, 'aiResultId' | 'output'>;
-
-const OUTPUT_FAILURES: Record<AiKind, (output: unknown) => string | null> = {
-  vacancy_parse: (output) => vacancyParseFailure(vacancyParseOutputSchema.parse(output)),
-};
-
-const FAILED_CALL = {
-  model: '',
-  tokensIn: 0,
-  tokensOut: 0,
-  latencyMs: 0,
-} as const;
-
-function isFinal(error: AiServiceError): boolean {
-  return error.status >= 400 && error.status < 500 && error.status !== 429;
-}
 
 function traceOf({ job, logFields }: AiCompleteAttempt) {
   return { requestId: job.requestId, ...logFields, aiJobId: job.aiJobId, kind: job.kind };
@@ -86,7 +71,7 @@ export class AiService {
     const { aiJobId: id, userId } = attempt.job;
     const now = this.clock.now();
     if ((await this.repository.startJob(userId, { id, now })) === 0) {
-      this.logger.log(traceOf(attempt), 'ai job skipped');
+      await this.skip(attempt);
       return null;
     }
     await attempt.progressed(jobUpdateOf({ job: attempt.job, status: 'processing' }));
@@ -105,6 +90,17 @@ export class AiService {
 
   deleteResults(userId: string): Promise<void> {
     return this.repository.deleteResults(userId);
+  }
+
+  private async skip(attempt: AiCompleteAttempt): Promise<void> {
+    const { job, retried } = attempt;
+    const stored = retried ? await this.repository.findJob(job.userId, job.aiJobId) : null;
+    if (stored?.status !== 'failed' || stored.errorType === null) {
+      this.logger.log(traceOf(attempt), 'ai job skipped');
+      return;
+    }
+    await attempt.settled({ job, status: 'failed', errorType: stored.errorType });
+    this.logger.log(traceOf(attempt), 'ai failed job settled again');
   }
 
   private async fromCache(run: AiRun): Promise<AiOutcome | null> {
@@ -170,6 +166,8 @@ export class AiService {
     });
     if (finished === 1) {
       await progressed(jobUpdateOf({ job, status: 'done' }));
+    } else {
+      this.logger.log(traceOf(run), 'ai job not marked done');
     }
   }
 

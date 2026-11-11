@@ -44,18 +44,20 @@ const NOTE_JOB: AiCompleteJob = { ...VACANCY_JOB, input: { text: VACANCY_TEXT, .
 const INVALID_OUTPUT = { status: 422, type: 'ai_invalid_output' };
 
 type AttemptOptions = Partial<
-  Pick<AiCompleteAttempt, 'job' | 'finalAttempt' | 'settled' | 'progressed'>
+  Pick<AiCompleteAttempt, 'job' | 'finalAttempt' | 'retried' | 'settled' | 'progressed'>
 >;
 
 function attemptOf({
   job = VACANCY_JOB,
   finalAttempt = false,
+  retried = false,
   settled = new SettledAiJobs().record,
   progressed = () => Promise.resolve(),
 }: AttemptOptions = {}): AiCompleteAttempt {
   return {
     job,
     finalAttempt,
+    retried,
     logFields: { jobId: job.aiJobId, queue: 'ai', jobName: 'ai.complete' },
     settled,
     progressed,
@@ -94,6 +96,15 @@ const doneJob = (aiResultId: string): FakeAiJob => ({
   aiResultId,
   finishedAt: NOW,
 });
+
+function progressOf(repository: FakeAiRepository) {
+  const seen: { update: JobUpdated; job: FakeAiJob | undefined }[] = [];
+  const progressed = (update: JobUpdated) => {
+    seen.push({ update, job: repository.jobs.get(AI_JOB_ID) });
+    return Promise.resolve();
+  };
+  return { seen, progressed };
+}
 
 beforeEach(() => {
   log.lines.length = 0;
@@ -387,6 +398,64 @@ describe('AiService.complete settling the job', () => {
     expect(repository.jobs.get(AI_JOB_ID)).toEqual(doneJob('ai-result-1'));
   });
 
+  it('settles a failed job again on the retry after its settle callback threw, without a second call, and reports failed once', async () => {
+    const { repository, ai, service } = await serviceWithFakes();
+    const { seen, progressed } = progressOf(repository);
+    const settledJobs = new SettledAiJobs();
+    ai.answer = () => Promise.reject(new AiServiceError(INVALID_OUTPUT));
+    const refusedOnce = () => Promise.reject(new Error('connect ECONNREFUSED 127.0.0.1:5432'));
+
+    const first = await service
+      .complete(attemptOf({ settled: refusedOnce, progressed }))
+      .catch((thrown: unknown) => thrown);
+    const retried = await service.complete(
+      attemptOf({ retried: true, settled: settledJobs.record, progressed }),
+    );
+
+    expect(first).toHaveProperty('message', 'connect ECONNREFUSED 127.0.0.1:5432');
+    expect(retried).toBeNull();
+    expect(settledJobs.outcomes).toEqual([
+      { job: VACANCY_JOB, status: 'failed', errorType: 'ai_invalid_output' },
+    ]);
+    expect(seen.map(({ update }) => update.status)).toEqual(['processing', 'failed']);
+    expect(ai.calls).toEqual([VACANCY_CALL]);
+    expect(log.parsed()).toContainEqual(
+      expect.objectContaining({
+        msg: 'ai failed job settled again',
+        aiJobId: AI_JOB_ID,
+        requestId: 'req-ai-7',
+      }),
+    );
+    expect(log.lines.join('')).not.toContain(VACANCY_TEXT);
+  });
+
+  it.each<{ delivery: string; retried: boolean; stored: FakeAiJob }>([
+    {
+      delivery: 'a first delivery of a job already failed',
+      retried: false,
+      stored: failedJob('ai_invalid_output'),
+    },
+    { delivery: 'a retry of a job already done', retried: true, stored: doneJob('ai-result-1') },
+    {
+      delivery: "a retry of another user's failed job",
+      retried: true,
+      stored: { ...failedJob('ai_invalid_output'), userId: BOHDAN_ID },
+    },
+  ])('settles nothing and skips $delivery', async ({ retried, stored }) => {
+    const { repository, service } = await serviceWithFakes();
+    const settledJobs = new SettledAiJobs();
+    repository.jobs.set(AI_JOB_ID, stored);
+
+    await expect(
+      service.complete(attemptOf({ retried, settled: settledJobs.record })),
+    ).resolves.toBeNull();
+
+    expect(settledJobs.outcomes).toEqual([]);
+    expect(log.parsed()).toEqual([
+      expect.objectContaining({ msg: 'ai job skipped', aiJobId: AI_JOB_ID, requestId: 'req-ai-7' }),
+    ]);
+  });
+
   it('settles a failed job once when a second attempt fails the same job after the first', async () => {
     const { ai, service } = await serviceWithFakes();
     const settledJobs = new SettledAiJobs();
@@ -470,15 +539,6 @@ describe('AiService.complete reporting progress', () => {
   const UPDATE = { id: AI_JOB_ID, kind: 'vacancy_parse', errorType: null, applicationId: null };
   const PROCESSING_UPDATE = { ...UPDATE, status: 'processing', step: 2 };
 
-  function progressOf(repository: FakeAiRepository) {
-    const seen: { update: JobUpdated; job: FakeAiJob | undefined }[] = [];
-    const progressed = (update: JobUpdated) => {
-      seen.push({ update, job: repository.jobs.get(AI_JOB_ID) });
-      return Promise.resolve();
-    };
-    return { seen, progressed };
-  }
-
   it('reports processing once the job has started and done once it is stored as finished', async () => {
     const { repository, service } = await serviceWithFakes();
     const { seen, progressed } = progressOf(repository);
@@ -535,7 +595,7 @@ describe('AiService.complete reporting progress', () => {
     ]);
   });
 
-  it('reports no done when the job is gone by the time it finishes', async () => {
+  it('reports no done and logs that the job was not marked done when the job is gone by the time it finishes', async () => {
     const { repository, service } = await serviceWithFakes();
     const { seen, progressed } = progressOf(repository);
     const settled = () => {
@@ -546,6 +606,13 @@ describe('AiService.complete reporting progress', () => {
     await service.complete(attemptOf({ settled, progressed }));
 
     expect(seen.map(({ update }) => update)).toEqual([PROCESSING_UPDATE]);
+    expect(log.parsed()).toContainEqual(
+      expect.objectContaining({
+        msg: 'ai job not marked done',
+        aiJobId: AI_JOB_ID,
+        requestId: 'req-ai-7',
+      }),
+    );
   });
 
   it('reports only processing while a 503 is still retried', async () => {

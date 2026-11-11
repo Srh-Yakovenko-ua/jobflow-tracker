@@ -39,6 +39,10 @@ export class LiveHub implements OnModuleDestroy {
 
   private readonly closed = new Subject<void>();
 
+  private readonly resubscribed = new Subject<void>();
+
+  private subscriptionLost = false;
+
   private readonly heartbeat = interval(LIVE_LIMITS.heartbeatSeconds * 1000).pipe(
     tap(() => void this.endStreamsWhileRedisIsDown()),
     map(() => HEARTBEAT),
@@ -51,6 +55,7 @@ export class LiveHub implements OnModuleDestroy {
       this.logger.warn({ err: error.message }, 'live subscriber connection error');
     });
     this.subscriber.on('close', () => {
+      this.subscriptionLost = true;
       this.closed.next();
     });
     this.subscriber.on('ready', () => void this.subscribe());
@@ -64,7 +69,11 @@ export class LiveHub implements OnModuleDestroy {
       filter((received) => received.userId === userId),
       map(({ event }): MessageEvent => ({ id: event.id, type: event.type, data: event.data })),
     );
-    const ended = merge(this.closed, timer(LIVE_LIMITS.streamMaxSeconds * 1000));
+    const ended = merge(
+      this.closed,
+      timer(LIVE_LIMITS.streamMaxSeconds * 1000),
+      ...(this.subscriptionLost ? [this.resubscribed] : []),
+    );
     return merge(events, this.heartbeat).pipe(takeUntil(ended));
   }
 
@@ -76,9 +85,17 @@ export class LiveHub implements OnModuleDestroy {
   private async subscribe(): Promise<void> {
     try {
       await this.subscriber.psubscribe(LIVE_CHANNEL.pattern);
+      this.endStreamsOpenedWithoutSubscription();
     } catch (error) {
       const err = error instanceof Error ? error.message : String(error);
       this.logger.warn({ err }, 'live subscription failed');
+    }
+  }
+
+  private endStreamsOpenedWithoutSubscription(): void {
+    if (this.subscriptionLost) {
+      this.subscriptionLost = false;
+      this.resubscribed.next();
     }
   }
 
