@@ -6,17 +6,17 @@ import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 
 import { type DraftReviewProps, reviewFieldsOf } from '@/features/edit-application';
-import { ApiError } from '@/shared/api';
 import type { AiJob } from '@/shared/ui/async-state';
 
 import { failureReasonOf } from '../model/failure-reason';
-import { type Capture, type CaptureReads, useCapture } from '../model/use-capture';
+import { type Capture, type CaptureReads, isGone, useCapture } from '../model/use-capture';
 import { IDLE_VIEW } from './add-explainer';
 import type { CaptureFailureActions, CaptureFailureKind } from './capture-failure';
 import {
   draftFormView,
   failureMarkOf,
   failureView,
+  loadingView,
   progressView,
   readFailedView,
   readyView,
@@ -29,9 +29,11 @@ export type CaptureProgressProps = Readonly<{ capture: Capture; actions: Capture
 
 type JobStage = Readonly<{ job: UseQueryResult<JobStatus>; jobId: JobStatus['id'] | null }>;
 
+type ManualFill = 'closed' | 'open' | 'back';
+
 type CardStage = Readonly<{
   reads: CaptureReads;
-  manual: boolean;
+  manual: Readonly<{ fill: ManualFill; onBack: () => void }>;
   actions: CaptureFailureActions & DraftReviewProps['actions'];
 }>;
 
@@ -48,10 +50,6 @@ const READING_VIEW = progressView({
   parse: { aiStatus: 'processing', aiJobId: null },
 });
 
-function isGone(error: Error): boolean {
-  return error instanceof ApiError && error.status === 404;
-}
-
 function aiJobOf(job: JobStatus | undefined): AiJob {
   if (job?.status === 'queued' && job.queue !== null) {
     return { status: 'queued', ...job.queue };
@@ -63,29 +61,33 @@ function aiJobOf(job: JobStatus | undefined): AiJob {
   };
 }
 
+function rereadView(query: UseQueryResult): LiveView {
+  return readFailedView({
+    onRetry: () => {
+      void query.refetch();
+    },
+    retrying: query.isFetching,
+  });
+}
+
 function jobView({ job, jobId }: JobStage): LiveView {
-  if (job.data === undefined && job.errorUpdateCount > 0) {
-    return readFailedView(() => {
-      void job.refetch();
-    });
-  }
+  if (job.data === undefined && job.errorUpdateCount > 0) return rereadView(job);
   const aiStatus = job.data?.status === 'processing' ? 'processing' : 'queued';
   return progressView({ job: aiJobOf(job.data), parse: { aiStatus, aiJobId: jobId } });
 }
 
-function unreadCardView(application: UseQueryResult<ApplicationResponse>): LiveView {
-  if (!application.isError) return READING_VIEW;
+function unreadCardView({ reads }: CardStage): LiveView {
+  const { application } = reads;
   if (isGone(application.error)) return IDLE_VIEW;
-  return readFailedView(() => {
-    void application.refetch();
-  });
+  if (application.errorUpdateCount > 0) return rereadView(application);
+  return reads.owned?.status === 'done' ? READING_VIEW : loadingView();
 }
 
 function failureOf({ card, reads }: DraftStage): CaptureFailureKind | null {
   if (card.aiParsed !== null) {
     return reviewFieldsOf(card) === null ? { reason: 'generic', parsed: true } : null;
   }
-  const job = reads.job.data;
+  const job = reads.owned;
   if (job?.status !== 'failed') return null;
   return { reason: failureReasonOf(job.errorType), parsed: false };
 }
@@ -94,40 +96,48 @@ function unfailedView({ card, reads, actions }: DraftStage): LiveView {
   if (card.aiParsed !== null) {
     return draftFormView({ id: 'review', mark: 'review', application: card, actions });
   }
-  const rereading = reads.job.data?.status === 'done' && reads.application.isFetching;
+  const rereading = reads.owned?.status === 'done' && reads.application.isFetching;
   return rereading ? READING_VIEW : IDLE_VIEW;
 }
 
 function draftView(stage: DraftStage): LiveView {
   const failure = failureOf(stage);
   if (failure === null) return unfailedView(stage);
-  const { card, actions } = stage;
-  if (!stage.manual) return failureView({ application: card, failure, actions });
+  const { card, actions, manual } = stage;
+  if (manual.fill !== 'open') {
+    const view = { manualFocused: manual.fill === 'back' };
+    return failureView({ application: card, failure, actions, view });
+  }
   return draftFormView({
     id: 'manual',
     mark: failureMarkOf(failure),
     application: card,
-    actions,
+    actions: { ...actions, onBack: manual.onBack },
   });
 }
 
 function cardView(stage: CardStage): LiveView {
   const card = stage.reads.application.data;
-  if (card === undefined) return unreadCardView(stage.reads.application);
+  if (card === undefined) return unreadCardView(stage);
   return card.isDraft ? draftView({ ...stage, card }) : readyView(card);
 }
 
 export function CaptureProgress({ capture, actions }: CaptureProgressProps) {
   const router = useRouter();
   const reads = useCapture(capture);
-  const [manual, setManual] = useState(false);
+  const [fill, setFill] = useState<ManualFill>('closed');
   const stage: CardStage = {
     reads,
-    manual,
+    manual: {
+      fill,
+      onBack: () => {
+        setFill('back');
+      },
+    },
     actions: {
       ...actions,
       onManual: () => {
-        setManual(true);
+        setFill('open');
       },
       onConfirmed: () => {
         router.push('/board');

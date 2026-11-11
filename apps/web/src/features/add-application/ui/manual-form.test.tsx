@@ -7,6 +7,7 @@ import {
   type AddRoutesOptions,
   addsOnceOnDoubleClick,
   NO_ACTIVE_SEARCH,
+  POSITION_ERROR,
   TWO_MINUTES,
 } from '@/test/add-fixtures';
 import {
@@ -92,7 +93,7 @@ describe('ManualForm', () => {
     await waitFor(() => {
       expect(descriptionOf(field(COMPANY))).toBe(COMPANY_REFUSED);
     });
-    expect(descriptionOf(field(POSITION))).toBe('Вкажи позицію одним коротким рядком');
+    expect(descriptionOf(field(POSITION))).toBe(POSITION_ERROR);
     expect(sent).toEqual([]);
   });
 

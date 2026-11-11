@@ -1,7 +1,12 @@
 import { useDraggable } from '@dnd-kit/core';
 import Link from 'next/link';
 
-import { ApplicationCard, type ApplicationCardProps, cardHrefOf } from '@/entities/application';
+import {
+  ApplicationCard,
+  type ApplicationCardProps,
+  cardHrefOf,
+  REVIEW_ANCHOR,
+} from '@/entities/application';
 import { canDragFrom } from '@/features/move-application';
 import { uk } from '@/shared/i18n';
 import { cn } from '@/shared/lib/cn';
@@ -9,8 +14,6 @@ import { cn } from '@/shared/lib/cn';
 import { KeyboardHint } from './keyboard-hint';
 
 export type DraggableCardProps = Pick<ApplicationCardProps, 'application' | 'context' | 'view'>;
-
-const REVIEW_ANCHOR = '#review';
 
 const CARD_LINK = 'block rounded-xl focus-visible:focus-ring';
 

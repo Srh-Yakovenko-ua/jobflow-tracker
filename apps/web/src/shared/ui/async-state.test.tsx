@@ -5,6 +5,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { uk } from '@/shared/i18n';
 
 import { type AiJob, AsyncState } from './async-state';
+import { STATE_TEXT } from './state-text';
 
 describe('AsyncState', () => {
   it.each<{ name: string; job: AiJob; line: string }>([
@@ -55,13 +56,7 @@ describe('AsyncState', () => {
     const { rerender } = render(<AsyncState job={{ status: 'failed' }} />);
     const failed = [...(screen.getByText('AI не впорався').closest('p')?.classList ?? [])];
     expect(failed).toEqual(
-      expect.arrayContaining([
-        'uppercase',
-        'text-[10px]',
-        'font-semibold',
-        'tracking-[0.12em]',
-        'text-danger',
-      ]),
+      expect.arrayContaining([...STATE_TEXT.eyebrow.split(' '), 'text-danger']),
     );
     expect(failed).not.toContain('label');
 
@@ -113,6 +108,17 @@ describe('AsyncState', () => {
     expect(
       screen.getByRole<HTMLButtonElement>('button', { name: 'Заповнити вручну' }).disabled,
     ).toBe(false);
+  });
+
+  it('a failed job takes focus to the manual way only when the caller asks for it', () => {
+    const onManual = vi.fn();
+    const { unmount } = render(<AsyncState job={{ status: 'failed' }} actions={{ onManual }} />);
+    expect(document.activeElement).toBe(document.body);
+    unmount();
+
+    render(<AsyncState job={{ status: 'failed' }} actions={{ onManual, manualFocused: true }} />);
+
+    expect(document.activeElement).toBe(screen.getByRole('button', { name: 'Заповнити вручну' }));
   });
 
   it('shows the operation content the caller passes in', () => {

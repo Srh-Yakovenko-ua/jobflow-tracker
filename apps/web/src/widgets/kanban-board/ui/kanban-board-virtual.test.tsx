@@ -61,6 +61,10 @@ function rowTopOf(link: HTMLAnchorElement | null): number {
   return Number(/translateY\((-?[\d.]+)px\)/.exec(row?.style.transform ?? '')?.[1] ?? Number.NaN);
 }
 
+function pickCompactBeforeAnyTimer() {
+  fireEvent.click(screen.getByRole('radio', { name: uk.board.density.compact }));
+}
+
 function columnView(column: HTMLElement) {
   return {
     mounted: within(column).getAllByRole('link').length,
@@ -213,12 +217,12 @@ describe('KanbanBoard long columns', () => {
   ])(
     '«Щільні» on a 40-card відгук scrolled to $scrolledTo measures its cards again and keeps the column scrolled',
     async ({ scrolledTo, full, compact }) => {
-      const { user } = await longBoardReady(appliedBoard(40));
+      await longBoardReady(appliedBoard(40));
       const applied = columnNamed('відгук 40');
       if (scrolledTo > 0) scrollColumnTo(applied, scrolledTo);
 
       const before = columnView(applied);
-      await user.click(screen.getByRole('radio', { name: uk.board.density.compact }));
+      pickCompactBeforeAnyTimer();
 
       expect({ before, after: columnView(applied) }).toEqual({ before: full, after: compact });
     },
@@ -238,7 +242,7 @@ describe('KanbanBoard long columns', () => {
   });
 
   it('«Щільні» on a 500-card відгук scrolled to its end keeps the last card mounted, says no card is below and leaves no card with its stack', async () => {
-    const { user } = await longBoardReady(appliedBoard(500));
+    await longBoardReady(appliedBoard(500));
     const applied = columnNamed('відгук 500');
     const view = () => ({
       ...columnView(applied),
@@ -249,7 +253,7 @@ describe('KanbanBoard long columns', () => {
     await within(applied).findByText('Vacancy 1499');
 
     const before = view();
-    await user.click(screen.getByRole('radio', { name: uk.board.density.compact }));
+    pickCompactBeforeAnyTimer();
 
     expect({ before, after: view() }).toEqual({
       before: { mounted: 11, hint: null, scrollTop: 100_000, last: true, stacks: 11 },

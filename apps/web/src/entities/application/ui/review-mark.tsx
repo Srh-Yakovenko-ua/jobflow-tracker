@@ -10,15 +10,28 @@ export type DraftMark = 'review' | 'failed';
 
 export type ReviewMarkProps = Readonly<{ mark: DraftMark }>;
 
-type MarkLook = Readonly<{ tone: string; dot: ReactNode; label: string }>;
+export type DraftMarkLook = Readonly<{
+  tone: string;
+  dot: ReactNode;
+  label: string;
+  card: Readonly<{ board: string; preview: string }>;
+  footer: 'kept' | 'fields';
+}>;
 
 const COPY = uk.application.parsing;
 
-const MARK_LOOK: Record<DraftMark, MarkLook> = {
+const FAILED_RING = 'text-ink-3 inset-ring inset-ring-rejected';
+
+export const DRAFT_MARK_LOOK: Record<DraftMark, DraftMarkLook> = {
   review: {
     tone: 'text-link',
     dot: <span aria-hidden className={CARD_FRAME.dot} />,
     label: COPY.review,
+    card: {
+      board: 'inset-ring inset-ring-accent/25',
+      preview: 'text-ink inset-ring inset-ring-accent',
+    },
+    footer: 'fields',
   },
   failed: {
     tone: 'text-danger',
@@ -31,11 +44,13 @@ const MARK_LOOK: Record<DraftMark, MarkLook> = {
       </span>
     ),
     label: COPY.failed,
+    card: { board: FAILED_RING, preview: FAILED_RING },
+    footer: 'kept',
   },
 };
 
 export function ReviewMark({ mark }: ReviewMarkProps) {
-  const look = MARK_LOOK[mark];
+  const look = DRAFT_MARK_LOOK[mark];
   return (
     <span className={cn(CARD_FRAME.eyebrow, look.tone)}>
       {look.dot}
