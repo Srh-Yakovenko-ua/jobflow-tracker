@@ -141,10 +141,10 @@ describe('run', () => {
 
   it.each<{ name: string; reply: FetchReply; text: string; href?: string }>([
     {
-      name: 'a revoked token',
-      reply: { status: 401 },
+      name: 'a revoked token behind an html error page',
+      reply: { status: 401, text: '<html>Unauthorized</html>' },
       text: 'Букмарклет вимкненоСтворити новий',
-      href: 'http://localhost:3000/settings',
+      href: 'http://localhost:3000/settings#bookmarklet',
     },
     {
       name: 'no active search',

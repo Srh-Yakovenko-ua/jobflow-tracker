@@ -23,7 +23,12 @@ export const DUPLICATE: PossibleDuplicate = {
   stage: 'rejected',
 };
 
-export type FetchReply = { status: number; body?: unknown; headers?: Record<string, string> };
+export type FetchReply = {
+  status: number;
+  body?: unknown;
+  text?: string;
+  headers?: Record<string, string>;
+};
 
 export type FetchBehaviour = FetchReply | Error | 'silent';
 
@@ -39,8 +44,8 @@ function replyTo(behaviour: FetchBehaviour) {
   if (behaviour instanceof Error) {
     return Promise.reject(behaviour);
   }
-  const { status, body = {}, headers = {} } = behaviour;
-  return Promise.resolve(new Response(JSON.stringify(body), { status, headers }));
+  const { status, body = {}, text = JSON.stringify(body), headers = {} } = behaviour;
+  return Promise.resolve(new Response(text, { status, headers }));
 }
 
 export function stubFetch(behaviour: FetchBehaviour) {

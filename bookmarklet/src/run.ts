@@ -20,7 +20,7 @@ const ADD_BY_HAND: RefusalToast = { title: 'failed', label: 'addByHand' };
 const OPEN_BOARD = { label: 'openBoard', path: '/board' } as const;
 
 const REFUSAL_TOASTS: Record<Refusal, RefusalToast> = {
-  unauthorized: { title: 'unauthorized', label: 'newBookmarklet', path: '/settings' },
+  unauthorized: { title: 'unauthorized', label: 'newBookmarklet', path: '/settings#bookmarklet' },
   conflict: { ...OPEN_BOARD, title: 'conflict' },
   repeated: { ...OPEN_BOARD, title: 'repeated' },
   failed: ADD_BY_HAND,

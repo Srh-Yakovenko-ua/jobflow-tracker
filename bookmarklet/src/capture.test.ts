@@ -140,6 +140,11 @@ describe('sendCapture', () => {
       },
     },
     { name: 'a revoked token', reply: { status: 401 }, outcome: { kind: 'unauthorized' } },
+    {
+      name: 'a revoked token behind an html error page',
+      reply: { status: 401, text: '<html>Unauthorized</html>' },
+      outcome: { kind: 'unauthorized' },
+    },
     { name: 'a conflict without a type', reply: { status: 409 }, outcome: { kind: 'conflict' } },
     { name: 'no active search', reply: conflictReply('conflict'), outcome: { kind: 'conflict' } },
     {
