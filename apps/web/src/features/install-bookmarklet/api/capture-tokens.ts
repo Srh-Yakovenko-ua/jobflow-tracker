@@ -46,5 +46,9 @@ async function revokeCaptureToken(id: CaptureTokenSummary['id']): Promise<void> 
 export async function revokeCaptureTokens(
   ids: readonly CaptureTokenSummary['id'][],
 ): Promise<void> {
-  await Promise.all(ids.map((id) => revokeCaptureToken(id)));
+  const results = await Promise.allSettled(ids.map((id) => revokeCaptureToken(id)));
+  const failed = results.find(
+    (result): result is PromiseRejectedResult => result.status === 'rejected',
+  );
+  if (failed !== undefined) throw failed.reason;
 }

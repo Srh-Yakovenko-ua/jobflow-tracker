@@ -37,6 +37,15 @@ export function safeReturnTo(value: unknown): string {
   return addressOf(url);
 }
 
+export function withPageHash(returnTo: string, hash: string): string {
+  const url = sameOriginUrl(returnTo);
+  if (url === null || url.hash !== '') {
+    return returnTo;
+  }
+  url.hash = hash;
+  return addressOf(url);
+}
+
 function loginHrefFor(returnTo: string): string {
   const query = new URLSearchParams({ [AUTH_ROUTES.returnParam]: returnTo });
   return `${AUTH_ROUTES.login}?${query.toString()}`;

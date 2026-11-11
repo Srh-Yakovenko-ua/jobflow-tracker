@@ -38,7 +38,7 @@ function ButtonSlot({ list, created, create, createButtonRef }: ButtonSlotProps)
       </LoadingRegion>
     );
   }
-  if (list.isError) {
+  if (list.isLoadingError) {
     return (
       <LoadFailedAlert
         onRetry={() => {
@@ -79,6 +79,10 @@ export function InstallBookmarklet() {
   const items = list.data?.items ?? [];
   const [newest] = items;
   const created = items.some((item) => item.id === lastCreated?.id) ? lastCreated : null;
+  const startCreate: typeof create.mutate = (variables, options) => {
+    focusRequestRef.current = false;
+    create.mutate(variables, options);
+  };
   return (
     <div className="flex flex-col gap-4">
       <InstallSteps>
@@ -88,7 +92,7 @@ export function InstallBookmarklet() {
           create={{
             pending: create.isPending,
             onCreate: () => {
-              create.mutate();
+              startCreate();
             },
           }}
           createButtonRef={focusIfRequested}
@@ -101,7 +105,7 @@ export function InstallBookmarklet() {
             regenerate={{
               pending: create.isPending,
               onConfirm: (close) => {
-                create.mutate(undefined, { onSuccess: close });
+                startCreate(undefined, { onSuccess: close });
               },
             }}
             revoke={{

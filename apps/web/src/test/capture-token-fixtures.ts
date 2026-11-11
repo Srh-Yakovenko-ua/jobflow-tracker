@@ -63,15 +63,17 @@ export function captureTokenRoutes({ items = [], replies = {} }: CaptureTokenRou
   const handlers = [
     http.get(
       CAPTURE_TOKENS_URL,
-      replies.list ?? (() => HttpResponse.json<CaptureTokenListResponse>({ items: store.items })),
+      async (info) =>
+        (await replies.list?.(info)) ??
+        HttpResponse.json<CaptureTokenListResponse>({ items: store.items }),
     ),
-    http.post(CAPTURE_TOKENS_URL, (info) => {
+    http.post(CAPTURE_TOKENS_URL, async (info) => {
       sent.push('POST');
-      return replies.create?.(info) ?? mint();
+      return (await replies.create?.(info)) ?? mint();
     }),
-    http.delete<{ id: string }>(`${CAPTURE_TOKENS_URL}/:id`, (info) => {
+    http.delete<{ id: string }>(`${CAPTURE_TOKENS_URL}/:id`, async (info) => {
       sent.push(`DELETE ${info.params.id}`);
-      return replies.revoke?.(info) ?? remove(info.params.id);
+      return (await replies.revoke?.(info)) ?? remove(info.params.id);
     }),
   ];
   return { handlers, sent, store };

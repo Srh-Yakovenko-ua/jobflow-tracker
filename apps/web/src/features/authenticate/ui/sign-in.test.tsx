@@ -34,6 +34,7 @@ const UNAVAILABLE = 'Сервер не відповідаєЦе збій на н
 describe('sign in', () => {
   afterEach(() => {
     resetSignIn();
+    history.replaceState(null, '', '/');
     vi.useRealTimers();
   });
 
@@ -58,6 +59,16 @@ describe('sign in', () => {
 
     await expectSignedIn('/applications/123');
     await waitForQuery({ queryKey: userKeys.me(), status: 'absent' });
+  });
+
+  it('signing in on a login page whose address kept the hash of the requested page returns there with the hash', async () => {
+    history.replaceState(null, '', '/login?next=%2Fsettings#bookmarklet');
+    server.use(authRoute(LOGIN));
+    const form = renderAuthForm({ mode: 'login', returnTo: '/settings' });
+
+    await form.fillAndSubmit(CREDENTIALS);
+
+    await expectSignedIn('/settings#bookmarklet');
   });
 
   it('401 shows the generic message, marks no field and raises no save toast', async () => {

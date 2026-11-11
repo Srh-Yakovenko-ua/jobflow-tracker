@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { loginHref, safeReturnTo } from './return-to';
+import { loginHref, safeReturnTo, withPageHash } from './return-to';
 
 const LINK_ONLY = '/add?url=https%3A%2F%2Fdjinni.co%2Fjobs%2F1';
 
@@ -35,6 +35,31 @@ describe('safeReturnTo', () => {
     ['a missing param', undefined],
   ])('sends %s to the board', (_name, value) => {
     expect(safeReturnTo(value)).toBe('/board');
+  });
+});
+
+describe('withPageHash', () => {
+  it.each([
+    {
+      name: 'picks up the hash the login page carries',
+      returnTo: '/settings',
+      hash: '#bookmarklet',
+      landing: '/settings#bookmarklet',
+    },
+    {
+      name: 'keeps the hash the address already has',
+      returnTo: '/settings#account',
+      hash: '#bookmarklet',
+      landing: '/settings#account',
+    },
+    {
+      name: 'leaves the address alone when the login page has no hash',
+      returnTo: '/settings?tab=ai',
+      hash: '',
+      landing: '/settings?tab=ai',
+    },
+  ])('$name', ({ returnTo, hash, landing }) => {
+    expect(withPageHash(returnTo, hash)).toBe(landing);
   });
 });
 
