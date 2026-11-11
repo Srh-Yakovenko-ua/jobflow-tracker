@@ -1,14 +1,22 @@
-import { LIVE_EVENTS, type LiveEvent } from '@jobflow/shared';
+import { LIVE_EVENTS, type LiveEvent, OPEN_STAGES } from '@jobflow/shared';
 import { buildJobUpdate } from '@jobflow/shared/testing';
 import { type QueryKey, useQuery } from '@tanstack/react-query';
-import { act, waitFor } from '@testing-library/react';
+import { act, screen, waitFor } from '@testing-library/react';
+import type { ReactNode } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { applicationKeys, jobKeys, timelineKeys } from '@/entities/application';
+import {
+  applicationKeys,
+  type ApplicationMove,
+  jobKeys,
+  timelineKeys,
+} from '@/entities/application';
 import { userKeys } from '@/entities/user';
-import { fixtureIdOf } from '@/test/board-fixtures';
+import { useMoveApplicationMutation } from '@/features/move-application';
+import { boardOf, cardIn, DESIGN_BOARD, fixtureIdOf, moveRoute } from '@/test/board-fixtures';
 import { liveTicketRoute, stubEventSource } from '@/test/fake-event-source';
 import { fakeTimeouts } from '@/test/fake-timeouts';
+import { latch } from '@/test/latch';
 import { renderInApp } from '@/test/render-in-app';
 import { server } from '@/test/server';
 
@@ -19,6 +27,18 @@ const EVENT_ID = '0199f4b1-2c3d-7e4f-8a51-6b7c8d9e0f1a';
 const APPLICATION_ID = fixtureIdOf(1);
 
 const JOB = buildJobUpdate({ status: 'processing', step: 2, applicationId: APPLICATION_ID });
+
+const JOB_FRAME: LiveEvent = { id: EVENT_ID, type: LIVE_EVENTS.jobUpdated, data: JOB };
+
+const BOARD = boardOf(DESIGN_BOARD.counts, {
+  cards: DESIGN_BOARD.cards ?? [],
+  stages: OPEN_STAGES,
+});
+
+const MOVE: ApplicationMove = {
+  application: cardIn({ serial: 101, stage: 'applied', position: 'Senior Frontend Engineer' }),
+  toStage: 'screening',
+};
 
 const OPEN = {
   job: jobKeys.detail(JOB.id),
@@ -70,21 +90,36 @@ function OpenQuery({ name }: Readonly<{ name: OpenName }>) {
     queryKey: OPEN[name],
     queryFn: () => {
       fetched.push(name);
-      return name;
+      return name === 'board' ? BOARD : name;
     },
   });
   return null;
 }
 
-async function pageWithOpenStream() {
+function MoveProbe() {
+  const move = useMoveApplicationMutation();
+  return (
+    <button
+      type="button"
+      onClick={() => {
+        move.mutate(MOVE);
+      }}
+    >
+      {move.status}
+    </button>
+  );
+}
+
+async function pageWithOpenStream(probe?: ReactNode) {
   server.use(liveTicketRoute().handler);
   const stream = stubEventSource();
-  renderInApp(
+  const user = renderInApp(
     <>
       <LiveUpdates />
       {OPEN_NAMES.map((name) => (
         <OpenQuery key={name} name={name} />
       ))}
+      {probe}
     </>,
   );
   const source = await stream.source(0);
@@ -94,7 +129,7 @@ async function pageWithOpenStream() {
   act(() => {
     source.open();
   });
-  return { stream, source };
+  return { stream, source, user };
 }
 
 function refetchedAfter(deliver: () => void): OpenName[] {
@@ -119,7 +154,7 @@ describe('LiveUpdates', () => {
   it.each<{ name: string; event: LiveEvent; refetched: OpenName[] }>([
     {
       name: 'job.updated for a job of an application',
-      event: { id: EVENT_ID, type: LIVE_EVENTS.jobUpdated, data: JOB },
+      event: JOB_FRAME,
       refetched: ['board', 'detail', 'job', 'list', 'table'],
     },
     {
@@ -157,6 +192,27 @@ describe('LiveUpdates', () => {
         source.send(event);
       }),
     ).toEqual(refetched);
+  });
+
+  it('a job.updated frame during a pending move refetches the job at once and reads the board once, after the move settles', async () => {
+    const held = latch();
+    const moves = moveRoute({ latch: held });
+    server.use(moves.handler);
+    const { source, user } = await pageWithOpenStream(<MoveProbe />);
+    await user.click(screen.getByRole('button', { name: 'idle' }));
+    await waitFor(() => {
+      expect(moves.sent).toHaveLength(1);
+    });
+
+    expect(
+      refetchedAfter(() => {
+        source.send(JOB_FRAME);
+      }),
+    ).toEqual(['job']);
+    held.release();
+
+    expect(await screen.findByRole('button', { name: 'success' })).toBeDefined();
+    expect(fetched.filter((name) => name === 'board')).toEqual(['board']);
   });
 
   it('a reconnect refetches nothing on open, and every open application, job and timeline query and nothing else once it has stayed open 10 s', async () => {

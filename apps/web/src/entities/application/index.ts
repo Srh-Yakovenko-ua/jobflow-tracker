@@ -12,6 +12,7 @@ export {
   draftStateOf,
   REVIEW_ANCHOR,
 } from './lib/draft-state';
+export { jobFinished } from './lib/job-finished';
 export { formatAmount, formatSalaryRange } from './lib/salary';
 export { isSearchable, SEARCH_LIMITS } from './lib/search-limits';
 export { silentCountOf } from './lib/silent-count';

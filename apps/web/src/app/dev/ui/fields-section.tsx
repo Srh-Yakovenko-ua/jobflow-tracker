@@ -3,6 +3,7 @@
 import { Search } from 'lucide-react';
 import { useRef, useState } from 'react';
 
+import { ConfidenceChip, NO_REVIEW } from '@/features/edit-application';
 import { uk } from '@/shared/i18n';
 import { cn } from '@/shared/lib/cn';
 import { ClearButton } from '@/shared/ui/clear-button';
@@ -26,7 +27,7 @@ const NOTE_LIMIT = 2000;
 
 const WIDE_TILE = 'min-w-0 sm:col-span-2';
 
-const ASIDE_MARK = 'font-ui text-[10px] leading-[1.4] font-semibold text-offer';
+const EXACT_POSITION = { ...NO_REVIEW, position: { confidence: 'exact', quote: null } } as const;
 
 function SearchField() {
   const [query, setQuery] = useState('');
@@ -157,7 +158,7 @@ export function FieldsSection() {
         </Field>
         <Field
           label={COPY.aside.label}
-          aside={<span className={ASIDE_MARK}>{COPY.aside.mark}</span>}
+          aside={<ConfidenceChip field="position" reviews={EXACT_POSITION} />}
           footer={{ hint: COPY.aside.hint }}
         >
           <Input defaultValue="Senior React developer" />

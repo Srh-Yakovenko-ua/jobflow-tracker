@@ -33,7 +33,7 @@ export type TextFieldProps = Readonly<{
   view?: EditFieldView;
 }>;
 
-export type StackFieldProps = Readonly<{ form: EditorForm; view?: EditFieldView }>;
+export type StackFieldProps = Readonly<{ form: EditorForm; view?: Omit<EditFieldView, 'error'> }>;
 
 const COPY = uk.applicationPage.editor;
 

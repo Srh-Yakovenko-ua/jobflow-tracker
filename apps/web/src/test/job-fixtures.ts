@@ -11,7 +11,7 @@ export type JobRouteOptions = {
   owner?: JobStatus['applicationId'];
 };
 
-export const JOB_ID = '0199f1a0-3c4d-7e5f-8a6b-7c8d9e0f1a2b';
+export const JOB_ID = buildJobStatus().id;
 
 export const PROCESSING_JOB = buildJobStatus({ status: 'processing', step: 2, queue: null });
 

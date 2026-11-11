@@ -3,7 +3,7 @@
 import type { ApplicationResponse, JobStatus } from '@jobflow/shared';
 import { useQuery, type UseQueryResult } from '@tanstack/react-query';
 
-import { applicationQueryOptions, jobQueryOptions } from '@/entities/application';
+import { applicationQueryOptions, jobFinished, jobQueryOptions } from '@/entities/application';
 import { ApiError, useLivePollMs } from '@/shared/api';
 
 export type Capture = Readonly<{
@@ -27,7 +27,7 @@ export function isGone(error: unknown): boolean {
 function jobEnded({ data, error }: JobRead, applicationId: Capture['applicationId']): boolean {
   if (isGone(error)) return true;
   if (data === undefined) return false;
-  return data.applicationId !== applicationId || data.status === 'done' || data.status === 'failed';
+  return data.applicationId !== applicationId || jobFinished(data);
 }
 
 export function useCapture({ applicationId, jobId }: Capture): CaptureReads {
