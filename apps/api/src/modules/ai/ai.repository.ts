@@ -10,11 +10,6 @@ import { AI_QUEUE_ESTIMATE } from './ai-queue-estimate.js';
 
 const CACHED_RESULT_SELECT = { id: true, output: true } satisfies Prisma.AiResultSelect;
 
-const COUNTED_RESULTS = [
-  { status: 'succeeded' },
-  { error: { in: [...AI_BUDGET.countedFailures] } },
-] satisfies Prisma.AiResultWhereInput[];
-
 export const AI_JOB_SELECT = {
   id: true,
   kind: true,
@@ -154,16 +149,24 @@ export class AiRepository {
   }
 
   async budgetUsage(userId: string, { dayStart, monthStart }: BudgetWindow): Promise<BudgetUsage> {
-    const [calls, { _sum: spent }] = await Promise.all([
+    const [succeeded, failed, { _sum: spent }] = await Promise.all([
       this.prisma.aiResult.count({
-        where: { userId, updatedAt: { gte: dayStart }, OR: COUNTED_RESULTS },
+        where: { userId, status: 'succeeded', updatedAt: { gte: dayStart } },
+      }),
+      this.prisma.aiJob.count({
+        where: {
+          userId,
+          status: 'failed',
+          errorType: { in: [...AI_BUDGET.countedFailures] },
+          finishedAt: { gte: dayStart },
+        },
       }),
       this.prisma.aiResult.aggregate({
         where: { updatedAt: { gte: monthStart } },
         _sum: { tokensIn: true, tokensOut: true },
       }),
     ]);
-    return { calls, tokens: (spent.tokensIn ?? 0) + (spent.tokensOut ?? 0) };
+    return { calls: succeeded + failed, tokens: (spent.tokensIn ?? 0) + (spent.tokensOut ?? 0) };
   }
 
   async queueSample(userId: string, id: string): Promise<QueueSample | null> {

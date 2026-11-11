@@ -30,7 +30,10 @@ export type AiCompleteCall = {
 
 type AiServicePost = { path: string; body: unknown; requestId?: string | undefined };
 
-type Checked = { value: unknown; refusal: 'validation_error' | 'ai_invalid_output' };
+type Checked = {
+  value: unknown;
+  refusal: 'validation_error' | typeof AI_JOB_FAILURES.invalidOutput;
+};
 
 function checked<Body>(schema: z.ZodType<Body>, { value, refusal }: Checked): Body {
   const parsed = schema.safeParse(value);
@@ -81,13 +84,16 @@ export class AiClient {
   }: AiCompleteCall): Promise<AiCompletion<AiKind>> {
     const body = allowedBody(aiCompleteRequestSchemas[kind], { ...options, input });
     const completion = await this.post({ path: `/v1/complete/${kind}`, body, requestId });
-    return checked(aiCompletionSchemas[kind], { value: completion, refusal: 'ai_invalid_output' });
+    return checked(aiCompletionSchemas[kind], {
+      value: completion,
+      refusal: AI_JOB_FAILURES.invalidOutput,
+    });
   }
 
   async embed(request: AiEmbedRequest, requestId?: string): Promise<AiEmbedding> {
     const body = allowedBody(aiEmbedRequestSchema, request);
     const embedding = await this.post({ path: '/v1/embed', body, requestId });
-    return checked(aiEmbeddingSchema, { value: embedding, refusal: 'ai_invalid_output' });
+    return checked(aiEmbeddingSchema, { value: embedding, refusal: AI_JOB_FAILURES.invalidOutput });
   }
 
   private async post({ path, body, requestId }: AiServicePost): Promise<unknown> {

@@ -11,11 +11,12 @@ import { Clock } from '../../common/clock.js';
 import { owned } from '../../common/owned.js';
 import type { Prisma } from '../../generated/prisma/client.js';
 import { DRAFT_BLANK, draftFieldsOf, untouchedDraftFields } from './application-draft-fields.js';
+import { ApplicationDraftsRepository, type LockedDraft } from './application-drafts.repository.js';
 import {
   APPLICATION_EVENTS,
   type ApplicationCaptureRequestedPayload,
 } from './applications.events.js';
-import { ApplicationsRepository, type LockedDraft } from './applications.repository.js';
+import { ApplicationsRepository } from './applications.repository.js';
 import { ApplicationsService } from './applications.service.js';
 
 type InDraftTransaction = { tx: Prisma.TransactionClient };
@@ -51,6 +52,7 @@ function retryRefusalOf({ isDraft, parsed, hasText }: LockedDraft): string | nul
 export class ApplicationDraftsService {
   constructor(
     private readonly repository: ApplicationsRepository,
+    private readonly drafts: ApplicationDraftsRepository,
     private readonly applications: ApplicationsService,
     private readonly clock: Clock,
   ) {}
@@ -95,7 +97,7 @@ export class ApplicationDraftsService {
     const draft = { id: applicationId, tx };
     const { data, isDraft } = draftFieldsOf(output);
     const { aiParsed, ...parsed } = data;
-    const row = await this.repository.fillDraft(userId, { ...draft, data: { aiParsed, isDraft } });
+    const row = await this.drafts.fillDraft(userId, { ...draft, data: { aiParsed, isDraft } });
     if (row === null) {
       return null;
     }
@@ -114,7 +116,7 @@ export class ApplicationDraftsService {
   async confirm(userId: string, { applicationId, tx }: DraftConfirm): Promise<Date> {
     const confirmedAt = this.clock.now();
     const draft = { id: applicationId, tx };
-    if ((await this.repository.confirmDraft(userId, draft)) === 0) {
+    if ((await this.drafts.confirmDraft(userId, draft)) === 0) {
       const { isDraft } = owned(await this.repository.findOwned(userId, draft));
       throw conflict(isDraft ? 'Vacancy parse is still running' : NOT_A_DRAFT);
     }
@@ -124,7 +126,7 @@ export class ApplicationDraftsService {
   }
 
   async lockForRetry(userId: string, { applicationId, tx }: DraftRetry): Promise<string | null> {
-    const draft = owned(await this.repository.lockDraft(userId, { id: applicationId, tx }));
+    const draft = owned(await this.drafts.lockDraft(userId, { id: applicationId, tx }));
     const refusal = retryRefusalOf(draft);
     if (refusal !== null) {
       throw conflict(refusal);

@@ -18,15 +18,18 @@ import {
   OLENA_ID,
 } from '../../test/service-fixtures.js';
 import { minutesBefore, NOW } from '../../test/time.js';
+import {
+  ApplicationDraftsRepository,
+  type DraftRow,
+  type FillDraft,
+  type LockedDraft,
+} from './application-drafts.repository.js';
 import { ApplicationDraftsService } from './application-drafts.service.js';
 import type { DuplicateProbe } from './application-duplicates.repository.js';
 import {
   type ApplicationById,
   type ApplicationRow,
   ApplicationsRepository,
-  type DraftRow,
-  type FillDraft,
-  type LockedDraft,
   type RecordApplicationEvent,
   type UpdateApplicationById,
 } from './applications.repository.js';
@@ -135,10 +138,17 @@ async function serviceWith(row = DRAFT_ROW) {
   const applications = new FakeApplications();
   const repository = new FakeDraftsRepository(row);
   const moduleRef = await fakeTransactionModule({
-    providers: [ApplicationDraftsService, ApplicationsRepository, ApplicationsService],
+    providers: [
+      ApplicationDraftsService,
+      ApplicationsRepository,
+      ApplicationDraftsRepository,
+      ApplicationsService,
+    ],
     now: NOW,
   })
     .overrideProvider(ApplicationsRepository)
+    .useValue(repository)
+    .overrideProvider(ApplicationDraftsRepository)
     .useValue(repository)
     .overrideProvider(ApplicationsService)
     .useValue(applications)
