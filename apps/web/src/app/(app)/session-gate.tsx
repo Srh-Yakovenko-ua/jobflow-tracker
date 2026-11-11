@@ -22,7 +22,9 @@ export function SessionGate({ fallback, children }: SessionGateProps) {
   useEffect(
     () =>
       onSessionEnd(() => {
-        router.replace(loginHref(`${window.location.pathname}${window.location.search}`));
+        router.replace(
+          loginHref(`${window.location.pathname}${window.location.search}${window.location.hash}`),
+        );
       }),
     [router],
   );

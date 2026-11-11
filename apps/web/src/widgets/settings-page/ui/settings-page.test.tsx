@@ -213,6 +213,12 @@ describe('SettingsPage', () => {
     expect(singleKeys.getAttribute('aria-checked')).toBe('false');
   });
 
+  it('«Вийти на всіх пристроях» says it switches the bookmarklet off too', async () => {
+    await renderLoadedSettings();
+
+    expect(within(regionOf('Акаунт')).getByText(/вимикає букмарклет/)).toBeDefined();
+  });
+
   it('«Вийти на всіх пристроях» ends every session and goes to the login page', async () => {
     const { user } = await renderLoadedSettings();
     server.use(

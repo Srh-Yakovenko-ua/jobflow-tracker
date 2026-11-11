@@ -5,6 +5,7 @@ import type { UseFormSetError } from 'react-hook-form';
 
 import { ApiError, applyFieldErrors, setAccessToken } from '@/shared/api';
 import { uk } from '@/shared/i18n';
+import { withPageHash } from '@/shared/lib/return-to';
 
 import { authenticate } from '../api/authenticate';
 import { AUTH_MODES, type AuthMode, type AuthModeSpec, CREDENTIAL_FIELDS } from './auth-modes';
@@ -40,7 +41,7 @@ export function useAuthenticateMutation({
     onSuccess: (response) => {
       setAccessToken(response.accessToken);
       queryClient.clear();
-      router.replace(returnTo);
+      router.replace(withPageHash(returnTo, window.location.hash));
     },
     onError: (error) => {
       markFields(error, { spec, setError });

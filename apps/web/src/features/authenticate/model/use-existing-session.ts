@@ -4,6 +4,7 @@ import { useEffect } from 'react';
 
 import { userKeys } from '@/entities/user';
 import { refreshAccessToken } from '@/shared/api';
+import { withPageHash } from '@/shared/lib/return-to';
 import { hasSessionCookie } from '@/shared/lib/session-cookie';
 
 export type UseExistingSessionOptions = { returnTo: string; enabled: boolean };
@@ -24,6 +25,6 @@ export function useExistingSession({ returnTo, enabled }: UseExistingSessionOpti
   useEffect(() => {
     if (!isSuccess) return;
     queryClient.removeQueries({ queryKey: userKeys.cookieSession() });
-    router.replace(returnTo);
+    router.replace(withPageHash(returnTo, window.location.hash));
   }, [isSuccess, queryClient, returnTo, router]);
 }

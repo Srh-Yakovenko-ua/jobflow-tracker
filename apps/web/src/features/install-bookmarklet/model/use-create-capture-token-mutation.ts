@@ -26,6 +26,7 @@ export function useCreateCaptureTokenMutation() {
     },
     onError: () => {
       showErrorToast(COPY.createFailed);
+      void queryClient.invalidateQueries({ queryKey: captureTokenKeys.all });
     },
   });
 }

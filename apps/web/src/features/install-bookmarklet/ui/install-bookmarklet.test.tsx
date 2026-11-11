@@ -63,6 +63,10 @@ const REVOKE_FAILED = 'Не вдалося вимкнути букмарклет
 
 const SERVER_ERROR = () => errorReply({ status: 500, type: 'internal_error' });
 
+const RETRY_BEHIND_DIALOG = { name: 'Спробувати ще раз', hidden: true } as const;
+
+const SLOW_DELETE_MS = 1_000;
+
 const LIST_OUTAGE_SHOWS = {
   error: () => screen.getByRole('alert'),
   pending: () => screen.getByText('Завантаження…'),
@@ -136,6 +140,12 @@ function createButtonOnceListEmpties({ store }: Pick<ReturnType<typeof renderSec
   store.items = [];
   returnToTab();
   return screen.findByRole('button', CREATE);
+}
+
+function listOutage() {
+  const outage = { on: false };
+  const list: HttpResponseResolver = () => (outage.on ? SERVER_ERROR() : undefined);
+  return { outage, list };
 }
 
 afterEach(() => {
@@ -322,6 +332,36 @@ describe('InstallBookmarklet', () => {
     },
   );
 
+  it('a failed Створити нову after which the list no longer holds the old capture token removes the link', async () => {
+    const lostAnswers: (() => Response)[] = [];
+    const view = await renderWithButton({ replies: { create: () => lostAnswers.shift()?.() } });
+    lostAnswers.push(() => {
+      view.store.items = [UNUSED_TOKEN];
+      return SERVER_ERROR();
+    });
+
+    await confirm(view.user, REGENERATE);
+
+    expect(await screen.findByText(CREATE_FAILED)).toBeDefined();
+    expect(await screen.findByText(SHOWN_ONCE)).toBeDefined();
+    expect(screen.queryByRole('link', LINK_BEHIND_DIALOG)).toBeNull();
+  });
+
+  it('a failed Вимкнути while the list read fails too keeps the draggable link', async () => {
+    const { outage, list } = listOutage();
+    const { user } = await renderWithButton({ replies: { list, revoke: SERVER_ERROR } });
+    outage.on = true;
+
+    await confirm(user, REVOKE);
+    await waitForQuery({ queryKey: LIST_KEY, status: 'error' });
+    await screen.findByRole('button', { name: REVOKE.press, busy: false });
+
+    expect(screen.getByRole('link', LINK_BEHIND_DIALOG).getAttribute('href')).toBe(
+      hrefOf('capture-token-one'),
+    );
+    expect(screen.queryByRole('button', RETRY_BEHIND_DIALOG)).toBeNull();
+  });
+
   it('the installed state has no accessibility violations', async () => {
     await renderWithButton();
     await screen.findByText(NEVER_USED);
@@ -397,6 +437,23 @@ describe('InstallBookmarklet', () => {
     expect(document.activeElement).toBe(document.body);
   });
 
+  it('a create button that a background refetch brings after Вимкнути, a failed list read and Створити нову takes no focus', async () => {
+    const { outage, list } = listOutage();
+    const view = renderSection({ items: [USED_TOKEN], replies: { list } });
+    await screen.findByText(USED_AT_IN_KYIV);
+    outage.on = true;
+    await confirm(view.user, REVOKE);
+    await waitForQuery({ queryKey: LIST_KEY, status: 'error' });
+    outage.on = false;
+    await confirm(view.user, REGENERATE);
+    await screen.findByRole('link', LINK);
+
+    const create = await createButtonOnceListEmpties(view);
+
+    expect(document.activeElement).toBe(document.body);
+    expect(create.isConnected).toBe(true);
+  });
+
   it('a capture token the server already revoked counts as switched off', async () => {
     const { user } = renderSection({
       items: [USED_TOKEN],
@@ -430,19 +487,31 @@ describe('InstallBookmarklet', () => {
     },
   );
 
-  it('with two capture tokens and one DELETE failing, reads the list again and shows the token that is left', async () => {
+  it('with two capture tokens, one DELETE failing and the other slow, reads the list again once both answered and shows the token that is left', async () => {
+    fakeTimeouts();
+    const reads = { list: 0, whenSlowAnswered: 0 };
     const { user } = renderSection({
       items: [USED_TOKEN, UNUSED_TOKEN],
       replies: {
-        revoke: ({ params }) => (params.id === UNUSED_TOKEN.id ? SERVER_ERROR() : undefined),
+        list: () => {
+          reads.list += 1;
+        },
+        revoke: async ({ params }) => {
+          if (params.id === UNUSED_TOKEN.id) return SERVER_ERROR();
+          await delay(SLOW_DELETE_MS);
+          reads.whenSlowAnswered = reads.list;
+          return undefined;
+        },
       },
     });
 
     await confirm(user, REVOKE);
+    await advanceBy(SLOW_DELETE_MS);
 
     expect(await screen.findByText(REVOKE_FAILED)).toBeDefined();
     expect(await screen.findByText(NEVER_USED)).toBeDefined();
     expect(screen.queryByText(USED_AT_IN_KYIV)).toBeNull();
+    expect(reads.whenSlowAnswered).toBe(1);
   });
 
   it.each(OUTAGES)(

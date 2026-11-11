@@ -98,6 +98,7 @@ function refreshesSent(sentRequests: ReturnType<typeof recordSentRequests>) {
 
 afterEach(() => {
   resetSignIn();
+  history.replaceState(null, '', '/');
   vi.useRealTimers();
   vi.restoreAllMocks();
   focusManager.setFocused(undefined);
@@ -107,15 +108,22 @@ afterEach(() => {
 describe('the sign-in form with a refresh cookie', () => {
   beforeEach(writeSessionCookie);
 
-  it('a valid cookie sends the visitor on to the requested page, the form usable meanwhile', async () => {
-    server.use(refreshRoute({ token: SESSION_TOKENS.fresh }));
-    const form = renderAuthForm({ mode: 'login', returnTo: REQUESTED });
+  it.each([
+    ['/login', REQUESTED],
+    ['/login#history', `${REQUESTED}#history`],
+  ])(
+    'a valid cookie on %s sends the visitor on to the requested page, the form usable meanwhile',
+    async (loginPage, landing) => {
+      history.replaceState(null, '', loginPage);
+      server.use(refreshRoute({ token: SESSION_TOKENS.fresh }));
+      const form = renderAuthForm({ mode: 'login', returnTo: REQUESTED });
 
-    expect(form.submit).toHaveProperty('disabled', false);
-    await waitFor(() => {
-      expect(replace).toHaveBeenCalledWith(REQUESTED);
-    });
-  });
+      expect(form.submit).toHaveProperty('disabled', false);
+      await waitFor(() => {
+        expect(replace).toHaveBeenCalledWith(landing);
+      });
+    },
+  );
 
   it.each(NO_SESSION)('a refresh that $name keeps the form and goes nowhere', async ({ reply }) => {
     fakeTimeouts();

@@ -103,16 +103,22 @@ describe('SessionGate on app start', () => {
     expect(screen.queryByText('Завантаження…')).toBeNull();
   });
 
-  it('a refused refresh sends the visitor to login with the requested page as next', async () => {
-    history.replaceState(null, '', '/applications/123');
-    renderGate();
+  it.each([
+    ['/applications/123', '/login?next=%2Fapplications%2F123'],
+    ['/settings#bookmarklet', '/login?next=%2Fsettings%23bookmarklet'],
+  ])(
+    'a refused refresh on %s sends the visitor to login with the requested page as next',
+    async (page, loginPage) => {
+      history.replaceState(null, '', page);
+      renderGate();
 
-    await waitFor(() => {
-      expect(replace).toHaveBeenCalledWith('/login?next=%2Fapplications%2F123');
-    });
-    expect(screen.getByRole('status')).toBeDefined();
-    expect(screen.queryByRole('alert')).toBeNull();
-  });
+      await waitFor(() => {
+        expect(replace).toHaveBeenCalledWith(loginPage);
+      });
+      expect(screen.getByRole('status')).toBeDefined();
+      expect(screen.queryByRole('alert')).toBeNull();
+    },
+  );
 
   it.each(OUTAGES)(
     'a refresh that $name shows the load failed panel, whose retry opens the page with no logout',
