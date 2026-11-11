@@ -55,7 +55,13 @@ function Dot({ className }: Readonly<{ className: string }>) {
   return <span aria-hidden className={cn('size-2 flex-none rounded-pill', className)} />;
 }
 
-const WAITING_DOT = <Dot className="bg-accent motion-safe:animate-pulse" />;
+export const WAITING_DOT = <Dot className="bg-accent motion-safe:animate-pulse" />;
+
+export const DONE_DOT = <Dot className="bg-offer" />;
+
+export const FAILED_MARK = (
+  <CircleMinus aria-hidden size={16} strokeWidth={1.9} className="flex-none" />
+);
 
 function queuedLine(job: AiJobOf<'queued'>): string {
   const position =
@@ -72,12 +78,12 @@ const LOOKS: { [Status in AiJobStatus]: JobLook<Status> } = {
   },
   done: {
     tone: 'label text-offer',
-    marker: <Dot className="bg-offer" />,
+    marker: DONE_DOT,
     line: (job) => COPY.done(formatDuration(job.tookSeconds)),
   },
   failed: {
     tone: cn('font-ui text-danger', STATE_TEXT.eyebrow),
-    marker: <CircleMinus aria-hidden size={16} strokeWidth={1.9} className="flex-none" />,
+    marker: FAILED_MARK,
     line: () => COPY.status.failed,
   },
 };

@@ -20,7 +20,7 @@ export type FeatureFlags = Readonly<Record<FeatureFlag, boolean>>;
 export const FEATURE_FLAGS: FeatureFlags = {
   analytics: false,
   calendar: true,
-  resumes: false,
+  resumes: true,
   reminders: false,
   settings: true,
   addApplication: true,

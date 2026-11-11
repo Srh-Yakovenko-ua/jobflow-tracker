@@ -1,4 +1,5 @@
 import { board } from './board';
+import { resumes } from './resumes';
 
 const { emptySearch, filters } = board;
 
@@ -14,14 +15,7 @@ export const devUiStates = {
         hint: "Перші висновки з'являються з 10 відгуків, прогноз офера з 15. До того аналітика показувала б випадковість.",
       },
     },
-    resumes: {
-      content: {
-        eyebrow: 'Резюме · 0 версій',
-        title: 'Завантаж перше резюме',
-        hint: 'Без нього не буде Match Score і порівняння версій. Одного файлу достатньо, щоб почати.',
-      },
-      drop: 'перетягни PDF або DOCX',
-    },
+    resumes: resumes.empty,
     reminders: {
       content: {
         eyebrow: 'Нагадування · порожньо',

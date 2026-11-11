@@ -4,9 +4,13 @@ import { uk } from '@/shared/i18n';
 
 const FORMS = uk.states.forms;
 
+const UNITS = uk.resumes.units;
+
 const SECONDS_PER_MINUTE = 60;
 
-const MEBIBYTE = 1024 * 1024;
+const KIBIBYTE = 1024;
+
+const MEBIBYTE = KIBIBYTE * KIBIBYTE;
 
 const TENTHS = 10;
 
@@ -32,6 +36,13 @@ export function formatDuration(seconds: number): string {
 
 export function formatMegabytes(bytes: number): string {
   return UP_TO_ONE_DECIMAL.format(Math.ceil((bytes * TENTHS) / MEBIBYTE) / TENTHS);
+}
+
+export function formatFileSize(bytes: number): string {
+  if (bytes < MEBIBYTE) {
+    return `${String(Math.ceil(bytes / KIBIBYTE))} ${UNITS.kilobytes}`;
+  }
+  return `${formatMegabytes(bytes)} ${UNITS.megabytes}`;
 }
 
 function formatZoned({ at, timeZone }: ZonedInstant, options: Intl.DateTimeFormatOptions): string {

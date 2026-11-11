@@ -1,5 +1,6 @@
 'use client';
 
+import { RESUME_MIMES } from '@jobflow/shared';
 import { useState } from 'react';
 
 import { FirstRunState } from '@/entities/application';
@@ -7,15 +8,18 @@ import { uk } from '@/shared/i18n';
 import { cn } from '@/shared/lib/cn';
 import { Button } from '@/shared/ui/button';
 import { ChipList } from '@/shared/ui/chip-list';
+import { DropZone } from '@/shared/ui/drop-zone';
 import { EmptyState } from '@/shared/ui/empty-state';
 import { TOUCH_HEIGHT } from '@/shared/ui/touch-height';
 
 import { GallerySection, STATE_GRID, StateRule } from './gallery';
-import { ANALYTICS_PROGRESS } from './state-specimens';
+import { ANALYTICS_PROGRESS, specimenNoop } from './state-specimens';
 
 const FIRST_RUN = uk.devUi.firstRun;
 
 const SCREENS = uk.devUi.emptyScreens;
+
+const RESUME_PICKER = { label: uk.resumes.upload.pick, accept: RESUME_MIMES.join(',') };
 
 const SCREEN_ACTION = cn(
   'h-auto max-w-full min-h-control-md py-1.5 whitespace-normal',
@@ -40,9 +44,13 @@ function SearchFilters() {
 
 function ResumeDropZone() {
   return (
-    <p className="rounded-[9px] border-[1.5px] border-dashed border-line bg-surface-2 p-4 text-center text-[13px] text-ink-3">
-      {SCREENS.resumes.drop}
-    </p>
+    <DropZone
+      picker={RESUME_PICKER}
+      onFile={specimenNoop}
+      className="flex flex-col items-center gap-3 rounded-[9px] p-4 text-center text-[13px] text-ink-3"
+    >
+      <p>{SCREENS.resumes.drop}</p>
+    </DropZone>
   );
 }
 

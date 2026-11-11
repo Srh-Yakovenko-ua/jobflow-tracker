@@ -11,6 +11,7 @@ import { calendar } from './calendar';
 import { calendarPage } from './calendar-page';
 import { contact } from './contact';
 import { devUi } from './dev-ui';
+import { resumes } from './resumes';
 import { settings } from './settings';
 import { shell } from './shell';
 import { states } from './states';
@@ -71,6 +72,7 @@ export const uk = {
   bookmarklet,
   applicationsTable,
   calendarPage,
+  resumes,
   settings,
   designSystem: {
     pageTitle: 'Дизайн-система',

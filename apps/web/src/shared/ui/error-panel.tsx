@@ -96,23 +96,29 @@ export type OversizedFile = { sizeBytes: number; limitBytes: number };
 
 export type FileTooBigPanelProps = Readonly<{ file: OversizedFile; onPick: () => void }>;
 
-export function FileTooBigPanel({ file, onPick }: FileTooBigPanelProps) {
-  const { eyebrow, title, body, action } = COPY.fileTooBig;
-  const content = {
-    eyebrow,
-    title: title(formatMegabytes(file.sizeBytes)),
-    body: body(formatMegabytes(file.limitBytes)),
-  };
+export type PickAnotherPanelProps = Readonly<{ content: ErrorPanelContent; onPick: () => void }>;
+
+export function PickAnotherPanel({ content, onPick }: PickAnotherPanelProps) {
   return (
     <ErrorPanel
       content={content}
       action={
         <Button className={TOUCH_HEIGHT} onClick={onPick}>
-          {action}
+          {COPY.fileTooBig.action}
         </Button>
       }
     />
   );
+}
+
+export function FileTooBigPanel({ file, onPick }: FileTooBigPanelProps) {
+  const { eyebrow, title, body } = COPY.fileTooBig;
+  const content = {
+    eyebrow,
+    title: title(formatMegabytes(file.sizeBytes)),
+    body: body(formatMegabytes(file.limitBytes)),
+  };
+  return <PickAnotherPanel content={content} onPick={onPick} />;
 }
 
 export type LoadFailedPanelProps = Readonly<{
