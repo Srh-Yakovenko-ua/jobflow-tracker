@@ -1,4 +1,8 @@
-import { type ErrorResponse, errorResponseSchema } from '@jobflow/shared';
+import {
+  type ErrorResponse,
+  errorResponseSchema,
+  IDEMPOTENCY_CONFLICT_TYPE,
+} from '@jobflow/shared';
 
 import { readJsonBody } from './read-json-body';
 
@@ -21,6 +25,14 @@ export class ApiError extends Error {
   get status(): number {
     return this.body.status;
   }
+}
+
+export function isIdempotencyConflict(error: Error): boolean {
+  return (
+    error instanceof ApiError &&
+    error.status === 409 &&
+    error.body.type === IDEMPOTENCY_CONFLICT_TYPE
+  );
 }
 
 function fallbackBody(response: Response): ErrorResponse {

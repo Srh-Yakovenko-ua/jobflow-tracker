@@ -1,4 +1,4 @@
-import { AI_JOB_FAILURES, type ErrorResponse } from '@jobflow/shared';
+import { AI_JOB_FAILURES, type ErrorResponse, IDEMPOTENCY_CONFLICT_TYPE } from '@jobflow/shared';
 
 export const ERROR_TYPES = {
   400: { type: 'bad_request', title: 'Bad request' },
@@ -56,7 +56,7 @@ export const illegalTransition = (detail: string) =>
   });
 
 export const IDEMPOTENCY_CONFLICT = {
-  type: 'idempotency_conflict',
+  type: IDEMPOTENCY_CONFLICT_TYPE,
   title: 'Idempotency-Key conflict',
 } as const;
 

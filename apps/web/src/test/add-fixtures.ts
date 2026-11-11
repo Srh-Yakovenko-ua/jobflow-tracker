@@ -51,12 +51,6 @@ export const NO_ACTIVE_SEARCH = {
   detail: 'No active search',
 } as const;
 
-export const STILL_RUNNING = {
-  status: 409,
-  type: 'idempotency_conflict',
-  detail: 'A request with this Idempotency-Key is still in progress',
-} as const;
-
 export const TWO_MINUTES = { 'Retry-After': '120' } as const;
 
 export const POSITION_ERROR = 'Вкажи позицію одним коротким рядком';

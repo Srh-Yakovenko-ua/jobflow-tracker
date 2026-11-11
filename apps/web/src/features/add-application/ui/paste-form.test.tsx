@@ -1,4 +1,5 @@
 import { screen, waitFor } from '@testing-library/react';
+import type { UserEvent } from '@testing-library/user-event';
 import { HttpResponse } from 'msw/http';
 import { toast } from 'sonner';
 import { afterEach, describe, expect, it, vi } from 'vitest';
@@ -11,7 +12,6 @@ import {
   FIRST_PASTE,
   linkField,
   NO_ACTIVE_SEARCH,
-  STILL_RUNNING,
   textField,
   TWO_MINUTES,
 } from '@/test/add-fixtures';
@@ -21,11 +21,13 @@ import {
   errorReply,
   rateLimitedReply,
   recordSentRequests,
+  STILL_RUNNING,
   validationReply,
 } from '@/test/api-handlers';
+import { ACME_APPLICATION } from '@/test/application-fixtures';
 import { descriptionOf } from '@/test/field-description';
 import { latch } from '@/test/latch';
-import { renderInApp } from '@/test/render-in-app';
+import { renderViewInApp } from '@/test/render-in-app';
 import { server } from '@/test/server';
 import { meRoute } from '@/test/session-fixtures';
 
@@ -60,16 +62,16 @@ function renderPasteForm({ query = {}, ...routes }: PasteSetup = {}) {
   const onCaptured = (capture: CapturedDraft) => {
     captured.push(capture);
   };
-  const user = renderInApp(<PasteForm query={query} actions={{ onCaptured }} />);
-  return { user, sent: added.sent.pasted, captured };
+  const { user, view } = renderViewInApp(<PasteForm query={query} actions={{ onCaptured }} />);
+  return { user, view, sent: added.sent.pasted, captured };
 }
 
-async function pasteVacancy(user: ReturnType<typeof renderInApp>, text = VACANCY) {
+async function pasteVacancy(user: UserEvent, text = VACANCY) {
   await user.click(textField());
   await user.paste(text);
 }
 
-async function sendVacancy(user: ReturnType<typeof renderInApp>) {
+async function sendVacancy(user: UserEvent) {
   await pasteVacancy(user);
   await user.click(screen.getByRole('button', { name: SUBMIT }));
 }
@@ -141,6 +143,28 @@ describe('PasteForm', () => {
     expect(textField().value).toBe('');
     expect(linkField().value).toBe('');
     expect(document.activeElement).toBe(textField());
+  });
+
+  it('a paste sent with Enter from the link field that fails leaves the focus in the link field', async () => {
+    const { user } = renderPasteForm({
+      query: { path: 'paste' },
+      paste: { reply: () => errorReply({ status: 500, type: 'internal_error' }) },
+    });
+    await pasteVacancy(user);
+
+    await user.type(linkField(), 'https://djinni.co/jobs/1{Enter}');
+
+    expect(await screen.findByText('Не вдалося зберегти')).toBeDefined();
+    expect(document.activeElement).toBe(linkField());
+  });
+
+  it('a review with the paste path arriving on a mounted page leaves the focus where it was', async () => {
+    const { user, view } = renderPasteForm();
+    await user.click(linkField());
+
+    view.rerender(<PasteForm query={{ review: ACME_APPLICATION.id, path: 'paste' }} />);
+
+    expect(document.activeElement).toBe(linkField());
   });
 
   it('six pastes in a row each go out at once', async () => {

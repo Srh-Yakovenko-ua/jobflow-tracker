@@ -1,5 +1,6 @@
 import {
   type ErrorResponse,
+  IDEMPOTENCY_CONFLICT_TYPE,
   type SessionTokens,
   type SettingsSuggestions,
   settingsSuggestionsSchema,
@@ -47,6 +48,12 @@ export const REFRESH_REFUSED = {
   status: 401,
   type: 'unauthorized',
   title: 'Session ended',
+} as const;
+
+export const STILL_RUNNING = {
+  status: 409,
+  type: IDEMPOTENCY_CONFLICT_TYPE,
+  detail: 'A request with this Idempotency-Key is still in progress',
 } as const;
 
 export const SUGGESTIONS: SettingsSuggestions = {

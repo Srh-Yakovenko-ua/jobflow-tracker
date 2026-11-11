@@ -1,6 +1,7 @@
 import type {
   CaptureBookmarkletInput,
   CapturePasteResponse,
+  IDEMPOTENCY_CONFLICT_TYPE,
   PossibleDuplicate,
 } from '@jobflow/shared';
 
@@ -24,6 +25,8 @@ export type CaptureRequest = {
   payload: CaptureBookmarkletInput;
   date: Date;
 };
+
+declare const BOOKMARKLET_IDEMPOTENCY_CONFLICT: typeof IDEMPOTENCY_CONFLICT_TYPE;
 
 const REQUEST_TIMEOUT_MS = 20_000;
 const DEFAULT_RETRY_SECONDS = 60;
@@ -96,7 +99,7 @@ async function outcomeOf(response: Response): Promise<CaptureOutcome> {
     const retryAfterSeconds = seconds > 0 && seconds < Infinity ? seconds : DEFAULT_RETRY_SECONDS;
     return { kind: 'rateLimited', retryAfterSeconds };
   }
-  if (isRecord(body) && body.type === 'idempotency_conflict') {
+  if (isRecord(body) && body.type === BOOKMARKLET_IDEMPOTENCY_CONFLICT) {
     return { kind: 'repeated' };
   }
   return REFUSALS[response.status] ?? FAILED;

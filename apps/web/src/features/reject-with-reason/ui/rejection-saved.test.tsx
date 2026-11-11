@@ -11,7 +11,13 @@ import { afterEach, describe, expect, it } from 'vitest';
 
 import { applicationKeys } from '@/entities/application';
 import { notesQueryOptions } from '@/entities/note';
-import { ANY_IDEMPOTENCY_KEY, errorReply, OUTAGES, validationReply } from '@/test/api-handlers';
+import {
+  ANY_IDEMPOTENCY_KEY,
+  errorReply,
+  OUTAGES,
+  STILL_RUNNING,
+  validationReply,
+} from '@/test/api-handlers';
 import {
   type MoveRouteOptions,
   reasonsSummaryRoute,
@@ -265,6 +271,14 @@ describe('RejectionReasonDialog, note step', () => {
     expect(failed.sent).toEqual([LIVE_CODING_NOTE]);
     expect(retried.sent).toEqual(failed.sent);
     expect(failed.finished).toEqual(['done']);
+  });
+
+  it('a note whose first try is still running says so, not that the save failed', async () => {
+    const { finished } = await submitNote({ reply: () => errorReply(STILL_RUNNING) });
+
+    expect(await screen.findByText('Запит ще обробляється')).toBeDefined();
+    expect(screen.queryByText('Не вдалося зберегти')).toBeNull();
+    expect(finished).toEqual([]);
   });
 
   it('a second save with the same text after a saved note carries a new key', async () => {
