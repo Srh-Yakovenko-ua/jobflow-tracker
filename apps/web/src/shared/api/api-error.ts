@@ -35,6 +35,10 @@ export function isIdempotencyConflict(error: Error): boolean {
   );
 }
 
+export function isNotFound(error: unknown): boolean {
+  return error instanceof ApiError && error.status === 404;
+}
+
 function fallbackBody(response: Response): ErrorResponse {
   return {
     type: 'unexpected_response',

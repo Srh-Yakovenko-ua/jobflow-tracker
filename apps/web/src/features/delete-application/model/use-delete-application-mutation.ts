@@ -8,10 +8,12 @@ import { uk } from '@/shared/i18n';
 import { showErrorToast } from '@/shared/ui/error-toast';
 
 import { deleteApplication } from '../api/delete-application';
+import { DELETE_MUTATION_KEY } from './delete-sent';
 
 export function useDeleteApplicationMutation() {
   const queryClient = useQueryClient();
   return useMutation({
+    mutationKey: DELETE_MUTATION_KEY,
     mutationFn: (applicationId: ApplicationResponse['id']) => deleteApplication(applicationId),
     onSuccess: (_deleted, applicationId) => {
       queryClient.removeQueries({ queryKey: applicationKeys.detail(applicationId) });

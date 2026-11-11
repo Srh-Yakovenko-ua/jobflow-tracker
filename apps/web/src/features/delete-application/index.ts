@@ -1,3 +1,4 @@
+export { isDeleteSent } from './model/delete-sent';
 export {
   type DeleteApplicationActions,
   DeleteApplicationDialog,

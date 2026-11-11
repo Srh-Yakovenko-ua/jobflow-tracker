@@ -53,12 +53,12 @@ export function CaptureFailure({ application, failure, actions, view }: CaptureF
         job={FAILED_JOB}
         actions={{
           onManual: actions.onManual,
-          manualFocused: view?.manualFocused,
           onDelete: () => {
             setDeleting(true);
           },
-          ...(!failure.parsed && { onRetry: retry.retry, retrying: retry.isPending }),
+          ...(!failure.parsed && { onRetry: retry.retry }),
         }}
+        view={{ manualFocused: view?.manualFocused, retrying: retry.isPending }}
       >
         <h3 className={LIVE_TITLE}>{COPY.title}</h3>
         <p className="max-w-[58ch] text-[15px] leading-[1.6] text-ink-2">{reasonOf(failure)}</p>

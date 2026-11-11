@@ -2,7 +2,7 @@
 
 import { AnimatePresence } from 'motion/react';
 import { useSearchParams } from 'next/navigation';
-import { type ReactNode, useRef, useState } from 'react';
+import { type ReactNode, startTransition, useRef, useState } from 'react';
 
 import {
   type AddPrefill,
@@ -83,15 +83,17 @@ function captureOf({ reviewId, jobId }: AddPrefill): Capture | null {
   return reviewId === null ? null : { applicationId: reviewId, jobId };
 }
 
-function writeCaptureToUrl(captured: CapturedDraft | null): void {
+function writeCaptureToUrl(captured: CapturedDraft): void {
   const url = new URL(window.location.href);
-  if (captured === null) {
-    url.searchParams.delete('review');
-    url.searchParams.delete('job');
-  } else {
-    url.searchParams.set('review', captured.applicationId);
-    url.searchParams.set('job', captured.jobId);
-  }
+  url.searchParams.set('review', captured.applicationId);
+  url.searchParams.set('job', captured.jobId);
+  window.history.replaceState(null, '', url);
+}
+
+function clearCaptureFromUrl(): void {
+  const url = new URL(window.location.href);
+  url.searchParams.delete('review');
+  url.searchParams.delete('job');
   window.history.replaceState(null, '', url);
 }
 
@@ -102,9 +104,11 @@ export function AddApplicationPage({ query }: AddApplicationPageProps) {
   const [local, setLocal] = useState<LocalCapture | null>(null);
   const capture =
     local !== null && local.under === addressReview ? local.capture : captureOf(prefill);
-  const show = (next: CapturedDraft | null) => {
-    writeCaptureToUrl(next);
-    setLocal({ under: next?.applicationId ?? null, capture: next });
+  const show = (next: CapturedDraft) => {
+    startTransition(() => {
+      writeCaptureToUrl(next);
+      setLocal({ under: next.applicationId, capture: next });
+    });
   };
   const liveRef = useRef<HTMLDivElement>(null);
   const onCaptured = (captured: CapturedDraft) => {
@@ -141,7 +145,10 @@ export function AddApplicationPage({ query }: AddApplicationPageProps) {
                     show({ ...capture, jobId });
                   },
                   onDeleted: () => {
-                    show(null);
+                    startTransition(() => {
+                      clearCaptureFromUrl();
+                      setLocal({ under: null, capture: null });
+                    });
                   },
                 }}
               />

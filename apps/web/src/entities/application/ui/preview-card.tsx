@@ -13,7 +13,7 @@ export type PreviewCardProps = Readonly<{
   view?: { mark?: DraftMark };
 }>;
 
-const PREVIEW_LOOK = { ready: 'text-ink shadow-e1' } as const;
+const READY_LOOK = 'text-ink shadow-e1';
 
 export function PreviewCard({ application, view }: PreviewCardProps) {
   const score = { matchScore: application.matchScore, aiStatus: null };
@@ -24,7 +24,7 @@ export function PreviewCard({ application, view }: PreviewCardProps) {
       className={cn(
         CARD_FRAME.article,
         'gap-2.5 bg-surface',
-        look === null ? PREVIEW_LOOK.ready : look.card.preview,
+        look === null ? READY_LOOK : look.card.preview,
       )}
     >
       {mark !== null && <ReviewMark mark={mark} />}

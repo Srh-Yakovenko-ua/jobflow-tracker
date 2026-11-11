@@ -1,3 +1,4 @@
+import { LIVE_EVENTS, type LiveEvent } from '@jobflow/shared';
 import { buildJobStatus } from '@jobflow/shared/testing';
 import { act, type RenderResult, screen, waitFor, within } from '@testing-library/react';
 import type { UserEvent } from '@testing-library/user-event';
@@ -16,8 +17,11 @@ import {
   REVIEW_DRAFT,
 } from '@/test/application-fixtures';
 import { axeViolations } from '@/test/axe';
+import type { MoveRouteOptions } from '@/test/board-fixtures';
 import { captureTokenRoutes } from '@/test/capture-token-fixtures';
 import { DONE_JOB, failedJob, jobRoute, PROCESSING_JOB } from '@/test/job-fixtures';
+import { latch } from '@/test/latch';
+import { bringLiveStreamUp, LiveUpdates } from '@/test/live-stream';
 import { navigateTo, push } from '@/test/navigation';
 import { renderViewInApp } from '@/test/render-in-app';
 import { server } from '@/test/server';
@@ -56,6 +60,14 @@ const RETRIED_JOB_ID = '0199f1a0-3c4d-7e5f-8a6b-7c8d9e0f1a3d';
 
 const FAILED_ADDRESS = `/add?review=${FAILED_DRAFT.id}&job=${FAILED_JOB.id}#review`;
 
+const FAILED_QUERY: AddQuery = { review: FAILED_DRAFT.id, job: FAILED_JOB.id };
+
+const DELETED_EVENT: LiveEvent = {
+  id: '0199f4b1-2c3d-7e4f-8a51-6b7c8d9e0f1b',
+  type: LIVE_EVENTS.applicationUpdated,
+  data: { applicationId: FAILED_DRAFT.id, fields: ['deletedAt'] },
+};
+
 const PASTED_ADDRESS = `/add?review=${FIRST_PASTE.applicationId}&job=${FIRST_PASTE.jobId}`;
 
 const PROCESSING_LINE = 'крок 2 з 3 · обробляється';
@@ -92,20 +104,39 @@ async function renderPage(query: AddQuery = {}, handlers: readonly RequestHandle
   return { user, view, sentRequests, sent: added.sent };
 }
 
-async function renderFailedPage(query: AddQuery = { job: FAILED_JOB.id }) {
+async function renderFailedPage(query: AddQuery = FAILED_QUERY, deletion: MoveRouteOptions = {}) {
   const jobs = jobRoute({
     job: (id) => (id === RETRIED_JOB_ID ? buildJobStatus() : FAILED_JOB),
     owner: FAILED_DRAFT.id,
   });
+  const cards = applicationRoute({ application: FAILED_DRAFT });
   const retries = retryRoute({ jobId: RETRIED_JOB_ID });
-  const deletes = deleteRoute();
+  const deletes = deleteRoute(deletion);
   const page = await renderPage({ review: FAILED_DRAFT.id, ...query }, [
     jobs.handler,
-    applicationRoute({ application: FAILED_DRAFT }).handler,
+    cards.handler,
     retries.handler,
     deletes.handler,
   ]);
-  return { ...page, jobs, retries, deletes };
+  return { ...page, jobs, cards, retries, deletes };
+}
+
+async function confirmDelete(user: UserEvent) {
+  await user.click(await screen.findByRole('button', { name: 'Видалити картку' }));
+  const asked = within(await screen.findByRole('dialog', { name: 'Видалити картку?' }));
+  await user.click(asked.getByRole('button', { name: 'Видалити' }));
+}
+
+async function explainerAfterDelete() {
+  expect(await screen.findByRole('heading', { level: 3, name: ON_BOARD })).toBeDefined();
+  await waitFor(() => {
+    expect(screen.queryByText('AI не впорався')).toBeNull();
+  });
+}
+
+async function deleteFailedDraft(user: UserEvent) {
+  await confirmDelete(user);
+  await explainerAfterDelete();
 }
 
 function cardReadsOf(sentRequests: ReturnType<typeof recordSentRequests>) {
@@ -118,6 +149,7 @@ describe('AddApplicationPage', () => {
   afterEach(() => {
     push.mockClear();
     vi.restoreAllMocks();
+    vi.unstubAllGlobals();
     window.history.replaceState(null, '', '/');
   });
 
@@ -298,18 +330,53 @@ describe('AddApplicationPage', () => {
 
   it('a deleted failed draft brings the explainer back and takes the draft and its job out of the address', async () => {
     window.history.replaceState(null, '', FAILED_ADDRESS);
-    const { user, deletes } = await renderFailedPage();
+    const { user, cards, deletes } = await renderFailedPage();
 
-    await user.click(await screen.findByRole('button', { name: 'Видалити картку' }));
-    const asked = within(await screen.findByRole('dialog', { name: 'Видалити картку?' }));
-    await user.click(asked.getByRole('button', { name: 'Видалити' }));
+    await deleteFailedDraft(user);
 
-    expect(await screen.findByRole('heading', { level: 3, name: ON_BOARD })).toBeDefined();
-    await waitFor(() => {
-      expect(screen.queryByText('AI не впорався')).toBeNull();
-    });
+    expect(cards.sent).toEqual([FAILED_DRAFT.id]);
     expect(deletes.sent).toEqual([FAILED_DRAFT.id]);
     expect(addressNow()).toBe('/add#review');
+  });
+
+  it('a deletion whose live event arrives before the delete answer sends no read of the deleted draft', async () => {
+    const held = latch();
+    const { user, view, cards, deletes, sentRequests } = await renderFailedPage(FAILED_QUERY, {
+      latch: held,
+    });
+    const source = await bringLiveStreamUp(() => {
+      view.rerender(
+        <>
+          <AddApplicationPage query={FAILED_QUERY} />
+          <LiveUpdates />
+        </>,
+      );
+    });
+    await confirmDelete(user);
+    await waitFor(() => {
+      expect(deletes.sent).toEqual([FAILED_DRAFT.id]);
+    });
+
+    act(() => {
+      source.send(DELETED_EVENT);
+    });
+    held.release();
+
+    await explainerAfterDelete();
+    expect(cardReadsOf(sentRequests).map(({ method }) => method)).toEqual(['GET', 'DELETE']);
+    expect(cards.sent).toEqual([FAILED_DRAFT.id]);
+  });
+
+  it('a vacancy pasted after a deleted failed draft follows its own job and reads no card of the deleted draft', async () => {
+    window.history.replaceState(null, '', FAILED_ADDRESS);
+    const { user, cards } = await renderFailedPage();
+    await deleteFailedDraft(user);
+    server.use(processingPasteRoute());
+
+    await pasteVacancy(user);
+
+    expect(cards.sent).toEqual([FAILED_DRAFT.id]);
+    expect(addressNow()).toBe(`${PASTED_ADDRESS}#review`);
   });
 
   it('review=garbage shows the explainer and asks for no card', async () => {

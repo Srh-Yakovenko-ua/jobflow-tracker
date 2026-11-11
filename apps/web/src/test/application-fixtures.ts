@@ -18,10 +18,9 @@ import {
   type MoveRouteOptions,
 } from './board-fixtures';
 
-export type ApplicationRouteOptions = {
+export type ApplicationRouteOptions = MoveRouteOptions & {
   application: ApplicationResponse;
   moves?: readonly unknown[];
-  reply?: HttpResponseResolver;
 };
 
 export type UpdateRouteOptions = MoveRouteOptions & { application: ApplicationResponse };
@@ -91,17 +90,19 @@ export const ACME_APPLICATION = applicationResponseOf({
   createdAt: '2026-10-12T09:00:00Z',
 });
 
-export function applicationRoute({ application, moves = [], reply }: ApplicationRouteOptions) {
+export function applicationRoute({ application, moves = [], ...control }: ApplicationRouteOptions) {
   const sent: string[] = [];
-  const handler = http.get(apiUrl(`/applications/${application.id}`), (info) => {
-    sent.push(application.id);
-    if (reply !== undefined) return reply(info);
+  const moved = () => {
     const last = moves.at(-1);
     const currentStage =
       last === undefined
         ? application.currentStage
         : moveApplicationInputSchema.parse(last).toStage;
     return HttpResponse.json({ ...application, currentStage });
+  };
+  const handler = http.get(apiUrl(`/applications/${application.id}`), (info) => {
+    sent.push(application.id);
+    return heldReply({ ...control, info, fallback: moved });
   });
   return { handler, sent };
 }

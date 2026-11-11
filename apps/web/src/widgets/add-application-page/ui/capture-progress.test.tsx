@@ -4,6 +4,7 @@ import { onlineManager } from '@tanstack/react-query';
 import { act, screen, waitFor, within } from '@testing-library/react';
 import { delay, type HttpResponseResolver } from 'msw';
 import { HttpResponse } from 'msw/http';
+import type { ReactNode } from 'react';
 import { toast } from 'sonner';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
@@ -20,6 +21,7 @@ import {
   updateRoute,
 } from '@/test/application-fixtures';
 import { heldReply, type MoveRouteOptions } from '@/test/board-fixtures';
+import { liveTicketRoute, stubEventSource } from '@/test/fake-event-source';
 import { advanceBy, fakeTimeoutsAndIntervals } from '@/test/fake-timeouts';
 import { descriptionOf } from '@/test/field-description';
 import {
@@ -31,7 +33,12 @@ import {
   PROCESSING_JOB as PROCESSING,
 } from '@/test/job-fixtures';
 import { type Latch, latch } from '@/test/latch';
-import { bringLiveStreamUp, closeLiveStreams } from '@/test/live-stream';
+import {
+  bringLiveStreamUp,
+  closeLiveStreams,
+  LiveUpdates,
+  reopenLiveStream,
+} from '@/test/live-stream';
 import { push } from '@/test/navigation';
 import { QueryProbe } from '@/test/query-status';
 import { renderViewInApp } from '@/test/render-in-app';
@@ -48,6 +55,7 @@ type ProgressSetup = {
   owner?: JobRouteOptions['owner'];
   application?: ApplicationResponse;
   applicationReply?: HttpResponseResolver;
+  cardLatch?: Latch;
   jobId?: string | null;
   retry?: MoveRouteOptions;
 };
@@ -130,6 +138,7 @@ function renderProgress({
   application = REVIEW_DRAFT,
   owner = application.id,
   applicationReply,
+  cardLatch,
   jobId = JOB_ID,
   retry = {},
 }: ProgressSetup = {}) {
@@ -137,6 +146,7 @@ function renderProgress({
   const detail = applicationRoute({
     application,
     ...(applicationReply && { reply: applicationReply }),
+    ...(cardLatch && { latch: cardLatch }),
   });
   const routes = {
     confirms: confirmRoute(),
@@ -169,6 +179,18 @@ function renderFailed(setup: ProgressSetup = {}) {
   return renderProgress({ job: () => FAILED, application: FAILED_DRAFT, ...setup });
 }
 
+function renderLinkedDraft(beside: ReactNode) {
+  renderViewInApp(
+    <>
+      <CaptureProgress
+        capture={{ applicationId: REVIEW_DRAFT.id, jobId: null }}
+        actions={{ onRetried: vi.fn(), onDeleted: vi.fn() }}
+      />
+      {beside}
+    </>,
+  );
+}
+
 function during(outage: Outage, replies: OutageReplies): HttpResponseResolver {
   return (info) => (outage.down ? replies.down(info) : replies.up(info));
 }
@@ -180,10 +202,6 @@ function cardReadDown(up: HttpResponseResolver) {
     up,
   });
   return { outage, setup: { job: () => DONE, applicationReply } };
-}
-
-function heldCard(held: Latch, card: ApplicationResponse): HttpResponseResolver {
-  return (info) => heldReply({ info, latch: held, fallback: () => HttpResponse.json(card) });
 }
 
 function processingReply(): Response {
@@ -359,15 +377,7 @@ describe('CaptureProgress', () => {
 
   it('a draft opened with no job keeps no job query under an empty id', async () => {
     server.use(applicationRoute({ application: REVIEW_DRAFT }).handler);
-    renderViewInApp(
-      <>
-        <CaptureProgress
-          capture={{ applicationId: REVIEW_DRAFT.id, jobId: null }}
-          actions={{ onRetried: vi.fn(), onDeleted: vi.fn() }}
-        />
-        <QueryProbe queryKey={['jobs', '']} />
-      </>,
-    );
+    renderLinkedDraft(<QueryProbe queryKey={['jobs', '']} />);
 
     expect(await screen.findByRole('form', { name: REVIEW })).toBeDefined();
     expect(screen.getByLabelText('query ["jobs",""]').textContent).toBe('absent');
@@ -399,6 +409,14 @@ describe('CaptureProgress', () => {
     expect(screen.getByText('текст збережено в нотатці')).toBeDefined();
     expect(buttonLabels()).toEqual([MANUAL, RETRY, DELETE]);
     expect(detailReads).toEqual([FAILED_DRAFT.id]);
+    expect(document.activeElement).toBe(document.body);
+  });
+
+  it('a custom job reply with an owner reaches the failure view', async () => {
+    renderFailed({ jobReply: () => HttpResponse.json(FAILED), owner: FAILED_DRAFT.id });
+
+    expect(await screen.findByText(FAILED_LINE)).toBeDefined();
+    expect(panelHeading('Картка створена, але порожня')).toBeDefined();
   });
 
   it.each(FAILURES)(
@@ -453,7 +471,7 @@ describe('CaptureProgress', () => {
 
   it('a failed parse with its card still on the way shows the loading line, not a processing step', async () => {
     const held = latch();
-    renderFailed({ applicationReply: heldCard(held, FAILED_DRAFT) });
+    renderFailed({ cardLatch: held });
 
     expect(await screen.findByText('Завантаження…')).toBeDefined();
     await waitFor(() => {
@@ -634,7 +652,9 @@ describe('CaptureProgress', () => {
 
   it('the load failure button stays busy while it reads the card again', async () => {
     const held = latch();
-    const { outage, setup } = cardReadDown(heldCard(held, REVIEW_DRAFT));
+    const { outage, setup } = cardReadDown((info) =>
+      heldReply({ info, latch: held, fallback: () => HttpResponse.json(REVIEW_DRAFT) }),
+    );
     const { user } = renderProgress(setup);
     await screen.findByText(READ_FAILED, {}, RETRIED);
     outage.down = false;
@@ -657,6 +677,24 @@ describe('CaptureProgress', () => {
     expect(await findIdleExplainer()).toBeDefined();
     expect(screen.queryByText(FAILED_LINE)).toBeNull();
     expect(screen.queryByText(READ_FAILED)).toBeNull();
+  });
+
+  it('a stale card link that answered 404 keeps the explainer through a live stream reopen, with no load failure and no second card request', async () => {
+    fakeTimeoutsAndIntervals();
+    const cards = applicationRoute({
+      application: REVIEW_DRAFT,
+      reply: () => errorReply({ status: 404, type: 'not_found' }),
+    });
+    server.use(liveTicketRoute().handler, cards.handler);
+    const stream = stubEventSource();
+    renderLinkedDraft(<LiveUpdates />);
+    await findIdleExplainer();
+
+    await reopenLiveStream(stream);
+
+    expect(panelHeading(ON_BOARD)).toBeDefined();
+    expect(screen.queryByText(READ_FAILED)).toBeNull();
+    expect(cards.sent).toHaveLength(1);
   });
 
   it('a draft opened by its link before any parse shows the explainer', async () => {
