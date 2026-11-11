@@ -14,7 +14,9 @@ import {
 import { getQueueToken } from '@nestjs/bullmq';
 import type { INestApplicationContext } from '@nestjs/common';
 import type { Queue } from 'bullmq';
+import type { Response } from 'supertest';
 import { afterAll, beforeEach, describe, expect, it, onTestFinished, vi } from 'vitest';
+import type { z } from 'zod';
 
 import type { Prisma } from '../../generated/prisma/client.js';
 import { DomainEventRouter } from '../../outbox/domain-event-router.js';
@@ -67,7 +69,10 @@ import { expectRateLimited } from '../../test/rate-limit.js';
 import type { SseStream } from '../../test/sse.js';
 import { useTestWorkers } from '../../test/worker.js';
 import { AiClient, AiServiceError } from '../ai/index.js';
-import { ApplicationDraftsService } from '../applications/index.js';
+import {
+  applicationCaptureRequestedPayloadSchema,
+  ApplicationDraftsService,
+} from '../applications/index.js';
 
 vi.hoisted(() => {
   vi.stubEnv('RATE_LIMIT_AI_PER_HOUR', '6');
@@ -138,6 +143,16 @@ const DRAFT_COLUMNS = {
 
 type FailedDraft = { accessToken: string; applicationId: string };
 
+type CaptureRequested = z.infer<typeof applicationCaptureRequestedPayloadSchema>;
+
+const acceptedBody = <Body extends object>(response: Response, schema: z.ZodType<Body>) => ({
+  ...schema.parse(response.body),
+  requestId: response.get('x-request-id'),
+});
+
+const captureRequestedRow = (capture: CaptureRequested) =>
+  applicationEventRow({ eventType: 'application.capture_requested', ...capture });
+
 const refusedByAi = () =>
   Promise.reject(new AiServiceError({ status: 422, type: 'ai_invalid_output' }));
 
@@ -200,8 +215,7 @@ describe('POST /api/v1/capture/paste', () => {
   async function paste(accessToken: string, input: object = PASTE) {
     const response = await postPaste(testApp.app, { accessToken, input });
     expect(statusAndDetail(response)).toEqual([202, undefined]);
-    const requestId = response.get('x-request-id');
-    return { ...capturePasteResponseSchema.parse(response.body), requestId };
+    return acceptedBody(response, capturePasteResponseSchema);
   }
 
   const draftOf = (id: string) =>
@@ -265,8 +279,7 @@ describe('POST /api/v1/capture/paste', () => {
   async function retried(accessToken: string, id: string) {
     const response = await postRetry(testApp.app, { accessToken, id });
     expect(statusAndDetail(response)).toEqual([202, undefined]);
-    const requestId = response.get('x-request-id');
-    return { ...captureRetryResponseSchema.parse(response.body), requestId };
+    return acceptedBody(response, captureRetryResponseSchema);
   }
 
   async function kindsOf(applicationId: string) {
@@ -324,13 +337,7 @@ describe('POST /api/v1/capture/paste', () => {
       { kind: 'captured', payload: { method: 'paste' } },
     ]);
     expect(await outboxRows(testApp.prisma)).toEqual([
-      applicationEventRow({
-        eventType: 'application.capture_requested',
-        applicationId,
-        aiJobId: jobId,
-        requestId,
-        userId,
-      }),
+      captureRequestedRow({ userId, applicationId, aiJobId: jobId, requestId }),
     ]);
     expect(ai.calls).toEqual([]);
   });
@@ -656,7 +663,7 @@ describe('POST /api/v1/capture/paste', () => {
 
       const response = await postConfirm(testApp.app, { accessToken, id: 'not-a-uuid' });
 
-      expect(response.status).toBe(422);
+      expect([response.status, errorPathsOf(response.body)]).toEqual([422, ['id']]);
     });
 
     it.each(['queued', 'processing'] as const)(
@@ -716,13 +723,7 @@ describe('POST /api/v1/capture/paste', () => {
       expect(await storedAiJob(testApp.prisma, jobId)).toMatchObject({ status: 'queued' });
       expect(await countRows()).toEqual(TWO_JOBS_ONE_CAPTURE);
       expect((await outboxRows(testApp.prisma)).at(-1)).toEqual(
-        applicationEventRow({
-          eventType: 'application.capture_requested',
-          applicationId,
-          aiJobId: jobId,
-          requestId,
-          userId,
-        }),
+        captureRequestedRow({ userId, applicationId, aiJobId: jobId, requestId }),
       );
       expect(columns.applied.items).toMatchObject([
         { id: applicationId, isDraft: true, aiStatus: 'queued', aiJobId: jobId },
@@ -889,26 +890,22 @@ describe('POST /api/v1/capture/paste', () => {
       const input = { ...BOOKMARKLET, ...page };
       const response = await postBookmarklet(testApp.app, { captureToken, input });
       expect(statusAndDetail(response)).toEqual([202, undefined]);
-      return { response, ...capturePasteResponseSchema.parse(response.body) };
+      return acceptedBody(response, capturePasteResponseSchema);
     }
 
     it('answers 202 to a capture token while the queue Redis is down and stores the draft with the title and the page text, the djinni source, its queued ai job, the captured timeline row and the capture event', async () => {
       const { userId, captureToken } = await signedInWithCaptureToken(testApp);
 
-      const { response, applicationId, jobId, possibleDuplicates } = await captured(captureToken);
+      const { applicationId, jobId, possibleDuplicates, requestId } = await captured(captureToken);
 
-      const requestId = response.get('x-request-id');
       expect(possibleDuplicates).toEqual([]);
       expect(await draftOf(applicationId)).toEqual(BOOKMARKLET_DRAFT);
       expect(await storedAiJob(testApp.prisma, jobId)).toMatchObject({ status: 'queued' });
       expect(await timelineOf(applicationId)).toEqual([
         { kind: 'captured', payload: { method: 'bookmarklet' } },
       ]);
-      expect(await outboxRows(testApp.prisma)).toMatchObject([
-        {
-          eventType: 'application.capture_requested',
-          payload: { userId, applicationId, aiJobId: jobId, requestId },
-        },
+      expect(await outboxRows(testApp.prisma)).toEqual([
+        captureRequestedRow({ userId, applicationId, aiJobId: jobId, requestId }),
       ]);
       expect(await countRows()).toEqual([1, 1, 1, 1]);
       expect(ai.calls).toEqual([]);

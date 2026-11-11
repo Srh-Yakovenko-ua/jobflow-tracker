@@ -1,4 +1,4 @@
-import type { ErrorResponse } from '@jobflow/shared';
+import { AI_JOB_FAILURES, type ErrorResponse } from '@jobflow/shared';
 
 export const ERROR_TYPES = {
   400: { type: 'bad_request', title: 'Bad request' },
@@ -10,7 +10,7 @@ export const ERROR_TYPES = {
   422: { type: 'validation_error', title: 'Invalid request' },
   429: { type: 'rate_limited', title: 'Too many requests' },
   500: { type: 'internal_error', title: 'Internal error' },
-  503: { type: 'not_ready', title: 'Service not ready' },
+  503: { type: AI_JOB_FAILURES.notReady, title: 'Service not ready' },
 } as const;
 
 export type ErrorStatus = keyof typeof ERROR_TYPES;

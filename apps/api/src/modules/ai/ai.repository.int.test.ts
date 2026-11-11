@@ -8,12 +8,15 @@ import {
   createOwnedApplication,
   createUser,
   type NewAiResult,
+  type OwnedApplication,
 } from '../../test/factories.js';
-import { minutesBefore, NOW } from '../../test/time.js';
+import { daysBefore, minutesBefore, NOW } from '../../test/time.js';
 import { AiRepository, type SaveAiFailure, type SaveAiResult } from './ai.repository.js';
 import { budgetWindow } from './ai-budget.js';
 
 type JobTarget = { userId: string; id: string; aiResultId: string };
+
+type FailedJob = { errorType: string; finishedAt?: Date };
 
 const EARLIER_TODAY = minutesBefore(60);
 
@@ -78,27 +81,56 @@ const failedResultOf = (userId: string, error: string): NewAiResult => ({
   updatedAt: EARLIER_TODAY,
 });
 
-const DAILY_CALLS = [
-  { verdict: 'counts', row: 'a succeeded result', fields: {}, calls: 1 },
-  ...['ai_invalid_output', 'ai_timeout'].map((error) => ({
-    verdict: 'counts',
-    row: `a result failed with ${error}`,
-    fields: failure(error),
-    calls: 1,
-  })),
-  ...['not_ready', 'unauthorized', 'validation_error', 'rate_limited', 'ai_provider_error'].map(
-    (error) => ({
-      verdict: 'leaves out',
-      row: `a result failed with ${error}`,
-      fields: failure(error),
-      calls: 0,
-    }),
-  ),
-];
-
 const database = useTestDatabase();
 
 const aiRepository = () => new AiRepository(database.prisma);
+
+const succeededResult = ({ userId }: OwnedApplication) =>
+  createAiResult(database.prisma, { userId, updatedAt: EARLIER_TODAY });
+
+const failedJob =
+  ({ errorType, finishedAt = EARLIER_TODAY }: FailedJob) =>
+  ({ userId, applicationId }: OwnedApplication) =>
+    createAiJob(database.prisma, {
+      userId,
+      applicationId,
+      status: 'failed',
+      errorType,
+      finishedAt,
+    });
+
+const othersFailedJob = async () =>
+  failedJob({ errorType: 'ai_timeout' })(await createOwnedApplication(database.prisma));
+
+const DAILY_CALLS = [
+  { verdict: 'counts', row: 'a succeeded result from today', seed: succeededResult, calls: 1 },
+  ...['ai_invalid_output', 'ai_timeout'].map((errorType) => ({
+    verdict: 'counts',
+    row: `a job failed today with ${errorType}`,
+    seed: failedJob({ errorType }),
+    calls: 1,
+  })),
+  ...['not_ready', 'unauthorized', 'validation_error', 'rate_limited', 'ai_provider_error'].map(
+    (errorType) => ({
+      verdict: 'leaves out',
+      row: `a job failed today with ${errorType}`,
+      seed: failedJob({ errorType }),
+      calls: 0,
+    }),
+  ),
+  {
+    verdict: 'leaves out',
+    row: 'a job failed yesterday with ai_timeout',
+    seed: failedJob({ errorType: 'ai_timeout', finishedAt: daysBefore(1) }),
+    calls: 0,
+  },
+  {
+    verdict: 'leaves out',
+    row: "another user's job failed today with ai_timeout",
+    seed: othersFailedJob,
+    calls: 0,
+  },
+];
 
 function storedResults(where: { userId: string }) {
   return database.prisma.aiResult.findMany({ where, select: AI_RESULT_ROW });
@@ -240,13 +272,31 @@ describe('AiRepository.saveFailure on Postgres', () => {
 });
 
 describe('AiRepository.budgetUsage on Postgres', () => {
-  it.each(DAILY_CALLS)('$verdict $row from today in the daily calls', async ({ fields, calls }) => {
-    const { id: userId } = await createUser(database.prisma);
-    await createAiResult(database.prisma, { userId, ...fields, updatedAt: EARLIER_TODAY });
+  it.each(DAILY_CALLS)('$verdict $row in the daily calls', async ({ seed, calls }) => {
+    const owner = await createOwnedApplication(database.prisma);
+    await seed(owner);
 
-    await expect(aiRepository().budgetUsage(userId, budgetWindow(NOW))).resolves.toHaveProperty(
+    await expect(
+      aiRepository().budgetUsage(owner.userId, budgetWindow(NOW)),
+    ).resolves.toHaveProperty('calls', calls);
+  });
+
+  it('counts two timed-out retries of one text as two calls of the day', async () => {
+    const { userId, applicationId } = await createOwnedApplication(database.prisma);
+    const repository = aiRepository();
+    const timedOutRetry = async () => {
+      const id = await repository.createJob(userId, { kind: 'vacancy_parse', applicationId });
+      await repository.startJob(userId, { id, now: NOW });
+      await repository.saveFailure(userId, { ...FAILURE, error: 'ai_timeout' });
+      await repository.failJob(userId, { id, errorType: 'ai_timeout', now: NOW });
+    };
+
+    await timedOutRetry();
+    await timedOutRetry();
+
+    await expect(repository.budgetUsage(userId, budgetWindow(NOW))).resolves.toHaveProperty(
       'calls',
-      calls,
+      2,
     );
   });
 });

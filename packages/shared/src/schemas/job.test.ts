@@ -19,6 +19,7 @@ describe('AI_JOB_FAILURES', () => {
       notReady: 'not_ready',
       providerError: 'ai_provider_error',
       rateLimited: 'rate_limited',
+      invalidOutput: 'ai_invalid_output',
     });
   });
 });

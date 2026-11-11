@@ -29,6 +29,13 @@ const log = memoryLog();
 
 const settledJobs = new SettledAiJobs();
 
+const RETRIED_FAILURES = [
+  { status: 429, type: 'rate_limited' },
+  { status: 504, type: 'ai_timeout' },
+  { status: 503, type: 'not_ready' },
+  { status: 502, type: 'ai_provider_error' },
+];
+
 function aiJob(data: unknown, name = 'ai.complete') {
   return processedJob({ queueName: 'ai', name, data, id: '71' });
 }
@@ -142,32 +149,33 @@ describe('AiProcessor', () => {
     await expect(processor.process(aiJob(VACANCY_JOB))).rejects.toBeInstanceOf(UnrecoverableError);
   });
 
-  it.each([
-    { status: 429, type: 'rate_limited' },
-    { status: 504, type: 'ai_timeout' },
-    { status: 503, type: 'not_ready' },
-    { status: 502, type: 'ai_provider_error' },
-  ])('rethrows a $status $type so BullMQ retries it with backoff', async (failure) => {
-    const refusal = new AiServiceError(failure);
-    ai.answer = () => Promise.reject(refusal);
+  it.each(RETRIED_FAILURES)(
+    'rethrows a $status $type so BullMQ retries it with backoff',
+    async (failure) => {
+      const refusal = new AiServiceError(failure);
+      ai.answer = () => Promise.reject(refusal);
 
-    const error = await processor.process(aiJob(VACANCY_JOB)).catch((thrown: unknown) => thrown);
+      const error = await processor.process(aiJob(VACANCY_JOB)).catch((thrown: unknown) => thrown);
 
-    expect(error).toBe(refusal);
-    expect(error).not.toBeInstanceOf(UnrecoverableError);
-  });
+      expect(error).toBe(refusal);
+      expect(error).not.toBeInstanceOf(UnrecoverableError);
+    },
+  );
 
-  it('fails the ai job with the error type when a 503 comes on the third and last attempt', async () => {
-    ai.answer = () => Promise.reject(new AiServiceError({ status: 503, type: 'not_ready' }));
+  it.each(RETRIED_FAILURES)(
+    'fails the ai job with $type when a $status comes on the third and last attempt',
+    async ({ status, type }) => {
+      ai.answer = () => Promise.reject(new AiServiceError({ status, type }));
 
-    await expect(
-      processor.process({ ...aiJob(VACANCY_JOB), attemptsMade: 2 }),
-    ).rejects.toBeInstanceOf(AiServiceError);
+      await expect(
+        processor.process({ ...aiJob(VACANCY_JOB), attemptsMade: 2 }),
+      ).rejects.toBeInstanceOf(AiServiceError);
 
-    expect(repository.jobs.get(AI_JOB_ID)).toEqual(
-      expect.objectContaining({ status: 'failed', errorType: 'not_ready' }),
-    );
-  });
+      expect(repository.jobs.get(AI_JOB_ID)).toEqual(
+        expect.objectContaining({ status: 'failed', errorType: type }),
+      );
+    },
+  );
 
   it.each([
     { job: 'with an unknown name', data: VACANCY_JOB, name: 'ai.summarize' },
