@@ -4,7 +4,7 @@ import type { RequestHandler } from 'msw';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import type { AddQuery } from '@/features/add-application';
-import { addRoutes, FIRST_PASTE, linkField, textField } from '@/test/add-fixtures';
+import { addRoutes, FIRST_PASTE, linkField, textField, TIMEOUT_REASON } from '@/test/add-fixtures';
 import { apiUrl, recordSentRequests } from '@/test/api-handlers';
 import {
   applicationRoute,
@@ -49,11 +49,15 @@ const ON_BOARD = 'Картка вже на дошці';
 
 const FAILED_TITLE = 'Картка створена, але порожня';
 
-const TIMEOUT_REASON = 'AI не встиг відповісти. Це збій на нашому боці, з текстом усе гаразд.';
-
 const FAILED_JOB = failedJob('ai_timeout');
 
 const RETRIED_JOB_ID = '0199f1a0-3c4d-7e5f-8a6b-7c8d9e0f1a3d';
+
+const FAILED_ADDRESS = `/add?review=${FAILED_DRAFT.id}&job=${FAILED_JOB.id}#review`;
+
+function addressNow(): string {
+  return `${window.location.pathname}${window.location.search}${window.location.hash}`;
+}
 
 async function renderPage(query: AddQuery = {}, handlers: readonly RequestHandler[] = []) {
   const added = addRoutes();
@@ -65,7 +69,10 @@ async function renderPage(query: AddQuery = {}, handlers: readonly RequestHandle
 }
 
 async function renderFailedPage(query: AddQuery = { job: FAILED_JOB.id }) {
-  const jobs = jobRoute({ job: (id) => (id === RETRIED_JOB_ID ? buildJobStatus() : FAILED_JOB) });
+  const jobs = jobRoute({
+    job: (id) => (id === RETRIED_JOB_ID ? buildJobStatus() : FAILED_JOB),
+    owner: FAILED_DRAFT.id,
+  });
   const retries = retryRoute({ jobId: RETRIED_JOB_ID });
   const deletes = deleteRoute();
   const page = await renderPage({ review: FAILED_DRAFT.id, ...query }, [
@@ -152,7 +159,7 @@ describe('AddApplicationPage', () => {
 
   it('a pasted vacancy brings the live panel into view, then its review, and the confirmation leads to the board', async () => {
     const parse = { job: PROCESSING_JOB };
-    const jobs = jobRoute({ job: () => parse.job });
+    const jobs = jobRoute({ job: () => parse.job, owner: FIRST_PASTE.applicationId });
     const draft = { ...REVIEW_DRAFT, id: FIRST_PASTE.applicationId };
     const confirms = confirmRoute();
     const scrolled = vi.spyOn(Element.prototype, 'scrollIntoView');
@@ -228,11 +235,7 @@ describe('AddApplicationPage', () => {
   });
 
   it('a retried parse keeps the card, follows the new job and puts it in the address in place of the failed one', async () => {
-    window.history.replaceState(
-      null,
-      '',
-      `/add?review=${FAILED_DRAFT.id}&job=${FAILED_JOB.id}#review`,
-    );
+    window.history.replaceState(null, '', FAILED_ADDRESS);
     const { user, jobs, retries } = await renderFailedPage();
 
     await user.click(await screen.findByRole('button', { name: 'Спробувати ще раз' }));
@@ -241,12 +244,11 @@ describe('AddApplicationPage', () => {
     expect(retries.sent).toEqual([FAILED_DRAFT.id]);
     expect(jobs.sent).toEqual([FAILED_JOB.id, RETRIED_JOB_ID]);
     expect(screen.queryByText('AI не впорався')).toBeNull();
-    expect(`${window.location.pathname}${window.location.search}${window.location.hash}`).toBe(
-      `/add?review=${FAILED_DRAFT.id}&job=${RETRIED_JOB_ID}#review`,
-    );
+    expect(addressNow()).toBe(`/add?review=${FAILED_DRAFT.id}&job=${RETRIED_JOB_ID}#review`);
   });
 
-  it('a deleted failed draft brings the explainer back', async () => {
+  it('a deleted failed draft brings the explainer back and takes the draft and its job out of the address', async () => {
+    window.history.replaceState(null, '', FAILED_ADDRESS);
     const { user, deletes } = await renderFailedPage();
 
     await user.click(await screen.findByRole('button', { name: 'Видалити картку' }));
@@ -258,6 +260,7 @@ describe('AddApplicationPage', () => {
       expect(screen.queryByText('AI не впорався')).toBeNull();
     });
     expect(deletes.sent).toEqual([FAILED_DRAFT.id]);
+    expect(addressNow()).toBe('/add#review');
   });
 
   it('review=garbage shows the explainer and asks for no card', async () => {

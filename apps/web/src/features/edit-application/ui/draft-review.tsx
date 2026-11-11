@@ -26,7 +26,7 @@ import { ReviewFormFields } from './review-form-fields';
 
 export type DraftReviewProps = Readonly<{
   application: ApplicationResponse;
-  actions: { onConfirmed: () => void };
+  actions: { onConfirmed: () => void; onBack?: () => void };
   heading?: ReactNode;
   view?: { name?: string; focusField?: EditField };
 }>;
@@ -109,6 +109,11 @@ export function DraftReview({ application, actions, heading, view = {} }: DraftR
         >
           {COPY.open}
         </Link>
+        {actions.onBack && (
+          <Button variant="ghost" size="lg" className={TOUCH_HEIGHT} onClick={actions.onBack}>
+            {COPY.back}
+          </Button>
+        )}
       </div>
     </form>
   );

@@ -5,6 +5,7 @@ import { act, screen, waitFor } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { applicationQueryOptions } from '@/entities/application';
+import { POSITION_ERROR } from '@/test/add-fixtures';
 import { errorReply, recordSentRequests, validationReply } from '@/test/api-handlers';
 import {
   applicationRoute,
@@ -31,6 +32,7 @@ type ReviewSetup = {
   update?: MoveRouteOptions;
   confirm?: MoveRouteOptions;
   view?: DraftReviewProps['view'];
+  onBack?: () => void;
 };
 
 const CONFIRM = 'Підтвердити і на дошку';
@@ -38,8 +40,6 @@ const CONFIRM = 'Підтвердити і на дошку';
 const SAVE_FAILED_TOAST = 'Це збій на нашому боці, збережені дані на місці. Спробуй ще раз.';
 
 const COMPANY_ERROR = 'Вкажи компанію одним коротким рядком';
-
-const POSITION_ERROR = 'Вкажи позицію одним коротким рядком';
 
 const NO_QUOTE = 'Цитати в тексті вакансії не знайшлося';
 
@@ -53,6 +53,7 @@ function renderReview({
   update = {},
   confirm = {},
   view = {},
+  onBack,
 }: ReviewSetup = {}) {
   const detail = applicationRoute({ application });
   const updates = updateRoute({ application, ...update });
@@ -63,7 +64,11 @@ function renderReview({
   const user = renderInApp(
     <>
       <DetailReader application={application} />
-      <DraftReview application={application} actions={{ onConfirmed }} view={view} />
+      <DraftReview
+        application={application}
+        actions={{ onConfirmed, ...(onBack && { onBack }) }}
+        view={view}
+      />
     </>,
   );
   const confirmUntilReported = async () => {
@@ -268,6 +273,13 @@ describe('DraftReview', () => {
     expect(screen.queryByText(/розпізнано/)).toBeNull();
   });
 
+  it('a parsed draft with an empty stack labels the stack field Стек with no recognised count', () => {
+    renderReview({ application: { ...REVIEW_DRAFT, stack: [] } });
+
+    expect(screen.getByText('Стек')).toBeDefined();
+    expect(screen.queryByText(/розпізнано \d+ із тексту/)).toBeNull();
+  });
+
   it('a confirmation with both names left empty marks each field and sends nothing', async () => {
     const { user, onConfirmed, writes } = renderReview({ application: FAILED_DRAFT });
 
@@ -344,5 +356,20 @@ describe('DraftReview', () => {
     expect(screen.getByRole('link', { name: 'Відкрити повну картку' }).getAttribute('href')).toBe(
       `/applications/${REVIEW_DRAFT.id}`,
     );
+    expect(screen.queryByRole('button', { name: 'Назад' })).toBeNull();
+  });
+
+  it('a way back from the caller shows Назад right after the card link and takes the press', async () => {
+    const onBack = vi.fn<() => void>();
+    const { user, writes } = renderReview({ application: FAILED_DRAFT, onBack });
+    const back = screen.getByRole('button', { name: 'Назад' });
+
+    expect(screen.getByRole('link', { name: 'Відкрити повну картку' }).nextElementSibling).toBe(
+      back,
+    );
+    await user.click(back);
+
+    expect(onBack).toHaveBeenCalledTimes(1);
+    expect(writes()).toEqual([]);
   });
 });

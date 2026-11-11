@@ -21,6 +21,7 @@ export type CaptureFailureProps = Readonly<{
   application: ApplicationResponse;
   failure: CaptureFailureKind;
   actions: CaptureFailureActions;
+  view?: { manualFocused?: boolean };
 }>;
 
 const COPY = uk.add.failed;
@@ -42,7 +43,7 @@ function KeptText({ text }: Readonly<{ text: string }>) {
   );
 }
 
-export function CaptureFailure({ application, failure, actions }: CaptureFailureProps) {
+export function CaptureFailure({ application, failure, actions, view }: CaptureFailureProps) {
   const [deleting, setDeleting] = useState(false);
   const retry = useRetryParse({ applicationId: application.id, actions });
   const openerFocus = useOpenerFocus();
@@ -52,6 +53,7 @@ export function CaptureFailure({ application, failure, actions }: CaptureFailure
         job={FAILED_JOB}
         actions={{
           onManual: actions.onManual,
+          manualFocused: view?.manualFocused,
           onDelete: () => {
             setDeleting(true);
           },

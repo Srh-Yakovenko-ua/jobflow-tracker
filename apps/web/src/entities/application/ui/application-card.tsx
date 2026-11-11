@@ -18,7 +18,7 @@ import { CardHeading } from './card-heading';
 import { NextEventChip } from './next-event-chip';
 import { OfferCard } from './offer-card';
 import { ParsingCard, type ParsingCardProps } from './parsing-card';
-import { type DraftMark, ReviewMark, TextKeptLine } from './review-mark';
+import { DRAFT_MARK_LOOK, type DraftMark, ReviewMark, TextKeptLine } from './review-mark';
 import { ScoreBadge } from './score-badge';
 import { SilenceIndicator } from './silence-indicator';
 import { STAGE_COLOR_CLASS } from './stage-color';
@@ -34,11 +34,6 @@ export type ApplicationCardProps = Readonly<{
 const CARD_LOOK = {
   live: 'bg-surface text-ink shadow-e1 duration-(--duration-base) ease-standard hover:shadow-e2 active:shadow-e1 motion-safe:transition-[translate,box-shadow] motion-safe:hover:-translate-y-0.75 motion-safe:active:translate-y-0',
   silent: 'bg-surface-2 text-ink-2 inset-ring inset-ring-line-soft',
-};
-
-const MARK_LOOK: Record<DraftMark, string> = {
-  review: 'animate-fade-in inset-ring inset-ring-accent/25',
-  failed: 'animate-fade-in text-ink-3 inset-ring inset-ring-rejected',
 };
 
 function StackTags({ application }: Readonly<{ application: ApplicationCardData }>) {
@@ -89,7 +84,7 @@ function scoredOf({ application, mark }: MarkedCard): ScoreSource {
 }
 
 function FieldsFooter({ application, mark }: MarkedCard) {
-  if (mark === 'failed') return <TextKeptLine />;
+  if (mark !== null && DRAFT_MARK_LOOK[mark].footer === 'kept') return <TextKeptLine />;
   const silent = application.silenceLevel === 'silent';
   return (
     <CardFooter
@@ -113,7 +108,7 @@ function FieldsCard({ application, view, context, mark }: FieldsCardProps) {
         CARD_FRAME.article,
         CARD_LOOK[silent ? 'silent' : 'live'],
         showStack ? 'gap-2.75' : 'gap-2.5',
-        mark !== null && MARK_LOOK[mark],
+        mark !== null && ['animate-fade-in', DRAFT_MARK_LOOK[mark].card.board],
       )}
     >
       {mark !== null && <ReviewMark mark={mark} />}

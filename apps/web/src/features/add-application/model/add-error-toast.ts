@@ -7,7 +7,7 @@ export type AddLimit = 'parseLimit' | 'requestLimit';
 
 const COPY = uk.add.errors;
 
-type LimitCopy = (typeof COPY)[AddLimit];
+type LimitCopy = Readonly<{ title: string; wait: (wait: string) => string; later: string }>;
 
 const IDEMPOTENCY_CONFLICT = 'idempotency_conflict';
 
@@ -19,8 +19,8 @@ function limitToast(copy: LimitCopy, retryAfterSeconds: number | undefined): Err
   };
 }
 
-export function parseLimitToast(retryAfterSeconds: number | undefined): ErrorToastContent {
-  return limitToast(COPY.parseLimit, retryAfterSeconds);
+export function retryLimitToast(retryAfterSeconds: number | undefined): ErrorToastContent {
+  return limitToast(COPY.retryLimit, retryAfterSeconds);
 }
 
 function conflictToast(error: ApiError): ErrorToastContent {

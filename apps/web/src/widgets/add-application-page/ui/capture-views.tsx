@@ -14,7 +14,9 @@ import { uk } from '@/shared/i18n';
 import { cn } from '@/shared/lib/cn';
 import { type AiJob, AsyncState } from '@/shared/ui/async-state';
 import { buttonLinkClasses } from '@/shared/ui/button';
-import { LoadFailedPanel } from '@/shared/ui/error-panel';
+import { LoadFailedPanel, type LoadFailedPanelProps } from '@/shared/ui/error-panel';
+import { LoadingRegion } from '@/shared/ui/loading-region';
+import { CardSkeleton, TextSkeleton } from '@/shared/ui/skeleton';
 import { STATE_TEXT } from '@/shared/ui/state-text';
 import { TOUCH_HEIGHT } from '@/shared/ui/touch-height';
 
@@ -81,8 +83,24 @@ export function progressView({ job, parse }: ProgressViewInput): LiveView {
   };
 }
 
-export function readFailedView(onRetry: () => void): LiveView {
-  return { id: 'read-failed', preview: null, panel: <LoadFailedPanel onRetry={onRetry} /> };
+export function readFailedView({ onRetry, retrying }: LoadFailedPanelProps): LiveView {
+  return {
+    id: 'read-failed',
+    preview: null,
+    panel: <LoadFailedPanel onRetry={onRetry} retrying={retrying} />,
+  };
+}
+
+export function loadingView(): LiveView {
+  return {
+    id: 'loading',
+    preview: <CardSkeleton />,
+    panel: (
+      <LoadingRegion className={cn(LIVE_PANEL, 'gap-4.5')}>
+        <TextSkeleton />
+      </LoadingRegion>
+    ),
+  };
 }
 
 export function failureView(props: CaptureFailureProps): LiveView {

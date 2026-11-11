@@ -147,7 +147,10 @@ export function ReviewFormFields({
         <StackField
           form={form}
           view={{
-            label: parsed === null ? REVIEW_NAMES.stack : COPY.stack(application.stack.length),
+            label:
+              parsed === null || application.stack.length === 0
+                ? REVIEW_NAMES.stack
+                : COPY.stack(application.stack.length),
             placeholder: COPY.addStack,
             aside: chipOf('stack'),
           }}

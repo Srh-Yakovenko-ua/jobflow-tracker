@@ -1,13 +1,14 @@
 import type { ApplicationResponse, JobStatus } from '@jobflow/shared';
 import { buildJobStatus } from '@jobflow/shared/testing';
-import { screen, waitFor, within } from '@testing-library/react';
+import { onlineManager } from '@tanstack/react-query';
+import { act, screen, waitFor, within } from '@testing-library/react';
 import { delay, type HttpResponseResolver } from 'msw';
 import { HttpResponse } from 'msw/http';
 import { toast } from 'sonner';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { API_CLIENT_LIMITS } from '@/shared/api';
-import { TWO_MINUTES } from '@/test/add-fixtures';
+import { POSITION_ERROR, TIMEOUT_REASON, TWO_MINUTES } from '@/test/add-fixtures';
 import { errorReply, rateLimitedReply } from '@/test/api-handlers';
 import {
   applicationRoute,
@@ -18,7 +19,7 @@ import {
   REVIEW_DRAFT,
   updateRoute,
 } from '@/test/application-fixtures';
-import type { MoveRouteOptions } from '@/test/board-fixtures';
+import { heldReply, type MoveRouteOptions } from '@/test/board-fixtures';
 import { advanceBy, fakeTimeoutsAndIntervals } from '@/test/fake-timeouts';
 import { descriptionOf } from '@/test/field-description';
 import {
@@ -29,7 +30,7 @@ import {
   type JobRouteOptions,
   PROCESSING_JOB as PROCESSING,
 } from '@/test/job-fixtures';
-import { latch } from '@/test/latch';
+import { type Latch, latch } from '@/test/latch';
 import { bringLiveStreamUp, closeLiveStreams } from '@/test/live-stream';
 import { push } from '@/test/navigation';
 import { QueryProbe } from '@/test/query-status';
@@ -44,6 +45,7 @@ vi.mock('next/navigation', () => import('@/test/navigation'));
 type ProgressSetup = {
   job?: JobRouteOptions['job'];
   jobReply?: HttpResponseResolver;
+  owner?: JobRouteOptions['owner'];
   application?: ApplicationResponse;
   applicationReply?: HttpResponseResolver;
   jobId?: string | null;
@@ -79,8 +81,6 @@ const READ_FAILED = 'Не вдалося завантажити';
 const NO_FIELDS =
   'У тексті не було ні назви компанії, ні позиції, схоже, скопіювався тільки блок вимог.';
 
-const TIMEOUT = 'AI не встиг відповісти. Це збій на нашому боці, з текстом усе гаразд.';
-
 const BUDGET =
   'Ліміт AI-розборів вичерпано, тому цей текст AI не читав. Повторити розбір вийде, коли ліміт оновиться.';
 
@@ -95,7 +95,7 @@ const NEXT =
 
 const FAILURES = [
   { errorType: 'no_company_no_position', reason: NO_FIELDS },
-  { errorType: 'ai_timeout', reason: TIMEOUT },
+  { errorType: 'ai_timeout', reason: TIMEOUT_REASON },
   { errorType: 'budget_exceeded', reason: BUDGET },
   { errorType: 'not_ready', reason: PROVIDER_DOWN },
   { errorType: 'ai_provider_error', reason: PROVIDER_DOWN },
@@ -114,6 +114,8 @@ const CONFIRM = 'Підтвердити і на дошку';
 
 const MANUAL_FORM = 'Заповни компанію і позицію';
 
+const BACK = 'Назад';
+
 const DELETE_DIALOG = { name: 'Видалити картку?' } as const;
 
 const SAVE_FAILED_TOAST = 'Це збій на нашому боці, збережені дані на місці. Спробуй ще раз.';
@@ -126,11 +128,12 @@ function renderProgress({
   job = () => QUEUED,
   jobReply,
   application = REVIEW_DRAFT,
+  owner = application.id,
   applicationReply,
   jobId = JOB_ID,
   retry = {},
 }: ProgressSetup = {}) {
-  const jobs = jobRoute({ job, ...(jobReply && { reply: jobReply }) });
+  const jobs = jobRoute({ job, owner, ...(jobReply && { reply: jobReply }) });
   const detail = applicationRoute({
     application,
     ...(applicationReply && { reply: applicationReply }),
@@ -170,8 +173,21 @@ function during(outage: Outage, replies: OutageReplies): HttpResponseResolver {
   return (info) => (outage.down ? replies.down(info) : replies.up(info));
 }
 
+function cardReadDown(up: HttpResponseResolver) {
+  const outage = { down: true };
+  const applicationReply = during(outage, {
+    down: () => errorReply({ status: 500, type: 'internal_error' }),
+    up,
+  });
+  return { outage, setup: { job: () => DONE, applicationReply } };
+}
+
+function heldCard(held: Latch, card: ApplicationResponse): HttpResponseResolver {
+  return (info) => heldReply({ info, latch: held, fallback: () => HttpResponse.json(card) });
+}
+
 function processingReply(): Response {
-  return HttpResponse.json({ ...PROCESSING, id: JOB_ID });
+  return HttpResponse.json({ ...PROCESSING, id: JOB_ID, applicationId: REVIEW_DRAFT.id });
 }
 
 function panelHeading(name: string): HTMLElement {
@@ -291,6 +307,44 @@ describe('CaptureProgress', () => {
     expect(jobReads).toHaveLength(asked);
   });
 
+  it('a job the address names that is gone is asked once, and the page follows the card alone', async () => {
+    fakeTimeoutsAndIntervals();
+    const { jobReads } = renderProgress({
+      jobReply: () => errorReply({ status: 404, type: 'not_found' }),
+    });
+
+    expect(await screen.findByRole('form', { name: REVIEW })).toBeDefined();
+    await advanceBy(30_000);
+    expect(jobReads).toHaveLength(1);
+  });
+
+  it('a gone job stays ended when a slow network comes back, so the review keeps what was typed and the focus', async () => {
+    fakeTimeoutsAndIntervals();
+    const outage = { down: false };
+    const { user, jobReads } = renderProgress({
+      jobReply: during(outage, {
+        down: () => delay('infinite'),
+        up: () => errorReply({ status: 404, type: 'not_found' }),
+      }),
+    });
+    const company = await screen.findByRole<HTMLInputElement>('textbox', { name: 'Компанія' });
+    await user.type(company, ' Kvit');
+
+    outage.down = true;
+    act(() => {
+      onlineManager.setOnline(false);
+      onlineManager.setOnline(true);
+    });
+    await advanceBy(2000);
+
+    expect(screen.queryByText(READ_FAILED)).toBeNull();
+    expect(screen.getByRole<HTMLInputElement>('textbox', { name: 'Компанія' }).value).toBe(
+      'Acme Kvit',
+    );
+    expect(document.activeElement).toBe(company);
+    expect(jobReads).toHaveLength(1);
+  });
+
   it('a draft opened by its link shows the review without asking for a job, and the confirmation leads to the board', async () => {
     const { user, jobReads, confirms } = renderProgress({ jobId: null });
 
@@ -371,6 +425,44 @@ describe('CaptureProgress', () => {
     expect(screen.queryByText(FAILED_LINE)).toBeNull();
   });
 
+  it('a failed job of another card leaves the draft on the explainer and is not asked again', async () => {
+    fakeTimeoutsAndIntervals();
+    const { jobReads } = renderFailed({ owner: REVIEW_DRAFT.id });
+
+    expect(await findIdleExplainer()).toBeDefined();
+    expect(screen.queryByText(FAILED_LINE)).toBeNull();
+    await advanceBy(30_000);
+    expect(jobReads).toHaveLength(1);
+  });
+
+  it.each<{ name: string; owner: JobRouteOptions['owner'] }>([
+    { name: 'another card', owner: FAILED_DRAFT.id },
+    { name: 'no card', owner: null },
+  ])(
+    'a queued job of $name is not asked again and the draft opens its review',
+    async ({ owner }) => {
+      fakeTimeoutsAndIntervals();
+      const { jobReads } = renderProgress({ owner });
+
+      expect(await screen.findByRole('form', { name: REVIEW })).toBeDefined();
+      expect(screen.queryByText(QUEUED_LINE)).toBeNull();
+      await advanceBy(30_000);
+      expect(jobReads).toHaveLength(1);
+    },
+  );
+
+  it('a failed parse with its card still on the way shows the loading line, not a processing step', async () => {
+    const held = latch();
+    renderFailed({ applicationReply: heldCard(held, FAILED_DRAFT) });
+
+    expect(await screen.findByText('Завантаження…')).toBeDefined();
+    await waitFor(() => {
+      expect(screen.queryByText(/обробляється/)).toBeNull();
+    });
+    held.release();
+    expect(await screen.findByText(FAILED_LINE)).toBeDefined();
+  });
+
   it('Спробувати ще раз posts one retry and stays busy on its way, then follows the new job with no retry button and opens the review once the card is parsed', async () => {
     const held = latch();
     const parse: { job: JobStatus; card: ApplicationResponse } = {
@@ -404,17 +496,16 @@ describe('CaptureProgress', () => {
     expect(retries).toHaveLength(1);
   });
 
-  it('a retry refused by the parse limit says how long to wait and keeps the failed state', async () => {
+  it('a retry refused by the parse limit says only how long to wait, names no form, and keeps the failed state', async () => {
     const { user, actions } = renderFailed({
       retry: { reply: () => rateLimitedReply(TWO_MINUTES) },
     });
 
     await user.click(await screen.findByRole('button', { name: RETRY }));
 
-    expect(
-      await screen.findByText('Спробуй через 2 хв. Усе введене лишилось у формі.'),
-    ).toBeDefined();
+    expect(await screen.findByText('Спробуй через 2 хв.')).toBeDefined();
     expect(screen.getByText('Забагато розборів за годину')).toBeDefined();
+    expect(screen.queryByText(/у формі/)).toBeNull();
     expect(screen.getByText(FAILED_LINE)).toBeDefined();
     expect(actions.onRetried).not.toHaveBeenCalled();
   });
@@ -447,7 +538,7 @@ describe('CaptureProgress', () => {
     await waitFor(() => {
       expect(descriptionOf(company)).toBe('Вкажи компанію одним коротким рядком');
     });
-    expect(descriptionOf(position)).toBe('Вкажи позицію одним коротким рядком');
+    expect(descriptionOf(position)).toBe(POSITION_ERROR);
     expect(updates).toEqual([]);
     expect(confirms).toEqual([]);
   });
@@ -465,6 +556,18 @@ describe('CaptureProgress', () => {
     });
     expect(updates).toEqual([{ company: 'Kvit', position: 'Middle QA' }]);
     expect(confirms).toEqual([FAILED_DRAFT.id]);
+  });
+
+  it('Назад on the manual form brings back the three failure actions with the focus on Заповнити вручну', async () => {
+    const { user } = renderFailed();
+    await openManualForm(user);
+
+    await user.click(screen.getByRole('button', { name: BACK }));
+
+    await waitFor(() => {
+      expect(buttonLabels()).toEqual([MANUAL, RETRY, DELETE]);
+    });
+    expect(document.activeElement).toBe(screen.getByRole('button', { name: MANUAL }));
   });
 
   it('Видалити картку asks first: Скасувати keeps the failed state, Видалити sends one DELETE and reports the card gone', async () => {
@@ -516,14 +619,8 @@ describe('CaptureProgress', () => {
   });
 
   it('a card request the server fails shows the load failure instead of the AI failure, and its button reads the card again', async () => {
-    const outage = { down: true };
-    const { user, detailReads } = renderProgress({
-      job: () => DONE,
-      applicationReply: during(outage, {
-        down: () => errorReply({ status: 500, type: 'internal_error' }),
-        up: () => HttpResponse.json(REVIEW_DRAFT),
-      }),
-    });
+    const { outage, setup } = cardReadDown(() => HttpResponse.json(REVIEW_DRAFT));
+    const { user, detailReads } = renderProgress(setup);
 
     expect(await screen.findByText(READ_FAILED, {}, RETRIED)).toBeDefined();
     expect(screen.queryByText(FAILED_LINE)).toBeNull();
@@ -533,6 +630,22 @@ describe('CaptureProgress', () => {
 
     expect(await screen.findByRole('form', { name: REVIEW })).toBeDefined();
     expect(detailReads).toHaveLength(3);
+  });
+
+  it('the load failure button stays busy while it reads the card again', async () => {
+    const held = latch();
+    const { outage, setup } = cardReadDown(heldCard(held, REVIEW_DRAFT));
+    const { user } = renderProgress(setup);
+    await screen.findByText(READ_FAILED, {}, RETRIED);
+    outage.down = false;
+
+    await user.click(screen.getByRole('button', { name: RETRY }));
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: RETRY }).getAttribute('aria-busy')).toBe('true');
+    });
+    held.release();
+    expect(await screen.findByRole('form', { name: REVIEW })).toBeDefined();
   });
 
   it('a card that is gone brings the explainer back', async () => {

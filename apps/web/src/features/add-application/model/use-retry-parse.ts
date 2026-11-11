@@ -12,7 +12,7 @@ import { apiClient, ApiError } from '@/shared/api';
 import { uk } from '@/shared/i18n';
 import { showErrorToast } from '@/shared/ui/error-toast';
 
-import { parseLimitToast } from './add-error-toast';
+import { retryLimitToast } from './add-error-toast';
 
 export type RetryParseOptions = Readonly<{
   applicationId: ApplicationResponse['id'];
@@ -36,7 +36,7 @@ export function useRetryParse({ applicationId, actions }: RetryParseOptions): Re
     },
     onError: (error) => {
       if (error instanceof ApiError && error.status === 429) {
-        showErrorToast(parseLimitToast(error.retryAfterSeconds));
+        showErrorToast(retryLimitToast(error.retryAfterSeconds));
         return;
       }
       showErrorToast(uk.errors.saveFailed);

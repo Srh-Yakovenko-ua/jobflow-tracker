@@ -82,10 +82,15 @@ function captureOf({ reviewId, jobId }: AddPrefill): Capture | null {
   return reviewId === null ? null : { applicationId: reviewId, jobId };
 }
 
-function writeCaptureToUrl({ applicationId, jobId }: CapturedDraft): void {
+function writeCaptureToUrl(captured: CapturedDraft | null): void {
   const url = new URL(window.location.href);
-  url.searchParams.set('review', applicationId);
-  url.searchParams.set('job', jobId);
+  if (captured === null) {
+    url.searchParams.delete('review');
+    url.searchParams.delete('job');
+  } else {
+    url.searchParams.set('review', captured.applicationId);
+    url.searchParams.set('job', captured.jobId);
+  }
   window.history.replaceState(null, '', url);
 }
 
@@ -135,6 +140,7 @@ export function AddApplicationPage({ query }: AddApplicationPageProps) {
                   },
                   onDeleted: () => {
                     setCapture(null);
+                    writeCaptureToUrl(null);
                   },
                 }}
               />

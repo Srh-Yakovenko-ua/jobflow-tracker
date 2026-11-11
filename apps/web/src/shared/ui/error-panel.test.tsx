@@ -112,4 +112,12 @@ describe('error panels', () => {
     await user.click(screen.getByRole('button', { name: 'Спробувати ще раз' }));
     expect(onRetry).toHaveBeenCalledTimes(1);
   });
+
+  it('a failed load whose retry is on its way shows the retry busy and shut', () => {
+    render(<LoadFailedPanel onRetry={noop} retrying />);
+    const retry = screen.getByRole<HTMLButtonElement>('button', { name: 'Спробувати ще раз' });
+
+    expect(retry.getAttribute('aria-busy')).toBe('true');
+    expect(retry.disabled).toBe(true);
+  });
 });

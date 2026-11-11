@@ -32,6 +32,7 @@ export type AsyncStateActions = {
   onRetry?: (() => void) | undefined;
   onDelete?: (() => void) | undefined;
   retrying?: boolean | undefined;
+  manualFocused?: boolean | undefined;
 };
 
 const DELETE_LOOK = 'text-ink-3 not-disabled:hover:bg-surface-3 not-disabled:hover:text-ink';
@@ -105,7 +106,11 @@ function FailedFooter({ actions }: Readonly<{ actions?: AsyncStateActions | unde
       <p className="body text-ink-2">{COPY.safe}</p>
       {actions && (
         <div className="flex flex-wrap gap-2.5">
-          <Button className={TOUCH_HEIGHT} onClick={actions.onManual}>
+          <Button
+            autoFocus={actions.manualFocused === true}
+            className={TOUCH_HEIGHT}
+            onClick={actions.onManual}
+          >
             {COPY.manual}
           </Button>
           {actions.onRetry && (

@@ -6,6 +6,8 @@ export type DraftSource = Pick<ApplicationCard, 'isDraft' | 'aiStatus'>;
 
 export type DraftLink = DraftSource & Pick<ApplicationCard, 'id' | 'aiJobId'>;
 
+export const REVIEW_ANCHOR = '#review';
+
 const DRAFT_STATE: Record<AiJobStatus, DraftState> = {
   queued: 'parsing',
   processing: 'parsing',
@@ -19,9 +21,9 @@ export function draftStateOf({ isDraft, aiStatus }: DraftSource): DraftState {
 
 export function cardHrefOf(card: DraftLink): string {
   const state = draftStateOf(card);
-  if (state === 'review') return `/add?review=${card.id}#review`;
+  if (state === 'review') return `/add?review=${card.id}${REVIEW_ANCHOR}`;
   if (state === 'failed' && card.aiJobId !== null) {
-    return `/add?review=${card.id}&job=${card.aiJobId}#review`;
+    return `/add?review=${card.id}&job=${card.aiJobId}${REVIEW_ANCHOR}`;
   }
   return `/applications/${card.id}`;
 }

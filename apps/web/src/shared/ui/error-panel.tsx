@@ -38,7 +38,7 @@ export function ErrorPanel({ content, meta, action }: ErrorPanelProps) {
 
 type RetryPanelProps = Readonly<{
   content: ErrorPanelContent;
-  retry: { label: string; onRetry: () => void };
+  retry: { label: string; onRetry: () => void; retrying?: boolean | undefined };
 }>;
 
 function RetryPanel({ content, retry }: RetryPanelProps) {
@@ -46,7 +46,12 @@ function RetryPanel({ content, retry }: RetryPanelProps) {
     <ErrorPanel
       content={content}
       action={
-        <Button variant="secondary" className={TOUCH_HEIGHT} onClick={retry.onRetry}>
+        <Button
+          variant="secondary"
+          loading={retry.retrying === true}
+          className={TOUCH_HEIGHT}
+          onClick={retry.onRetry}
+        >
           {retry.label}
         </Button>
       }
@@ -110,9 +115,12 @@ export function FileTooBigPanel({ file, onPick }: FileTooBigPanelProps) {
   );
 }
 
-export type LoadFailedPanelProps = Readonly<{ onRetry: () => void }>;
+export type LoadFailedPanelProps = Readonly<{
+  onRetry: () => void;
+  retrying?: boolean | undefined;
+}>;
 
-export function LoadFailedPanel({ onRetry }: LoadFailedPanelProps) {
+export function LoadFailedPanel({ onRetry, retrying }: LoadFailedPanelProps) {
   const { action, ...content } = COPY.loadFailed;
-  return <RetryPanel content={content} retry={{ label: action, onRetry }} />;
+  return <RetryPanel content={content} retry={{ label: action, onRetry, retrying }} />;
 }

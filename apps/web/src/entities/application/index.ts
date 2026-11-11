@@ -5,7 +5,13 @@ export { applicationListQueryOptions } from './api/list';
 export { applicationTableQueryOptions } from './api/table';
 export { timelineQueryOptions } from './api/timeline';
 export { daysInFunnelOf } from './lib/days-in-funnel';
-export { cardHrefOf, type DraftSource, type DraftState, draftStateOf } from './lib/draft-state';
+export {
+  cardHrefOf,
+  type DraftSource,
+  type DraftState,
+  draftStateOf,
+  REVIEW_ANCHOR,
+} from './lib/draft-state';
 export { formatAmount, formatSalaryRange } from './lib/salary';
 export { isSearchable, SEARCH_LIMITS } from './lib/search-limits';
 export { silentCountOf } from './lib/silent-count';

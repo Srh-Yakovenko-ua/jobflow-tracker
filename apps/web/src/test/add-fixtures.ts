@@ -59,6 +59,11 @@ export const STILL_RUNNING = {
 
 export const TWO_MINUTES = { 'Retry-After': '120' } as const;
 
+export const POSITION_ERROR = 'Вкажи позицію одним коротким рядком';
+
+export const TIMEOUT_REASON =
+  'AI не встиг відповісти. Це збій на нашому боці, з текстом усе гаразд.';
+
 export const ACME_DUPLICATE: PossibleDuplicate = {
   id: ACME_APPLICATION.id,
   company: ACME_APPLICATION.company,

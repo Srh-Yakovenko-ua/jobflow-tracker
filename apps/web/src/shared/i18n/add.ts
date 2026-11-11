@@ -1,9 +1,16 @@
 const FILLED_STAYS = 'Усе введене лишилось у формі.';
 
-const LIMIT_RETRY = {
-  wait: (wait: string) => `Спробуй через ${wait}. ${FILLED_STAYS}`,
-  later: `Спробуй трохи пізніше. ${FILLED_STAYS}`,
+const LIMIT_WAIT = {
+  wait: (wait: string) => `Спробуй через ${wait}.`,
+  later: 'Спробуй трохи пізніше.',
 } as const;
+
+const LIMIT_RETRY = {
+  wait: (wait: string) => `${LIMIT_WAIT.wait(wait)} ${FILLED_STAYS}`,
+  later: `${LIMIT_WAIT.later} ${FILLED_STAYS}`,
+} as const;
+
+const PARSE_LIMIT_TITLE = 'Забагато розборів за годину';
 
 export const add = {
   title: 'Додавання вакансії',
@@ -72,8 +79,9 @@ export const add = {
       title: 'Запит ще обробляється',
       description: `Перша спроба ще виконується. Спробуй ще раз за хвилину. ${FILLED_STAYS}`,
     },
-    parseLimit: { title: 'Забагато розборів за годину', ...LIMIT_RETRY },
+    parseLimit: { title: PARSE_LIMIT_TITLE, ...LIMIT_RETRY },
     requestLimit: { title: 'Забагато запитів', ...LIMIT_RETRY },
+    retryLimit: { title: PARSE_LIMIT_TITLE, ...LIMIT_WAIT },
   },
   explainer: {
     eyebrow: 'Що відбувається після кліку',
@@ -101,6 +109,7 @@ export const add = {
     evidenceMissing: 'Цитати в тексті вакансії не знайшлося',
     confirm: 'Підтвердити і на дошку',
     open: 'Відкрити повну картку',
+    back: 'Назад',
   },
   ready: {
     title: 'Картка готова',
