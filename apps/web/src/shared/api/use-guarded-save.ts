@@ -4,7 +4,7 @@ import type { FieldValues } from 'react-hook-form';
 import { uk } from '@/shared/i18n';
 import { type ErrorToastContent, showErrorToast } from '@/shared/ui/error-toast';
 
-import { ApiError } from './api-error';
+import { ApiError, isIdempotencyConflict } from './api-error';
 import { applyFieldErrors, type ApplyFieldErrorsOptions } from './field-errors';
 
 type GuardedSaveOptions<Body, Values extends FieldValues, Result> = Readonly<{
@@ -38,7 +38,11 @@ export function useGuardedSave<Body, Values extends FieldValues, Result>({
         applyFieldErrors({ error, ...form });
         return;
       }
-      showErrorToast(errorToast?.(error) ?? uk.errors.saveFailed);
+      showErrorToast(
+        isIdempotencyConflict(error)
+          ? uk.add.errors.stillRunning
+          : (errorToast?.(error) ?? uk.errors.saveFailed),
+      );
     },
   });
   return {

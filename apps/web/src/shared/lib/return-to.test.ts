@@ -91,6 +91,11 @@ describe('loginHref', () => {
       returnTo: `/add?url=https%3A%2F%2Fdjinni.co%2F${'a'.repeat(4_100)}&text=x`,
       href: '/login?next=%2Fadd',
     },
+    {
+      name: 'cuts a long address of another host to its path without reading it as ours',
+      returnTo: `//evil.test/add?text=${'a'.repeat(4_100)}`,
+      href: '/login?next=%2F%2Fevil.test%2Fadd',
+    },
   ])('$name', ({ returnTo, href }) => {
     expect(loginHref(returnTo)).toBe(href);
   });

@@ -1,5 +1,7 @@
 import { z } from 'zod';
 
+export const IDEMPOTENCY_CONFLICT_TYPE = 'idempotency_conflict' as const;
+
 export const errorResponseSchema = z.object({
   type: z.string().min(1),
   title: z.string().min(1),

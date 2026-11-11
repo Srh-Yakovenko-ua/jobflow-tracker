@@ -1,5 +1,6 @@
 import {
   CAPTURE_BOOKMARKLET_LIMITS,
+  IDEMPOTENCY_CONFLICT_TYPE,
   STAGE_LABELS,
   STAGES,
   VACANCY_PARSE_LIMITS,
@@ -55,4 +56,7 @@ const shared = {
   },
 } satisfies SharedData;
 
-export const SHARED_DEFINE = { BOOKMARKLET_SHARED: JSON.stringify(shared) };
+export const SHARED_DEFINE = {
+  BOOKMARKLET_SHARED: JSON.stringify(shared),
+  BOOKMARKLET_IDEMPOTENCY_CONFLICT: JSON.stringify(IDEMPOTENCY_CONFLICT_TYPE),
+};

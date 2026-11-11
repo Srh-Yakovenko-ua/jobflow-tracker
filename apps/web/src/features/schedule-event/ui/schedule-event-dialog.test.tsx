@@ -2,7 +2,12 @@ import { screen, waitFor } from '@testing-library/react';
 import { toast } from 'sonner';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { ANY_IDEMPOTENCY_KEY, errorReply, validationReply } from '@/test/api-handlers';
+import {
+  ANY_IDEMPOTENCY_KEY,
+  errorReply,
+  STILL_RUNNING,
+  validationReply,
+} from '@/test/api-handlers';
 import { ACME_APPLICATION } from '@/test/application-fixtures';
 import { renderInApp } from '@/test/render-in-app';
 import {
@@ -97,6 +102,33 @@ describe('ScheduleEventDialog', () => {
 
     expect(sent.created).toEqual([TOMORROW_CREATE]);
     expect(retried.sent.created).toEqual(sent.created);
+  });
+
+  it.each([
+    {
+      name: 'for a request still running says so, not that the event was changed',
+      refusal: STILL_RUNNING,
+      shown: 'Запит ще обробляється',
+      absent: 'Подію вже змінено',
+    },
+    {
+      name: 'for a conflict keeps the save failure, not the running request',
+      refusal: { status: 409, type: 'conflict' },
+      shown: 'Не вдалося зберегти',
+      absent: 'Запит ще обробляється',
+    },
+  ])('a create refused with a 409 $name and stays open', async ({ refusal, shown, absent }) => {
+    const { user, onClose } = renderDialog({
+      routes: { create: { reply: () => errorReply(refusal) } },
+    });
+    const dialog = await findScheduleDialog();
+    await waitForDate(KYIV_TOMORROW);
+
+    await user.click(dialog.getByRole('button', { name: 'Запланувати' }));
+
+    expect(await screen.findByText(shown)).toBeDefined();
+    expect(screen.queryByText(absent)).toBeNull();
+    expect(onClose).not.toHaveBeenCalled();
   });
 
   it('a second create sent unchanged after a scheduled event carries a new key', async () => {
