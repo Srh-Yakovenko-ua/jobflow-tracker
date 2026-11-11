@@ -6,10 +6,11 @@ import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 
 import { type DraftReviewProps, reviewFieldsOf } from '@/features/edit-application';
+import { isNotFound } from '@/shared/api';
 import type { AiJob } from '@/shared/ui/async-state';
 
 import { failureReasonOf } from '../model/failure-reason';
-import { type Capture, type CaptureReads, isGone, useCapture } from '../model/use-capture';
+import { type Capture, type CaptureReads, useCapture } from '../model/use-capture';
 import { IDLE_VIEW } from './add-explainer';
 import type { CaptureFailureActions, CaptureFailureKind } from './capture-failure';
 import {
@@ -78,7 +79,7 @@ function jobView({ job, jobId }: JobStage): LiveView {
 
 function unreadCardView({ reads }: CardStage): LiveView {
   const { application } = reads;
-  if (isGone(application.error)) return IDLE_VIEW;
+  if (isNotFound(application.error)) return IDLE_VIEW;
   if (application.errorUpdateCount > 0) return rereadView(application);
   return reads.owned?.status === 'done' ? READING_VIEW : loadingView();
 }

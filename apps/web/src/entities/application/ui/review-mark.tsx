@@ -10,7 +10,7 @@ export type DraftMark = 'review' | 'failed';
 
 export type ReviewMarkProps = Readonly<{ mark: DraftMark }>;
 
-export type DraftMarkLook = Readonly<{
+type DraftMarkLook = Readonly<{
   tone: string;
   dot: ReactNode;
   label: string;

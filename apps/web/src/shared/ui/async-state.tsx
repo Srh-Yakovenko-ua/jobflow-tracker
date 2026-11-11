@@ -31,9 +31,17 @@ export type AsyncStateActions = {
   onManual: () => void;
   onRetry?: (() => void) | undefined;
   onDelete?: (() => void) | undefined;
+};
+
+export type AsyncStateView = {
   retrying?: boolean | undefined;
   manualFocused?: boolean | undefined;
 };
+
+type FailedFooterProps = Readonly<{
+  actions?: AsyncStateActions | undefined;
+  view?: AsyncStateView | undefined;
+}>;
 
 const DELETE_LOOK = 'text-ink-3 not-disabled:hover:bg-surface-3 not-disabled:hover:text-ink';
 
@@ -100,14 +108,14 @@ function ProcessingTrack({ job }: Readonly<{ job: AiJobOf<'processing'> }>) {
   );
 }
 
-function FailedFooter({ actions }: Readonly<{ actions?: AsyncStateActions | undefined }>) {
+function FailedFooter({ actions, view }: FailedFooterProps) {
   return (
     <>
       <p className="body text-ink-2">{COPY.safe}</p>
       {actions && (
         <div className="flex flex-wrap gap-2.5">
           <Button
-            autoFocus={actions.manualFocused === true}
+            autoFocus={view?.manualFocused === true}
             className={TOUCH_HEIGHT}
             onClick={actions.onManual}
           >
@@ -116,7 +124,7 @@ function FailedFooter({ actions }: Readonly<{ actions?: AsyncStateActions | unde
           {actions.onRetry && (
             <Button
               variant="secondary"
-              loading={actions.retrying === true}
+              loading={view?.retrying === true}
               className={TOUCH_HEIGHT}
               onClick={actions.onRetry}
             >
@@ -141,16 +149,17 @@ function FailedFooter({ actions }: Readonly<{ actions?: AsyncStateActions | unde
 export type AsyncStateProps = Readonly<{
   job: AiJob;
   actions?: AsyncStateActions;
+  view?: AsyncStateView;
   children?: ReactNode;
 }>;
 
-export function AsyncState({ job, actions, children }: AsyncStateProps) {
+export function AsyncState({ job, actions, view, children }: AsyncStateProps) {
   return (
     <div role="status" className="flex min-w-0 flex-col gap-3.5 bg-surface p-5 shadow-e1">
       <StatusLine job={job} />
       {children}
       {job.status === 'processing' && <ProcessingTrack job={job} />}
-      {job.status === 'failed' && <FailedFooter actions={actions} />}
+      {job.status === 'failed' && <FailedFooter actions={actions} view={view} />}
     </div>
   );
 }

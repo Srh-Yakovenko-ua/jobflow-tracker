@@ -7,7 +7,7 @@ import {
 import { queryOptions } from '@tanstack/react-query';
 import { z } from 'zod';
 
-import { apiClient, ApiError } from '@/shared/api';
+import { apiClient, isNotFound } from '@/shared/api';
 
 import { captureTokenKeys } from '../model/keys';
 
@@ -31,15 +31,11 @@ export function createCaptureToken(): Promise<CaptureTokenCreated> {
   });
 }
 
-function isAlreadyRevoked(error: unknown): boolean {
-  return error instanceof ApiError && error.status === 404;
-}
-
 async function revokeCaptureToken(id: CaptureTokenSummary['id']): Promise<void> {
   try {
     await apiClient.request({ path: `${TOKENS_PATH}/${id}`, method: 'DELETE', schema: z.void() });
   } catch (error) {
-    if (!isAlreadyRevoked(error)) throw error;
+    if (!isNotFound(error)) throw error;
   }
 }
 

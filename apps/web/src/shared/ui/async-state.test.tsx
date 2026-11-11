@@ -96,8 +96,8 @@ describe('AsyncState', () => {
 
   it('a retry on its way keeps the retry button busy and takes no second click', async () => {
     const user = userEvent.setup();
-    const actions = { onManual: vi.fn(), onRetry: vi.fn(), retrying: true };
-    render(<AsyncState job={{ status: 'failed' }} actions={actions} />);
+    const actions = { onManual: vi.fn(), onRetry: vi.fn() };
+    render(<AsyncState job={{ status: 'failed' }} actions={actions} view={{ retrying: true }} />);
 
     const retry = screen.getByRole<HTMLButtonElement>('button', { name: 'Спробувати ще раз' });
     await user.click(retry);
@@ -116,7 +116,13 @@ describe('AsyncState', () => {
     expect(document.activeElement).toBe(document.body);
     unmount();
 
-    render(<AsyncState job={{ status: 'failed' }} actions={{ onManual, manualFocused: true }} />);
+    render(
+      <AsyncState
+        job={{ status: 'failed' }}
+        actions={{ onManual }}
+        view={{ manualFocused: true }}
+      />,
+    );
 
     expect(document.activeElement).toBe(screen.getByRole('button', { name: 'Заповнити вручну' }));
   });
