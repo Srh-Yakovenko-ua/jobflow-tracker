@@ -30,6 +30,7 @@ describe('capturePasteInputSchema', () => {
     { label: 'a missing text', input: {}, path: 'text' },
     { label: 'a blank text', input: { text: '  \n\t' }, path: 'text' },
     { label: 'a text of 20 001 characters', input: { text: 'н'.repeat(20_001) }, path: 'text' },
+    { label: 'a text with a NUL character', input: { text: `Sen\u0000${text}` }, path: 'text' },
     { label: 'a javascript: url', input: { text, url: 'javascript:alert(1)' }, path: 'url' },
     { label: 'an ftp url', input: { text, url: 'ftp://djinni.co/jobs/1' }, path: 'url' },
     {
@@ -83,6 +84,11 @@ describe('captureBookmarkletInputSchema', () => {
     },
     { label: 'a blank title', patch: { title: ' \t' }, path: 'title' },
     { label: 'a title of 301 characters', patch: { title: 'н'.repeat(301) }, path: 'title' },
+    {
+      label: 'a title with a NUL character',
+      patch: { title: 'Senior\u0000Frontend Engineer' },
+      path: 'title',
+    },
     { label: 'a blank text', patch: { text: '  \n\t' }, path: 'text' },
     { label: 'a text with a NUL character', patch: { text: `${text}\u0000` }, path: 'text' },
     { label: 'an html with a NUL character', patch: { html: '<p>\u0000</p>' }, path: 'html' },

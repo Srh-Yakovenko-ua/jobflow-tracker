@@ -200,26 +200,30 @@ function probeAppWithCaptureTokensAt(prisma: PrismaService): Promise<NestExpress
   );
 }
 
-async function expectInternalErrorWithoutChallenge(app: NestExpressApplication): Promise<void> {
+async function expectInternalErrorWithoutChallenge(
+  app: NestExpressApplication | undefined,
+): Promise<void> {
+  if (!app) throw new Error('the probe app did not start');
   const response = await request(app.getHttpServer())
     .post('/api/v1/guard-probe/capture')
     .set('authorization', 'Capture any-capture-token');
 
   expect(response.status).toBe(500);
   expect(errorResponseSchema.parse(response.body).type).toBe('internal_error');
+  expect(response.body).not.toHaveProperty('detail');
   expect(response.get('www-authenticate')).toBeUndefined();
 }
 
 describe('the capture token lookup while Postgres refuses the connection', () => {
   const prisma = prismaAt('postgresql://u:p@127.0.0.1:1/x');
-  let app: NestExpressApplication;
+  let app: NestExpressApplication | undefined;
 
   beforeAll(async () => {
     app = await probeAppWithCaptureTokensAt(prisma);
   });
 
   afterAll(async () => {
-    await app.close();
+    await app?.close();
     await prisma.$disconnect();
   });
 
@@ -229,9 +233,9 @@ describe('the capture token lookup while Postgres refuses the connection', () =>
 });
 
 describe('the capture token lookup while Postgres keeps the connection and never answers', () => {
-  let proxy: TcpProxy;
-  let prisma: PrismaService;
-  let app: NestExpressApplication;
+  let proxy: TcpProxy | undefined;
+  let prisma: PrismaService | undefined;
+  let app: NestExpressApplication | undefined;
 
   beforeAll(async () => {
     proxy = await startTcpProxy(await configuredDatabaseUrl());
@@ -242,9 +246,9 @@ describe('the capture token lookup while Postgres keeps the connection and never
   });
 
   afterAll(async () => {
-    await app.close();
-    await proxy.close();
-    await prisma.$disconnect();
+    await app?.close();
+    await proxy?.close();
+    await prisma?.$disconnect();
   });
 
   it('answers 500 without a challenge', { timeout: LOOKUP_LIMITS_MS.silent }, () =>
