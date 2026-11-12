@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
+import { subMinutes } from 'date-fns';
 
-import { addMinutes } from '../add-minutes.js';
 import { idempotencyConflict } from '../app-error.js';
 import { Clock } from '../clock.js';
 import {
@@ -41,8 +41,8 @@ export class IdempotencyService {
 
   async claim(userId: string, { key, requestHash }: KeyClaim): Promise<ClaimResult> {
     const now = this.clock.now();
-    const windowStart = addMinutes(now, -IDEMPOTENCY_LIMITS.replayWindowMinutes);
-    const leaseStart = addMinutes(now, -IDEMPOTENCY_LIMITS.leaseMinutes);
+    const windowStart = subMinutes(now, IDEMPOTENCY_LIMITS.replayWindowMinutes);
+    const leaseStart = subMinutes(now, IDEMPOTENCY_LIMITS.leaseMinutes);
     const outcome = await this.keys.claim(userId, {
       key,
       requestHash,

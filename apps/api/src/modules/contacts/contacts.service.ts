@@ -6,6 +6,7 @@ import type {
   UpdateContactInput,
 } from '@jobflow/shared';
 import { Injectable } from '@nestjs/common';
+import { compareDesc } from 'date-fns';
 
 import { Clock } from '../../common/clock.js';
 import { withIsoTimestamps } from '../../common/iso-timestamps.js';
@@ -36,7 +37,7 @@ const toContact = (row: ContactRow): Contact => withIsoTimestamps(row);
 const emailKey = ({ email }: ContactRow) => email?.toLowerCase();
 
 const newestFirst = (left: ContactRow, right: ContactRow) =>
-  right.updatedAt.getTime() - left.updatedAt.getTime();
+  compareDesc(left.updatedAt, right.updatedAt);
 
 function historiesHolding(contact: ContactRow, { own, histories }: CompanyHistory) {
   const key = emailKey(contact);

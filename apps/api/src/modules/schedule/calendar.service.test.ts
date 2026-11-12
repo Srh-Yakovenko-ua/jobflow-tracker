@@ -80,6 +80,8 @@ describe('CalendarService.items', () => {
     { timeZone: 'Europe/Kyiv', dueAt: '2026-11-08T22:30:00.000Z', date: '2026-11-09' },
     { timeZone: 'America/New_York', dueAt: '2026-11-08T21:30:00.000Z', date: '2026-11-08' },
     { timeZone: 'America/New_York', dueAt: '2026-11-09T04:30:00.000Z', date: '2026-11-08' },
+    { timeZone: 'Europe/Kyiv', dueAt: '2026-10-24T21:30:00.000Z', date: '2026-10-25' },
+    { timeZone: 'Europe/Kyiv', dueAt: '2026-10-25T22:30:00.000Z', date: '2026-10-26' },
   ])(
     'dates a follow-up due $dueAt as $date for a $timeZone user',
     async ({ timeZone, dueAt, date }) => {

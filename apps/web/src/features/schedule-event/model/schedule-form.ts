@@ -7,6 +7,7 @@ import {
   type Stage,
   userSettingsSchema,
 } from '@jobflow/shared';
+import { isAfter } from 'date-fns';
 import { z } from 'zod';
 
 import { uk } from '@/shared/i18n';
@@ -77,14 +78,11 @@ export function scheduleDefaultsOf({
 }
 
 export function scheduleFormSchemaOf({ timeZone, clock }: ScheduleClock) {
-  return valuesSchema.refine(
-    (values) => Date.parse(instantOf({ ...values, timeZone })) > clock().getTime(),
-    {
-      error: ERRORS.startsInPast,
-      path: ['time'],
-      when: (payload) => slotSchema.safeParse(payload.value).success,
-    },
-  );
+  return valuesSchema.refine((values) => isAfter(instantOf({ ...values, timeZone }), clock()), {
+    error: ERRORS.startsInPast,
+    path: ['time'],
+    when: (payload) => slotSchema.safeParse(payload.value).success,
+  });
 }
 
 export function toScheduledEventInput({

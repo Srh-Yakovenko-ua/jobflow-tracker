@@ -28,6 +28,10 @@ describe('formatTimelineDate', () => {
     expect(dateOf('2026-09-06T20:30:00Z', justAfterMidnight)).toBe('учора');
   });
 
+  it('noon the day before the Kyiv spring change reads "учора" at noon on the change day', () => {
+    expect(dateOf('2026-03-28T12:00:00Z', new Date('2026-03-29T12:00:00Z'))).toBe('учора');
+  });
+
   it('00:10 local today reads "сьогодні" while UTC is still the day before', () => {
     expect(dateOf('2026-09-06T21:10:00Z')).toBe('сьогодні');
   });

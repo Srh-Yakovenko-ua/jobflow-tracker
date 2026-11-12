@@ -1,8 +1,8 @@
+import { tz } from '@date-fns/tz';
 import type { ApplicationCard } from '@jobflow/shared';
+import { differenceInCalendarDays } from 'date-fns';
 
 import { uk } from '@/shared/i18n';
-
-import { calendarDayOf } from './calendar-date';
 
 const COPY = uk.application.nextEvent;
 
@@ -20,8 +20,7 @@ export function formatNextEvent({ event, now, timeZone }: NextEventInput): strin
   const startsAt = new Date(event.startsAt);
   const format = (options: Intl.DateTimeFormatOptions) =>
     new Intl.DateTimeFormat(uk.locale, { ...options, timeZone }).format(startsAt);
-  const relativeDay =
-    RELATIVE_DAYS[calendarDayOf(startsAt, timeZone) - calendarDayOf(now, timeZone)];
+  const relativeDay = RELATIVE_DAYS[differenceInCalendarDays(startsAt, now, { in: tz(timeZone) })];
   const when =
     relativeDay === undefined ? format(DATE_TIME) : COPY.relative(relativeDay, format(TIME));
   return COPY.phrase(COPY.kinds[event.kind], when);

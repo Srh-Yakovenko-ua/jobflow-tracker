@@ -1,6 +1,7 @@
 import { readFile } from 'node:fs/promises';
 
 import type { PublicJwk } from '@jobflow/shared';
+import { getUnixTime } from 'date-fns';
 import {
   calculateJwkThumbprint,
   type CryptoKey,
@@ -48,7 +49,7 @@ export function signWithKeys({
   issuedAt,
   header,
 }: SignWithKeysInput): Promise<string> {
-  const issuedAtSeconds = Math.floor(issuedAt.getTime() / 1000);
+  const issuedAtSeconds = getUnixTime(issuedAt);
   return new SignJWT(claims)
     .setProtectedHeader({ alg: 'RS256', kid: keys.jwk.kid, ...header })
     .setIssuedAt(issuedAtSeconds)

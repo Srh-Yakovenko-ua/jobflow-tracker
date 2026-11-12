@@ -5,6 +5,7 @@ import {
   timelineRecordSchema,
   wholeDaysBetween,
 } from '@jobflow/shared';
+import { compareDesc } from 'date-fns';
 
 import type { TimelineRows } from './timeline.repository.js';
 import { NOTE_TITLE, recordTitle, stageChangeTitle } from './timeline-titles.js';
@@ -71,8 +72,7 @@ function noteItem({ id, body, createdAt }: NoteRow): TimelineItem {
 }
 
 function newestFirst(left: TimelineItem, right: TimelineItem): number {
-  const byTime = Date.parse(right.occurredAt) - Date.parse(left.occurredAt);
-  return byTime === 0 ? right.id.localeCompare(left.id) : byTime;
+  return compareDesc(left.occurredAt, right.occurredAt) || right.id.localeCompare(left.id);
 }
 
 export function timelineItemsOf({

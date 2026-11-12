@@ -4,6 +4,8 @@ import {
   rejectionReasonCodeSchema,
   type TimelineEventKind,
 } from '@jobflow/shared';
+import { compareAsc, differenceInMilliseconds } from 'date-fns';
+import { millisecondsInHour } from 'date-fns/constants';
 
 import type { ApplicationHistory } from './contacts.repository.js';
 
@@ -16,8 +18,6 @@ type StageMove = ResponseHistory['stageEvents'][number];
 type Step = { at: Date; isReply: boolean; startsWait: boolean };
 
 const MIN_RESPONSE_SAMPLES = 2;
-
-const HOUR_MS = 60 * 60 * 1000;
 
 function isCandidateSide(reasonCode: string | null): boolean {
   const code = rejectionReasonCodeSchema.safeParse(reasonCode);
@@ -36,7 +36,7 @@ function stepsOf({ stageEvents, waitStarts }: ResponseHistory): Step[] {
   return [
     ...stageEvents.map(stageStep),
     ...waitStarts.map((at) => ({ at, isReply: false, startsWait: true })),
-  ].sort((left, right) => left.at.getTime() - right.at.getTime());
+  ].sort((left, right) => compareAsc(left.at, right.at));
 }
 
 function responseHoursOf(history: ResponseHistory): number[] {
@@ -44,7 +44,7 @@ function responseHoursOf(history: ResponseHistory): number[] {
   let waitingSince: Date | null = null;
   for (const { at, isReply, startsWait } of stepsOf(history)) {
     if (isReply && waitingSince !== null) {
-      hours.push((at.getTime() - waitingSince.getTime()) / HOUR_MS);
+      hours.push(differenceInMilliseconds(at, waitingSince) / millisecondsInHour);
     }
     if (startsWait) {
       waitingSince = at;

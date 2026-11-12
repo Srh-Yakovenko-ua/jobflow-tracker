@@ -137,4 +137,24 @@ describe('wholeDaysBetween', () => {
   it('clamps an instant in the future to 0', () => {
     expect(wholeDaysBetween(from, new Date('2026-09-28T09:00:00.000Z'))).toBe(0);
   });
+
+  it.for([
+    ['2026-03-22T10:00:00.000Z', '2026-03-29T10:00:00.000Z', 7],
+    ['2026-03-22T10:00:00.000Z', '2026-03-29T09:59:59.999Z', 6],
+    ['2026-10-18T10:00:00.000Z', '2026-10-25T10:00:00.000Z', 7],
+    ['2026-10-18T10:00:00.000Z', '2026-10-25T09:59:59.999Z', 6],
+  ] as const)('counts %s to %s across a Kyiv clock change as %i', ([start, end, expected]) => {
+    expect(wholeDaysBetween(new Date(start), new Date(end))).toBe(expected);
+  });
+});
+
+describe('silenceWindows across a Kyiv clock change', () => {
+  it('puts the silent cutoff for 7 days on the 22 March instant 168 hours before', () => {
+    const [silent] = silenceWindows({
+      levels: ['silent'],
+      silenceDays: 7,
+      now: new Date('2026-03-29T10:00:00.000Z'),
+    });
+    expect(silent?.lastEventAtOrBefore?.toISOString()).toBe('2026-03-22T10:00:00.000Z');
+  });
 });

@@ -99,6 +99,26 @@ describe('monthGrid', () => {
     expect(cells[41]).toEqual({ day: '2026-04-05', date: 5, outside: true });
   });
 
+  it('keeps every day across the Kyiv spring change in March 2026', () => {
+    const cells = monthGrid({ year: 2026, month: 2 });
+
+    expect(cells).toHaveLength(42);
+    expect(cells[0]?.day).toBe('2026-02-23');
+    expect(cells[34]).toEqual({ day: '2026-03-29', date: 29, outside: false });
+    expect(cells[35]).toEqual({ day: '2026-03-30', date: 30, outside: false });
+    expect(cells[41]?.day).toBe('2026-04-05');
+  });
+
+  it('keeps every day across the Kyiv autumn change in October 2026', () => {
+    const cells = monthGrid({ year: 2026, month: 9 });
+
+    expect(cells).toHaveLength(35);
+    expect(cells[0]?.day).toBe('2026-09-28');
+    expect(cells[27]).toEqual({ day: '2026-10-25', date: 25, outside: false });
+    expect(cells[28]).toEqual({ day: '2026-10-26', date: 26, outside: false });
+    expect(cells[34]?.day).toBe('2026-11-01');
+  });
+
   it('reaches into the previous year for January and keeps a February from Monday at 35', () => {
     expect(monthGrid({ year: 2026, month: 0 }).slice(0, 4)).toEqual([
       { day: '2025-12-29', date: 29, outside: true },

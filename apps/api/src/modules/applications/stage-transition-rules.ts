@@ -6,6 +6,7 @@ import {
   STAGE_MOVE_LIMITS,
   type TransitionRefusalReason,
 } from '@jobflow/shared';
+import { differenceInMilliseconds } from 'date-fns';
 
 import { conflict, illegalTransition, validation } from '../../common/app-error.js';
 import type { StageEventPlan, StageState } from './stage-transition.repository.js';
@@ -83,7 +84,7 @@ export function plannedUndo({ state, now }: UndoContext): StageEventPlan {
   if (target === undefined || target.fromStage === null || previous === undefined) {
     throw conflict('Nothing to undo');
   }
-  if (now.getTime() - target.createdAt.getTime() > STAGE_MOVE_LIMITS.undoWindowMs) {
+  if (differenceInMilliseconds(now, target.createdAt) > STAGE_MOVE_LIMITS.undoWindowMs) {
     throw conflict('The undo window has passed');
   }
   const event = {

@@ -1,5 +1,6 @@
 import { type VacancyParseOutput, vacancyParseOutputSchema } from '@jobflow/shared';
 import { Injectable } from '@nestjs/common';
+import { differenceInSeconds } from 'date-fns';
 
 import { PrismaService } from '../../prisma/prisma.service.js';
 import type { SettledAiJob } from '../ai/index.js';
@@ -10,7 +11,7 @@ import { NotesService } from '../notes/index.js';
 type ParsedDraft = { applicationId: string; output: VacancyParseOutput };
 
 const durationSecOf = ({ createdAt, filledAt }: FilledDraft) =>
-  Math.max(1, Math.round((filledAt.getTime() - createdAt.getTime()) / 1000));
+  Math.max(1, differenceInSeconds(filledAt, createdAt, { roundingMethod: 'round' }));
 
 @Injectable()
 export class CaptureParseService {

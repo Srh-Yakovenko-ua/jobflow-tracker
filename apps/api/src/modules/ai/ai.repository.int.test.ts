@@ -275,6 +275,15 @@ describe('AiRepository.saveFailure on Postgres', () => {
 });
 
 describe('AiRepository.budgetUsage on Postgres', () => {
+  it('starts the budget day and month at UTC midnight on the Kyiv clock change', () => {
+    const { dayStart, monthStart } = budgetWindow(new Date('2026-10-25T01:30:00.000Z'));
+
+    expect([dayStart.toISOString(), monthStart.toISOString()]).toEqual([
+      '2026-10-25T00:00:00.000Z',
+      '2026-10-01T00:00:00.000Z',
+    ]);
+  });
+
   it.each(DAILY_CALLS)('$verdict $row in the daily calls', async ({ seed, calls }) => {
     const owner = await createOwnedApplication(database.prisma);
     await seed(owner);

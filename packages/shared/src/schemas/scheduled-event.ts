@@ -1,3 +1,4 @@
+import { isAfter } from 'date-fns';
 import { z } from 'zod';
 
 import { reminderStatusSchema } from '../reminders.js';
@@ -63,7 +64,7 @@ const calendarRangeSchema = z.object({ from: offsetDateTimeSchema, to: offsetDat
 
 type CalendarRange = z.infer<typeof calendarRangeSchema>;
 
-const rangeIsOrdered = ({ from, to }: CalendarRange) => Date.parse(to) > Date.parse(from);
+const rangeIsOrdered = ({ from, to }: CalendarRange) => isAfter(to, from);
 
 const rangeFitsCap = ({ from, to }: CalendarRange) =>
   wholeDaysBetween(new Date(from), new Date(to)) <= CALENDAR_LIMITS.rangeMaxDays;

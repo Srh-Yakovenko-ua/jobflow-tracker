@@ -1,6 +1,7 @@
 import { InjectQueue } from '@nestjs/bullmq';
 import { Injectable, Logger } from '@nestjs/common';
 import { Queue } from 'bullmq';
+import { milliseconds, subMilliseconds } from 'date-fns';
 
 import { Clock } from '../common/clock.js';
 import { withinLimit } from '../common/probe.js';
@@ -14,8 +15,6 @@ export const OUTBOX_LIMITS = {
   transactionTimeoutMs: 5000,
   retentionDays: 7,
 } as const;
-
-const DAY_MS = 86_400_000;
 
 function domainEventJob(row: UnpublishedOutboxRow) {
   return { name: row.eventType, data: row.payload, opts: { jobId: row.id } };
@@ -54,7 +53,8 @@ export class OutboxRelayService {
   }
 
   async deletePublished(): Promise<number> {
-    const cutoff = new Date(this.clock.now().getTime() - OUTBOX_LIMITS.retentionDays * DAY_MS);
+    const retention = milliseconds({ days: OUTBOX_LIMITS.retentionDays });
+    const cutoff = subMilliseconds(this.clock.now(), retention);
     const count = await this.repository.deletePublishedBefore(cutoff);
     this.logger.log({ count }, 'published outbox rows deleted');
     return count;

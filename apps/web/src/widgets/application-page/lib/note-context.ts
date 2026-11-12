@@ -1,4 +1,5 @@
 import type { Note, TimelineItem } from '@jobflow/shared';
+import { isAfter } from 'date-fns';
 
 import { uk } from '@/shared/i18n';
 import { formatDayMonth } from '@/shared/lib/state-format';
@@ -14,14 +15,12 @@ export type NoteContextInput = Readonly<{
 const COPY = uk.applicationPage.notes;
 
 function laterOf(last: TimelineItem | undefined, item: TimelineItem): TimelineItem {
-  return last === undefined || Date.parse(item.occurredAt) > Date.parse(last.occurredAt)
-    ? item
-    : last;
+  return last === undefined || isAfter(item.occurredAt, last.occurredAt) ? item : last;
 }
 
 function lastMoveUntil(items: readonly TimelineItem[], at: Date): TimelineItem | undefined {
   return items
-    .filter((item) => item.type === 'stage_changed' && Date.parse(item.occurredAt) <= at.getTime())
+    .filter((item) => item.type === 'stage_changed' && !isAfter(item.occurredAt, at))
     .reduce<TimelineItem | undefined>(laterOf, undefined);
 }
 
