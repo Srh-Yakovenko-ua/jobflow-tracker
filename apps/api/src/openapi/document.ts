@@ -11,6 +11,7 @@ import { HEALTH_OPENAPI_PATHS } from '../modules/health/index.js';
 import { JOBS_OPENAPI_PATHS } from '../modules/jobs/index.js';
 import { LIVE_OPENAPI_PATHS } from '../modules/live/index.js';
 import { MAINTENANCE_OPENAPI_PATHS } from '../modules/maintenance/index.js';
+import { MATCH_OPENAPI_PATHS } from '../modules/match/index.js';
 import { NOTES_OPENAPI_PATHS } from '../modules/notes/index.js';
 import { RESUMES_OPENAPI_PATHS } from '../modules/resumes/index.js';
 import { SCHEDULE_OPENAPI_PATHS } from '../modules/schedule/index.js';
@@ -26,6 +27,7 @@ export const API_OPENAPI_PATHS = [
   ...SEARCHES_OPENAPI_PATHS,
   ...APPLICATIONS_OPENAPI_PATHS,
   ...TIMELINE_OPENAPI_PATHS,
+  ...MATCH_OPENAPI_PATHS,
   ...NOTES_OPENAPI_PATHS,
   ...CONTACTS_OPENAPI_PATHS,
   ...SCHEDULE_OPENAPI_PATHS,

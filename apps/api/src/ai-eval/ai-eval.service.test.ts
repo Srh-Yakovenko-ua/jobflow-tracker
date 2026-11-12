@@ -1,7 +1,10 @@
 import { mkdtemp, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
+import { matchInputSchema } from '@jobflow/shared';
+import { buildMatchCompletion, buildMatchOutput } from '@jobflow/shared/testing';
 import { Test } from '@nestjs/testing';
 import { describe, expect, it } from 'vitest';
 
@@ -10,6 +13,7 @@ import { AiClient, AiServiceError } from '../modules/ai/index.js';
 import { DocumentsClient, DocumentsError } from '../modules/resumes/index.js';
 import {
   FakeAiClient,
+  MATCH_COMPLETION,
   RESUME_COMPLETION,
   VACANCY_COMPLETION,
   VACANCY_EVAL_CASE,
@@ -133,6 +137,48 @@ describe('AiEvalService.vacancy', () => {
     await expect((await evalService(new FakeAiClient())).vacancy(dir)).rejects.toThrow(
       `No eval cases in ${dir}`,
     );
+  });
+});
+
+const MATCH_CASES_DIR = fileURLToPath(new URL('../modules/ai/evals/match', import.meta.url));
+
+const NOTHING_COVERED = buildMatchCompletion({
+  output: buildMatchOutput({
+    requirements: [{ name: 'Kotlin', weight: 'must', coverage: 'missing' }],
+  }),
+});
+
+describe('AiEvalService.match', () => {
+  it('sends each vacancy case with the sample CV as a match payload and ranks the scores from the scoring code', async () => {
+    const ai = new FakeAiClient();
+    ai.answer = () => {
+      const sent = matchInputSchema.parse(ai.calls.at(-1)?.input);
+      return Promise.resolve(
+        sent.vacancy.stack.includes('React') ? MATCH_COMPLETION : NOTHING_COVERED,
+      );
+    };
+
+    const report = await (await evalService(ai)).match(MATCH_CASES_DIR);
+
+    expect(ai.calls).toHaveLength(15);
+    expect(new Set(ai.calls.map(({ kind }) => kind))).toEqual(new Set(['match']));
+    expect(report.lines).toEqual(
+      expect.arrayContaining([
+        '01-djinni-uk-react-net-no-currency.json\t2\t59\t1.5',
+        '14-dou-en-fullstack-hybrid-kyiv.json\t1\t59\t1.5',
+        '11-djinni-uk-flutter-junior.json\t15\t0\t9',
+      ]),
+    );
+  });
+
+  it('stops at the first case when services/ai is not ready', async () => {
+    const ai = new FakeAiClient();
+    ai.answer = () => Promise.reject(new AiServiceError({ status: 503, type: 'not_ready' }));
+
+    expect(await (await evalService(ai)).match(MATCH_CASES_DIR)).toEqual({
+      lines: ['stopped\t01-djinni-uk-react-net-no-currency.json\tnot_ready', 'FAIL'],
+      passed: false,
+    });
   });
 });
 

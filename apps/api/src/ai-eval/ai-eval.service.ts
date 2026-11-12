@@ -3,6 +3,7 @@ import { join } from 'node:path';
 
 import {
   AI_JOB_FAILURES,
+  matchOutputSchema,
   type ResumeParseOutput,
   resumeParseOutputSchema,
   vacancyParseOutputSchema,
@@ -12,8 +13,11 @@ import { Injectable } from '@nestjs/common';
 import { Clock } from '../common/clock.js';
 import { ServiceCallError } from '../common/service-call-error.js';
 import { AI_PAYLOAD_BUILDERS, AiClient } from '../modules/ai/index.js';
+import { scoreMatch } from '../modules/match/index.js';
 import { detectResumeFormat, DocumentsClient } from '../modules/resumes/index.js';
 import type { EvalReport } from './eval-cases.js';
+import { loadMatchCases, type MatchEvalCase } from './match-cases.js';
+import { type MatchCaseAnswer, matchReport } from './match-report.js';
 import { loadResumeCases, type ResumeEvalCase } from './resume-cases.js';
 import { type ResumeCaseAnswer, resumeReport } from './resume-score.js';
 import { loadVacancyCases, type VacancyEvalCase } from './vacancy-cases.js';
@@ -50,6 +54,12 @@ export class AiEvalService {
     const cases = await loadVacancyCases(casesDir);
     const answers = await this.answerAll(cases, (evalCase) => this.vacancyAnswer(evalCase));
     return Array.isArray(answers) ? vacancyReport(answers) : answers;
+  }
+
+  async match(casesDir: string): Promise<EvalReport> {
+    const cases = await loadMatchCases(casesDir);
+    const answers = await this.answerAll(cases, (evalCase) => this.matchAnswer(evalCase));
+    return Array.isArray(answers) ? matchReport(answers) : answers;
   }
 
   async resume(casesDir: string): Promise<EvalReport> {
@@ -89,6 +99,20 @@ export class AiEvalService {
       return { file, expected, output: vacancyParseOutputSchema.parse(output) };
     } catch (error) {
       return { file, expected, ...refusalOf(error) };
+    }
+  }
+
+  private async matchAnswer({
+    file,
+    rank,
+    input,
+  }: MatchEvalCase): Promise<MatchCaseAnswer | Stopped> {
+    try {
+      const { output } = await this.ai.complete({ kind: 'match', input });
+      const breakdown = scoreMatch(matchOutputSchema.parse(output));
+      return { file, manualRank: rank, score: breakdown?.score ?? null };
+    } catch (error) {
+      return { file, manualRank: rank, ...refusalOf(error) };
     }
   }
 

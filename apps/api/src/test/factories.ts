@@ -52,6 +52,7 @@ export type NewAiJob = {
   applicationId: string;
   status: AiJobStatus;
   kind?: string;
+  resumeVersionId?: string;
   createdAt?: Date;
   aiResultId?: string;
   step?: number;

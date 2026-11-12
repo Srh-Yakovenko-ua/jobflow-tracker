@@ -1,0 +1,62 @@
+{
+  "positions": [
+    {
+      "title": "Senior Full Stack Developer",
+      "company": "Lumenrail",
+      "start": "2022-02",
+      "end": null
+    },
+    {
+      "title": "Full Stack Developer",
+      "company": "Paperkite",
+      "start": "2019-09",
+      "end": "2022-01"
+    },
+    { "title": "Frontend Developer", "company": "Northgrain", "start": "2018-06", "end": "2019-08" }
+  ],
+  "skills": [
+    {
+      "name": "React",
+      "years": 6,
+      "evidence": "Built the booking dashboard in React and TypeScript",
+      "positions": [0, 1, 2]
+    },
+    { "name": "TypeScript", "years": 6, "evidence": null, "positions": [0, 1, 2] },
+    { "name": "JavaScript", "years": 6, "evidence": null, "positions": [0, 1, 2] },
+    {
+      "name": "Node.js",
+      "years": 5,
+      "evidence": "Node.js services in production for 2 million monthly users",
+      "positions": [0, 1]
+    },
+    { "name": "Express", "years": 4, "evidence": null, "positions": [0, 1] },
+    {
+      "name": "PostgreSQL",
+      "years": 5,
+      "evidence": "Designed PostgreSQL schemas for orders and payouts",
+      "positions": [0, 1]
+    },
+    {
+      "name": "GraphQL",
+      "years": 1,
+      "evidence": "Added a GraphQL gateway for the mobile client",
+      "positions": [0]
+    },
+    { "name": "Redux", "years": 4, "evidence": null, "positions": [1, 2] },
+    { "name": "Next.js", "years": 2, "evidence": null, "positions": [0] },
+    { "name": "Jest", "years": 4, "evidence": null, "positions": [0, 1] },
+    { "name": "Docker", "years": 2, "evidence": null, "positions": [0] },
+    { "name": "Git", "years": 6, "evidence": null, "positions": [0, 1, 2] },
+    { "name": "HTML", "years": 6, "evidence": null, "positions": [0, 1, 2] },
+    { "name": "CSS", "years": 6, "evidence": null, "positions": [0, 1, 2] }
+  ],
+  "totalYears": 6,
+  "seniority": "senior",
+  "englishLevel": "upper_intermediate",
+  "domains": ["travel", "e-commerce"],
+  "leadership": { "hasExperience": false, "evidence": null },
+  "languages": [
+    { "name": "Українська", "level": "native" },
+    { "name": "English", "level": "B2" }
+  ]
+}

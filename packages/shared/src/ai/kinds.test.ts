@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  buildMatchCompletion,
   buildResumeParseOutput,
   buildVacancyCompletion,
   VACANCY_SAMPLE_TEXT,
@@ -34,7 +35,7 @@ const VACANCY_OUTPUT_FIELDS = [
 describe('AI_PROMPT_VERSIONS', () => {
   it('pins one prompt version for exactly the AI kinds', () => {
     expect(Object.keys(AI_PROMPT_VERSIONS)).toEqual([...AI_KINDS]);
-    expect(AI_PROMPT_VERSIONS).toEqual({ vacancy_parse: 'v2', resume_parse: 'v1' });
+    expect(AI_PROMPT_VERSIONS).toEqual({ vacancy_parse: 'v2', resume_parse: 'v1', match: 'v3' });
   });
 });
 
@@ -47,6 +48,9 @@ describe('aiContractJsonSchemas', () => {
       'resume_parse_request',
       'resume_parse_output',
       'resume_parse_response',
+      'match_request',
+      'match_output',
+      'match_response',
       'embed_request',
       'embed_response',
     ]);
@@ -83,6 +87,13 @@ describe('aiContractJsonSchemas', () => {
         'leadership',
         'languages',
       ],
+    });
+  });
+
+  it('requires the vacancy and the profile in a match request, and the requirements and the explanation in its output', () => {
+    expect(aiContractJsonSchemas()).toMatchObject({
+      match_request: { properties: { input: { required: ['vacancy', 'profile'] } } },
+      match_output: { title: 'MatchOutput', required: ['requirements', 'explanation'] },
     });
   });
 
@@ -124,6 +135,11 @@ describe('aiCompletionSchemas', () => {
   it('parses a resume_parse completion carrying the profile', () => {
     const completion = { ...COMPLETION, promptVersion: 'v1', output: buildResumeParseOutput() };
     expect(aiCompletionSchemas.resume_parse.parse(completion)).toEqual(completion);
+  });
+
+  it('parses a match completion carrying the requirement mapping', () => {
+    const completion = buildMatchCompletion();
+    expect(aiCompletionSchemas.match.parse(completion)).toEqual(completion);
   });
 
   it('refuses a numeric promptVersion', () => {

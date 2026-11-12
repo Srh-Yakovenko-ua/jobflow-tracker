@@ -1,9 +1,11 @@
 import type { AiCompletion } from '../src/ai/completion.js';
 import { AI_PROMPT_VERSIONS } from '../src/ai/kinds.js';
+import type { MatchOutput } from '../src/ai/match.js';
 import type { ResumeParseOutput } from '../src/ai/resume-parse.js';
 import type { VacancyConfidence, VacancyParseOutput } from '../src/ai/vacancy-parse.js';
 
 type VacancyCompletion = AiCompletion<'vacancy_parse'>;
+type MatchCompletion = AiCompletion<'match'>;
 
 export const VACANCY_SAMPLE_TEXT = 'Senior React developer, Acme, remote, 4000-5000 USD';
 
@@ -55,16 +57,39 @@ export function buildResumeParseOutput(
   };
 }
 
+export function buildMatchOutput(overrides: Partial<MatchOutput> = {}): MatchOutput {
+  return {
+    requirements: [
+      { name: 'React + TypeScript', weight: 'must', coverage: 'full' },
+      { name: 'Node.js у проді', weight: 'must', coverage: 'full' },
+      { name: 'GraphQL', weight: 'nice', coverage: 'partial' },
+      { name: 'AWS / інфраструктура', weight: 'must', coverage: 'missing' },
+      { name: 'Досвід ліда команди 3+', weight: 'nice', coverage: 'missing' },
+      { name: 'Домен fintech', weight: 'mentioned', coverage: 'missing' },
+    ],
+    explanation: 'Стек збігається, бракує AWS і досвіду ліда.',
+    ...overrides,
+  };
+}
+
+const FAKE_CALL = { model: 'fake', tokensIn: 120, tokensOut: 40, latencyMs: 15 };
+
 export function buildVacancyCompletion(
   overrides: Partial<VacancyCompletion> = {},
 ): VacancyCompletion {
   return {
     output: buildVacancyParseOutput(),
-    model: 'fake',
     promptVersion: AI_PROMPT_VERSIONS.vacancy_parse,
-    tokensIn: 120,
-    tokensOut: 40,
-    latencyMs: 15,
+    ...FAKE_CALL,
+    ...overrides,
+  };
+}
+
+export function buildMatchCompletion(overrides: Partial<MatchCompletion> = {}): MatchCompletion {
+  return {
+    output: buildMatchOutput(),
+    promptVersion: AI_PROMPT_VERSIONS.match,
+    ...FAKE_CALL,
     ...overrides,
   };
 }

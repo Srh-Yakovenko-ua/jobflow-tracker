@@ -1,21 +1,38 @@
 import {
   type AiKind,
   type AiKindInput,
+  type Application,
   type DocumentExtraction,
+  matchProfileSchema,
   RESUME_PARSE_LIMITS,
+  VACANCY_PARSE_LIMITS,
 } from '@jobflow/shared';
 
 export type VacancySource = { rawText: string };
 
+export type MatchInputSource = Pick<Application, 'position' | 'stack'> & {
+  rawText: string | null;
+  profile: unknown;
+};
+
 type AiPayloadBuilders = { [Kind in AiKind]: (source: never) => AiKindInput<Kind> };
 
-const resumeTextOf = (text: string) =>
-  text.replaceAll('\u0000', '').slice(0, RESUME_PARSE_LIMITS.textMaxLength).toWellFormed();
+const boundedText = (text: string, maxLength: number) =>
+  text.replaceAll('\u0000', '').slice(0, maxLength).toWellFormed();
+
+const vacancyTextOf = (rawText: string | null) => {
+  const text = boundedText(rawText ?? '', VACANCY_PARSE_LIMITS.textMaxLength);
+  return /\S/.test(text) ? text : '';
+};
 
 export const AI_PAYLOAD_BUILDERS = {
   vacancy_parse: (application: VacancySource) => ({ text: application.rawText }),
   resume_parse: ({ kind, text, pages }: DocumentExtraction) =>
     kind === 'text'
-      ? { text: resumeTextOf(text), pages: [] }
+      ? { text: boundedText(text, RESUME_PARSE_LIMITS.textMaxLength), pages: [] }
       : { text: '', pages: pages.map((page) => page.jpegBase64) },
+  match: ({ position, stack, rawText, profile }: MatchInputSource) => ({
+    vacancy: { position, stack, text: vacancyTextOf(rawText) },
+    profile: matchProfileSchema.parse(profile),
+  }),
 } satisfies AiPayloadBuilders;

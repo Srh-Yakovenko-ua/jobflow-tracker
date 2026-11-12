@@ -9154,6 +9154,339 @@
         }
       }
     },
+    "/applications/{id}/match": {
+      "get": {
+        "tags": [
+          "applications"
+        ],
+        "summary": "Read the Match Score breakdown of an Application",
+        "description": "The latest done match of the Application against the resume version linked to it now. The model maps each vacancy requirement as full, partial or missing with a weight of must, nice or mentioned; the score is computed in code: must is worth 3 points, nice 1, mentioned 0, and each must or nice requirement loses its share of 100 by its missing coverage, so the score is 100 minus the listed losses. The match settle step writes match_score only for the version still linked. match is null with no linked resume version, before a match is done for that version, or after the AI results are deleted. Read only.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "example": "0199f0c4-6e3f-7c42-9d50-7b8c9d0e1f2a"
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The Match Score breakdown, or null",
+            "content": {
+              "application/json": {
+                "example": {
+                  "match": {
+                    "score": 65,
+                    "matched": [
+                      {
+                        "name": "React + TypeScript",
+                        "weight": "must",
+                        "coverage": "full",
+                        "pointsLost": 0
+                      },
+                      {
+                        "name": "AWS",
+                        "weight": "must",
+                        "coverage": "partial",
+                        "pointsLost": 21
+                      }
+                    ],
+                    "missing": [
+                      {
+                        "name": "GraphQL",
+                        "weight": "nice",
+                        "pointsLost": 14
+                      }
+                    ],
+                    "ignored": [
+                      {
+                        "name": "Домен e-commerce",
+                        "coverage": "full"
+                      }
+                    ],
+                    "explanation": "React збігається, AWS лише частково, GraphQL немає.",
+                    "resumeVersion": {
+                      "id": "0199f1d0-3b10-7a20-8c30-4d5e6f708192",
+                      "number": 2,
+                      "title": "CV v2"
+                    },
+                    "computedAt": "2026-08-14T10:20:00.000Z"
+                  }
+                },
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "match": {
+                      "type": [
+                        "object",
+                        "null"
+                      ],
+                      "properties": {
+                        "score": {
+                          "type": "integer",
+                          "minimum": 0,
+                          "maximum": 100
+                        },
+                        "matched": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "name": {
+                                "type": "string",
+                                "minLength": 1,
+                                "maxLength": 80
+                              },
+                              "weight": {
+                                "type": "string",
+                                "enum": [
+                                  "must",
+                                  "nice"
+                                ]
+                              },
+                              "pointsLost": {
+                                "type": "integer",
+                                "minimum": 0
+                              },
+                              "coverage": {
+                                "type": "string",
+                                "enum": [
+                                  "full",
+                                  "partial"
+                                ]
+                              }
+                            },
+                            "required": [
+                              "name",
+                              "weight",
+                              "pointsLost",
+                              "coverage"
+                            ]
+                          }
+                        },
+                        "missing": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "name": {
+                                "type": "string",
+                                "minLength": 1,
+                                "maxLength": 80
+                              },
+                              "weight": {
+                                "type": "string",
+                                "enum": [
+                                  "must",
+                                  "nice"
+                                ]
+                              },
+                              "pointsLost": {
+                                "type": "integer",
+                                "minimum": 0
+                              }
+                            },
+                            "required": [
+                              "name",
+                              "weight",
+                              "pointsLost"
+                            ]
+                          }
+                        },
+                        "ignored": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "name": {
+                                "type": "string",
+                                "minLength": 1,
+                                "maxLength": 80
+                              },
+                              "coverage": {
+                                "type": "string",
+                                "enum": [
+                                  "full",
+                                  "partial",
+                                  "missing"
+                                ]
+                              }
+                            },
+                            "required": [
+                              "name",
+                              "coverage"
+                            ]
+                          }
+                        },
+                        "explanation": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "resumeVersion": {
+                          "type": "object",
+                          "properties": {
+                            "id": {
+                              "type": "string",
+                              "format": "uuid"
+                            },
+                            "number": {
+                              "type": "integer",
+                              "exclusiveMinimum": 0
+                            },
+                            "title": {
+                              "type": "string",
+                              "minLength": 1
+                            }
+                          },
+                          "required": [
+                            "id",
+                            "number",
+                            "title"
+                          ]
+                        },
+                        "computedAt": {
+                          "type": "string",
+                          "format": "date-time"
+                        }
+                      },
+                      "required": [
+                        "score",
+                        "matched",
+                        "missing",
+                        "ignored",
+                        "explanation",
+                        "resumeVersion",
+                        "computedAt"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "match"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "example": {
+                  "type": "unauthorized",
+                  "title": "Unauthorized",
+                  "status": 401,
+                  "requestId": "0199f0c4-5d2e-7b31-8c4f-6a7b8c9d0e1f"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "example": {
+                  "type": "forbidden",
+                  "title": "Forbidden",
+                  "status": 403,
+                  "requestId": "0199f0c4-5d2e-7b31-8c4f-6a7b8c9d0e1f"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "example": {
+                  "type": "not_found",
+                  "title": "Not found",
+                  "status": 404,
+                  "requestId": "0199f0c4-5d2e-7b31-8c4f-6a7b8c9d0e1f"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Invalid request",
+            "content": {
+              "application/json": {
+                "example": {
+                  "type": "validation_error",
+                  "title": "Invalid request",
+                  "status": 422,
+                  "errors": [
+                    {
+                      "path": "email",
+                      "message": "Invalid input: expected string, received undefined"
+                    }
+                  ],
+                  "requestId": "0199f0c4-5d2e-7b31-8c4f-6a7b8c9d0e1f"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too many requests: 300 per 60 s by default (RATE_LIMIT_API_PER_MINUTE)",
+            "headers": {
+              "Retry-After": {
+                "schema": {
+                  "type": "integer",
+                  "exclusiveMinimum": 0,
+                  "description": "Seconds until the limit window resets"
+                },
+                "required": true,
+                "description": "Seconds until the limit window resets"
+              }
+            },
+            "content": {
+              "application/json": {
+                "example": {
+                  "type": "rate_limited",
+                  "title": "Too many requests",
+                  "status": 429,
+                  "requestId": "0199f0c4-5d2e-7b31-8c4f-6a7b8c9d0e1f"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal error",
+            "content": {
+              "application/json": {
+                "example": {
+                  "type": "internal_error",
+                  "title": "Internal error",
+                  "status": 500,
+                  "requestId": "0199f0c4-5d2e-7b31-8c4f-6a7b8c9d0e1f"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/applications/{id}/notes": {
       "post": {
         "tags": [

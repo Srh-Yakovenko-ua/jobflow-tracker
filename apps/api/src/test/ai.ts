@@ -4,9 +4,12 @@ import {
   type AiJobStatus,
   type AiKind,
   type Contact,
+  type MatchProfile,
   type NoteInput,
 } from '@jobflow/shared';
 import {
+  buildMatchCompletion,
+  buildMatchOutput,
   buildResumeParseOutput,
   buildVacancyCompletion,
   buildVacancyParseOutput,
@@ -39,6 +42,8 @@ import { OLENA_ID } from './service-fixtures.js';
 
 export const VACANCY_TEXT = VACANCY_SAMPLE_TEXT;
 
+export const AI_RESULTS_PATH = '/api/v1/ai-results';
+
 export const VACANCY_COMPLETION = buildVacancyCompletion();
 
 export const RESUME_PROFILE = buildResumeParseOutput();
@@ -48,6 +53,23 @@ export const RESUME_COMPLETION: AiCompletion<'resume_parse'> = {
   output: RESUME_PROFILE,
   promptVersion: AI_PROMPT_VERSIONS.resume_parse,
 };
+
+export const MATCH_PROFILE: MatchProfile = {
+  skills: [
+    { name: 'React', years: 0 },
+    { name: 'TypeScript', years: 0 },
+  ],
+  totalYears: 0,
+  seniority: 'middle',
+  englishLevel: 'upper_intermediate',
+  domains: ['fintech'],
+  languages: [{ name: 'English', level: 'B2' }],
+  leadership: { hasExperience: false },
+};
+
+export const MATCH_OUTPUT = buildMatchOutput();
+
+export const MATCH_COMPLETION = buildMatchCompletion();
 
 export const NAMELESS_VACANCY_COMPLETION = buildVacancyCompletion({
   output: buildVacancyParseOutput({
@@ -227,10 +249,10 @@ export class FakeAiRepository {
   }
 
   createJob(userId: string, job: CreateAiJob): Promise<string> {
-    const target =
-      'applicationId' in job
-        ? { applicationId: job.applicationId }
-        : { resumeVersionId: job.resumeVersionId };
+    const target = {
+      ...('applicationId' in job && { applicationId: job.applicationId }),
+      ...('resumeVersionId' in job && { resumeVersionId: job.resumeVersionId }),
+    };
     return this.reached(() => {
       this.jobs.set(AI_JOB_ID, { userId, status: 'queued', step: 1, ...target });
       return AI_JOB_ID;
