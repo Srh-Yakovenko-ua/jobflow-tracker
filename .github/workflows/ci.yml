@@ -22,6 +22,7 @@ jobs:
     outputs:
       code: ${{ steps.diff.outputs.code }}
       ai: ${{ steps.diff.outputs.ai }}
+      documents: ${{ steps.diff.outputs.documents }}
       live_load: ${{ steps.diff.outputs.live_load }}
     steps:
       - uses: actions/checkout@v7.0.1
@@ -33,6 +34,7 @@ jobs:
         run: |
           code=true
           ai=true
+          documents=true
           live_load=false
           if files=$(git -c core.quotePath=false diff --name-only "$BASE" HEAD); then
             if ! grep -qvE '^docs/|\.md$' <<< "$files" && ! grep -qxF -e 'docs/diagrams/erd.md' -e 'docs/api/openapi.json' <<< "$files"; then
@@ -41,12 +43,16 @@ jobs:
             if ! grep -qE '^(services/ai|packages/shared/src/ai)/' <<< "$files"; then
               ai=false
             fi
+            if ! grep -qE '^services/documents/' <<< "$files"; then
+              documents=false
+            fi
             if grep -qxF 'apps/api/src/modules/live/live-load.int.test.ts' <<< "$files"; then
               live_load=true
             fi
           fi
           echo "code=$code" >> "$GITHUB_OUTPUT"
           echo "ai=$ai" >> "$GITHUB_OUTPUT"
+          echo "documents=$documents" >> "$GITHUB_OUTPUT"
           echo "live_load=$live_load" >> "$GITHUB_OUTPUT"
 
   lint:
@@ -174,7 +180,7 @@ jobs:
       - run: pnpm --filter @jobflow/api db:erd
       - run: git diff --exit-code -- docs/diagrams/erd.md
       - run: pnpm gen:contracts
-      - run: git diff --exit-code -- services/ai/app/contracts
+      - run: git diff --exit-code -- services/ai/app/contracts services/documents/app/contracts
 
   ai:
     needs: changes
@@ -196,6 +202,26 @@ jobs:
       - run: uv run mypy app
       - run: uv run pytest --cov=app
 
+  documents:
+    needs: changes
+    if: needs.changes.outputs.documents == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: services/documents
+    steps:
+      - uses: actions/checkout@v7.0.1
+      - uses: astral-sh/setup-uv@v10.3.3
+        with:
+          working-directory: services/documents
+          enable-cache: true
+      - run: uv sync --locked
+      - run: uv run ruff check .
+      - run: uv run ruff format --check .
+      - run: uv run mypy app
+      - run: uv run pytest --cov=app
+
   build:
     needs: changes
     if: needs.changes.outputs.code == 'true'
@@ -204,7 +230,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7.0.1
       - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069
-        if: hashFiles('apps/api/Dockerfile', 'apps/web/Dockerfile', 'services/analytics/Dockerfile', 'services/ai/Dockerfile') != ''
+        if: hashFiles('apps/api/Dockerfile', 'apps/web/Dockerfile', 'services/analytics/Dockerfile', 'services/ai/Dockerfile', 'services/documents/Dockerfile') != ''
       - uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc
         if: hashFiles('apps/api/Dockerfile') != ''
         with:
@@ -248,6 +274,17 @@ jobs:
           tags: jobflow-ai:ci
           cache-from: type=gha,scope=ai
           cache-to: type=gha,mode=max,scope=ai
+      - uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc
+        if: hashFiles('services/documents/Dockerfile') != ''
+        with:
+          context: .
+          file: services/documents/Dockerfile
+          target: prod
+          push: false
+          load: true
+          tags: jobflow-documents:ci
+          cache-from: type=gha,scope=documents
+          cache-to: type=gha,mode=max,scope=documents
       - name: Image sizes
         run: |
           {

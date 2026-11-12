@@ -28,6 +28,12 @@ services:
     volumes:
       - ../../services/ai/app:/app/app
 
+  documents:
+    build:
+      target: dev
+    volumes:
+      - ../../services/documents/app:/app/app
+
   web:
     build:
       target: dev

@@ -613,6 +613,8 @@ importers:
 
   services/ai: {}
 
+  services/documents: {}
+
 packages:
 
   '@alloc/quick-lru@5.3.0':
