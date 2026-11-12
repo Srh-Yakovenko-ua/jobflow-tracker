@@ -125,6 +125,12 @@ const TITLE_CASES: TitleCase[] = [
     title: 'Поля перевірено вручну',
     actor: 'user',
   },
+  {
+    type: 'match_scored',
+    rows: journal({ kind: 'match_scored', payload: { score: 59 } }),
+    title: 'Обчислено Match Score: 59',
+    actor: 'system',
+  },
 ];
 
 describe('timeline item titles', () => {

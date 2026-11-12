@@ -147,6 +147,7 @@ const LOOKS: Record<TimelineItemType, RowLook> = {
   },
   resume_attached: { marker: ringed, tone: 'strong', meta: noMeta },
   draft_confirmed: { marker: ringed, tone: 'muted', meta: noMeta },
+  match_scored: { marker: ringed, tone: 'muted', meta: noMeta },
 };
 
 function foldedOf(items: readonly TimelineItem[]): Folded {

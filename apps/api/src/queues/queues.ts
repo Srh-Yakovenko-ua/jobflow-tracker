@@ -9,6 +9,7 @@ export const QUEUES = {
   push: { name: 'push', concurrency: 10 },
   domainEvents: { name: 'domain-events', concurrency: 5 },
   maintenance: { name: 'maintenance', concurrency: 1 },
+  match: { name: 'match', concurrency: 2 },
 } as const;
 
 export type QueueName = (typeof QUEUES)[keyof typeof QUEUES]['name'];

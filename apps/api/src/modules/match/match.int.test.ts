@@ -9,7 +9,6 @@ import {
   MATCH_OUTPUT,
   RESUME_PROFILE,
   storedAiJob,
-  VACANCY_TEXT,
 } from '../../test/ai.js';
 import { useTestApp } from '../../test/app.js';
 import { applicationPath, signedInWithSearch } from '../../test/applications.js';
@@ -21,6 +20,7 @@ import {
   resumeVersionData,
 } from '../../test/factories.js';
 import { callRoute, statusAndType } from '../../test/http.js';
+import { MATCHABLE_ROW } from '../../test/match.js';
 import { memoryLog } from '../../test/memory-log.js';
 import { NOW } from '../../test/time.js';
 import { useTestWorkers } from '../../test/worker.js';
@@ -84,15 +84,7 @@ describe('the Match Score of an application', () => {
     const resumeVersionId = await versionOf({ ...owner, resumeId }, 1);
     const [applicationId = ''] = await createApplicationRows(prisma, {
       ...owner,
-      rows: [
-        {
-          lastEventAt: NOW,
-          position: 'Senior React developer',
-          stack: ['React'],
-          rawText: VACANCY_TEXT,
-          resumeVersionId,
-        },
-      ],
+      rows: [{ ...MATCHABLE_ROW, resumeVersionId }],
     });
     return { ...owner, resumeId, applicationId, resumeVersionId };
   }
@@ -290,7 +282,10 @@ describe('the Match Score of an application', () => {
     const bohdan = await signedInWithSearch(testApp.prisma);
     const repository = testApp.app.get(MatchRepository);
     const { applicationId, resumeVersionId } = olena;
-    const write = { applicationId, resumeVersionId, score: 40 };
+    const { id: aiJobId } = await testApp.prisma.aiJob.findFirstOrThrow({
+      where: { applicationId },
+    });
+    const write = { applicationId, resumeVersionId, score: 40, aiJobId };
 
     const asBohdan = await Promise.all([
       repository.findSource(bohdan.userId, applicationId),

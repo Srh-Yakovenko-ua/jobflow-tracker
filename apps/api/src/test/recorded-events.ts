@@ -15,4 +15,12 @@ export class TimelineRecorder extends RecordedEvents<TimelineEntry> {
   record(userId: string, entry: TimelineEntry): Promise<void> {
     return this.recordEvent(userId, entry);
   }
+
+  async recordFirst(userId: string, entry: TimelineEntry): Promise<void> {
+    const sameKind = ({ applicationId, kind }: TimelineEntry) =>
+      applicationId === entry.applicationId && kind === entry.kind;
+    if (!this.events.some(sameKind)) {
+      await this.record(userId, entry);
+    }
+  }
 }

@@ -26,6 +26,7 @@
     "gen:keys": "node scripts/gen-keys.js",
     "ai:usage": "nest build -p tsconfig.seed.json && node dist-seed/ai-usage.js",
     "ai:eval": "nest build -p tsconfig.seed.json && node dist-seed/ai-eval.js",
+    "ai:rematch": "nest build -p tsconfig.seed.json && node dist-seed/ai-rematch.js",
     "openapi": "node dist/openapi.js ../../docs/api/openapi.json",
     "postinstall": "DISABLE_ERD=true prisma generate"
   },

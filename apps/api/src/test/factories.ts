@@ -276,3 +276,30 @@ export async function createResumeVersion(prisma: PrismaService, userId: string)
   });
   return version.id;
 }
+
+export async function createActiveResumeVersion(
+  prisma: PrismaService,
+  userId: string,
+): Promise<string> {
+  const activeResumeVersionId = await createResumeVersion(prisma, userId);
+  await prisma.userSettings.update({ where: { userId }, data: { activeResumeVersionId } });
+  return activeResumeVersionId;
+}
+
+export type ActiveVersionOwner = {
+  userId: string;
+  email: string;
+  activeVersionId: string;
+  ids: string[];
+};
+
+export async function createActiveVersionOwner(
+  prisma: PrismaService,
+  rows: ApplicationRowInput[],
+): Promise<ActiveVersionOwner> {
+  const { id: userId, email } = await createUser(prisma);
+  const searchId = await createSearch(prisma, { userId });
+  const activeVersionId = await createActiveResumeVersion(prisma, userId);
+  const ids = await createApplicationRows(prisma, { userId, searchId, rows });
+  return { userId, email, activeVersionId, ids };
+}

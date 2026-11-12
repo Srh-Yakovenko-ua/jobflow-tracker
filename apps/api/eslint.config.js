@@ -13,4 +13,8 @@ export default defineConfig(
     files: ['src/**/*.middleware.ts'],
     rules: { '@typescript-eslint/max-params': ['error', { max: 3 }] },
   },
+  {
+    files: ['src/**/*.subscriber.ts'],
+    rules: { '@typescript-eslint/max-params': ['error', { max: 4 }] },
+  },
 );

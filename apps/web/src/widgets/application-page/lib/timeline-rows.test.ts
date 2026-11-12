@@ -106,13 +106,17 @@ describe('timelineRowsOf', () => {
     ]);
   });
 
-  it('a confirmed draft with no capture row reads as a muted ringed row with the title the API gave it', () => {
-    const title = 'Поля перевірено вручну';
-
-    expect(looksOf([itemOf({ type: 'draft_confirmed', meta: {}, title })])).toEqual([
-      { title, meta: null, marker: RING, tone: 'muted' },
-    ]);
-  });
+  it.for([
+    { type: 'draft_confirmed', meta: {}, title: 'Поля перевірено вручну' },
+    { type: 'match_scored', meta: { score: 59 }, title: 'Обчислено Match Score: 59' },
+  ] as const)(
+    'a $type row with no capture row reads as a muted ringed row with the title the API gave it',
+    ({ type, meta, title }) => {
+      expect(looksOf([itemOf({ type, meta, title })])).toEqual([
+        { title, meta: null, marker: RING, tone: 'muted' },
+      ]);
+    },
+  );
 
   it('a confirmed draft folds into the capture row after the AI parse time and loses its own row', () => {
     const confirmed = itemOf({ type: 'draft_confirmed', meta: {} });

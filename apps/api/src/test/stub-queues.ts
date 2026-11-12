@@ -1,16 +1,19 @@
 import { getQueueToken } from '@nestjs/bullmq';
 import type { TestingModuleBuilder } from '@nestjs/testing';
+import type { JobsOptions } from 'bullmq';
 
 import { QUEUE_NAMES, type QueueName } from '../queues/queues.js';
 
 export type StubJob = { id: string; name: string; data: unknown };
 
-export type StubBulkJob = { name: string; data: unknown; opts?: { jobId?: string } };
+export type StubBulkJob = { name: string; data: unknown; opts?: JobsOptions };
 
 export type StubAdd = [name: string, data: unknown, opts?: StubBulkJob['opts']];
 
 export class StubQueue {
   readonly jobs: StubJob[] = [];
+
+  readonly bulks: StubBulkJob[][] = [];
 
   constructor(readonly name: string) {}
 
@@ -19,6 +22,7 @@ export class StubQueue {
   }
 
   addBulk(jobs: StubBulkJob[]): Promise<StubJob[]> {
+    this.bulks.push(jobs);
     return Promise.resolve(
       jobs.map(({ name, data, opts }) =>
         this.record({ id: opts?.jobId ?? this.nextId(), name, data }),
@@ -44,11 +48,19 @@ export class SilentQueue extends StubQueue {
   override add(): Promise<never> {
     return new Promise<never>(() => undefined);
   }
+
+  override addBulk(): Promise<never> {
+    return this.add();
+  }
 }
 
 export class RefusingQueue extends StubQueue {
   override add(): Promise<never> {
     return Promise.reject(new Error('Connection is closed.'));
+  }
+
+  override addBulk(): Promise<never> {
+    return this.add();
   }
 }
 

@@ -19,7 +19,7 @@ import {
   stageEventsOf,
 } from '../../test/applications.js';
 import { accessTokenFor, BOHDAN, OLENA, signUp } from '../../test/auth.js';
-import { createResumeVersion, createUser } from '../../test/factories.js';
+import { createActiveResumeVersion, createUser } from '../../test/factories.js';
 import { callRoute, errorPathsOf, type RouteCall } from '../../test/http.js';
 import { expectReplayedCreate } from '../../test/idempotency.js';
 import { outboxRows } from '../../test/outbox.js';
@@ -61,15 +61,6 @@ describe('the applications routes', () => {
       where: { userId, status: 'active' },
     });
     return search.id;
-  }
-
-  async function activateResumeVersion(userId: string): Promise<string> {
-    const activeResumeVersionId = await createResumeVersion(testApp.prisma, userId);
-    await testApp.prisma.userSettings.update({
-      where: { userId },
-      data: { activeResumeVersionId },
-    });
-    return activeResumeVersionId;
   }
 
   const updatedEvents = () => outboxRows(testApp.prisma, { eventType: 'application.updated' });
@@ -125,9 +116,9 @@ describe('the applications routes', () => {
 
   it("POST attaches the owner's active resume version and search while another user has their own", async () => {
     const bohdan = await signUp(testApp.app, BOHDAN);
-    await activateResumeVersion(bohdan.user.id);
+    await createActiveResumeVersion(testApp.prisma, bohdan.user.id);
     const olena = await signUp(testApp.app, OLENA);
-    const resumeVersionId = await activateResumeVersion(olena.user.id);
+    const resumeVersionId = await createActiveResumeVersion(testApp.prisma, olena.user.id);
 
     const application = await createApplication(testApp.app, {
       accessToken: olena.accessToken,

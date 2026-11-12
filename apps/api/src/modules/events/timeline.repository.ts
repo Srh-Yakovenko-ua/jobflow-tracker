@@ -45,6 +45,8 @@ export type TimelineWrite = TimelineOfApplication & InTransaction & { occurredAt
 
 export type InsertTimelineEvent = TimelineWrite & { record: TimelineRecord };
 
+export type KindOfApplication = TimelineOfApplication & InTransaction & { kind: TimelineEventKind };
+
 @Injectable()
 export class TimelineRepository {
   constructor(private readonly prisma: PrismaService) {}
@@ -71,6 +73,16 @@ export class TimelineRepository {
       },
       select: OCCURRENCE_SELECT,
     });
+  }
+
+  async hasKind(
+    userId: string,
+    { applicationId, kind, tx = this.prisma }: KindOfApplication,
+  ): Promise<boolean> {
+    const count = await tx.timelineEvent.count({
+      where: { applicationId, kind, application: { userId } },
+    });
+    return count > 0;
   }
 
   insert(

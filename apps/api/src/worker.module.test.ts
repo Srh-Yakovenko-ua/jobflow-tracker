@@ -10,7 +10,12 @@ import { JwtKeys } from './modules/auth/index.js';
 import { CaptureSubscriber } from './modules/capture/index.js';
 import { LivePublisher } from './modules/live/index.js';
 import { MaintenanceProcessor, MaintenanceScheduler } from './modules/maintenance/index.js';
-import { MatchQueueService, MatchSubscriber } from './modules/match/index.js';
+import {
+  MatchQueueService,
+  MatchSubscriber,
+  MatchTriggerProcessor,
+  MatchTriggerSubscriber,
+} from './modules/match/index.js';
 import { ResumeProfileSubscriber } from './modules/resumes/index.js';
 import { DomainEventsProcessor } from './outbox/domain-events.processor.js';
 import { RedisService } from './redis/redis.service.js';
@@ -41,6 +46,8 @@ describe('WorkerModule', () => {
       ApplicationLiveSubscriber,
       MatchSubscriber,
       MatchQueueService,
+      MatchTriggerSubscriber,
+      MatchTriggerProcessor,
       LivePublisher,
     ]) {
       expect(moduleRef.get(provider, { strict: false })).toBeInstanceOf(provider);

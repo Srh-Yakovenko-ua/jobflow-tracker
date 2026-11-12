@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import { PrismaService } from '../../prisma/prisma.service.js';
 import { FAKE_TRANSACTION, fakeTransactionModule } from '../../test/fake-prisma.js';
+import { matchScoredEntry } from '../../test/match.js';
 import type { ByUser } from '../../test/recorded-events.js';
 import {
   APPLICATION_ID,
@@ -16,6 +17,7 @@ import {
 import { daysBefore, NOW } from '../../test/time.js';
 import {
   type InsertTimelineEvent,
+  type KindOfApplication,
   type TimelineOfApplication,
   TimelineRepository,
   type TimelineRows,
@@ -67,6 +69,15 @@ class FakeTimelineRepository {
     }
     this.inserted.push({ userId, ...input });
     return Promise.resolve(1);
+  }
+
+  hasKind(userId: string, { applicationId, kind }: KindOfApplication): Promise<boolean> {
+    return Promise.resolve(
+      this.inserted.some(
+        (row) =>
+          row.userId === userId && row.applicationId === applicationId && row.record.kind === kind,
+      ),
+    );
   }
 
   private owns({ userId, id }: Target): boolean {
@@ -245,5 +256,38 @@ describe('TimelineService.record', () => {
         occurredAt: NOW,
       }),
     ).rejects.toMatchObject(APPLICATION_NOT_FOUND);
+  });
+});
+
+describe('TimelineService.recordFirst', () => {
+  const firstScore = (userId: string, applicationId = APPLICATION_ID) => ({
+    userId,
+    entry: matchScoredEntry(applicationId),
+  });
+
+  it('writes the first match_scored row and nothing on a second call for the same application', async () => {
+    const { repository, service } = await serviceWith();
+    const { userId, entry } = firstScore(OLENA_ID);
+
+    await service.recordFirst(userId, entry);
+    await service.recordFirst(userId, { ...entry, payload: { score: 71 } });
+
+    expect(repository.inserted).toEqual([
+      {
+        userId: OLENA_ID,
+        applicationId: APPLICATION_ID,
+        record: { kind: 'match_scored', payload: { score: 59 } },
+        occurredAt: NOW,
+      },
+    ]);
+  });
+
+  it.each(MISSING_TARGETS)('answers $case with 404', async ({ userId, id }) => {
+    const { service } = await serviceWith();
+    const first = firstScore(userId, id);
+
+    await expect(service.recordFirst(first.userId, first.entry)).rejects.toMatchObject(
+      APPLICATION_NOT_FOUND,
+    );
   });
 });

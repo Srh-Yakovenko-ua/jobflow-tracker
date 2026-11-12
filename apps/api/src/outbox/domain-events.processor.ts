@@ -3,7 +3,12 @@ import { Logger } from '@nestjs/common';
 import { UnrecoverableError } from 'bullmq';
 import { z } from 'zod';
 
-import { failedJobFields, jobFields, type ProcessedJob } from '../queues/processed-job.js';
+import {
+  failedJobFields,
+  jobFields,
+  type ProcessedJob,
+  warnWorkerError,
+} from '../queues/processed-job.js';
 import { DEFAULT_JOB_OPTIONS, QUEUES } from '../queues/queues.js';
 import { DomainEventRouter } from './domain-event-router.js';
 
@@ -43,9 +48,6 @@ export class DomainEventsProcessor extends WorkerHost {
 
   @OnWorkerEvent('error')
   onError(error: Error): void {
-    this.logger.warn(
-      { queue: QUEUES.domainEvents.name, err: error.message },
-      'worker connection error',
-    );
+    warnWorkerError(this.logger, { queue: QUEUES.domainEvents.name, error });
   }
 }

@@ -5,7 +5,7 @@ import type { AppConfig } from '../config/app-config.js';
 import { DEFAULT_JOB_OPTIONS, QUEUE_NAMES, queueOptions, QUEUES } from './queues.js';
 
 describe('QUEUES', () => {
-  it('runs ai at 2, notifications at 5, push at 10, domain-events at 5 and maintenance at 1', () => {
+  it('runs ai at 2, notifications at 5, push at 10, domain-events at 5, maintenance at 1 and match at 2', () => {
     const rows = Object.entries(QUEUES).map(
       ([key, { name, concurrency }]) => `${key} ${name} ${String(concurrency)}`,
     );
@@ -16,11 +16,19 @@ describe('QUEUES', () => {
       'push push 10',
       'domainEvents domain-events 5',
       'maintenance maintenance 1',
+      'match match 2',
     ]);
   });
 
-  it('lists the five queue names', () => {
-    expect(QUEUE_NAMES).toEqual(['ai', 'notifications', 'push', 'domain-events', 'maintenance']);
+  it('lists the six queue names', () => {
+    expect(QUEUE_NAMES).toEqual([
+      'ai',
+      'notifications',
+      'push',
+      'domain-events',
+      'maintenance',
+      'match',
+    ]);
   });
 });
 

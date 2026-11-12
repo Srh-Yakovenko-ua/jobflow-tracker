@@ -26,6 +26,7 @@ const VALID_PAYLOADS: {
     title: 'акцент на продукті',
   },
   draft_confirmed: {},
+  match_scored: { score: 59 },
 };
 
 describe('timelineRecordSchema', () => {
@@ -43,6 +44,12 @@ describe('timelineRecordSchema', () => {
     const record = { kind: 'ai_parsed', payload: { durationSec: 1.5 } };
 
     expect(issuePathsOf(timelineRecordSchema.safeParse(record))).toEqual(['payload.durationSec']);
+  });
+
+  it('refuses a match_scored record whose score is above 100', () => {
+    const record = { kind: 'match_scored', payload: { score: 101 } };
+
+    expect(issuePathsOf(timelineRecordSchema.safeParse(record))).toEqual(['payload.score']);
   });
 
   it('refuses a kind outside the timeline event kinds', () => {

@@ -69,7 +69,7 @@ function cardSelectAt(now: Date) {
       take: 1,
       select: { kind: true, startsAt: true },
     },
-    aiJobs: LATEST_AI_JOB_SELECT,
+    aiJobs: { where: { kind: 'vacancy_parse' }, ...LATEST_AI_JOB_SELECT },
   } satisfies Prisma.ApplicationSelect;
 }
 

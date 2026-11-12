@@ -1,9 +1,14 @@
 import { LIVE_EVENTS } from '@jobflow/shared';
 import { OnWorkerEvent, Processor, WorkerHost } from '@nestjs/bullmq';
 import { Logger } from '@nestjs/common';
-import { UnrecoverableError } from 'bullmq';
 
-import { failedJobFields, jobFields, type ProcessedJob } from '../../queues/processed-job.js';
+import {
+  failedJobFields,
+  jobFields,
+  parsedJob,
+  type ProcessedJob,
+  warnWorkerError,
+} from '../../queues/processed-job.js';
 import { DEFAULT_JOB_OPTIONS, QUEUES } from '../../queues/queues.js';
 import { LivePublisher } from '../live/index.js';
 import { AI_JOBS, type AiCompleteJob, aiCompleteJobSchema } from './ai.jobs.js';
@@ -47,15 +52,15 @@ export class AiProcessor extends WorkerHost {
 
   @OnWorkerEvent('error')
   onError(error: Error): void {
-    this.logger.warn({ queue: QUEUES.ai.name, err: error.message }, 'worker connection error');
+    warnWorkerError(this.logger, { queue: QUEUES.ai.name, error });
   }
 
   private parse(job: ProcessedJob): AiCompleteJob {
-    const parsed = aiCompleteJobSchema.safeParse(job.data);
-    if (job.name !== AI_JOBS.complete || !parsed.success) {
-      this.logger.error({ ...jobFields(job), issues: parsed.error?.issues }, 'ai job invalid');
-      throw new UnrecoverableError('ai job invalid');
-    }
-    return parsed.data;
+    return parsedJob(job, {
+      name: AI_JOBS.complete,
+      schema: aiCompleteJobSchema,
+      logger: this.logger,
+      label: 'ai job',
+    });
   }
 }
