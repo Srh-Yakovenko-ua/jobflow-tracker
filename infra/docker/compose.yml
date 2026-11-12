@@ -176,6 +176,26 @@ services:
     networks:
       - jobflow
 
+  documents:
+    build:
+      context: ../..
+      dockerfile: services/documents/Dockerfile
+    ports:
+      - '127.0.0.1:8002:8002'
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8002/health', timeout=2)"
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 10s
+    mem_limit: 512m
+    networks:
+      - jobflow
+
   web:
     build:
       context: ../..

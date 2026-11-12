@@ -1,5 +1,6 @@
 import { z } from 'zod';
 
+import { documentExtractionSchema } from '../schemas/document-extraction.js';
 import { AI_KIND_SCHEMAS, aiCompleteRequestSchemas, aiCompletionSchemas } from './completion.js';
 import { aiEmbeddingSchema, aiEmbedRequestSchema } from './embed.js';
 import { AI_KINDS } from './kinds.js';
@@ -36,4 +37,9 @@ const toContractJsonSchema = ([name, schema]: ContractSchema) =>
 
 export function aiContractJsonSchemas() {
   return Object.fromEntries(contractSchemas().map(toContractJsonSchema));
+}
+
+export function documentContractJsonSchemas() {
+  const documentSchemas: ContractSchema[] = [['document_extraction', documentExtractionSchema]];
+  return Object.fromEntries(documentSchemas.map(toContractJsonSchema));
 }

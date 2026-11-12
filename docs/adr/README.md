@@ -25,5 +25,6 @@ New records start from [the template](0000-template.md) and take the next free n
 | [0013](0013-feature-sliced-design.md)       | Feature sliced design on the frontend                                     | accepted | 2026-10-18 |
 | [0014](0014-glitchtip.md)                   | GlitchTip instead of hosted Sentry                                        | accepted | 2026-10-18 |
 | [0015](0015-stack-baseline-2026-10.md)      | Stack baseline, October 2026: newest stable, never release candidates     | accepted | 2026-10-19 |
+| [0016](0016-document-service.md)            | A stateless document service for resume files                             | accepted | 2026-11-12 |
 | [0017](0017-nestjs-for-the-api.md)          | NestJS for the API                                                        | accepted | 2026-10-19 |
 | [0018](0018-ai-as-a-python-service.md)      | AI as a Python service                                                    | accepted | 2026-10-19 |

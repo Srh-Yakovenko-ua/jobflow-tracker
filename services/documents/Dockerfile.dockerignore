@@ -1,0 +1,6 @@
+*
+!services/documents/pyproject.toml
+!services/documents/uv.lock
+!services/documents/app
+**/__pycache__
+**/.env*

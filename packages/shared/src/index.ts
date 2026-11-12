@@ -18,6 +18,7 @@ export * from './schemas/application-list.js';
 export * from './schemas/auth.js';
 export * from './schemas/capture.js';
 export * from './schemas/contact.js';
+export * from './schemas/document-extraction.js';
 export * from './schemas/error-response.js';
 export * from './schemas/health.js';
 export * from './schemas/job.js';

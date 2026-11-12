@@ -21,3 +21,7 @@ services:
       target: prod
     environment:
       AI_PROVIDER: fake
+
+  documents:
+    build:
+      target: prod
