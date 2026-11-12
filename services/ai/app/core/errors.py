@@ -25,6 +25,7 @@ ERRORS: dict[int, tuple[str, str]] = {
 }
 
 INVALID_OUTPUT = ("ai_invalid_output", "Invalid AI output")
+NEEDS_TEXT = ("needs_text", "Text needed")
 
 
 @dataclass(frozen=True)

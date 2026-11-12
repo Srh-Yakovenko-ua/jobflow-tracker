@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-import { aiJobStatusSchema } from '../ai-statuses.js';
+import { AI_JOB_FAILURES, AI_JOB_STATUSES } from '../ai-statuses.js';
 import { isNonEmptyPatch, NON_EMPTY_PATCH_ISSUE } from './patch.js';
 import {
   resumeUploadInputSchema,
@@ -14,6 +14,10 @@ export const RESUME_VERSION_LIMITS = {
   noteMaxLength: 2000,
 } as const;
 
+export const RESUME_PROFILE_STATUSES = [...AI_JOB_STATUSES, AI_JOB_FAILURES.needsText] as const;
+
+export const resumeProfileStatusSchema = z.enum(RESUME_PROFILE_STATUSES);
+
 export const resumeVersionIdSchema = z.uuid();
 
 export const resumeVersionSchema = z.object({
@@ -26,7 +30,7 @@ export const resumeVersionSchema = z.object({
   sizeBytes: z.int().nonnegative(),
   isArchived: z.boolean(),
   uploadedAt: z.iso.datetime(),
-  aiProfileStatus: aiJobStatusSchema,
+  aiProfileStatus: resumeProfileStatusSchema,
   applicationsCount: z.int().nonnegative(),
 });
 
@@ -56,6 +60,7 @@ export const relinkResumeVersionInputSchema = z.object({ resumeVersionId: resume
 
 export const resumeDownloadSchema = resumeUploadTicketSchema.pick({ url: true, expiresAt: true });
 
+export type ResumeProfileStatus = z.infer<typeof resumeProfileStatusSchema>;
 export type ResumeVersion = z.infer<typeof resumeVersionSchema>;
 export type ResumeVersionListResponse = z.infer<typeof resumeVersionListResponseSchema>;
 export type ResumeVersionLabelParts = z.infer<typeof resumeVersionLabelSchema>;

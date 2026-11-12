@@ -40,6 +40,12 @@ export class StubQueue {
   }
 }
 
+export class SilentQueue extends StubQueue {
+  override add(): Promise<never> {
+    return new Promise<never>(() => undefined);
+  }
+}
+
 export class HeldStubQueue extends StubQueue {
   private openGate: () => void = () => undefined;
 

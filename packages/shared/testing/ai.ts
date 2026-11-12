@@ -1,5 +1,6 @@
 import type { AiCompletion } from '../src/ai/completion.js';
 import { AI_PROMPT_VERSIONS } from '../src/ai/kinds.js';
+import type { ResumeParseOutput } from '../src/ai/resume-parse.js';
 import type { VacancyConfidence, VacancyParseOutput } from '../src/ai/vacancy-parse.js';
 
 type VacancyCompletion = AiCompletion<'vacancy_parse'>;
@@ -28,6 +29,28 @@ export function buildVacancyParseOutput(
     requirements: vacancyFieldOf([], null),
     englishLevel: vacancyFieldOf(null, null),
     sourceGuess: vacancyFieldOf(null, null),
+    ...overrides,
+  };
+}
+
+export function buildResumeParseOutput(
+  overrides: Partial<ResumeParseOutput> = {},
+): ResumeParseOutput {
+  return {
+    positions: [
+      { title: 'Frontend developer', company: 'Acme', start: '2021-03', end: null },
+      { title: 'Junior developer', company: null, start: '2019-09', end: '2021-02' },
+    ],
+    skills: [
+      { name: 'React', years: 0, evidence: 'Built the Acme dashboard in React', positions: [0, 1] },
+      { name: 'TypeScript', years: 0, evidence: null, positions: [0] },
+    ],
+    totalYears: 0,
+    seniority: 'middle',
+    englishLevel: 'upper_intermediate',
+    domains: ['fintech'],
+    leadership: { hasExperience: false, evidence: null },
+    languages: [{ name: 'English', level: 'B2' }],
     ...overrides,
   };
 }

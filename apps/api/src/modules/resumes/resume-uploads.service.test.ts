@@ -2,6 +2,7 @@ import type { CreateResumeVersionInput, ResumeMime } from '@jobflow/shared';
 import { describe, expect, it } from 'vitest';
 
 import { FileStorage, type ObjectStart } from '../../storage/file-storage.js';
+import { AI_JOB_ID, FakeAiRepository } from '../../test/ai.js';
 import { FAKE_TRANSACTION, fakeTransactionModule } from '../../test/fake-prisma.js';
 import { FAKE_STORAGE_URL, FakeFileStorage, type FakeObject } from '../../test/file-storage.js';
 import { type ByUser, RecordedEvents } from '../../test/recorded-events.js';
@@ -13,7 +14,9 @@ import {
   UPLOAD_ID,
 } from '../../test/service-fixtures.js';
 import { NOW } from '../../test/time.js';
+import { AiService } from '../ai/index.js';
 import { ResumeUploadsService } from './resume-uploads.service.js';
+import { ResumeVersionWriter } from './resume-version-writer.js';
 import {
   type InsertResumeVersion,
   type RecordResumeEvent,
@@ -112,18 +115,21 @@ class StorageSwappedWhileSignatureRead extends FakeFileStorage {
 
 async function serviceWithStorage(storage = new FakeFileStorage()) {
   const repository = new FakeResumeVersionsRepository();
+  const ai = new FakeAiRepository();
   const moduleRef = await fakeTransactionModule({
     providers: [
       ResumeUploadsService,
+      ResumeVersionWriter,
       ResumeVersionsRepository,
       { provide: FileStorage, useValue: storage },
+      { provide: AiService, useValue: ai },
     ],
     now: NOW,
   })
     .overrideProvider(ResumeVersionsRepository)
     .useValue(repository)
     .compile();
-  return { storage, repository, service: moduleRef.get(ResumeUploadsService) };
+  return { storage, repository, ai, service: moduleRef.get(ResumeUploadsService) };
 }
 
 describe('ResumeUploadsService.createUploadTicket', () => {
@@ -224,8 +230,8 @@ describe('ResumeUploadsService.confirm', () => {
 });
 
 describe('ResumeUploadsService.createVersion', () => {
-  it('copies the checked bytes to the version key and inserts the next version with one resume.version_uploaded event', async () => {
-    const { storage, repository, service } = await serviceWithStorage();
+  it('copies the checked bytes to the version key and inserts the next version with its queued resume_parse job and one resume.version_uploaded event naming that job', async () => {
+    const { storage, repository, ai, service } = await serviceWithStorage();
     storage.objects.set(PDF_KEY, { bytes: PDF_BYTES, mime: PDF });
 
     const version = await service.createVersion(OLENA_ID, VERSION_INPUT);
@@ -252,9 +258,19 @@ describe('ResumeUploadsService.createVersion', () => {
     expect(repository.events).toEqual([
       {
         userId: OLENA_ID,
-        event: { eventType: 'resume.version_uploaded', resumeVersionId: RESUME_VERSION_ID },
+        event: {
+          eventType: 'resume.version_uploaded',
+          resumeVersionId: RESUME_VERSION_ID,
+          aiJobId: AI_JOB_ID,
+        },
         tx: FAKE_TRANSACTION,
       },
+    ]);
+    expect([...ai.jobs]).toEqual([
+      [
+        AI_JOB_ID,
+        { userId: OLENA_ID, status: 'queued', step: 1, resumeVersionId: RESUME_VERSION_ID },
+      ],
     ]);
     expect(version).toEqual({
       id: RESUME_VERSION_ID,

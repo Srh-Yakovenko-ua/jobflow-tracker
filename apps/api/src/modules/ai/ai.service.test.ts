@@ -655,6 +655,24 @@ describe('AiService.createJob', () => {
   });
 });
 
+describe('AiService.failJob', () => {
+  it("fails the user's queued job with the error type at the clock's now and leaves it for another user", async () => {
+    const { repository, service } = await serviceWithFakes();
+
+    const foreign = await service.failJob(BOHDAN_ID, { id: AI_JOB_ID, errorType: 'needs_text' });
+    const failed = await service.failJob(OLENA_ID, { id: AI_JOB_ID, errorType: 'needs_text' });
+
+    expect([foreign, failed]).toEqual([0, 1]);
+    expect(repository.jobs.get(AI_JOB_ID)).toEqual({
+      userId: OLENA_ID,
+      status: 'failed',
+      step: 1,
+      errorType: 'needs_text',
+      finishedAt: NOW,
+    });
+  });
+});
+
 describe('AiService.queuePosition', () => {
   const JOB_OF_OLENA = { userId: OLENA_ID, aiJobId: AI_JOB_ID };
 

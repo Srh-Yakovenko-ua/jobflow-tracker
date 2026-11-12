@@ -11,10 +11,12 @@ def test_defaults_to_the_fake_provider_with_no_vendor_settings() -> None:
         settings.ai_provider,
         settings.ai_timeout_seconds,
         settings.ai_rate_limit_per_minute,
+        settings.ai_vision_model,
     ) == (
         "fake",
         30,
         35,
+        "",
     )
 
 

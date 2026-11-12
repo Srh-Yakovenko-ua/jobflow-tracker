@@ -4,6 +4,7 @@ export * from './ai/contracts.js';
 export * from './ai/embed.js';
 export * from './ai/kinds.js';
 export * from './ai/payload-fields.js';
+export * from './ai/resume-parse.js';
 export * from './ai/vacancy-parse.js';
 export * from './ai-statuses.js';
 export * from './labels.js';

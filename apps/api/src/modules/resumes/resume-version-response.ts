@@ -1,8 +1,16 @@
-import type { ResumeVersion } from '@jobflow/shared';
+import { AI_JOB_FAILURES, type ResumeProfileStatus, type ResumeVersion } from '@jobflow/shared';
 
 import type { ResumeVersionRow } from './resume-versions.repository.js';
 
 export const RESUME_VERSION_NOT_FOUND = 'Resume version not found';
+
+function profileStatusOf({ aiProfile, aiJobs: [latest] }: ResumeVersionRow): ResumeProfileStatus {
+  if (aiProfile !== null) {
+    return 'done';
+  }
+  const needsText = latest?.status === 'failed' && latest.errorType === AI_JOB_FAILURES.needsText;
+  return needsText ? AI_JOB_FAILURES.needsText : (latest?.status ?? 'queued');
+}
 
 export function toResumeVersion(row: ResumeVersionRow): ResumeVersion {
   const { id, number, title, note, filename, mime, sizeBytes, isArchived } = row;
@@ -16,7 +24,7 @@ export function toResumeVersion(row: ResumeVersionRow): ResumeVersion {
     sizeBytes,
     isArchived,
     uploadedAt: row.uploadedAt.toISOString(),
-    aiProfileStatus: row.aiProfile !== null ? 'done' : (row.aiJobs[0]?.status ?? 'queued'),
+    aiProfileStatus: profileStatusOf(row),
     applicationsCount: row._count.applications,
   };
 }

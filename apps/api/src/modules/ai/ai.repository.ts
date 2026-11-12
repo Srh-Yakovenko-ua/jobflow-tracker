@@ -29,7 +29,11 @@ export type FinishAiJob = AiJobChange & { aiResultId: string };
 
 export type FailAiJob = AiJobChange & { errorType: string };
 
-export type CreateAiJob = InTransaction & { kind: AiKind; applicationId: string };
+export type AiJobFailure = Pick<FailAiJob, 'id' | 'errorType'>;
+
+export type AiJobTarget = { applicationId: string } | { resumeVersionId: string };
+
+export type CreateAiJob = InTransaction & { kind: AiKind } & AiJobTarget;
 
 export type AiResultKey = { kind: AiKind; inputHash: string };
 
@@ -75,10 +79,10 @@ export class AiRepository {
 
   async createJob(
     userId: string,
-    { kind, applicationId, tx = this.prisma }: CreateAiJob,
+    { kind, tx = this.prisma, ...target }: CreateAiJob,
   ): Promise<string> {
     const { id } = await tx.aiJob.create({
-      data: { userId, kind, applicationId, step: AI_JOB_STEPS.queued },
+      data: { userId, kind, ...target, step: AI_JOB_STEPS.queued },
       select: { id: true },
     });
     return id;
@@ -102,7 +106,7 @@ export class AiRepository {
 
   async failJob(userId: string, { id, errorType, now }: FailAiJob): Promise<number> {
     const { count } = await this.prisma.aiJob.updateMany({
-      where: { id, userId, status: 'processing' },
+      where: { id, userId, status: { in: UNSETTLED_AI_JOB_STATUSES } },
       data: { status: 'failed', errorType, finishedAt: now },
     });
     return count;

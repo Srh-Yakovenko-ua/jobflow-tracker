@@ -205,7 +205,7 @@ describe('AiProcessor', () => {
 
   it.each([
     { job: 'with an unknown name', data: VACANCY_JOB, name: 'ai.summarize' },
-    { job: 'of an unknown kind', data: { ...VACANCY_JOB, kind: 'resume_parse' }, name: undefined },
+    { job: 'of an unknown kind', data: { ...VACANCY_JOB, kind: 'cover_letter' }, name: undefined },
     { job: 'without data', data: undefined, name: undefined },
   ])('fails a job $job as unrecoverable and calls nothing', async ({ data, name }) => {
     await expect(processor.process(aiJob(data, name))).rejects.toBeInstanceOf(UnrecoverableError);

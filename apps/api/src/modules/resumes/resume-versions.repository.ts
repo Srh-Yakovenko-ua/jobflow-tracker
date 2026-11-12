@@ -22,9 +22,27 @@ export const RESUME_VERSION_SELECT = {
   uploadedAt: true,
   storageKey: true,
   aiProfile: true,
-  aiJobs: LATEST_AI_JOB_SELECT,
+  aiJobs: {
+    ...LATEST_AI_JOB_SELECT,
+    select: { ...LATEST_AI_JOB_SELECT.select, errorType: true },
+  },
   _count: { select: { applications: { where: { deletedAt: null } } } },
 } satisfies Prisma.ResumeVersionSelect;
+
+const PROFILE_SOURCE_SELECT = {
+  storageKey: true,
+  filename: true,
+  mime: true,
+  aiProfile: true,
+} satisfies Prisma.ResumeVersionSelect;
+
+export type ProfileSource = Prisma.ResumeVersionGetPayload<{
+  select: typeof PROFILE_SOURCE_SELECT;
+}>;
+
+export type ExtractedText = { id: string; text: string };
+
+export type ResumeProfile = { id: string; profile: Prisma.InputJsonValue };
 
 export type ResumeVersionRow = Prisma.ResumeVersionGetPayload<{
   select: typeof RESUME_VERSION_SELECT;
@@ -118,6 +136,29 @@ export class ResumeVersionsRepository {
     { id, tx = this.prisma }: ResumeVersionById,
   ): Promise<ResumeVersionRow | null> {
     return tx.resumeVersion.findFirst({ where: { id, userId }, select: RESUME_VERSION_SELECT });
+  }
+
+  findForProfile(userId: string, id: string): Promise<ProfileSource | null> {
+    return this.prisma.resumeVersion.findFirst({
+      where: { id, userId },
+      select: PROFILE_SOURCE_SELECT,
+    });
+  }
+
+  async saveExtractedText(userId: string, { id, text }: ExtractedText): Promise<number> {
+    const { count } = await this.prisma.resumeVersion.updateMany({
+      where: { id, userId },
+      data: { textExtracted: text },
+    });
+    return count;
+  }
+
+  async saveProfile(userId: string, { id, profile }: ResumeProfile): Promise<number> {
+    const { count } = await this.prisma.resumeVersion.updateMany({
+      where: { id, userId },
+      data: { aiProfile: profile },
+    });
+    return count;
   }
 
   async update(

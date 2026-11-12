@@ -34,7 +34,7 @@ const STORED_ROW: ResumeVersionRow = {
   sizeBytes: 52_000,
   uploadedAt: daysBefore(2),
   storageKey: STORAGE_KEY,
-  aiJobs: [{ id: AI_JOB_ID, status: 'processing' }],
+  aiJobs: [{ id: AI_JOB_ID, status: 'processing', errorType: null }],
 };
 
 const VERSION_NOT_FOUND = {
@@ -148,6 +148,25 @@ describe('ResumeVersionsService.list', () => {
       [expect.objectContaining({ aiProfileStatus: 'done' })],
     ]);
   });
+
+  it.each([
+    { failure: 'needs_text', aiProfileStatus: 'needs_text' },
+    { failure: 'ai_timeout', aiProfileStatus: 'failed' },
+    { failure: null, aiProfileStatus: 'failed' },
+  ])(
+    'shows $aiProfileStatus for a version whose latest AI job failed with $failure',
+    async ({ failure, aiProfileStatus }) => {
+      const { repository, service } = await serviceWithFakes();
+      repository.stored = {
+        ...STORED_ROW,
+        aiJobs: [{ id: AI_JOB_ID, status: 'failed', errorType: failure }],
+      };
+
+      const { items } = await service.list(OLENA_ID);
+
+      expect(items.map((item) => item.aiProfileStatus)).toEqual([aiProfileStatus]);
+    },
+  );
 });
 
 describe('ResumeVersionsService.update', () => {

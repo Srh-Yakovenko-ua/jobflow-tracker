@@ -19,7 +19,7 @@ const dayWordOf = (count: number) => pluralUk(count, DAY_FORMS_UK);
 
 type MedianCopy = { median: number; preset: number };
 
-type ModelDataCopy = { [Kind in AiKind]: Record<AiPayloadField<Kind>, string> };
+export type ModelDataCopy = { [Kind in AiKind]: Record<AiPayloadField<Kind>, string> };
 
 export const settings = {
   title: 'Налаштування',
@@ -99,6 +99,10 @@ export const settings = {
       fields: {
         vacancy_parse: {
           text: 'Текст вакансії: з нього модель дістає компанію, посаду, зарплату, формат роботи й стек.',
+        },
+        resume_parse: {
+          text: 'Текст резюме без email, телефону, Telegram і адреси: з нього модель збирає навички, роки досвіду, рівень і англійську.',
+          pages: 'Сторінки скану резюме як зображення, до трьох: лише коли у файлі немає тексту.',
         },
       } satisfies ModelDataCopy,
     },

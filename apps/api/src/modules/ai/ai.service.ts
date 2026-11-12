@@ -14,7 +14,7 @@ import { Clock } from '../../common/clock.js';
 import type { Env } from '../../config/env.js';
 import type { jobFields } from '../../queues/processed-job.js';
 import type { AiCompleteJob } from './ai.jobs.js';
-import { AiRepository, type CreateAiJob } from './ai.repository.js';
+import { type AiJobFailure, AiRepository, type CreateAiJob } from './ai.repository.js';
 import { budgetWindow } from './ai-budget.js';
 import { AiClient } from './ai-client.js';
 import { FAILED_CALL, isFinal, OUTPUT_FAILURES } from './ai-failures.js';
@@ -83,6 +83,10 @@ export class AiService {
     return this.repository.createJob(userId, job);
   }
 
+  failJob(userId: string, { id, errorType }: AiJobFailure): Promise<number> {
+    return this.repository.failJob(userId, { id, errorType, now: this.clock.now() });
+  }
+
   async queuePosition({ userId, aiJobId }: AiJobOfUser): Promise<AiQueuePosition | null> {
     const sample = await this.repository.queueSample(userId, aiJobId);
     return sample === null ? null : queueEstimate(sample);
@@ -105,10 +109,8 @@ export class AiService {
 
   private async fromCache(run: AiRun): Promise<AiOutcome | null> {
     const { userId, kind } = run.job;
-    const cached = await this.repository.findCachedResult(userId, {
-      kind,
-      inputHash: run.inputHash,
-    });
+    const key = { kind, inputHash: run.inputHash };
+    const cached = await this.repository.findCachedResult(userId, key);
     if (cached === null) {
       return null;
     }

@@ -7,8 +7,10 @@ import {
 } from '@jobflow/shared';
 import type { NestExpressApplication } from '@nestjs/platform-express';
 
+import type { ExtractedText, ProfileSource, ResumeProfile } from '../modules/resumes/index.js';
 import { applicationPath } from './applications.js';
 import { callRoute } from './http.js';
+import { OLENA_ID, RESUME_VERSION_ID, RESUME_VERSION_ROW } from './service-fixtures.js';
 
 export const UPLOADS_PATH = '/api/v1/uploads/resume';
 
@@ -95,4 +97,38 @@ export async function uploadResumeVersion(
   const ticket = await uploadedPdf(app, { accessToken: upload.accessToken, bytes: PDF_BYTES });
   const response = await postResumeVersion(app, { ...upload, ticket });
   return { ticket, version: resumeVersionSchema.parse(response.body) };
+}
+
+export const PROFILE_SOURCE: ProfileSource = {
+  storageKey: RESUME_VERSION_ROW.storageKey,
+  filename: RESUME_VERSION_ROW.filename,
+  mime: RESUME_VERSION_ROW.mime,
+  aiProfile: null,
+};
+
+const ownsVersion = (userId: string, id: string) => userId === OLENA_ID && id === RESUME_VERSION_ID;
+
+function keep<T>(saved: T[], item: T): number {
+  saved.push(item);
+  return 1;
+}
+
+export class FakeProfileVersions {
+  source: ProfileSource = PROFILE_SOURCE;
+
+  readonly texts: ExtractedText[] = [];
+
+  readonly profiles: ResumeProfile[] = [];
+
+  findForProfile(userId: string, id: string): Promise<ProfileSource | null> {
+    return Promise.resolve(ownsVersion(userId, id) ? this.source : null);
+  }
+
+  saveExtractedText(userId: string, text: ExtractedText): Promise<number> {
+    return Promise.resolve(ownsVersion(userId, text.id) ? keep(this.texts, text) : 0);
+  }
+
+  saveProfile(userId: string, profile: ResumeProfile): Promise<number> {
+    return Promise.resolve(ownsVersion(userId, profile.id) ? keep(this.profiles, profile) : 0);
+  }
 }

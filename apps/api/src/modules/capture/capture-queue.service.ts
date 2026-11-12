@@ -2,11 +2,9 @@ import { InjectQueue } from '@nestjs/bullmq';
 import { Injectable, Logger } from '@nestjs/common';
 import { Queue, UnrecoverableError } from 'bullmq';
 
-import { withinLimit } from '../../common/probe.js';
 import type { DomainEvent } from '../../outbox/domain-event-router.js';
-import { OUTBOX_LIMITS } from '../../outbox/outbox-relay.service.js';
 import { QUEUES } from '../../queues/queues.js';
-import { AI_JOBS, AI_PAYLOAD_BUILDERS, type AiCompleteJob } from '../ai/index.js';
+import { AI_PAYLOAD_BUILDERS, type AiCompleteJob, queueAiCompletion } from '../ai/index.js';
 import {
   applicationCaptureRequestedPayloadSchema,
   ApplicationDraftsService,
@@ -40,8 +38,7 @@ export class CaptureQueueService {
       applicationId,
       requestId,
     };
-    const added = this.queue.add(AI_JOBS.complete, job, { jobId: aiJobId });
-    await withinLimit(added, OUTBOX_LIMITS.publishTimeoutMs);
+    await queueAiCompletion(this.queue, job);
     this.logger.log({ requestId, eventId: id, aiJobId }, 'capture parse queued');
   }
 }

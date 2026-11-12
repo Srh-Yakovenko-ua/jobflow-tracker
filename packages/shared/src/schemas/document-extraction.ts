@@ -11,6 +11,13 @@ export const DOCUMENT_LIMITS = {
   maxJpegBytes: 180 * 1024,
 } as const;
 
+export const DOCUMENT_FAILURES = [
+  'file_too_large',
+  'unsupported_type',
+  'encrypted_pdf',
+  'unreadable_file',
+] as const;
+
 export const documentPageSchema = z.object({
   index: z
     .int()

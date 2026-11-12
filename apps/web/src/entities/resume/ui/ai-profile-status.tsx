@@ -1,4 +1,4 @@
-import type { AiJobStatus } from '@jobflow/shared';
+import type { ResumeProfileStatus } from '@jobflow/shared';
 import type { ReactNode } from 'react';
 
 import { uk } from '@/shared/i18n';
@@ -9,14 +9,17 @@ const COPY = uk.resumes.aiProfile;
 
 type ProfileLook = { marker: ReactNode; tone?: string };
 
-const LOOKS: Record<AiJobStatus, ProfileLook> = {
+const FAILED_LOOK: ProfileLook = { marker: FAILED_MARK, tone: 'text-ink-2' };
+
+const LOOKS: Record<ResumeProfileStatus, ProfileLook> = {
   queued: { marker: WAITING_DOT },
   processing: { marker: WAITING_DOT },
   done: { marker: DONE_DOT },
-  failed: { marker: FAILED_MARK, tone: 'text-ink-2' },
+  failed: FAILED_LOOK,
+  needs_text: FAILED_LOOK,
 };
 
-export type AiProfileStatusProps = Readonly<{ status: AiJobStatus }>;
+export type AiProfileStatusProps = Readonly<{ status: ResumeProfileStatus }>;
 
 export function AiProfileStatus({ status }: AiProfileStatusProps) {
   const look = LOOKS[status];

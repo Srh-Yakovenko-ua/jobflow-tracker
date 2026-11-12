@@ -2,6 +2,7 @@ import { z } from 'zod';
 
 import { aiCallMetaSchema } from './call-meta.js';
 import type { AiKind } from './kinds.js';
+import { resumeParseInputSchema, resumeParseOutputSchema } from './resume-parse.js';
 import { vacancyParseInputSchema, vacancyParseOutputSchema } from './vacancy-parse.js';
 
 export const aiCompleteOptionsSchema = z.object({
@@ -11,6 +12,7 @@ export const aiCompleteOptionsSchema = z.object({
 
 export const AI_KIND_SCHEMAS = {
   vacancy_parse: { input: vacancyParseInputSchema, output: vacancyParseOutputSchema },
+  resume_parse: { input: resumeParseInputSchema, output: resumeParseOutputSchema },
 } satisfies Record<AiKind, { input: z.ZodType; output: z.ZodType }>;
 
 const completionMetaSchema = aiCallMetaSchema.extend({
@@ -20,10 +22,12 @@ const completionMetaSchema = aiCallMetaSchema.extend({
 
 export const aiCompleteRequestSchemas = {
   vacancy_parse: aiCompleteOptionsSchema.extend({ input: AI_KIND_SCHEMAS.vacancy_parse.input }),
+  resume_parse: aiCompleteOptionsSchema.extend({ input: AI_KIND_SCHEMAS.resume_parse.input }),
 } satisfies Record<AiKind, z.ZodType>;
 
 export const aiCompletionSchemas = {
   vacancy_parse: completionMetaSchema.extend({ output: AI_KIND_SCHEMAS.vacancy_parse.output }),
+  resume_parse: completionMetaSchema.extend({ output: AI_KIND_SCHEMAS.resume_parse.output }),
 } satisfies Record<AiKind, z.ZodType>;
 
 type KindSchemas = typeof AI_KIND_SCHEMAS;

@@ -8,7 +8,7 @@ import { AiEvalModule } from './ai-eval/ai-eval.module.js';
 import { AiEvalService } from './ai-eval/ai-eval.service.js';
 import { boot, BOOT_OPTIONS } from './boot.js';
 
-const evalKindSchema = z.enum(['vacancy']);
+const evalKindSchema = z.enum(['vacancy', 'resume']);
 
 const kind = evalKindSchema.safeParse(process.argv[2]);
 
@@ -17,7 +17,7 @@ if (kind.success) {
     const app = await NestFactory.createApplicationContext(AiEvalModule, BOOT_OPTIONS);
     app.useLogger(app.get(Logger));
     const casesDir = path.resolve('src/modules/ai/evals', kind.data);
-    const { lines, passed } = await app.get(AiEvalService).vacancy(casesDir);
+    const { lines, passed } = await app.get(AiEvalService)[kind.data](casesDir);
     process.stdout.write(`${lines.join('\n')}\n`);
     process.exitCode = passed ? 0 : 1;
     await app.close();

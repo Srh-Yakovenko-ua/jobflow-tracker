@@ -6,6 +6,8 @@ from app.providers.anthropic import AnthropicProvider
 from app.providers.base import Completion
 from tests.factories import (
     COMPLETION_REQUEST,
+    SCAN_PROMPT,
+    SCAN_REQUEST,
     VACANCY_PROMPT,
     ScriptedVendor,
     anthropic_message,
@@ -43,6 +45,38 @@ async def test_forces_a_tool_call_with_the_kind_json_schema() -> None:
     ]
     assert completion == Completion(
         text='{"company": "Acme"}', model="test-model", tokens_in=11, tokens_out=7
+    )
+
+
+def image_block(data: str) -> dict[str, object]:
+    return {
+        "type": "image",
+        "source": {"type": "base64", "media_type": "image/jpeg", "data": data},
+    }
+
+
+async def test_sends_scan_pages_as_image_blocks_before_the_text_to_the_vision_model() -> (
+    None
+):
+    vendor = ScriptedVendor([anthropic_message({"skills": []})])
+
+    await AnthropicProvider(vendor_settings(), http_client=vendor.client()).complete(
+        SCAN_REQUEST
+    )
+
+    body = vendor.bodies()[0]
+    assert (body["model"], body["messages"]) == (
+        "test-vision",
+        [
+            {
+                "role": "user",
+                "content": [
+                    image_block("/9j/4AAQSkZJRgABAQ"),
+                    image_block("/9j/second"),
+                    {"type": "text", "text": SCAN_PROMPT},
+                ],
+            }
+        ],
     )
 
 

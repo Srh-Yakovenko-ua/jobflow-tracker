@@ -10,6 +10,7 @@ import { JwtKeys } from './modules/auth/index.js';
 import { CaptureSubscriber } from './modules/capture/index.js';
 import { LivePublisher } from './modules/live/index.js';
 import { MaintenanceProcessor, MaintenanceScheduler } from './modules/maintenance/index.js';
+import { ResumeProfileSubscriber } from './modules/resumes/index.js';
 import { DomainEventsProcessor } from './outbox/domain-events.processor.js';
 import { RedisService } from './redis/redis.service.js';
 import { testJwtKeys } from './test/auth.js';
@@ -35,6 +36,7 @@ describe('WorkerModule', () => {
       AiProcessor,
       MaintenanceScheduler,
       CaptureSubscriber,
+      ResumeProfileSubscriber,
       ApplicationLiveSubscriber,
       LivePublisher,
     ]) {

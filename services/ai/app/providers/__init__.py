@@ -10,6 +10,7 @@ def vendor_settings_of(settings: Settings) -> VendorSettings:
         api_key=settings.vendor_key(),
         model=settings.ai_model,
         embedding_model=settings.ai_embedding_model,
+        vision_model=settings.ai_vision_model,
         base_url=settings.nvidia_base_url if settings.ai_provider == "nvidia" else None,
         timeout_seconds=settings.ai_timeout_seconds,
         max_retries=settings.ai_max_retries,

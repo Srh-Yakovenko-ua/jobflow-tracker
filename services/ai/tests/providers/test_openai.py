@@ -7,6 +7,8 @@ from app.providers.base import Completion
 from app.providers.openai import OpenAiProvider
 from tests.factories import (
     COMPLETION_REQUEST,
+    SCAN_PROMPT,
+    SCAN_REQUEST,
     VACANCY_PROMPT,
     ScriptedVendor,
     chat_completion,
@@ -49,6 +51,42 @@ async def test_asks_openai_for_the_kind_json_schema() -> None:
     assert completion == Completion(
         text='{"company": "Acme"}', model="test-model", tokens_in=11, tokens_out=7
     )
+
+
+async def test_sends_scan_pages_as_image_parts_before_the_text_to_the_vision_model() -> (
+    None
+):
+    vendor = ScriptedVendor([chat_completion('{"skills": []}')])
+
+    await OpenAiProvider(vendor_settings(), http_client=vendor.client()).complete(
+        SCAN_REQUEST
+    )
+
+    assert vendor.bodies() == [
+        CHAT_BODY
+        | {
+            "model": "test-vision",
+            "messages": [
+                {"role": "system", "content": "Extract the vacancy."},
+                {
+                    "role": "user",
+                    "content": [
+                        {
+                            "type": "image_url",
+                            "image_url": {
+                                "url": "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQ"
+                            },
+                        },
+                        {
+                            "type": "image_url",
+                            "image_url": {"url": "data:image/jpeg;base64,/9j/second"},
+                        },
+                        {"type": "text", "text": SCAN_PROMPT},
+                    ],
+                },
+            ],
+        }
+    ]
 
 
 async def test_turns_nvidia_reasoning_off_and_strips_a_thinking_block() -> None:

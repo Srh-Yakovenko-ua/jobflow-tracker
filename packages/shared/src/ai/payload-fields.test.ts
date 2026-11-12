@@ -4,8 +4,8 @@ import { AI_KINDS } from './kinds.js';
 import { AI_PAYLOAD_FIELDS } from './payload-fields.js';
 
 describe('AI_PAYLOAD_FIELDS', () => {
-  it('allows only the vacancy text into a vacancy parse payload', () => {
-    expect(AI_PAYLOAD_FIELDS).toEqual({ vacancy_parse: ['text'] });
+  it('allows only the vacancy text into a vacancy parse payload and the resume text and scan pages into a resume parse payload', () => {
+    expect(AI_PAYLOAD_FIELDS).toEqual({ vacancy_parse: ['text'], resume_parse: ['text', 'pages'] });
   });
 
   it('lists the allowed fields for every AI kind', () => {

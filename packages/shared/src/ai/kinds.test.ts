@@ -1,6 +1,10 @@
 import { describe, expect, it } from 'vitest';
 
-import { buildVacancyCompletion, VACANCY_SAMPLE_TEXT } from '../../testing/index.js';
+import {
+  buildResumeParseOutput,
+  buildVacancyCompletion,
+  VACANCY_SAMPLE_TEXT,
+} from '../../testing/index.js';
 import { issuePathsOf } from '../test/zod-issues.js';
 import { aiCompleteRequestSchemas, aiCompletionSchemas } from './completion.js';
 import { aiContractJsonSchemas } from './contracts.js';
@@ -30,7 +34,7 @@ const VACANCY_OUTPUT_FIELDS = [
 describe('AI_PROMPT_VERSIONS', () => {
   it('pins one prompt version for exactly the AI kinds', () => {
     expect(Object.keys(AI_PROMPT_VERSIONS)).toEqual([...AI_KINDS]);
-    expect(AI_PROMPT_VERSIONS).toEqual({ vacancy_parse: 'v2' });
+    expect(AI_PROMPT_VERSIONS).toEqual({ vacancy_parse: 'v2', resume_parse: 'v1' });
   });
 });
 
@@ -40,6 +44,9 @@ describe('aiContractJsonSchemas', () => {
       'vacancy_parse_request',
       'vacancy_parse_output',
       'vacancy_parse_response',
+      'resume_parse_request',
+      'resume_parse_output',
+      'resume_parse_response',
       'embed_request',
       'embed_response',
     ]);
@@ -62,6 +69,22 @@ describe('aiContractJsonSchemas', () => {
       });
     },
   );
+
+  it('requires every resume_parse output field, the nullable ones included', () => {
+    expect(aiContractJsonSchemas()['resume_parse_output']).toMatchObject({
+      title: 'ResumeParseOutput',
+      required: [
+        'positions',
+        'skills',
+        'totalYears',
+        'seniority',
+        'englishLevel',
+        'domains',
+        'leadership',
+        'languages',
+      ],
+    });
+  });
 
   it('requires only the input in a completion request', () => {
     expect(aiContractJsonSchemas()['vacancy_parse_request']).toMatchObject({
@@ -96,6 +119,11 @@ describe('aiCompleteRequestSchemas', () => {
 describe('aiCompletionSchemas', () => {
   it('parses a vacancy_parse completion', () => {
     expect(aiCompletionSchemas.vacancy_parse.parse(COMPLETION)).toEqual(COMPLETION);
+  });
+
+  it('parses a resume_parse completion carrying the profile', () => {
+    const completion = { ...COMPLETION, promptVersion: 'v1', output: buildResumeParseOutput() };
+    expect(aiCompletionSchemas.resume_parse.parse(completion)).toEqual(completion);
   });
 
   it('refuses a numeric promptVersion', () => {

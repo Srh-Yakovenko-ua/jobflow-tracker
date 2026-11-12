@@ -14,6 +14,7 @@ class Settings(BaseSettings):
     ai_provider: ProviderName = "fake"
     ai_model: str = ""
     ai_embedding_model: str = ""
+    ai_vision_model: str = ""
     anthropic_api_key: SecretStr = SecretStr("")
     openai_api_key: SecretStr = SecretStr("")
     nvidia_api_key: SecretStr = SecretStr("")

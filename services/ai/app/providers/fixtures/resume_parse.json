@@ -1,0 +1,21 @@
+{
+  "positions": [
+    { "title": "Frontend developer", "company": "Acme", "start": "2021-03", "end": "2023-02" },
+    { "title": "Junior developer", "company": null, "start": "2019-09", "end": "2021-02" }
+  ],
+  "skills": [
+    {
+      "name": "React",
+      "years": 0,
+      "evidence": "Built the Acme dashboard in React",
+      "positions": [0, 1]
+    },
+    { "name": "TypeScript", "years": 0, "evidence": null, "positions": [0] }
+  ],
+  "totalYears": 0,
+  "seniority": "middle",
+  "englishLevel": "upper_intermediate",
+  "domains": ["fintech"],
+  "leadership": { "hasExperience": false, "evidence": null },
+  "languages": [{ "name": "English", "level": "B2" }]
+}

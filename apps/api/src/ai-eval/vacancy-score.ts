@@ -1,5 +1,6 @@
 import { vacancyParseFailure, type VacancyParseOutput } from '@jobflow/shared';
 
+import type { EvalReport } from './eval-cases.js';
 import type { VacancyExpected } from './vacancy-cases.js';
 
 const THRESHOLD_NAMES = ['company', 'position', 'salary', 'stackF1'] as const;
@@ -17,7 +18,7 @@ export type VacancyCaseAnswer = { file: string; expected: VacancyExpected } & (
   { output: VacancyParseOutput } | { error: string }
 );
 
-export type VacancyEvalReport = { lines: string[]; passed: boolean };
+export type VacancyEvalReport = EvalReport;
 
 const ROWS = [
   'company',

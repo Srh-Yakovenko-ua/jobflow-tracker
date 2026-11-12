@@ -5,6 +5,8 @@ import pytest
 from app.providers.fake import FIXTURES, FakeAiProvider
 from tests.factories import (
     PARSED_VACANCY,
+    PII_RESUME,
+    SCRUBBED_RESUME,
     UNNAMED_VACANCY,
     VACANCY_BODY,
     build_app,
@@ -218,25 +220,14 @@ async def test_scrubs_emails_and_phones_from_every_message_sent_to_the_model() -
 
 async def test_scrubs_a_resume_before_the_model_sees_it() -> None:
     fake = FakeAiProvider()
-    resume = (
-        "Olena Koval, React developer\n"
-        "olena.koval@example.com | +380 67 123 45 67 | @olena_dev\n"
-        "вул. Хрещатик, 22, кв. 5, Київ\n"
-        "5 years with React and Node.js"
-    )
 
     response = await post_completion(
-        {"input": {"text": resume}}, app=build_app(provider=fake)
+        {"input": {"text": PII_RESUME}}, app=build_app(provider=fake)
     )
 
     assert (response.status_code, fake.requests[0].messages[0].content) == (
         200,
-        (
-            "<vacancy_text>\nOlena Koval, React developer\n"
-            "[email] | [phone] | [telegram]\n"
-            "[address], Київ\n"
-            "5 years with React and Node.js\n</vacancy_text>"
-        ),
+        f"<vacancy_text>\n{SCRUBBED_RESUME}\n</vacancy_text>",
     )
 
 

@@ -19,6 +19,7 @@ class Runtime:
     provider: AiProvider
     limiter: RateLimiter
     timeout_seconds: float
+    vision_enabled: bool
 
 
 @dataclass(frozen=True, kw_only=True)
@@ -111,7 +112,9 @@ async def complete_structured(
     request = CompletionRequest(
         kind=call.kind,
         system=call.prompt.system,
-        messages=[Message(role="user", content=call.prompt.user)],
+        messages=[
+            Message(role="user", content=call.prompt.user, images=call.prompt.images)
+        ],
         output_schema=call.output_model.model_json_schema(by_alias=True),
         temperature=call.prompt.temperature,
         max_tokens=call.prompt.max_tokens,
