@@ -14,18 +14,22 @@ import { Reveal } from '@/shared/ui/reveal';
 import { useSheetClose } from '@/shared/ui/sheet';
 import { PageSkeleton } from '@/shared/ui/skeleton';
 
+import { useApplicationMatch } from '../model/use-application-match';
 import {
   type ApplicationPageActions,
+  type ApplicationPageState,
   type ApplicationPanel,
   useApplicationPage,
 } from '../model/use-application-page';
 import { ApplicationActions } from './application-actions';
 import { ApplicationContext } from './application-context';
 import { ApplicationHeader } from './application-header';
+import { ApplicationMatch } from './application-match';
 import { ApplicationNotes } from './application-notes';
 import { ApplicationRecruiter } from './application-recruiter';
 import { ApplicationSchedule } from './application-schedule';
 import { ApplicationTimeline } from './application-timeline';
+import { AttachedResume } from './attached-resume';
 import { type ApplicationPageMode, PageTopBar } from './page-top-bar';
 
 export type { ApplicationPageMode } from './page-top-bar';
@@ -73,19 +77,17 @@ function PageActions({ application, page, focusTarget }: PageActionsProps) {
   );
 }
 
-function PageContent({ id, view }: ApplicationPageProps) {
-  const page = useApplicationPage(id);
+type LoadedPageProps = Readonly<{
+  application: ApplicationResponse;
+  page: ApplicationPageState;
+  view: ApplicationPageProps['view'];
+}>;
+
+function LoadedPage({ application, page, view }: LoadedPageProps) {
   const titleRef = useRef<HTMLHeadingElement>(null);
   const onDeleted = useLeaveAfterDelete();
-  const { application, panel } = page;
-  if (page.missing) return <NotFoundState />;
-  if (application === undefined) {
-    return page.load.failed ? (
-      <LoadFailedPanel onRetry={page.load.onRetry} />
-    ) : (
-      <PageSkeleton className="pt-14" />
-    );
-  }
+  const match = useApplicationMatch(application);
+  const { panel } = page;
   const editing = panel?.kind === 'edit' ? panel.field : null;
   const focusTitle = () => {
     titleRef.current?.focus();
@@ -125,11 +127,13 @@ function PageContent({ id, view }: ApplicationPageProps) {
               </Reveal>
             </div>
           </ApplicationHeader>
+          <ApplicationMatch match={match} />
           <ApplicationTimeline application={application} />
           <ApplicationNotes key={application.id} application={application} />
         </div>
         <div className="flex min-w-0 flex-col gap-6">
           <ApplicationRecruiter key={application.id} application={application} />
+          <AttachedResume application={application} actions={{ onRelinked: match.onRelinked }} />
           <ApplicationContext application={application} />
         </div>
       </div>
@@ -146,6 +150,20 @@ function PageContent({ id, view }: ApplicationPageProps) {
       />
     </div>
   );
+}
+
+function PageContent({ id, view }: ApplicationPageProps) {
+  const page = useApplicationPage(id);
+  const { application } = page;
+  if (page.missing) return <NotFoundState />;
+  if (application === undefined) {
+    return page.load.failed ? (
+      <LoadFailedPanel onRetry={page.load.onRetry} />
+    ) : (
+      <PageSkeleton className="pt-14" />
+    );
+  }
+  return <LoadedPage key={application.id} application={application} page={page} view={view} />;
 }
 
 export function ApplicationPage({ id, view }: ApplicationPageProps) {

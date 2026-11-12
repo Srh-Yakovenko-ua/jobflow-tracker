@@ -3,6 +3,7 @@ import {
   confirmResumeUploadInputSchema,
   type CreateResumeVersionInput,
   createResumeVersionInputSchema,
+  relinkResumeVersionInputSchema,
   type ResumeDownload,
   type ResumeUploadInput,
   resumeUploadInputSchema,
@@ -17,7 +18,7 @@ import type { HttpResponseResolver } from 'msw';
 import { http, HttpResponse } from 'msw/http';
 
 import { apiUrl } from './api-handlers';
-import { fixtureIdOf } from './board-fixtures';
+import { fixtureIdOf, heldReply, type MoveRouteOptions } from './board-fixtures';
 import { meRoute, meWithSettings } from './session-fixtures';
 import { storageReply, storageRoutes } from './storage-handlers';
 import { storedRoutes, type StoredRoutesSetup, type StoredRoutesSpec } from './stored-routes';
@@ -29,7 +30,7 @@ export type UploadRoutesOptions = {
 };
 
 export type ResumeRoutesOptions = StoredRoutesSetup<ResumeVersion> &
-  UploadRoutesOptions & { activeId?: string | null };
+  UploadRoutesOptions & { activeId?: string | null; relink?: MoveRouteOptions };
 
 type ResumeSession = { activeId: string | null };
 
@@ -37,7 +38,9 @@ type VersionParams = { id: string };
 
 type UploadsSent = { tickets: ResumeUploadInput[]; stored: number[]; confirms: string[] };
 
-type ActionsSent = { activated: string[]; downloaded: string[] };
+type Relinked = { applicationId: string; resumeVersionId: string };
+
+type ActionsSent = { activated: string[]; downloaded: string[]; relinked: Relinked[] };
 
 const SERIAL_FROM = 500;
 
@@ -152,9 +155,18 @@ function uploadRoutes({ ticket, storage, confirm }: UploadRoutesOptions) {
   return { handlers, sent };
 }
 
-function versionActionRoutes(session: ResumeSession) {
-  const sent: ActionsSent = { activated: [], downloaded: [] };
+function relinkRoute(sent: ActionsSent, control: MoveRouteOptions) {
+  return http.patch<VersionParams>(apiUrl('/applications/:id/resume-version'), async (info) => {
+    const { resumeVersionId } = relinkResumeVersionInputSchema.parse(await info.request.json());
+    sent.relinked.push({ applicationId: info.params.id, resumeVersionId });
+    return heldReply({ ...control, info, fallback: () => new HttpResponse(null, { status: 204 }) });
+  });
+}
+
+function versionActionRoutes(session: ResumeSession, relink: MoveRouteOptions) {
+  const sent: ActionsSent = { activated: [], downloaded: [], relinked: [] };
   const handlers = [
+    relinkRoute(sent, relink),
     http.post<VersionParams>(apiUrl(`${VERSIONS_PATH}/:id/activate`), ({ params }) => {
       sent.activated.push(params.id);
       session.activeId = params.id;
@@ -169,12 +181,16 @@ function versionActionRoutes(session: ResumeSession) {
   return { handlers, sent };
 }
 
-export function resumeRoutes({ activeId = null, ...options }: ResumeRoutesOptions = {}) {
+export function resumeRoutes({
+  activeId = null,
+  relink = {},
+  ...options
+}: ResumeRoutesOptions = {}) {
   const session: ResumeSession = { activeId };
   const numbered = { last: Math.max(0, ...(options.items ?? []).map(({ number }) => number)) };
   const versions = storedRoutes(versionsSpec(session, numbered), options);
   const uploads = uploadRoutes(options);
-  const actions = versionActionRoutes(session);
+  const actions = versionActionRoutes(session, relink);
   const me = () => HttpResponse.json(meWithSettings({ activeResumeVersionId: session.activeId }));
   return {
     handlers: [meRoute(me), ...versions.handlers, ...uploads.handlers, ...actions.handlers],

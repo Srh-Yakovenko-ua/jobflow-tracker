@@ -1,3 +1,11 @@
+import { countedUk, type PluralForms } from '@jobflow/shared';
+
+const APPLICATION_FORMS = {
+  one: 'відгук',
+  few: 'відгуки',
+  other: 'відгуків',
+} as const satisfies PluralForms;
+
 export const applicationPage = {
   title: 'Картка вакансії',
   back: 'Дошка',
@@ -46,6 +54,33 @@ export const applicationPage = {
     saved: 'збережено',
     failed: 'не збережено, спробуємо ще',
     finishHint: 'Ctrl+Enter, щоб завершити',
+  },
+  match: {
+    kicker: 'Розбір Match Score',
+    score: (score: number) => `Збіг ${String(score)}%`,
+    noScore: 'Збіг',
+    against: (number: number, date: string) => `проти CV v${String(number)} · ${date}`,
+    matched: 'Що збіглося',
+    missing: 'Чого не вистачає',
+    coverage: { full: 'повний', partial: 'частковий' },
+    pointsLost: (points: number) => `−${String(points)}`,
+    ignored: 'не вплинуло',
+    noCv: { lead: 'Рахувати нема з чим:', link: 'завантаж резюме' },
+    unscored: 'Score не порахований: в описі не знайшлося вимог або резюме ще не прочитане.',
+  },
+  resume: {
+    kicker: "Прив'язане резюме",
+    uploaded: (date: string, count: number) =>
+      `завантажено ${date} · ${countedUk(count, APPLICATION_FORMS)}`,
+    preview: (format: string) => `Переглянути ${format}`,
+    change: 'Змінити версію',
+    versions: 'Версії резюме',
+    none: "До цього відгуку резюме не прив'язане.",
+    upload: 'Завантажити резюме',
+    gone: {
+      title: 'Цієї версії вже немає',
+      description: 'Список версій оновлено. Обери іншу.',
+    },
   },
   context: {
     kicker: 'Контекст',

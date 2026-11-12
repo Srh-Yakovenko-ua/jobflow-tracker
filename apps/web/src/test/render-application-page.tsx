@@ -1,4 +1,8 @@
-import type { ApplicationResponse, ApplicationTimelineResponse } from '@jobflow/shared';
+import type {
+  ApplicationMatchResponse,
+  ApplicationResponse,
+  ApplicationTimelineResponse,
+} from '@jobflow/shared';
 import { screen } from '@testing-library/react';
 import type { ReactNode } from 'react';
 
@@ -26,6 +30,8 @@ import {
   undoRoute,
 } from './board-fixtures';
 import { contactRoutes, type ContactRoutesOptions } from './contact-fixtures';
+import { LiveUpdates } from './live-stream';
+import { matchRoute } from './match-fixtures';
 import {
   noteDeleteRoute,
   noteRoute,
@@ -34,6 +40,7 @@ import {
   noteUpdateRoute,
 } from './note-fixtures';
 import { renderViewInApp } from './render-in-app';
+import { resumeRoutes, type ResumeRoutesOptions } from './resume-fixtures';
 import {
   liveCardOf,
   scheduledEventRoutes,
@@ -54,19 +61,32 @@ export type ApplicationPageSetup = Partial<Pick<ApplicationRouteOptions, 'reply'
   scheduledEvents?: ScheduledEventRoutesOptions;
   board?: BoardRouteOptions;
   contacts?: ContactRoutesOptions;
+  match?: ApplicationMatchResponse;
+  resumes?: ResumeRoutesOptions;
   inShell?: boolean;
+  live?: boolean;
 };
 
 type ShownPage = Readonly<{
   id: string;
   mode: ApplicationPageMode;
   inShell: boolean;
+  live: boolean | undefined;
   wrap: (ui: ReactNode) => ReactNode;
 }>;
 
-function shownPage({ id, mode, inShell, wrap }: ShownPage) {
+function shownPage({ id, mode, inShell, live, wrap }: ShownPage) {
+  const page =
+    mode === 'sheet' ? <ApplicationSheet id={id} /> : <ApplicationPage id={id} view={{ mode }} />;
   const ui = wrap(
-    mode === 'sheet' ? <ApplicationSheet id={id} /> : <ApplicationPage id={id} view={{ mode }} />,
+    live === true ? (
+      <>
+        <LiveUpdates />
+        {page}
+      </>
+    ) : (
+      page
+    ),
   );
   return inShell ? <AppShell initial={{ collapsed: false }}>{ui}</AppShell> : ui;
 }
@@ -110,7 +130,10 @@ export function renderApplicationPage({
   scheduledEvents,
   board,
   contacts,
+  match: matchResponse,
+  resumes,
   inShell = false,
+  live,
 }: ApplicationPageSetup = {}) {
   const move = moveRoute();
   const undo = undoRoute();
@@ -121,6 +144,8 @@ export function renderApplicationPage({
   const events = scheduledEventRoutes(scheduledEvents);
   const beside = boardBeside({ board, id, store: events.store });
   const recruiters = contactRoutes(contacts);
+  const match = matchRoute(matchResponse);
+  const versions = resumeRoutes(resumes);
   server.use(
     meRoute(),
     page.handler,
@@ -134,8 +159,10 @@ export function renderApplicationPage({
     ...events.handlers,
     ...beside.handlers,
     ...recruiters.handlers,
+    match.handler,
+    ...versions.handlers,
   );
-  const ui = shownPage({ id, mode, inShell, wrap: beside.wrap });
+  const ui = shownPage({ id, mode, inShell, live, wrap: beside.wrap });
   const { user, view } = renderViewInApp(ui);
   return {
     user,
@@ -152,6 +179,8 @@ export function renderApplicationPage({
     scheduledEvents: events.sent,
     board: beside.sent,
     contacts: recruiters.sent,
+    match,
+    resumes: versions.sent,
   };
 }
 

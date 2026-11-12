@@ -24,9 +24,13 @@ export class MatchService {
   async read(userId: string, applicationId: string): Promise<ApplicationMatchResponse> {
     const { resumeVersionId } = owned(await this.repository.findSource(userId, applicationId));
     if (resumeVersionId === null) {
-      return { match: null };
+      return { match: null, job: null };
     }
-    const latest = await this.repository.findLatest(userId, { applicationId, resumeVersionId });
-    return { match: latest === null ? null : matchOf(latest) };
+    const linked = { applicationId, resumeVersionId };
+    const [latest, job] = await Promise.all([
+      this.repository.findLatest(userId, linked),
+      this.repository.findLatestJob(userId, linked),
+    ]);
+    return { match: latest === null ? null : matchOf(latest), job };
   }
 }

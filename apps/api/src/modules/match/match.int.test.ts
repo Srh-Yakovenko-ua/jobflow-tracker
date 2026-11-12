@@ -93,16 +93,24 @@ describe('the Match Score of an application', () => {
     return (await workers.compile()).init();
   }
 
-  async function matched(worker: INestApplicationContext, { userId, applicationId }: Linked) {
+  async function requested(worker: INestApplicationContext, { userId, applicationId }: Linked) {
     const queue = worker.get(MatchQueueService, { strict: false });
     const aiJobId = await queue.request(userId, { applicationId });
     if (aiJobId === null) {
       throw new Error('no match job queued');
     }
+    return aiJobId;
+  }
+
+  async function settled(aiJobId: string) {
     await expect
       .poll(async () => (await storedAiJob(testApp.prisma, aiJobId)).status, SETTLED)
       .toMatch(/^(done|failed)$/);
     return aiJobId;
+  }
+
+  async function matched(worker: INestApplicationContext, owner: Linked) {
+    return settled(await requested(worker, owner));
   }
 
   const scoreOf = async (applicationId: string) =>
@@ -122,10 +130,21 @@ describe('the Match Score of an application', () => {
   const getMatch = (accessToken: string | undefined, id: string) =>
     callRoute(testApp.app, { method: 'get', path: matchPath(id), accessToken });
 
-  async function readMatch(owner: Linked) {
+  async function readBody(owner: Linked) {
     const response = await getMatch(owner.accessToken, owner.applicationId);
     expect(response.status).toBe(200);
-    return applicationMatchResponseSchema.parse(response.body).match;
+    return applicationMatchResponseSchema.parse(response.body);
+  }
+
+  const readMatch = async (owner: Linked) => (await readBody(owner)).match;
+
+  async function relinked(owner: Linked, number: number) {
+    const resumeVersionId = await versionOf(owner, number);
+    await testApp.prisma.application.update({
+      where: { id: owner.applicationId },
+      data: { resumeVersionId },
+    });
+    return resumeVersionId;
   }
 
   it(
@@ -158,6 +177,34 @@ describe('the Match Score of an application', () => {
   );
 
   it(
+    'answers the match job queued for the linked version, then done beside the score once it settles',
+    WORKER_TEST,
+    async () => {
+      const owner = await linkedApplication();
+      const worker = await workers.compile();
+
+      const aiJobId = await requested(worker, owner);
+      const whileQueued = await readBody(owner);
+      await worker.init();
+      await settled(aiJobId);
+
+      expect(whileQueued).toEqual({ match: null, job: { id: aiJobId, status: 'queued' } });
+      expect(await readBody(owner)).toMatchObject({
+        match: { score: 59 },
+        job: { id: aiJobId, status: 'done' },
+      });
+    },
+  );
+
+  it('answers no match and no job for a newly linked version that has no match job', async () => {
+    const owner = await seededMatch(await linkedApplication());
+
+    await relinked(owner, 2);
+
+    expect(await readBody(owner)).toEqual({ match: null, job: null });
+  });
+
+  it(
     'calls the AI again with a new input hash after a stack edit and after a relink to a version with another profile',
     WORKER_TEST,
     async () => {
@@ -169,8 +216,7 @@ describe('the Match Score of an application', () => {
       await matched(worker, owner);
       await application.update({ where, data: { stack: ['React', 'GraphQL'] } });
       await matched(worker, owner);
-      const secondVersionId = await versionOf(owner, 2);
-      await application.update({ where, data: { resumeVersionId: secondVersionId } });
+      const secondVersionId = await relinked(owner, 2);
       await matched(worker, owner);
 
       expect(ai.calls).toHaveLength(3);
@@ -290,15 +336,21 @@ describe('the Match Score of an application', () => {
     const asBohdan = await Promise.all([
       repository.findSource(bohdan.userId, applicationId),
       repository.findLatest(bohdan.userId, { applicationId, resumeVersionId }),
+      repository.findLatestJob(bohdan.userId, { applicationId, resumeVersionId }),
       repository.saveScore(bohdan.userId, write),
     ]);
     const asOlena = await Promise.all([
       repository.findLatest(olena.userId, { applicationId, resumeVersionId }),
+      repository.findLatestJob(olena.userId, { applicationId, resumeVersionId }),
       repository.saveScore(olena.userId, write),
     ]);
 
-    expect(asBohdan).toEqual([null, null, 0]);
-    expect(asOlena).toEqual([expect.objectContaining({ finishedAt: NOW }), 1]);
+    expect(asBohdan).toEqual([null, null, null, 0]);
+    expect(asOlena).toEqual([
+      expect.objectContaining({ finishedAt: NOW }),
+      { id: aiJobId, status: 'done' },
+      1,
+    ]);
     expect(await scoreOf(applicationId)).toBe(40);
   });
 

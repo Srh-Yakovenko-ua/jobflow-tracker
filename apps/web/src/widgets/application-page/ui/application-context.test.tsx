@@ -1,7 +1,8 @@
 import { screen, within } from '@testing-library/react';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
 import { ACME_APPLICATION } from '@/test/application-fixtures';
+import { pinClockInEachTest } from '@/test/pinned-clock';
 import { renderApplicationPage } from '@/test/render-application-page';
 
 vi.mock('next/navigation', () => import('@/test/navigation'));
@@ -18,14 +19,7 @@ async function contextRows(): Promise<[string | null, string | null][]> {
 }
 
 describe('ApplicationContext', () => {
-  beforeEach(() => {
-    vi.useFakeTimers({ toFake: ['Date'] });
-    vi.setSystemTime(NOW);
-  });
-
-  afterEach(() => {
-    vi.useRealTimers();
-  });
+  pinClockInEachTest(NOW);
 
   it('reads the source and the days in the funnel, and says мало даних where no norm is known yet', async () => {
     renderApplicationPage();

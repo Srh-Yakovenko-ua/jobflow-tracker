@@ -1,6 +1,7 @@
 export { MatchModule, MatchTriggerModule, MatchWorkerModule } from './match.module.js';
 export { MATCH_OPENAPI_PATHS } from './match.openapi.js';
 export type {
+  LatestMatchJob,
   LatestMatchRow,
   LinkedVersion,
   MatchScoreWrite,

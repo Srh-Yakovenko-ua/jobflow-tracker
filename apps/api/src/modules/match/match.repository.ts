@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 
 import type { Prisma } from '../../generated/prisma/client.js';
 import type { InTransaction } from '../../prisma/in-transaction.js';
+import { LATEST_AI_JOB_SELECT } from '../../prisma/latest-ai-job.js';
 import { PrismaService } from '../../prisma/prisma.service.js';
 
 const MATCH_SOURCE_SELECT = {
@@ -22,6 +23,8 @@ const LATEST_MATCH_SELECT = {
 export type MatchSource = Prisma.ApplicationGetPayload<{ select: typeof MATCH_SOURCE_SELECT }>;
 
 export type LatestMatchRow = Prisma.AiJobGetPayload<{ select: typeof LATEST_MATCH_SELECT }>;
+
+export type LatestMatchJob = Prisma.AiJobGetPayload<{ select: typeof LATEST_AI_JOB_SELECT.select }>;
 
 export type LinkedVersion = { applicationId: string; resumeVersionId: string };
 
@@ -78,6 +81,16 @@ export class MatchRepository {
       },
       orderBy: [{ finishedAt: 'desc' }, { id: 'desc' }],
       select: LATEST_MATCH_SELECT,
+    });
+  }
+
+  findLatestJob(
+    userId: string,
+    { applicationId, resumeVersionId }: LinkedVersion,
+  ): Promise<LatestMatchJob | null> {
+    return this.prisma.aiJob.findFirst({
+      where: { userId, applicationId, resumeVersionId, kind: 'match' },
+      ...LATEST_AI_JOB_SELECT,
     });
   }
 

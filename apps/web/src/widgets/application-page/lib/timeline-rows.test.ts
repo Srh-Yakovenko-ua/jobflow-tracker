@@ -86,6 +86,32 @@ describe('timelineRowsOf', () => {
     ]);
   });
 
+  it('the applied row names the linked CV when no CV was attached later', () => {
+    const rows = timelineRowsOf({
+      items: DESIGN_TIMELINE.items,
+      application: DESIGN_TIMELINE_APPLICATION,
+      linkedVersion: { number: 2 },
+    });
+
+    expect(rows.map(({ title }) => title)).toContain('відгук надіслано · CV v2');
+    expect(rows.filter(({ title }) => title.includes('CV v'))).toHaveLength(1);
+  });
+
+  it('the applied row names no CV once the timeline shows a CV attached after it', () => {
+    const attached = itemOf({
+      type: 'resume_attached',
+      meta: { resumeVersionId: fixtureIdOf(503) },
+      title: 'Прикріплено CV v3 · для дизайн-ролей',
+    });
+    const rows = timelineRowsOf({
+      items: [attached, ...DESIGN_TIMELINE.items],
+      application: DESIGN_TIMELINE_APPLICATION,
+      linkedVersion: { number: 3 },
+    });
+
+    expect(rows.map(({ title }) => title)).toContain('відгук надіслано');
+  });
+
   it('each row keeps the id and the time of its item', () => {
     const rows = timelineRowsOf({
       items: DESIGN_TIMELINE.items,

@@ -60,18 +60,30 @@ describe('matchBreakdownSchema', () => {
   });
 });
 
+const QUEUED_JOB = { id: '01920000-0000-7000-8000-000000000070', status: 'queued' };
+
 describe('applicationMatchResponseSchema', () => {
   it.for([
-    { label: 'no match computed yet', body: { match: null } },
-    { label: 'a match against a resume version', body: { match: MATCH } },
+    { label: 'no match and no match job yet', body: { match: null, job: null } },
+    { label: 'a match job queued for the linked version', body: { match: null, job: QUEUED_JOB } },
+    { label: 'a match against a resume version', body: { match: MATCH, job: null } },
   ])('accepts $label', ({ body }) => {
     expect(applicationMatchResponseSchema.parse(body)).toEqual(body);
   });
 
-  it('refuses a computedAt that is not an ISO date-time', () => {
-    const result = applicationMatchResponseSchema.safeParse({
-      match: { ...MATCH, computedAt: '14.08.2026' },
-    });
-    expect(issuePathsOf(result)).toEqual(['match.computedAt']);
+  it.for([
+    {
+      label: 'a computedAt that is not an ISO date-time',
+      body: { match: { ...MATCH, computedAt: '14.08.2026' }, job: null },
+      path: 'match.computedAt',
+    },
+    {
+      label: 'an unknown match job status',
+      body: { match: null, job: { ...QUEUED_JOB, status: 'running' } },
+      path: 'job.status',
+    },
+    { label: 'a body without the job field', body: { match: null }, path: 'job' },
+  ])('refuses $label at $path', ({ body, path }) => {
+    expect(issuePathsOf(applicationMatchResponseSchema.safeParse(body))).toEqual([path]);
   });
 });
