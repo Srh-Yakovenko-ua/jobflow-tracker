@@ -2,12 +2,19 @@ import {
   AI_PAYLOAD_FIELDS,
   type Application,
   type Contact,
+  matchInputSchema,
   type NoteInput,
   resumeParseInputSchema,
 } from '@jobflow/shared';
 import { describe, expect, it } from 'vitest';
 
-import { PRIVATE_NOTE, RECRUITER_CHANNELS, VACANCY_TEXT } from '../../test/ai.js';
+import {
+  MATCH_PROFILE,
+  PRIVATE_NOTE,
+  RECRUITER_CHANNELS,
+  RESUME_PROFILE,
+  VACANCY_TEXT,
+} from '../../test/ai.js';
 import {
   RESUME_TEXT,
   SCAN_EXTRACTION,
@@ -53,6 +60,40 @@ describe('AI_PAYLOAD_BUILDERS.resume_parse', () => {
 
     expect(sent).toBe(`React${'a'.repeat(39_994)}�`);
     expect(resumeParseInputSchema.safeParse({ text: sent, pages: [] }).success).toBe(true);
+  });
+});
+
+describe('AI_PAYLOAD_BUILDERS.match', () => {
+  const SOURCE = { position: 'Senior React developer', stack: ['React'], rawText: VACANCY_TEXT };
+
+  it('sends the vacancy fields and only the skills, years, levels and lead flag of the stored profile', () => {
+    const payload = AI_PAYLOAD_BUILDERS.match({ ...SOURCE, profile: RESUME_PROFILE });
+
+    expect(payload).toEqual({
+      vacancy: { position: 'Senior React developer', stack: ['React'], text: VACANCY_TEXT },
+      profile: MATCH_PROFILE,
+    });
+    expect(Object.keys(payload)).toEqual(AI_PAYLOAD_FIELDS.match);
+    expect(JSON.stringify(payload.profile)).not.toMatch(/Acme|Frontend developer|positions/);
+  });
+
+  it.each([
+    { rawText: null, case: 'no vacancy text' },
+    { rawText: ' \n\t ', case: 'a blank vacancy text' },
+  ])('sends an empty text for $case so position and stack still score', ({ rawText }) => {
+    const payload = AI_PAYLOAD_BUILDERS.match({ ...SOURCE, rawText, profile: RESUME_PROFILE });
+
+    expect(payload.vacancy.text).toBe('');
+    expect(matchInputSchema.safeParse(payload).success).toBe(true);
+  });
+
+  it('cuts a long vacancy text at 20000 characters', () => {
+    const rawText = `React ${'a'.repeat(30_000)}`;
+
+    const payload = AI_PAYLOAD_BUILDERS.match({ ...SOURCE, rawText, profile: RESUME_PROFILE });
+
+    expect(payload.vacancy.text).toHaveLength(20_000);
+    expect(matchInputSchema.safeParse(payload).success).toBe(true);
   });
 });
 

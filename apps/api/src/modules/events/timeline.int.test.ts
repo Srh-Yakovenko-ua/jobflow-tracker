@@ -19,7 +19,7 @@ import {
 } from '../../test/applications.js';
 import { accessTokenFor, OLENA, signUp } from '../../test/auth.js';
 import { createOwnedApplication, createStageEvents, createUser } from '../../test/factories.js';
-import { callRoute } from '../../test/http.js';
+import { callRoute, statusAndType } from '../../test/http.js';
 import { APPLICATION_NOT_FOUND, MISSING_ID, TO_SCREENING } from '../../test/service-fixtures.js';
 import { NOW, settableClock } from '../../test/time.js';
 import type { OccurrencesQuery } from './timeline.repository.js';
@@ -230,9 +230,7 @@ describe('the application timeline', () => {
       getTimeline({ accessToken, id: 'not-a-uuid' }),
     ]);
 
-    expect(
-      responses.map(({ status, body }) => [status, errorResponseSchema.parse(body).type]),
-    ).toEqual([
+    expect(responses.map(statusAndType)).toEqual([
       [401, 'unauthorized'],
       [404, 'not_found'],
       [422, 'validation_error'],

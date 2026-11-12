@@ -4,6 +4,8 @@ import pytest
 
 from app.providers.fake import FIXTURES, FakeAiProvider
 from tests.factories import (
+    MATCH_FIXTURE,
+    MATCH_PATH,
     PARSED_VACANCY,
     PII_RESUME,
     SCRUBBED_RESUME,
@@ -11,6 +13,7 @@ from tests.factories import (
     VACANCY_BODY,
     build_app,
     failing_vacancy,
+    match_body,
     post_as_worker,
     post_completion,
     settings_for,
@@ -39,6 +42,28 @@ async def test_returns_the_fixture_output_with_model_and_prompt_version() -> Non
         "tokensIn": 100,
         "tokensOut": 50,
     }
+
+
+async def test_returns_the_match_requirements_without_a_score() -> None:
+    fake = FakeAiProvider()
+
+    response = await post_as_worker(
+        MATCH_PATH, match_body(), app=build_app(provider=fake)
+    )
+
+    body = response.json()
+    assert isinstance(body.pop("latencyMs"), int)
+    assert (response.status_code, body, fake.requests[0].kind) == (
+        200,
+        {
+            "output": MATCH_FIXTURE,
+            "model": "fake",
+            "promptVersion": "v3",
+            "tokensIn": 100,
+            "tokensOut": 50,
+        },
+        "match",
+    )
 
 
 async def test_marks_an_invented_company_check_when_the_text_lacks_its_quote() -> None:

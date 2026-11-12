@@ -17,6 +17,7 @@ import { HealthModule } from './modules/health/index.js';
 import { JobsModule } from './modules/jobs/index.js';
 import { LiveStreamModule } from './modules/live/index.js';
 import { MaintenanceModule } from './modules/maintenance/index.js';
+import { MatchModule } from './modules/match/index.js';
 import { NotesModule } from './modules/notes/index.js';
 import { ResumesModule } from './modules/resumes/index.js';
 import { ScheduleModule } from './modules/schedule/index.js';
@@ -49,6 +50,7 @@ import { RedisModule } from './redis/redis.module.js';
     AiModule,
     CaptureModule,
     ResumesModule,
+    MatchModule,
     JobsModule,
     LiveStreamModule,
   ],

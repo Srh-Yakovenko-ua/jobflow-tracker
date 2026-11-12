@@ -2,6 +2,7 @@ import { applicationResponseSchema } from '@jobflow/shared';
 import { buildVacancyParseOutput } from '@jobflow/shared/testing';
 import { describe, expect, it } from 'vitest';
 
+import { AI_RESULTS_PATH } from '../../test/ai.js';
 import { useTestApp } from '../../test/app.js';
 import { applicationPath, signedInWithSearch } from '../../test/applications.js';
 import {
@@ -13,8 +14,6 @@ import {
 } from '../../test/factories.js';
 import { callRoute } from '../../test/http.js';
 import { minutesBefore, NOW } from '../../test/time.js';
-
-const AI_RESULTS_PATH = '/api/v1/ai-results';
 
 const EARLIER = minutesBefore(60);
 

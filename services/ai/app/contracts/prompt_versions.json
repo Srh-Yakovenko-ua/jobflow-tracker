@@ -1,4 +1,5 @@
 {
   "vacancy_parse": "v2",
-  "resume_parse": "v1"
+  "resume_parse": "v1",
+  "match": "v3"
 }

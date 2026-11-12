@@ -1,10 +1,17 @@
-import { type AiKind, vacancyParseFailure, vacancyParseOutputSchema } from '@jobflow/shared';
+import {
+  type AiKind,
+  matchFailure,
+  matchOutputSchema,
+  vacancyParseFailure,
+  vacancyParseOutputSchema,
+} from '@jobflow/shared';
 
 import type { AiServiceError } from './ai-service-error.js';
 
 export const OUTPUT_FAILURES: Record<AiKind, (output: unknown) => string | null> = {
   vacancy_parse: (output) => vacancyParseFailure(vacancyParseOutputSchema.parse(output)),
   resume_parse: () => null,
+  match: (output) => matchFailure(matchOutputSchema.parse(output)),
 };
 
 export const FAILED_CALL = {

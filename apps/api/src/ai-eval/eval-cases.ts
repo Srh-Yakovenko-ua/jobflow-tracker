@@ -13,12 +13,18 @@ function describeRefusal(error: unknown): string {
   return error instanceof z.ZodError ? z.prettifyError(error) : String(error);
 }
 
+export type EvalFile<T> = { file: string; schema: z.ZodType<T> };
+
 function parseCase<T>(schema: z.ZodType<T>, { file, content }: { file: string; content: string }) {
   try {
-    return { file, ...schema.parse(JSON.parse(content)) };
+    return schema.parse(JSON.parse(content));
   } catch (error) {
     throw new Error(`Eval case ${file} is malformed: ${describeRefusal(error)}`, { cause: error });
   }
+}
+
+export async function loadEvalFile<T>(casesDir: string, { file, schema }: EvalFile<T>): Promise<T> {
+  return parseCase(schema, { file, content: await readFile(join(casesDir, file), 'utf8') });
 }
 
 export async function loadEvalCases<T extends object>(
@@ -30,8 +36,6 @@ export async function loadEvalCases<T extends object>(
     throw new Error(`No eval cases in ${casesDir}`);
   }
   return Promise.all(
-    files.map(async (file) =>
-      parseCase(schema, { file, content: await readFile(join(casesDir, file), 'utf8') }),
-    ),
+    files.map(async (file) => ({ file, ...(await loadEvalFile(casesDir, { file, schema })) })),
   );
 }

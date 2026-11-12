@@ -71,7 +71,8 @@ export class AiClient {
     options,
     requestId,
   }: AiCompleteCall): Promise<AiCompletion<AiKind>> {
-    const body = allowedBody(aiCompleteRequestSchemas[kind], { ...options, input });
+    const requestSchema: z.ZodType = aiCompleteRequestSchemas[kind];
+    const body = allowedBody(requestSchema, { ...options, input });
     const completion = await this.post({ path: `/v1/complete/${kind}`, body, requestId });
     const schema: z.ZodType<AiCompletion<AiKind>> = aiCompletionSchemas[kind];
     return checked(schema, {

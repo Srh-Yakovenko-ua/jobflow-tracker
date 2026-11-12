@@ -11,7 +11,11 @@ from tests.factories import settings_for
 
 
 def test_reads_the_prompt_versions_exported_from_the_shared_package() -> None:
-    assert load_prompt_versions() == {"vacancy_parse": "v2", "resume_parse": "v1"}
+    assert load_prompt_versions() == {
+        "vacancy_parse": "v2",
+        "resume_parse": "v1",
+        "match": "v3",
+    }
 
 
 def test_refuses_to_boot_when_a_prompt_version_differs_from_ai_prompt_versions(

@@ -77,6 +77,26 @@ PROFILED_RESUME = {
 }
 
 
+MATCH_PATH = "/v1/complete/match"
+MATCH_FIXTURE: dict[str, Any] = json.loads(fixture_of("match"))
+MATCH_PROFILE = {
+    "totalYears": 6.0,
+    "seniority": "senior",
+    "englishLevel": "upper_intermediate",
+    "domains": ["e-commerce"],
+    "languages": [{"name": "English", "level": "B2"}],
+    "skills": [{"name": "React", "years": 6.0}, {"name": "Node.js", "years": 4.0}],
+    "leadership": {"hasExperience": False},
+}
+
+
+def match_body(
+    *, text: str = VACANCY_TEXT, position: str = "Senior React developer"
+) -> Any:
+    vacancy = {"position": position, "stack": ["React", "AWS"], "text": text}
+    return {"input": {"vacancy": vacancy, "profile": MATCH_PROFILE}}
+
+
 PII_RESUME = (
     "Olena Koval, React developer\n"
     "olena.koval@example.com | +380 67 123 45 67 | @olena_dev\n"

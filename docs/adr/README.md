@@ -28,3 +28,4 @@ New records start from [the template](0000-template.md) and take the next free n
 | [0016](0016-document-service.md)            | A stateless document service for resume files                             | accepted | 2026-11-12 |
 | [0017](0017-nestjs-for-the-api.md)          | NestJS for the API                                                        | accepted | 2026-10-19 |
 | [0018](0018-ai-as-a-python-service.md)      | AI as a Python service                                                    | accepted | 2026-10-19 |
+| [0019](0019-hybrid-match-score.md)          | Hybrid Match Score, the model maps and code scores                        | accepted | 2026-11-12 |

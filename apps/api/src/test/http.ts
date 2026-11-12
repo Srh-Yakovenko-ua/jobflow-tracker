@@ -27,3 +27,8 @@ export const statusAndDetail = ({ status, body }: Response) => [
   status,
   errorResponseSchema.safeParse(body).data?.detail,
 ];
+
+export const statusAndType = ({ status, body }: Pick<Response, 'status' | 'body'>) => [
+  status,
+  errorResponseSchema.parse(body).type,
+];

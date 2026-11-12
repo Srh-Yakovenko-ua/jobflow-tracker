@@ -46,6 +46,12 @@ export class SilentQueue extends StubQueue {
   }
 }
 
+export class RefusingQueue extends StubQueue {
+  override add(): Promise<never> {
+    return Promise.reject(new Error('Connection is closed.'));
+  }
+}
+
 export class HeldStubQueue extends StubQueue {
   private openGate: () => void = () => undefined;
 

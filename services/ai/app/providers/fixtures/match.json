@@ -1,0 +1,11 @@
+{
+  "requirements": [
+    { "name": "React + TypeScript", "weight": "must", "coverage": "full" },
+    { "name": "Node.js у проді", "weight": "must", "coverage": "full" },
+    { "name": "GraphQL", "weight": "nice", "coverage": "partial" },
+    { "name": "AWS / інфраструктура", "weight": "must", "coverage": "missing" },
+    { "name": "Досвід ліда команди 3+", "weight": "nice", "coverage": "missing" },
+    { "name": "Домен fintech", "weight": "mentioned", "coverage": "missing" }
+  ],
+  "explanation": "Стек збігається, бракує AWS і досвіду ліда."
+}

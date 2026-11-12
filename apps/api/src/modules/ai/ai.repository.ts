@@ -31,7 +31,10 @@ export type FailAiJob = AiJobChange & { errorType: string };
 
 export type AiJobFailure = Pick<FailAiJob, 'id' | 'errorType'>;
 
-export type AiJobTarget = { applicationId: string } | { resumeVersionId: string };
+export type AiJobTarget =
+  | { applicationId: string }
+  | { resumeVersionId: string }
+  | { applicationId: string; resumeVersionId: string };
 
 export type CreateAiJob = InTransaction & { kind: AiKind } & AiJobTarget;
 

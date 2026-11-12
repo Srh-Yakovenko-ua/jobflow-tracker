@@ -7,6 +7,7 @@ import { AiWorkerModule } from './modules/ai/index.js';
 import { ApplicationsWorkerModule } from './modules/applications/index.js';
 import { CaptureWorkerModule } from './modules/capture/index.js';
 import { MaintenanceWorkerModule } from './modules/maintenance/index.js';
+import { MatchWorkerModule } from './modules/match/index.js';
 import { ResumesWorkerModule } from './modules/resumes/index.js';
 import { PrismaModule } from './prisma/prisma.module.js';
 import { QueuesModule } from './queues/queues.module.js';
@@ -22,6 +23,7 @@ import { QueuesModule } from './queues/queues.module.js';
     ApplicationsWorkerModule,
     CaptureWorkerModule,
     ResumesWorkerModule,
+    MatchWorkerModule,
   ],
 })
 export class WorkerModule {}

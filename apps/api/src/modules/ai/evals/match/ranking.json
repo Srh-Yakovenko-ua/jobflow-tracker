@@ -1,0 +1,19 @@
+{
+  "ranks": [
+    { "file": "14-dou-en-fullstack-hybrid-kyiv.json", "rank": 1 },
+    { "file": "01-djinni-uk-react-net-no-currency.json", "rank": 2 },
+    { "file": "08-djinni-ru-node-team-lead.json", "rank": 3 },
+    { "file": "04-djinni-en-qa-no-salary.json", "rank": 4 },
+    { "file": "07-dou-ru-php-net-uah.json", "rank": 5 },
+    { "file": "02-djinni-uk-python-gross-uah.json", "rank": 6 },
+    { "file": "12-dou-uk-requirements-only.json", "rank": 6 },
+    { "file": "06-djinni-ru-go-remote.json", "rank": 8 },
+    { "file": "03-dou-en-java-eur.json", "rank": 9 },
+    { "file": "05-dou-uk-dotnet-hybrid-dnipro.json", "rank": 9 },
+    { "file": "09-dou-en-data-engineer-lviv-office.json", "rank": 11 },
+    { "file": "10-djinni-en-devops-gross-usd.json", "rank": 12 },
+    { "file": "15-djinni-en-ml-engineer.json", "rank": 12 },
+    { "file": "13-djinni-uk-product-designer.json", "rank": 14 },
+    { "file": "11-djinni-uk-flutter-junior.json", "rank": 15 }
+  ]
+}
