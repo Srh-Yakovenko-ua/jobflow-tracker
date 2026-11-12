@@ -1,12 +1,14 @@
 import { Injectable } from '@nestjs/common';
 
 import type { Prisma } from '../../generated/prisma/client.js';
+import type { InTransaction } from '../../prisma/in-transaction.js';
 import { PrismaService } from '../../prisma/prisma.service.js';
 
 const MATCH_SOURCE_SELECT = {
   position: true,
   stack: true,
   rawText: true,
+  isDraft: true,
   resumeVersionId: true,
   resumeVersion: { select: { aiProfile: true } },
 } satisfies Prisma.ApplicationSelect;
@@ -23,7 +25,7 @@ export type LatestMatchRow = Prisma.AiJobGetPayload<{ select: typeof LATEST_MATC
 
 export type LinkedVersion = { applicationId: string; resumeVersionId: string };
 
-export type MatchScoreWrite = LinkedVersion & { score: number };
+export type MatchScoreWrite = LinkedVersion & InTransaction & { score: number; aiJobId: string };
 
 @Injectable()
 export class MatchRepository {
@@ -38,10 +40,16 @@ export class MatchRepository {
 
   async saveScore(
     userId: string,
-    { applicationId, resumeVersionId, score }: MatchScoreWrite,
+    { applicationId, resumeVersionId, score, aiJobId, tx = this.prisma }: MatchScoreWrite,
   ): Promise<number> {
-    const { count } = await this.prisma.application.updateMany({
-      where: { id: applicationId, userId, deletedAt: null, resumeVersionId },
+    const { count } = await tx.application.updateMany({
+      where: {
+        id: applicationId,
+        userId,
+        deletedAt: null,
+        resumeVersionId,
+        aiJobs: { none: { kind: 'match', id: { gt: aiJobId }, status: { not: 'failed' } } },
+      },
       data: { matchScore: score },
     });
     return count;
@@ -71,5 +79,42 @@ export class MatchRepository {
       orderBy: [{ finishedAt: 'desc' }, { id: 'desc' }],
       select: LATEST_MATCH_SELECT,
     });
+  }
+
+  async linkUnlinked(userId: string, resumeVersionId: string): Promise<number> {
+    const { count } = await this.prisma.application.updateMany({
+      where: {
+        userId,
+        deletedAt: null,
+        resumeVersionId: null,
+        user: { settings: { activeResumeVersionId: resumeVersionId } },
+      },
+      data: { resumeVersionId },
+    });
+    return count;
+  }
+
+  async findLinkedIds(userId: string, resumeVersionId: string): Promise<string[]> {
+    const rows = await this.prisma.application.findMany({
+      where: { userId, resumeVersionId, deletedAt: null },
+      select: { id: true },
+    });
+    return rows.map(({ id }) => id);
+  }
+
+  async findActiveVersionId(userId: string): Promise<string | null> {
+    const settings = await this.prisma.userSettings.findUnique({
+      where: { userId },
+      select: { activeResumeVersionId: true },
+    });
+    return settings?.activeResumeVersionId ?? null;
+  }
+
+  async findScorableIds(userId: string): Promise<string[]> {
+    const rows = await this.prisma.application.findMany({
+      where: { userId, deletedAt: null, isDraft: false },
+      select: { id: true },
+    });
+    return rows.map(({ id }) => id);
   }
 }

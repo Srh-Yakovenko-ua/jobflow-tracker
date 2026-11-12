@@ -1,13 +1,7 @@
 import { getQueueToken } from '@nestjs/bullmq';
 import { beforeEach, describe, expect, it } from 'vitest';
 
-import {
-  AI_JOB_ID,
-  FakeAiRepository,
-  MATCH_PROFILE,
-  RESUME_PROFILE,
-  VACANCY_TEXT,
-} from '../../test/ai.js';
+import { AI_JOB_ID, FakeAiRepository, MATCH_PROFILE, VACANCY_TEXT } from '../../test/ai.js';
 import { FakeMatchRepository, MATCH_SOURCE } from '../../test/match.js';
 import { memoryLog } from '../../test/memory-log.js';
 import { compileProcessorModule } from '../../test/processor.js';
@@ -19,7 +13,7 @@ import {
 } from '../../test/service-fixtures.js';
 import { RefusingQueue, SilentQueue, StubQueue } from '../../test/stub-queues.js';
 import { AiService } from '../ai/index.js';
-import { MatchRepository } from './match.repository.js';
+import { MatchRepository, type MatchSource } from './match.repository.js';
 import { MatchQueueService } from './match-queue.service.js';
 
 const log = memoryLog();
@@ -81,16 +75,22 @@ describe('MatchQueueService.request', () => {
     expect([ai.jobs.size, queue.jobs.length]).toEqual([0, 0]);
   });
 
-  it.each([
-    { case: 'while the linked version has no AI profile yet', userId: OLENA_ID, aiProfile: null },
+  it.each<{ case: string; userId: string; source: Partial<MatchSource> }>([
     {
-      case: "for another user's or a deleted application",
-      userId: BOHDAN_ID,
-      aiProfile: RESUME_PROFILE,
+      case: 'while the linked version has no AI profile yet',
+      userId: OLENA_ID,
+      source: { resumeVersion: { aiProfile: null } },
     },
-  ])('queues no job and clears nothing $case', async ({ userId, aiProfile }) => {
+    { case: "for another user's or a deleted application", userId: BOHDAN_ID, source: {} },
+    { case: 'for a draft', userId: OLENA_ID, source: { isDraft: true } },
+    {
+      case: 'for a draft with no CV linked',
+      userId: OLENA_ID,
+      source: { isDraft: true, resumeVersionId: null, resumeVersion: null },
+    },
+  ])('queues no job and clears nothing $case', async ({ userId, source }) => {
     const { queue, repository, ai, request } = await serviceWith();
-    repository.source = { ...MATCH_SOURCE, resumeVersion: { aiProfile } };
+    repository.source = { ...MATCH_SOURCE, ...source };
 
     expect(await request(userId)).toBeNull();
 

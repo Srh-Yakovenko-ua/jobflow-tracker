@@ -14,6 +14,8 @@ export type { ApplicationEvent } from './applications.events.js';
 export {
   APPLICATION_EVENTS,
   applicationCaptureRequestedPayloadSchema,
+  applicationCreatedPayloadSchema,
+  applicationUpdatedPayloadSchema,
 } from './applications.events.js';
 export { ApplicationsModule, ApplicationsWorkerModule } from './applications.module.js';
 export { APPLICATIONS_OPENAPI_PATHS } from './applications.openapi.js';

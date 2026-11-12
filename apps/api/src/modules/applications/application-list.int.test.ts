@@ -506,6 +506,18 @@ describe('the application list and board routes', () => {
     });
   });
 
+  it('keeps aiStatus and aiJobId on the vacancy_parse job when a newer match job exists', async () => {
+    const olena = await signedInWithSearch(testApp.prisma);
+    const [id = ''] = await rowsFor(olena, [{ lastEventAt: daysBefore(1) }]);
+    const jobOfCard = { userId: olena.userId, applicationId: id };
+    const parseJobId = await createAiJob(testApp.prisma, { ...jobOfCard, status: 'done' });
+    await createAiJob(testApp.prisma, { ...jobOfCard, kind: 'match', status: 'processing' });
+
+    const list = await listApplications(testApp.app, { accessToken: olena.accessToken });
+
+    expect(list.items[0]).toMatchObject({ id, aiStatus: 'done', aiJobId: parseJobId });
+  });
+
   it.each([
     { path: APPLICATIONS_PATH, query: { stage: 'hired' }, error: 'stage.0' },
     { path: APPLICATIONS_PATH, query: { limit: '0' }, error: 'limit' },

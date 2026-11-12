@@ -44,6 +44,8 @@ export type ExtractedText = { id: string; text: string };
 
 export type ResumeProfile = { id: string; profile: Prisma.InputJsonValue };
 
+export type SaveResumeProfile = InTransaction & ResumeProfile;
+
 export type ResumeVersionRow = Prisma.ResumeVersionGetPayload<{
   select: typeof RESUME_VERSION_SELECT;
 }>;
@@ -153,8 +155,11 @@ export class ResumeVersionsRepository {
     return count;
   }
 
-  async saveProfile(userId: string, { id, profile }: ResumeProfile): Promise<number> {
-    const { count } = await this.prisma.resumeVersion.updateMany({
+  async saveProfile(
+    userId: string,
+    { id, profile, tx = this.prisma }: SaveResumeProfile,
+  ): Promise<number> {
+    const { count } = await tx.resumeVersion.updateMany({
       where: { id, userId },
       data: { aiProfile: profile },
     });

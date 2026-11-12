@@ -1,6 +1,7 @@
 import { z } from 'zod';
 
 import { scheduledEventKindSchema, scheduledEventSlotSchema } from './scheduled-events.js';
+import { matchBreakdownSchema } from './schemas/match.js';
 import { resumeVersionIdSchema, resumeVersionLabelSchema } from './schemas/resume-version.js';
 
 export const TIMELINE_EVENT_KINDS = [
@@ -14,6 +15,7 @@ export const TIMELINE_EVENT_KINDS = [
   'note_added',
   'resume_attached',
   'draft_confirmed',
+  'match_scored',
 ] as const;
 
 export const timelineEventKindSchema = z.enum(TIMELINE_EVENT_KINDS);
@@ -50,6 +52,7 @@ export const timelineRecordSchema = z.discriminatedUnion('kind', [
     ...resumeVersionLabelSchema.shape,
   }),
   timelineRecordOf('draft_confirmed', {}),
+  timelineRecordOf('match_scored', matchBreakdownSchema.pick({ score: true }).shape),
 ]);
 
 export type TimelineRecord = z.infer<typeof timelineRecordSchema>;

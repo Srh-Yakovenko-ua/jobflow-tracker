@@ -26,7 +26,7 @@ export class MatchQueueService {
 
   async request(userId: string, { applicationId }: MatchRequest): Promise<string | null> {
     const source = await this.repository.findSource(userId, applicationId);
-    if (source === null) {
+    if (source === null || source.isDraft) {
       return null;
     }
     const { resumeVersionId } = source;

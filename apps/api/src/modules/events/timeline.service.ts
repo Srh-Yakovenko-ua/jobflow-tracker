@@ -37,4 +37,11 @@ export class TimelineService {
       throw notFound(APPLICATION_NOT_FOUND);
     }
   }
+
+  async recordFirst(userId: string, entry: TimelineEntry): Promise<void> {
+    if (await this.repository.hasKind(userId, entry)) {
+      return;
+    }
+    await this.record(userId, entry);
+  }
 }

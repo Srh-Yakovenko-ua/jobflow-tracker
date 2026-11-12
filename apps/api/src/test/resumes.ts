@@ -7,9 +7,15 @@ import {
 } from '@jobflow/shared';
 import type { NestExpressApplication } from '@nestjs/platform-express';
 
-import type { ExtractedText, ProfileSource, ResumeProfile } from '../modules/resumes/index.js';
+import type {
+  ExtractedText,
+  ProfileSource,
+  RecordResumeEvent,
+  ResumeProfile,
+} from '../modules/resumes/index.js';
 import { applicationPath } from './applications.js';
 import { callRoute } from './http.js';
+import { RecordedEvents } from './recorded-events.js';
 import { OLENA_ID, RESUME_VERSION_ID, RESUME_VERSION_ROW } from './service-fixtures.js';
 
 export const UPLOADS_PATH = '/api/v1/uploads/resume';
@@ -113,7 +119,7 @@ function keep<T>(saved: T[], item: T): number {
   return 1;
 }
 
-export class FakeProfileVersions {
+export class FakeProfileVersions extends RecordedEvents<RecordResumeEvent> {
   source: ProfileSource = PROFILE_SOURCE;
 
   readonly texts: ExtractedText[] = [];

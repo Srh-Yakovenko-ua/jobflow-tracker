@@ -27,6 +27,7 @@ const JOURNAL_ACTORS: Record<TimelineEventKind, TimelineActor> = {
   note_added: 'user',
   resume_attached: 'user',
   draft_confirmed: 'user',
+  match_scored: 'system',
 };
 
 function stageItem(event: StageEventRow, previous: StageEventRow | undefined): TimelineItem {

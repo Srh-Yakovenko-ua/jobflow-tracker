@@ -40,6 +40,7 @@ const RECORD_TITLES: RecordTitles = {
   note_added: () => NOTE_TITLE,
   resume_attached: (payload) => `Прикріплено ${resumeVersionLabel(payload)}`,
   draft_confirmed: () => 'Поля перевірено вручну',
+  match_scored: ({ score }) => `Обчислено Match Score: ${String(score)}`,
 };
 
 export function recordTitle<Kind extends keyof PayloadOf>({

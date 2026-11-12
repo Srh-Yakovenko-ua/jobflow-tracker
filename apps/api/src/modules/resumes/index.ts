@@ -5,6 +5,7 @@ export { ResumeProfileSubscriber } from './resume-profile-subscriber.service.js'
 export type {
   ExtractedText,
   ProfileSource,
+  RecordResumeEvent,
   ResumeProfile,
   ResumeVersionRow,
 } from './resume-versions.repository.js';
@@ -12,6 +13,8 @@ export {
   RESUME_EVENTS,
   type ResumeAttachedPayload,
   resumeAttachedPayloadSchema,
+  type ResumeVersionProfiledPayload,
+  resumeVersionProfiledPayloadSchema,
   type ResumeVersionUploadedPayload,
   resumeVersionUploadedPayloadSchema,
 } from './resumes.events.js';

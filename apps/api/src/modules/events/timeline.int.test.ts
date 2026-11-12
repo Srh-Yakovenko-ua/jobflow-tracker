@@ -20,6 +20,7 @@ import {
 import { accessTokenFor, OLENA, signUp } from '../../test/auth.js';
 import { createOwnedApplication, createStageEvents, createUser } from '../../test/factories.js';
 import { callRoute, statusAndType } from '../../test/http.js';
+import { matchScoredEntry } from '../../test/match.js';
 import { APPLICATION_NOT_FOUND, MISSING_ID, TO_SCREENING } from '../../test/service-fixtures.js';
 import { NOW, settableClock } from '../../test/time.js';
 import type { OccurrencesQuery } from './timeline.repository.js';
@@ -250,6 +251,20 @@ describe('the application timeline', () => {
       }),
     ).rejects.toMatchObject(APPLICATION_NOT_FOUND);
     expect(await journalRowCount(olena.applicationId)).toBe(0);
+  });
+
+  it("writes OLENA's first match_scored row once and refuses BOHDAN's on her application with 404", async () => {
+    const { userId, applicationId } = await createOwnedApplication(testApp.prisma);
+    const bohdan = await createUser(testApp.prisma);
+    const entry = matchScoredEntry(applicationId);
+
+    await timeline().recordFirst(userId, entry);
+    await timeline().recordFirst(userId, { ...entry, payload: { score: 71 } });
+
+    await expect(timeline().recordFirst(bohdan.id, entry)).rejects.toMatchObject(
+      APPLICATION_NOT_FOUND,
+    );
+    expect(await journalRowCount(applicationId)).toBe(1);
   });
 
   it('gives OLENA the occurrences of the asked kind only and BOHDAN none of them', async () => {

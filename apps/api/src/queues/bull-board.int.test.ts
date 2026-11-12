@@ -32,7 +32,7 @@ describe('Bull Board in development', () => {
     expect(directives.has('upgrade-insecure-requests')).toBe(false);
   });
 
-  it('lists the five queues read-only', async () => {
+  it('lists the six queues read-only', async () => {
     const response = await request(testApp.app.getHttpServer()).get('/admin/queues/api/queues');
 
     const { queues } = response.body as { queues: { name: string; readOnlyMode: boolean }[] };
@@ -43,6 +43,7 @@ describe('Bull Board in development', () => {
       { name: 'push', readOnlyMode: true },
       { name: 'domain-events', readOnlyMode: true },
       { name: 'maintenance', readOnlyMode: true },
+      { name: 'match', readOnlyMode: true },
     ]);
   });
 });

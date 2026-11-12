@@ -1,36 +1,22 @@
 import { UnrecoverableError } from 'bullmq';
-import { beforeAll, beforeEach, describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it } from 'vitest';
 
-import { DomainEventRouter } from '../../outbox/domain-event-router.js';
 import { RecordingLivePublisher } from '../../test/live.js';
-import { memoryLog } from '../../test/memory-log.js';
-import { compileProcessorModule } from '../../test/processor.js';
 import { APPLICATION_ID, MOVE_EVENT_ID, OLENA_ID } from '../../test/service-fixtures.js';
+import { useSubscribedRouter } from '../../test/subscriber.js';
 import { LivePublisher } from '../live/index.js';
 import { ApplicationLiveSubscriber } from './application-live.subscriber.js';
 
 const UPDATED = { userId: OLENA_ID, applicationId: APPLICATION_ID, fields: ['company', 'stack'] };
 
 describe('ApplicationLiveSubscriber', () => {
-  const log = memoryLog();
   const live = new RecordingLivePublisher();
-  let events: DomainEventRouter;
-
-  const route = (type: string, payload: unknown) =>
-    events.route({ id: MOVE_EVENT_ID, type, payload });
-
-  beforeAll(async () => {
-    const moduleRef = await compileProcessorModule(log.sink, [
-      ApplicationLiveSubscriber,
-      DomainEventRouter,
-      { provide: LivePublisher, useValue: live },
-    ]);
-    await moduleRef.init();
-    events = moduleRef.get(DomainEventRouter);
-  });
+  const { log, route } = useSubscribedRouter([
+    ApplicationLiveSubscriber,
+    { provide: LivePublisher, useValue: live },
+  ]);
 
   beforeEach(() => {
-    log.lines.length = 0;
     live.published.length = 0;
   });
 

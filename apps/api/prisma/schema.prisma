@@ -109,6 +109,7 @@ enum TimelineEventKind {
   note_added
   resume_attached
   draft_confirmed
+  match_scored
 
   @@map("timeline_event_kind")
 }

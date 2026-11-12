@@ -5,7 +5,12 @@ import { Logger } from '@nestjs/common';
 import { UnrecoverableError } from 'bullmq';
 
 import { OutboxRelayService } from '../../outbox/outbox-relay.service.js';
-import { failedJobFields, jobFields, type ProcessedJob } from '../../queues/processed-job.js';
+import {
+  failedJobFields,
+  jobFields,
+  type ProcessedJob,
+  warnWorkerError,
+} from '../../queues/processed-job.js';
 import { QUEUES } from '../../queues/queues.js';
 import {
   MAINTENANCE_JOBS,
@@ -49,10 +54,7 @@ export class MaintenanceProcessor extends WorkerHost {
 
   @OnWorkerEvent('error')
   onError(error: Error): void {
-    this.logger.warn(
-      { queue: QUEUES.maintenance.name, err: error.message },
-      'worker connection error',
-    );
+    warnWorkerError(this.logger, { queue: QUEUES.maintenance.name, error });
   }
 
   private async ping(job: ProcessedJob): Promise<void> {
