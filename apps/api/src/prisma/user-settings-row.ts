@@ -1,4 +1,6 @@
+import { TZDate } from '@date-fns/tz';
 import type { UserSettings } from '@jobflow/shared';
+import { format } from 'date-fns';
 
 import type { Prisma } from '../generated/prisma/client.js';
 
@@ -23,7 +25,7 @@ export type UserSettingsRow = Prisma.UserSettingsGetPayload<{
   select: typeof USER_SETTINGS_SELECT;
 }>;
 
-const clockTime = (time: Date) => time.toISOString().slice(11, 16);
+const clockTime = (time: Date) => format(new TZDate(time, 'UTC'), 'HH:mm');
 
 export function toUserSettings({
   quietHoursStart,

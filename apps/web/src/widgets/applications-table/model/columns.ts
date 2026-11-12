@@ -1,5 +1,6 @@
 import { type ApplicationListItem, SOURCE_LABELS, STAGES } from '@jobflow/shared';
 import { createColumnHelper, type SortingState } from '@tanstack/react-table';
+import { getTime } from 'date-fns';
 
 import { uk } from '@/shared/i18n';
 
@@ -37,7 +38,7 @@ const COMPANY_ORDER = new Intl.Collator(uk.locale, { numeric: true, sensitivity:
 const EMPTY_LAST = { sortUndefined: 'last' } as const;
 
 function instantOf(iso: string | null): number | undefined {
-  return iso === null ? undefined : Date.parse(iso);
+  return iso === null ? undefined : getTime(iso);
 }
 
 function salaryKeyOf({ salaryMin, salaryMax }: ApplicationListItem): number | undefined {
@@ -67,6 +68,6 @@ export const APPLICATION_COLUMNS = column.columns([
     id: 'appliedAt',
     ...EMPTY_LAST,
   }),
-  column.accessor((application) => Date.parse(application.lastEventAt), { id: 'lastEventAt' }),
+  column.accessor((application) => getTime(application.lastEventAt), { id: 'lastEventAt' }),
   column.accessor('daysInStage', { id: 'daysInStage' }),
 ]);

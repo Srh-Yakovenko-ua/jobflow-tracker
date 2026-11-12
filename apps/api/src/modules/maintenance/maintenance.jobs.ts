@@ -1,4 +1,5 @@
 import type { JobSchedulerTemplateOptions, RepeatOptions } from 'bullmq';
+import { milliseconds } from 'date-fns';
 import { z } from 'zod';
 
 export const MAINTENANCE_JOBS = {
@@ -29,14 +30,14 @@ export const MAINTENANCE_SCHEDULES: MaintenanceSchedule[] = [
   },
   {
     id: 'cleanup',
-    repeat: { every: 86_400_000 },
+    repeat: { every: milliseconds({ days: 1 }) },
     template: { name: MAINTENANCE_JOBS.cleanup, opts: TICK_JOB_OPTIONS },
   },
 ];
 
 export const maintenanceJobNameSchema = z.enum(MAINTENANCE_JOBS);
 
-export const PING_LIMITS = { maxHoldMs: 60_000 } as const;
+export const PING_LIMITS = { maxHoldMs: milliseconds({ minutes: 1 }) } as const;
 
 export const pingJobSchema = z.object({
   requestId: z.string().min(1),

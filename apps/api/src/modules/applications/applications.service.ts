@@ -6,8 +6,8 @@ import type {
   Stage,
 } from '@jobflow/shared';
 import { Injectable } from '@nestjs/common';
+import { milliseconds, subMilliseconds } from 'date-fns';
 
-import { addMinutes } from '../../common/add-minutes.js';
 import { conflict, notFound } from '../../common/app-error.js';
 import { Clock } from '../../common/clock.js';
 import { APPLICATION_NOT_FOUND, owned } from '../../common/owned.js';
@@ -45,8 +45,6 @@ type RecordedChange = {
 type DuplicateCheck = { probe: DuplicateProbe; now: Date };
 
 const FIRST_STAGE = 'applied' satisfies Stage;
-
-const DAY_MINUTES = 24 * 60;
 
 @Injectable()
 export class ApplicationsService {
@@ -118,7 +116,7 @@ export class ApplicationsService {
     userId: string,
     { probe, now }: DuplicateCheck,
   ): Promise<PossibleDuplicate[]> {
-    const since = addMinutes(now, -DUPLICATE_LIMITS.windowDays * DAY_MINUTES);
+    const since = subMilliseconds(now, milliseconds({ days: DUPLICATE_LIMITS.windowDays }));
     const rows = await this.duplicates.findPossible(userId, { ...probe, since });
     return rows.map(({ appliedAt, ...duplicate }) => ({
       ...duplicate,

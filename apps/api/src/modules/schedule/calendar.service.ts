@@ -1,7 +1,8 @@
+import { TZDate } from '@date-fns/tz';
 import type { CalendarItem, CalendarQuery, CalendarResponse } from '@jobflow/shared';
 import { Injectable } from '@nestjs/common';
+import { addMinutes, format } from 'date-fns';
 
-import { addMinutes } from '../../common/add-minutes.js';
 import { type FollowupRow, RemindersService } from '../reminders/index.js';
 import { scheduledEventTitle } from './scheduled-event-rules.js';
 import { type CalendarEventRow, ScheduledEventsRepository } from './scheduled-events.repository.js';
@@ -29,13 +30,13 @@ function eventItem(event: CalendarEventRow): CalendarItem {
 }
 
 function followupItemIn(timeZone: string) {
-  const calendarDate = new Intl.DateTimeFormat('en-CA', { timeZone });
+  const calendarDate = (date: Date) => format(new TZDate(date, timeZone), 'yyyy-MM-dd');
   return (followup: FollowupRow): CalendarItem => {
     const { id, applicationId, status, dueAt, snoozedUntil, application } = followup;
     return {
       id,
       title: `${FOLLOWUP_TITLE} · ${application.company}`,
-      start: calendarDate.format(status === 'snoozed' ? (snoozedUntil ?? dueAt) : dueAt),
+      start: calendarDate(status === 'snoozed' ? (snoozedUntil ?? dueAt) : dueAt),
       end: null,
       allDay: true,
       extendedProps: {

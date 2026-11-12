@@ -5,8 +5,7 @@ import {
   type ScheduledEventStatus,
   type Stage,
 } from '@jobflow/shared';
-
-import { addMinutes } from '../../common/add-minutes.js';
+import { addMinutes } from 'date-fns';
 
 export type ScheduledEventSlot = { status: ScheduledEventStatus; startsAt: Date };
 

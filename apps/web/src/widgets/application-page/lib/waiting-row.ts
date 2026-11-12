@@ -1,4 +1,5 @@
 import { type ApplicationResponse, effectiveSilenceDays, isActiveStage } from '@jobflow/shared';
+import { addMilliseconds, milliseconds } from 'date-fns';
 
 import { uk } from '@/shared/i18n';
 import { formatDayMonth } from '@/shared/lib/state-format';
@@ -14,9 +15,7 @@ export type WaitingRowInput = {
 const COPY = uk.timeline;
 
 function daysAfter(at: string, days: number): Date {
-  const later = new Date(at);
-  later.setUTCDate(later.getUTCDate() + days);
-  return later;
+  return addMilliseconds(at, milliseconds({ days }));
 }
 
 export function waitingRowOf({

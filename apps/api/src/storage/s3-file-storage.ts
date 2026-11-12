@@ -12,8 +12,8 @@ import {
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { RESUME_UPLOAD_LIMITS } from '@jobflow/shared';
 import type { OnModuleDestroy } from '@nestjs/common';
+import { addSeconds } from 'date-fns';
 
-import { addMinutes } from '../common/add-minutes.js';
 import { AppError, ERROR_TYPES } from '../common/app-error.js';
 import { DEPENDENCY_LIMITS } from '../common/probe.js';
 import type { AppConfig } from '../config/app-config.js';
@@ -96,7 +96,7 @@ async function orMissing<T>(call: Promise<T>): Promise<T | null> {
 const expiryOf = ({ signedAt, ttlSeconds }: Expiry) => ({
   signingDate: signedAt,
   expiresIn: ttlSeconds,
-  expiresAt: addMinutes(signedAt, ttlSeconds / 60),
+  expiresAt: addSeconds(signedAt, ttlSeconds),
 });
 
 const encodedFilename = (filename: string) =>

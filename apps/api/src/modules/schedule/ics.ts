@@ -1,6 +1,6 @@
 import type { ScheduledEventKind } from '@jobflow/shared';
+import { addMinutes } from 'date-fns';
 
-import { addMinutes } from '../../common/add-minutes.js';
 import { scheduledEventTitle, type TimedEvent } from './scheduled-event-rules.js';
 
 export type IcsEvent = TimedEvent & {

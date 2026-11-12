@@ -1,4 +1,5 @@
 import type { DefaultJobOptions, QueueOptions } from 'bullmq';
+import { secondsInDay } from 'date-fns/constants';
 
 import type { AppConfig } from '../config/app-config.js';
 
@@ -17,7 +18,7 @@ export const QUEUE_NAMES: QueueName[] = Object.values(QUEUES).map((queue) => que
 export const DEFAULT_JOB_OPTIONS = {
   attempts: 3,
   backoff: { type: 'exponential', delay: 5000 },
-  removeOnComplete: { age: 86_400 },
+  removeOnComplete: { age: secondsInDay },
   removeOnFail: { age: 604_800 },
 } as const satisfies DefaultJobOptions;
 

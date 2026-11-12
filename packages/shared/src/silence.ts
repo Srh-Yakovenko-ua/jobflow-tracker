@@ -1,3 +1,5 @@
+import { tz } from '@date-fns/tz';
+import { differenceInDays, milliseconds, subMilliseconds } from 'date-fns';
 import { z } from 'zod';
 
 import type { UserSettings } from './schemas/user-settings.js';
@@ -12,7 +14,6 @@ export type SilenceLevel = z.infer<typeof silenceLevelSchema>;
 export const DEFAULT_SILENCE_DAYS = 7;
 
 const FINAL_STAGE_SILENCE_FACTOR = 2;
-const DAY_MS = 24 * 60 * 60 * 1000;
 
 export type SilenceSettings = Pick<UserSettings, 'silenceDays'>;
 
@@ -54,7 +55,7 @@ export type SilenceWindowsInput = SilenceSettings & {
 
 type ThresholdGroup = { stages: readonly Stage[]; threshold: number };
 
-const daysBefore = (now: Date, days: number) => new Date(now.getTime() - days * DAY_MS);
+const daysBefore = (now: Date, days: number) => subMilliseconds(now, milliseconds({ days }));
 
 const ACTIVE_WINDOW_OF: Record<SilenceLevel, (group: ThresholdGroup, now: Date) => SilenceWindow> =
   {
@@ -91,5 +92,5 @@ export function silenceWindows({ levels, silenceDays, now }: SilenceWindowsInput
 }
 
 export function wholeDaysBetween(from: Date, to: Date): number {
-  return Math.max(0, Math.floor((to.getTime() - from.getTime()) / DAY_MS));
+  return Math.max(0, differenceInDays(to, from, { in: tz('UTC') }));
 }

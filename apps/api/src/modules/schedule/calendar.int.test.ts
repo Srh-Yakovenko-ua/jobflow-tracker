@@ -3,9 +3,9 @@ import {
   calendarResponseSchema,
   type MoveApplicationInput,
 } from '@jobflow/shared';
+import { addMinutes } from 'date-fns';
 import { describe, expect, it } from 'vitest';
 
-import { addMinutes } from '../../common/add-minutes.js';
 import {
   applicationPath,
   CALENDAR_PATH,

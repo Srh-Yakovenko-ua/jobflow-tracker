@@ -16,6 +16,16 @@ describe('zoned time', () => {
   });
 
   it.each([
+    { at: '2026-03-28T21:59:00Z', day: '2026-03-28' },
+    { at: '2026-03-28T22:30:00Z', day: '2026-03-29' },
+    { at: '2026-10-24T21:30:00Z', day: '2026-10-25' },
+    { at: '2026-10-25T21:30:00Z', day: '2026-10-25' },
+    { at: '2026-10-25T22:30:00Z', day: '2026-10-26' },
+  ])('around a Kyiv clock change $at falls on $day', ({ at, day }) => {
+    expect(dayKeyOf(new Date(at), KYIV)).toBe(day);
+  });
+
+  it.each([
     {
       name: 'Kyiv winter',
       timeZone: KYIV,
