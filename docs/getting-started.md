@@ -9,8 +9,8 @@
 - Щонайменше 6 ГБ пам'яті для Docker.
 - Node.js 26, версія записана в `.nvmrc`. З nvm: `nvm install && nvm use` у корені репозиторію.
 - pnpm 12.14.0, як у полі `packageManager` у `package.json`. Node 26 постачається без corepack, тому pnpm ставиться окремо: `npm install -g pnpm@12.14.0`.
-- Вільні порти з таблиці нижче, насамперед 5432, 6379, 9000, 9001, 1025, 8025, 4000, 3000, 8001 і 8002.
-- uv для Python-сервісів. Зараз він потрібен `services/ai` і `services/documents`, згодом `services/analytics`. Без uv `pnpm dev` не запустить ці сервіси.
+- Вільні порти з таблиці нижче, насамперед 5432, 6379, 9000, 9001, 1025, 8025, 4000, 3000, 8000, 8001 і 8002.
+- uv для Python-сервісів: `services/analytics`, `services/ai` і `services/documents`. Без uv `pnpm dev` не запустить ці сервіси.
 
 ## Кроки
 
@@ -28,7 +28,7 @@ pnpm dev
 2. `pnpm install --frozen-lockfile` ставить залежності точно за `pnpm-lock.yaml` і вмикає git-хуки husky.
 3. `cp .env.example .env` створює єдиний кореневий `.env`. Значення з `.env.example` підходять для локального стеку, міняти їх не треба. Змінна `COMPOSE_FILE` у ньому вказує compose на `infra/docker/`, тому `docker compose` працює з кореня без `-f`.
 4. `pnpm gen:keys` створює пару ключів RS256 для JWT і друкує `JWT keys written to .secrets/jwt-private.pem and .secrets/jwt-public.pem.` Повторний запуск ключі не перезаписує, а друкує `JWT keys already exist in .secrets/, nothing to do.`
-5. `pnpm dev` піднімає Postgres, Redis, MinIO і Mailpit, чекає до 120 секунд, поки їхні healthcheck-и стануть healthy, і створює бакет `resumes`. Далі йдуть міграції, а за ними api на порту 4000, web на порту 3000, ai на порту 8001 і documents на порту 8002, усі з hot reload через `turbo dev`. Ctrl+C зупиняє застосунки, контейнери інфраструктури працюють далі.
+5. `pnpm dev` піднімає Postgres, Redis, MinIO і Mailpit, чекає до 120 секунд, поки їхні healthcheck-и стануть healthy, і створює бакет `resumes`. Далі йдуть міграції, а за ними api на порту 4000, web на порту 3000, analytics на порту 8000, ai на порту 8001 і documents на порту 8002, усі з hot reload через `turbo dev`. Ctrl+C зупиняє застосунки, контейнери інфраструктури працюють далі.
 
 Міграції запускає `pnpm db:migrate`, тобто `prisma migrate deploy` у `apps/api`. На порожній базі перший запуск застосовує всі міграції з `apps/api/prisma/migrations` і друкує серед іншого такі рядки:
 
@@ -53,13 +53,13 @@ Api живий, якщо http://localhost:4000/api/v1/health відповіда�
 docker compose up -d
 ```
 
-Зараз у compose є інфраструктура, api, worker, web, ai і documents. Лише api і worker разом з Redis, від якого вони залежать:
+Зараз у compose є інфраструктура, api, worker, web, analytics, ai і documents. Лише api і worker разом з Redis, від якого вони залежать:
 
 ```bash
 docker compose up -d --build --wait api worker
 ```
 
-Команда збирає образ api (ціль `dev`, `apps/api/src` змонтовано в контейнер) і повертає керування, коли healthcheck api стане `healthy`, а worker запуститься. Worker використовує той самий образ з іншою командою, порту не має і healthcheck-а теж, тому в `docker compose ps` у колонці `STATUS` у нього лише `Up`, без `(healthy)`. `--build` потрібен, щоб після pull образ підхопив нові залежності. Health відповідає на http://localhost:4000/api/v1/health. Контейнер api займає той самий порт 4000, що й `pnpm dev`, тому одночасно працює щось одне. Контейнер ai описано в розділі [AI](#ai), analytics додасть AN-01. Моніторинг (Grafana, Jaeger та інші) вмикатиметься профілем: `docker compose --profile observability up -d`, коли з'являться картки OBS.
+Команда збирає образ api (ціль `dev`, `apps/api/src` змонтовано в контейнер) і повертає керування, коли healthcheck api стане `healthy`, а worker запуститься. Worker використовує той самий образ з іншою командою, порту не має і healthcheck-а теж, тому в `docker compose ps` у колонці `STATUS` у нього лише `Up`, без `(healthy)`. `--build` потрібен, щоб після pull образ підхопив нові залежності. Health відповідає на http://localhost:4000/api/v1/health. Контейнер api займає той самий порт 4000, що й `pnpm dev`, тому одночасно працює щось одне. Контейнер ai описано в розділі [AI](#ai), analytics і documents нижче. Моніторинг (Grafana, Jaeger та інші) вмикатиметься профілем: `docker compose --profile observability up -d`, коли з'являться картки OBS.
 
 Лише web:
 
@@ -76,6 +76,14 @@ docker compose up -d --build --wait documents
 ```
 
 Сервіс documents працює в compose на порту 8002 (127.0.0.1 і мережа compose): перетворює PDF, DOCX і фото резюме на текст або зображення сторінок. Образ збирається з цілі `dev`, `services/documents/app` змонтовано в контейнер. Команда повертає керування, коли healthcheck стане `healthy`: http://localhost:8002/health відповідає `{"status":"ok"}`. Від інших контейнерів documents не залежить, нічого не зберігає і не має авторизації, а `POST /documents/extract` викликає лише worker. Контейнер займає той самий порт 8002, що й `pnpm dev`, тому одночасно працює щось одне.
+
+Лише analytics:
+
+```bash
+docker compose up -d --build --wait analytics
+```
+
+Сервіс analytics рахує статистику і працює в compose на порту 8000 (127.0.0.1 і мережа compose). Команда піднімає також Postgres і Redis, від яких він залежить. Образ збирається з цілі `dev`, `services/analytics/app` змонтовано в контейнер. Команда повертає керування, коли healthcheck стане `healthy`: http://localhost:8000/health відповідає `{"status":"ok"}` і залежностей не перевіряє. http://localhost:8000/health/ready перевіряє Postgres і Redis, відповідає `{"status":"ok","checks":{"postgres":"up","redis":"up"}}` або 503, якщо хоч один з них недоступний. Сторінка OpenAPI відкривається на http://localhost:8000/docs. Дані сервіс лише читає, через роль `jobflow_analytics`. Авторизації поки немає, її додасть AN-03. Контейнер займає той самий порт 8000, що й `pnpm dev`, тому одночасно працює щось одне.
 
 `docker compose stop worker` чекає, поки worker завершить задачі, що вже виконуються (до 60 секунд). Задача, яку перервало аварійне завершення worker, не губиться: після перезапуску worker бере її знову.
 
@@ -107,7 +115,7 @@ docker compose down
 | api           | 4000                       | працює             |
 | worker        | без порту                  | працює             |
 | web (Next.js) | 3000                       | працює             |
-| analytics     | 8000                       | з'явиться в AN-01  |
+| analytics     | 8000                       | працює             |
 | ai            | 8001                       | працює             |
 | documents     | 8002                       | працює             |
 | Prometheus    | 9090                       | з'явиться в OBS-02 |

@@ -23,6 +23,7 @@ jobs:
       code: ${{ steps.diff.outputs.code }}
       ai: ${{ steps.diff.outputs.ai }}
       documents: ${{ steps.diff.outputs.documents }}
+      analytics: ${{ steps.diff.outputs.analytics }}
       live_load: ${{ steps.diff.outputs.live_load }}
     steps:
       - uses: actions/checkout@v7.0.1
@@ -35,6 +36,7 @@ jobs:
           code=true
           ai=true
           documents=true
+          analytics=true
           live_load=false
           if files=$(git -c core.quotePath=false diff --name-only "$BASE" HEAD); then
             if ! grep -qvE '^docs/|\.md$' <<< "$files" && ! grep -qxF -e 'docs/diagrams/erd.md' -e 'docs/api/openapi.json' <<< "$files"; then
@@ -46,6 +48,9 @@ jobs:
             if ! grep -qE '^services/documents/' <<< "$files"; then
               documents=false
             fi
+            if ! grep -qE '^services/analytics/' <<< "$files"; then
+              analytics=false
+            fi
             if grep -qxF 'apps/api/src/modules/live/live-load.int.test.ts' <<< "$files"; then
               live_load=true
             fi
@@ -53,6 +58,7 @@ jobs:
           echo "code=$code" >> "$GITHUB_OUTPUT"
           echo "ai=$ai" >> "$GITHUB_OUTPUT"
           echo "documents=$documents" >> "$GITHUB_OUTPUT"
+          echo "analytics=$analytics" >> "$GITHUB_OUTPUT"
           echo "live_load=$live_load" >> "$GITHUB_OUTPUT"
 
   lint:
@@ -222,6 +228,26 @@ jobs:
       - run: uv run mypy app
       - run: uv run pytest --cov=app
 
+  analytics:
+    needs: changes
+    if: needs.changes.outputs.analytics == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: services/analytics
+    steps:
+      - uses: actions/checkout@v7.0.1
+      - uses: astral-sh/setup-uv@v10.3.3
+        with:
+          working-directory: services/analytics
+          enable-cache: true
+      - run: uv sync --locked
+      - run: uv run ruff check .
+      - run: uv run ruff format --check .
+      - run: uv run mypy app
+      - run: uv run pytest --cov=app
+
   build:
     needs: changes
     if: needs.changes.outputs.code == 'true'
@@ -256,7 +282,8 @@ jobs:
       - uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc
         if: hashFiles('services/analytics/Dockerfile') != ''
         with:
-          context: services/analytics
+          context: .
+          file: services/analytics/Dockerfile
           target: prod
           push: false
           load: true
