@@ -9,8 +9,9 @@ import { useMoving } from '@/shared/lib/use-moving';
 type RevealTag = 'div' | 'span';
 
 export type RevealView = Readonly<{
-  mode?: 'sync' | 'popLayout';
+  mode?: 'sync' | 'popLayout' | 'wait';
   as?: RevealTag;
+  id?: string;
 }>;
 
 export type RevealProps = Readonly<{
@@ -55,11 +56,11 @@ function RevealBody({ as, children, className, ref }: RevealBodyProps) {
 }
 
 export function Reveal({ shown, children, className, view = {} }: RevealProps) {
-  const { mode = 'sync', as = 'div' } = view;
+  const { mode = 'sync', as = 'div', id = 'reveal' } = view;
   return (
     <AnimatePresence initial={false} mode={mode}>
       {shown && (
-        <RevealBody key="reveal" as={as} className={className}>
+        <RevealBody key={id} as={as} className={className}>
           {children}
         </RevealBody>
       )}

@@ -5,6 +5,7 @@ import type { UseQueryResult } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 
+import { aiJobOf } from '@/entities/application';
 import { type DraftReviewProps, reviewFieldsOf } from '@/features/edit-application';
 import { isNotFound } from '@/shared/api';
 import type { AiJob } from '@/shared/ui/async-state';
@@ -50,17 +51,6 @@ const READING_VIEW = progressView({
   job: READING_CARD,
   parse: { aiStatus: 'processing', aiJobId: null },
 });
-
-function aiJobOf(job: JobStatus | undefined): AiJob {
-  if (job?.status === 'queued' && job.queue !== null) {
-    return { status: 'queued', ...job.queue };
-  }
-  return {
-    status: 'processing',
-    step: job?.step ?? AI_JOB_STEPS.queued,
-    steps: AI_JOB_STEPS.total,
-  };
-}
 
 function rereadView(query: UseQueryResult): LiveView {
   return readFailedView({

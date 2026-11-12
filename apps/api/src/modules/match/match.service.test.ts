@@ -2,6 +2,7 @@ import { buildMatchOutput } from '@jobflow/shared/testing';
 import { Test } from '@nestjs/testing';
 import { describe, expect, it } from 'vitest';
 
+import { AI_JOB_ID } from '../../test/ai.js';
 import {
   FakeMatchRepository,
   LATEST_MATCH,
@@ -18,6 +19,8 @@ import {
 import { MatchRepository } from './match.repository.js';
 import { MatchService } from './match.service.js';
 
+const LINKED = { applicationId: APPLICATION_ID, resumeVersionId: RESUME_VERSION_ID };
+
 async function serviceWith(repository = new FakeMatchRepository()) {
   const moduleRef = await Test.createTestingModule({
     providers: [MatchService, { provide: MatchRepository, useValue: repository }],
@@ -31,9 +34,7 @@ describe('MatchService.read', () => {
 
     const { match } = await service.read(OLENA_ID, APPLICATION_ID);
 
-    expect(repository.latestReads).toEqual([
-      { applicationId: APPLICATION_ID, resumeVersionId: RESUME_VERSION_ID },
-    ]);
+    expect(repository.latestReads).toEqual([LINKED]);
     expect(match).toMatchObject({
       score: 59,
       missing: [
@@ -51,9 +52,46 @@ describe('MatchService.read', () => {
     repository.source = { ...MATCH_SOURCE, resumeVersionId: null, resumeVersion: null };
     const { service } = await serviceWith(repository);
 
-    expect(await service.read(OLENA_ID, APPLICATION_ID)).toEqual({ match: null });
+    expect(await service.read(OLENA_ID, APPLICATION_ID)).toEqual({ match: null, job: null });
     expect(repository.latestReads).toEqual([]);
+    expect(repository.jobReads).toEqual([]);
   });
+
+  it.each([
+    { case: 'no match job exists for it', latest: LATEST_MATCH, job: null, score: 59 },
+    {
+      case: 'a queued job is newer than the done match',
+      latest: LATEST_MATCH,
+      job: { id: AI_JOB_ID, status: 'queued' } as const,
+      score: 59,
+    },
+    {
+      case: 'the latest job failed with no done match',
+      latest: null,
+      job: { id: AI_JOB_ID, status: 'failed' } as const,
+      score: undefined,
+    },
+    {
+      case: 'the latest job failed after an older done match',
+      latest: LATEST_MATCH,
+      job: { id: AI_JOB_ID, status: 'failed' } as const,
+      score: 59,
+    },
+  ])(
+    'answers the latest match job of the linked version beside the match when $case',
+    async ({ latest, job, score }) => {
+      const repository = new FakeMatchRepository();
+      repository.latest = latest;
+      repository.latestJob = job;
+      const { service } = await serviceWith(repository);
+
+      const response = await service.read(OLENA_ID, APPLICATION_ID);
+
+      expect(response.job).toEqual(job);
+      expect(response.match?.score).toBe(score);
+      expect(repository.jobReads).toEqual([LINKED]);
+    },
+  );
 
   it.each([
     { case: 'no match job is done for the version', latest: null },
@@ -67,7 +105,7 @@ describe('MatchService.read', () => {
     repository.latest = latest;
     const { service } = await serviceWith(repository);
 
-    expect(await service.read(OLENA_ID, APPLICATION_ID)).toEqual({ match: null });
+    expect(await service.read(OLENA_ID, APPLICATION_ID)).toEqual({ match: null, job: null });
   });
 
   it("answers 404 for another user's application", async () => {
@@ -77,5 +115,6 @@ describe('MatchService.read', () => {
       APPLICATION_NOT_FOUND,
     );
     expect(repository.latestReads).toEqual([]);
+    expect(repository.jobReads).toEqual([]);
   });
 });

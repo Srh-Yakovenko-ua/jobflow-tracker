@@ -17,6 +17,7 @@ export const applicationKeys = {
   board: (query: ApplicationBoardQuery) => [...applicationKeys.boards(), query] as const,
   details: () => [...applicationKeys.all, 'detail'] as const,
   detail: (id: Application['id']) => [...applicationKeys.details(), id] as const,
+  match: (id: Application['id']) => [...applicationKeys.detail(id), 'match'] as const,
   reasonsSummaries: () => [...applicationKeys.all, 'reasons-summary'] as const,
   reasonsSummary: (stage: Stage) => [...applicationKeys.reasonsSummaries(), stage] as const,
 };

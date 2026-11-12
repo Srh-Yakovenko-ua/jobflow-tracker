@@ -4,10 +4,12 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { ACME_APPLICATION, applicationRoute } from '@/test/application-fixtures';
 import { holdExitAnimations } from '@/test/held-exits';
+import { matchRoute } from '@/test/match-fixtures';
 import { back } from '@/test/navigation';
 import { notesRoute } from '@/test/note-fixtures';
 import { renderApplicationPage } from '@/test/render-application-page';
 import { renderInApp, renderViewInApp } from '@/test/render-in-app';
+import { resumeRoutes } from '@/test/resume-fixtures';
 import { server } from '@/test/server';
 import { meRoute } from '@/test/session-fixtures';
 import { EMPTY_TIMELINE, timelineRoute } from '@/test/timeline-fixtures';
@@ -25,6 +27,8 @@ function serveSheet() {
     applicationRoute({ application: ACME_APPLICATION }).handler,
     timelineRoute({ timeline: EMPTY_TIMELINE }),
     notesRoute().handler,
+    matchRoute().handler,
+    ...resumeRoutes().handlers,
   );
 }
 

@@ -4,6 +4,7 @@ import {
   type Note,
   REJECTION_REASONS,
   rejectionReasonCodeSchema,
+  type ResumeVersion,
   type ScheduledEventKind,
   scheduledEventKindSchema,
   SOURCE_LABELS,
@@ -36,6 +37,7 @@ export type TimelineRowsInput = {
   items: readonly TimelineItem[];
   application: ApplicationResponse;
   notes?: readonly Note[];
+  linkedVersion?: Pick<ResumeVersion, 'number'> | undefined;
 };
 
 type Meta = TimelineItem['meta'];
@@ -160,21 +162,34 @@ function foldedOf(items: readonly TimelineItem[]): Folded {
   };
 }
 
-export function timelineRowsOf({
-  items,
-  application,
-  notes = [],
-}: TimelineRowsInput): TimelineRow[] {
+function isApplied({ type, meta }: TimelineItem): boolean {
+  return type === 'stage_changed' && meta.fromStage === null && meta.toStage === 'applied';
+}
+
+function sentVersionOf({ items, linkedVersion }: TimelineRowsInput) {
+  const attachedLater = items.some((item) => item.type === 'resume_attached');
+  return attachedLater ? undefined : linkedVersion;
+}
+
+function titleOf(item: TimelineItem, sentVersion: TimelineRowsInput['linkedVersion']): string {
+  if (sentVersion === undefined || !isApplied(item)) return item.title;
+  return COPY.sentWithCv(item.title, sentVersion.number);
+}
+
+export function timelineRowsOf(input: TimelineRowsInput): TimelineRow[] {
+  const { items, application, notes = [] } = input;
   const folded = foldedOf(items);
   const notesById = new Map(notes.map((note) => [note.id, note]));
+  const sentVersion = sentVersionOf(input);
   return items
     .filter((item) => item !== folded.parsed && item !== folded.confirmed)
-    .map(({ id, type, occurredAt, title, meta }): TimelineRow => {
+    .map((item): TimelineRow => {
+      const { id, type, occurredAt, meta } = item;
       const look = LOOKS[type];
       return {
         id,
         at: new Date(occurredAt),
-        title,
+        title: titleOf(item, sentVersion),
         meta: look.meta({ ...folded, meta, application, note: notesById.get(id) }),
         metaFormat: type === 'note_added' ? 'note' : 'text',
         marker: look.marker(meta),

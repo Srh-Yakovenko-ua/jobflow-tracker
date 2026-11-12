@@ -1,6 +1,7 @@
 import type { AiCompleteJob } from '../modules/ai/index.js';
 import type { TimelineEntry } from '../modules/events/index.js';
 import type {
+  LatestMatchJob,
   LatestMatchRow,
   LinkedVersion,
   MatchScoreWrite,
@@ -76,6 +77,10 @@ export class FakeMatchRepository {
 
   readonly latestReads: LinkedVersion[] = [];
 
+  latestJob: LatestMatchJob | null = null;
+
+  readonly jobReads: LinkedVersion[] = [];
+
   activeVersionId: string | null = RESUME_VERSION_ID;
 
   linkedIds: string[] = [APPLICATION_ID];
@@ -106,6 +111,11 @@ export class FakeMatchRepository {
   findLatest(userId: string, linked: LinkedVersion): Promise<LatestMatchRow | null> {
     this.latestReads.push(linked);
     return Promise.resolve(ownsApplication(userId, linked.applicationId) ? this.latest : null);
+  }
+
+  findLatestJob(userId: string, linked: LinkedVersion): Promise<LatestMatchJob | null> {
+    this.jobReads.push(linked);
+    return Promise.resolve(ownsApplication(userId, linked.applicationId) ? this.latestJob : null);
   }
 
   linkUnlinked(userId: string, resumeVersionId: string): Promise<number> {

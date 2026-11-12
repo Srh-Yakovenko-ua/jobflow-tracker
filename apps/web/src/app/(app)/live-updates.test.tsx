@@ -13,14 +13,25 @@ import {
 } from '@/entities/application';
 import { userKeys } from '@/entities/user';
 import { useMoveApplicationMutation } from '@/features/move-application';
-import { boardOf, cardIn, DESIGN_BOARD, fixtureIdOf, moveRoute } from '@/test/board-fixtures';
+import {
+  boardOf,
+  boardRoute,
+  cardIn,
+  DESIGN_BOARD,
+  fixtureIdOf,
+  moveRoute,
+} from '@/test/board-fixtures';
 import { liveTicketRoute, stubEventSource } from '@/test/fake-event-source';
 import { fakeTimeouts } from '@/test/fake-timeouts';
 import { latch } from '@/test/latch';
+import { bringLiveStreamUp } from '@/test/live-stream';
 import { renderInApp } from '@/test/render-in-app';
 import { server } from '@/test/server';
+import { KanbanBoard } from '@/widgets/kanban-board';
 
 import { LiveUpdates } from './live-updates';
+
+vi.mock('next/navigation', () => import('@/test/navigation'));
 
 const EVENT_ID = '0199f4b1-2c3d-7e4f-8a51-6b7c8d9e0f1a';
 
@@ -192,6 +203,33 @@ describe('LiveUpdates', () => {
         source.send(event);
       }),
     ).toEqual(refetched);
+  });
+
+  it('an application.updated frame for matchScore rereads the board and the card shows the new score', async () => {
+    const placed = cardIn({ serial: 101, stage: 'applied', position: 'Senior Frontend Engineer' });
+    const card = { ...placed, matchScore: 70, aiStatus: null };
+    const counts = { applied: 1 };
+    server.use(boardRoute({ counts, cards: [card] }).handler);
+    const source = await bringLiveStreamUp(() => {
+      renderInApp(
+        <>
+          <LiveUpdates />
+          <KanbanBoard initial={{ density: 'full', filters: {} }} />
+        </>,
+      );
+    });
+    expect(await screen.findByRole('img', { name: 'Match Score 70' })).toBeDefined();
+    server.use(boardRoute({ counts, cards: [{ ...card, matchScore: 85 }] }).handler);
+
+    act(() => {
+      source.send({
+        id: EVENT_ID,
+        type: LIVE_EVENTS.applicationUpdated,
+        data: { applicationId: card.id, fields: ['matchScore'] },
+      });
+    });
+
+    expect(await screen.findByRole('img', { name: 'Match Score 85' })).toBeDefined();
   });
 
   it('a job.updated frame during a pending move refetches the job at once and reads the board once, after the move settles', async () => {

@@ -27,6 +27,7 @@ export const timeline = {
     ghosted: 'ghosted',
     withdrawn: 'відкликання',
   } satisfies Record<Stage, string>,
+  sentWithCv: (title: string, number: number) => `${title} · CV v${String(number)}`,
   movedByHand: 'Перенесено вручну.',
   daysInStage: (days: number, stageGenitive: string) =>
     `${daysOf(days)} на етапі ${stageGenitive}.`,

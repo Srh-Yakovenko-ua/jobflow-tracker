@@ -1,6 +1,7 @@
 import { z } from 'zod';
 
 import { matchCoverageSchema, matchRequirementSchema, matchWeightSchema } from '../ai/match.js';
+import { jobStatusSchema } from './job.js';
 import { resumeVersionSchema } from './resume-version.js';
 
 const scoredRequirementSchema = matchRequirementSchema.pick({ name: true }).extend({
@@ -25,6 +26,7 @@ export const applicationMatchResponseSchema = z.object({
       computedAt: z.iso.datetime(),
     })
     .nullable(),
+  job: jobStatusSchema.pick({ id: true, status: true }).nullable(),
 });
 
 export type MatchBreakdown = z.infer<typeof matchBreakdownSchema>;

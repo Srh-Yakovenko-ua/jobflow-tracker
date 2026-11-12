@@ -70,3 +70,5 @@ export function useApplicationPage(id: Application['id']) {
     actions,
   };
 }
+
+export type ApplicationPageState = ReturnType<typeof useApplicationPage>;
