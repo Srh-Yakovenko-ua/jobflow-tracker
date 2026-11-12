@@ -1,0 +1,6 @@
+*
+!services/analytics/pyproject.toml
+!services/analytics/uv.lock
+!services/analytics/app
+**/__pycache__
+**/.env*

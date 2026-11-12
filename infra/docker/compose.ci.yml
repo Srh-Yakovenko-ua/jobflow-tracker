@@ -16,6 +16,10 @@ services:
     build:
       target: prod
 
+  analytics:
+    build:
+      target: prod
+
   ai:
     build:
       target: prod
