@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 
 import { HandlerRouter, type RoutedHandler } from '../common/handler-router.js';
 
-export type DomainEvent = { id: string; type: string; payload: unknown };
+export type DomainEvent = { id: string; type: string; payload: unknown; finalAttempt?: boolean };
 
 export type DomainEventHandler = RoutedHandler<DomainEvent>;
 

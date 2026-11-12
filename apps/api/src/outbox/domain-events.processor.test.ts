@@ -54,7 +54,12 @@ describe('DomainEventsProcessor', () => {
 
     await processor.process(domainEventJob());
 
-    const event = { id: OUTBOX_ID, type: 'application.created', payload: PAYLOAD };
+    const event = {
+      id: OUTBOX_ID,
+      type: 'application.created',
+      payload: PAYLOAD,
+      finalAttempt: false,
+    };
     expect(first.events).toEqual([event]);
     expect(second.events).toEqual([event]);
     expect(other.events).toEqual([]);
@@ -68,6 +73,21 @@ describe('DomainEventsProcessor', () => {
       }),
     ]);
   });
+
+  it.each([
+    { attemptsMade: 1, finalAttempt: false },
+    { attemptsMade: 2, finalAttempt: true },
+  ])(
+    'tells the subscribers finalAttempt $finalAttempt after $attemptsMade attempts of three',
+    async ({ attemptsMade, finalAttempt }) => {
+      const handler = recordingHandler();
+      router.subscribe(CREATED, handler.handle);
+
+      await processor.process({ ...domainEventJob(), attemptsMade });
+
+      expect(handler.events).toEqual([expect.objectContaining({ id: OUTBOX_ID, finalAttempt })]);
+    },
+  );
 
   it('completes an event type nobody subscribes to and reports 0 handlers', async () => {
     await expect(processor.process(domainEventJob())).resolves.toBeUndefined();

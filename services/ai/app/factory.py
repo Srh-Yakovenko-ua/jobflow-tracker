@@ -20,6 +20,7 @@ def create_app(settings: Settings) -> FastAPI:
         provider=provider_for(settings),
         limiter=RateLimiter(settings.ai_rate_limit_per_minute),
         timeout_seconds=settings.ai_timeout_seconds,
+        vision_enabled=settings.ai_vision_model != "",
     )
     app.state.key_source = key_source_for(settings)
     install_error_handlers(app)

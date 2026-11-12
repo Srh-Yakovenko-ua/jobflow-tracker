@@ -1,10 +1,12 @@
-export { AI_JOBS, type AiCompleteJob } from './ai.jobs.js';
+export { AI_JOBS, type AiCompleteJob, queueAiCompletion } from './ai.jobs.js';
 export { AiModule, AiWorkerModule } from './ai.module.js';
 export { AI_OPENAPI_PATHS } from './ai.openapi.js';
 export { AiProcessor } from './ai.processor.js';
 export type {
   AiJobChange,
+  AiJobFailure,
   AiJobRow,
+  AiJobTarget,
   AiResultKey,
   BudgetUsage,
   BudgetWindow,

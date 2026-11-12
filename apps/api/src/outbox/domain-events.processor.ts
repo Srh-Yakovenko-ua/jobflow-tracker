@@ -4,7 +4,7 @@ import { UnrecoverableError } from 'bullmq';
 import { z } from 'zod';
 
 import { failedJobFields, jobFields, type ProcessedJob } from '../queues/processed-job.js';
-import { QUEUES } from '../queues/queues.js';
+import { DEFAULT_JOB_OPTIONS, QUEUES } from '../queues/queues.js';
 import { DomainEventRouter } from './domain-event-router.js';
 
 const domainEventJobSchema = z.object({ id: z.uuid(), name: z.string().min(1) });
@@ -27,7 +27,12 @@ export class DomainEventsProcessor extends WorkerHost {
       throw new UnrecoverableError('domain event job invalid');
     }
     const { id, name } = parsed.data;
-    const handlers = await this.router.route({ id, type: name, payload: job.data });
+    const handlers = await this.router.route({
+      id,
+      type: name,
+      payload: job.data,
+      finalAttempt: job.attemptsMade + 1 >= DEFAULT_JOB_OPTIONS.attempts,
+    });
     this.logger.log({ ...jobFields(job), handlers }, 'domain event routed');
   }
 

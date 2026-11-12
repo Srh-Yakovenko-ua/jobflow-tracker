@@ -20,6 +20,7 @@ describe('AI_JOB_FAILURES', () => {
       providerError: 'ai_provider_error',
       rateLimited: 'rate_limited',
       invalidOutput: 'ai_invalid_output',
+      needsText: 'needs_text',
     });
   });
 });

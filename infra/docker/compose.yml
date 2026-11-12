@@ -9,6 +9,7 @@ x-api-environment: &api-environment
   JWT_PRIVATE_KEY_PATH: /app/.secrets/jwt-private.pem
   JWT_PUBLIC_KEY_PATH: /app/.secrets/jwt-public.pem
   AI_SERVICE_URL: http://ai:8001
+  DOCUMENTS_SERVICE_URL: http://documents:8002
 
 services:
   postgres:
@@ -143,6 +144,8 @@ services:
       - ../../.secrets:/app/.secrets:ro
     depends_on:
       redis:
+        condition: service_healthy
+      documents:
         condition: service_healthy
     stop_grace_period: 60s
     healthcheck:

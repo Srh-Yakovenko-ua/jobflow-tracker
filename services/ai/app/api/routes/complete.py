@@ -7,7 +7,7 @@ from pydantic import BaseModel, ValidationError
 
 from app.api.deps import get_runtime
 from app.core.auth import require_service_token
-from app.core.errors import AppError, field_errors
+from app.core.errors import NEEDS_TEXT, AppError, field_errors
 from app.core.request_id import request_id_of
 from app.core.structured import Runtime, StructuredCall, complete_structured
 from app.prompts import PROMPTS
@@ -31,6 +31,10 @@ async def complete(
         raise AppError(404, detail="Unknown AI kind")
     parsed = parsed_body(prompt.REQUEST_MODEL, await request.body())
     built = prompt.build(parsed)
+    if built.images and not runtime.vision_enabled:
+        raise AppError(
+            422, problem=NEEDS_TEXT, detail="Scanned pages need a vision model"
+        )
     result = await complete_structured(
         StructuredCall(kind=kind, prompt=built, output_model=prompt.OUTPUT_MODEL),
         runtime,

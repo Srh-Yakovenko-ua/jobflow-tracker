@@ -1,13 +1,19 @@
-import { AI_KINDS, AI_PAYLOAD_FIELDS } from '@jobflow/shared';
+import { AI_KINDS, AI_PAYLOAD_FIELDS, type AiKind, type AiPayloadField } from '@jobflow/shared';
 
-import { uk } from '@/shared/i18n';
+import { type ModelDataCopy, uk } from '@/shared/i18n';
 
 export type ModelDataItem = Readonly<{ id: string; text: string }>;
 
-const COPY = uk.settings.aiPrivacy.modelData.fields;
+type PayloadFields = { [Kind in AiKind]: readonly AiPayloadField<Kind>[] };
+
+const FIELDS: PayloadFields = AI_PAYLOAD_FIELDS;
+
+const COPY: ModelDataCopy = uk.settings.aiPrivacy.modelData.fields;
+
+function kindItems<Kind extends AiKind>(kind: Kind, copy: ModelDataCopy[Kind]): ModelDataItem[] {
+  return FIELDS[kind].map((field) => ({ id: `${kind}.${field}`, text: copy[field] }));
+}
 
 export function modelDataItems(): readonly ModelDataItem[] {
-  return AI_KINDS.flatMap((kind) =>
-    AI_PAYLOAD_FIELDS[kind].map((field) => ({ id: `${kind}.${field}`, text: COPY[kind][field] })),
-  );
+  return AI_KINDS.flatMap((kind) => kindItems(kind, COPY[kind]));
 }

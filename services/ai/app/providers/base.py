@@ -13,6 +13,7 @@ from app.core.errors import AppError, provider_error, timeout_error
 class Message:
     role: Literal["user", "assistant"]
     content: str
+    images: tuple[str, ...] = ()
 
 
 @dataclass(frozen=True, kw_only=True)
@@ -55,6 +56,12 @@ class VendorSettings:
     timeout_seconds: float
     max_retries: int
     nvidia: bool = False
+    vision_model: str = ""
+
+
+def model_for(request: CompletionRequest, vendor: VendorSettings) -> str:
+    seeing = any(message.images for message in request.messages)
+    return vendor.vision_model if seeing else vendor.model
 
 
 @dataclass(frozen=True, kw_only=True)

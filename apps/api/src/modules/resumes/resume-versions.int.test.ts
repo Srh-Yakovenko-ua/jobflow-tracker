@@ -120,6 +120,12 @@ describe('the resume versions of a user', () => {
     return [first, await uploadResumeVersion(testApp.app, owner)];
   }
 
+  const profileJobOf = (resumeVersionId: string) =>
+    testApp.prisma.aiJob.findFirstOrThrow({
+      where: { resumeVersionId },
+      select: { id: true, kind: true, status: true },
+    });
+
   const activate = (owner: Owner, id: string) =>
     call(owner.accessToken, { method: 'post', path: activationPath(id) });
 
@@ -129,7 +135,7 @@ describe('the resume versions of a user', () => {
       input: { ...ROMASHKA, company },
     });
 
-  it('creates version 1 and then 2 with 201, the copied key, the stored size and one resume.version_uploaded row each', async () => {
+  it('creates version 1 and then 2 with 201, the copied key, the stored size and one resume.version_uploaded row and one queued resume_parse job each', async () => {
     const owner = await signedUp();
     const firstTicket = await uploadedPdf(testApp.app, { ...owner, bytes: PDF_BYTES });
     const secondTicket = await uploadedPdf(testApp.app, { ...owner, bytes: PDF_BYTES });
@@ -164,12 +170,17 @@ describe('the resume versions of a user', () => {
         sizeBytes: PDF_BYTES.length,
       })),
     );
+    const jobs = await Promise.all(versions.map(({ id }) => profileJobOf(id)));
+    expect(jobs.map(({ kind, status }) => [kind, status])).toEqual([
+      ['resume_parse', 'queued'],
+      ['resume_parse', 'queued'],
+    ]);
     expect(await outboxRows(testApp.prisma, { eventType: 'resume.version_uploaded' })).toEqual(
-      versions.map(({ id }) => ({
+      versions.map(({ id }, index) => ({
         aggregate: 'resume_version',
         aggregateId: id,
         eventType: 'resume.version_uploaded',
-        payload: { userId: owner.userId, resumeVersionId: id },
+        payload: { userId: owner.userId, resumeVersionId: id, aiJobId: jobs[index]?.id },
       })),
     );
   });

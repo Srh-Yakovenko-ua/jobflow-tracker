@@ -7,12 +7,16 @@ export const RESUME_EVENTS = {
   attached: 'resume.attached',
 } as const;
 
-export const resumeVersionUploadedPayloadSchema = z.object({
+const resumeVersionEventSchema = z.object({
   userId: z.uuid(),
   resumeVersionId: z.uuid(),
 });
 
-export const resumeAttachedPayloadSchema = resumeVersionUploadedPayloadSchema.extend({
+export const resumeVersionUploadedPayloadSchema = resumeVersionEventSchema.extend({
+  aiJobId: z.uuid(),
+});
+
+export const resumeAttachedPayloadSchema = resumeVersionEventSchema.extend({
   applicationId: z.uuid(),
 });
 

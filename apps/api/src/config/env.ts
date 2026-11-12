@@ -47,6 +47,7 @@ const envFields = z.object({
   PORT: z.coerce.number().int().min(1).max(65535).default(4000),
   WEB_ORIGIN: httpUrl,
   AI_SERVICE_URL: httpUrl.default('http://localhost:8001'),
+  DOCUMENTS_SERVICE_URL: httpUrl.default('http://localhost:8002'),
   AI_DAILY_LIMIT: positiveCount.default(50),
   AI_MONTHLY_TOKEN_CAP: positiveCount.default(1_000_000),
   AI_USD_PER_MILLION_TOKENS_IN: usdPrice,

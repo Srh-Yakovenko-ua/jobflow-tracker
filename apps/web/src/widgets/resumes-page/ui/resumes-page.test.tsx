@@ -121,7 +121,8 @@ describe('ResumesPage', () => {
 
   it.each<{ status: ResumeVersion['aiProfileStatus']; label: string }>([
     { status: 'queued', label: 'у черзі' },
-    { status: 'failed', label: 'потрібен текстовий PDF' },
+    { status: 'needs_text', label: 'потрібен текстовий PDF' },
+    { status: 'failed', label: 'AI-профіль не вдався' },
   ])('an AI profile that is $status reads "$label" in the row', async ({ status, label }) => {
     renderPage(onlyVersion({ aiProfileStatus: status }));
 

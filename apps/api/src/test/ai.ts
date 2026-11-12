@@ -1,5 +1,13 @@
-import type { AiCompletion, AiJobStatus, AiKind, Contact, NoteInput } from '@jobflow/shared';
 import {
+  AI_PROMPT_VERSIONS,
+  type AiCompletion,
+  type AiJobStatus,
+  type AiKind,
+  type Contact,
+  type NoteInput,
+} from '@jobflow/shared';
+import {
+  buildResumeParseOutput,
   buildVacancyCompletion,
   buildVacancyParseOutput,
   VACANCY_SAMPLE_TEXT,
@@ -32,6 +40,14 @@ import { OLENA_ID } from './service-fixtures.js';
 export const VACANCY_TEXT = VACANCY_SAMPLE_TEXT;
 
 export const VACANCY_COMPLETION = buildVacancyCompletion();
+
+export const RESUME_PROFILE = buildResumeParseOutput();
+
+export const RESUME_COMPLETION: AiCompletion<'resume_parse'> = {
+  ...VACANCY_COMPLETION,
+  output: RESUME_PROFILE,
+  promptVersion: AI_PROMPT_VERSIONS.resume_parse,
+};
 
 export const NAMELESS_VACANCY_COMPLETION = buildVacancyCompletion({
   output: buildVacancyParseOutput({
@@ -178,6 +194,7 @@ export type FakeAiJob = {
   status: AiJobStatus;
   step?: number;
   applicationId?: string;
+  resumeVersionId?: string;
   aiResultId?: string;
   errorType?: string;
   finishedAt?: Date;
@@ -209,9 +226,13 @@ export class FakeAiRepository {
     this.jobs.set(id, { userId, status: 'queued', step: 1 });
   }
 
-  createJob(userId: string, { applicationId }: CreateAiJob): Promise<string> {
+  createJob(userId: string, job: CreateAiJob): Promise<string> {
+    const target =
+      'applicationId' in job
+        ? { applicationId: job.applicationId }
+        : { resumeVersionId: job.resumeVersionId };
     return this.reached(() => {
-      this.jobs.set(AI_JOB_ID, { userId, status: 'queued', step: 1, applicationId });
+      this.jobs.set(AI_JOB_ID, { userId, status: 'queued', step: 1, ...target });
       return AI_JOB_ID;
     });
   }
@@ -228,7 +249,7 @@ export class FakeAiRepository {
 
   failJob(userId: string, { id, errorType, now }: FailAiJob): Promise<number> {
     const to = { status: 'failed', errorType, finishedAt: now } as const;
-    return this.reached(() => this.moveJob(userId, { id, from: ['processing'], to }));
+    return this.reached(() => this.moveJob(userId, { id, from: ['queued', 'processing'], to }));
   }
 
   findJob(userId: string, id: string): Promise<AiJobRow | null> {

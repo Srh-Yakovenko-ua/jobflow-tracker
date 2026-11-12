@@ -3,7 +3,9 @@ import { describe, expect, it } from 'vitest';
 import { issuePathsOf } from '../test/zod-issues.js';
 import {
   createResumeVersionInputSchema,
+  RESUME_PROFILE_STATUSES,
   RESUME_VERSION_LIMITS,
+  resumeProfileStatusSchema,
   resumeVersionLabel,
   updateResumeVersionInputSchema,
 } from './resume-version.js';
@@ -20,6 +22,22 @@ describe('resumeVersionLabel', () => {
     expect(resumeVersionLabel({ number: 2, title: 'акцент на продукті' })).toBe(
       'CV v2 · акцент на продукті',
     );
+  });
+});
+
+describe('resumeProfileStatusSchema', () => {
+  it('adds needs_text to the AI job statuses of a version profile', () => {
+    expect(RESUME_PROFILE_STATUSES).toEqual([
+      'queued',
+      'processing',
+      'done',
+      'failed',
+      'needs_text',
+    ]);
+  });
+
+  it('refuses a status outside the profile statuses', () => {
+    expect(issuePathsOf(resumeProfileStatusSchema.safeParse('ocr_pending'))).toEqual(['']);
   });
 });
 

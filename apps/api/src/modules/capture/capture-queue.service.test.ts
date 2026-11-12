@@ -12,7 +12,7 @@ import {
   CREATION_EVENT_ID,
   OLENA_ID,
 } from '../../test/service-fixtures.js';
-import { StubQueue } from '../../test/stub-queues.js';
+import { SilentQueue, StubQueue } from '../../test/stub-queues.js';
 import { ApplicationDraftsService } from '../applications/index.js';
 import { CaptureQueueService } from './capture-queue.service.js';
 
@@ -30,12 +30,6 @@ const eventWith = (payload: unknown) => ({
   type: 'application.capture_requested',
   payload,
 });
-
-class SilentQueue extends StubQueue {
-  override add(): Promise<never> {
-    return new Promise<never>(() => undefined);
-  }
-}
 
 async function serviceWith(queue: StubQueue = new StubQueue('ai')) {
   const moduleRef = await compileProcessorModule(log.sink, [

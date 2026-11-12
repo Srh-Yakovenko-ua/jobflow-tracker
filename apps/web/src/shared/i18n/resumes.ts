@@ -1,4 +1,4 @@
-import { type AiJobStatus, RESUME_VERSION_LIMITS, type ResumeMime } from '@jobflow/shared';
+import { RESUME_VERSION_LIMITS, type ResumeMime, type ResumeProfileStatus } from '@jobflow/shared';
 
 import { applicationPage } from './application-page';
 import { states } from './states';
@@ -59,8 +59,9 @@ export const resumes = {
     queued: status.queued,
     processing: status.processing,
     done: 'AI-профіль готовий',
-    failed: 'потрібен текстовий PDF',
-  } satisfies Record<AiJobStatus, string>,
+    failed: 'AI-профіль не вдався',
+    needs_text: 'потрібен текстовий PDF',
+  } satisfies Record<ResumeProfileStatus, string>,
   errors: {
     unsupportedType: {
       eyebrow: FILE_REFUSED,

@@ -19,8 +19,7 @@ import { FileStorage, type StoredObject } from '../../storage/file-storage.js';
 import { detectResumeFormat, RESUME_SIGNATURE_BYTES } from './resume-file-format.js';
 import { pendingResumeKey, resumeStorageKey } from './resume-storage-key.js';
 import { toResumeVersion } from './resume-version-response.js';
-import { type ResumeVersionRow, ResumeVersionsRepository } from './resume-versions.repository.js';
-import { RESUME_EVENTS } from './resumes.events.js';
+import { ResumeVersionWriter } from './resume-version-writer.js';
 
 export type ResumeUploadTarget = ConfirmResumeUploadInput & Pick<ConfirmedResumeUpload, 'uploadId'>;
 
@@ -30,21 +29,13 @@ type StoredUpload = UploadKey & { stored: StoredObject };
 
 type VersionCopy = { from: string; to: string; etag: string | null; tx: Prisma.TransactionClient };
 
-type VersionInsert = {
-  input: CreateResumeVersionInput;
-  storageKey: string;
-  stored: StoredObject;
-  uploadedAt: Date;
-  tx: Prisma.TransactionClient;
-};
-
 @Injectable()
 export class ResumeUploadsService {
   constructor(
     private readonly storage: FileStorage,
     private readonly clock: Clock,
-    private readonly versions: ResumeVersionsRepository,
     private readonly prisma: PrismaService,
+    private readonly writer: ResumeVersionWriter,
   ) {}
 
   async createUploadTicket(
@@ -86,39 +77,17 @@ export class ResumeUploadsService {
     const row = await this.prisma.$transaction(async (tx) => {
       const storageKey = resumeStorageKey(ref);
       await this.copyOnce(userId, { from, to: storageKey, etag: stored.etag, tx });
-      return this.insertVersion(userId, { input, storageKey, stored, uploadedAt, tx });
+      return this.writer.insert(userId, { input, storageKey, stored, uploadedAt, tx });
     });
     return toResumeVersion(row);
   }
 
   private async copyOnce(userId: string, { from, to, etag, tx }: VersionCopy): Promise<void> {
-    await this.versions.lockOwner(userId, { tx });
-    if ((await this.versions.findByStorageKey(userId, { storageKey: to, tx })) !== null) {
-      throw conflict('A version from this upload already exists');
-    }
+    await this.writer.claim(userId, { storageKey: to, tx });
     const copied = etag !== null && (await this.storage.copy({ from, to, ifMatch: etag }));
     if (!copied) {
       throw conflict('The file changed after the check; upload it again');
     }
-  }
-
-  private async insertVersion(
-    userId: string,
-    { input, storageKey, stored, uploadedAt, tx }: VersionInsert,
-  ): Promise<ResumeVersionRow> {
-    const resumeId = await this.versions.findOrCreateResume(userId, { tx });
-    const number = await this.versions.nextNumber(userId, { resumeId, tx });
-    const { filename, mime, title, note = null } = input;
-    const data = { resumeId, number, storageKey, filename, mime, sizeBytes: stored.sizeBytes };
-    const row = await this.versions.insert(userId, {
-      data: { ...data, title, note, uploadedAt },
-      tx,
-    });
-    await this.versions.recordEvent(userId, {
-      event: { eventType: RESUME_EVENTS.versionUploaded, resumeVersionId: row.id },
-      tx,
-    });
-    return row;
   }
 
   private async checkedUpload({ key, mime }: UploadKey): Promise<StoredObject> {

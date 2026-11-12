@@ -1,3 +1,4 @@
+import re
 from dataclasses import dataclass
 from typing import Any, Protocol
 
@@ -10,6 +11,7 @@ class BuiltPrompt:
     user: str
     temperature: float
     max_tokens: int
+    images: tuple[str, ...] = ()
 
 
 class PromptModule(Protocol):
@@ -28,3 +30,18 @@ class PromptModule(Protocol):
     def build(self, request: Any) -> BuiltPrompt: ...
 
     def checked(self, request: Any, output: Any) -> BaseModel: ...
+
+
+def delimiter_tag(name: str) -> re.Pattern[str]:
+    return re.compile(rf"<\s*/?\s*{name}\b[^>]*>", re.IGNORECASE)
+
+
+def without_delimiter_tags(text: str, tag: re.Pattern[str]) -> str:
+    removed = 1
+    while removed:
+        text, removed = tag.subn("", text)
+    return text
+
+
+def collapsed(text: str) -> str:
+    return " ".join(text.split())

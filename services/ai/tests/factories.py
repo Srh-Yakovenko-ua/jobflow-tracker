@@ -15,6 +15,7 @@ from app.core.auth import get_key_source
 from app.core.config import Settings
 from app.factory import create_app
 from app.providers.base import AiProvider, CompletionRequest, Message, VendorSettings
+from app.providers.fake import fixture_of
 
 KID = "test-signing-key"
 SIGNING_KEY = rsa.generate_private_key(public_exponent=65537, key_size=2048)
@@ -57,6 +58,41 @@ UNNAMED_VACANCY = {
     "company": vacancy_field(None, None),
     "position": vacancy_field(None, None),
 }
+
+
+RESUME_PATH = "/v1/complete/resume_parse"
+RESUME_TEXT = (
+    "Frontend developer, Acme, 2021-03 to 2023-02. Built the Acme dashboard in React.\n"
+    "Junior developer, 2019-09 to 2021-02. TypeScript, fintech, English B2."
+)
+RESUME_PAGE = "/9j/4AAQSkZJRgABAQ"
+RESUME_FIXTURE: dict[str, Any] = json.loads(fixture_of("resume_parse"))
+PROFILED_RESUME = {
+    **RESUME_FIXTURE,
+    "skills": [
+        {**RESUME_FIXTURE["skills"][0], "years": 3.5},
+        {**RESUME_FIXTURE["skills"][1], "years": 2.0},
+    ],
+    "totalYears": 3.5,
+}
+
+
+PII_RESUME = (
+    "Olena Koval, React developer\n"
+    "olena.koval@example.com | +380 67 123 45 67 | @olena_dev\n"
+    "вул. Хрещатик, 22, кв. 5, Київ\n"
+    "5 years with React and Node.js"
+)
+SCRUBBED_RESUME = (
+    "Olena Koval, React developer\n"
+    "[email] | [phone] | [telegram]\n"
+    "[address], Київ\n"
+    "5 years with React and Node.js"
+)
+
+
+def resume_body(*, text: str = RESUME_TEXT, pages: list[str] | None = None) -> Any:
+    return {"input": {"text": text, "pages": pages or []}}
 
 
 def failing_vacancy(failure: str) -> str:
@@ -148,6 +184,13 @@ COMPLETION_REQUEST = CompletionRequest(
     max_tokens=64,
 )
 
+SCAN_PROMPT = "The resume is in the attached page images."
+SCAN_PAGES = (RESUME_PAGE, "/9j/second")
+SCAN_REQUEST = replace(
+    COMPLETION_REQUEST,
+    messages=[Message(role="user", content=SCAN_PROMPT, images=SCAN_PAGES)],
+)
+
 VENDOR = VendorSettings(
     api_key="test-key",
     model="test-model",
@@ -155,6 +198,7 @@ VENDOR = VendorSettings(
     base_url=None,
     timeout_seconds=5,
     max_retries=2,
+    vision_model="test-vision",
 )
 
 

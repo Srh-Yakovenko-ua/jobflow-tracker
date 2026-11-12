@@ -1,0 +1,43 @@
+%PDF-1.7
+1 0 obj
+<< /Type /Catalog /Pages 2 0 R >>
+endobj
+2 0 obj
+<< /Type /Pages /Kids [4 0 R 6 0 R] /Count 2 >>
+endobj
+3 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>
+endobj
+4 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 3 0 R >> >> /Contents 5 0 R >>
+endobj
+5 0 obj
+<< /Length 570 >>
+stream
+BT /F1 14 Tf 72 760 Td (Marko Lisovyi) Tj 0 -18 Td (Senior Backend Developer) Tj 0 -18 Td (Kyiv, open to remote work) Tj 0 -18 Td (Summary: eight years building Python services for logistics.) Tj 0 -18 Td (Experience) Tj 0 -18 Td (Senior Backend Developer, Northwind Freight, 2020-01 to now) Tj 0 -18 Td (Designed Django REST APIs on PostgreSQL and Redis.) Tj 0 -18 Td (Led a team of four engineers and ran code reviews.) Tj 0 -18 Td (Backend Developer, Bluefin Systems, 2017-03 to 2019-12) Tj 0 -18 Td (Built Celery workers and moved services to Docker.) Tj 0 -18 Td ET
+endstream
+endobj
+6 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 3 0 R >> >> /Contents 7 0 R >>
+endobj
+7 0 obj
+<< /Length 272 >>
+stream
+BT /F1 14 Tf 72 760 Td (Skills: Python, Django, PostgreSQL, Redis, Celery, Docker, AWS) Tj 0 -18 Td (Domains: logistics, payments) Tj 0 -18 Td (Education: BSc Computer Science, 2017) Tj 0 -18 Td (Languages: English Upper-Intermediate (B2), Ukrainian native) Tj 0 -18 Td ET
+endstream
+endobj
+xref
+0 8
+0000000000 65535 f 
+0000000009 00000 n 
+0000000058 00000 n 
+0000000121 00000 n 
+0000000191 00000 n 
+0000000317 00000 n 
+0000000938 00000 n 
+0000001064 00000 n 
+trailer
+<< /Size 8 /Root 1 0 R >>
+startxref
+1387
+%%EOF

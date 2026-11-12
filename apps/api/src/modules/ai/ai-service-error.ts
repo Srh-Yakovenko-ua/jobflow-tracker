@@ -1,14 +1,7 @@
-export type AiServiceFailure = { status: number; type: string; cause?: unknown };
+import { ServiceCallError, type ServiceCallFailure } from '../../common/service-call-error.js';
 
-export class AiServiceError extends Error {
-  readonly status: number;
-
-  readonly type: string;
-
-  constructor({ status, type, cause }: AiServiceFailure) {
-    super(`AI call failed: ${String(status)} ${type}`, { cause });
-    this.name = 'AiServiceError';
-    this.status = status;
-    this.type = type;
+export class AiServiceError extends ServiceCallError {
+  constructor(failure: ServiceCallFailure) {
+    super(failure, 'AI call');
   }
 }

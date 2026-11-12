@@ -9,13 +9,13 @@ import {
   type AiEmbedRequest,
   aiEmbedRequestSchema,
   type AiKind,
-  errorResponseSchema,
 } from '@jobflow/shared';
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import type { z } from 'zod';
 
 import { DEPENDENCY_LIMITS } from '../../common/probe.js';
+import { fetchFailureOf, refusalTypeOf } from '../../common/service-call-error.js';
 import { withoutUndefined } from '../../common/without-undefined.js';
 import type { Env } from '../../config/env.js';
 import { JwtKeys, signServiceToken } from '../auth/index.js';
@@ -51,18 +51,7 @@ async function readBody(response: Response): Promise<unknown> {
   if (response.ok) {
     return response.json();
   }
-  const body: unknown = await response.json().catch(() => undefined);
-  const type = errorResponseSchema.safeParse(body).data?.type ?? 'unexpected_response';
-  throw new AiServiceError({ status: response.status, type });
-}
-
-function toAiServiceError(error: unknown): unknown {
-  if (error instanceof DOMException && error.name === 'TimeoutError') {
-    return new AiServiceError({ status: 504, type: AI_JOB_FAILURES.timeout, cause: error });
-  }
-  return error instanceof TypeError
-    ? new AiServiceError({ status: 503, type: AI_JOB_FAILURES.notReady, cause: error })
-    : error;
+  throw new AiServiceError({ status: response.status, type: await refusalTypeOf(response) });
 }
 
 @Injectable()
@@ -84,7 +73,8 @@ export class AiClient {
   }: AiCompleteCall): Promise<AiCompletion<AiKind>> {
     const body = allowedBody(aiCompleteRequestSchemas[kind], { ...options, input });
     const completion = await this.post({ path: `/v1/complete/${kind}`, body, requestId });
-    return checked(aiCompletionSchemas[kind], {
+    const schema: z.ZodType<AiCompletion<AiKind>> = aiCompletionSchemas[kind];
+    return checked(schema, {
       value: completion,
       refusal: AI_JOB_FAILURES.invalidOutput,
     });
@@ -116,7 +106,10 @@ export class AiClient {
       });
       return await readBody(response);
     } catch (error) {
-      throw toAiServiceError(error);
+      throw fetchFailureOf(error, {
+        timeoutType: AI_JOB_FAILURES.timeout,
+        ErrorClass: AiServiceError,
+      });
     }
   }
 }

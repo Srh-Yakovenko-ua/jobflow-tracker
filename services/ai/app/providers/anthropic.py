@@ -3,7 +3,12 @@ import json
 import anthropic
 import httpx2
 from anthropic import AsyncAnthropic
-from anthropic.types import MessageParam, ToolUseBlock
+from anthropic.types import (
+    ContentBlockParam,
+    ImageBlockParam,
+    MessageParam,
+    ToolUseBlock,
+)
 
 from app.contracts.embed_request import EmbedRequest
 from app.core.errors import AppError
@@ -11,8 +16,10 @@ from app.providers.base import (
     Completion,
     CompletionRequest,
     Embedding,
+    Message,
     VendorErrors,
     VendorSettings,
+    model_for,
     vendor_errors,
 )
 
@@ -21,6 +28,21 @@ ANTHROPIC_ERRORS = VendorErrors(
     rate_limited=anthropic.RateLimitError,
     failed=anthropic.APIError,
 )
+
+
+def message_content(message: Message) -> str | list[ContentBlockParam]:
+    if not message.images:
+        return message.content
+    return [
+        *(
+            ImageBlockParam(
+                type="image",
+                source={"type": "base64", "media_type": "image/jpeg", "data": image},
+            )
+            for image in message.images
+        ),
+        {"type": "text", "text": message.content},
+    ]
 
 
 class AnthropicProvider:
@@ -39,12 +61,12 @@ class AnthropicProvider:
     async def complete(self, request: CompletionRequest) -> Completion:
         tool_name = f"submit_{request.kind}"
         messages: list[MessageParam] = [
-            {"role": message.role, "content": message.content}
+            {"role": message.role, "content": message_content(message)}
             for message in request.messages
         ]
         with vendor_errors(ANTHROPIC_ERRORS, self.vendor):
             response = await self.client.messages.create(
-                model=self.vendor.model,
+                model=model_for(request, self.vendor),
                 max_tokens=request.max_tokens,
                 system=request.system,
                 messages=messages,

@@ -5,6 +5,8 @@ import openai
 from openai import AsyncOpenAI, omit
 from openai.types.chat import (
     ChatCompletionAssistantMessageParam,
+    ChatCompletionContentPartImageParam,
+    ChatCompletionContentPartParam,
     ChatCompletionMessageParam,
     ChatCompletionUserMessageParam,
 )
@@ -18,6 +20,7 @@ from app.providers.base import (
     Message,
     VendorErrors,
     VendorSettings,
+    model_for,
     vendor_errors,
 )
 
@@ -30,11 +33,26 @@ OPENAI_ERRORS = VendorErrors(
 THINKING_BLOCK = re.compile(r"<think>.*?</think>", re.DOTALL)
 
 
+def user_parts(message: Message) -> list[ChatCompletionContentPartParam]:
+    return [
+        *(
+            ChatCompletionContentPartImageParam(
+                type="image_url",
+                image_url={"url": f"data:image/jpeg;base64,{image}"},
+            )
+            for image in message.images
+        ),
+        {"type": "text", "text": message.content},
+    ]
+
+
 def chat_message(message: Message) -> ChatCompletionMessageParam:
     if message.role == "assistant":
         return ChatCompletionAssistantMessageParam(
             role="assistant", content=message.content
         )
+    if message.images:
+        return ChatCompletionUserMessageParam(role="user", content=user_parts(message))
     return ChatCompletionUserMessageParam(role="user", content=message.content)
 
 
@@ -54,7 +72,7 @@ class OpenAiProvider:
     async def complete(self, request: CompletionRequest) -> Completion:
         with vendor_errors(OPENAI_ERRORS, self.vendor):
             response = await self.client.chat.completions.create(
-                model=self.vendor.model,
+                model=model_for(request, self.vendor),
                 messages=[
                     {"role": "system", "content": request.system},
                     *map(chat_message, request.messages),

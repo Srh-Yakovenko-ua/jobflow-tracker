@@ -5,8 +5,19 @@ import { join } from 'node:path';
 import { Test } from '@nestjs/testing';
 import { describe, expect, it } from 'vitest';
 
+import { Clock } from '../common/clock.js';
 import { AiClient, AiServiceError } from '../modules/ai/index.js';
-import { FakeAiClient, VACANCY_COMPLETION, VACANCY_EVAL_CASE, VACANCY_TEXT } from '../test/ai.js';
+import { DocumentsClient, DocumentsError } from '../modules/resumes/index.js';
+import {
+  FakeAiClient,
+  RESUME_COMPLETION,
+  VACANCY_COMPLETION,
+  VACANCY_EVAL_CASE,
+  VACANCY_TEXT,
+} from '../test/ai.js';
+import { FakeDocumentsClient, RESUME_TEXT } from '../test/documents.js';
+import { PDF, PDF_BYTES } from '../test/resumes.js';
+import { NOW, settableClock } from '../test/time.js';
 import { AiEvalService } from './ai-eval.service.js';
 
 const TWO_CASES = {
@@ -22,15 +33,25 @@ async function casesDir(cases: Record<string, unknown>): Promise<string> {
   const dir = await mkdtemp(join(tmpdir(), 'jobflow-ai-eval-'));
   await Promise.all(
     Object.entries(cases).map(([file, content]) =>
-      writeFile(join(dir, file), JSON.stringify(content)),
+      writeFile(join(dir, file), content instanceof Uint8Array ? content : JSON.stringify(content)),
     ),
   );
   return dir;
 }
 
-async function evalService(ai: FakeAiClient): Promise<AiEvalService> {
+type EvalFakes = { documents?: FakeDocumentsClient; clock?: ReturnType<typeof settableClock> };
+
+async function evalService(
+  ai: FakeAiClient,
+  { documents = new FakeDocumentsClient(), clock = settableClock(NOW) }: EvalFakes = {},
+): Promise<AiEvalService> {
   const moduleRef = await Test.createTestingModule({
-    providers: [AiEvalService, { provide: AiClient, useValue: ai }],
+    providers: [
+      AiEvalService,
+      { provide: AiClient, useValue: ai },
+      { provide: DocumentsClient, useValue: documents },
+      { provide: Clock, useValue: clock },
+    ],
   }).compile();
   return moduleRef.get(AiEvalService);
 }
@@ -112,5 +133,93 @@ describe('AiEvalService.vacancy', () => {
     await expect((await evalService(new FakeAiClient())).vacancy(dir)).rejects.toThrow(
       `No eval cases in ${dir}`,
     );
+  });
+});
+
+const RESUME_EXPECTED = {
+  skills: ['React', 'TypeScript'],
+  seniority: 'middle',
+  englishLevel: null,
+};
+
+const RESUME_CASES = {
+  '01-cv.pdf': PDF_BYTES,
+  '01-cv.expected.json': RESUME_EXPECTED,
+  '02-cv.pdf': PDF_BYTES,
+  '02-cv.expected.json': RESUME_EXPECTED,
+};
+
+function resumeRun(answer: FakeAiClient['answer']) {
+  const ai = new FakeAiClient();
+  const documents = new FakeDocumentsClient();
+  const clock = settableClock(NOW);
+  ai.answer = answer;
+  const run = async (cases: Record<string, unknown> = RESUME_CASES) =>
+    (await evalService(ai, { documents, clock })).resume(await casesDir(cases));
+  return { ai, documents, clock, run };
+}
+
+describe('AiEvalService.resume', () => {
+  it('extracts each case document, sends its text as resume_parse and times each case', async () => {
+    const { ai, documents, clock, run } = resumeRun(() => {
+      clock.at(new Date(clock.now().getTime() + 16_000));
+      return Promise.resolve(RESUME_COMPLETION);
+    });
+
+    const report = await run();
+
+    expect(documents.calls).toEqual([
+      { bytes: PDF_BYTES, filename: '01-cv.pdf', mime: PDF },
+      { bytes: PDF_BYTES, filename: '02-cv.pdf', mime: PDF },
+    ]);
+    expect(ai.calls).toEqual([
+      { kind: 'resume_parse', input: { text: RESUME_TEXT, pages: [] } },
+      { kind: 'resume_parse', input: { text: RESUME_TEXT, pages: [] } },
+    ]);
+    expect(report.lines.slice(1, 3)).toEqual([
+      '01-cv.expected.json\t1.000\tmiddle/middle\tnull/upper_intermediate\t16000\tFAIL',
+      '02-cv.expected.json\t1.000\tmiddle/middle\tnull/upper_intermediate\t16000\tFAIL',
+    ]);
+    expect(report.passed).toBe(false);
+  });
+
+  it('counts a document the service refuses as a wrong case and goes on to the next one', async () => {
+    const { ai, documents, run } = resumeRun(() => Promise.resolve(RESUME_COMPLETION));
+    let extracted = 0;
+    const answer = documents.answer;
+    documents.answer = () => {
+      extracted += 1;
+      return extracted === 1
+        ? Promise.reject(new DocumentsError({ status: 422, type: 'encrypted_pdf' }))
+        : answer();
+    };
+
+    const report = await run();
+
+    expect(ai.calls).toHaveLength(1);
+    expect(report.lines[1]).toBe(
+      '01-cv.expected.json\t0.000\tencrypted_pdf\tencrypted_pdf\t0\tFAIL',
+    );
+  });
+
+  it('stops at the first case when the document service times out', async () => {
+    const { ai, documents, run } = resumeRun(() => Promise.resolve(RESUME_COMPLETION));
+    documents.answer = () =>
+      Promise.reject(new DocumentsError({ status: 504, type: 'documents_timeout' }));
+
+    expect(await run()).toEqual({
+      lines: ['stopped\t01-cv.expected.json\tdocuments_timeout', 'FAIL'],
+      passed: false,
+    });
+    expect(ai.calls).toEqual([]);
+  });
+
+  it('refuses an expected file without its document beside it before any call', async () => {
+    const { ai, documents, run } = resumeRun(() => Promise.resolve(RESUME_COMPLETION));
+
+    await expect(run({ '01-cv.expected.json': RESUME_EXPECTED })).rejects.toThrow(
+      'Eval case 01-cv.expected.json has no document beside it',
+    );
+    expect([documents.calls, ai.calls]).toEqual([[], []]);
   });
 });
