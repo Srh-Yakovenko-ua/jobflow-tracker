@@ -1,10 +1,10 @@
-import { screen } from '@testing-library/react';
+import { screen, within } from '@testing-library/react';
 import { toast } from 'sonner';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { uk } from '@/shared/i18n';
 import { axeViolations } from '@/test/axe';
-import { findLiveToaster, renderGallery, specimenOf } from '@/test/dev-ui';
+import { findLiveToaster, renderGallery, sectionTitled, specimenOf } from '@/test/dev-ui';
 import { quietLogs } from '@/test/quiet-logs';
 
 const DEMO = uk.devUi.errorPanels.crashDemo;
@@ -50,9 +50,7 @@ const STATE_ACTIONS = [
 ];
 
 function skeletonSection(): HTMLElement {
-  const section = screen.getByRole('heading', { level: 2, name: 'Скелетони' }).closest('section');
-  if (section === null) throw new Error('the 03 skeleton section is missing');
-  return section;
+  return sectionTitled('Скелетони');
 }
 
 function shimmeringBars(container: HTMLElement): number {
@@ -85,7 +83,9 @@ describe('/dev/ui states from the empty states screen', () => {
   it('the analytics specimen fills 4 of 10 meter segments', () => {
     renderGallery();
 
-    const meter = screen.getByRole('meter', { name: 'Прогрес до першого висновку' });
+    const meter = within(sectionTitled('Порожні стани решти екранів')).getByRole('meter', {
+      name: 'Прогрес до першого висновку',
+    });
     expect(meter.getAttribute('aria-valuenow')).toBe('4');
     expect(meter.getAttribute('aria-valuetext')).toBe('4 / 10');
     expect(meter.querySelectorAll('.bg-stage-screening')).toHaveLength(4);
@@ -105,7 +105,7 @@ describe('/dev/ui states from the empty states screen', () => {
     renderGallery();
 
     const actions = STATE_ACTIONS.flatMap((name) => screen.getAllByRole('button', { name }));
-    expect(actions).toHaveLength(10);
+    expect(actions).toHaveLength(11);
     for (const action of actions) {
       expect(action.className).toContain('max-md:min-h-11');
       expect(action.className).toMatch(/\bh-control-(md|lg)\b/);

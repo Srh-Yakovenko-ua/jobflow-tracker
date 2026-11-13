@@ -25,6 +25,7 @@ function palettes(tokens: Tokens) {
     ...light,
     colors: overDark(light.colors, tokens.dark),
     outcome: overDark(light.outcome, tokens.dark),
+    data: Object.values(overDark(hexes(tokens.dataViz), tokens.dark)),
   };
   return { light, dark };
 }

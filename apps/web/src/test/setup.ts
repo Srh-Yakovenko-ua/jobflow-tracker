@@ -48,6 +48,11 @@ function insertTextInFocusedField(command: string, ...args: readonly unknown[]):
   return true;
 }
 
+Object.defineProperty(HTMLCanvasElement.prototype, 'getContext', {
+  value: () => null,
+  configurable: true,
+});
+
 if (!('execCommand' in document)) {
   Object.defineProperty(document, 'execCommand', {
     value: insertTextInFocusedField,

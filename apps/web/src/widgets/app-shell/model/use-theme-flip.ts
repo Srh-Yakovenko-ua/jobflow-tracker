@@ -1,13 +1,9 @@
-import { useTheme } from '@/shared/lib/theme';
-import { useMediaQuery } from '@/shared/lib/use-media-query';
-
-const DARK_SCHEME = '(prefers-color-scheme: dark)';
+import { useShownScheme, useTheme } from '@/shared/lib/theme';
 
 export function useThemeFlip(): () => void {
-  const { theme, setTheme } = useTheme();
-  const prefersDark = useMediaQuery(DARK_SCHEME);
-  const shownDark = theme === 'dark' || (theme === 'system' && prefersDark);
+  const { setTheme } = useTheme();
+  const scheme = useShownScheme();
   return () => {
-    setTheme(shownDark ? 'light' : 'dark');
+    setTheme(scheme === 'dark' ? 'light' : 'dark');
   };
 }

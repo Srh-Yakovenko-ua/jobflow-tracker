@@ -81,17 +81,25 @@ export function ColumnSkeleton() {
   );
 }
 
+export type ChartPlotSkeletonProps = Readonly<{ motion: SkeletonMotion; className: string }>;
+
+export function ChartPlotSkeleton({ motion, className }: ChartPlotSkeletonProps) {
+  return (
+    <div aria-hidden className={cn('flex items-end gap-1.5', className)}>
+      {PLOT_BARS.map((bar) => (
+        <span key={bar} className={cn('h-[52%] flex-1', FILL[motion])} />
+      ))}
+    </div>
+  );
+}
+
 export function ChartSkeleton() {
   const motion = useSkeletonMotion();
   return (
     <div aria-hidden className={cn('flex flex-col gap-4 p-5', RAISED)}>
       <Bar motion="static" className="h-2.25 w-23" />
       <Bar motion={motion} className="h-10 w-27" />
-      <div className="flex h-21 items-end gap-1.5">
-        {PLOT_BARS.map((bar) => (
-          <span key={bar} className="h-[52%] flex-1 bg-surface-3" />
-        ))}
-      </div>
+      <ChartPlotSkeleton motion="static" className="h-21" />
     </div>
   );
 }
