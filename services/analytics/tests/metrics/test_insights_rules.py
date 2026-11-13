@@ -1,19 +1,38 @@
+from collections.abc import Callable
 from dataclasses import replace
+from typing import Any
 
 import pytest
 
+from app.metrics.forecast import NO_REPLY, Forecast, WeeksRange
 from app.metrics.funnel import FunnelStage
 from app.metrics.ghost_market import ghost_rate_vs_market
 from app.metrics.insights import engine
-from app.metrics.insights.engine import Insight, InsightMetrics, insight_rule, insights
+from app.metrics.insights.engine import (
+    Insight,
+    InsightAction,
+    InsightMetrics,
+    insight_rule,
+    insights,
+)
+from app.metrics.insights.inputs import stage_what_if
 from app.metrics.insights.rules.dominant_reason import dominant_reason
 from app.metrics.insights.rules.entry_leak import narrowest_step
 from app.metrics.insights.rules.ghosts import ghost_share
-from app.metrics.insights.rules.resume_switch import resume_switch
-from app.metrics.insights.rules.source_gap import weak_and_strong_source
+from app.metrics.insights.rules.most_expensive import practice_costly_stage
+from app.metrics.insights.rules.resume_switch import keep_winning_resume, resume_switch
+from app.metrics.insights.rules.source_gap import (
+    cut_weak_source,
+    lean_on_strong_source,
+    weak_and_strong_source,
+)
+from app.metrics.most_expensive import MostExpensiveStage
 from app.metrics.rate import Insufficient, rate
 from app.metrics.reasons import reasons
 from app.metrics.reasons_trend import TopReason
+from app.metrics.resume_ab import Verdict
+from app.metrics.sources import SourcePerformance
+from tests.metrics import funnel_design
 from tests.metrics.funnel_design import TECH_INTERVIEW
 from tests.metrics.insights_design import design_metrics, one_source_metrics
 from tests.metrics.reasons_design import DESIGN_NOW
@@ -54,6 +73,51 @@ def tiny_metrics() -> InsightMetrics:
     )
 
 
+def with_comparison(metrics: InsightMetrics, update: dict[str, Any]) -> InsightMetrics:
+    comparison = metrics.resume_ab.comparison
+    assert comparison is not None
+    resume_ab = metrics.resume_ab.model_copy(
+        update={"comparison": comparison.model_copy(update=update)}
+    )
+    return replace(metrics, resume_ab=resume_ab)
+
+
+def fallen(metrics: InsightMetrics) -> InsightMetrics:
+    comparison = metrics.resume_ab.comparison
+    assert comparison is not None
+    switch = comparison.switch
+    fell = switch.model_copy(update={"before": switch.after, "after": switch.before})
+    return with_comparison(metrics, {"switch": fell})
+
+
+def baseline_wins(metrics: InsightMetrics) -> InsightMetrics:
+    verdict = Verdict(winner=1, message="CV v1 працює краще")
+    return with_comparison(metrics, {"verdict": verdict})
+
+
+def with_sources(
+    metrics: InsightMetrics, listed: list[SourcePerformance]
+) -> InsightMetrics:
+    return replace(
+        metrics, sources=metrics.sources.model_copy(update={"sources": listed})
+    )
+
+
+def without_gap(metrics: InsightMetrics) -> InsightMetrics:
+    kept = [
+        source
+        for source in metrics.sources.sources
+        if source.source in {"linkedin", "referral"}
+    ]
+    return with_sources(metrics, kept)
+
+
+def with_likely(metrics: InsightMetrics, likely: WeeksRange) -> InsightMetrics:
+    what_if = metrics.stage_what_if
+    assert isinstance(what_if, Forecast)
+    return replace(metrics, stage_what_if=what_if.model_copy(update={"likely": likely}))
+
+
 def test_names_a_later_stage_when_the_funnel_narrows_after_the_entry(
     metrics: InsightMetrics,
 ) -> None:
@@ -77,15 +141,7 @@ def test_names_a_later_stage_when_the_funnel_narrows_after_the_entry(
 def test_says_the_conversion_fell_after_the_switch_as_a_warning(
     metrics: InsightMetrics,
 ) -> None:
-    comparison = metrics.resume_ab.comparison
-    assert comparison is not None
-    switch = comparison.switch
-    fell = switch.model_copy(update={"before": switch.after, "after": switch.before})
-    resume_ab = metrics.resume_ab.model_copy(
-        update={"comparison": comparison.model_copy(update={"switch": fell})}
-    )
-
-    said = resume_switch(replace(metrics, resume_ab=resume_ab))
+    said = resume_switch(fallen(metrics))
 
     assert said is not None
     assert (said.body, said.severity) == (
@@ -163,14 +219,7 @@ def test_compares_the_ghost_share_with_the_market(
 def test_compares_no_sources_while_only_one_source_has_a_rate(
     metrics: InsightMetrics,
 ) -> None:
-    kept = [
-        source
-        for source in metrics.sources.sources
-        if source.source in {"linkedin", "referral"}
-    ]
-    only_linkedin = metrics.sources.model_copy(update={"sources": kept})
-
-    assert weak_and_strong_source(replace(metrics, sources=only_linkedin)) is None
+    assert weak_and_strong_source(without_gap(metrics)) is None
 
 
 def test_every_rule_stays_silent_on_insufficient_metrics() -> None:
@@ -188,6 +237,7 @@ def test_every_rule_stays_silent_on_insufficient_metrics() -> None:
 
     assert all(isinstance(metric, Insufficient) for metric in measured)
     assert [rule(tiny) for rule in engine.RULES] == [None] * 6
+    assert [rule(tiny) for rule in engine.ACTION_RULES] == [None] * 4
 
 
 def test_a_rule_declared_anywhere_joins_the_insights_without_an_engine_edit(
@@ -213,3 +263,105 @@ def test_a_rule_declared_anywhere_joins_the_insights_without_an_engine_edit(
         "declared_here",
     ]
     assert titles[-2:] == ["17 компаній не відповіли", "declared"]
+
+
+@pytest.mark.parametrize("what_if", [None, NO_REPLY], ids=["no what-if", "no reply"])
+def test_advises_no_practice_without_an_ok_what_if_forecast(
+    metrics: InsightMetrics, what_if: Insufficient | None
+) -> None:
+    assert practice_costly_stage(replace(metrics, stage_what_if=what_if)) is None
+
+
+def test_advises_no_practice_when_the_likely_range_runs_past_the_horizon(
+    metrics: InsightMetrics,
+) -> None:
+    open_ended = with_likely(metrics, WeeksRange(low=30.0, high=None))
+
+    assert practice_costly_stage(open_ended) is None
+
+
+def test_names_the_next_final_round_and_one_week_in_the_genitive(
+    metrics: InsightMetrics,
+) -> None:
+    costliest = metrics.most_expensive
+    assert isinstance(costliest, MostExpensiveStage)
+    final = costliest.model_copy(update={"stage": "final"})
+    short = with_likely(metrics, WeeksRange(low=0.4, high=1.0))
+
+    said = practice_costly_stage(replace(short, most_expensive=final))
+
+    assert said == InsightAction(
+        block="funnel",
+        title="Підготуватися до наступної фінальної співбесіди",
+        expected_effect="Прогноз офера звузиться до діапазону від 0 до 1 тижня, "
+        "якщо конверсія дійде до 60%.",
+    )
+
+
+def test_runs_no_what_if_once_the_costliest_stage_passes_sixty_percent(
+    metrics: InsightMetrics,
+) -> None:
+    costliest = metrics.most_expensive
+    assert isinstance(costliest, MostExpensiveStage)
+    at_target = costliest.model_copy(update={"reached": 10, "passed": 6})
+
+    what_if = stage_what_if(
+        funnel_design.design_frame(),
+        costliest=at_target,
+        now=funnel_design.DESIGN_NOW,
+    )
+
+    assert what_if is None
+
+
+def test_advises_nothing_about_sources_without_a_source_gap(
+    metrics: InsightMetrics,
+) -> None:
+    quiet = without_gap(metrics)
+
+    assert (cut_weak_source(quiet), lean_on_strong_source(quiet)) == (None, None)
+
+
+def test_keeps_the_weak_source_when_the_comparison_gives_no_more_screenings(
+    metrics: InsightMetrics,
+) -> None:
+    listed = [
+        source.model_copy(update={"screenings": 2})
+        if source.source == "djinni"
+        else source
+        for source in metrics.sources.sources
+    ]
+
+    assert cut_weak_source(with_sources(metrics, listed)) is None
+
+
+def test_leans_on_a_rated_source_by_name_without_the_small_sample_note(
+    metrics: InsightMetrics,
+) -> None:
+    djinni, *rest = metrics.sources.sources
+    rated = djinni.model_copy(
+        update={
+            "source": "workua",
+            "applications": 10,
+            "screenings": 9,
+            "conversion": rate(9, 10),
+        }
+    )
+    listed = [rated, djinni, *(source for source in rest if source.note is None)]
+
+    said = lean_on_strong_source(with_sources(metrics, listed))
+
+    assert said == InsightAction(
+        block="sources",
+        title="Більше відгуків через Work.ua",
+        expected_effect="9 скринінгів на 10 відгуків через Work.ua.",
+    )
+
+
+@pytest.mark.parametrize(
+    "changed", [fallen, baseline_wins], ids=["conversion fell", "baseline wins"]
+)
+def test_advises_no_resume_switch_unless_the_challenger_wins_and_grows(
+    metrics: InsightMetrics, changed: Callable[[InsightMetrics], InsightMetrics]
+) -> None:
+    assert keep_winning_resume(changed(metrics)) is None

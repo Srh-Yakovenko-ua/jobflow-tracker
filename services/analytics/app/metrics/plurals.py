@@ -15,6 +15,7 @@ SILENCE_FORMS: Final = PluralForms("тиша", "тиші", "тиш")
 SCREENING_FORMS: Final = PluralForms("скринінг", "скринінги", "скринінгів")
 DAY_FORMS: Final = PluralForms("день", "дні", "днів")
 WEEK_FORMS: Final = PluralForms("тиждень", "тижні", "тижнів")
+UP_TO_WEEK_FORMS: Final = PluralForms("тижня", "тижнів", "тижнів")
 NO_REPLY_FORMS: Final = PluralForms("не відповіла", "не відповіли", "не відповіли")
 GAVE_FORMS: Final = PluralForms("дав", "дали", "дали")
 

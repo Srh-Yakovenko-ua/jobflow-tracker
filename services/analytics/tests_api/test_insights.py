@@ -18,4 +18,4 @@ def test_says_nothing_for_an_owned_search_with_one_application(
         query=(INSIGHTS_PATH, {"searchId": owned.search_id}),
     )
 
-    assert body == {"insights": []}
+    assert body == {"insights": [], "actions": []}

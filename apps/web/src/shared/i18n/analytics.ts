@@ -60,10 +60,7 @@ export const analytics = {
       label: 'Дійшли до скринінгу',
       of: (successes: number, trials: number) => `${String(successes)} із ${String(trials)}`,
     },
-    response: {
-      label: 'Медіана відповіді',
-      threshold: (days: string) => `поріг тиші: ${days}`,
-    },
+    response: { label: 'Медіана відповіді', threshold: (days: string) => `поріг тиші: ${days}` },
     ghost: {
       label: 'Ghost rate',
       gap: (points: number) => `${signed(points)} п.п.`,
@@ -93,6 +90,7 @@ export const analytics = {
           `конверсія ${step}: ${String(value)}% (${String(low)}–${String(high)}%)`,
         ghost: 'не входить у розрахунок конверсій',
       },
+      notes: { label: 'Висновки про воронку', lead: (title: string) => `${title}.` },
       ghost: {
         lead: 'Сіра гілка не твоя провина.',
         body: (companies: number) =>
@@ -186,6 +184,7 @@ export const analytics = {
     },
     timings: { eyebrow: 'час на етапах · медіана' },
   },
+  whatToDo: { eyebrow: 'що зробити', list: 'Що зробити далі' },
   lowDataState: {
     firstWeek: 'перший тиждень',
     week: (week: number) => `тиждень ${String(week)} пошуку`,

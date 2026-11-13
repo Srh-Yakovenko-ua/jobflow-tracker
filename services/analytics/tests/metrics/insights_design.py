@@ -6,7 +6,7 @@ from app.metrics.data_rules import clean_events
 from app.metrics.funnel import funnel_stages
 from app.metrics.ghost_market import ghost_rate_vs_market
 from app.metrics.insights.engine import InsightMetrics
-from app.metrics.insights.inputs import insight_metrics
+from app.metrics.insights.inputs import insight_metrics, stage_what_if
 from app.metrics.journeys import journeys
 from app.metrics.most_expensive import most_expensive
 from app.metrics.reasons import reasons
@@ -105,7 +105,33 @@ DESIGN_INSIGHTS_BODY: Final[dict[str, list[dict[str, Any]]]] = {
                 "gapPoints": 9,
             },
         },
-    ]
+    ],
+    "actions": [
+        {
+            "block": "funnel",
+            "title": "Підготуватися до наступного техінтерв'ю",
+            "expectedEffect": "Прогноз офера звузиться до діапазону від 3 до 11 "
+            "тижнів, якщо конверсія дійде до 60%.",
+        },
+        {
+            "block": "sources",
+            "title": "Прибрати LinkedIn з рутини",
+            "expectedEffect": "Ті самі 16 відгуків через Djinni дали б "
+            "6 скринінгів замість 2.",
+        },
+        {
+            "block": "sources",
+            "title": "Попросити ще кілька рефералок",
+            "expectedEffect": "3 скринінги на 3 відгуки через рефералки. "
+            "Вибірка мала, але напрям однозначний.",
+        },
+        {
+            "block": "resume_ab",
+            "title": "Відгукуватися з CV v2",
+            "expectedEffect": "Конверсія у скринінг 41% проти 24% "
+            "до переходу на CV v2.",
+        },
+    ],
 }
 
 
@@ -126,10 +152,11 @@ def one_source_metrics(
 def design_metrics() -> InsightMetrics:
     funnel_events = funnel_design.design_frame()
     rows = journeys(clean_events(funnel_events))
+    costliest = most_expensive(rows)
     return InsightMetrics(
         applications=DESIGN_APPLICATIONS,
         stages=funnel_stages(rows),
-        most_expensive=most_expensive(rows),
+        most_expensive=costliest,
         reasons=reasons(
             reasons_design.design_frame(), stage=None, now=reasons_design.DESIGN_NOW
         ),
@@ -140,4 +167,7 @@ def design_metrics() -> InsightMetrics:
             resume_ab_design.design_events(), links=resume_ab_design.design_links()
         ),
         ghosts=ghost_rate_vs_market(funnel_events),
+        stage_what_if=stage_what_if(
+            funnel_events, costliest=costliest, now=funnel_design.DESIGN_NOW
+        ),
     )
