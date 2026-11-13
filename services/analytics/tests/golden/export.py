@@ -43,8 +43,21 @@ METRICS: Final[dict[str, Callable[[Story], BaseModel]]] = {
 }
 
 
+SNAPSHOT_DECIMALS: Final = 10
+
+
+def rounded(value: Any) -> Any:
+    if isinstance(value, float):
+        return round(value, SNAPSHOT_DECIMALS)
+    if isinstance(value, dict):
+        return {key: rounded(item) for key, item in value.items()}
+    if isinstance(value, list):
+        return [rounded(item) for item in value]
+    return value
+
+
 def metric_body(story: Story, *, name: str) -> Any:
-    return METRICS[name](story).model_dump(by_alias=True, mode="json")
+    return rounded(METRICS[name](story).model_dump(by_alias=True, mode="json"))
 
 
 def iso(moment: Any) -> str:

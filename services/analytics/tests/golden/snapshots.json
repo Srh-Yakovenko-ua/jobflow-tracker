@@ -47,8 +47,8 @@
     "stages": [
       {
         "conversion": {
-          "high": 0.5780493145800892,
-          "low": 0.28509392559950375,
+          "high": 0.5780493146,
+          "low": 0.2850939256,
           "status": "ok",
           "successes": 17,
           "trials": 40,
@@ -65,8 +65,8 @@
       },
       {
         "conversion": {
-          "high": 0.8017550385865843,
-          "low": 0.3574683012062461,
+          "high": 0.8017550386,
+          "low": 0.3574683012,
           "status": "ok",
           "successes": 9,
           "trials": 15,
@@ -83,8 +83,8 @@
       },
       {
         "conversion": {
-          "high": 0.7847839377861223,
-          "low": 0.21521606221387765,
+          "high": 0.7847839378,
+          "low": 0.2152160622,
           "status": "ok",
           "successes": 4,
           "trials": 8,
@@ -223,120 +223,120 @@
             "code": "skills_gap",
             "count": 3,
             "share": {
-              "high": 0.4102945856883412,
-              "low": 0.061911266376209945,
+              "high": 0.4102945857,
+              "low": 0.0619112664,
               "status": "ok",
               "successes": 3,
               "trials": 17,
-              "value": 0.17647058823529413
+              "value": 0.1764705882
             }
           },
           {
             "code": "english_level",
             "count": 3,
             "share": {
-              "high": 0.4102945856883412,
-              "low": 0.061911266376209945,
+              "high": 0.4102945857,
+              "low": 0.0619112664,
               "status": "ok",
               "successes": 3,
               "trials": 17,
-              "value": 0.17647058823529413
+              "value": 0.1764705882
             }
           },
           {
             "code": "salary_expectations",
             "count": 2,
             "share": {
-              "high": 0.3433635059488586,
-              "low": 0.0328797737637927,
+              "high": 0.3433635059,
+              "low": 0.0328797738,
               "status": "ok",
               "successes": 2,
               "trials": 17,
-              "value": 0.11764705882352941
+              "value": 0.1176470588
             }
           },
           {
             "code": "chose_other",
             "count": 2,
             "share": {
-              "high": 0.3433635059488586,
-              "low": 0.0328797737637927,
+              "high": 0.3433635059,
+              "low": 0.0328797738,
               "status": "ok",
               "successes": 2,
               "trials": 17,
-              "value": 0.11764705882352941
+              "value": 0.1176470588
             }
           },
           {
             "code": "accepted_other",
             "count": 2,
             "share": {
-              "high": 0.3433635059488586,
-              "low": 0.0328797737637927,
+              "high": 0.3433635059,
+              "low": 0.0328797738,
               "status": "ok",
               "successes": 2,
               "trials": 17,
-              "value": 0.11764705882352941
+              "value": 0.1176470588
             }
           },
           {
             "code": "position_closed",
             "count": 1,
             "share": {
-              "high": 0.269820306375754,
-              "low": 0.010460400984997592,
+              "high": 0.2698203064,
+              "low": 0.010460401,
               "status": "ok",
               "successes": 1,
               "trials": 17,
-              "value": 0.058823529411764705
+              "value": 0.0588235294
             }
           },
           {
             "code": "no_explanation",
             "count": 1,
             "share": {
-              "high": 0.269820306375754,
-              "low": 0.010460400984997592,
+              "high": 0.2698203064,
+              "low": 0.010460401,
               "status": "ok",
               "successes": 1,
               "trials": 17,
-              "value": 0.058823529411764705
+              "value": 0.0588235294
             }
           },
           {
             "code": "low_salary",
             "count": 1,
             "share": {
-              "high": 0.269820306375754,
-              "low": 0.010460400984997592,
+              "high": 0.2698203064,
+              "low": 0.010460401,
               "status": "ok",
               "successes": 1,
               "trials": 17,
-              "value": 0.058823529411764705
+              "value": 0.0588235294
             }
           },
           {
             "code": "office_schedule",
             "count": 1,
             "share": {
-              "high": 0.269820306375754,
-              "low": 0.010460400984997592,
+              "high": 0.2698203064,
+              "low": 0.010460401,
               "status": "ok",
               "successes": 1,
               "trials": 17,
-              "value": 0.058823529411764705
+              "value": 0.0588235294
             }
           },
           {
             "code": "red_flags",
             "count": 1,
             "share": {
-              "high": 0.269820306375754,
-              "low": 0.010460400984997592,
+              "high": 0.2698203064,
+              "low": 0.010460401,
               "status": "ok",
               "successes": 1,
               "trials": 17,
-              "value": 0.058823529411764705
+              "value": 0.0588235294
             }
           }
         ],
@@ -344,23 +344,23 @@
           "candidate": {
             "count": 5,
             "share": {
-              "high": 0.5313311006653985,
-              "low": 0.13279989610295234,
+              "high": 0.5313311007,
+              "low": 0.1327998961,
               "status": "ok",
               "successes": 5,
               "trials": 17,
-              "value": 0.29411764705882354
+              "value": 0.2941176471
             }
           },
           "company": {
             "count": 12,
             "share": {
-              "high": 0.8672001038970477,
-              "low": 0.46866889933460176,
+              "high": 0.8672001039,
+              "low": 0.4686688993,
               "status": "ok",
               "successes": 12,
               "trials": 17,
-              "value": 0.7058823529411765
+              "value": 0.7058823529
             }
           }
         },
@@ -386,8 +386,8 @@
             "code": "salary_expectations",
             "count": 1,
             "share": {
-              "high": 0.6244653702374746,
-              "low": 0.0362241086324302,
+              "high": 0.6244653702,
+              "low": 0.0362241086,
               "status": "ok",
               "successes": 1,
               "trials": 5,
@@ -398,8 +398,8 @@
             "code": "chose_other",
             "count": 1,
             "share": {
-              "high": 0.6244653702374746,
-              "low": 0.0362241086324302,
+              "high": 0.6244653702,
+              "low": 0.0362241086,
               "status": "ok",
               "successes": 1,
               "trials": 5,
@@ -410,8 +410,8 @@
             "code": "position_closed",
             "count": 1,
             "share": {
-              "high": 0.6244653702374746,
-              "low": 0.0362241086324302,
+              "high": 0.6244653702,
+              "low": 0.0362241086,
               "status": "ok",
               "successes": 1,
               "trials": 5,
@@ -422,8 +422,8 @@
             "code": "no_explanation",
             "count": 1,
             "share": {
-              "high": 0.6244653702374746,
-              "low": 0.0362241086324302,
+              "high": 0.6244653702,
+              "low": 0.0362241086,
               "status": "ok",
               "successes": 1,
               "trials": 5,
@@ -434,8 +434,8 @@
             "code": "low_salary",
             "count": 1,
             "share": {
-              "high": 0.6244653702374746,
-              "low": 0.0362241086324302,
+              "high": 0.6244653702,
+              "low": 0.0362241086,
               "status": "ok",
               "successes": 1,
               "trials": 5,
@@ -447,8 +447,8 @@
           "candidate": {
             "count": 1,
             "share": {
-              "high": 0.6244653702374746,
-              "low": 0.0362241086324302,
+              "high": 0.6244653702,
+              "low": 0.0362241086,
               "status": "ok",
               "successes": 1,
               "trials": 5,
@@ -458,8 +458,8 @@
           "company": {
             "count": 4,
             "share": {
-              "high": 0.9637758913675698,
-              "low": 0.37553462976252544,
+              "high": 0.9637758914,
+              "low": 0.3755346298,
               "status": "ok",
               "successes": 4,
               "trials": 5,
@@ -603,13 +603,13 @@
     "comparison": {
       "baseline": 1,
       "challenger": 2,
-      "difference": -0.11555555555555558,
-      "pValue": 0.7026999696632622,
+      "difference": -0.1155555556,
+      "pValue": 0.7026999697,
       "probabilityBetter": 0.28361,
       "switch": {
         "after": {
-          "high": 0.6636911713067252,
-          "low": 0.33630882869327483,
+          "high": 0.6636911713,
+          "low": 0.3363088287,
           "status": "ok",
           "successes": 16,
           "trials": 32,
@@ -635,12 +635,12 @@
       {
         "applications": 6,
         "conversion": {
-          "high": 0.5635028221864701,
-          "low": 0.03005336974830664,
+          "high": 0.5635028222,
+          "low": 0.0300533697,
           "status": "ok",
           "successes": 1,
           "trials": 6,
-          "value": 0.16666666666666666
+          "value": 0.1666666667
         },
         "number": 3,
         "resumeVersionId": "3dccc6c7-cda6-5cbb-8c7e-b6a9dc46e82c",
@@ -650,8 +650,8 @@
       {
         "applications": 27,
         "conversion": {
-          "high": 0.6293266813020123,
-          "low": 0.2666563888106736,
+          "high": 0.6293266813,
+          "low": 0.2666563888,
           "status": "ok",
           "successes": 11,
           "trials": 25,
@@ -665,12 +665,12 @@
       {
         "applications": 21,
         "conversion": {
-          "high": 0.8112214789023353,
-          "low": 0.26665129349549316,
+          "high": 0.8112214789,
+          "low": 0.2666512935,
           "status": "ok",
           "successes": 5,
           "trials": 9,
-          "value": 0.5555555555555556
+          "value": 0.5555555556
         },
         "number": 1,
         "resumeVersionId": "8391ca4d-b33d-5e55-921b-737ac339a708",
@@ -935,8 +935,8 @@
       {
         "applications": 24,
         "conversion": {
-          "high": 0.6579146575496576,
-          "low": 0.25819785825562425,
+          "high": 0.6579146575,
+          "low": 0.2581978583,
           "status": "ok",
           "successes": 9,
           "trials": 20,
@@ -944,12 +944,12 @@
         },
         "easyApply": 0,
         "ghostRate": {
-          "high": 0.35853070649699054,
-          "low": 0.0667867632863295,
+          "high": 0.3585307065,
+          "low": 0.0667867633,
           "status": "ok",
           "successes": 4,
           "trials": 24,
-          "value": 0.16666666666666666
+          "value": 0.1666666667
         },
         "medianResponse": {
           "days": 2.0,
@@ -963,8 +963,8 @@
       {
         "applications": 6,
         "conversion": {
-          "high": 0.7692757187239869,
-          "low": 0.11762077423264795,
+          "high": 0.7692757187,
+          "low": 0.1176207742,
           "status": "ok",
           "successes": 2,
           "trials": 5,
@@ -972,12 +972,12 @@
         },
         "easyApply": 0,
         "ghostRate": {
-          "high": 0.7000066848616078,
-          "low": 0.09677141110578048,
+          "high": 0.7000066849,
+          "low": 0.0967714111,
           "status": "ok",
           "successes": 2,
           "trials": 6,
-          "value": 0.3333333333333333
+          "value": 0.3333333333
         },
         "medianResponse": {
           "days": 2.0,
@@ -991,17 +991,17 @@
       {
         "applications": 16,
         "conversion": {
-          "high": 0.547411030893011,
-          "low": 0.06322510711784675,
+          "high": 0.5474110309,
+          "low": 0.0632251071,
           "status": "ok",
           "successes": 2,
           "trials": 9,
-          "value": 0.2222222222222222
+          "value": 0.2222222222
         },
         "easyApply": 7,
         "ghostRate": {
-          "high": 0.7690134759450764,
-          "low": 0.33178556398811904,
+          "high": 0.7690134759,
+          "low": 0.331785564,
           "status": "ok",
           "successes": 9,
           "trials": 16,
@@ -1106,12 +1106,12 @@
         "url": "https://www.entrepreneur.com/business-news/ghost-job-listings-on-the-rise-how-to-spot-avoid-experts/485494"
       },
       "rate": {
-        "high": 0.447434448247951,
-        "low": 0.20679280660052918,
+        "high": 0.4474344482,
+        "low": 0.2067928066,
         "status": "ok",
         "successes": 17,
         "trials": 54,
-        "value": 0.3148148148148148
+        "value": 0.3148148148
       }
     },
     "medianDaysToOffer": {
