@@ -7,6 +7,7 @@ from loguru import logger
 from sqlalchemy.ext.asyncio import AsyncEngine
 
 from app.core.errors import ServiceError
+from app.repositories.applications import load_application_sources
 from app.repositories.events import load_events
 from app.repositories.searches import load_search
 from app.services.readiness import DEPENDENCY_FAILURES
@@ -46,3 +47,14 @@ async def load_scoped_events(
         return events
     async with postgres_reads():
         return await load_events(engine, user_id=user_id, search_id=None)
+
+
+async def scoped_events_with_origins(
+    engine: AsyncEngine, *, user_id: UUID, search_id: UUID | None
+) -> tuple[pd.DataFrame, pd.DataFrame]:
+    events = await load_scoped_events(engine, user_id=user_id, search_id=search_id)
+    async with postgres_reads():
+        origins = await load_application_sources(
+            engine, user_id=user_id, search_id=search_id
+        )
+    return events, origins

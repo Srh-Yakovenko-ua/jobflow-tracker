@@ -46,12 +46,14 @@ def funnel_stage(rows: pd.DataFrame, *, index: int) -> FunnelStage:
     )
 
 
+def funnel_stages(rows: pd.DataFrame) -> list[FunnelStage]:
+    return [funnel_stage(rows, index=index) for index in range(len(progress_stages()))]
+
+
 def funnel(events: pd.DataFrame, *, period: SearchPeriod, now: datetime) -> Funnel:
     rows = journeys(clean_events(events))
     return Funnel(
-        stages=[
-            funnel_stage(rows, index=index) for index in range(len(progress_stages()))
-        ],
+        stages=funnel_stages(rows),
         kpis=kpis(rows, period=period, now=now),
         most_expensive=most_expensive(rows),
     )

@@ -9,6 +9,7 @@ from app.api.routes import (
     forecast,
     funnel,
     health,
+    insights,
     reasons,
     resume_ab,
     sankey,
@@ -63,4 +64,5 @@ def create_app(settings: Settings) -> FastAPI:
     app.include_router(timings.router)
     app.include_router(resume_ab.router)
     app.include_router(forecast.router)
+    app.include_router(insights.router)
     return app

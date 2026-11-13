@@ -6,6 +6,7 @@ from pydantic import BaseModel, ConfigDict, Field
 from pydantic.alias_generators import to_camel
 
 from app.core.enums import load_domain_enums
+from app.metrics.plurals import APPLICATION_FORMS, counted_uk
 
 Z = NormalDist().inv_cdf(0.975)
 
@@ -45,19 +46,11 @@ def wilson_interval(successes: int, trials: int) -> tuple[float, float]:
     return low, high
 
 
-def _applications_word(count: int) -> str:
-    if count % 10 == 1 and count % 100 != 11:
-        return "відгук"
-    if count % 10 in range(2, 5) and count % 100 not in range(12, 15):
-        return "відгуки"
-    return "відгуків"
-
-
 def insufficient(have: int, *, threshold: int) -> Insufficient | None:
     if have >= threshold:
         return None
     need = threshold - have
-    message = f"Ще {need} {_applications_word(need)} до першого висновку"
+    message = f"Ще {counted_uk(need, APPLICATION_FORMS)} до першого висновку"
     return Insufficient(have=have, need=need, message=message)
 
 
