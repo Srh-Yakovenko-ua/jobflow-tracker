@@ -12,31 +12,36 @@ export type SankeyTooltipInput = Readonly<{
   stages: readonly FunnelStage[] | undefined;
 }>;
 
-type StageStep = Readonly<{ stage: FunnelStage; next: FunnelStage | undefined }>;
+export type StageStep = Readonly<{ stage: FunnelStage; next: FunnelStage | undefined }>;
 
-function rateLines({ stage, next }: StageStep): string[] {
+export function conversionLine({ stage, next }: StageStep): string | null {
   const { conversion } = stage;
-  if (conversion === null || next === undefined) return [];
-  if (conversion.status !== 'ok') return [conversion.message];
+  if (conversion === null || next === undefined) return null;
+  if (conversion.status !== 'ok') return conversion.message;
   const step = sankeyStepName({ from: stage.stage, to: next.stage });
   const { value, low, high } = conversion;
-  return [
-    TIP.conversion({ step, value: percentOf(value), low: percentOf(low), high: percentOf(high) }),
-  ];
+  return TIP.conversion({
+    step,
+    value: percentOf(value),
+    low: percentOf(low),
+    high: percentOf(high),
+  });
 }
 
 function stageLines(step: StageStep): string[] {
   const { reached, passed } = step.stage;
   const counts = passed === null ? [] : [TIP.reached(reached, passed)];
-  return [...counts, ...rateLines(step)];
+  const rate = conversionLine(step);
+  return rate === null ? counts : [...counts, rate];
 }
 
-export function sankeyTooltipLines({ link, stages = [] }: SankeyTooltipInput): string[] {
+function flowStageLines({ link, stages = [] }: SankeyTooltipInput): string[] {
   const index = stages.findIndex((entry) => entry.stage === link.from);
   const stage = stages[index];
-  return [
-    sankeyFlowLine(link),
-    ...(stage === undefined ? [] : stageLines({ stage, next: stages[index + 1] })),
-    ...(link.ghost ? [TIP.ghost] : []),
-  ];
+  return stage === undefined ? [] : stageLines({ stage, next: stages[index + 1] });
+}
+
+export function sankeyTooltipLines(input: SankeyTooltipInput): string[] {
+  const flow = sankeyFlowLine(input.link);
+  return input.link.ghost ? [flow, TIP.ghost] : [flow, ...flowStageLines(input)];
 }

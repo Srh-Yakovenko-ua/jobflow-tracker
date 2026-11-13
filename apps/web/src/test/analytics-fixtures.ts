@@ -70,16 +70,31 @@ export const ARCHIVED_SEARCH: SearchSummary = {
   applications: 31,
 };
 
-export const DESIGN_NODE_LABELS = {
-  applied: 'відгук 54',
-  screening: 'скринінг 17',
-  tech_interview: "техінтерв'ю 9",
-  final: 'фінал 4',
-  offer: 'офер 1',
-  rejected: 'відмова 32',
-  ghosted: 'ghosted 17',
-  withdrawn: 'відкликав 4',
-};
+export const DESIGN_FUNNEL_ROWS = [
+  {
+    stage: 'відгук 54',
+    conversion: 'конверсія відгук → скринінг: 43% (29–58%)',
+    exits: ['відкликав 2', 'ghosted 14', 'відмова 21'],
+  },
+  {
+    stage: 'скринінг 17',
+    conversion: "конверсія скринінг → техінтерв'ю: 60% (36–80%)",
+    exits: ['відкликав 1', 'ghosted 2', 'відмова 5'],
+  },
+  {
+    stage: "техінтерв'ю 9",
+    conversion: "конверсія техінтерв'ю → фінал: 50% (22–78%)",
+    exits: ['ghosted 1', 'відмова 4'],
+  },
+  {
+    stage: 'фінал 4',
+    conversion: 'Ще 1 відгук до першого висновку',
+    exits: ['відкликав 1', 'відмова 2'],
+  },
+  { stage: 'офер 1', conversion: null, exits: [] },
+];
+
+export const DESIGN_ENDINGS = ['офер 1', 'відкликав 4', 'ghosted 17', 'відмова 32'];
 
 const SEARCHES: SearchListResponse = { items: [ACTIVE_SEARCH, ARCHIVED_SEARCH] };
 

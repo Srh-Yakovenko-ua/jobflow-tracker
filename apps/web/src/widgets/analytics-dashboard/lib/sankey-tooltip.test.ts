@@ -46,11 +46,9 @@ describe('sankeyTooltipLines', () => {
     ]);
   });
 
-  it('a ghost flow says it stays outside the conversions', () => {
+  it('a ghost flow says it stays outside the conversions and shows no stage rate above that', () => {
     expect(linesOf({ from: 'screening', to: 'ghosted', flow: 2, ghost: true })).toEqual([
       'скринінг → ghosted 2',
-      'дійшло 17, пройшло 9',
-      "конверсія скринінг → техінтерв'ю: 60% (36–80%)",
       'не входить у розрахунок конверсій',
     ]);
   });

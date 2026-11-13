@@ -73,10 +73,9 @@ export const analytics = {
       nodes: { in_progress: 'у процесі', other: 'інші' },
       split: 'розбити відмови за причинами',
       expand: 'показати всі причини',
-      caption: {
-        thickness: 'товщина = кількість відгуків',
-        hover: 'наведи на потік, щоб побачити точні числа',
-      },
+      funnel: 'етапи воронки',
+      biggestDrop: 'найбільша втрата',
+      endings: 'чим закінчились',
       table: { caption: 'Воронка відгуків', from: 'звідки', to: 'куди', count: 'відгуків' },
       tooltip: {
         reached: (reached: number, passed: number) =>

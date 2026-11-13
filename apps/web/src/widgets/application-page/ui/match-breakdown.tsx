@@ -8,7 +8,7 @@ import { type ReactNode, useId } from 'react';
 import { uk } from '@/shared/i18n';
 import { cn } from '@/shared/lib/cn';
 import { usePrefersReducedMotion } from '@/shared/lib/reduced-motion';
-import { useDataTransition } from '@/shared/lib/use-data-transition';
+import { GrowBar } from '@/shared/ui/grow-bar';
 
 import { type MatchRow, matchRowsOf } from '../lib/match-rows';
 import type { ScoredMatch } from '../lib/match-view';
@@ -38,16 +38,12 @@ const LIST: Variants = {
 const LIST_STILL: Variants = { hidden: {}, shown: {} };
 
 function MatchBar({ score }: Readonly<{ score: number }>) {
-  const transition = useDataTransition();
   return (
     <span aria-hidden className="flex h-3 overflow-hidden rounded-pill bg-line-soft">
-      <motion.span
+      <GrowBar
         key={score}
-        className="block h-full origin-left rounded-pill bg-accent"
-        style={{ width: `${String(Math.min(score, PERCENT))}%` }}
-        initial={{ scaleX: 0 }}
-        animate={{ scaleX: 1 }}
-        transition={transition}
+        share={Math.min(score, PERCENT) / PERCENT}
+        className="block h-full rounded-pill bg-accent"
       />
     </span>
   );
