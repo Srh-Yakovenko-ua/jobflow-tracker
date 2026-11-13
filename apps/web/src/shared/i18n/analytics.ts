@@ -2,6 +2,7 @@ import { countedUk, type PluralForms, pluralUk } from '@jobflow/shared';
 
 const FORMS = {
   application: { one: 'відгук', few: 'відгуки', other: 'відгуків' },
+  screening: { one: 'скринінг', few: 'скринінги', other: 'скринінгів' },
   week: { one: 'тиждень', few: 'тижні', other: 'тижнів' },
   company: { one: 'компанія', few: 'компанії', other: 'компаній' },
   silent: { one: 'не відповіла', other: 'не відповіли' },
@@ -15,6 +16,11 @@ const MINUS = '−';
 const signed = (value: number) => `${value > 0 ? '+' : MINUS}${String(Math.abs(value))}`;
 
 const applications = (count: number) => countedUk(count, FORMS.application);
+
+const sourceCounts = ({ applied, screened }: SourceCounts) =>
+  `${applications(applied)}, ${countedUk(screened, FORMS.screening)}`;
+
+export type SourceCounts = Readonly<{ applied: number; screened: number }>;
 
 export const analytics = {
   title: 'Дашборд аналітики',
@@ -39,6 +45,7 @@ export const analytics = {
   noValue: '—',
   lowData: (...details: string[]) => ['мало даних', ...details].join(' · '),
   percent: (value: number) => `${String(value)}%`,
+  summary: (caption: string, parts: readonly string[]) => `${caption}: ${parts.join(', ')}`,
   kpi: {
     sent: {
       label: 'Відгуків надіслано',
@@ -89,8 +96,52 @@ export const analytics = {
           `${countedUk(companies, FORMS.company)} ${pluralUk(companies, FORMS.silent)}. ${pluralUk(companies, FORMS.excluded)} у розрахунок конверсій.`,
       },
     },
-    reasons: { eyebrow: 'причини відмов за етапами', fallback: 'Де відмовляють найчастіше' },
-    sources: { eyebrow: 'конверсія за джерелами', fallback: 'Яке джерело працює' },
+    reasons: {
+      eyebrow: 'причини відмов за етапами',
+      fallback: 'Де відмовляють найчастіше',
+      sides: { company: 'компанія', candidate: 'ти' },
+      table: {
+        caption: 'Причини відмов за етапами',
+        stage: 'етап',
+        side: 'сторона',
+        reason: 'причина',
+        count: 'відмов',
+        share: 'частка',
+      },
+      tooltip: {
+        title: (stage: string, side: string) => `${stage} · ${side}`,
+        count: (reason: string, count: number) => `${reason}: ${String(count)}`,
+        share: (percent: string) => `${percent} відмов етапу`,
+      },
+      empty: {
+        title: 'Причин ще немає',
+        hint: "Тут з'являться відмови, для яких указано причину.",
+      },
+    },
+    sources: {
+      eyebrow: 'конверсія за джерелами',
+      fallback: 'Яке джерело працює',
+      step: 'у скринінг',
+      interval: 'інтервал',
+      counts: sourceCounts,
+      table: {
+        caption: 'Конверсія за джерелами',
+        source: 'джерело',
+        applications: 'відгуків',
+        screenings: 'скринінгів',
+        conversion: 'конверсія у скринінг',
+      },
+      small: {
+        tag: 'n<5',
+        line: ({ label, ...counts }: SourceCounts & Readonly<{ label: string }>) =>
+          `${label}: ${sourceCounts(counts)}.`,
+        noise: 'Відсоток на такій вибірці лише шум.',
+      },
+      empty: {
+        title: 'Джерел ще немає',
+        hint: "Тут з'явиться конверсія кожного майданчика, звідки ти відгукуєшся.",
+      },
+    },
     resume_ab: { eyebrow: 'A/B версій резюме', fallback: 'Яка версія CV працює краще' },
     forecast: { eyebrow: 'прогноз офера' },
     timings: { eyebrow: 'час на етапах · медіана' },

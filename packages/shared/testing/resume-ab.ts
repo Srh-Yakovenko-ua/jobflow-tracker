@@ -4,6 +4,7 @@ import type {
   ResumeAbResponse,
   ResumeAbVersion,
 } from '../src/schemas/analytics-resume-ab.js';
+import { INSUFFICIENT_RATES } from './rates.js';
 
 export type DesignResumeAbOptions = { versionIdOf?: (number: number) => string };
 
@@ -18,12 +19,7 @@ const DESIGN_ROWS: Omit<ResumeAbVersion, 'resumeVersionId'>[] = [
     title: 'для дизайн-ролей',
     applications: 3,
     screenings: 1,
-    conversion: {
-      status: 'insufficient_data',
-      have: 3,
-      need: 2,
-      message: 'Ще 2 відгуки до першого висновку',
-    },
+    conversion: INSUFFICIENT_RATES.twoMore,
   },
   {
     number: 2,

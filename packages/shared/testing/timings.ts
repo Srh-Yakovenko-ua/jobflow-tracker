@@ -1,4 +1,5 @@
 import { type TimingsResponse, timingsResponseSchema } from '../src/schemas/analytics-timings.js';
+import { INSUFFICIENT_RATES } from './rates.js';
 
 const DESIGN_TIMINGS: TimingsResponse = {
   ghostRate: {
@@ -19,12 +20,7 @@ const DESIGN_TIMINGS: TimingsResponse = {
       value: 0.3148148148,
     },
   },
-  medianDaysToOffer: {
-    have: 1,
-    message: 'Ще 4 відгуки до першого висновку',
-    need: 4,
-    status: 'insufficient_data',
-  },
+  medianDaysToOffer: INSUFFICIENT_RATES.fourMore,
   responseTime: { hours: 144.0, samples: 33, status: 'ok' },
   stages: [
     {
@@ -51,13 +47,7 @@ const DESIGN_TIMINGS: TimingsResponse = {
       status: 'ok',
       upperQuartileDays: 9.0,
     },
-    {
-      have: 4,
-      message: 'Ще 1 відгук до першого висновку',
-      need: 1,
-      stage: 'final',
-      status: 'insufficient_data',
-    },
+    { ...INSUFFICIENT_RATES.oneMore, stage: 'final' },
   ],
 };
 

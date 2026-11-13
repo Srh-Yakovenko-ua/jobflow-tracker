@@ -6,7 +6,11 @@ export type TitledBlock = Extract<InsightBlock, 'reasons' | 'sources' | 'resume_
 
 export type BlockTitleInput = Readonly<{ insights: readonly Insight[]; block: TitledBlock }>;
 
-export function blockTitleOf({ insights, block }: BlockTitleInput): string {
+export type BlockHeader = Readonly<{ title: string; body?: string }>;
+
+export function blockHeaderOf({ insights, block }: BlockTitleInput): BlockHeader {
   const insight = insights.find((candidate) => candidate.block === block);
-  return insight?.title ?? uk.analytics.blocks[block].fallback;
+  return insight === undefined
+    ? { title: uk.analytics.blocks[block].fallback }
+    : { title: insight.title, body: insight.body };
 }
