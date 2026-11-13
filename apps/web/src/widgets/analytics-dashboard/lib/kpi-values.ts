@@ -46,6 +46,8 @@ export type ResponseKpiInput = Readonly<{ timings: TimingsResponse; silenceDays:
 
 export const percentOf = (fraction: number) => Math.round(fraction * PERCENT);
 
+export const oneDecimal = (value: number) => ONE_DECIMAL.format(value);
+
 export function searchWeeks(daysInSearch: number): number {
   return Math.max(1, Math.round(daysInSearch / DAYS_IN_WEEK));
 }
@@ -53,7 +55,7 @@ export function searchWeeks(daysInSearch: number): number {
 export function sentKpi({ sent, daysInSearch }: FunnelKpis): KpiContent {
   const change = sent.thisMonth - sent.previousMonth;
   const weeks = Math.max(daysInSearch, DAYS_IN_WEEK) / DAYS_IN_WEEK;
-  const pace = KPI.sent.pace(ONE_DECIMAL.format(sent.total / weeks));
+  const pace = KPI.sent.pace(oneDecimal(sent.total / weeks));
   if (change === 0) return { value: String(sent.total), caption: pace };
   const tone = change > 0 ? 'positive' : 'neutral';
   return {

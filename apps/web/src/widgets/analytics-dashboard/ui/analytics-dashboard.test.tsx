@@ -12,7 +12,7 @@ import {
   type SentRequest,
 } from '@/test/analytics-fixtures';
 import { OUTAGES } from '@/test/api-handlers';
-import { frameOf } from '@/test/dashboard-frames';
+import { frameOf, selectArchivedSearch } from '@/test/dashboard-frames';
 import { advancePastQueryRetries, fakeTimeouts } from '@/test/fake-timeouts';
 import { renderInApp } from '@/test/render-in-app';
 import { server } from '@/test/server';
@@ -217,8 +217,7 @@ describe('AnalyticsDashboard', () => {
       });
     });
     sent.length = 0;
-    await user.click(screen.getByRole('combobox', { name: 'Пошук' }));
-    await user.click(await screen.findByRole('option', { name: /Пошук 2025/ }));
+    await selectArchivedSearch(user);
 
     await waitFor(() => {
       expect(queriesOf(sent)).toEqual({

@@ -14,7 +14,7 @@ export type EmptyStateContent = {
   footnote?: string;
 };
 
-export type EmptyStateProgress = { count: number; goal: number };
+export type EmptyStateProgress = { count: number; goal: number; label?: string };
 
 export type EmptyStateSize = 'page' | 'panel' | 'compact';
 
@@ -107,7 +107,7 @@ export function ProgressMeter({ progress }: ProgressMeterProps) {
     <>
       <div
         role="meter"
-        aria-label={COPY.meterLabel}
+        aria-label={progress.label ?? COPY.meterLabel}
         aria-valuemin={0}
         aria-valuemax={goal}
         aria-valuenow={filled}

@@ -11,6 +11,7 @@ import { Fade } from '@/shared/ui/fade';
 import { searchWeeks } from '../lib/kpi-values';
 import { dashboardViewOf } from '../model/dashboard-view';
 import { useDashboardQueries } from '../model/use-dashboard-queries';
+import { useForecastWhatIf } from '../model/use-forecast-what-if';
 import { type SearchScope, useSearchScope } from '../model/use-search-scope';
 import { DashboardBlocks } from './dashboard-blocks';
 import { LowDataDashboard } from './low-data-dashboard';
@@ -39,7 +40,12 @@ function DashboardHeader({ kpis, scope }: DashboardHeaderProps) {
 export function AnalyticsDashboard() {
   const scope = useSearchScope();
   const [byReason, setByReason] = useState(false);
-  const queries = useDashboardQueries({ ...scope, split: byReason ? 'reason' : undefined });
+  const { whatIf, sent, actions } = useForecastWhatIf(scope.selectedId);
+  const queries = useDashboardQueries({
+    ...scope,
+    split: byReason ? 'reason' : undefined,
+    whatIf: sent,
+  });
   const view = dashboardViewOf({ queries, searches: scope.searches });
   const silenceDays = useSilenceDays();
   const sankey = {
@@ -57,7 +63,12 @@ export function AnalyticsDashboard() {
           {view.kpis !== undefined && view.lowData ? (
             <LowDataDashboard kpis={view.kpis} />
           ) : (
-            <DashboardBlocks view={view} silenceDays={silenceDays} sankey={sankey} />
+            <DashboardBlocks
+              view={view}
+              silenceDays={silenceDays}
+              sankey={sankey}
+              forecast={{ value: whatIf, actions }}
+            />
           )}
         </Fade>
       </AnimatePresence>

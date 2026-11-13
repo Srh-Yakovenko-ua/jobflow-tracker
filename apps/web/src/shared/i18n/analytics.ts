@@ -4,6 +4,8 @@ const FORMS = {
   application: { one: 'відгук', few: 'відгуки', other: 'відгуків' },
   screening: { one: 'скринінг', few: 'скринінги', other: 'скринінгів' },
   week: { one: 'тиждень', few: 'тижні', other: 'тижнів' },
+  weekFraction: { other: 'тижня' },
+  offer: { one: 'офер', few: 'офери', other: 'оферів' },
   company: { one: 'компанія', few: 'компанії', other: 'компаній' },
   silent: { one: 'не відповіла', other: 'не відповіли' },
   excluded: { one: 'Вона не входить', other: 'Вони не входять' },
@@ -16,6 +18,8 @@ const MINUS = '−';
 const signed = (value: number) => `${value > 0 ? '+' : MINUS}${String(Math.abs(value))}`;
 
 const applications = (count: number) => countedUk(count, FORMS.application);
+
+const weeks = (count: number) => countedUk(count, FORMS.week);
 
 const sourceCounts = ({ applied, screened }: SourceCounts) =>
   `${applications(applied)}, ${countedUk(screened, FORMS.screening)}`;
@@ -142,7 +146,44 @@ export const analytics = {
       },
     },
     resume_ab: { eyebrow: 'A/B версій резюме', fallback: 'Яка версія CV працює краще' },
-    forecast: { eyebrow: 'прогноз офера' },
+    forecast: {
+      eyebrow: 'прогноз офера',
+      span: (low: number, high: number) => `${String(low)}–${weeks(high)}`,
+      weeks,
+      beyond: (count: number) => `понад ${weeks(count)}`,
+      openEnd: ({ low, horizon }: Readonly<{ low: number; horizon: number }>) =>
+        `від ${String(low)} до понад ${String(horizon)} ${FORMS.week.other}`,
+      fraction: (value: string) => `${value} ${FORMS.weekFraction.other}`,
+      caption: ({ pace, improved }: Readonly<{ pace: string; improved: boolean }>) =>
+        `Ймовірний коридор: половина симуляцій. Темп ${pace} на тиждень, ${improved ? "техінтерв'ю 60%" : 'поточні конверсії'}.`,
+      legend: {
+        likely: (span: string) => `ймовірний коридор ${span}`,
+        interval: (span: string) => `увесь 80% інтервал: ${span}`,
+        median: (value: string) => `медіана: ${value}`,
+      },
+      odds: (four: string, eight: string) => `Офер за 4 тижні: ${four}, за 8 тижнів: ${eight}`,
+      note: ({ applications: sent, offers }: Readonly<Record<'applications' | 'offers', number>>) =>
+        `Це не обіцянка. Модель бачила ${applications(sent)} і ${countedUk(offers, FORMS.offer)}.`,
+      ticks: {
+        start: '0',
+        weeks: (count: number) => `${String(count)} тиж`,
+        end: (count: number) => `${String(count)}+`,
+      },
+      rate: { label: 'Відгуків на тиждень', value: (pace: string) => `${pace} на тиждень` },
+      tech: "Якщо конверсія техінтерв'ю дійде до 60%",
+      method: {
+        label: 'Як рахується прогноз',
+        title: '10 000 симуляцій на твоїх даних',
+        body: [
+          'Модель бере твій темп відгуків і те, як часто ти проходиш кожен етап. Потім 10 000 разів розігрує пошук наперед і дивиться, на якому тижні приходить офер.',
+          'Суцільна смуга це ймовірний коридор: у ньому закінчується половина симуляцій. Смугаста це 80% інтервал: у ньому 8 симуляцій із 10.',
+        ],
+      },
+      empty: {
+        title: (missing: number) => `Ще ${applications(missing)} до прогнозу`,
+        meter: 'Прогрес до прогнозу',
+      },
+    },
     timings: { eyebrow: 'час на етапах · медіана' },
   },
   lowDataState: {

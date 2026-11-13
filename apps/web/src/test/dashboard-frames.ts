@@ -24,9 +24,15 @@ export function frameOf(eyebrow: string): HTMLElement {
   return frame;
 }
 
-export function renderDashboardBlocks(options: DashboardRoutesOptions = {}): void {
-  server.use(meRoute(), ...dashboardRoutes(options).handlers);
-  renderInApp(createElement(AnalyticsDashboard));
+export function renderDashboardBlocks(options: DashboardRoutesOptions = {}) {
+  const routes = dashboardRoutes(options);
+  server.use(meRoute(), ...routes.handlers);
+  return { user: renderInApp(createElement(AnalyticsDashboard)), sent: routes.sent };
+}
+
+export async function selectArchivedSearch(user: ReturnType<typeof renderInApp>): Promise<void> {
+  await user.click(screen.getByRole('combobox', { name: 'Пошук' }));
+  await user.click(await screen.findByRole('option', { name: /Пошук 2025/ }));
 }
 
 export async function drawnBlock({ eyebrow, table }: BlockNames): Promise<DrawnBlock> {
