@@ -11,7 +11,7 @@ from app.core.errors import TOKEN_EXPIRED, ServiceError
 READ_SCOPE = "analytics:read"
 ACCESS_TOKEN_CLAIMS = ["exp", "sub", "jti", "scope"]
 KEY_SET_LIFESPAN_SECONDS = 300
-UNKNOWN_KID_REFETCH_COOLDOWN_SECONDS = 0
+UNKNOWN_KID_REFETCH_COOLDOWN_SECONDS = 30
 KEYS_UNREACHABLE = "The API signing keys could not be fetched"
 
 bearer_scheme = HTTPBearer(auto_error=False)

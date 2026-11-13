@@ -57,9 +57,10 @@ def month_index(year_month: str) -> int:
     return int(year) * 12 + int(month) - 1
 
 
-def months_of(position: Position, *, current: int) -> set[int]:
-    end = current if position.end is None else month_index(position.end.root)
-    return set(range(month_index(position.start), end + 1))
+def months_of(position: Position, *, window: range) -> set[int]:
+    last = window.stop - 1
+    end = last if position.end is None else min(month_index(position.end.root), last)
+    return set(range(max(month_index(position.start), window.start), end + 1))
 
 
 def years_of(months: set[int]) -> float:
@@ -99,7 +100,8 @@ def checked(
 ) -> ResumeParseOutput:
     day = today or datetime.now(UTC).date()
     current = day.year * 12 + day.month - 1
-    spans = [months_of(position, current=current) for position in output.positions]
+    window = range(current - int(YEARS_MAX) * 12, current + 1)
+    spans = [months_of(position, window=window) for position in output.positions]
     seen = seen_text(request)
     leadership = output.leadership
     return output.model_copy(

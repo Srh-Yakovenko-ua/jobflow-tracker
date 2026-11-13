@@ -2,7 +2,7 @@ import base64
 from io import BytesIO
 
 import pytest
-from PIL import ExifTags, Image
+from PIL import ExifTags, Image, ImageOps
 
 from app.core.errors import DocumentError
 from app.extract.image import extract_image
@@ -12,6 +12,7 @@ from tests.factories import (
     phone_jpeg,
     pixel_bomb_png,
     transparent_png,
+    white_png,
 )
 from tests.jpeg import jpeg_has_exif, jpeg_size
 
@@ -36,11 +37,36 @@ def test_shrinks_a_noisy_scan_until_it_fits_the_jpeg_cap() -> None:
 def test_turns_a_phone_photo_upright_and_drops_its_exif() -> None:
     source = phone_jpeg()
     with Image.open(BytesIO(source)) as photo:
-        assert ExifTags.IFD.GPSInfo in photo.getexif()
+        assert (ExifTags.IFD.GPSInfo in photo.getexif(), "comment" in photo.info) == (
+            True,
+            True,
+        )
 
     jpeg = only_page(source)
 
-    assert (jpeg_size(jpeg), jpeg_has_exif(jpeg)) == ((600, 800), False)
+    with Image.open(BytesIO(jpeg)) as page:
+        assert (jpeg_size(jpeg), jpeg_has_exif(jpeg), "comment" in page.info) == (
+            (600, 800),
+            False,
+            False,
+        )
+
+
+def test_shrinks_a_large_png_before_turning_it_upright(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    sizes: list[tuple[int, int]] = []
+    transpose = ImageOps.exif_transpose
+
+    def recording_transpose(image: Image.Image) -> Image.Image:
+        sizes.append(image.size)
+        return transpose(image)
+
+    monkeypatch.setattr(ImageOps, "exif_transpose", recording_transpose)
+
+    jpeg = only_page(white_png())
+
+    assert (sizes, jpeg_size(jpeg)) == ([(1600, 1067)], (1600, 1067))
 
 
 def test_refuses_an_image_above_fifty_megapixels() -> None:

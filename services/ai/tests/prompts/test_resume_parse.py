@@ -1,4 +1,5 @@
 from datetime import date
+from time import perf_counter
 from typing import Any
 
 import pytest
@@ -125,6 +126,8 @@ def skill(*positions: int) -> dict[str, Any]:
         ([position("2023-05", "2022-01")], [0], [0], 0.0, 0.0),
         ([position("1950-01", None)], [0], [0], 60.0, 60.0),
         ([position("2020-01", "2020-12")], [], [], 0.0, 1.0),
+        ([position("0001-01", "1900-12")], [0], [0], 0.0, 0.0),
+        ([position("2025-01", "9999-12")], [0], [0], 1.9, 1.9),
     ],
     ids=[
         "overlap counted once",
@@ -135,6 +138,8 @@ def skill(*positions: int) -> dict[str, Any]:
         "end before start",
         "capped at the schema maximum",
         "skill without positions",
+        "years before the window do not count",
+        "a future end stops at the current month",
     ],
 )
 def test_checked_computes_years_from_the_union_of_position_months(
@@ -153,6 +158,19 @@ def test_checked_computes_years_from_the_union_of_position_months(
         [{**skill(*kept), "years": years}],
         total,
     )
+
+
+def test_checked_finishes_fast_on_positions_spanning_millennia() -> None:
+    positions = [position("0001-01", "9999-12") for _ in range(10)]
+    skills = [skill(*range(10)) for _ in range(25)]
+
+    started = perf_counter()
+    profile = checked_profile({"positions": positions, "skills": skills})
+    elapsed = perf_counter() - started
+
+    assert {entry["years"] for entry in profile["skills"]} == {60.0}
+    assert profile["totalYears"] == 60.0
+    assert elapsed < 0.05
 
 
 def evidence_profile(evidence: str) -> dict[str, Any]:

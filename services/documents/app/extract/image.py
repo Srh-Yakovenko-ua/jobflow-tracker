@@ -43,6 +43,7 @@ def smallest_jpeg(image: Image.Image) -> bytes | None:
 def to_jpeg_page(image: Image.Image, index: int) -> Page:
     long_side = MAX_LONG_SIDE
     rgb = flatten(image)
+    rgb.info.clear()
     while long_side >= MIN_LONG_SIDE:
         jpeg = smallest_jpeg(fit_long_side(rgb, long_side))
         if jpeg is not None:
@@ -62,14 +63,13 @@ def open_image(data: bytes) -> Image.Image:
         raise DocumentError("unreadable_file") from error
     if image.width * image.height > MAX_PIXELS:
         raise DocumentError("unreadable_file", detail="The image has too many pixels")
-    if image.format == "JPEG":
-        image.draft("RGB", (MAX_LONG_SIDE, MAX_LONG_SIDE))
     return image
 
 
 def extract_image(data: bytes) -> DocumentExtraction:
     image = open_image(data)
     try:
+        image.thumbnail((MAX_LONG_SIDE, MAX_LONG_SIDE))
         upright = ImageOps.exif_transpose(image)
     except (OSError, ValueError, SyntaxError) as error:
         raise DocumentError("unreadable_file") from error
