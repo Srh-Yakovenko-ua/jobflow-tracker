@@ -3,6 +3,7 @@ import { ChartFrame } from '@/shared/ui/chart-frame';
 
 import type { DashboardFrameId, DashboardView } from '../model/dashboard-view';
 import { KpiRow } from './kpi-row';
+import { SankeyBlock, type SankeyControls } from './sankey-block';
 
 const GRIDS: readonly { id: string; columns: string; frames: readonly DashboardFrameId[] }[] = [
   {
@@ -22,14 +23,18 @@ const GRIDS: readonly { id: string; columns: string; frames: readonly DashboardF
   },
 ];
 
-export type DashboardBlocksProps = Readonly<{ view: DashboardView; silenceDays: number }>;
+export type DashboardBlocksProps = Readonly<{
+  view: DashboardView;
+  silenceDays: number;
+  sankey: SankeyControls;
+}>;
 
-export function DashboardBlocks({ view, silenceDays }: DashboardBlocksProps) {
+export function DashboardBlocks({ view, silenceDays, sankey }: DashboardBlocksProps) {
   const { frames } = view;
   return (
     <div className="flex min-w-0 flex-col gap-4.5">
       <KpiRow kpi={view.kpi} silenceDays={silenceDays} />
-      <ChartFrame header={frames.sankey.header} state={frames.sankey.state} />
+      <SankeyBlock frame={frames.sankey} controls={sankey} />
       {GRIDS.map((grid) => (
         <div key={grid.id} className={cn('grid items-start gap-4.5', grid.columns)}>
           {grid.frames.map((id) => (

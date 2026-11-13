@@ -5,7 +5,7 @@ import {
   STAGE_LABELS,
 } from '@jobflow/shared';
 
-import type { ChartPalette } from '@/shared/lib/chart';
+import { sankeyFlowLine } from '@/shared/lib/chart';
 
 export type RejectionBar = Readonly<{ reason: RejectionReasonCode; count: number }>;
 
@@ -35,18 +35,6 @@ export const FUNNEL_NODE_LABELS: Record<string, string> = Object.fromEntries(
   Object.entries(STAGE_LABELS).map(([stage, label]) => [stage, label.labelUk]),
 );
 
-export function funnelNodeColours(palette: ChartPalette): Record<string, string> {
-  const { stage, outcome } = palette;
-  return {
-    applied: stage.applied,
-    screening: stage.screening,
-    tech_interview: stage.tech,
-    offer: outcome.offer,
-    rejected: outcome.rejected,
-    ghosted: outcome.ghosted,
-  };
-}
-
 export function reasonLines(reason: RejectionReasonCode): string[] {
   const words = REJECTION_REASONS[reason].labelUk.split(' ');
   const half = Math.ceil(words.length / 2);
@@ -57,14 +45,4 @@ export const REJECTION_SUMMARY = REJECTION_BARS.map(
   ({ reason, count }) => `${REJECTION_REASONS[reason].labelUk} ${String(count)}`,
 ).join(', ');
 
-export type FlowLine = Readonly<{ from: string; to: string; flow: number }>;
-
-function nodeLabel(node: string): string {
-  return FUNNEL_NODE_LABELS[node] ?? node;
-}
-
-export function flowLine({ from, to, flow }: FlowLine): string {
-  return `${nodeLabel(from)} → ${nodeLabel(to)} ${String(flow)}`;
-}
-
-export const FUNNEL_SUMMARY = FUNNEL_FLOWS.map(flowLine).join(', ');
+export const FUNNEL_SUMMARY = FUNNEL_FLOWS.map(sankeyFlowLine).join(', ');

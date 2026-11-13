@@ -2,14 +2,15 @@ import {
   DEFAULT_SEARCH_TITLE,
   type FunnelResponse,
   type ReasonsResponse,
-  type SankeyResponse,
   type SearchListResponse,
   type SearchSummary,
   type SourcesResponse,
 } from '@jobflow/shared';
 import {
   buildDesignFunnel,
+  buildDesignSankey,
   buildDesignTimings,
+  buildFoldedSankey,
   buildForecast,
   designInsightsBody,
 } from '@jobflow/shared/testing';
@@ -69,11 +70,18 @@ export const ARCHIVED_SEARCH: SearchSummary = {
   applications: 31,
 };
 
+export const DESIGN_NODE_LABELS = {
+  applied: 'відгук 54',
+  screening: 'скринінг 17',
+  tech_interview: "техінтерв'ю 9",
+  final: 'фінал 4',
+  offer: 'офер 1',
+  rejected: 'відмова 32',
+  ghosted: 'ghosted 17',
+  withdrawn: 'відкликав 4',
+};
+
 const SEARCHES: SearchListResponse = { items: [ACTIVE_SEARCH, ARCHIVED_SEARCH] };
-
-const EMPTY_GRAPH = { nodes: [], links: [] };
-
-const SANKEY: SankeyResponse = { split: null, detailed: EMPTY_GRAPH, merged: EMPTY_GRAPH };
 
 const REASONS: ReasonsResponse = { stages: [], headline: null };
 
@@ -97,11 +105,18 @@ const URLS: Record<DashboardRoute, string> = {
   'resume-ab': RESUME_AB_URL,
 };
 
-function designBodies(): Record<DashboardRoute, JsonBodyType> {
+const sankeyReply: HttpResponseResolver = ({ request }) =>
+  HttpResponse.json(
+    new URL(request.url).searchParams.get('split') === 'reason'
+      ? buildFoldedSankey()
+      : buildDesignSankey(),
+  );
+
+function designBodies(): Record<DashboardRoute, JsonBodyType | HttpResponseResolver> {
   return {
     searches: SEARCHES,
     funnel: buildDesignFunnel(),
-    sankey: SANKEY,
+    sankey: sankeyReply,
     reasons: REASONS,
     sources: SOURCES,
     timings: buildDesignTimings(),
@@ -111,19 +126,21 @@ function designBodies(): Record<DashboardRoute, JsonBodyType> {
   };
 }
 
-type RouteReply = Readonly<{
-  url: string;
-  override: JsonBodyType | HttpResponseResolver | undefined;
-  design: JsonBodyType;
-}>;
+type RouteBody = JsonBodyType | HttpResponseResolver;
 
-function isResolver(override: RouteReply['override']): override is HttpResponseResolver {
-  return typeof override === 'function';
+type RouteReply = Readonly<{ url: string; override: RouteBody | undefined; design: RouteBody }>;
+
+function isResolver(body: RouteBody): body is HttpResponseResolver {
+  return typeof body === 'function';
+}
+
+function resolverOf(body: RouteBody): HttpResponseResolver {
+  return isResolver(body) ? body : () => HttpResponse.json(body);
 }
 
 function repliesOf({ url, override, design }: RouteReply) {
-  if (!isResolver(override)) return [http.get(url, () => HttpResponse.json(override ?? design))];
-  return [http.get(url, override), http.get(url, () => HttpResponse.json(design))];
+  const bodies = override === undefined ? [design] : [override, design];
+  return bodies.map((body) => http.get(url, resolverOf(body)));
 }
 
 export function dashboardRoutes(options: DashboardRoutesOptions = {}) {

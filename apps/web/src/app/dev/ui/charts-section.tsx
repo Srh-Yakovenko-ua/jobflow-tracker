@@ -5,15 +5,18 @@ import type { SankeyParsedData } from 'chartjs-chart-sankey';
 import { Bar, Chart } from 'react-chartjs-2';
 
 import { uk } from '@/shared/i18n';
-import { type ChartThemeOptions, useChartTheme } from '@/shared/lib/chart';
+import {
+  type ChartThemeOptions,
+  sankeyFlowLine,
+  sankeyNodeColours,
+  useChartTheme,
+} from '@/shared/lib/chart';
 import { ChartFrame, type ChartFrameState } from '@/shared/ui/chart-frame';
 
 import {
-  flowLine,
   FUNNEL_FLOWS,
   FUNNEL_NODE_LABELS,
   FUNNEL_SUMMARY,
-  funnelNodeColours,
   reasonLines,
   REJECTION_BARS,
   REJECTION_SUMMARY,
@@ -45,7 +48,7 @@ const FUNNEL_LOOK = {
     tooltip: {
       callbacks: {
         label: ({ parsed: { _custom: flow } }: { parsed: SankeyParsedData }) =>
-          flowLine({ from: flow.from.key, to: flow.to.key, flow: flow.flow }),
+          sankeyFlowLine({ from: flow.from.key, to: flow.to.key, flow: flow.flow }),
       },
     },
   },
@@ -81,15 +84,14 @@ function RejectionsChart() {
 
 function FunnelChart() {
   const { palette, options } = useChartTheme();
-  const colours = funnelNodeColours(palette);
-  const fallback = palette.colors['ink-3'];
+  const colourOf = sankeyNodeColours(palette);
   const data = {
     datasets: [
       {
         data: [...FUNNEL_FLOWS],
         labels: FUNNEL_NODE_LABELS,
-        colorFrom: ({ raw }: { raw: { from: string } }) => colours[raw.from] ?? fallback,
-        colorTo: ({ raw }: { raw: { to: string } }) => colours[raw.to] ?? fallback,
+        colorFrom: ({ raw }: { raw: { from: string } }) => colourOf(raw.from),
+        colorTo: ({ raw }: { raw: { to: string } }) => colourOf(raw.to),
         color: palette.colors['ink-2'],
         borderWidth: 0,
       },
