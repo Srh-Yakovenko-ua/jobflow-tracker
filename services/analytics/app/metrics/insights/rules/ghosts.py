@@ -10,7 +10,6 @@ from app.metrics.rate import Rate
 GAP_PHRASES: Final[Mapping[GapPosition, str]] = {
     "above": "на {points} п.п. більше за ринок",
     "below": "на {points} п.п. менше за ринок",
-    "within": "у межах ринку",
 }
 
 
@@ -20,6 +19,8 @@ def ghost_share(metrics: InsightMetrics) -> Insight | None:
     if not isinstance(share, Rate) or gap is None:
         return None
     silent = share.successes
+    if silent == 0 or gap.points == 0:
+        return None
     versus = GAP_PHRASES[gap.position].format(points=gap.points)
     return Insight(
         block="ghosted",

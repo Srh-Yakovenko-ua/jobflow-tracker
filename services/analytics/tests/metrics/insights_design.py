@@ -40,7 +40,7 @@ DESIGN_INSIGHTS_BODY: Final[dict[str, list[dict[str, Any]]]] = {
         {
             "block": "funnel",
             "title": "Техінтерв'ю — найдорожчий етап",
-            "body": "Дійшло 9, пройшло 4. Кожна втрата тут — це 2–3 тижні "
+            "body": "Дійшло 9, пройшли 4. Кожна втрата тут — це 2–3 тижні "
             "вже витраченого часу.",
             "severity": "warning",
             "evidence": {
@@ -110,7 +110,7 @@ DESIGN_INSIGHTS_BODY: Final[dict[str, list[dict[str, Any]]]] = {
         {
             "block": "funnel",
             "title": "Підготуватися до наступного техінтерв'ю",
-            "expectedEffect": "Прогноз офера звузиться до діапазону від 3 до 11 "
+            "expectedEffect": "Прогноз офера звузиться до діапазону від 4 до 12 "
             "тижнів, якщо конверсія дійде до 60%.",
         },
         {

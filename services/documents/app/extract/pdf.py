@@ -38,7 +38,8 @@ def check_image_pixels(page: pdfium.PdfPage) -> None:
 def render_page(page: pdfium.PdfPage, index: int) -> Page:
     check_image_pixels(page)
     scale = min(SCAN_DPI / POINTS_PER_INCH, MAX_LONG_SIDE / max(page.get_size()))
-    return to_jpeg_page(page.render(scale=scale).to_pil(), index)
+    bitmap = page.render(scale=scale, draw_annots=False, may_draw_forms=False)
+    return to_jpeg_page(bitmap.to_pil(), index)
 
 
 def read_pdf(document: pdfium.PdfDocument) -> DocumentExtraction:

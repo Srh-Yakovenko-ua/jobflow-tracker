@@ -46,6 +46,8 @@ const NOTES = 'Висновки про воронку';
 
 const GHOST_LEAD = 'Сіра гілка не твоя провина.';
 
+const REASONS_TITLE = "На техінтерв'ю тебе найчастіше валять: «не вистачає скілів»";
+
 const DESIGN_ROWS = [
   ['відгук', 'скринінг', '17'],
   ['відгук', 'відмова', '21'],
@@ -153,12 +155,40 @@ describe('SankeyBlock', () => {
     await waitFor(() => {
       expect(notesText()).toEqual([
         'Найширша втеча — на першому кроці. 21 відмова і 14 тиш із 54 — воронка закінчується там, де ти ще ні з ким не говорив.',
-        "Техінтерв'ю — найдорожчий етап. Дійшло 9, пройшло 4. Кожна втрата тут — це 2–3 тижні вже витраченого часу.",
+        "Техінтерв'ю — найдорожчий етап. Дійшло 9, пройшли 4. Кожна втрата тут — це 2–3 тижні вже витраченого часу.",
         '17 компаній не відповіли. Це 31% твоїх відгуків — на 9 п.п. більше за ринок.',
       ]);
     });
     expect(screen.getByText(FRAME)).toBeDefined();
     expect(screen.queryByText(GHOST_LEAD)).toBeNull();
+  });
+
+  it('reads no funnel insight while the funnel loads, and reads them once it is drawn', async () => {
+    const held = latch();
+    renderDashboard(async () => {
+      await held.reached;
+      return undefined;
+    });
+    await screen.findByRole('heading', { name: REASONS_TITLE });
+
+    expect(frameOf(FRAME).querySelector('[aria-busy="true"]')).not.toBeNull();
+    expect(notesText()).toEqual([]);
+    held.release();
+    await waitFor(() => {
+      expect(notesText()).toHaveLength(3);
+    });
+  });
+
+  it('reads no funnel insight when the funnel fails to load', async () => {
+    fakeTimeouts();
+    renderDashboard(() => errorReply({ status: 500, type: 'internal_error' }));
+    await advancePastQueryRetries();
+
+    await waitFor(() => {
+      expect(within(frameOf(FRAME)).queryByRole('alert')).not.toBeNull();
+    });
+    expect(screen.getByRole('heading', { name: REASONS_TITLE })).toBeDefined();
+    expect(notesText()).toEqual([]);
   });
 
   it('without a served ghosted insight the local grey branch note closes the funnel notes', async () => {

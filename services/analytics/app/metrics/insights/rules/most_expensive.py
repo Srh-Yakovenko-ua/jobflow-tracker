@@ -1,5 +1,3 @@
-from math import ceil, floor
-
 from app.metrics.forecast import Forecast
 from app.metrics.insights.engine import (
     WHAT_IF_CONVERSION,
@@ -9,9 +7,20 @@ from app.metrics.insights.engine import (
     action_rule,
     insight_rule,
 )
-from app.metrics.insights.phrases import STAGE_PHRASES, percent, sentence, spent_time
+from app.metrics.insights.phrases import (
+    STAGE_PHRASES,
+    percent,
+    sentence,
+    spent_time,
+    whole_weeks,
+)
 from app.metrics.most_expensive import MostExpensiveStage
-from app.metrics.plurals import UP_TO_WEEK_FORMS, plural_uk
+from app.metrics.plurals import (
+    PASSED_FORMS,
+    REACHED_FORMS,
+    UP_TO_WEEK_FORMS,
+    plural_uk,
+)
 
 
 @insight_rule
@@ -23,7 +32,8 @@ def most_expensive_stage(metrics: InsightMetrics) -> Insight | None:
     return Insight(
         block="funnel",
         title=f"{sentence(STAGE_PHRASES[stage.stage].name)} — найдорожчий етап",
-        body=f"Дійшло {stage.reached}, пройшло {stage.passed}. "
+        body=f"{sentence(plural_uk(stage.reached, REACHED_FORMS))} {stage.reached}, "
+        f"{plural_uk(stage.passed, PASSED_FORMS)} {stage.passed}. "
         f"Кожна втрата тут — це {spent} вже витраченого часу.",
         severity="warning",
         evidence={
@@ -36,6 +46,13 @@ def most_expensive_stage(metrics: InsightMetrics) -> Insight | None:
     )
 
 
+def narrowed_weeks(low: int, high: int) -> str:
+    unit = plural_uk(high, UP_TO_WEEK_FORMS)
+    if low == high:
+        return f"до {high} {unit}"
+    return f"до діапазону від {low} до {high} {unit}"
+
+
 @action_rule
 def practice_costly_stage(metrics: InsightMetrics) -> InsightAction | None:
     stage, what_if = metrics.most_expensive, metrics.stage_what_if
@@ -44,12 +61,10 @@ def practice_costly_stage(metrics: InsightMetrics) -> InsightAction | None:
     low, high = what_if.likely.low, what_if.likely.high
     if low is None or high is None:
         return None
-    weeks = (
-        f"від {floor(low)} до {ceil(high)} {plural_uk(ceil(high), UP_TO_WEEK_FORMS)}"
-    )
+    weeks = narrowed_weeks(whole_weeks(low), whole_weeks(high))
     return InsightAction(
         block="funnel",
         title=f"Підготуватися до {STAGE_PHRASES[stage.stage].next}",
-        expected_effect=f"Прогноз офера звузиться до діапазону {weeks}, "
+        expected_effect=f"Прогноз офера звузиться {weeks}, "
         f"якщо конверсія дійде до {percent(WHAT_IF_CONVERSION)}%.",
     )

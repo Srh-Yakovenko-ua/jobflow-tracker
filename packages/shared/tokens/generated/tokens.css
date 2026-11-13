@@ -65,7 +65,7 @@
   --scrim: oklch(25% 0.013 62);
   --offer: oklch(72% 0.13 158);
   --rejected: oklch(62% 0.075 42);
-  --ghosted: oklch(52% 0.014 78);
+  --ghosted: oklch(55% 0.014 78);
   --withdrawn: oklch(66% 0.04 275);
   --data-1: oklch(48% 0.08 258);
   --data-2: oklch(58% 0.10 235);
@@ -99,7 +99,7 @@
     --scrim: oklch(25% 0.013 62);
     --offer: oklch(72% 0.13 158);
     --rejected: oklch(62% 0.075 42);
-    --ghosted: oklch(52% 0.014 78);
+    --ghosted: oklch(55% 0.014 78);
     --withdrawn: oklch(66% 0.04 275);
     --data-1: oklch(48% 0.08 258);
     --data-2: oklch(58% 0.10 235);

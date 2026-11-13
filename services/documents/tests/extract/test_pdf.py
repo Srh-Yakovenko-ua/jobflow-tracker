@@ -6,13 +6,14 @@ from app.core.errors import DocumentError
 from app.extract.pdf import extract_pdf
 from tests.factories import (
     MAX_JPEG_BYTES,
+    annotated_pdf,
     encrypted_pdf,
     image_pdf,
     scan_pdf,
     text_pdf,
     two_page_pdf,
 )
-from tests.jpeg import jpeg_size
+from tests.jpeg import jpeg_darkest, jpeg_size
 
 
 def test_reads_the_text_layer_page_by_page() -> None:
@@ -87,3 +88,10 @@ def test_refuses_a_pdf_it_cannot_read(data: bytes, expected: tuple[int, str]) ->
         extract_pdf(data)
 
     assert (raised.value.status, raised.value.type) == expected
+
+
+def test_does_not_draw_annotation_appearance_streams() -> None:
+    extraction = extract_pdf(annotated_pdf())
+
+    assert (extraction.kind.value, len(extraction.pages)) == ("scan", 1)
+    assert jpeg_darkest(base64.b64decode(extraction.pages[0].jpeg_base64)) >= 245

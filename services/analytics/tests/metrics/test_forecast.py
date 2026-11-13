@@ -21,9 +21,13 @@ from tests.metrics.forecast_fixtures import (
     FORECAST_BODY,
     FORECAST_NOW,
     HISTORY,
+    OFFERED,
     OLD_GHOSTS,
     OPEN_AT_APPLIED,
+    QUICK_REJECTED_AT_APPLIED,
+    QUICK_REJECTED_AT_SCREENING,
     REJECTED_AT_APPLIED,
+    Cohort,
     history_frame,
 )
 
@@ -33,6 +37,10 @@ SIXTY_APPLICATIONS = (*HISTORY, *HISTORY, (OPEN_AT_APPLIED, (61, 64, 67, 69)))
 
 def rows_of(events: pd.DataFrame) -> pd.DataFrame:
     return journeys(clean_events(events))
+
+
+def one_offer_and_rejections_at_applied(rejected: int) -> tuple[Cohort, ...]:
+    return ((OFFERED, (0,)), (REJECTED_AT_APPLIED, tuple(range(rejected))))
 
 
 def body_of(events: pd.DataFrame, **what_if: Any) -> dict[str, Any]:
@@ -81,13 +89,19 @@ def test_keeps_in_flight_the_applications_open_at_an_active_stage() -> None:
 @pytest.mark.parametrize(
     ("starts", "now", "expected"),
     [
-        ((0, 10, 50, 60, 65), day(70), 0.75),
+        ((0, 10, 50, 60, 65), day(70), 1.0),
         ((0, 3, 7), day(14), 1.5),
         ((13,), day(14), 1.0),
+        ((0, *range(43, 69)), day(70), 4.0),
     ],
-    ids=["older than four weeks", "two weeks young", "a day young"],
+    ids=[
+        "older than four weeks, raised to one",
+        "two weeks young",
+        "a day young",
+        "a burst, held to four",
+    ],
 )
-def test_counts_only_the_applications_of_the_last_four_weeks_in_the_rate(
+def test_counts_the_last_four_weeks_in_the_rate_kept_within_one_to_four(
     starts: tuple[float, ...], *, now: datetime, expected: float
 ) -> None:
     rows = rows_of(history_frame(((OPEN_AT_APPLIED, starts),)))
@@ -98,8 +112,8 @@ def test_counts_only_the_applications_of_the_last_four_weeks_in_the_rate(
 def test_answers_insufficient_data_below_fifteen_applications_and_a_forecast_at_fifteen() -> (
     None
 ):
-    below = body_of(history_frame(((REJECTED_AT_APPLIED, tuple(range(14))),)))
-    at = body_of(history_frame(((REJECTED_AT_APPLIED, tuple(range(15))),)))
+    below = body_of(history_frame(one_offer_and_rejections_at_applied(13)))
+    at = body_of(history_frame(one_offer_and_rejections_at_applied(14)))
 
     assert below == {
         "status": "insufficient_data",
@@ -115,6 +129,22 @@ def test_waits_for_the_first_company_reply_before_a_forecast() -> None:
 
     assert forecast(silent, now=FORECAST_NOW, what_if=WhatIf()) == Insufficient(
         have=0, need=1, message="Прогноз з'явиться після першої відповіді компанії"
+    )
+
+
+def test_waits_for_a_result_at_every_stage_after_a_burst_without_offers() -> None:
+    burst = history_frame(
+        (
+            (QUICK_REJECTED_AT_SCREENING, tuple(63 + half / 2 for half in range(6))),
+            (QUICK_REJECTED_AT_APPLIED, tuple(63 + half / 2 for half in range(6))),
+            (OPEN_AT_APPLIED, tuple(63 + half / 2 for half in range(6))),
+        )
+    )
+
+    assert forecast(burst, now=FORECAST_NOW, what_if=WhatIf()) == Insufficient(
+        have=2,
+        need=2,
+        message="Прогноз з'явиться, коли кожен етап матиме хоча б один результат",
     )
 
 

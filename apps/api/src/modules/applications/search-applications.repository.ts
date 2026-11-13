@@ -75,8 +75,8 @@ export class SearchApplicationsRepository {
     return this.prisma.$queryRaw<SearchTotalsRow[]>`
       SELECT a.search_id AS "searchId",
         count(DISTINCT a.id)::int AS applications,
-        (count(e.id) FILTER (
-          WHERE e.to_stage = ANY(${[...INTERVIEW_STAGES]}::stage[]) AND e.occurred_at >= s.started_at
+        (count(DISTINCT a.id) FILTER (
+          WHERE e.to_stage = ANY(${[...INTERVIEW_STAGES]}::stage[])
         ))::int AS interviews,
         (count(DISTINCT a.id) FILTER (WHERE e.to_stage = 'offer'))::int AS offers,
         min(e.occurred_at) FILTER (

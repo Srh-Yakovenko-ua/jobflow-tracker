@@ -2,7 +2,13 @@ from app.core.enums import GHOSTED_STAGE, REJECTED_STAGE
 from app.metrics.funnel import FunnelStage
 from app.metrics.insights.engine import Insight, InsightMetrics, insight_rule
 from app.metrics.insights.phrases import STAGE_PHRASES
-from app.metrics.plurals import REJECTION_FORMS, SILENCE_FORMS, counted_uk
+from app.metrics.plurals import (
+    PASSED_FORMS,
+    REJECTION_FORMS,
+    SILENCE_FORMS,
+    counted_uk,
+    plural_uk,
+)
 from app.metrics.rate import Rate
 
 
@@ -26,7 +32,8 @@ def entry_leak(stage: FunnelStage) -> Insight:
 
 
 def later_narrowing(stage: str, *, conversion: Rate) -> Insight:
-    passed = f"пройшло {conversion.successes} із {conversion.trials}"
+    verb = plural_uk(conversion.successes, PASSED_FORMS)
+    passed = f"{verb} {conversion.successes} із {conversion.trials}"
     return Insight(
         block="funnel",
         title="Далі об'єм відгуків уже не допоможе",

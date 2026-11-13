@@ -56,8 +56,20 @@ async def test_answers_the_stored_body_without_computing() -> None:
     assert (await cached(redis, compute), compute.calls) == (STORED, 0)
 
 
-async def test_computes_a_miss_and_stores_it_by_alias_for_an_hour() -> None:
-    redis = FakeRedis()
+UNREADABLE_BODIES = {
+    "nothing stored": {},
+    "half-written body": {KEY: b'{"stageNormDays":{"fin'},
+    "body of an older shape": {KEY: b'{"stageNorms":{"final":17}}'},
+}
+
+
+@pytest.mark.parametrize(
+    "bodies", UNREADABLE_BODIES.values(), ids=UNREADABLE_BODIES.keys()
+)
+async def test_computes_a_miss_and_stores_it_by_alias_for_an_hour(
+    bodies: dict[str, bytes],
+) -> None:
+    redis = FakeRedis(dict(bodies))
     compute = Computation()
 
     assert (await cached(redis, compute), compute.calls) == (COMPUTED, 1)

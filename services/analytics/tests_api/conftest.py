@@ -38,10 +38,14 @@ def owned(settings: Settings, registered: Any) -> OwnedSearch:
     return owned_search(settings, registered)
 
 
+def active_search(settings: Settings, *, token: str) -> Any:
+    searches = api_call(settings, token=token, request=("GET", "/searches", None))
+    return next(item for item in searches["items"] if item["status"] == "active")
+
+
 def owned_search(settings: Settings, registered: Any) -> OwnedSearch:
     token = registered["accessToken"]
-    searches = api_call(settings, token=token, request=("GET", "/searches", None))
-    active = next(item for item in searches["items"] if item["status"] == "active")
+    active = active_search(settings, token=token)
     rejected_at_screening(settings, token=token, reason="unspecified")
     return OwnedSearch(
         token=token, search_id=str(active["id"]), user_id=registered["user"]["id"]

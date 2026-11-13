@@ -10,6 +10,10 @@ the current search (or `searchId`).
 - With 15 or more applications and no company reply yet (no recorded stay at
   any stage) it answers `insufficient_data` with have 0, need 1, because the
   time model would have no data.
+- When an active stage has no decided outcome yet (no pass and no rejection
+  or withdrawal), it answers `insufficient_data` with have = the stages with
+  a result and need = the stages without one, so every pass probability rests
+  on the user's own data rather than on the prior alone.
 
 ## Model
 
@@ -91,19 +95,18 @@ applications a week (Poisson) and gamma stays with means of 6, 8, 9 and 14
 days. Each history is cut at week 4, the forecast is made at the cut, and it
 is compared with the first offer that actually came after the cut.
 
-| Measure                                                | Value         |
-| ------------------------------------------------------ | ------------- |
-| Users                                                  | 200           |
-| Forecast made (15+ applications and a reply by week 4) | 154           |
-| Actual first offer inside the 80% interval             | 93.5%         |
-| Median absolute error of the median                    | 2.4 weeks     |
-| Offer within 4 weeks: observed / mean predicted        | 50.0% / 53.2% |
-| Offer within 8 weeks: observed / mean predicted        | 79.9% / 65.5% |
+| Measure                                                                | Value         |
+| ---------------------------------------------------------------------- | ------------- |
+| Users                                                                  | 200           |
+| Forecast made (15+ applications and a result at every stage by week 4) | 23            |
+| Actual first offer inside the 80% interval                             | 82.6%         |
+| Median absolute error of the median                                    | 2.28 weeks    |
+| Offer within 4 weeks: observed / mean predicted                        | 60.9% / 62.4% |
+| Offer within 8 weeks: observed / mean predicted                        | 73.9% / 74.2% |
 
-The interval covers more than 80% of the users: four weeks of history leave
-the pass probabilities of the later stages wide, and the forecast says so. The
-8-week share is predicted low, probably because the Beta(1,1) prior pulls the
-rarely seen `final` stage (0.6 in the synthetic users) towards 0.5.
+Most synthetic users get no forecast at week 4: the mean stays add up to
+about five weeks before a `final` outcome, so the stage is still unproven at
+the cut. The users who do get one are forecast close to what happened.
 `tests/scripts/test_backtest_forecast.py` runs 50 users and checks that two
 runs give the same report and that the 80% interval covers at least 60% of
 them.

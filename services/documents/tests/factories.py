@@ -88,22 +88,51 @@ def text_pdf(pages: list[list[str]]) -> bytes:
     )
 
 
-def image_pdf(*, width: int, height: int) -> bytes:
-    image = (
-        b"/Type /XObject /Subtype /Image /Width %d /Height %d /ColorSpace /DeviceGray "
-        b"/BitsPerComponent 8 /Filter /FlateDecode " % (width, height)
-    )
+DRAW_IM0 = b"q 612 0 0 792 0 0 cm /Im0 Do Q"
+
+
+def im0_at(number: int) -> bytes:
+    return b"/Resources << /XObject << /Im0 %d 0 R >> >> " % number
+
+
+def single_page_pdf(*, page: bytes, content: bytes, objects: list[bytes]) -> bytes:
     return pdf_bytes(
         [
             b"<< /Type /Catalog /Pages 2 0 R >>",
             b"<< /Type /Pages /Kids [3 0 R] /Count 1 >>",
             (
                 b"<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] "
-                b"/Resources << /XObject << /Im0 5 0 R >> >> /Contents 4 0 R >>"
+                b"%s/Contents 4 0 R >>" % page
             ),
-            stream_object(b"q 612 0 0 792 0 0 cm /Im0 Do Q"),
-            stream_object(zlib.compress(bytes(width * height)), image),
+            stream_object(content),
+            *objects,
         ]
+    )
+
+
+def image_pdf(*, width: int, height: int) -> bytes:
+    image = (
+        b"/Type /XObject /Subtype /Image /Width %d /Height %d /ColorSpace /DeviceGray "
+        b"/BitsPerComponent 8 /Filter /FlateDecode " % (width, height)
+    )
+    return single_page_pdf(
+        page=im0_at(5),
+        content=DRAW_IM0,
+        objects=[stream_object(zlib.compress(bytes(width * height)), image)],
+    )
+
+
+def annotated_pdf() -> bytes:
+    return single_page_pdf(
+        page=b"/Annots [5 0 R] ",
+        content=b"",
+        objects=[
+            b"<< /Type /Annot /Subtype /Square /Rect [0 0 612 792] /AP << /N 6 0 R >> >>",
+            stream_object(
+                b"0 g 0 0 612 792 re f",
+                b"/Type /XObject /Subtype /Form /BBox [0 0 612 792] ",
+            ),
+        ],
     )
 
 

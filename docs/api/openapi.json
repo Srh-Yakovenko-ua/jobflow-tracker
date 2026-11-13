@@ -3181,7 +3181,7 @@
           "searches"
         ],
         "summary": "List the job searches of the signed-in user with their totals",
-        "description": "Every search, newest first, in one list without pages. applications counts the applications now in the search, leaving out drafts and deleted ones; interviews counts the stage events into tech_interview or final since the search started, each round once; offers counts the applications that reached offer; days runs from the start to the finish, or to today for the active search; daysToOffer runs from the start to the first offer, or is null. Undone moves are left out.",
+        "description": "Every search, newest first, in one list without pages. applications counts the applications now in the search, leaving out drafts and deleted ones; interviews counts the applications that reached tech_interview or final, each once; offers counts the applications that reached offer; days runs from the start to the finish, or to today for the active search; daysToOffer runs from the start to the first offer, or is null. Undone moves are left out.",
         "responses": {
           "200": {
             "description": "The searches",

@@ -200,6 +200,14 @@ describe('the search routes', () => {
       seed: (_olena, countedId) => addEvents(countedId, eventAt('tech_interview', 50)),
     },
     {
+      case: 'a second tech interview round and a final of the same card',
+      seed: (_olena, countedId) =>
+        addEvents(countedId, [
+          { fromStage: 'tech_interview', toStage: 'tech_interview', daysAgo: 18 },
+          { fromStage: 'tech_interview', toStage: 'final', daysAgo: 15 },
+        ]),
+    },
+    {
       case: 'an offer before the search started',
       seed: (_olena, countedId) => addEvents(countedId, eventAt('offer', 45)),
     },
@@ -323,7 +331,7 @@ describe('the search routes', () => {
         offers: 1,
         daysToOffer: 38,
       },
-      { ...FRESH_SEARCH, id: current.id, applications: 1 },
+      { ...FRESH_SEARCH, id: current.id, applications: 1, interviews: 1 },
     ]);
     expect(await timelineOf(olena, techInterview)).toEqual(timelineBefore);
     expect(await testApp.prisma.stageEvent.count({ where: { applicationId: techInterview } })).toBe(

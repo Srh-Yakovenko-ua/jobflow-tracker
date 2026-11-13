@@ -33,6 +33,12 @@ REJECTED_AT_SCREENING: Stops = (("applied", 0), ("screening", 6), ("rejected", 1
 REJECTED_AT_APPLIED: Stops = (("applied", 0), ("rejected", 7))
 WITHDRAWN_AT_SCREENING: Stops = (("applied", 0), ("screening", 3), ("withdrawn", 8))
 GHOSTED_AT_APPLIED: Stops = (("applied", 0), ("ghosted", 21))
+QUICK_REJECTED_AT_SCREENING: Stops = (
+    ("applied", 0),
+    ("screening", 1),
+    ("rejected", 2),
+)
+QUICK_REJECTED_AT_APPLIED: Stops = (("applied", 0), ("rejected", 1))
 OPEN_AT_APPLIED: Stops = (("applied", 0),)
 OPEN_AT_SCREENING: Stops = (("applied", 0), ("screening", 5))
 OPEN_AT_TECH: Stops = (("applied", 0), ("screening", 4), ("tech_interview", 9))

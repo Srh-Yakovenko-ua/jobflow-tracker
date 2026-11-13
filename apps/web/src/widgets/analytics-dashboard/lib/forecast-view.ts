@@ -2,6 +2,7 @@ import type { ForecastResponse, WeeksRange } from '@jobflow/shared';
 
 import { uk } from '@/shared/i18n';
 
+import { rateOnStep } from './forecast-rate';
 import { oneDecimal, percentOf } from './kpi-values';
 
 const COPY = uk.analytics.blocks.forecast;
@@ -66,16 +67,20 @@ function spanOf(range: WeeksRange, axis: Axis): ForecastSpan {
   return { left: Math.min(start, FULL - MIN_WIDTH), width: MIN_WIDTH };
 }
 
+const wholeWeeks = (weeks: number) => Math.max(1, Math.round(weeks));
+
 function spanText(range: WeeksRange, horizon: number): string {
   if (range.low === null) return COPY.beyond(horizon);
-  const low = Math.round(range.low);
+  const low = wholeWeeks(range.low);
   if (range.high === null) return COPY.openEnd({ low, horizon });
-  const high = Math.round(range.high);
+  const high = wholeWeeks(range.high);
   return low === high ? COPY.weeks(low) : COPY.span(low, high);
 }
 
 function medianText({ medianWeeks, horizonWeeks }: OkForecast): string {
-  return medianWeeks === null ? COPY.beyond(horizonWeeks) : COPY.fraction(oneDecimal(medianWeeks));
+  if (medianWeeks === null) return COPY.beyond(horizonWeeks);
+  if (medianWeeks < 1) return COPY.weeks(wholeWeeks(medianWeeks));
+  return COPY.fraction(oneDecimal(medianWeeks));
 }
 
 function bandOf(forecast: OkForecast): ForecastBand {
@@ -92,7 +97,7 @@ export function forecastViewOf({ forecast, improved }: ForecastViewInput): Forec
   const likely = spanText(forecast.likely, forecast.horizonWeeks);
   return {
     headline: likely,
-    caption: COPY.caption({ pace: oneDecimal(forecast.applicationsPerWeek), improved }),
+    caption: COPY.caption({ pace: oneDecimal(rateOnStep(forecast.applicationsPerWeek)), improved }),
     legend: [
       COPY.legend.likely(likely),
       COPY.legend.interval(spanText(forecast.interval, forecast.horizonWeeks)),

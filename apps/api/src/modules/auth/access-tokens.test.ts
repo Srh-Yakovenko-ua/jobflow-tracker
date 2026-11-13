@@ -16,10 +16,23 @@ const otherKeys = await jwtKeysFrom(await generateKeyPair('RS256'));
 
 const encodePart = (part: object) => Buffer.from(JSON.stringify(part)).toString('base64url');
 
-const claims = { sub: USER_ID, scope: 'user analytics:read', jti: crypto.randomUUID() };
+const ACCESS_TOKEN_ROUTING = {
+  iss: 'jobflow-api',
+  aud: ['jobflow-api', 'jobflow-analytics'],
+};
+
+const claims = {
+  ...ACCESS_TOKEN_ROUTING,
+  sub: USER_ID,
+  scope: 'user analytics:read',
+  jti: crypto.randomUUID(),
+};
 
 const signedByTestKey = (jwt: SignJWT) =>
   jwt.setProtectedHeader(TEST_KEY_HEADER).sign(testJwtKeys.privateKey);
+
+const signedWithClaims = (change: object) =>
+  signedByTestKey(new SignJWT({ ...claims, ...change }).setIssuedAt().setExpirationTime('15m'));
 
 const forgedTokens: [string, () => Promise<string>][] = [
   ['signed by another key', () => signAccessToken({ keys: otherKeys, userId: USER_ID })],
@@ -46,6 +59,8 @@ const forgedTokens: [string, () => Promise<string>][] = [
       ),
   ],
   ['without an exp claim', () => signedByTestKey(new SignJWT(claims).setIssuedAt())],
+  ['with another issuer', () => signedWithClaims({ iss: 'jobflow-ai' })],
+  ['with the ai audience', () => signedWithClaims({ aud: 'jobflow-ai' })],
 ];
 
 describe('signAccessToken', () => {
@@ -59,6 +74,7 @@ describe('signAccessToken', () => {
     const { protectedHeader, jti, claims } = await verifyWithTestKey(token, ISSUED_AT);
     expect(protectedHeader).toEqual(TEST_KEY_HEADER);
     expect(claims).toEqual({
+      ...ACCESS_TOKEN_ROUTING,
       sub: USER_ID,
       scope: 'user analytics:read',
       iat: 1_792_576_800,

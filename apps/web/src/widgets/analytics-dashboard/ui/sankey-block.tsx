@@ -113,7 +113,9 @@ export function SankeyBlock({ frame, controls }: SankeyBlockProps) {
           />
         )}
       </ChartFrame>
-      <FunnelNotes notes={frame.notes} graph={loaded} />
+      <AnimatePresence initial={false}>
+        {loaded && <FunnelNotes key="funnel-notes" notes={frame.notes} graph={loaded} />}
+      </AnimatePresence>
     </>
   );
 }
