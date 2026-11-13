@@ -24,6 +24,8 @@ STAGE_ROLES: Final[Mapping[str, StageRole]] = {
 GHOSTED_STAGE: Final = "ghosted"
 REJECTED_STAGE: Final = "rejected"
 UNSPECIFIED_REASON: Final = "unspecified"
+CANDIDATE_SIDE: Final = "candidate"
+LINKEDIN_SOURCE: Final = "linkedin"
 ACTIVE_SEARCH: Final = "active"
 
 
@@ -51,6 +53,7 @@ class DomainEnums(EnumsModel):
     stages: tuple[str, ...]
     terminal_stages: tuple[str, ...]
     interview_stages: tuple[str, ...]
+    response_stages: tuple[str, ...]
     allowed_transitions: Mapping[str, tuple[str, ...]]
     sources: tuple[str, ...]
     work_modes: tuple[str, ...]

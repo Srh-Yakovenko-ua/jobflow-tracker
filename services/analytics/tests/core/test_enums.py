@@ -2,7 +2,9 @@ import pytest
 
 from app.core.auth import READ_SCOPE
 from app.core.enums import (
+    CANDIDATE_SIDE,
     GHOSTED_STAGE,
+    LINKEDIN_SOURCE,
     STAGE_ROLES,
     DomainEnums,
     UnhandledStageError,
@@ -62,6 +64,24 @@ def test_rejections_leave_only_the_stages_whose_transitions_allow_them() -> None
 
 def test_the_ghosted_stage_is_a_stage_exported_by_the_shared_package() -> None:
     assert GHOSTED_STAGE in load_domain_enums().stages
+
+
+def test_a_reply_is_a_move_to_screening_tech_interview_or_rejected() -> None:
+    assert load_domain_enums().response_stages == (
+        "screening",
+        "tech_interview",
+        "rejected",
+    )
+
+
+def test_the_candidate_side_is_a_rejection_side_exported_by_the_shared_package() -> (
+    None
+):
+    assert CANDIDATE_SIDE in load_domain_enums().rejection_sides
+
+
+def test_linkedin_is_a_source_exported_by_the_shared_package() -> None:
+    assert LINKEDIN_SOURCE in load_domain_enums().sources
 
 
 def test_the_read_scope_is_a_token_scope_exported_by_the_shared_package() -> None:

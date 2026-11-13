@@ -35,6 +35,16 @@ def applications_statement(*, user_id: UUID, search_id: UUID) -> Select[Any]:
     )
 
 
+def application_sources_statement(
+    *, user_id: UUID, search_id: UUID | None
+) -> Select[Any]:
+    return select(
+        applications.c.id.label("application_id"),
+        applications.c.source,
+        applications.c.url,
+    ).where(*confirmed_in_search(user_id=user_id, search_id=search_id))
+
+
 def latest_change_statement(*, user_id: UUID) -> Select[Any]:
     return select(func.max(applications.c.updated_at)).where(
         applications.c.user_id == user_id
@@ -46,6 +56,14 @@ async def load_applications(
 ) -> pd.DataFrame:
     return await read_frame(
         engine, applications_statement(user_id=user_id, search_id=search_id)
+    )
+
+
+async def load_application_sources(
+    engine: AsyncEngine, *, user_id: UUID, search_id: UUID | None
+) -> pd.DataFrame:
+    return await read_frame(
+        engine, application_sources_statement(user_id=user_id, search_id=search_id)
     )
 
 

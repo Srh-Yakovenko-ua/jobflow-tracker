@@ -11,15 +11,15 @@ from redis import Redis
 from app.core.config import DEPENDENCY_LIMITS, Settings
 from app.factory import create_app
 from tests.api_client import (
+    analytics_body,
     analytics_client,
     api_call,
-    register,
     rejected_at_screening,
 )
 from tests.factories import closed_port, silent_listener
 from tests.routes.test_funnel import SCREENING
 from tests.routes.test_reasons import REASONS_PATH, SUMMARY_PATH
-from tests_api.conftest import OwnedSearch, owned_search
+from tests_api.conftest import OwnedSearch, finished_search
 
 pytestmark = pytest.mark.enable_socket
 
@@ -66,10 +66,9 @@ def node_summary(settings: Settings, owned: OwnedSearch) -> Any:
 
 
 def summary_over_http(settings: Settings, owned: OwnedSearch) -> Any:
-    with analytics_client(create_app(settings), token=owned.token) as client:
-        response = client.get(SUMMARY_PATH, params=SCREENING)
-    assert response.status_code == 200, response.text
-    return response.json()
+    return analytics_body(
+        create_app(settings), token=owned.token, query=(SUMMARY_PATH, SCREENING)
+    )
 
 
 def test_answers_the_same_summary_as_the_api_for_the_same_user(
@@ -83,14 +82,7 @@ def test_answers_the_same_summary_as_the_api_for_the_same_user(
 def test_leaves_the_rejections_of_a_finished_search_out_like_the_api(
     settings: Settings,
 ) -> None:
-    finished = owned_search(settings, register(settings))
-    finish = {"searchId": finished.search_id, "outcome": "paused"}
-    request = (
-        "POST",
-        "/searches/current/finish",
-        finish | {"openApplications": "move"},
-    )
-    api_call(settings, token=finished.token, request=request)
+    finished = finished_search(settings)
     rejected_at_screening(settings, token=finished.token, reason="skills_gap")
     analytics = summary_over_http(settings, finished)
 

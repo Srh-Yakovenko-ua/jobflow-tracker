@@ -1,10 +1,10 @@
 from datetime import UTC, datetime
 from typing import Annotated
-from uuid import UUID
 
 from fastapi import APIRouter, Query, Request
 from pydantic import AfterValidator
 
+from app.api.routes.queries import SearchIdQuery
 from app.core.auth import CurrentUserId
 from app.core.enums import load_domain_enums
 from app.metrics.reasons import Reasons
@@ -22,7 +22,6 @@ def known_stage(stage: str) -> str:
 
 
 KnownStage = Annotated[str, AfterValidator(known_stage)]
-SearchIdQuery = Annotated[UUID | None, Query(alias="searchId")]
 
 
 @router.get("/reasons", response_model=Reasons)

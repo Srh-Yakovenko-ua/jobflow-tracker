@@ -7,6 +7,7 @@ from sqlalchemy import Select
 from sqlalchemy.dialects import postgresql
 
 from app.repositories.applications import (
+    application_sources_statement,
     applications_statement,
     latest_change_statement,
 )
@@ -29,6 +30,7 @@ ACTIVE_SEARCH_PREDICATES = ("searches.user_id =", "CAST(searches.status AS TEXT)
 STATEMENTS = {
     "events": (events_statement, OWNERSHIP_PREDICATES),
     "applications": (applications_statement, OWNERSHIP_PREDICATES),
+    "application sources": (application_sources_statement, OWNERSHIP_PREDICATES),
     "search": (search_statement, SEARCH_PREDICATES),
 }
 
@@ -53,8 +55,15 @@ def user_wide(statement: Select[Any]) -> tuple[set[object], str]:
     return set(compiled.params.values()), str(compiled)
 
 
-def test_reads_the_active_search_of_the_user_without_a_search_id() -> None:
-    bound, sql = user_wide(events_statement(user_id=USER_ID, search_id=None))
+@pytest.mark.parametrize(
+    "statement",
+    [events_statement, application_sources_statement],
+    ids=["events", "application sources"],
+)
+def test_reads_the_active_search_of_the_user_without_a_search_id(
+    statement: Statement,
+) -> None:
+    bound, sql = user_wide(statement(user_id=USER_ID, search_id=None))
 
     assert bound == {USER_ID, "active"}
     assert "applications.search_id IN (SELECT searches.id" in sql

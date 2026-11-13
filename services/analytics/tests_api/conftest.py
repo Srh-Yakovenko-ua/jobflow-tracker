@@ -37,3 +37,15 @@ def owned_search(settings: Settings, registered: Any) -> OwnedSearch:
     return OwnedSearch(
         token=token, search_id=str(active["id"]), user_id=registered["user"]["id"]
     )
+
+
+def finished_search(settings: Settings) -> OwnedSearch:
+    finished = owned_search(settings, register(settings))
+    finish = {
+        "searchId": finished.search_id,
+        "outcome": "paused",
+        "openApplications": "move",
+    }
+    request = ("POST", "/searches/current/finish", finish)
+    api_call(settings, token=finished.token, request=request)
+    return finished
