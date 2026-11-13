@@ -2,7 +2,7 @@ import json
 import socket
 import threading
 import time
-from collections.abc import Iterator
+from collections.abc import Iterator, Sequence
 from contextlib import contextmanager
 from dataclasses import asdict, dataclass, field, fields
 from datetime import UTC, datetime, timedelta
@@ -78,11 +78,26 @@ def moves(application_id: UUID, path: list[str]) -> list[StageEvent]:
     ]
 
 
+def records_frame(rows: Sequence[Any], *, record: type[Any]) -> pd.DataFrame:
+    columns = [column.name for column in fields(record)]
+    return pd.DataFrame([asdict(row) for row in rows], columns=columns)
+
+
+@dataclass(frozen=True)
+class ApplicationSource:
+    application_id: UUID
+    source: str
+    url: str | None = None
+
+
+def application_sources_frame(rows: list[ApplicationSource]) -> pd.DataFrame:
+    return records_frame(rows, record=ApplicationSource)
+
+
 def stage_events_frame(
     rows: list[StageEvent], *, occurred_at: list[datetime] | None = None
 ) -> pd.DataFrame:
-    columns = [column.name for column in fields(StageEvent)]
-    frame = pd.DataFrame([asdict(row) for row in rows], columns=columns)
+    frame = records_frame(rows, record=StageEvent)
     frame["occurred_at"] = occurred_at or [
         EVENTS_BASE_TIME + timedelta(hours=order) for order in range(len(rows))
     ]

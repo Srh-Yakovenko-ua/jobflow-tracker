@@ -26,7 +26,7 @@ applications = Table(
     "applications",
     metadata,
     *map(uuid_column, ("id", "user_id", "search_id", "resume_version_id")),
-    *map(text_column, ("source", "current_stage", "work_mode", "currency")),
+    *map(text_column, ("source", "url", "current_stage", "work_mode", "currency")),
     *map(integer_column, ("salary_min", "salary_max", "match_score")),
     Column("is_draft", Boolean()),
     *map(

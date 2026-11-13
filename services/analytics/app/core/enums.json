@@ -17,6 +17,11 @@
     "tech_interview",
     "final"
   ],
+  "responseStages": [
+    "screening",
+    "tech_interview",
+    "rejected"
+  ],
   "allowedTransitions": {
     "applied": [
       "screening",

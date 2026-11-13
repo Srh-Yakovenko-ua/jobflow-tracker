@@ -2,10 +2,17 @@ from itertools import pairwise
 
 import pandas as pd
 
-from tests.factories import StageEvent, application, stage_event, stage_events_frame
+from tests.factories import (
+    StageEvent,
+    application,
+    day,
+    stage_event,
+    stage_events_frame,
+)
 
 type Move = tuple[str, str | None]
 type Journey = list[Move]
+type DatedMove = tuple[str, str | None, float]
 
 APPLIED = ("applied",)
 SCREENING = (*APPLIED, "screening")
@@ -22,6 +29,12 @@ def reasoned_events(journeys: list[Journey]) -> list[StageEvent]:
 
 def reasoned_frame(journeys: list[Journey]) -> pd.DataFrame:
     return stage_events_frame(reasoned_events(journeys))
+
+
+def dated_frame(journeys: list[list[DatedMove]]) -> pd.DataFrame:
+    moves = [[(stage, reason) for stage, reason, _ in journey] for journey in journeys]
+    dates = [day(offset) for journey in journeys for *_, offset in journey]
+    return stage_events_frame(reasoned_events(moves), occurred_at=dates)
 
 
 def cohort(path: tuple[str, ...], *, end: Move, count: int) -> list[Journey]:

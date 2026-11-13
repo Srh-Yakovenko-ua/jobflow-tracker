@@ -66,3 +66,13 @@ def analytics_client(app: FastAPI, *, token: str) -> Iterator[httpx2.Client]:
         ) as client,
     ):
         yield client
+
+
+def analytics_body(
+    app: FastAPI, *, token: str, query: tuple[str, dict[str, str]]
+) -> Any:
+    path, params = query
+    with analytics_client(app, token=token) as client:
+        response = client.get(path, params=params)
+    assert response.status_code == 200, response.text
+    return response.json()
