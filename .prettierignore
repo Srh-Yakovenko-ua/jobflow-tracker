@@ -3,3 +3,4 @@ docs/design/
 packages/shared/tokens/generated/
 docs/diagrams/erd.md
 docs/api/openapi.json
+services/analytics/app/core/enums.json

@@ -14,6 +14,11 @@ def isolated_env(monkeypatch: pytest.MonkeyPatch) -> None:
 
 
 @pytest.fixture
+def anyio_backend() -> str:
+    return "asyncio"
+
+
+@pytest.fixture
 def client() -> Iterator[TestClient]:
     with serving(create_app(settings_for())) as client:
         yield client
