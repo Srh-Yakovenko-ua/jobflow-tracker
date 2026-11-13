@@ -1,5 +1,4 @@
-import { tz } from '@date-fns/tz';
-import { differenceInDays, milliseconds, subMilliseconds } from 'date-fns';
+import { differenceInMilliseconds, milliseconds, subMilliseconds } from 'date-fns';
 import { z } from 'zod';
 
 import type { UserSettings } from './schemas/user-settings.js';
@@ -91,6 +90,8 @@ export function silenceWindows({ levels, silenceDays, now }: SilenceWindowsInput
   return levels.includes('none') ? [...activeWindows, { stages: INACTIVE_STAGES }] : activeWindows;
 }
 
+const ONE_DAY_MS = milliseconds({ days: 1 });
+
 export function wholeDaysBetween(from: Date, to: Date): number {
-  return Math.max(0, differenceInDays(to, from, { in: tz('UTC') }));
+  return Math.max(0, Math.floor(differenceInMilliseconds(to, from) / ONE_DAY_MS));
 }
