@@ -12,7 +12,10 @@ export const OUTPUT_FAILURES: Record<AiKind, (output: unknown) => string | null>
   vacancy_parse: (output) => vacancyParseFailure(vacancyParseOutputSchema.parse(output)),
   resume_parse: () => null,
   match: (output) => matchFailure(matchOutputSchema.parse(output)),
+  followup: () => null,
 };
+
+export type AiRefusal = { error: AiServiceError; kind: AiKind };
 
 export const FAILED_CALL = {
   model: '',
@@ -21,6 +24,9 @@ export const FAILED_CALL = {
   latencyMs: 0,
 } as const;
 
-export function isFinal(error: AiServiceError): boolean {
-  return error.status >= 400 && error.status < 500 && error.status !== 429;
+const FAILS_AT_ONCE: ReadonlySet<AiKind> = new Set(['followup']);
+
+export function isFinal({ error, kind }: AiRefusal): boolean {
+  const refused = error.status >= 400 && error.status < 500 && error.status !== 429;
+  return refused || FAILS_AT_ONCE.has(kind);
 }

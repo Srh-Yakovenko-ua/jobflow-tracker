@@ -13,6 +13,7 @@ import { PrismaService } from '../../prisma/prisma.service.js';
 import { TimelineService } from '../events/index.js';
 import { nextInterviewReminderAt } from './interview-reminders.js';
 import {
+  type CloseFollowups,
   type CloseInterviewReminder,
   type CloseReminder,
   type DateRange,
@@ -37,6 +38,8 @@ function toReminder({ application, dueAt, snoozedUntil, ...row }: ReminderRow): 
 export type PlanInterview = InterviewOfApplication & { startsAt: Date; now: Date };
 
 export type SnoozeReminder = SnoozeReminderInput & { id: string };
+
+export type ResolveFollowups = Omit<CloseFollowups, 'status'>;
 
 export type StartFollowup = Omit<SilenceItem, 'company'> & { now: Date };
 
@@ -67,8 +70,8 @@ export class RemindersService {
     return this.close(userId, { id, status: 'snoozed', snoozedUntil });
   }
 
-  resolveFollowups(userId: string, applicationId: string): Promise<number> {
-    return this.repository.closeActiveFollowups(userId, { applicationId, status: 'done' });
+  resolveFollowups(userId: string, followups: ResolveFollowups): Promise<number> {
+    return this.repository.closeActiveFollowups(userId, { ...followups, status: 'done' });
   }
 
   async startFollowup(userId: string, { applicationId, days, now }: StartFollowup): Promise<void> {

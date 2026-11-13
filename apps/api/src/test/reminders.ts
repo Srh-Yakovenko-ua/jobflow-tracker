@@ -10,14 +10,18 @@ import type {
 } from '../modules/reminders/index.js';
 import type { PrismaService } from '../prisma/prisma.service.js';
 import { signedInWithSearch } from './applications.js';
-import { createApplicationRows } from './factories.js';
+import { type ApplicationRowInput, createApplicationRows } from './factories.js';
 import type { ByUser } from './recorded-events.js';
 import { APPLICATION_ID, OLENA_ID, REMINDER_ID } from './service-fixtures.js';
 import { NOW, type SettableClock } from './time.js';
 
 export type StoredReminder = ByUser<ReminderRow>;
 
-export type StageApplication = { stage: Stage; lastEventAt: Date };
+export type StageApplication = {
+  stage: Stage;
+  lastEventAt: Date;
+  row?: Omit<ApplicationRowInput, 'lastEventAt'>;
+};
 
 export type StageApplicationOwner = { userId: string; accessToken: string; applicationId: string };
 
@@ -134,13 +138,13 @@ export function remindersOf(prisma: PrismaService, applicationId: string) {
 
 export async function ownedStageApplication(
   prisma: PrismaService,
-  { stage, lastEventAt }: StageApplication,
+  { stage, lastEventAt, row }: StageApplication,
 ): Promise<StageApplicationOwner> {
   const { userId, searchId, accessToken } = await signedInWithSearch(prisma);
   const [applicationId = ''] = await createApplicationRows(prisma, {
     userId,
     searchId,
-    rows: [{ company: 'Acme', currentStage: stage, lastEventAt }],
+    rows: [{ company: 'Acme', ...row, currentStage: stage, lastEventAt }],
   });
   return { userId, accessToken, applicationId };
 }

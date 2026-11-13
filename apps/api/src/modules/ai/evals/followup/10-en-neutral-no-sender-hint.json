@@ -1,0 +1,15 @@
+{
+  "recruiterFirstName": "Lucas",
+  "company": "Granite Apps",
+  "position": "Mobile Developer",
+  "stage": "tech_interview",
+  "silenceDays": 5,
+  "lastInterview": {
+    "kind": "other",
+    "date": "2026-09-06"
+  },
+  "senderName": null,
+  "language": "en",
+  "tone": "neutral",
+  "hint": "ask whether a take-home task is the next step"
+}

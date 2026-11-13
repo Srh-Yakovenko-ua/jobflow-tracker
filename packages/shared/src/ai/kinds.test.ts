@@ -11,6 +11,7 @@ import { aiCompleteRequestSchemas, aiCompletionSchemas } from './completion.js';
 import { aiContractJsonSchemas } from './contracts.js';
 import { aiEmbedRequestSchema } from './embed.js';
 import { AI_KINDS, AI_PROMPT_VERSIONS } from './kinds.js';
+import { AI_PAYLOAD_FIELDS } from './payload-fields.js';
 
 const VACANCY_INPUT = { text: VACANCY_SAMPLE_TEXT };
 
@@ -35,7 +36,12 @@ const VACANCY_OUTPUT_FIELDS = [
 describe('AI_PROMPT_VERSIONS', () => {
   it('pins one prompt version for exactly the AI kinds', () => {
     expect(Object.keys(AI_PROMPT_VERSIONS)).toEqual([...AI_KINDS]);
-    expect(AI_PROMPT_VERSIONS).toEqual({ vacancy_parse: 'v2', resume_parse: 'v1', match: 'v3' });
+    expect(AI_PROMPT_VERSIONS).toEqual({
+      vacancy_parse: 'v2',
+      resume_parse: 'v1',
+      match: 'v3',
+      followup: 'v1',
+    });
   });
 });
 
@@ -51,6 +57,9 @@ describe('aiContractJsonSchemas', () => {
       'match_request',
       'match_output',
       'match_response',
+      'followup_request',
+      'followup_output',
+      'followup_response',
       'embed_request',
       'embed_response',
     ]);
@@ -94,6 +103,17 @@ describe('aiContractJsonSchemas', () => {
     expect(aiContractJsonSchemas()).toMatchObject({
       match_request: { properties: { input: { required: ['vacancy', 'profile'] } } },
       match_output: { title: 'MatchOutput', required: ['requirements', 'explanation'] },
+    });
+  });
+
+  it('requires every followup input field, the nullable ones included, and the subject and the body in its output', () => {
+    expect(aiContractJsonSchemas()).toMatchObject({
+      followup_request: {
+        properties: {
+          input: { required: AI_PAYLOAD_FIELDS.followup },
+        },
+      },
+      followup_output: { title: 'FollowupOutput', required: ['subject', 'body'] },
     });
   });
 

@@ -23,7 +23,8 @@ export class RemindersSubscriber implements OnModuleInit {
       type: APPLICATION_EVENTS.stageChanged,
       schema: applicationStageChangedPayloadSchema,
       label: REMINDERS_LABEL,
-      handle: ({ userId, applicationId }) => this.reminders.resolveFollowups(userId, applicationId),
+      handle: ({ userId, applicationId }) =>
+        this.reminders.resolveFollowups(userId, { applicationId }),
     });
     this.events.subscribeParsed({
       type: SETTINGS_EVENTS.changed,

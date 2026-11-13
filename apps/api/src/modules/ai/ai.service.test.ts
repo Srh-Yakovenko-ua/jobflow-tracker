@@ -10,6 +10,9 @@ import {
   FakeAiClient,
   type FakeAiJob,
   FakeAiRepository,
+  FOLLOWUP_COMPLETION,
+  FOLLOWUP_JOB,
+  FOLLOWUP_VARIANT_JOB,
   NAMELESS_VACANCY_COMPLETION,
   PRIVATE_NOTE,
   SettledAiJobs,
@@ -355,6 +358,43 @@ describe('AiService.complete', () => {
     expect(log.parsed()).toEqual([
       expect.objectContaining({ msg: 'ai job skipped', aiJobId: AI_JOB_ID, requestId: 'req-ai-7' }),
     ]);
+  });
+});
+
+describe('AiService.complete for a followup', () => {
+  const FOLLOWUP_CALL = {
+    kind: 'followup',
+    input: FOLLOWUP_JOB.input,
+    requestId: 'req-followup-1',
+  };
+
+  it("writes another draft for 'Ще варіант' past the cached one, at the variant temperature, under its own input hash", async () => {
+    const { repository, ai, service } = await serviceWithFakes();
+    ai.answer = () => Promise.resolve(FOLLOWUP_COMPLETION);
+    await service.complete(attemptOf({ job: FOLLOWUP_JOB }));
+    repository.queueJob(OLENA_ID, PASTED_AGAIN_JOB_ID);
+
+    const variant = await service.complete(
+      attemptOf({ job: { ...FOLLOWUP_VARIANT_JOB, aiJobId: PASTED_AGAIN_JOB_ID } }),
+    );
+
+    expect(variant).toEqual(expect.objectContaining({ aiResultId: 'ai-result-2', cached: false }));
+    expect(ai.calls).toEqual([FOLLOWUP_CALL, { ...FOLLOWUP_CALL, options: { temperature: 0.9 } }]);
+    expect(new Set([...repository.results.values()].map(({ inputHash }) => inputHash)).size).toBe(
+      2,
+    );
+  });
+
+  it('fails a followup on a 504 at its first attempt with ai_timeout and gives up without a retry', async () => {
+    const { repository, ai, service } = await serviceWithFakes();
+    ai.answer = () => Promise.reject(new AiServiceError({ status: 504, type: 'ai_timeout' }));
+
+    const error = await service
+      .complete(attemptOf({ job: FOLLOWUP_JOB }))
+      .catch((thrown: unknown) => thrown);
+
+    expect(error).toBeInstanceOf(UnrecoverableError);
+    expect(repository.jobs.get(AI_JOB_ID)).toEqual(failedJob('ai_timeout'));
   });
 });
 

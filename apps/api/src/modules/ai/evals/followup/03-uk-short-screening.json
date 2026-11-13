@@ -1,0 +1,15 @@
+{
+  "recruiterFirstName": "Ірина",
+  "company": "Квадрат Софт",
+  "position": "Node.js developer",
+  "stage": "screening",
+  "silenceDays": 7,
+  "lastInterview": {
+    "kind": "screening_call",
+    "date": "2026-08-28"
+  },
+  "senderName": "Тарас",
+  "language": "uk",
+  "tone": "short",
+  "hint": null
+}

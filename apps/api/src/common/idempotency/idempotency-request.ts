@@ -4,6 +4,7 @@ import type { Request } from 'express';
 import { z } from 'zod';
 
 import { validation } from '../app-error.js';
+import type { IdempotentOptions } from './idempotent.decorator.js';
 
 export const IDEMPOTENCY_LIMITS = {
   replayWindowMinutes: 24 * 60,
@@ -30,9 +31,12 @@ export type KeyedRequest = Pick<Request, 'headers'>;
 
 export type HashedRequest = { method: string; originalUrl: string; body: unknown };
 
-export function keyOf(req: KeyedRequest): string | undefined {
+export function keyOf(
+  req: KeyedRequest,
+  { keyRequired = false }: IdempotentOptions = {},
+): string | undefined {
   const header = req.headers[IDEMPOTENCY_HEADER.toLowerCase()];
-  if (header === undefined) return undefined;
+  if (header === undefined && !keyRequired) return undefined;
   const parsed = idempotencyKeySchema.safeParse(header);
   if (parsed.success) return parsed.data;
   throw validation(
@@ -47,6 +51,6 @@ export function requestHashOf({ method, originalUrl, body }: HashedRequest): str
 }
 
 export function storedReplyOf({ body }: HandlerReply): StoredReply {
-  const sent: unknown = JSON.parse(JSON.stringify(body));
+  const sent: unknown = JSON.parse(JSON.stringify(body ?? null));
   return storedReplySchema.parse({ body: sent });
 }

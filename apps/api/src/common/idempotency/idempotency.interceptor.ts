@@ -10,7 +10,7 @@ import { catchError, mergeMap, type Observable, of } from 'rxjs';
 
 import { IdempotencyService } from './idempotency.service.js';
 import { keyOf, requestHashOf } from './idempotency-request.js';
-import { IDEMPOTENT } from './idempotent.decorator.js';
+import { IDEMPOTENT, type IdempotentOptions } from './idempotent.decorator.js';
 
 type FirstRun = { userId: string; key: string };
 
@@ -23,7 +23,8 @@ export class IdempotencyInterceptor implements NestInterceptor {
 
   async intercept(context: ExecutionContext, next: CallHandler): Promise<Observable<unknown>> {
     const req = context.switchToHttp().getRequest<Request>();
-    const key = this.isIdempotent(context) ? keyOf(req) : undefined;
+    const options = this.optionsOf(context);
+    const key = options === undefined ? undefined : keyOf(req, options);
     const userId = req.user?.id;
     if (key === undefined || userId === undefined) return next.handle();
     const claim = await this.idempotency.claim(userId, { key, requestHash: requestHashOf(req) });
@@ -31,8 +32,8 @@ export class IdempotencyInterceptor implements NestInterceptor {
     return of(claim.reply.body);
   }
 
-  private isIdempotent(context: ExecutionContext): boolean {
-    return this.reflector.get<boolean | undefined>(IDEMPOTENT, context.getHandler()) === true;
+  private optionsOf(context: ExecutionContext): IdempotentOptions | undefined {
+    return this.reflector.get<IdempotentOptions | undefined>(IDEMPOTENT, context.getHandler());
   }
 
   private runFirst(next: CallHandler, { userId, key }: FirstRun): Observable<unknown> {

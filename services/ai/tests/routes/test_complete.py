@@ -4,6 +4,8 @@ import pytest
 
 from app.providers.fake import FIXTURES, FakeAiProvider
 from tests.factories import (
+    FOLLOWUP_FIXTURE,
+    FOLLOWUP_PATH,
     MATCH_FIXTURE,
     MATCH_PATH,
     PARSED_VACANCY,
@@ -12,7 +14,9 @@ from tests.factories import (
     UNNAMED_VACANCY,
     VACANCY_BODY,
     build_app,
+    draft_of,
     failing_vacancy,
+    followup_body,
     match_body,
     post_as_worker,
     post_completion,
@@ -22,10 +26,28 @@ from tests.factories import (
 pytestmark = pytest.mark.anyio
 
 FIXTURE_REPLY = (FIXTURES / "vacancy_parse.json").read_text()
+FIXTURE_FOLLOWUP = (FIXTURES / "followup.json").read_text()
 
 REPAIR_REQUEST = (
     "Your answer did not match the JSON schema: answer: Invalid JSON: expected value at line 1 column 1. "
     "Answer again with JSON that matches the schema."
+)
+
+
+def invalid_output(*, detail: str, errors: list[dict[str, str]]) -> dict[str, object]:
+    return {
+        "type": "ai_invalid_output",
+        "title": "Invalid AI output",
+        "status": 422,
+        "detail": detail,
+        "errors": errors,
+        "requestId": "req-test",
+    }
+
+
+RULES_REPAIR = (
+    "Your answer broke these rules: body has 5 words, it needs 60 to 120. "
+    "Answer again with JSON that matches the schema and keeps every rule."
 )
 
 
@@ -64,6 +86,71 @@ async def test_returns_the_match_requirements_without_a_score() -> None:
         },
         "match",
     )
+
+
+async def test_returns_the_followup_draft_at_temperature_0_4() -> None:
+    fake = FakeAiProvider()
+
+    response = await post_as_worker(
+        FOLLOWUP_PATH, followup_body(), app=build_app(provider=fake)
+    )
+
+    body = response.json()
+    assert isinstance(body.pop("latencyMs"), int)
+    assert (response.status_code, body) == (
+        200,
+        {
+            "output": FOLLOWUP_FIXTURE,
+            "model": "fake",
+            "promptVersion": "v1",
+            "tokensIn": 100,
+            "tokensOut": 50,
+        },
+    )
+    assert (len(fake.requests), fake.requests[0].temperature) == (1, 0.4)
+
+
+async def test_repairs_a_short_followup_draft_once_with_its_problems() -> None:
+    fake = FakeAiProvider(replies=[draft_of(5), FIXTURE_FOLLOWUP])
+
+    response = await post_as_worker(
+        FOLLOWUP_PATH, followup_body(), app=build_app(provider=fake)
+    )
+
+    assert (response.status_code, response.json()["output"]) == (200, FOLLOWUP_FIXTURE)
+    assert [
+        (message.role, message.content) for message in fake.requests[1].messages[1:]
+    ] == [("assistant", draft_of(5)), ("user", RULES_REPAIR)]
+
+
+async def test_answers_invalid_output_when_the_repaired_draft_is_still_short() -> None:
+    fake = FakeAiProvider(replies=[draft_of(5), draft_of(50)])
+
+    response = await post_as_worker(
+        FOLLOWUP_PATH, followup_body(), app=build_app(provider=fake)
+    )
+
+    assert (response.status_code, len(fake.requests)) == (422, 2)
+    assert response.json() == invalid_output(
+        detail="The model output broke the kind's rules after one repair",
+        errors=[{"path": "output", "message": "body has 50 words, it needs 60 to 120"}],
+    )
+
+
+async def test_answers_504_for_a_followup_hint_with_the_timeout_marker() -> None:
+    response = await post_as_worker(
+        FOLLOWUP_PATH, followup_body(hint="fake-ai-fail:ai_timeout")
+    )
+
+    assert (response.status_code, response.json()["type"]) == (504, "ai_timeout")
+
+
+async def test_answers_401_for_a_followup_without_the_service_token() -> None:
+    response = await post_as_worker(
+        FOLLOWUP_PATH, followup_body(), headers={"x-request-id": "req-test"}
+    )
+
+    assert (response.status_code, response.json()["type"]) == (401, "unauthorized")
 
 
 async def test_marks_an_invented_company_check_when_the_text_lacks_its_quote() -> None:
@@ -106,12 +193,9 @@ async def test_answers_invalid_output_when_the_repair_is_still_invalid() -> None
     response = await post_completion(app=build_app(provider=fake))
 
     assert (response.status_code, len(fake.requests)) == (422, 2)
-    assert response.json() == {
-        "type": "ai_invalid_output",
-        "title": "Invalid AI output",
-        "status": 422,
-        "detail": "The model output did not match the schema after one repair",
-        "errors": [
+    assert response.json() == invalid_output(
+        detail="The model output did not match the schema after one repair",
+        errors=[
             {"path": path, "message": "Field required"}
             for path in (
                 "position",
@@ -128,8 +212,7 @@ async def test_answers_invalid_output_when_the_repair_is_still_invalid() -> None
                 "sourceGuess",
             )
         ],
-        "requestId": "req-test",
-    }
+    )
 
 
 async def test_answers_504_when_the_model_does_not_answer_in_time() -> None:

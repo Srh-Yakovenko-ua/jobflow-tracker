@@ -1,0 +1,15 @@
+{
+  "recruiterFirstName": "Daniel",
+  "company": "Kestrel Data",
+  "position": "Data Engineer",
+  "stage": "screening",
+  "silenceDays": 7,
+  "lastInterview": {
+    "kind": "screening_call",
+    "date": "2026-09-02"
+  },
+  "senderName": "Taras",
+  "language": "en",
+  "tone": "short",
+  "hint": "mention that I can start in October"
+}

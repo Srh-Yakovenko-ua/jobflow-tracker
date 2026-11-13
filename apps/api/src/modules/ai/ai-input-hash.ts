@@ -28,7 +28,22 @@ function canonical(value: unknown): unknown {
   return value;
 }
 
-export function aiInputHash({ kind, input }: AiHashedInput): string {
-  const key = JSON.stringify([kind, AI_PROMPT_VERSIONS[kind], canonical(input)]);
-  return createHash('sha256').update(key).digest('hex');
+export type AiHashedJob = AiHashedInput & Pick<AiCompleteJob, 'aiJobId' | 'fresh'>;
+
+function digest(parts: unknown[]): string {
+  return createHash('sha256').update(JSON.stringify(parts)).digest('hex');
+}
+
+const keyOf = ({ kind, input }: AiHashedInput) => [
+  kind,
+  AI_PROMPT_VERSIONS[kind],
+  canonical(input),
+];
+
+export function aiInputHash(hashed: AiHashedInput): string {
+  return digest(keyOf(hashed));
+}
+
+export function jobInputHash({ aiJobId, fresh, ...hashed }: AiHashedJob): string {
+  return fresh ? digest([...keyOf(hashed), aiJobId]) : aiInputHash(hashed);
 }

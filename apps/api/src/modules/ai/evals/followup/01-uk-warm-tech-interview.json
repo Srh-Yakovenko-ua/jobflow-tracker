@@ -1,0 +1,15 @@
+{
+  "recruiterFirstName": "Оксана",
+  "company": "Зоряна Лабораторія",
+  "position": "Senior React developer",
+  "stage": "tech_interview",
+  "silenceDays": 6,
+  "lastInterview": {
+    "kind": "tech_interview",
+    "date": "2026-09-03"
+  },
+  "senderName": "Андрій",
+  "language": "uk",
+  "tone": "warm",
+  "hint": "згадай, що я дорозв'язав задачу з динамічним програмуванням"
+}

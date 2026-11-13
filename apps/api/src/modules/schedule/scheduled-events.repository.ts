@@ -12,6 +12,7 @@ import type { Prisma } from '../../generated/prisma/client.js';
 import type { InTransaction } from '../../prisma/in-transaction.js';
 import { ownedChildWhere } from '../../prisma/owned-child-where.js';
 import { PrismaService } from '../../prisma/prisma.service.js';
+import { timeZoneOf } from '../../prisma/user-time-zone.js';
 import type { DateRange } from '../reminders/index.js';
 
 export const SCHEDULED_EVENT_SELECT = {
@@ -38,8 +39,6 @@ const APPLICATION_EVENTS_SELECT = {
     orderBy: [{ startsAt: 'asc' }, { id: 'asc' }],
   },
 } satisfies Prisma.ApplicationSelect;
-
-const DEFAULT_TIME_ZONE = 'Europe/Kyiv';
 
 export type ScheduledEventRow = Prisma.ScheduledEventGetPayload<{
   select: typeof SCHEDULED_EVENT_SELECT;
@@ -170,6 +169,6 @@ export class ScheduledEventsRepository {
       where: { userId },
       select: { timezone: true },
     });
-    return settings?.timezone ?? DEFAULT_TIME_ZONE;
+    return timeZoneOf(settings);
   }
 }

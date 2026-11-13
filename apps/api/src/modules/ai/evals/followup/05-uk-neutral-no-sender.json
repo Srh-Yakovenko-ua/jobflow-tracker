@@ -1,0 +1,15 @@
+{
+  "recruiterFirstName": "Світлана",
+  "company": "Хмарка",
+  "position": "QA Automation Engineer",
+  "stage": "tech_interview",
+  "silenceDays": 8,
+  "lastInterview": {
+    "kind": "tech_interview",
+    "date": "2026-09-05"
+  },
+  "senderName": null,
+  "language": "uk",
+  "tone": "neutral",
+  "hint": null
+}

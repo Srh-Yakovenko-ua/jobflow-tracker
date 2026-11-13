@@ -1,4 +1,5 @@
 import re
+from collections.abc import Callable
 from dataclasses import dataclass
 from typing import Any, Protocol
 
@@ -12,6 +13,7 @@ class BuiltPrompt:
     temperature: float
     max_tokens: int
     images: tuple[str, ...] = ()
+    problems: Callable[[BaseModel], list[str]] | None = None
 
 
 class PromptModule(Protocol):

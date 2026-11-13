@@ -8,7 +8,7 @@ import { AiEvalModule } from './ai-eval/ai-eval.module.js';
 import { AiEvalService } from './ai-eval/ai-eval.service.js';
 import { boot, BOOT_OPTIONS } from './boot.js';
 
-const evalKindSchema = z.enum(['vacancy', 'resume', 'match']);
+const evalKindSchema = z.enum(['vacancy', 'resume', 'match', 'followup']);
 
 const kind = evalKindSchema.safeParse(process.argv[2]);
 

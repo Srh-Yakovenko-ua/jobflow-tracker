@@ -5,7 +5,7 @@ import { Clock } from '../../common/clock.js';
 import { APPLICATION_ID, MOVE_EVENT_ID, OLENA_ID } from '../../test/service-fixtures.js';
 import { useSubscribedRouter } from '../../test/subscriber.js';
 import { fixedClock, NOW } from '../../test/time.js';
-import { RemindersService } from './reminders.service.js';
+import { RemindersService, type ResolveFollowups } from './reminders.service.js';
 import { RemindersSubscriber } from './reminders.subscriber.js';
 import { SilenceScanService } from './silence-scan.service.js';
 
@@ -21,8 +21,8 @@ const STAGE_CHANGED = {
 class RecordingReminders {
   readonly calls: unknown[][] = [];
 
-  resolveFollowups(userId: string, applicationId: string): Promise<number> {
-    this.calls.push(['resolveFollowups', userId, applicationId]);
+  resolveFollowups(userId: string, followups: ResolveFollowups): Promise<number> {
+    this.calls.push(['resolveFollowups', userId, followups]);
     return Promise.resolve(1);
   }
 
@@ -48,7 +48,9 @@ describe('RemindersSubscriber', () => {
   it('resolves the follow-ups of an application whose stage changed', async () => {
     await route('application.stage_changed', STAGE_CHANGED);
 
-    expect(reminders.calls).toEqual([['resolveFollowups', OLENA_ID, APPLICATION_ID]]);
+    expect(reminders.calls).toEqual([
+      ['resolveFollowups', OLENA_ID, { applicationId: APPLICATION_ID }],
+    ]);
   });
 
   it.each([

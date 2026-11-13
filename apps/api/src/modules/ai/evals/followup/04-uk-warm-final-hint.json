@@ -1,0 +1,15 @@
+{
+  "recruiterFirstName": "Богдан",
+  "company": "Вітрило",
+  "position": "Full Stack Engineer",
+  "stage": "final",
+  "silenceDays": 12,
+  "lastInterview": {
+    "kind": "final_interview",
+    "date": "2026-09-01"
+  },
+  "senderName": "Олена",
+  "language": "uk",
+  "tone": "warm",
+  "hint": "подякуй за знайомство з командою і нагадай про мій досвід з Next.js"
+}
