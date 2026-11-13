@@ -274,7 +274,14 @@ jobs:
       - run: uv run ruff check .
       - run: uv run ruff format --check .
       - run: uv run mypy app
-      - run: uv run pytest --cov=app
+      - run: uv run pytest --cov=app --cov-report=term --cov-report=xml
+      - run: uv run coverage report --include='app/metrics/*' --fail-under=85
+      - uses: actions/upload-artifact@v7.0.2
+        if: ${{ !cancelled() }}
+        with:
+          name: analytics-coverage
+          path: services/analytics/coverage.xml
+          if-no-files-found: error
 
   build:
     needs: changes

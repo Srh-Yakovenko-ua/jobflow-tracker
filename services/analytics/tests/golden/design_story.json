@@ -1,0 +1,1281 @@
+{
+  "applications": [
+    {
+      "events": [
+        {
+          "fromStage": null,
+          "occurredAt": "2026-06-05T09:00:00Z",
+          "reasonCode": null,
+          "toStage": "applied"
+        },
+        {
+          "fromStage": "applied",
+          "occurredAt": "2026-06-07T09:00:00Z",
+          "reasonCode": "skills_gap",
+          "toStage": "rejected"
+        }
+      ],
+      "key": "application-0",
+      "resumeVersion": 1,
+      "source": "djinni",
+      "url": "https://djinni.co/jobs/71000-frontend-developer/"
+    },
+    {
+      "events": [
+        {
+          "fromStage": null,
+          "occurredAt": "2026-06-05T09:00:00Z",
+          "reasonCode": null,
+          "toStage": "applied"
+        },
+        {
+          "fromStage": "applied",
+          "occurredAt": "2026-06-07T09:00:00Z",
+          "reasonCode": "english_level",
+          "toStage": "rejected"
+        }
+      ],
+      "key": "application-1",
+      "resumeVersion": 1,
+      "source": "djinni",
+      "url": "https://djinni.co/jobs/71001-frontend-developer/"
+    },
+    {
+      "events": [
+        {
+          "fromStage": null,
+          "occurredAt": "2026-06-06T09:00:00Z",
+          "reasonCode": null,
+          "toStage": "applied"
+        },
+        {
+          "fromStage": "applied",
+          "occurredAt": "2026-06-08T09:00:00Z",
+          "reasonCode": null,
+          "toStage": "ghosted"
+        }
+      ],
+      "key": "application-2",
+      "resumeVersion": 1,
+      "source": "linkedin",
+      "url": "https://www.linkedin.com/jobs/view/4012345002/apply/?openSEOJobApply=1"
+    },
+    {
+      "events": [
+        {
+          "fromStage": null,
+          "occurredAt": "2026-06-06T09:00:00Z",
+          "reasonCode": null,
+          "toStage": "applied"
+        },
+        {
+          "fromStage": "applied",
+          "occurredAt": "2026-06-08T09:00:00Z",
+          "reasonCode": null,
+          "toStage": "ghosted"
+        }
+      ],
+      "key": "application-3",
+      "resumeVersion": 1,
+      "source": "linkedin",
+      "url": "https://www.linkedin.com/jobs/view/4012345003/apply/?openSEOJobApply=1"
+    },
+    {
+      "events": [
+        {
+          "fromStage": null,
+          "occurredAt": "2026-06-06T09:00:00Z",
+          "reasonCode": null,
+          "toStage": "applied"
+        },
+        {
+          "fromStage": "applied",
+          "occurredAt": "2026-06-08T09:00:00Z",
+          "reasonCode": null,
+          "toStage": "ghosted"
+        }
+      ],
+      "key": "application-4",
+      "resumeVersion": 1,
+      "source": "linkedin",
+      "url": "https://www.linkedin.com/jobs/view/4012345004/apply/?openSEOJobApply=1"
+    },
+    {
+      "events": [
+        {
+          "fromStage": null,
+          "occurredAt": "2026-06-06T09:00:00Z",
+          "reasonCode": null,
+          "toStage": "applied"
+        },
+        {
+          "fromStage": "applied",
+          "occurredAt": "2026-06-08T09:00:00Z",
+          "reasonCode": null,
+          "toStage": "ghosted"
+        }
+      ],
+      "key": "application-5",
+      "resumeVersion": 1,
+      "source": "linkedin",
+      "url": "https://www.linkedin.com/jobs/view/4012345005/apply/?openSEOJobApply=1"
+    },
+    {
+      "events": [
+        {
+          "fromStage": null,
+          "occurredAt": "2026-06-06T09:00:00Z",
+          "reasonCode": null,
+          "toStage": "applied"
+        },
+        {
+          "fromStage": "applied",
+          "occurredAt": "2026-06-08T09:00:00Z",
+          "reasonCode": null,
+          "toStage": "ghosted"
+        }
+      ],
+      "key": "application-6",
+      "resumeVersion": 1,
+      "source": "linkedin",
+      "url": "https://www.linkedin.com/jobs/view/4012345006/apply/?openSEOJobApply=1"
+    },
+    {
+      "events": [
+        {
+          "fromStage": null,
+          "occurredAt": "2026-06-06T09:00:00Z",
+          "reasonCode": null,
+          "toStage": "applied"
+        },
+        {
+          "fromStage": "applied",
+          "occurredAt": "2026-06-08T09:00:00Z",
+          "reasonCode": null,
+          "toStage": "ghosted"
+        }
+      ],
+      "key": "application-7",
+      "resumeVersion": 1,
+      "source": "linkedin",
+      "url": "https://www.linkedin.com/jobs/view/4012345007/apply/?openSEOJobApply=1"
+    },
+    {
+      "events": [
+        {
+          "fromStage": null,
+          "occurredAt": "2026-06-06T09:00:00Z",
+          "reasonCode": null,
+          "toStage": "applied"
+        },
+        {
+          "fromStage": "applied",
+          "occurredAt": "2026-06-08T09:00:00Z",
+          "reasonCode": null,
+          "toStage": "ghosted"
+        }
+      ],
+      "key": "application-8",
+      "resumeVersion": 1,
+      "source": "linkedin",
+      "url": "https://www.linkedin.com/jobs/view/4012345008/apply/?openSEOJobApply=1"
+    },
+    {
+      "events": [
+        {
+          "fromStage": null,
+          "occurredAt": "2026-06-08T09:00:00Z",
+          "reasonCode": null,
+          "toStage": "applied"
+        },
+        {
+          "fromStage": "applied",
+          "occurredAt": "2026-06-14T09:00:00Z",
+          "reasonCode": null,
+          "toStage": "screening"
+        },
+        {
+          "fromStage": "screening",
+          "occurredAt": "2026-06-25T09:00:00Z",
+          "reasonCode": null,
+          "toStage": "tech_interview"
+        },
+        {
+          "fromStage": "tech_interview",
+          "occurredAt": "2026-06-27T09:00:00Z",
+          "reasonCode": null,
+          "toStage": "ghosted"
+        }
+      ],
+      "key": "application-9",
+      "resumeVersion": 2,
+      "source": "dou",
+      "url": "https://jobs.dou.ua/companies/acme/vacancies/30009/"
+    },
+    {
+      "events": [
+        {
+          "fromStage": null,
+          "occurredAt": "2026-06-10T09:00:00Z",
+          "reasonCode": null,
+          "toStage": "applied"
+        },
+        {
+          "fromStage": "applied",
+          "occurredAt": "2026-06-16T09:00:00Z",
+          "reasonCode": null,
+          "toStage": "screening"
+        },
+        {
+          "fromStage": "screening",
+          "occurredAt": "2026-06-18T09:00:00Z",
+          "reasonCode": "salary_expectations",
+          "toStage": "rejected"
+        }
+      ],
+      "key": "application-10",
+      "resumeVersion": 1,
+      "source": "djinni",
+      "url": "https://djinni.co/jobs/71010-frontend-developer/"
+    },
+    {
+      "events": [
+        {
+          "fromStage": null,
+          "occurredAt": "2026-06-10T09:00:00Z",
+          "reasonCode": null,
+          "toStage": "applied"
+        },
+        {
+          "fromStage": "applied",
+          "occurredAt": "2026-06-16T09:00:00Z",
+          "reasonCode": null,
+          "toStage": "screening"
+        },
+        {
+          "fromStage": "screening",
+          "occurredAt": "2026-06-18T09:00:00Z",
+          "reasonCode": "chose_other",
+          "toStage": "rejected"
+        }
+      ],
+      "key": "application-11",
+      "resumeVersion": 1,
+      "source": "djinni",
+      "url": "https://djinni.co/jobs/71011-frontend-developer/"
+    },
+    {
+      "events": [
+        {
+          "fromStage": null,
+          "occurredAt": "2026-06-10T09:00:00Z",
+          "reasonCode": null,
+          "toStage": "applied"
+        },
+        {
+          "fromStage": "applied",
+          "occurredAt": "2026-06-16T09:00:00Z",
+          "reasonCode": null,
+          "toStage": "screening"
+        },
+        {
+          "fromStage": "screening",
+          "occurredAt": "2026-06-18T09:00:00Z",
+          "reasonCode": "position_closed",
+          "toStage": "rejected"
+        }
+      ],
+      "key": "application-12",
+      "resumeVersion": 1,
+      "source": "djinni",
+      "url": "https://djinni.co/jobs/71012-frontend-developer/"
+    },
+    {
+      "events": [
+        {
+          "fromStage": null,
+          "occurredAt": "2026-06-10T09:00:00Z",
+          "reasonCode": null,
+          "toStage": "applied"
+        },
+        {
+          "fromStage": "applied",
+          "occurredAt": "2026-06-16T09:00:00Z",
+          "reasonCode": null,
+          "toStage": "screening"
+        },
+        {
+          "fromStage": "screening",
+          "occurredAt": "2026-06-18T09:00:00Z",
+          "reasonCode": "no_explanation",
+          "toStage": "rejected"
+        }
+      ],
+      "key": "application-13",
+      "resumeVersion": 1,
+      "source": "djinni",
+      "url": "https://djinni.co/jobs/71013-frontend-developer/"
+    },
+    {
+      "events": [
+        {
+          "fromStage": null,
+          "occurredAt": "2026-06-10T09:00:00Z",
+          "reasonCode": null,
+          "toStage": "applied"
+        },
+        {
+          "fromStage": "applied",
+          "occurredAt": "2026-06-16T09:00:00Z",
+          "reasonCode": null,
+          "toStage": "screening"
+        },
+        {
+          "fromStage": "screening",
+          "occurredAt": "2026-06-18T09:00:00Z",
+          "reasonCode": "low_salary",
+          "toStage": "rejected"
+        }
+      ],
+      "key": "application-14",
+      "resumeVersion": 1,
+      "source": "djinni",
+      "url": "https://djinni.co/jobs/71014-frontend-developer/"
+    },
+    {
+      "events": [
+        {
+          "fromStage": null,
+          "occurredAt": "2026-06-10T09:00:00Z",
+          "reasonCode": null,
+          "toStage": "applied"
+        },
+        {
+          "fromStage": "applied",
+          "occurredAt": "2026-06-16T09:00:00Z",
+          "reasonCode": null,
+          "toStage": "screening"
+        },
+        {
+          "fromStage": "screening",
+          "occurredAt": "2026-06-18T09:00:00Z",
+          "reasonCode": null,
+          "toStage": "ghosted"
+        }
+      ],
+      "key": "application-15",
+      "resumeVersion": 2,
+      "source": "linkedin",
+      "url": "https://www.linkedin.com/jobs/view/4012345015/"
+    },
+    {
+      "events": [
+        {
+          "fromStage": null,
+          "occurredAt": "2026-06-10T09:00:00Z",
+          "reasonCode": null,
+          "toStage": "applied"
+        },
+        {
+          "fromStage": "applied",
+          "occurredAt": "2026-06-16T09:00:00Z",
+          "reasonCode": null,
+          "toStage": "screening"
+        },
+        {
+          "fromStage": "screening",
+          "occurredAt": "2026-06-18T09:00:00Z",
+          "reasonCode": null,
+          "toStage": "ghosted"
+        }
+      ],
+      "key": "application-16",
+      "resumeVersion": 2,
+      "source": "linkedin",
+      "url": "https://www.linkedin.com/jobs/view/4012345016/"
+    },
+    {
+      "events": [
+        {
+          "fromStage": null,
+          "occurredAt": "2026-06-10T09:00:00Z",
+          "reasonCode": null,
+          "toStage": "applied"
+        },
+        {
+          "fromStage": "applied",
+          "occurredAt": "2026-06-16T09:00:00Z",
+          "reasonCode": null,
+          "toStage": "screening"
+        },
+        {
+          "fromStage": "screening",
+          "occurredAt": "2026-06-18T09:00:00Z",
+          "reasonCode": null,
+          "toStage": "withdrawn"
+        }
+      ],
+      "key": "application-17",
+      "resumeVersion": 2,
+      "source": "dou",
+      "url": "https://jobs.dou.ua/companies/acme/vacancies/30017/"
+    },
+    {
+      "events": [
+        {
+          "fromStage": null,
+          "occurredAt": "2026-06-12T09:00:00Z",
+          "reasonCode": null,
+          "toStage": "applied"
+        },
+        {
+          "fromStage": "applied",
+          "occurredAt": "2026-06-14T09:00:00Z",
+          "reasonCode": null,
+          "toStage": "withdrawn"
+        }
+      ],
+      "key": "application-18",
+      "resumeVersion": 1,
+      "source": "robota",
+      "url": "https://robota.ua/company/acme/vacancy/104018"
+    },
+    {
+      "events": [
+        {
+          "fromStage": null,
+          "occurredAt": "2026-06-12T09:00:00Z",
+          "reasonCode": null,
+          "toStage": "applied"
+        },
+        {
+          "fromStage": "applied",
+          "occurredAt": "2026-06-14T09:00:00Z",
+          "reasonCode": null,
+          "toStage": "withdrawn"
+        }
+      ],
+      "key": "application-19",
+      "resumeVersion": 1,
+      "source": "company_site",
+      "url": "https://careers.acme.example/jobs/19"
+    },
+    {
+      "events": [
+        {
+          "fromStage": null,
+          "occurredAt": "2026-07-01T09:00:00Z",
+          "reasonCode": null,
+          "toStage": "applied"
+        },
+        {
+          "fromStage": "applied",
+          "occurredAt": "2026-07-07T09:00:00Z",
+          "reasonCode": null,
+          "toStage": "screening"
+        },
+        {
+          "fromStage": "screening",
+          "occurredAt": "2026-07-18T09:00:00Z",
+          "reasonCode": null,
+          "toStage": "tech_interview"
+        },
+        {
+          "fromStage": "tech_interview",
+          "occurredAt": "2026-07-20T09:00:00Z",
+          "reasonCode": "skills_gap",
+          "toStage": "rejected"
+        }
+      ],
+      "key": "application-20",
+      "resumeVersion": 2,
+      "source": "djinni",
+      "url": "https://djinni.co/jobs/71020-frontend-developer/"
+    },
+    {
+      "events": [
+        {
+          "fromStage": null,
+          "occurredAt": "2026-07-01T09:00:00Z",
+          "reasonCode": null,
+          "toStage": "applied"
+        },
+        {
+          "fromStage": "applied",
+          "occurredAt": "2026-07-07T09:00:00Z",
+          "reasonCode": null,
+          "toStage": "screening"
+        },
+        {
+          "fromStage": "screening",
+          "occurredAt": "2026-07-18T09:00:00Z",
+          "reasonCode": null,
+          "toStage": "tech_interview"
+        },
+        {
+          "fromStage": "tech_interview",
+          "occurredAt": "2026-07-20T09:00:00Z",
+          "reasonCode": "skills_gap",
+          "toStage": "rejected"
+        }
+      ],
+      "key": "application-21",
+      "resumeVersion": 2,
+      "source": "djinni",
+      "url": "https://djinni.co/jobs/71021-frontend-developer/"
+    },
+    {
+      "events": [
+        {
+          "fromStage": null,
+          "occurredAt": "2026-07-01T09:00:00Z",
+          "reasonCode": null,
+          "toStage": "applied"
+        },
+        {
+          "fromStage": "applied",
+          "occurredAt": "2026-07-07T09:00:00Z",
+          "reasonCode": null,
+          "toStage": "screening"
+        },
+        {
+          "fromStage": "screening",
+          "occurredAt": "2026-07-18T09:00:00Z",
+          "reasonCode": null,
+          "toStage": "tech_interview"
+        },
+        {
+          "fromStage": "tech_interview",
+          "occurredAt": "2026-07-20T09:00:00Z",
+          "reasonCode": "skills_gap",
+          "toStage": "rejected"
+        }
+      ],
+      "key": "application-22",
+      "resumeVersion": 2,
+      "source": "djinni",
+      "url": "https://djinni.co/jobs/71022-frontend-developer/"
+    },
+    {
+      "events": [
+        {
+          "fromStage": null,
+          "occurredAt": "2026-07-05T09:00:00Z",
+          "reasonCode": null,
+          "toStage": "applied"
+        },
+        {
+          "fromStage": "applied",
+          "occurredAt": "2026-07-07T09:00:00Z",
+          "reasonCode": null,
+          "toStage": "ghosted"
+        }
+      ],
+      "key": "application-23",
+      "resumeVersion": 1,
+      "source": "djinni",
+      "url": "https://djinni.co/jobs/71023-frontend-developer/"
+    },
+    {
+      "events": [
+        {
+          "fromStage": null,
+          "occurredAt": "2026-07-05T09:00:00Z",
+          "reasonCode": null,
+          "toStage": "applied"
+        },
+        {
+          "fromStage": "applied",
+          "occurredAt": "2026-07-07T09:00:00Z",
+          "reasonCode": null,
+          "toStage": "ghosted"
+        }
+      ],
+      "key": "application-24",
+      "resumeVersion": 1,
+      "source": "djinni",
+      "url": "https://djinni.co/jobs/71024-frontend-developer/"
+    },
+    {
+      "events": [
+        {
+          "fromStage": null,
+          "occurredAt": "2026-07-05T09:00:00Z",
+          "reasonCode": null,
+          "toStage": "applied"
+        },
+        {
+          "fromStage": "applied",
+          "occurredAt": "2026-07-07T09:00:00Z",
+          "reasonCode": null,
+          "toStage": "ghosted"
+        }
+      ],
+      "key": "application-25",
+      "resumeVersion": 1,
+      "source": "djinni",
+      "url": "https://djinni.co/jobs/71025-frontend-developer/"
+    },
+    {
+      "events": [
+        {
+          "fromStage": null,
+          "occurredAt": "2026-07-05T09:00:00Z",
+          "reasonCode": null,
+          "toStage": "applied"
+        },
+        {
+          "fromStage": "applied",
+          "occurredAt": "2026-07-07T09:00:00Z",
+          "reasonCode": null,
+          "toStage": "ghosted"
+        }
+      ],
+      "key": "application-26",
+      "resumeVersion": 1,
+      "source": "djinni",
+      "url": "https://djinni.co/jobs/71026-frontend-developer/"
+    },
+    {
+      "events": [
+        {
+          "fromStage": null,
+          "occurredAt": "2026-07-05T09:00:00Z",
+          "reasonCode": null,
+          "toStage": "applied"
+        },
+        {
+          "fromStage": "applied",
+          "occurredAt": "2026-07-07T09:00:00Z",
+          "reasonCode": null,
+          "toStage": "ghosted"
+        }
+      ],
+      "key": "application-27",
+      "resumeVersion": 1,
+      "source": "dou",
+      "url": "https://jobs.dou.ua/companies/acme/vacancies/30027/"
+    },
+    {
+      "events": [
+        {
+          "fromStage": null,
+          "occurredAt": "2026-07-05T09:00:00Z",
+          "reasonCode": null,
+          "toStage": "applied"
+        },
+        {
+          "fromStage": "applied",
+          "occurredAt": "2026-07-07T09:00:00Z",
+          "reasonCode": null,
+          "toStage": "ghosted"
+        }
+      ],
+      "key": "application-28",
+      "resumeVersion": 2,
+      "source": "robota",
+      "url": "https://robota.ua/company/acme/vacancy/104028"
+    },
+    {
+      "events": [
+        {
+          "fromStage": null,
+          "occurredAt": "2026-07-05T09:00:00Z",
+          "reasonCode": null,
+          "toStage": "applied"
+        },
+        {
+          "fromStage": "applied",
+          "occurredAt": "2026-07-07T09:00:00Z",
+          "reasonCode": null,
+          "toStage": "ghosted"
+        }
+      ],
+      "key": "application-29",
+      "resumeVersion": 2,
+      "source": "robota",
+      "url": "https://robota.ua/company/acme/vacancy/104029"
+    },
+    {
+      "events": [
+        {
+          "fromStage": null,
+          "occurredAt": "2026-07-20T09:00:00Z",
+          "reasonCode": null,
+          "toStage": "applied"
+        },
+        {
+          "fromStage": "applied",
+          "occurredAt": "2026-07-26T09:00:00Z",
+          "reasonCode": null,
+          "toStage": "screening"
+        },
+        {
+          "fromStage": "screening",
+          "occurredAt": "2026-08-06T09:00:00Z",
+          "reasonCode": null,
+          "toStage": "tech_interview"
+        },
+        {
+          "fromStage": "tech_interview",
+          "occurredAt": "2026-08-08T09:00:00Z",
+          "reasonCode": "english_level",
+          "toStage": "rejected"
+        }
+      ],
+      "key": "application-30",
+      "resumeVersion": 2,
+      "source": "djinni",
+      "url": "https://djinni.co/jobs/71030-frontend-developer/"
+    },
+    {
+      "events": [
+        {
+          "fromStage": null,
+          "occurredAt": "2026-07-20T09:00:00Z",
+          "reasonCode": null,
+          "toStage": "applied"
+        },
+        {
+          "fromStage": "applied",
+          "occurredAt": "2026-07-26T09:00:00Z",
+          "reasonCode": null,
+          "toStage": "screening"
+        },
+        {
+          "fromStage": "screening",
+          "occurredAt": "2026-08-06T09:00:00Z",
+          "reasonCode": null,
+          "toStage": "tech_interview"
+        },
+        {
+          "fromStage": "tech_interview",
+          "occurredAt": "2026-08-15T09:00:00Z",
+          "reasonCode": null,
+          "toStage": "final"
+        },
+        {
+          "fromStage": "final",
+          "occurredAt": "2026-08-17T09:00:00Z",
+          "reasonCode": null,
+          "toStage": "offer"
+        }
+      ],
+      "key": "application-31",
+      "resumeVersion": 2,
+      "source": "referral",
+      "url": "https://careers.acme.example/jobs/31?ref=referral"
+    },
+    {
+      "events": [
+        {
+          "fromStage": null,
+          "occurredAt": "2026-07-20T09:00:00Z",
+          "reasonCode": null,
+          "toStage": "applied"
+        },
+        {
+          "fromStage": "applied",
+          "occurredAt": "2026-07-26T09:00:00Z",
+          "reasonCode": null,
+          "toStage": "screening"
+        },
+        {
+          "fromStage": "screening",
+          "occurredAt": "2026-08-06T09:00:00Z",
+          "reasonCode": null,
+          "toStage": "tech_interview"
+        },
+        {
+          "fromStage": "tech_interview",
+          "occurredAt": "2026-08-15T09:00:00Z",
+          "reasonCode": null,
+          "toStage": "final"
+        },
+        {
+          "fromStage": "final",
+          "occurredAt": "2026-08-17T09:00:00Z",
+          "reasonCode": "office_schedule",
+          "toStage": "rejected"
+        }
+      ],
+      "key": "application-32",
+      "resumeVersion": 2,
+      "source": "referral",
+      "url": "https://careers.acme.example/jobs/32?ref=referral"
+    },
+    {
+      "events": [
+        {
+          "fromStage": null,
+          "occurredAt": "2026-07-20T09:00:00Z",
+          "reasonCode": null,
+          "toStage": "applied"
+        },
+        {
+          "fromStage": "applied",
+          "occurredAt": "2026-07-26T09:00:00Z",
+          "reasonCode": null,
+          "toStage": "screening"
+        },
+        {
+          "fromStage": "screening",
+          "occurredAt": "2026-08-06T09:00:00Z",
+          "reasonCode": null,
+          "toStage": "tech_interview"
+        },
+        {
+          "fromStage": "tech_interview",
+          "occurredAt": "2026-08-15T09:00:00Z",
+          "reasonCode": null,
+          "toStage": "final"
+        },
+        {
+          "fromStage": "final",
+          "occurredAt": "2026-08-17T09:00:00Z",
+          "reasonCode": "red_flags",
+          "toStage": "rejected"
+        }
+      ],
+      "key": "application-33",
+      "resumeVersion": 2,
+      "source": "referral",
+      "url": "https://careers.acme.example/jobs/33?ref=referral"
+    },
+    {
+      "events": [
+        {
+          "fromStage": null,
+          "occurredAt": "2026-07-20T09:00:00Z",
+          "reasonCode": null,
+          "toStage": "applied"
+        },
+        {
+          "fromStage": "applied",
+          "occurredAt": "2026-07-26T09:00:00Z",
+          "reasonCode": null,
+          "toStage": "screening"
+        },
+        {
+          "fromStage": "screening",
+          "occurredAt": "2026-08-06T09:00:00Z",
+          "reasonCode": null,
+          "toStage": "tech_interview"
+        },
+        {
+          "fromStage": "tech_interview",
+          "occurredAt": "2026-08-15T09:00:00Z",
+          "reasonCode": null,
+          "toStage": "final"
+        },
+        {
+          "fromStage": "final",
+          "occurredAt": "2026-08-17T09:00:00Z",
+          "reasonCode": null,
+          "toStage": "withdrawn"
+        }
+      ],
+      "key": "application-34",
+      "resumeVersion": 3,
+      "source": "company_site",
+      "url": "https://careers.acme.example/jobs/34"
+    },
+    {
+      "events": [
+        {
+          "fromStage": null,
+          "occurredAt": "2026-08-10T09:00:00Z",
+          "reasonCode": null,
+          "toStage": "applied"
+        },
+        {
+          "fromStage": "applied",
+          "occurredAt": "2026-08-12T09:00:00Z",
+          "reasonCode": "accepted_other",
+          "toStage": "rejected"
+        }
+      ],
+      "key": "application-35",
+      "resumeVersion": 2,
+      "source": "djinni",
+      "url": "https://djinni.co/jobs/71035-frontend-developer/"
+    },
+    {
+      "events": [
+        {
+          "fromStage": null,
+          "occurredAt": "2026-08-10T09:00:00Z",
+          "reasonCode": null,
+          "toStage": "applied"
+        },
+        {
+          "fromStage": "applied",
+          "occurredAt": "2026-08-12T09:00:00Z",
+          "reasonCode": "silence_timeout",
+          "toStage": "rejected"
+        }
+      ],
+      "key": "application-36",
+      "resumeVersion": 2,
+      "source": "djinni",
+      "url": "https://djinni.co/jobs/71036-frontend-developer/"
+    },
+    {
+      "events": [
+        {
+          "fromStage": null,
+          "occurredAt": "2026-08-10T09:00:00Z",
+          "reasonCode": null,
+          "toStage": "applied"
+        },
+        {
+          "fromStage": "applied",
+          "occurredAt": "2026-08-12T09:00:00Z",
+          "reasonCode": "unspecified",
+          "toStage": "rejected"
+        }
+      ],
+      "key": "application-37",
+      "resumeVersion": 2,
+      "source": "djinni",
+      "url": "https://djinni.co/jobs/71037-frontend-developer/"
+    },
+    {
+      "events": [
+        {
+          "fromStage": null,
+          "occurredAt": "2026-08-10T09:00:00Z",
+          "reasonCode": null,
+          "toStage": "applied"
+        },
+        {
+          "fromStage": "applied",
+          "occurredAt": "2026-08-12T09:00:00Z",
+          "reasonCode": "skills_gap",
+          "toStage": "rejected"
+        }
+      ],
+      "key": "application-38",
+      "resumeVersion": 2,
+      "source": "djinni",
+      "url": "https://djinni.co/jobs/71038-frontend-developer/"
+    },
+    {
+      "events": [
+        {
+          "fromStage": null,
+          "occurredAt": "2026-08-10T09:00:00Z",
+          "reasonCode": null,
+          "toStage": "applied"
+        },
+        {
+          "fromStage": "applied",
+          "occurredAt": "2026-08-12T09:00:00Z",
+          "reasonCode": "english_level",
+          "toStage": "rejected"
+        }
+      ],
+      "key": "application-39",
+      "resumeVersion": 2,
+      "source": "djinni",
+      "url": "https://djinni.co/jobs/71039-frontend-developer/"
+    },
+    {
+      "events": [
+        {
+          "fromStage": null,
+          "occurredAt": "2026-08-10T09:00:00Z",
+          "reasonCode": null,
+          "toStage": "applied"
+        },
+        {
+          "fromStage": "applied",
+          "occurredAt": "2026-08-12T09:00:00Z",
+          "reasonCode": "salary_expectations",
+          "toStage": "rejected"
+        }
+      ],
+      "key": "application-40",
+      "resumeVersion": 2,
+      "source": "djinni",
+      "url": "https://djinni.co/jobs/71040-frontend-developer/"
+    },
+    {
+      "events": [
+        {
+          "fromStage": null,
+          "occurredAt": "2026-08-10T09:00:00Z",
+          "reasonCode": null,
+          "toStage": "applied"
+        },
+        {
+          "fromStage": "applied",
+          "occurredAt": "2026-08-12T09:00:00Z",
+          "reasonCode": "chose_other",
+          "toStage": "rejected"
+        }
+      ],
+      "key": "application-41",
+      "resumeVersion": 2,
+      "source": "djinni",
+      "url": "https://djinni.co/jobs/71041-frontend-developer/"
+    },
+    {
+      "events": [
+        {
+          "fromStage": null,
+          "occurredAt": "2026-08-10T09:00:00Z",
+          "reasonCode": null,
+          "toStage": "applied"
+        },
+        {
+          "fromStage": "applied",
+          "occurredAt": "2026-08-12T09:00:00Z",
+          "reasonCode": "position_closed",
+          "toStage": "rejected"
+        }
+      ],
+      "key": "application-42",
+      "resumeVersion": 2,
+      "source": "djinni",
+      "url": "https://djinni.co/jobs/71042-frontend-developer/"
+    },
+    {
+      "events": [
+        {
+          "fromStage": null,
+          "occurredAt": "2026-08-10T09:00:00Z",
+          "reasonCode": null,
+          "toStage": "applied"
+        },
+        {
+          "fromStage": "applied",
+          "occurredAt": "2026-08-12T09:00:00Z",
+          "reasonCode": "no_explanation",
+          "toStage": "rejected"
+        }
+      ],
+      "key": "application-43",
+      "resumeVersion": 2,
+      "source": "djinni",
+      "url": "https://djinni.co/jobs/71043-frontend-developer/"
+    },
+    {
+      "events": [
+        {
+          "fromStage": null,
+          "occurredAt": "2026-08-10T09:00:00Z",
+          "reasonCode": null,
+          "toStage": "applied"
+        },
+        {
+          "fromStage": "applied",
+          "occurredAt": "2026-08-12T09:00:00Z",
+          "reasonCode": "low_salary",
+          "toStage": "rejected"
+        }
+      ],
+      "key": "application-44",
+      "resumeVersion": 2,
+      "source": "linkedin",
+      "url": "https://www.linkedin.com/jobs/view/4012345044/"
+    },
+    {
+      "events": [
+        {
+          "fromStage": null,
+          "occurredAt": "2026-08-10T09:00:00Z",
+          "reasonCode": null,
+          "toStage": "applied"
+        },
+        {
+          "fromStage": "applied",
+          "occurredAt": "2026-08-12T09:00:00Z",
+          "reasonCode": "office_schedule",
+          "toStage": "rejected"
+        }
+      ],
+      "key": "application-45",
+      "resumeVersion": 2,
+      "source": "linkedin",
+      "url": "https://www.linkedin.com/jobs/view/4012345045/"
+    },
+    {
+      "events": [
+        {
+          "fromStage": null,
+          "occurredAt": "2026-08-10T09:00:00Z",
+          "reasonCode": null,
+          "toStage": "applied"
+        },
+        {
+          "fromStage": "applied",
+          "occurredAt": "2026-08-12T09:00:00Z",
+          "reasonCode": "red_flags",
+          "toStage": "rejected"
+        }
+      ],
+      "key": "application-46",
+      "resumeVersion": 2,
+      "source": "linkedin",
+      "url": "https://www.linkedin.com/jobs/view/4012345046/"
+    },
+    {
+      "events": [
+        {
+          "fromStage": null,
+          "occurredAt": "2026-08-10T09:00:00Z",
+          "reasonCode": null,
+          "toStage": "applied"
+        },
+        {
+          "fromStage": "applied",
+          "occurredAt": "2026-08-12T09:00:00Z",
+          "reasonCode": "accepted_other",
+          "toStage": "rejected"
+        }
+      ],
+      "key": "application-47",
+      "resumeVersion": 2,
+      "source": "linkedin",
+      "url": "https://www.linkedin.com/jobs/view/4012345047/"
+    },
+    {
+      "events": [
+        {
+          "fromStage": null,
+          "occurredAt": "2026-08-10T09:00:00Z",
+          "reasonCode": null,
+          "toStage": "applied"
+        },
+        {
+          "fromStage": "applied",
+          "occurredAt": "2026-08-12T09:00:00Z",
+          "reasonCode": "silence_timeout",
+          "toStage": "rejected"
+        }
+      ],
+      "key": "application-48",
+      "resumeVersion": 2,
+      "source": "linkedin",
+      "url": "https://www.linkedin.com/jobs/view/4012345048/"
+    },
+    {
+      "events": [
+        {
+          "fromStage": null,
+          "occurredAt": "2026-08-10T09:00:00Z",
+          "reasonCode": null,
+          "toStage": "applied"
+        },
+        {
+          "fromStage": "applied",
+          "occurredAt": "2026-08-12T09:00:00Z",
+          "reasonCode": "unspecified",
+          "toStage": "rejected"
+        }
+      ],
+      "key": "application-49",
+      "resumeVersion": 3,
+      "source": "linkedin",
+      "url": "https://www.linkedin.com/jobs/view/4012345049/"
+    },
+    {
+      "events": [
+        {
+          "fromStage": null,
+          "occurredAt": "2026-08-10T09:00:00Z",
+          "reasonCode": null,
+          "toStage": "applied"
+        },
+        {
+          "fromStage": "applied",
+          "occurredAt": "2026-08-12T09:00:00Z",
+          "reasonCode": "skills_gap",
+          "toStage": "rejected"
+        }
+      ],
+      "key": "application-50",
+      "resumeVersion": 3,
+      "source": "linkedin",
+      "url": "https://www.linkedin.com/jobs/view/4012345050/"
+    },
+    {
+      "events": [
+        {
+          "fromStage": null,
+          "occurredAt": "2026-08-10T09:00:00Z",
+          "reasonCode": null,
+          "toStage": "applied"
+        },
+        {
+          "fromStage": "applied",
+          "occurredAt": "2026-08-12T09:00:00Z",
+          "reasonCode": "english_level",
+          "toStage": "rejected"
+        }
+      ],
+      "key": "application-51",
+      "resumeVersion": 3,
+      "source": "dou",
+      "url": "https://jobs.dou.ua/companies/acme/vacancies/30051/"
+    },
+    {
+      "events": [
+        {
+          "fromStage": null,
+          "occurredAt": "2026-08-10T09:00:00Z",
+          "reasonCode": null,
+          "toStage": "applied"
+        },
+        {
+          "fromStage": "applied",
+          "occurredAt": "2026-08-12T09:00:00Z",
+          "reasonCode": "salary_expectations",
+          "toStage": "rejected"
+        }
+      ],
+      "key": "application-52",
+      "resumeVersion": 3,
+      "source": "dou",
+      "url": "https://jobs.dou.ua/companies/acme/vacancies/30052/"
+    },
+    {
+      "events": [
+        {
+          "fromStage": null,
+          "occurredAt": "2026-08-10T09:00:00Z",
+          "reasonCode": null,
+          "toStage": "applied"
+        },
+        {
+          "fromStage": "applied",
+          "occurredAt": "2026-08-12T09:00:00Z",
+          "reasonCode": "chose_other",
+          "toStage": "rejected"
+        }
+      ],
+      "key": "application-53",
+      "resumeVersion": 3,
+      "source": "dou",
+      "url": "https://jobs.dou.ua/companies/acme/vacancies/30053/"
+    }
+  ],
+  "now": "2026-08-28T12:00:00Z",
+  "resumeVersions": [
+    {
+      "number": 1,
+      "title": "хронологічне"
+    },
+    {
+      "number": 2,
+      "title": "акцент на продукті"
+    },
+    {
+      "number": 3,
+      "title": "для дизайн-ролей"
+    }
+  ],
+  "searchStartedAt": "2026-06-05T06:00:00Z",
+  "timezone": "Europe/Kyiv"
+}

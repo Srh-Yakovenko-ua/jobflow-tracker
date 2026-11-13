@@ -6,6 +6,7 @@ dist-seed/
 .next/
 coverage/
 .coverage
+coverage.xml
 *.tsbuildinfo
 
 .env
