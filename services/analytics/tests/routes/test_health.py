@@ -58,7 +58,12 @@ def test_lists_the_health_and_metric_paths_in_the_openapi_schema(
 ) -> None:
     paths = client.get("/openapi.json").json()["paths"]
 
-    assert sorted(paths) == ["/analytics/funnel", "/health", "/health/ready"]
+    assert sorted(paths) == [
+        "/analytics/funnel",
+        "/analytics/sankey",
+        "/health",
+        "/health/ready",
+    ]
 
 
 def test_reports_ready_when_postgres_and_redis_answer() -> None:
