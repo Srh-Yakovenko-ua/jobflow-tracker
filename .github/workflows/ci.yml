@@ -157,6 +157,16 @@ jobs:
         run: docker exec -i -e POSTGRES_APP_PASSWORD=jobflow_app -e POSTGRES_ANALYTICS_PASSWORD=jobflow_analytics ${{ job.services.postgres.id }} sh -s < infra/docker/postgres/init-databases.sh
       - name: Reset and seed the test database
         run: cp .env.example .env && pnpm gen:keys && pnpm db:reset && pnpm db:seed
+      - uses: astral-sh/setup-uv@v10.3.3
+        with:
+          working-directory: services/analytics
+          enable-cache: true
+      - name: Analytics reads as the read-only role
+        working-directory: services/analytics
+        env:
+          DATABASE_URL_ANALYTICS: postgresql://jobflow_analytics:jobflow_analytics@127.0.0.1:5432/jobflow_test
+          REDIS_URL: redis://127.0.0.1:6379
+        run: uv sync --locked && uv run pytest tests_db
       - name: Start MinIO with the resume bucket
         run: docker compose up -d --wait --wait-timeout 120 minio && docker compose run --rm minio-init
       - run: pnpm test:int
@@ -186,7 +196,7 @@ jobs:
       - run: pnpm --filter @jobflow/api db:erd
       - run: git diff --exit-code -- docs/diagrams/erd.md
       - run: pnpm gen:contracts
-      - run: git diff --exit-code -- services/ai/app/contracts services/documents/app/contracts
+      - run: git diff --exit-code -- services/ai/app/contracts services/documents/app/contracts services/analytics/app/core/enums.json
 
   ai:
     needs: changes

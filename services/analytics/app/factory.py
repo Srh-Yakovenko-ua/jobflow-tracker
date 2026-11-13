@@ -6,6 +6,7 @@ from fastapi import FastAPI
 
 from app.api.routes import health
 from app.core.config import Settings
+from app.core.enums import check_stages, load_domain_enums
 from app.core.errors import install_error_handlers
 from app.core.logging import configure_logging
 from app.core.request_id import RequestIdMiddleware
@@ -15,6 +16,7 @@ from app.services.readiness import ReadinessService
 
 
 def create_app(settings: Settings) -> FastAPI:
+    check_stages(load_domain_enums())
     configure_logging(settings.log_level)
     engine = create_engine(settings)
     redis = create_redis(settings)

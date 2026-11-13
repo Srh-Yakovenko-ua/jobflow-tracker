@@ -1,6 +1,7 @@
 import socket
 from collections.abc import Iterator
 from contextlib import contextmanager
+from uuid import UUID
 
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
@@ -13,6 +14,9 @@ REQUIRED_ENV = {
 }
 
 UNUSED_PORT = 9
+
+USER_ID = UUID("0196f0a1-7c2e-7b3d-8a41-5e6f7a8b9c0d")
+SEARCH_ID = UUID("0196f0a1-7c2e-7b3d-8a41-5e6f7a8b9c1e")
 
 
 def settings_for(
