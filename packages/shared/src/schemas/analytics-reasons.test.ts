@@ -1,10 +1,11 @@
 import { describe, expect, it } from 'vitest';
 
+import { buildDesignReasons } from '../../testing/index.js';
 import { issuePathsOf } from '../test/zod-issues.js';
 import {
   reasonsQuerySchema,
-  type ReasonsResponse,
   reasonsResponseSchema,
+  type StageReasons,
 } from './analytics-reasons.js';
 
 const BELOW_FIRST_CONCLUSION = {
@@ -14,76 +15,15 @@ const BELOW_FIRST_CONCLUSION = {
   message: 'Ще 1 відгук до першого висновку',
 } as const;
 
-const TECH_INTERVIEW_TOP = {
-  status: 'ok',
-  stage: 'tech_interview',
-  code: 'skills_gap',
-  count: 3,
-  of: 4,
-} as const;
+const DESIGN_REASONS = buildDesignReasons();
 
-const TECH_INTERVIEW = {
-  stage: 'tech_interview',
-  total: 4,
-  stated: 4,
-  sides: {
-    company: { count: 4, share: BELOW_FIRST_CONCLUSION },
-    candidate: { count: 0, share: BELOW_FIRST_CONCLUSION },
-  },
-  reasons: [
-    { code: 'skills_gap', count: 3, share: BELOW_FIRST_CONCLUSION },
-    { code: 'english_level', count: 1, share: BELOW_FIRST_CONCLUSION },
-  ],
-  unstated: [],
-  top: TECH_INTERVIEW_TOP,
-  trend: { previous: 'skills_gap', changed: false },
-} as const satisfies ReasonsResponse['stages'][number];
+function techInterviewOf(stages: StageReasons[]): StageReasons {
+  const stage = stages.find((entry) => entry.stage === 'tech_interview');
+  if (!stage) throw new Error('the design body has no tech interview stage');
+  return stage;
+}
 
-const FINAL = {
-  stage: 'final',
-  total: 2,
-  stated: 1,
-  sides: {
-    company: {
-      count: 1,
-      share: {
-        status: 'insufficient_data',
-        have: 1,
-        need: 4,
-        message: 'Ще 4 відгуки до першого висновку',
-      },
-    },
-    candidate: {
-      count: 0,
-      share: {
-        status: 'insufficient_data',
-        have: 1,
-        need: 4,
-        message: 'Ще 4 відгуки до першого висновку',
-      },
-    },
-  },
-  reasons: [
-    {
-      code: 'chose_other',
-      count: 1,
-      share: {
-        status: 'insufficient_data',
-        have: 1,
-        need: 4,
-        message: 'Ще 4 відгуки до першого висновку',
-      },
-    },
-  ],
-  unstated: [{ code: 'unspecified', count: 1 }],
-  top: null,
-  trend: null,
-} as const satisfies ReasonsResponse['stages'][number];
-
-const DESIGN_REASONS = {
-  stages: [TECH_INTERVIEW, FINAL],
-  headline: TECH_INTERVIEW_TOP,
-} as const satisfies ReasonsResponse;
+const TECH_INTERVIEW = techInterviewOf(DESIGN_REASONS.stages);
 
 describe('reasonsQuerySchema', () => {
   it('accepts a query without a search or a stage', () => {
@@ -116,7 +56,7 @@ describe('reasonsResponseSchema', () => {
   it.for([
     {
       label: 'a top reason counting more rejections than it is out of',
-      body: { ...DESIGN_REASONS, headline: { ...TECH_INTERVIEW_TOP, count: 5 } },
+      body: { ...DESIGN_REASONS, headline: { ...DESIGN_REASONS.headline, count: 5 } },
       path: 'headline.count',
     },
     {

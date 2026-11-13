@@ -27,9 +27,20 @@ export type ChartFrameState =
   | z.infer<typeof insufficientDataSchema>
   | { status: 'ready' };
 
-export type ChartFrameHeader = { eyebrow: string; title?: string };
+export type ChartFrameHeader = { eyebrow: string; title?: string; body?: string };
 
-export type ChartFrameView = Readonly<{ plot?: 'hero'; actions?: ReactNode }>;
+export type ChartFramePlot = 'boxed' | 'hero' | 'open';
+
+export type ChartFrameView = Readonly<{
+  plot?: Exclude<ChartFramePlot, 'boxed'>;
+  actions?: ReactNode;
+}>;
+
+const PLOTS: Record<ChartFramePlot, { skeleton: string; boxed: boolean }> = {
+  boxed: { skeleton: PLOT_HEIGHT, boxed: true },
+  hero: { skeleton: HERO_PLOT_HEIGHT, boxed: false },
+  open: { skeleton: PLOT_HEIGHT, boxed: false },
+};
 
 export type ChartFrameProps = Readonly<{
   header: ChartFrameHeader;
@@ -38,23 +49,28 @@ export type ChartFrameProps = Readonly<{
   view?: ChartFrameView;
 }>;
 
-type PlotSkeletonProps = Readonly<{ hero: boolean }>;
+type PlotSkeletonProps = Readonly<{ height: string }>;
 
-function PlotSkeleton({ hero }: PlotSkeletonProps) {
+function PlotSkeleton({ height }: PlotSkeletonProps) {
   const motion = useSkeletonMotion();
   return (
     <LoadingRegion>
-      <ChartPlotSkeleton motion={motion} className={hero ? HERO_PLOT_HEIGHT : PLOT_HEIGHT} />
+      <ChartPlotSkeleton motion={motion} className={height} />
     </LoadingRegion>
   );
 }
 
-type FrameBodyProps = Readonly<{ state: ChartFrameState; hero: boolean; children: ReactNode }>;
+type FrameBodyProps = Readonly<{
+  state: ChartFrameState;
+  plot: ChartFramePlot;
+  children: ReactNode;
+}>;
 
-function FrameBody({ state, hero, children }: FrameBodyProps) {
+function FrameBody({ state, plot, children }: FrameBodyProps) {
+  const look = PLOTS[plot];
   switch (state.status) {
     case 'loading':
-      return <PlotSkeleton hero={hero} />;
+      return <PlotSkeleton height={look.skeleton} />;
     case 'failed':
       return <LoadFailedPanel onRetry={state.onRetry} retrying={state.retrying} />;
     case 'insufficient_data':
@@ -67,10 +83,10 @@ function FrameBody({ state, hero, children }: FrameBodyProps) {
         />
       );
     case 'ready':
-      return hero ? (
-        children
-      ) : (
+      return look.boxed ? (
         <div className={cn('relative min-w-0', PLOT_HEIGHT)}>{children}</div>
+      ) : (
+        children
       );
     default: {
       const unhandled: never = state;
@@ -82,7 +98,7 @@ function FrameBody({ state, hero, children }: FrameBodyProps) {
 type FrameHeadingProps = Readonly<{ header: ChartFrameHeader; labelId: string }>;
 
 function FrameHeading({ header, labelId }: FrameHeadingProps) {
-  const { eyebrow, title } = header;
+  const { eyebrow, title, body } = header;
   return (
     <div className="flex min-w-0 flex-col gap-1">
       <span id={title ? undefined : labelId} className="eyebrow text-ink-3">
@@ -96,6 +112,7 @@ function FrameHeading({ header, labelId }: FrameHeadingProps) {
           {title}
         </h2>
       )}
+      {body && <p className="text-[13px] leading-[1.55] text-pretty text-ink-2">{body}</p>}
     </div>
   );
 }
@@ -117,7 +134,7 @@ export function ChartFrame({ header, state, children, view = {} }: ChartFramePro
       )}
       <AnimatePresence mode="popLayout" initial={false}>
         <Fade key={state.status}>
-          <FrameBody state={state} hero={view.plot === 'hero'}>
+          <FrameBody state={state} plot={view.plot ?? 'boxed'}>
             {children}
           </FrameBody>
         </Fade>

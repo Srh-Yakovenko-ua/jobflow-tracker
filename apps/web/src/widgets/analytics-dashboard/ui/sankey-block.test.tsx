@@ -9,6 +9,7 @@ import {
   type SentRequest,
 } from '@/test/analytics-fixtures';
 import { errorReply } from '@/test/api-handlers';
+import { frameOf } from '@/test/dashboard-frames';
 import { advancePastQueryRetries, fakeTimeouts } from '@/test/fake-timeouts';
 import { latch } from '@/test/latch';
 import { stubMotionPreference } from '@/test/motion-preference';
@@ -17,6 +18,7 @@ import { lastDrawnChart } from '@/test/recorded-chart';
 import { renderInApp } from '@/test/render-in-app';
 import { server } from '@/test/server';
 import { meRoute } from '@/test/session-fixtures';
+import { tableCells } from '@/test/table-rows';
 
 import { AnalyticsDashboard } from './analytics-dashboard';
 
@@ -25,6 +27,8 @@ vi.mock('next/link', () => import('@/test/link'));
 vi.mock('react-chartjs-2', () => import('@/test/recorded-chart'));
 
 const TABLE = 'Воронка відгуків';
+
+const FRAME = 'головне · воронка цілком';
 
 const SPLIT = 'розбити відмови за причинами';
 
@@ -61,24 +65,6 @@ function renderDashboard(sankey?: HttpResponseResolver) {
   return { user: renderInApp(<AnalyticsDashboard />), sent: routes.sent };
 }
 
-function sankeyFrame(): HTMLElement {
-  const frame = screen.getByText('головне · воронка цілком').closest('section');
-  if (frame === null) throw new Error('no sankey frame');
-  return frame;
-}
-
-async function tableRows() {
-  const table = await screen.findByRole('table', { name: TABLE });
-  return within(table)
-    .getAllByRole('row')
-    .slice(1)
-    .map((row) =>
-      within(row)
-        .getAllByRole('cell')
-        .map((cell) => cell.textContent),
-    );
-}
-
 function sankeyQueries(sent: readonly SentRequest[]) {
   return sent.filter(({ route }) => route === 'sankey').map(({ url }) => url.search);
 }
@@ -91,12 +77,12 @@ describe('SankeyBlock', () => {
   it('draws the 54 application search as designed: node labels with counts, one table row per flow, the ghost note', async () => {
     renderDashboard();
 
-    expect(await tableRows()).toEqual(DESIGN_ROWS);
+    expect(tableCells(await screen.findByRole('table', { name: TABLE }))).toEqual(DESIGN_ROWS);
     expect(lastDrawnChart().data.datasets[0]?.labels).toEqual(DESIGN_NODE_LABELS);
     expect(screen.getByText('Сіра гілка не твоя провина.').closest('p')?.textContent).toBe(
       'Сіра гілка не твоя провина. 17 компаній не відповіли. Вони не входять у розрахунок конверсій.',
     );
-    const legend = within(sankeyFrame()).getByRole('list');
+    const legend = within(frameOf(FRAME)).getByRole('list');
     expect(
       within(legend)
         .getAllByRole('listitem')
@@ -108,7 +94,7 @@ describe('SankeyBlock', () => {
     renderDashboard();
     const table = await screen.findByRole('table', { name: TABLE });
 
-    expect(sankeyFrame().querySelector('canvas')?.getAttribute('aria-hidden')).toBe('true');
+    expect(frameOf(FRAME).querySelector('canvas')?.getAttribute('aria-hidden')).toBe('true');
     const wrapper = table.parentElement;
     expect(wrapper?.className).toContain('sr-only');
     expect(wrapper?.className).toContain('focus-within:not-sr-only');
@@ -145,17 +131,17 @@ describe('SankeyBlock', () => {
     const toggle = screen.getByRole('switch', { name: SPLIT });
     expect(document.activeElement).toBe(toggle);
     expect(toggle.getAttribute('aria-checked')).toBe('true');
-    expect(sankeyFrame().querySelector('[aria-busy="true"]')).not.toBeNull();
+    expect(frameOf(FRAME).querySelector('[aria-busy="true"]')).not.toBeNull();
     held.release();
     await waitFor(async () => {
-      expect(await tableRows()).toEqual(MERGED_ROWS);
+      expect(tableCells(await screen.findByRole('table', { name: TABLE }))).toEqual(MERGED_ROWS);
     });
     expect(lastDrawnChart().data.datasets[0]?.labels?.other).toBe('інші 2');
     expect(screen.queryByText('Сіра гілка не твоя провина.')).toBeNull();
 
     await user.click(screen.getByRole('button', { name: 'показати всі причини' }));
 
-    expect(await tableRows()).toEqual([
+    expect(tableCells(await screen.findByRole('table', { name: TABLE }))).toEqual([
       ['відгук', 'не вистачає скілів', '3'],
       ['відгук', 'рівень англійської', '2'],
       ['відгук', 'у процесі', '375'],
@@ -174,12 +160,12 @@ describe('SankeyBlock', () => {
     await advancePastQueryRetries();
 
     await waitFor(() => {
-      expect(within(sankeyFrame()).queryByRole('alert')).not.toBeNull();
+      expect(within(frameOf(FRAME)).queryByRole('alert')).not.toBeNull();
     });
     await user.click(screen.getByRole('switch', { name: SPLIT }));
 
     await waitFor(async () => {
-      expect(await tableRows()).toEqual(DESIGN_ROWS);
+      expect(tableCells(await screen.findByRole('table', { name: TABLE }))).toEqual(DESIGN_ROWS);
     });
     expect(screen.getByRole('switch', { name: SPLIT }).getAttribute('aria-checked')).toBe('false');
   });

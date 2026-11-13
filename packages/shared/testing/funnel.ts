@@ -1,4 +1,5 @@
 import { type FunnelResponse, funnelResponseSchema } from '../src/schemas/analytics-funnel.js';
+import { INSUFFICIENT_RATES } from './rates.js';
 
 const DESIGN_FUNNEL: FunnelResponse = {
   kpis: {
@@ -59,12 +60,7 @@ const DESIGN_FUNNEL: FunnelResponse = {
       stage: 'tech_interview',
     },
     {
-      conversion: {
-        have: 4,
-        message: 'Ще 1 відгук до першого висновку',
-        need: 1,
-        status: 'insufficient_data',
-      },
+      conversion: INSUFFICIENT_RATES.oneMore,
       dropOff: { ghosted: 0, rejected: 2, withdrawn: 1 },
       passed: 1,
       reached: 4,

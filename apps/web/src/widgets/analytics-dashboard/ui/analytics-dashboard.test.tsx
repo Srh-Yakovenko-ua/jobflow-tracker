@@ -12,6 +12,7 @@ import {
   type SentRequest,
 } from '@/test/analytics-fixtures';
 import { OUTAGES } from '@/test/api-handlers';
+import { frameOf } from '@/test/dashboard-frames';
 import { advancePastQueryRetries, fakeTimeouts } from '@/test/fake-timeouts';
 import { renderInApp } from '@/test/render-in-app';
 import { server } from '@/test/server';
@@ -95,9 +96,7 @@ function isTile(block: Block): block is TileBlock {
 
 function blockOf(block: Block): HTMLElement {
   if (isTile(block)) return screen.getByRole('group', { name: TILES[block] });
-  const frame = screen.getByText(FRAMES[block]).closest('section');
-  if (frame === null) throw new Error(`no frame for ${block}`);
-  return frame;
+  return frameOf(FRAMES[block]);
 }
 
 function stateOf(element: HTMLElement): BlockState {
@@ -168,7 +167,7 @@ describe('AnalyticsDashboard', () => {
     expect(screen.getByRole('region', { name: FRAMES.forecast })).toBeDefined();
     expect(screen.getByRole('region', { name: FRAMES.timings })).toBeDefined();
     expect(blockRegions()).toHaveLength(6);
-    expect(screen.queryByText(/зарплат/i)).toBeNull();
+    expect(screen.queryByRole('heading', { name: /зарплат/i })).toBeNull();
     expect(screen.queryByText(/саммарі/i)).toBeNull();
   });
 

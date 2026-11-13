@@ -1,14 +1,14 @@
 import {
   DEFAULT_SEARCH_TITLE,
   type FunnelResponse,
-  type ReasonsResponse,
   type SearchListResponse,
   type SearchSummary,
-  type SourcesResponse,
 } from '@jobflow/shared';
 import {
   buildDesignFunnel,
+  buildDesignReasons,
   buildDesignSankey,
+  buildDesignSources,
   buildDesignTimings,
   buildFoldedSankey,
   buildForecast,
@@ -83,10 +83,6 @@ export const DESIGN_NODE_LABELS = {
 
 const SEARCHES: SearchListResponse = { items: [ACTIVE_SEARCH, ARCHIVED_SEARCH] };
 
-const REASONS: ReasonsResponse = { stages: [], headline: null };
-
-const SOURCES: SourcesResponse = { sources: [], silentGhosts: { total: 0, easyApply: 0 } };
-
 export function lowDataFunnel(): FunnelResponse {
   const funnel = buildDesignFunnel();
   const sent = { total: 4, thisMonth: 4, previousMonth: 0 };
@@ -117,8 +113,8 @@ function designBodies(): Record<DashboardRoute, JsonBodyType | HttpResponseResol
     searches: SEARCHES,
     funnel: buildDesignFunnel(),
     sankey: sankeyReply,
-    reasons: REASONS,
-    sources: SOURCES,
+    reasons: buildDesignReasons(),
+    sources: buildDesignSources(),
     timings: buildDesignTimings(),
     forecast: buildForecast(),
     insights: designInsightsBody(),

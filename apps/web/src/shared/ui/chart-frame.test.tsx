@@ -89,6 +89,42 @@ describe('ChartFrame', () => {
     expect(within(frame).getByText(PLOT).parentElement?.className).not.toContain('h-55');
   });
 
+  it('shows the evidence line under the title, and nothing there when the header has none', () => {
+    const body = 'Djinni при 24 відгуках дав 9 скринінгів.';
+    const { rerender } = render(
+      <ChartFrame header={{ ...HEADER, body }} state={{ status: 'ready' }} />,
+    );
+    const frame = screen.getByRole('region', { name: HEADER.title });
+
+    expect(
+      within(frame).getByRole('heading', { name: HEADER.title }).nextSibling?.textContent,
+    ).toBe(body);
+
+    rerender(<ChartFrame header={HEADER} state={{ status: 'ready' }} />);
+
+    expect(within(frame).queryByText(body)).toBeNull();
+  });
+
+  it('an open plot loads at the 220 px height and hands the ready body to the block unwrapped', () => {
+    const view = { plot: 'open' } as const;
+    const { rerender } = render(
+      <ChartFrame header={HEADER} state={{ status: 'loading' }} view={view}>
+        <p>{PLOT}</p>
+      </ChartFrame>,
+    );
+    const frame = screen.getByRole('region', { name: HEADER.title });
+
+    expect(frame.querySelector('[aria-hidden="true"]')?.className).toContain('h-55');
+
+    rerender(
+      <ChartFrame header={HEADER} state={{ status: 'ready' }} view={view}>
+        <p>{PLOT}</p>
+      </ChartFrame>,
+    );
+
+    expect(within(frame).getByText(PLOT).parentElement?.className).not.toContain('h-55');
+  });
+
   it('keeps the header actions mounted and focused while the body loads, fails and draws', async () => {
     const { rerender } = render(heroFrame({ status: 'ready' }));
     await userEvent.tab();
