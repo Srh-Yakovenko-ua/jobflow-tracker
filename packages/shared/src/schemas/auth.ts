@@ -53,6 +53,7 @@ export const refreshTokenBodySchema = z
 export const meResponseSchema = z.object({
   user: authUserSchema,
   settings: userSettingsSchema,
+  unreadNotifications: z.int().nonnegative(),
 });
 
 export const publicJwkSchema = z.strictObject({

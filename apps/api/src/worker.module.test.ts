@@ -16,6 +16,11 @@ import {
   MatchTriggerProcessor,
   MatchTriggerSubscriber,
 } from './modules/match/index.js';
+import {
+  AiNotificationsSubscriber,
+  InsightSubscriber,
+  NotificationsSubscriber,
+} from './modules/notifications/index.js';
 import { RemindersSubscriber } from './modules/reminders/index.js';
 import { ResumeProfileSubscriber } from './modules/resumes/index.js';
 import { DomainEventsProcessor } from './outbox/domain-events.processor.js';
@@ -51,6 +56,9 @@ describe('WorkerModule', () => {
       MatchTriggerProcessor,
       LivePublisher,
       RemindersSubscriber,
+      NotificationsSubscriber,
+      AiNotificationsSubscriber,
+      InsightSubscriber,
     ]) {
       expect(moduleRef.get(provider, { strict: false })).toBeInstanceOf(provider);
     }

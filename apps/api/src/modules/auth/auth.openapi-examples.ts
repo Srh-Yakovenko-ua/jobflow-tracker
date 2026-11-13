@@ -37,7 +37,7 @@ export const AUTH_EXAMPLES = {
   refreshBody: {
     refreshToken: 'q8Zr3VbX0nLw5Tf2Ky7Hc1Md9Pg4Rs6Ua_Ej-WoNxIb',
   } satisfies RefreshTokenBody,
-  me: { user: USER, settings: EXAMPLE_USER_SETTINGS } satisfies MeResponse,
+  me: { user: USER, settings: EXAMPLE_USER_SETTINGS, unreadNotifications: 3 } satisfies MeResponse,
   jwks: {
     keys: [
       {

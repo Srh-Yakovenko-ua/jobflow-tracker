@@ -31,7 +31,14 @@ const AUTH_USER_SELECT = { id: true, email: true, displayName: true, locale: tru
 
 const CREDENTIALS_SELECT = { ...AUTH_USER_SELECT, passwordHash: true } as const;
 
-export type UserProfile = AuthUser & { settings: UserSettingsRow | null };
+export type UserProfile = AuthUser & {
+  settings: UserSettingsRow | null;
+  _count: { notifications: number };
+};
+
+const UNREAD_NOTIFICATIONS_COUNT = {
+  select: { notifications: { where: { readAt: null } } },
+} satisfies Prisma.UserCountOutputTypeDefaultArgs;
 
 async function conflictOnDuplicate<T>(write: Promise<T>, detail: string): Promise<T> {
   try {
@@ -100,7 +107,11 @@ export class AuthRepository {
   findProfile(userId: string): Promise<UserProfile | null> {
     return this.prisma.user.findUnique({
       where: { id: userId },
-      select: { ...AUTH_USER_SELECT, settings: { select: USER_SETTINGS_SELECT } },
+      select: {
+        ...AUTH_USER_SELECT,
+        settings: { select: USER_SETTINGS_SELECT },
+        _count: UNREAD_NOTIFICATIONS_COUNT,
+      },
     });
   }
 

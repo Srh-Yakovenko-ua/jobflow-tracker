@@ -42,6 +42,7 @@ export const ME_RESPONSE: MeResponse = {
     singleKeyShortcuts: true,
     activeResumeVersionId: null,
   },
+  unreadNotifications: 0,
 };
 
 export const AUTH_RESPONSE: AuthResponse = {

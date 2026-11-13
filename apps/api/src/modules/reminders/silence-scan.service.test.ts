@@ -3,8 +3,11 @@ import { Test } from '@nestjs/testing';
 import { describe, expect, it } from 'vitest';
 
 import { Prisma } from '../../generated/prisma/client.js';
-import { APPLICATION_ID, OLENA_ID } from '../../test/service-fixtures.js';
+import { SECOND_APPLICATION_ID } from '../../test/match.js';
+import { RecordingNotifications } from '../../test/notifications.js';
+import { APPLICATION_ID, MISSING_ID, OLENA_ID } from '../../test/service-fixtures.js';
 import { daysBefore, minutesBefore, NOW } from '../../test/time.js';
+import { NotificationsService } from '../notifications/index.js';
 import { SettingsService } from '../settings/index.js';
 import { RemindersService, type StartFollowup } from './reminders.service.js';
 import {
@@ -14,7 +17,14 @@ import {
 } from './silence.repository.js';
 import { SilenceScanService } from './silence-scan.service.js';
 
-type Candidate = { stage: Stage; lastEventAt: Date; remindedAt?: Date; movedAt?: Date | undefined };
+type Candidate = {
+  stage: Stage;
+  lastEventAt: Date;
+  remindedAt?: Date;
+  movedAt?: Date | undefined;
+  id?: string;
+  company?: string;
+};
 
 const DAY_MINUTES = 24 * 60;
 
@@ -42,11 +52,12 @@ class FakeSilenceRepository {
 class RecordingFollowups {
   readonly started: (StartFollowup & { userId: string })[] = [];
 
-  failure: Error | undefined;
+  readonly failures = new Map<string, Error>();
 
   startFollowup(userId: string, start: StartFollowup): Promise<void> {
-    if (this.failure !== undefined) {
-      return Promise.reject(this.failure);
+    const failure = this.failures.get(start.applicationId);
+    if (failure !== undefined) {
+      return Promise.reject(failure);
     }
     this.started.push({ userId, ...start });
     return Promise.resolve();
@@ -58,31 +69,39 @@ const candidateRow = ({
   lastEventAt,
   remindedAt,
   movedAt,
+  id = APPLICATION_ID,
+  company = 'Ромашка',
 }: Candidate): SilentApplicationRow => ({
-  id: APPLICATION_ID,
-  company: 'Ромашка',
+  id,
+  company,
   currentStage: stage,
   lastEventAt,
   reminders: remindedAt === undefined ? [] : [{ dueAt: remindedAt }],
   stageEvents: movedAt === undefined ? [] : [{ createdAt: movedAt }],
 });
 
-async function scanOf(candidate: Candidate, silenceDays = 7) {
+async function scanOf(candidates: Candidate | Candidate[], silenceDays = 7) {
   const repository = new FakeSilenceRepository();
   const followups = new RecordingFollowups();
-  repository.rows = [candidateRow(candidate)];
+  const notifications = new RecordingNotifications();
+  repository.rows = [candidates].flat().map(candidateRow);
   const moduleRef = await Test.createTestingModule({
-    providers: [SilenceScanService, SilenceRepository, RemindersService, SettingsService],
-  })
-    .overrideProvider(SilenceRepository)
-    .useValue(repository)
-    .overrideProvider(RemindersService)
-    .useValue(followups)
-    .overrideProvider(SettingsService)
-    .useValue({ get: () => Promise.resolve({ silenceDays }) })
-    .compile();
-  return { repository, followups, service: moduleRef.get(SilenceScanService) };
+    providers: [
+      SilenceScanService,
+      { provide: SilenceRepository, useValue: repository },
+      { provide: RemindersService, useValue: followups },
+      { provide: NotificationsService, useValue: notifications },
+      { provide: SettingsService, useValue: { get: () => Promise.resolve({ silenceDays }) } },
+    ],
+  }).compile();
+  return { repository, followups, notifications, service: moduleRef.get(SilenceScanService) };
 }
+
+const THREE_SILENT: Candidate[] = [
+  { stage: 'applied', lastEventAt: daysBefore(7), company: 'Ромашка' },
+  { stage: 'applied', lastEventAt: daysBefore(9), company: 'Acme', id: MISSING_ID },
+  { stage: 'final', lastEventAt: daysBefore(15), company: 'Globex', id: SECOND_APPLICATION_ID },
+];
 
 describe('SilenceScanService.startSilence', () => {
   it.each([
@@ -115,13 +134,7 @@ describe('SilenceScanService.startSilence', () => {
 
     expect(repository.readFor).toEqual([OLENA_ID]);
     expect(followups.started).toEqual([
-      {
-        userId: OLENA_ID,
-        applicationId: APPLICATION_ID,
-        company: 'Ромашка',
-        lastEventAt: daysBefore(3),
-        now: NOW,
-      },
+      { userId: OLENA_ID, applicationId: APPLICATION_ID, days: 3, now: NOW },
     ]);
   });
 
@@ -163,20 +176,97 @@ describe('SilenceScanService.startSilence', () => {
     },
   );
 
-  it('counts a follow-up the unique index refuses as already started', async () => {
-    const { followups, service } = await scanOf({ stage: 'applied', lastEventAt: daysBefore(7) });
-    followups.failure = uniqueViolation();
+  it('counts a follow-up the unique index refuses as already started and writes no notification', async () => {
+    const { followups, notifications, service } = await scanOf({
+      stage: 'applied',
+      lastEventAt: daysBefore(7),
+    });
+    followups.failures.set(APPLICATION_ID, uniqueViolation());
 
     await expect(service.startSilence(OLENA_ID, NOW)).resolves.toEqual({
       started: 0,
       alreadyStarted: 1,
     });
+    expect(notifications.notifications).toEqual([]);
   });
 
-  it('rethrows any other failure of the follow-up write', async () => {
-    const { followups, service } = await scanOf({ stage: 'applied', lastEventAt: daysBefore(7) });
-    followups.failure = new Error('connection lost');
+  it('rethrows any other failure of the follow-up write and writes no notification', async () => {
+    const { followups, notifications, service } = await scanOf({
+      stage: 'applied',
+      lastEventAt: daysBefore(7),
+    });
+    followups.failures.set(APPLICATION_ID, new Error('connection lost'));
 
     await expect(service.startSilence(OLENA_ID, NOW)).rejects.toThrow('connection lost');
+    expect(notifications.notifications).toEqual([]);
+  });
+});
+
+describe('SilenceScanService grouping the silence notification', () => {
+  it('writes one silence notification with the one application that fell silent', async () => {
+    const { notifications, service } = await scanOf(THREE_SILENT.slice(0, 1));
+
+    await service.startSilence(OLENA_ID, NOW);
+
+    expect(notifications.notifications).toEqual([
+      {
+        userId: OLENA_ID,
+        type: 'silence',
+        payload: { items: [{ applicationId: APPLICATION_ID, company: 'Ромашка', days: 7 }] },
+      },
+    ]);
+  });
+
+  it('writes one silence notification listing the three applications that fell silent in one scan', async () => {
+    const { notifications, service } = await scanOf(THREE_SILENT);
+
+    await expect(service.startSilence(OLENA_ID, NOW)).resolves.toEqual({
+      started: 3,
+      alreadyStarted: 0,
+    });
+
+    expect(notifications.notifications).toEqual([
+      {
+        userId: OLENA_ID,
+        type: 'silence',
+        payload: {
+          items: [
+            { applicationId: APPLICATION_ID, company: 'Ромашка', days: 7 },
+            { applicationId: MISSING_ID, company: 'Acme', days: 9 },
+            { applicationId: SECOND_APPLICATION_ID, company: 'Globex', days: 15 },
+          ],
+        },
+      },
+    ]);
+  });
+
+  it('writes no notification when nothing fell silent', async () => {
+    const { notifications, service } = await scanOf({
+      stage: 'applied',
+      lastEventAt: daysBefore(6),
+    });
+
+    await service.startSilence(OLENA_ID, NOW);
+
+    expect(notifications.notifications).toEqual([]);
+  });
+
+  it('leaves an application the unique index refuses out of the items', async () => {
+    const { followups, notifications, service } = await scanOf(THREE_SILENT);
+    followups.failures.set(MISSING_ID, uniqueViolation());
+
+    await expect(service.startSilence(OLENA_ID, NOW)).resolves.toEqual({
+      started: 2,
+      alreadyStarted: 1,
+    });
+
+    expect(notifications.notifications.map(({ payload }) => payload)).toEqual([
+      {
+        items: [
+          { applicationId: APPLICATION_ID, company: 'Ромашка', days: 7 },
+          { applicationId: SECOND_APPLICATION_ID, company: 'Globex', days: 15 },
+        ],
+      },
+    ]);
   });
 });

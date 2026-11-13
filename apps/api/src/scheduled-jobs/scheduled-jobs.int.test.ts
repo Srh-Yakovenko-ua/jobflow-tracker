@@ -85,6 +85,13 @@ describe('ScheduledJobsService on the database', () => {
         atOffset(BOUNDARIES.notification, JUST_OUTSIDE),
       ].map((createdAt) => ({ userId: bohdan.id, type: 'silence' as const, createdAt })),
     });
+    await prisma.notification.create({
+      data: {
+        userId: bohdan.id,
+        type: 'insight_unlocked',
+        createdAt: atOffset(BOUNDARIES.notification, JUST_OUTSIDE),
+      },
+    });
 
     await expect(service.cleanup()).resolves.toEqual({
       idempotencyKeys: 1,
@@ -98,8 +105,13 @@ describe('ScheduledJobsService on the database', () => {
     expect(await prisma.refreshToken.findMany({ select: { expiresAt: true } })).toEqual([
       { expiresAt: new Date(BOUNDARIES.refreshToken) },
     ]);
-    expect(await prisma.notification.findMany({ select: { createdAt: true } })).toEqual([
-      { createdAt: new Date(BOUNDARIES.notification) },
+    const kept = await prisma.notification.findMany({
+      orderBy: { type: 'asc' },
+      select: { type: true, createdAt: true },
+    });
+    expect(kept).toEqual([
+      { type: 'silence', createdAt: new Date(BOUNDARIES.notification) },
+      { type: 'insight_unlocked', createdAt: atOffset(BOUNDARIES.notification, JUST_OUTSIDE) },
     ]);
   });
 

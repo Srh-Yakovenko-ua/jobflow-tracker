@@ -6,7 +6,6 @@ import type {
   CloseReminder,
   InsertFollowup,
   InsertInterviewReminder,
-  NewNotification,
   ReminderRow,
 } from '../modules/reminders/index.js';
 import type { PrismaService } from '../prisma/prisma.service.js';
@@ -17,8 +16,6 @@ import { APPLICATION_ID, OLENA_ID, REMINDER_ID } from './service-fixtures.js';
 import { NOW, type SettableClock } from './time.js';
 
 export type StoredReminder = ByUser<ReminderRow>;
-
-export type StoredNotification = ByUser<NewNotification>;
 
 export type StageApplication = { stage: Stage; lastEventAt: Date };
 
@@ -57,7 +54,7 @@ const withoutOwner = (stored: StoredReminder): ReminderRow => {
 export class FakeRemindersRepository {
   readonly rows: StoredReminder[] = [];
 
-  readonly notifications: StoredNotification[] = [];
+  readonly followupTransactions: InsertFollowup['tx'][] = [];
 
   closeActiveInterview(
     userId: string,
@@ -86,13 +83,9 @@ export class FakeRemindersRepository {
     return Promise.resolve();
   }
 
-  insertFollowup(userId: string, { applicationId, dueAt }: InsertFollowup) {
+  insertFollowup(userId: string, { applicationId, dueAt, tx }: InsertFollowup) {
     this.rows.push(storedReminder({ userId, applicationId, dueAt }));
-    return Promise.resolve();
-  }
-
-  insertNotification(userId: string, notification: NewNotification): Promise<void> {
-    this.notifications.push({ userId, ...notification });
+    this.followupTransactions.push(tx);
     return Promise.resolve();
   }
 

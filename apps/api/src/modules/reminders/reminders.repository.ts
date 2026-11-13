@@ -1,10 +1,4 @@
-import {
-  type InterviewSoonNotificationPayload,
-  OPEN_STAGES,
-  type ReminderStatus,
-  type ReminderType,
-  type SilenceNotificationPayload,
-} from '@jobflow/shared';
+import { OPEN_STAGES, type ReminderStatus, type ReminderType } from '@jobflow/shared';
 import { Injectable } from '@nestjs/common';
 
 import type { Prisma } from '../../generated/prisma/client.js';
@@ -52,12 +46,6 @@ export type CloseReminder = {
   status: Exclude<ReminderStatus, 'pending'>;
   snoozedUntil?: Date;
 };
-
-export type NewNotification = InTransaction &
-  (
-    | { type: 'silence'; payload: SilenceNotificationPayload }
-    | { type: 'interview_soon'; payload: InterviewSoonNotificationPayload }
-  );
 
 export type DateRange = { from: Date; to: Date };
 
@@ -107,13 +95,6 @@ export class RemindersRepository {
       data: { userId, applicationId, type: 'followup', dueAt },
       select: { id: true },
     });
-  }
-
-  async insertNotification(
-    userId: string,
-    { type, payload, tx = this.prisma }: NewNotification,
-  ): Promise<void> {
-    await tx.notification.create({ data: { userId, type, payload }, select: { id: true } });
   }
 
   findFollowups(userId: string, { from, to }: DateRange): Promise<FollowupRow[]> {

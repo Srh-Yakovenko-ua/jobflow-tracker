@@ -6,7 +6,7 @@ import { errorResponseSchema, LIVE_EVENTS } from '@jobflow/shared';
 import { buildJobUpdate } from '@jobflow/shared/testing';
 import { ConfigService } from '@nestjs/config';
 import type { NestExpressApplication } from '@nestjs/platform-express';
-import { afterAll, afterEach, beforeAll, describe, expect, it } from 'vitest';
+import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 import { DEPENDENCY_LIMITS } from '../../common/probe.js';
 import type { AppConfig } from '../../config/app-config.js';
@@ -20,10 +20,10 @@ import {
   issueLiveTicket,
   LIVE_PATHS,
   liveEventsOf,
-  liveHubSubscribed,
   openLiveStream,
   redisAt,
   streamPathOf,
+  useLiveStreams,
 } from '../../test/live.js';
 import { openSse, type SseStream } from '../../test/sse.js';
 import { startTcpProxy, type TcpProxy } from '../../test/tcp-proxy.js';
@@ -40,7 +40,7 @@ const ticketKeyOf = (ticket: string) =>
 
 describe('the live stream and its one-time ticket', () => {
   const testApp = useTestApp();
-  const streams: SseStream[] = [];
+  const streams = useLiveStreams(testApp);
 
   const redis = () => testApp.app.get(RedisService).client;
 
@@ -58,12 +58,6 @@ describe('the live stream and its one-time ticket', () => {
     expect(requestId).not.toBe('');
     return body;
   }
-
-  beforeAll(() => liveHubSubscribed(testApp.app));
-
-  afterEach(async () => {
-    await Promise.all(streams.splice(0).map((stream) => stream.close()));
-  });
 
   it('opens the stream with a fresh ticket and answers 401 to the same ticket again', async () => {
     const { ticket } = await issueLiveTicket(testApp.app, await createUser(testApp.prisma));
