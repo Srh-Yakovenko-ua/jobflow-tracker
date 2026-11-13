@@ -16,10 +16,7 @@ import { buttonLinkClasses } from './button';
 const ZONE =
   'border-[1.5px] border-dashed border-line bg-surface-2 transition-[border-color,background-color,box-shadow] duration-(--duration-base) ease-standard data-dragging:border-accent data-dragging:bg-accent-tint data-dragging:ring-4 data-dragging:ring-accent/25';
 
-const PICKER = cn(
-  buttonLinkClasses({ variant: 'secondary', size: 'sm' }),
-  'cursor-pointer has-focus-visible:focus-ring',
-);
+const PICKER = 'cursor-pointer has-focus-visible:focus-ring';
 
 export type FilePicker = Readonly<{
   inputRef: RefObject<HTMLInputElement | null>;
@@ -30,6 +27,7 @@ export type DropZonePicker = {
   label: string;
   accept: string;
   inputRef?: FilePicker['inputRef'];
+  disabled?: boolean;
 };
 
 export function useFilePicker(): FilePicker {
@@ -53,12 +51,15 @@ function carriesFiles(event: DragEvent): boolean {
   return event.dataTransfer.types.includes('Files');
 }
 
-function useFileDrag(onFile: DropZoneProps['onFile']) {
+type FileDrag = Pick<DropZoneProps, 'onFile'> & { disabled: boolean };
+
+function useFileDrag({ onFile, disabled }: FileDrag) {
   const depthRef = useRef(0);
   const [dragging, setDragging] = useState(false);
   const enter = (event: DragEvent) => {
     if (!carriesFiles(event)) return;
     event.preventDefault();
+    if (disabled) return;
     depthRef.current += 1;
     setDragging(true);
   };
@@ -75,7 +76,7 @@ function useFileDrag(onFile: DropZoneProps['onFile']) {
     depthRef.current = 0;
     setDragging(false);
     const file = event.dataTransfer.files[0];
-    if (file !== undefined) onFile(file);
+    if (file !== undefined && !disabled) onFile(file);
   };
   return {
     dragging,
@@ -84,12 +85,12 @@ function useFileDrag(onFile: DropZoneProps['onFile']) {
 }
 
 export function DropZone({
-  picker: { label, accept, inputRef },
+  picker: { label, accept, inputRef, disabled = false },
   onFile,
   children,
   className,
 }: DropZoneProps) {
-  const drag = useFileDrag(onFile);
+  const drag = useFileDrag({ onFile, disabled });
   const pick = (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.currentTarget.files?.[0];
     event.currentTarget.value = '';
@@ -102,8 +103,21 @@ export function DropZone({
       className={cn(ZONE, className)}
     >
       {children}
-      <label className={PICKER}>
-        <input ref={inputRef} type="file" accept={accept} onChange={pick} className="sr-only" />
+      <label
+        aria-disabled={disabled || undefined}
+        className={cn(
+          buttonLinkClasses({ variant: 'secondary', size: 'sm', dimmed: disabled }),
+          PICKER,
+        )}
+      >
+        <input
+          ref={inputRef}
+          type="file"
+          accept={accept}
+          disabled={disabled}
+          onChange={pick}
+          className="sr-only"
+        />
         {label}
       </label>
     </div>

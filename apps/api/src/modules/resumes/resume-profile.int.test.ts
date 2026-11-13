@@ -1,4 +1,3 @@
-import { resumeVersionListResponseSchema } from '@jobflow/shared';
 import type { INestApplicationContext } from '@nestjs/common';
 import { beforeEach, describe, expect, it } from 'vitest';
 
@@ -7,9 +6,8 @@ import { FakeAiClient, RESUME_COMPLETION, RESUME_PROFILE, storedAiJob } from '..
 import { useTestApp } from '../../test/app.js';
 import { BOHDAN, OLENA, signUp } from '../../test/auth.js';
 import { FakeDocumentsClient, RESUME_TEXT, TEXT_EXTRACTION } from '../../test/documents.js';
-import { callRoute } from '../../test/http.js';
 import { memoryLog } from '../../test/memory-log.js';
-import { RESUME_VERSIONS_PATH, uploadResumeVersion } from '../../test/resumes.js';
+import { listedProfileStatuses, uploadResumeVersion } from '../../test/resumes.js';
 import { useTestWorkers } from '../../test/worker.js';
 import { AiClient, AiServiceError } from '../ai/index.js';
 import { DocumentsClient } from './documents-client.js';
@@ -69,15 +67,7 @@ describe('the AI skills profile of a resume version', () => {
     return version;
   }
 
-  async function listedStatuses(owner: Owner) {
-    const response = await callRoute(testApp.app, {
-      method: 'get',
-      path: RESUME_VERSIONS_PATH,
-      accessToken: owner.accessToken,
-    });
-    const { items } = resumeVersionListResponseSchema.parse(response.body);
-    return items.map(({ aiProfileStatus }) => aiProfileStatus);
-  }
+  const listedStatuses = (owner: Owner) => listedProfileStatuses(testApp.app, owner);
 
   it(
     'profiles the same file uploaded twice with one AI call and stores the profile on both versions',

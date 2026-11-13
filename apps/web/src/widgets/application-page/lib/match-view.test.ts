@@ -16,6 +16,7 @@ const LINKED: MatchViewInput = {
   response: NO_MATCH,
   relinkedTo: null,
   versionProfileStatus: 'done',
+  isDraft: false,
 };
 
 const RELINKED: MatchViewInput = {
@@ -96,6 +97,10 @@ describe('matchViewOf', () => {
       expect(matchViewOf({ ...RELINKED, versionProfileStatus }).kind).toBe('unscored');
     },
   );
+
+  it('a relink on a draft to a read CV reads unscored, since a draft gets no match job', () => {
+    expect(matchViewOf({ ...RELINKED, isDraft: true }).kind).toBe('unscored');
+  });
 
   it('the relink marker of another version does not hold the linked one pending', () => {
     expect(matchViewOf({ ...LINKED, relinkedTo: NEXT_VERSION.id }).kind).toBe('unscored');

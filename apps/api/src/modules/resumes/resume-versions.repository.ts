@@ -26,7 +26,7 @@ export const RESUME_VERSION_SELECT = {
     ...LATEST_AI_JOB_SELECT,
     select: { ...LATEST_AI_JOB_SELECT.select, errorType: true },
   },
-  _count: { select: { applications: { where: { deletedAt: null } } } },
+  _count: { select: { applications: { where: { deletedAt: null, isDraft: false } } } },
 } satisfies Prisma.ResumeVersionSelect;
 
 const PROFILE_SOURCE_SELECT = {
@@ -68,6 +68,8 @@ export type UpdateResumeVersion = ResumeVersionById & {
 };
 
 export type RecordResumeEvent = InTransaction & { event: ResumeEvent };
+
+export type SetActiveVersion = InTransaction & { to: string | null; from?: string | null };
 
 export type ApplicationLink = { resumeVersionId: string | null };
 
@@ -177,15 +179,9 @@ export class ResumeVersionsRepository {
     return count;
   }
 
-  async clearActive(userId: string, { id, tx = this.prisma }: ResumeVersionById): Promise<void> {
-    await tx.userSettings.updateMany({
-      where: { userId, activeResumeVersionId: id },
-      data: { activeResumeVersionId: null },
-    });
-  }
-
-  async activate(userId: string, { id, tx = this.prisma }: ResumeVersionById): Promise<void> {
-    await tx.userSettings.updateMany({ where: { userId }, data: { activeResumeVersionId: id } });
+  async setActive(userId: string, { to, from, tx = this.prisma }: SetActiveVersion): Promise<void> {
+    const where = from === undefined ? { userId } : { userId, activeResumeVersionId: from };
+    await tx.userSettings.updateMany({ where, data: { activeResumeVersionId: to } });
   }
 
   async deleteUnlinked(

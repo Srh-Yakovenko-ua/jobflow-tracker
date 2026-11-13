@@ -22,6 +22,7 @@ export function useApplicationMatch(application: ApplicationResponse) {
       response,
       relinkedTo,
       versionProfileStatus,
+      isDraft: application.isDraft,
     });
   const match = useQuery({
     ...applicationMatchQueryOptions(application.id),

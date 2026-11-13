@@ -10,26 +10,31 @@ import { showErrorToast } from '@/shared/ui/error-toast';
 
 import { downloadResumeVersion } from '../api/version-requests';
 
-type PreviewRequest = Readonly<{ id: ResumeVersion['id']; tab: Window | null }>;
+type PreviewRequest = Readonly<{ id: ResumeVersion['id']; tab: Window }>;
 
 const BLANK_TAB = 'about:blank';
 
 export function usePreviewVersion(): (id: ResumeVersion['id']) => void {
   const queryClient = useQueryClient();
   const { mutate } = useMutation({
+    gcTime: 0,
     mutationFn: ({ id }: PreviewRequest) => downloadResumeVersion(id),
     onSuccess: ({ url }, { tab }) => {
-      tab?.location.assign(url);
+      tab.location.assign(url);
     },
     onError: (error, { tab }) => {
-      tab?.close();
+      tab.close();
       if (isNotFound(error)) void queryClient.invalidateQueries({ queryKey: resumeKeys.list() });
       showErrorToast(uk.resumes.errors.previewFailed);
     },
   });
   return (id) => {
     const tab = window.open(BLANK_TAB, '_blank');
-    if (tab !== null) tab.opener = null;
+    if (tab === null) {
+      showErrorToast(uk.resumes.errors.popupBlocked);
+      return;
+    }
+    tab.opener = null;
     mutate({ id, tab });
   };
 }

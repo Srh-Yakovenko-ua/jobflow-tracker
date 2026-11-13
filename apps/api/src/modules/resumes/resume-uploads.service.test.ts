@@ -6,6 +6,7 @@ import { AI_JOB_ID, FakeAiRepository } from '../../test/ai.js';
 import { FAKE_TRANSACTION, fakeTransactionModule } from '../../test/fake-prisma.js';
 import { FAKE_STORAGE_URL, FakeFileStorage, type FakeObject } from '../../test/file-storage.js';
 import { type ByUser, RecordedEvents } from '../../test/recorded-events.js';
+import { ActiveVersions } from '../../test/resumes.js';
 import {
   BOHDAN_ID,
   OLENA_ID,
@@ -22,6 +23,7 @@ import {
   type RecordResumeEvent,
   type ResumeVersionRow,
   ResumeVersionsRepository,
+  type SetActiveVersion,
   type VersionByStorageKey,
 } from './resume-versions.repository.js';
 
@@ -30,6 +32,8 @@ const PDF: ResumeMime = 'application/pdf';
 const DOCX: ResumeMime = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
 
 const RESUME_ID = '0199f0a0-0000-7000-8000-0000000000b0';
+
+const OTHER_VERSION_ID = '0199f0a0-0000-7000-8000-0000000000c1';
 
 const PDF_KEY = `pending/users/${OLENA_ID}/resumes/${UPLOAD_ID}.pdf`;
 
@@ -64,6 +68,7 @@ class FakeResumeVersionsRepository extends RecordedEvents<RecordResumeEvent> {
   readonly locked: string[] = [];
   readonly inserted: ByUser<InsertResumeVersion>[] = [];
   readonly storageKeys = new Set<string>();
+  readonly active = new ActiveVersions([[BOHDAN_ID, null]]);
 
   lockOwner(userId: string): Promise<void> {
     this.locked.push(userId);
@@ -85,6 +90,10 @@ class FakeResumeVersionsRepository extends RecordedEvents<RecordResumeEvent> {
   insert(userId: string, input: InsertResumeVersion): Promise<ResumeVersionRow> {
     this.inserted.push({ userId, ...input });
     return Promise.resolve(CREATED_ROW);
+  }
+
+  setActive(userId: string, input: SetActiveVersion): Promise<void> {
+    return this.active.move(userId, input);
   }
 }
 
@@ -285,6 +294,24 @@ describe('ResumeUploadsService.createVersion', () => {
       aiProfileStatus: 'queued',
       applicationsCount: 0,
     });
+  });
+
+  it('makes the created version active for a user with none and keeps an active version of a user who has one', async () => {
+    const { storage, repository, service } = await serviceWithStorage();
+    storage.objects.set(PDF_KEY, { bytes: PDF_BYTES, mime: PDF });
+    storage.objects.set(`pending/users/${BOHDAN_ID}/resumes/${UPLOAD_ID}.pdf`, {
+      bytes: PDF_BYTES,
+      mime: PDF,
+    });
+    repository.active.set(OLENA_ID, OTHER_VERSION_ID);
+
+    await service.createVersion(OLENA_ID, VERSION_INPUT);
+    await service.createVersion(BOHDAN_ID, VERSION_INPUT);
+
+    expect([...repository.active]).toEqual([
+      [BOHDAN_ID, RESUME_VERSION_ID],
+      [OLENA_ID, OTHER_VERSION_ID],
+    ]);
   });
 
   it('answers 409 when the file was written again after the check and inserts nothing', async () => {

@@ -45,6 +45,8 @@ const NEVER_UPLOADED_ID = '6f1c2b9e-3d4a-4f5b-8c6d-7e8f9a0b1c2d';
 
 const MALFORMED_ID = 'not-a-uuid';
 
+const LINKED_REFUSAL = [409, 'The version is linked to applications; archive it instead'];
+
 const MALFORMED_REQUESTS: { case: string; route: (applicationId: string) => Route; at: string }[] =
   [
     {
@@ -308,10 +310,7 @@ describe('the resume versions of a user', () => {
       path: resumeVersionPath(unlinked.version.id),
     });
 
-    expect(statusAndDetail(refused)).toEqual([
-      409,
-      'The version is linked to applications; archive it instead',
-    ]);
+    expect(statusAndDetail(refused)).toEqual(LINKED_REFUSAL);
     expect(errorResponseSchema.parse(refused.body).type).toBe('conflict');
     expect(deleted.status).toBe(204);
     expect(
@@ -406,6 +405,33 @@ describe('the resume versions of a user', () => {
       [2, 0, 'queued'],
       [1, 1, 'queued'],
     ]);
+  });
+
+  it('counts no draft in applicationsCount and answers 409 to deleting a version linked only to a draft', async () => {
+    const owner = await signedUp();
+    const [first, second] = await twoVersions(owner);
+    await activate(owner, first.version.id);
+    await newApplication(owner);
+    const firstDraft = await newApplication(owner, 'Ромашка Лаб');
+    await activate(owner, second.version.id);
+    const secondDraft = await newApplication(owner, 'Ромашка Плюс');
+    await testApp.prisma.application.updateMany({
+      where: { id: { in: [firstDraft.id, secondDraft.id] } },
+      data: { isDraft: true },
+    });
+
+    const listed = await call(owner.accessToken, { method: 'get', path: RESUME_VERSIONS_PATH });
+    const refused = await call(owner.accessToken, {
+      method: 'delete',
+      path: resumeVersionPath(second.version.id),
+    });
+
+    const { items } = resumeVersionListResponseSchema.parse(listed.body);
+    expect(items.map(({ number, applicationsCount }) => [number, applicationsCount])).toEqual([
+      [2, 0],
+      [1, 1],
+    ]);
+    expect(statusAndDetail(refused)).toEqual(LINKED_REFUSAL);
   });
 
   it("lists BOHDAN only his own versions while OLENA's exist", async () => {

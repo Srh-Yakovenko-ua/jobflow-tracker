@@ -38,6 +38,8 @@ const TITLE_ERROR = 'Назва потрібна, до 120 символів';
 
 const PREVIEW_FAILED = 'Не вдалося завантажити';
 
+const POPUP_BLOCKED = 'Браузер не дав відкрити вкладку';
+
 const CURRENT = 'CV v1 · акцент на продукті';
 
 const PREVIEW = { name: `Відкрити PDF: ${CURRENT}` } as const;
@@ -243,5 +245,15 @@ describe('VersionActions', () => {
     expect(await screen.findByText(PREVIEW_FAILED)).toBeDefined();
     expect(tab.close).toHaveBeenCalledOnce();
     expect(tab.location.assign).not.toHaveBeenCalled();
+  });
+
+  it('a blocked tab asks to allow pop-ups and asks for no signed link', async () => {
+    vi.stubGlobal('open', () => null);
+    const { user, routes } = await renderVersions({ items: [buildResumeVersion()] });
+
+    await user.click(screen.getByRole('button', PREVIEW));
+
+    expect(await screen.findByText(POPUP_BLOCKED)).toBeDefined();
+    expect(routes.sent.downloaded).toEqual([]);
   });
 });

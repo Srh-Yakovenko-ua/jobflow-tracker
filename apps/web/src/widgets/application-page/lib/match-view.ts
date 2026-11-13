@@ -21,6 +21,7 @@ export type MatchViewInput = Readonly<{
   response: ApplicationMatchResponse;
   relinkedTo: ResumeVersion['id'] | null;
   versionProfileStatus: ResumeProfileStatus | undefined;
+  isDraft: ApplicationResponse['isDraft'];
 }>;
 
 const NO_CV: MatchView = { kind: 'no_cv' };
@@ -58,6 +59,6 @@ export function matchViewOf(input: MatchViewInput): MatchView {
   if (isRunning(job)) return { kind: 'pending', job };
   if (match?.resumeVersion.id === resumeVersionId) return { kind: 'scored', match };
   if (job?.status === 'failed') return FAILED;
-  if (job === null && awaitsJob(input)) return PLACEHOLDER;
+  if (job === null && !input.isDraft && awaitsJob(input)) return PLACEHOLDER;
   return UNSCORED;
 }

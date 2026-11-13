@@ -149,6 +149,17 @@ describe('ResumeProfileQueueService.enqueue', () => {
     expect([...ai.jobs]).toEqual(failedWith('needs_text'));
   });
 
+  it('fails the job as needs_text and queues nothing when a scan has no pages', async () => {
+    const { queue, service, documents, ai } = await serviceWith();
+    documents.answer = () => Promise.resolve({ ...SCAN_EXTRACTION, pages: [], pageCount: 0 });
+
+    await service.enqueue(eventWith());
+
+    expect(queue.jobs).toEqual([]);
+    expect([...ai.jobs]).toEqual(failedWith('needs_text'));
+    expect(log.lines.join('')).not.toContain('resume profile queued');
+  });
+
   it('saves and sends the text without the NUL characters Postgres refuses', async () => {
     const { queue, service, versions, documents } = await serviceWith();
     documents.answer = () => Promise.resolve({ ...TEXT_EXTRACTION, text: 'React\u0000 Jest' });

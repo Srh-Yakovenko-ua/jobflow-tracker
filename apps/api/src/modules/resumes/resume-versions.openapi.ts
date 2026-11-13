@@ -87,7 +87,7 @@ export const RESUME_VERSIONS_OPENAPI_PATHS: RouteConfig[] = [
     tags: TAGS,
     summary: 'List the resume versions of the signed-in user',
     description:
-      'Every version, archived ones included, highest number first, with its AI profile status (needs_text when the file holds no readable resume text) and the count of Applications linked to it.',
+      'Every version, archived ones included, highest number first, with its AI profile status (needs_text when the file holds no readable resume text, failed when the profile is gone and no job will rebuild it) and the count of Applications linked to it; drafts are not counted.',
     responses: {
       200: {
         description: 'The resume versions',
@@ -102,7 +102,7 @@ export const RESUME_VERSIONS_OPENAPI_PATHS: RouteConfig[] = [
     tags: TAGS,
     summary: 'Create a resume version from a confirmed upload',
     description:
-      "Checks the pending upload again and copies it to the version's own key only while it is still the file checked; a file written again since answers 409. The first version creates the user's resume, each next one takes the next number, and one upload makes one version: a second create from it answers 409. A resume_parse AI job and a resume.version_uploaded event are written in the same transaction; the worker extracts the text and builds the AI skills profile, so the version starts with aiProfileStatus queued.",
+      "Checks the pending upload again and copies it to the version's own key only while it is still the file checked; a file written again since answers 409. The first version creates the user's resume, each next one takes the next number, and one upload makes one version: a second create from it answers 409. The first version becomes the active one when the user has none. A resume_parse AI job and a resume.version_uploaded event are written in the same transaction; the worker extracts the text and builds the AI skills profile, so the version starts with aiProfileStatus queued.",
     request: {
       headers: idempotencyHeaders,
       body: {

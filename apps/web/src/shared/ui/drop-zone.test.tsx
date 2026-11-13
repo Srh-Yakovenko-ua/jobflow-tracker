@@ -2,7 +2,7 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 
-import { DropZone } from './drop-zone';
+import { DropZone, type DropZonePicker } from './drop-zone';
 
 const PICKER = { label: 'Обрати файл', accept: '.pdf,application/pdf' } as const;
 
@@ -10,16 +10,16 @@ const RESUME = new File(['%PDF-1.7'], 'andrii_cv.pdf', { type: 'application/pdf'
 
 const SECOND = new File(['%PDF-1.7'], 'andrii_cv_v2.pdf', { type: 'application/pdf' });
 
-function renderZone() {
+function renderZone(picker: DropZonePicker = PICKER) {
   const onFile = vi.fn<(file: File) => void>();
   render(
-    <DropZone picker={PICKER} onFile={onFile}>
+    <DropZone picker={picker} onFile={onFile}>
       <p>Перетягни PDF або DOCX сюди</p>
     </DropZone>,
   );
   const zone = screen.getByText('Перетягни PDF або DOCX сюди').parentElement;
   if (zone === null) throw new Error('the drop zone has no box');
-  return { onFile, zone, picker: screen.getByLabelText(PICKER.label) };
+  return { onFile, zone, picker: screen.getByLabelText<HTMLInputElement>(PICKER.label) };
 }
 
 function fileDrag(files: readonly File[]) {
@@ -85,5 +85,18 @@ describe('DropZone', () => {
 
     expect(zone.hasAttribute('data-dragging')).toBe(false);
     expect(onFile).not.toHaveBeenCalled();
+  });
+
+  it('a disabled zone takes no drop, stays unlit and disables the picker', () => {
+    const { onFile, zone, picker } = renderZone({ ...PICKER, disabled: true });
+
+    fireEvent.dragEnter(zone, fileDrag([RESUME]));
+    const lit = zone.hasAttribute('data-dragging');
+    fireEvent.drop(zone, fileDrag([RESUME]));
+
+    expect(lit).toBe(false);
+    expect(onFile).toHaveBeenCalledTimes(0);
+    expect(picker.disabled).toBe(true);
+    expect(picker.closest('label')?.getAttribute('aria-disabled')).toBe('true');
   });
 });

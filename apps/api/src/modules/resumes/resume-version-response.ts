@@ -8,6 +8,9 @@ function profileStatusOf({ aiProfile, aiJobs: [latest] }: ResumeVersionRow): Res
   if (aiProfile !== null) {
     return 'done';
   }
+  if (latest?.status === 'done') {
+    return 'failed';
+  }
   const needsText = latest?.status === 'failed' && latest.errorType === AI_JOB_FAILURES.needsText;
   return needsText ? AI_JOB_FAILURES.needsText : (latest?.status ?? 'queued');
 }

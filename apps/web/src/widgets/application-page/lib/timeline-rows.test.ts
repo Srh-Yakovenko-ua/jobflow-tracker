@@ -18,6 +18,8 @@ const AT = '2026-09-01T10:00:00Z';
 
 const RING = { kind: 'ring' } as const;
 
+const UPLOADED_BEFORE = '2026-08-09T09:30:00.000Z';
+
 function looksOf(items: readonly TimelineItem[]) {
   const rows = timelineRowsOf({ items, application: DESIGN_TIMELINE_APPLICATION });
   return rows.map(({ title, meta, marker, tone }: TimelineRow) => ({ title, meta, marker, tone }));
@@ -90,7 +92,7 @@ describe('timelineRowsOf', () => {
     const rows = timelineRowsOf({
       items: DESIGN_TIMELINE.items,
       application: DESIGN_TIMELINE_APPLICATION,
-      linkedVersion: { number: 2 },
+      linkedVersion: { number: 2, uploadedAt: UPLOADED_BEFORE },
     });
 
     expect(rows.map(({ title }) => title)).toContain('відгук надіслано · CV v2');
@@ -106,10 +108,21 @@ describe('timelineRowsOf', () => {
     const rows = timelineRowsOf({
       items: [attached, ...DESIGN_TIMELINE.items],
       application: DESIGN_TIMELINE_APPLICATION,
-      linkedVersion: { number: 3 },
+      linkedVersion: { number: 3, uploadedAt: UPLOADED_BEFORE },
     });
 
     expect(rows.map(({ title }) => title)).toContain('відгук надіслано');
+  });
+
+  it('the applied row names no CV when the linked version was uploaded after the application was made', () => {
+    const rows = timelineRowsOf({
+      items: DESIGN_TIMELINE.items,
+      application: DESIGN_TIMELINE_APPLICATION,
+      linkedVersion: { number: 3, uploadedAt: '2026-09-01T09:00:00.000Z' },
+    });
+
+    expect(rows.map(({ title }) => title)).toContain('відгук надіслано');
+    expect(rows.filter(({ title }) => title.includes('CV v'))).toEqual([]);
   });
 
   it('each row keeps the id and the time of its item', () => {

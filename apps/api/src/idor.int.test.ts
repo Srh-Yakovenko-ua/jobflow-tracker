@@ -321,7 +321,7 @@ describe("another user's data", () => {
       expect(await stored()).toEqual([
         { title: 'для продуктових', note: null, isArchived: false },
         { activeResumeVersionId: version.id },
-        { activeResumeVersionId: null },
+        { activeResumeVersionId: bohdanUpload.version.id },
         { resumeVersionId: null },
         { resumeVersionId: null },
       ]);

@@ -86,9 +86,13 @@ export function ResumeUpload({ view, picker }: ResumeUploadProps) {
   return (
     <div className={cn('flex min-w-0 flex-col gap-3', view.size === 'full' && 'w-full')}>
       <DropZone
-        picker={{ label: COPY.upload.pick, accept: ACCEPT, inputRef: picker.inputRef }}
+        picker={{
+          label: COPY.upload.pick,
+          accept: ACCEPT,
+          inputRef: picker.inputRef,
+          disabled: upload.pending,
+        }}
         onFile={(file) => {
-          if (upload.pending) return;
           upload.reset();
           choice.choose(file);
         }}
