@@ -1,5 +1,6 @@
 import pytest
 
+from app.core.auth import READ_SCOPE
 from app.core.enums import (
     STAGE_ROLES,
     DomainEnums,
@@ -30,6 +31,10 @@ def test_reads_the_reason_taxonomy_with_its_camel_case_keys() -> None:
         "Skills gap",
         1,
     )
+
+
+def test_the_read_scope_is_a_token_scope_exported_by_the_shared_package() -> None:
+    assert READ_SCOPE in load_domain_enums().token_scopes
 
 
 def test_refuses_a_stage_in_enums_json_that_has_no_role() -> None:

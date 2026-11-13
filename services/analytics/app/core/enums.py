@@ -44,6 +44,7 @@ class DomainEnums(EnumsModel):
     work_modes: tuple[str, ...]
     rejection_sides: tuple[str, ...]
     rejection_reasons: tuple[RejectionReason, ...]
+    token_scopes: tuple[str, ...]
 
 
 class UnhandledStageError(ValueError):

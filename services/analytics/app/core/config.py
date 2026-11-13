@@ -6,6 +6,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 POSTGRES_SCHEME = "postgresql://"
 ASYNCPG_SCHEME = "postgresql+asyncpg://"
+JWKS_PATH = "/.well-known/jwks.json"
 
 
 @dataclass(frozen=True)
@@ -29,6 +30,8 @@ class Settings(BaseSettings):
 
     database_url_analytics: str
     redis_url: str
+    api_url: str
+    web_origin: str
     log_level: str = "INFO"
 
     @field_validator("database_url_analytics")
@@ -43,3 +46,7 @@ class Settings(BaseSettings):
         return ASYNCPG_SCHEME + self.database_url_analytics.removeprefix(
             POSTGRES_SCHEME
         )
+
+    @property
+    def jwks_url(self) -> str:
+        return self.api_url.rstrip("/") + JWKS_PATH

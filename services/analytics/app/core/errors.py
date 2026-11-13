@@ -6,7 +6,11 @@ from starlette.exceptions import HTTPException
 
 from app.core.request_id import request_id_from
 
-PROBLEM_TYPES: dict[int, tuple[str, str]] = {
+type Problem = tuple[str, str]
+
+PROBLEM_TYPES: dict[int, Problem] = {
+    401: ("unauthorized", "Unauthorized"),
+    403: ("forbidden", "Forbidden"),
     404: ("not_found", "Not found"),
     405: ("method_not_allowed", "Method not allowed"),
     422: ("validation_error", "Invalid request"),
@@ -14,7 +18,11 @@ PROBLEM_TYPES: dict[int, tuple[str, str]] = {
     503: ("not_ready", "Service not ready"),
 }
 
+TOKEN_EXPIRED: Problem = ("token_expired", "Token expired")
+
 INTERNAL_STATUS = 500
+UNAUTHORIZED_STATUS = 401
+BEARER_CHALLENGE = {"WWW-Authenticate": "Bearer"}
 
 type FieldErrors = list[dict[str, str]]
 
@@ -26,11 +34,13 @@ class ServiceError(Exception):
         *,
         detail: str | None = None,
         errors: FieldErrors | None = None,
+        problem: Problem | None = None,
     ) -> None:
         super().__init__(status)
         self.status = status if status in PROBLEM_TYPES else INTERNAL_STATUS
         self.detail = detail
         self.errors = errors
+        self.problem = problem
 
 
 def field_errors(error: RequestValidationError) -> FieldErrors:
@@ -56,7 +66,7 @@ def to_service_error(error: Exception) -> ServiceError:
 
 
 def problem(error: ServiceError, request_id: str) -> dict[str, object]:
-    error_type, title = PROBLEM_TYPES[error.status]
+    error_type, title = error.problem or PROBLEM_TYPES[error.status]
     extras = {"detail": error.detail, "errors": error.errors}
     return {
         "type": error_type,
@@ -71,8 +81,11 @@ async def respond_with_problem(request: Request, error: Exception) -> JSONRespon
     service_error = to_service_error(error)
     request_id = request_id_from(request)
     logger.info("request failed", status=service_error.status, requestId=request_id)
+    challenged = service_error.status == UNAUTHORIZED_STATUS
     return JSONResponse(
-        problem(service_error, request_id), status_code=service_error.status
+        problem(service_error, request_id),
+        status_code=service_error.status,
+        headers=BEARER_CHALLENGE if challenged else None,
     )
 
 

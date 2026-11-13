@@ -12,7 +12,9 @@ def required_env(monkeypatch: pytest.MonkeyPatch) -> pytest.MonkeyPatch:
     return monkeypatch
 
 
-@pytest.mark.parametrize("missing", ["DATABASE_URL_ANALYTICS", "REDIS_URL"])
+@pytest.mark.parametrize(
+    "missing", ["DATABASE_URL_ANALYTICS", "REDIS_URL", "API_URL", "WEB_ORIGIN"]
+)
 def test_refuses_to_boot_without_a_required_url(
     required_env: pytest.MonkeyPatch, missing: str
 ) -> None:
@@ -40,3 +42,9 @@ def test_swaps_in_the_asyncpg_driver_and_keeps_the_rest_of_the_url(
         "postgresql://jobflow_analytics:test@db:5432/jobflow",
         "postgresql+asyncpg://jobflow_analytics:test@db:5432/jobflow",
     )
+
+
+def test_derives_the_jwks_url_from_the_api_url_without_its_trailing_slash(
+    required_env: pytest.MonkeyPatch,
+) -> None:
+    assert Settings(_env_file=None).jwks_url == "http://api:4000/.well-known/jwks.json"

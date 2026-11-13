@@ -1,31 +1,50 @@
+import json
 import socket
+import threading
+import time
 from collections.abc import Iterator
 from contextlib import contextmanager
-from uuid import UUID
+from dataclasses import dataclass, field
+from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+from typing import Any
+from uuid import UUID, uuid4
 
-from fastapi import FastAPI
+import jwt
+from cryptography.hazmat.primitives.asymmetric import rsa
+from fastapi import APIRouter, FastAPI
 from fastapi.testclient import TestClient
+from jwt.algorithms import RSAAlgorithm
 
+from app.core.auth import CurrentUserId, KeySource, get_key_source
 from app.core.config import Settings
+from app.factory import create_app
 
 REQUIRED_ENV = {
     "DATABASE_URL_ANALYTICS": "postgresql://jobflow_analytics:test@db:5432/jobflow",
     "REDIS_URL": "redis://cache:6379",
+    "API_URL": "http://api:4000/",
+    "WEB_ORIGIN": "http://localhost:3000",
 }
 
 UNUSED_PORT = 9
+WEB_ORIGIN = REQUIRED_ENV["WEB_ORIGIN"]
 
 USER_ID = UUID("0196f0a1-7c2e-7b3d-8a41-5e6f7a8b9c0d")
 SEARCH_ID = UUID("0196f0a1-7c2e-7b3d-8a41-5e6f7a8b9c1e")
 
 
 def settings_for(
-    *, postgres_port: int = UNUSED_PORT, redis_port: int = UNUSED_PORT
+    *,
+    postgres_port: int = UNUSED_PORT,
+    redis_port: int = UNUSED_PORT,
+    api_port: int = UNUSED_PORT,
 ) -> Settings:
     return Settings(
         _env_file=None,
         database_url_analytics=f"postgresql://jobflow_analytics:test@127.0.0.1:{postgres_port}/jobflow",
         redis_url=f"redis://127.0.0.1:{redis_port}",
+        api_url=f"http://127.0.0.1:{api_port}",
+        web_origin=WEB_ORIGIN,
     )
 
 
@@ -45,3 +64,125 @@ def closed_port() -> int:
 def silent_listener() -> Iterator[int]:
     with socket.create_server(("127.0.0.1", 0), backlog=8) as listener:
         yield listener.getsockname()[1]
+
+
+REQUEST_ID = "0d6f3a2b-7c41-4e8a-9b15-2f6c8d4e1a73"
+TOKEN_LIFETIME_SECONDS = 900
+
+
+def problem_body(
+    status: int,
+    *,
+    type: str,
+    title: str,
+    detail: str | None = None,
+    request_id: str = REQUEST_ID,
+) -> dict[str, Any]:
+    described = {} if detail is None else {"detail": detail}
+    return (
+        {"type": type, "title": title, "status": status}
+        | described
+        | {"requestId": request_id}
+    )
+
+
+UNAUTHORIZED_BODY = problem_body(401, type="unauthorized", title="Unauthorized")
+EXPIRED_BODY = problem_body(401, type="token_expired", title="Token expired")
+
+
+@dataclass(frozen=True)
+class TokenSigner:
+    kid: str
+    key: rsa.RSAPrivateKey = field(
+        default_factory=lambda: rsa.generate_private_key(65537, 2048)
+    )
+
+    def jwk(self) -> dict[str, Any]:
+        public = RSAAlgorithm.to_jwk(self.key.public_key(), as_dict=True)
+        return {**public, "kid": self.kid, "alg": "RS256", "use": "sig"}
+
+    def get_signing_key_from_jwt(self, token: str) -> jwt.PyJWK:
+        return jwt.PyJWK(self.jwk())
+
+    def user_token(self, **claims: Any) -> str:
+        issued = int(time.time())
+        payload = {
+            "sub": str(USER_ID),
+            "jti": str(uuid4()),
+            "scope": "user analytics:read",
+            "iat": issued,
+            "exp": issued + TOKEN_LIFETIME_SECONDS,
+        }
+        headers = {"kid": self.kid}
+        return jwt.encode(payload | claims, self.key, "RS256", headers=headers)
+
+    def expired_token(self) -> str:
+        issued = int(time.time()) - 2 * TOKEN_LIFETIME_SECONDS
+        return self.user_token(iat=issued, exp=issued + TOKEN_LIFETIME_SECONDS)
+
+
+SIGNER = TokenSigner(kid="analytics-test-key-a")
+ROTATED_SIGNER = TokenSigner(kid="analytics-test-key-b")
+
+
+def bearer(token: str) -> dict[str, str]:
+    return {"authorization": f"Bearer {token}", "x-request-id": REQUEST_ID}
+
+
+def with_payload_of(token: str, donor: str) -> str:
+    header, _, signature = token.split(".")
+    return ".".join([header, donor.split(".")[1], signature])
+
+
+probe = APIRouter()
+
+
+@probe.get("/probe/me")
+def probe_me(user_id: CurrentUserId) -> dict[str, str]:
+    return {"userId": str(user_id)}
+
+
+def with_probe(app: FastAPI) -> FastAPI:
+    app.include_router(probe)
+    return app
+
+
+def auth_app(key_source: KeySource = SIGNER) -> FastAPI:
+    app = with_probe(create_app(settings_for()))
+    app.dependency_overrides[get_key_source] = lambda: key_source
+    return app
+
+
+@dataclass
+class JwksServer:
+    signers: list[TokenSigner]
+    hits: int = 0
+    port: int = UNUSED_PORT
+
+    def key_set(self) -> bytes:
+        self.hits += 1
+        return json.dumps({"keys": [signer.jwk() for signer in self.signers]}).encode()
+
+
+@contextmanager
+def jwks_server(signers: list[TokenSigner]) -> Iterator[JwksServer]:
+    state = JwksServer(signers)
+
+    class KeySetHandler(BaseHTTPRequestHandler):
+        def do_GET(self) -> None:
+            body = state.key_set()
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json")
+            self.end_headers()
+            self.wfile.write(body)
+
+        def log_message(self, *_: Any) -> None:
+            return
+
+    with ThreadingHTTPServer(("127.0.0.1", 0), KeySetHandler) as server:
+        state.port = server.server_address[1]
+        threading.Thread(target=server.serve_forever, daemon=True).start()
+        try:
+            yield state
+        finally:
+            server.shutdown()

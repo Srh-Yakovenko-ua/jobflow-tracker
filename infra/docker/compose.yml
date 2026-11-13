@@ -161,6 +161,8 @@ services:
     environment:
       DATABASE_URL_ANALYTICS: postgresql://jobflow_analytics:${POSTGRES_ANALYTICS_PASSWORD:-jobflow_analytics}@postgres:5432/jobflow
       REDIS_URL: redis://redis:6379
+      API_URL: http://api:4000
+      WEB_ORIGIN: ${WEB_ORIGIN:-http://localhost:3000}
     ports:
       - '127.0.0.1:8000:8000'
     depends_on:

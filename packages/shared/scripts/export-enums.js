@@ -9,6 +9,7 @@ import {
   STAGES,
   TERMINAL_STAGES,
   THRESHOLDS,
+  TOKEN_SCOPES,
   WORK_MODES,
 } from '../dist/index.js';
 
@@ -26,6 +27,7 @@ const enums = {
   rejectionSides: REJECTION_SIDES,
   rejectionReasons,
   thresholds: THRESHOLDS,
+  tokenScopes: TOKEN_SCOPES,
 };
 
 writeFileSync(

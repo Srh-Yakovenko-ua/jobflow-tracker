@@ -3,13 +3,15 @@ from contextlib import asynccontextmanager
 from functools import partial
 
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.routes import health
+from app.core.auth import key_source_for
 from app.core.config import Settings
 from app.core.enums import check_stages, load_domain_enums
 from app.core.errors import install_error_handlers
 from app.core.logging import configure_logging
-from app.core.request_id import RequestIdMiddleware
+from app.core.request_id import REQUEST_ID_HEADER, RequestIdMiddleware
 from app.core.resources import create_engine, create_redis
 from app.repositories.health import select_one
 from app.services.readiness import ReadinessService
@@ -31,7 +33,16 @@ def create_app(settings: Settings) -> FastAPI:
     app.state.readiness = ReadinessService(
         {"postgres": partial(select_one, engine), "redis": redis.ping}
     )
+    app.state.key_source = key_source_for(settings)
     install_error_handlers(app)
     app.add_middleware(RequestIdMiddleware)
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=[settings.web_origin],
+        allow_credentials=False,
+        allow_methods=["GET"],
+        allow_headers=["Authorization"],
+        expose_headers=[REQUEST_ID_HEADER, "Retry-After"],
+    )
     app.include_router(health.router)
     return app
