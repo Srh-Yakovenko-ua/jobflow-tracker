@@ -61,6 +61,7 @@ def test_lists_the_health_and_metric_paths_in_the_openapi_schema(
     assert sorted(paths) == [
         "/analytics/forecast",
         "/analytics/funnel",
+        "/analytics/insights",
         "/analytics/norms",
         "/analytics/reasons",
         "/analytics/reasons/summary",
