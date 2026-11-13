@@ -1,6 +1,7 @@
 import type { Theme } from '@jobflow/shared';
 
 import { add } from './add';
+import { analytics } from './analytics';
 import { application } from './application';
 import { applicationPage } from './application-page';
 import { applicationsTable } from './applications-table';
@@ -74,6 +75,7 @@ export const uk = {
   calendarPage,
   resumes,
   settings,
+  analytics,
   designSystem: {
     pageTitle: 'Дизайн-система',
     typography: {

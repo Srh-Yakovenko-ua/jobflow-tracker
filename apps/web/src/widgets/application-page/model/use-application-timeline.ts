@@ -1,23 +1,15 @@
-import { type ApplicationResponse, DEFAULT_SILENCE_DAYS } from '@jobflow/shared';
+import type { ApplicationResponse } from '@jobflow/shared';
 import { useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
 
 import { timelineQueryOptions } from '@/entities/application';
 import { notesQueryOptions } from '@/entities/note';
-import { meQueryOptions, useUserTimeZone } from '@/entities/user';
+import { useSilenceDays, useUserTimeZone } from '@/entities/user';
 
 import { timelineRowsOf } from '../lib/timeline-rows';
 import { waitingRowOf } from '../lib/waiting-row';
 import { sectionLoadOf } from './section-load';
 import { useLinkedVersion } from './use-linked-version';
-
-function useSilenceDays(): number {
-  const { data = DEFAULT_SILENCE_DAYS } = useQuery({
-    ...meQueryOptions(),
-    select: (me) => me.settings.silenceDays,
-  });
-  return data;
-}
 
 export function useApplicationTimeline(application: ApplicationResponse) {
   const timeline = useQuery(timelineQueryOptions(application.id));

@@ -1,7 +1,7 @@
 'use client';
 
 import { Select as SelectPrimitive } from 'radix-ui';
-import { useRef } from 'react';
+import { useRef, useState } from 'react';
 
 import { uk } from '@/shared/i18n';
 import { cn } from '@/shared/lib/cn';
@@ -103,6 +103,7 @@ function SelectMenu({ groups, value, labelledBy }: SelectMenuProps) {
 export function Select({ groups, value, onValueChange, view = {} }: SelectProps) {
   const field = useField();
   const triggerRef = useRef<HTMLButtonElement>(null);
+  const [open, setOpen] = useState(false);
   const loading = view.status === 'loading';
   const clearable = Boolean(view.clearable) && value !== '';
   return (
@@ -110,7 +111,10 @@ export function Select({ groups, value, onValueChange, view = {} }: SelectProps)
       value={value}
       onValueChange={onValueChange}
       disabled={view.status === 'disabled'}
-      {...(loading && { open: false })}
+      open={open && !loading}
+      onOpenChange={(next) => {
+        setOpen(next && !loading);
+      }}
     >
       <div className="relative">
         <SelectPrimitive.Trigger

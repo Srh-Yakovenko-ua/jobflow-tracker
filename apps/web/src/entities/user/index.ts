@@ -5,5 +5,6 @@ export { initialsOf } from './lib/initials';
 export { recentApplicationsKeyOf } from './lib/recent-applications-key';
 export { userKeys } from './model/keys';
 export { type Session, useSession } from './model/use-session';
+export { useSilenceDays } from './model/use-silence-days';
 export { useSingleKeyShortcuts } from './model/use-single-key-shortcuts';
 export { useSettledTimeZone, useUserTimeZone } from './model/use-user-time-zone';

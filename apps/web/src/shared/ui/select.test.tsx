@@ -5,7 +5,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { uk } from '@/shared/i18n';
 
 import { Field } from './field';
-import { Select, type SelectProps } from './select';
+import { Select, type SelectProps, type SelectView } from './select';
 import { SOURCE_OPTIONS } from './source-options';
 
 const COPY = uk.devUi.selects.source;
@@ -113,6 +113,27 @@ describe('Select', () => {
 
     expect(screen.queryByRole('listbox')).toBeNull();
     expect(trigger.getAttribute('aria-busy')).toBe('true');
+  });
+
+  it('a select that finishes loading stays controlled and opens on Enter', async () => {
+    const user = userEvent.setup();
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+    const select = (view: SelectView) => (
+      <Field label={COPY.label}>
+        <Select groups={SOURCE_GROUPS} value="" onValueChange={vi.fn()} view={view} />
+      </Field>
+    );
+    const { rerender } = render(select({ status: 'loading' }));
+    await user.tab();
+    await user.keyboard('{Enter}');
+
+    rerender(select({}));
+    expect(screen.queryByRole('listbox')).toBeNull();
+    await user.keyboard('{Enter}');
+
+    expect(await screen.findByRole('listbox')).toBeDefined();
+    expect(warn).not.toHaveBeenCalledWith(expect.stringContaining('controlled'));
+    warn.mockRestore();
   });
 
   it('a disabled select refuses a click', async () => {

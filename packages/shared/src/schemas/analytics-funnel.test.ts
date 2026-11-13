@@ -1,91 +1,10 @@
 import { describe, expect, it } from 'vitest';
 
+import { buildDesignFunnel } from '../../testing/index.js';
 import { issuePathsOf } from '../test/zod-issues.js';
-import {
-  funnelQuerySchema,
-  type FunnelResponse,
-  funnelResponseSchema,
-} from './analytics-funnel.js';
+import { funnelQuerySchema, funnelResponseSchema } from './analytics-funnel.js';
 
-const DESIGN_FUNNEL = {
-  stages: [
-    {
-      stage: 'applied',
-      reached: 54,
-      passed: 17,
-      conversion: {
-        status: 'ok',
-        value: 0.425,
-        low: 0.28509392559950375,
-        high: 0.5780493145800892,
-        successes: 17,
-        trials: 40,
-      },
-      dropOff: { rejected: 21, ghosted: 14, withdrawn: 2 },
-    },
-    {
-      stage: 'screening',
-      reached: 17,
-      passed: 9,
-      conversion: {
-        status: 'ok',
-        value: 0.6,
-        low: 0.3574683012062461,
-        high: 0.8017550385865843,
-        successes: 9,
-        trials: 15,
-      },
-      dropOff: { rejected: 5, ghosted: 2, withdrawn: 1 },
-    },
-    {
-      stage: 'tech_interview',
-      reached: 9,
-      passed: 4,
-      conversion: {
-        status: 'ok',
-        value: 0.5,
-        low: 0.21521606221387765,
-        high: 0.7847839377861223,
-        successes: 4,
-        trials: 8,
-      },
-      dropOff: { rejected: 4, ghosted: 1, withdrawn: 0 },
-    },
-    {
-      stage: 'final',
-      reached: 4,
-      passed: 1,
-      conversion: {
-        status: 'insufficient_data',
-        have: 4,
-        need: 1,
-        message: 'Ще 1 відгук до першого висновку',
-      },
-      dropOff: { rejected: 2, ghosted: 0, withdrawn: 1 },
-    },
-    {
-      stage: 'offer',
-      reached: 1,
-      passed: null,
-      conversion: null,
-      dropOff: { rejected: 0, ghosted: 0, withdrawn: 0 },
-    },
-  ],
-  kpis: {
-    sent: { total: 54, thisMonth: 19, previousMonth: 15 },
-    interviews: { total: 9, thisMonth: 5, previousMonth: 3 },
-    offers: { total: 1, thisMonth: 1, previousMonth: 0 },
-    daysInSearch: 84,
-  },
-  mostExpensive: {
-    status: 'ok',
-    stage: 'tech_interview',
-    reached: 9,
-    passed: 4,
-    lost: 5,
-    investedDaysMedian: 17,
-  },
-} as const satisfies FunnelResponse;
+const DESIGN_FUNNEL = buildDesignFunnel();
 
 const [APPLIED] = DESIGN_FUNNEL.stages;
 
@@ -129,7 +48,7 @@ describe('funnelResponseSchema', () => {
       label: 'a conversion above 1',
       body: {
         ...DESIGN_FUNNEL,
-        stages: [{ ...APPLIED, conversion: { ...APPLIED.conversion, high: 1.2 } }],
+        stages: [{ ...APPLIED, conversion: { ...APPLIED?.conversion, high: 1.2 } }],
       },
       path: 'stages.0.conversion.high',
     },

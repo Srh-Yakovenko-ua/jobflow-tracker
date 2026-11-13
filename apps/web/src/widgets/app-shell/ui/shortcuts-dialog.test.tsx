@@ -57,6 +57,7 @@ describe('ShortcutsDialog', () => {
       ['Пошук вакансій', '/'],
       ['Додати вакансію', 'N'],
       ['Відкрити дошку', 'G потім B'],
+      ['Відкрити аналітику', 'G потім A'],
       ['Гарячі клавіші', '?'],
     ]);
     await user.keyboard('{Escape}');
@@ -66,7 +67,7 @@ describe('ShortcutsDialog', () => {
     });
   });
 
-  it('once N, G A and G R ship it lists them too, and names the palette ⌘ K on a Mac', () => {
+  it('once G R ships it lists it too, and names the palette ⌘ K on a Mac', () => {
     vi.spyOn(navigator, 'userAgent', 'get').mockReturnValue(APPLE_AGENT);
     renderInApp(
       <ShortcutsDialog
@@ -146,6 +147,7 @@ describe('with single key shortcuts off', () => {
       ['Пошук вакансій', '/ вимкнено'],
       ['Додати вакансію', 'N вимкнено'],
       ['Відкрити дошку', 'G потім B вимкнено'],
+      ['Відкрити аналітику', 'G потім A вимкнено'],
       ['Гарячі клавіші', '? вимкнено'],
     ]);
     expect(
