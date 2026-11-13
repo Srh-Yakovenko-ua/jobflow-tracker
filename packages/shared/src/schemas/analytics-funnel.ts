@@ -2,11 +2,11 @@ import { z } from 'zod';
 
 import { outcomeStageSchema, stageSchema } from '../stages.js';
 
-const countSchema = z.int().nonnegative();
+export const countSchema = z.int().nonnegative();
 
 const fractionSchema = z.number().min(0).max(1);
 
-const insufficientDataSchema = z.object({
+export const insufficientDataSchema = z.object({
   status: z.literal('insufficient_data'),
   have: countSchema,
   need: z.int().positive(),

@@ -29,7 +29,10 @@ applications = Table(
     *map(text_column, ("source", "current_stage", "work_mode", "currency")),
     *map(integer_column, ("salary_min", "salary_max", "match_score")),
     Column("is_draft", Boolean()),
-    *map(moment_column, ("applied_at", "last_event_at", "deleted_at", "created_at")),
+    *map(
+        moment_column,
+        ("applied_at", "last_event_at", "deleted_at", "created_at", "updated_at"),
+    ),
 )
 
 stage_events = Table(

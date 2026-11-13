@@ -9,6 +9,7 @@ from app.core.enums import (
     check_stages,
     load_domain_enums,
     progress_stages,
+    rejectable_stages,
 )
 
 
@@ -53,6 +54,10 @@ def test_the_funnel_stages_are_the_progress_stages_in_enums_json_order() -> None
         "final",
         "offer",
     )
+
+
+def test_rejections_leave_only_the_stages_whose_transitions_allow_them() -> None:
+    assert rejectable_stages() == ("applied", "screening", "tech_interview", "final")
 
 
 def test_the_ghosted_stage_is_a_stage_exported_by_the_shared_package() -> None:

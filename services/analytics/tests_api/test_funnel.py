@@ -1,4 +1,3 @@
-from dataclasses import dataclass
 from typing import Any
 
 import httpx2
@@ -6,43 +5,17 @@ import pytest
 
 from app.core.config import Settings
 from app.factory import create_app
-from tests.api_client import api_call, register
+from tests.api_client import register
 from tests.factories import bearer, problem_body, uvicorn_serving
-from tests.routes.test_funnel import FUNNEL_PATH, SEARCH_PATHS
+from tests.routes.test_funnel import FUNNEL_PATH, SEARCH_PATH_IDS, SEARCH_PATHS
+from tests_api.conftest import OwnedSearch
 
 pytestmark = pytest.mark.enable_socket
-
-SCREENING_THEN_REJECTED = [
-    {"fromStage": "applied", "toStage": "screening"},
-    {"fromStage": "screening", "toStage": "rejected", "reasonCode": "unspecified"},
-]
 
 SANKEY_LINKS = {
     "no split": ({}, "rejected"),
     "reason split": ({"split": "reason"}, "unspecified"),
 }
-
-
-@dataclass(frozen=True)
-class OwnedSearch:
-    token: str
-    search_id: str
-
-
-@pytest.fixture(scope="module")
-def owned(settings: Settings, registered: Any) -> OwnedSearch:
-    token = registered["accessToken"]
-    searches = api_call(settings, token=token, request=("GET", "/searches", None))
-    active = next(item for item in searches["items"] if item["status"] == "active")
-    created = api_call(
-        settings,
-        token=token,
-        request=("POST", "/applications", {"company": "Acme", "position": "QA"}),
-    )
-    for move in SCREENING_THEN_REJECTED:
-        path = f"/applications/{created['id']}/events"
-        api_call(settings, token=token, request=("POST", path, move))
-    return OwnedSearch(token=token, search_id=str(active["id"]))
 
 
 def funnel_over_http(
@@ -110,14 +83,18 @@ def test_draws_a_rejection_after_screening_as_sankey_links_over_http(
     ]
 
 
-@pytest.mark.parametrize("path", SEARCH_PATHS)
+@pytest.mark.parametrize(("path", "query"), SEARCH_PATHS, ids=SEARCH_PATH_IDS)
 def test_answers_not_found_for_another_users_search(
-    settings: Settings, owned: OwnedSearch, *, path: str
+    settings: Settings, owned: OwnedSearch, *, path: str, query: dict[str, str]
 ) -> None:
     stranger = register(settings)
 
     response = funnel_over_http(
-        settings, token=stranger["accessToken"], search_id=owned.search_id, path=path
+        settings,
+        token=stranger["accessToken"],
+        search_id=owned.search_id,
+        path=path,
+        query=query,
     )
 
     assert (response.status_code, response.json()) == (

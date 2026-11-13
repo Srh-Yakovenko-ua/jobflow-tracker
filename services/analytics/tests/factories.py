@@ -228,6 +228,17 @@ def auth_app(
     return app
 
 
+REFUSED = (422, "validation_error")
+
+
+def refusal(path: str, query: dict[str, str]) -> tuple[tuple[int, str], list[str]]:
+    with serving(auth_app()) as client:
+        response = client.get(path, params=query, headers=bearer(SIGNER.user_token()))
+    body = response.json()
+    fields = [error["path"] for error in body.get("errors", [])]
+    return (response.status_code, body.get("type")), fields
+
+
 SERVER_START_SECONDS = 5.0
 SERVER_POLL_SECONDS = 0.01
 
