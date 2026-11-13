@@ -1,8 +1,4 @@
 import json
-import statistics
-import time
-from collections.abc import Callable, Iterator
-from contextlib import AbstractContextManager, nullcontext
 from typing import Any
 
 import pytest
@@ -11,12 +7,17 @@ from redis import Redis
 from app.core.config import DEPENDENCY_LIMITS, Settings
 from app.factory import create_app
 from tests.api_client import (
+    WARM_CALLS,
     analytics_body,
     analytics_client,
     api_call,
+    fresh_keys,
     rejected_at_screening,
+    timed_answer,
+    warm_calls,
+    with_redis_on,
 )
-from tests.factories import closed_port, silent_listener
+from tests.factories import OUTAGES, Outage
 from tests.routes.test_funnel import SCREENING
 from tests.routes.test_reasons import REASONS_PATH, SUMMARY_PATH
 from tests_api.conftest import OwnedSearch, finished_search
@@ -34,7 +35,6 @@ SKILLS_GAP_AT_SCREENING = {
     "reasons": [{"code": "skills_gap", "count": 1}],
 }
 MARKER_BODY = {"stage": "screening", "total": 99, "reasons": []}
-WARM_CALLS = 5
 TOAST_LIMIT_SECONDS = 0.05
 STAGE_KEYS = [
     "reasons",
@@ -46,18 +46,6 @@ STAGE_KEYS = [
     "trend",
     "unstated",
 ]
-
-REDIS_OUTAGES: dict[str, Callable[[], AbstractContextManager[int]]] = {
-    "refused": lambda: nullcontext(closed_port()),
-    "silent": silent_listener,
-}
-
-
-@pytest.fixture
-def cache(settings: Settings) -> Iterator[Redis]:
-    client = Redis.from_url(settings.redis_url)
-    yield client
-    client.close()
 
 
 def node_summary(settings: Settings, owned: OwnedSearch) -> Any:
@@ -94,10 +82,9 @@ def test_answers_the_stored_summary_while_nothing_changed(
 ) -> None:
     scope = f"screening:{owned.search_id}"
     pattern = f"analytics:{owned.user_id}:reasons-summary:{scope}:*"
-    for stale in cache.scan_iter(match=pattern):
-        cache.delete(stale)
-    summary_over_http(settings, owned)
-    [key] = list(cache.scan_iter(match=pattern))
+    [key] = fresh_keys(
+        cache, pattern=pattern, answer=lambda: summary_over_http(settings, owned)
+    )
     cache.set(key, json.dumps(MARKER_BODY), keepttl=True)
 
     try:
@@ -132,35 +119,29 @@ def test_counts_a_rejection_just_recorded_and_drops_it_once_undone(
 def test_answers_the_toast_summary_within_50_ms_once_cached(
     settings: Settings, owned: OwnedSearch
 ) -> None:
-    timings = []
-    with analytics_client(create_app(settings), token=owned.token) as client:
-        client.get(SUMMARY_PATH, params=SCREENING)
-        for _ in range(WARM_CALLS):
-            started = time.perf_counter()
-            response = client.get(SUMMARY_PATH, params=SCREENING)
-            timings.append(time.perf_counter() - started)
-            assert response.status_code == 200
+    statuses, median = warm_calls(
+        create_app(settings), token=owned.token, query=(SUMMARY_PATH, SCREENING)
+    )
 
-    assert statistics.median(timings) < TOAST_LIMIT_SECONDS
+    assert statuses == [200] * WARM_CALLS
+    assert median < TOAST_LIMIT_SECONDS
 
 
-@pytest.mark.parametrize(
-    "outage", list(REDIS_OUTAGES.values()), ids=list(REDIS_OUTAGES)
-)
+@pytest.mark.parametrize("outage", list(OUTAGES.values()), ids=list(OUTAGES))
 def test_answers_the_summary_from_postgres_when_redis_is_down(
     settings: Settings,
     owned: OwnedSearch,
     *,
-    outage: Callable[[], AbstractContextManager[int]],
+    outage: Outage,
 ) -> None:
     with outage() as port:
-        down = settings.model_copy(update={"redis_url": f"redis://127.0.0.1:{port}"})
-        with analytics_client(create_app(down), token=owned.token) as client:
-            started = time.monotonic()
-            response = client.get(SUMMARY_PATH, params=SCREENING)
-            elapsed = time.monotonic() - started
+        status, body, elapsed = timed_answer(
+            create_app(with_redis_on(settings, port)),
+            token=owned.token,
+            query=(SUMMARY_PATH, SCREENING),
+        )
 
-    assert (response.status_code, response.json()) == (200, UNSPECIFIED_AT_SCREENING)
+    assert (status, body) == (200, UNSPECIFIED_AT_SCREENING)
     assert elapsed < DEPENDENCY_LIMITS.ping + 0.5
 
 

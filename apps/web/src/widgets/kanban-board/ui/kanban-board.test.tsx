@@ -1,9 +1,10 @@
-import { focusManager, type QueryStatus } from '@tanstack/react-query';
+import { focusManager, type QueryKey, type QueryStatus } from '@tanstack/react-query';
 import { act, fireEvent, screen, waitFor, within } from '@testing-library/react';
 import { http } from 'msw/http';
 import { delay } from 'msw/utils/delay';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
+import { analyticsKeys } from '@/entities/analytics';
 import { applicationKeys } from '@/entities/application';
 import { uk } from '@/shared/i18n';
 import { apiUrl, errorReply, OUTAGES } from '@/test/api-handlers';
@@ -16,6 +17,7 @@ import {
   DESIGN_BOARD_HEADINGS,
 } from '@/test/board-fixtures';
 import { push } from '@/test/navigation';
+import { DESIGN_NORMS, normsRoute, UNKNOWN_NORMS } from '@/test/norms-fixtures';
 import { QueryProbe, waitForQuery } from '@/test/query-status';
 import { columnNamed, renderBoard } from '@/test/render-board';
 import { renderInApp } from '@/test/render-in-app';
@@ -37,6 +39,18 @@ const FINAL_ONLY_BOARD: BoardRouteOptions = {
   cards: [cardIn({ serial: 107, stage: 'final', position: 'Lead Frontend Engineer' })],
 };
 
+const FINAL_NORM_BOARD: BoardRouteOptions = {
+  counts: { final: 1 },
+  cards: [
+    {
+      ...cardIn({ serial: 107, stage: 'final', position: 'Lead Frontend Engineer' }),
+      daysInStage: 13,
+    },
+  ],
+};
+
+const NORMS_KEY = analyticsKeys.norms();
+
 const SETTLED_STATE: Record<Exclude<QueryStatus, 'success'>, { role: string; text: string }> = {
   error: { role: 'alert', text: uk.states.errors.loadFailed.title },
   pending: { role: 'status', text: uk.ui.loading },
@@ -49,6 +63,16 @@ function expandFailsRoute() {
     new URL(request.url).searchParams.has('expand')
       ? errorReply({ status: 500, type: 'internal_error' })
       : undefined,
+  );
+}
+
+function renderBoardProbing(queryKey: QueryKey) {
+  server.use(meRoute());
+  renderInApp(
+    <>
+      <KanbanBoard initial={{ density: 'full' }} />
+      <QueryProbe queryKey={queryKey} />
+    </>,
   );
 }
 
@@ -262,18 +286,44 @@ describe('KanbanBoard', () => {
   });
 
   it.each(OUTAGES)('while the board API $name it shows the $settled state', async (outage) => {
-    server.use(meRoute(), http.get(BOARD_URL, outage.reply));
-    renderInApp(
-      <>
-        <KanbanBoard initial={{ density: 'full' }} />
-        <QueryProbe queryKey={BOARD_KEY} />
-      </>,
-    );
+    server.use(http.get(BOARD_URL, outage.reply));
+    renderBoardProbing(BOARD_KEY);
     await waitForQuery({ queryKey: BOARD_KEY, status: outage.settled });
 
     const state = SETTLED_STATE[outage.settled];
     expect(screen.getByText(state.text).closest('[role]')?.getAttribute('role')).toBe(state.role);
   });
+
+  it('a фінал card 13 days on the stage reads its norm from the fetched norms: 13 днів на етапі · норма 17', async () => {
+    server.use(normsRoute(DESIGN_NORMS));
+    renderBoard(FINAL_NORM_BOARD);
+    await screen.findByText('Lead Frontend Engineer');
+
+    const final = within(columnNamed('фінал 1'));
+    expect(await final.findByText('13 днів на етапі · норма 17')).toBeDefined();
+  });
+
+  it('a stage the service has too few data points for shows no norm on its card', async () => {
+    server.use(normsRoute(UNKNOWN_NORMS), boardRoute(FINAL_NORM_BOARD).handler);
+    renderBoardProbing(NORMS_KEY);
+    await waitForQuery({ queryKey: NORMS_KEY, status: 'success' });
+
+    expect(await screen.findByText('Lead Frontend Engineer')).toBeDefined();
+    expect(screen.queryByText(/на етапі/)).toBeNull();
+  });
+
+  it.each(OUTAGES)(
+    'while the norms request $name the board shows its cards with no norm',
+    async (outage) => {
+      server.use(normsRoute(outage.reply), boardRoute(FINAL_NORM_BOARD).handler);
+      renderBoardProbing(NORMS_KEY);
+      await waitForQuery({ queryKey: NORMS_KEY, status: outage.settled });
+
+      expect(await screen.findByText('Lead Frontend Engineer')).toBeDefined();
+      expect(screen.queryByText(/на етапі/)).toBeNull();
+      expect(screen.queryByRole('alert')).toBeNull();
+    },
+  );
 
   it('while the board loads its outcome strips are drawn like the real ones: rounded, ghosted on paper with its ring, the other two raised with none', () => {
     server.use(

@@ -37,6 +37,8 @@ export const ACTIVE_STAGES = [
   'final',
 ] as const satisfies readonly Stage[];
 
+export const activeStageSchema = z.enum(ACTIVE_STAGES);
+
 export type ActiveStage = (typeof ACTIVE_STAGES)[number];
 
 export const INTERVIEW_STAGES = [

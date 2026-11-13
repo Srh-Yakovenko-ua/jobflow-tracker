@@ -11,6 +11,14 @@ from app.repositories.searches import active_search_statement
 from app.repositories.tables import applications
 
 
+def confirmed_of(user_id: UUID) -> list[ColumnElement[bool]]:
+    return [
+        applications.c.user_id == user_id,
+        applications.c.deleted_at.is_(None),
+        applications.c.is_draft.is_(false()),
+    ]
+
+
 def confirmed_in_search(
     *, user_id: UUID, search_id: UUID | None
 ) -> list[ColumnElement[bool]]:
@@ -19,12 +27,7 @@ def confirmed_in_search(
         if search_id is None
         else applications.c.search_id == search_id
     )
-    return [
-        applications.c.user_id == user_id,
-        in_search,
-        applications.c.deleted_at.is_(None),
-        applications.c.is_draft.is_(false()),
-    ]
+    return [*confirmed_of(user_id), in_search]
 
 
 def applications_statement(*, user_id: UUID, search_id: UUID) -> Select[Any]:

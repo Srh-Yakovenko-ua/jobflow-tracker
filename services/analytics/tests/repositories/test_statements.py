@@ -11,8 +11,9 @@ from app.repositories.applications import (
     applications_statement,
     latest_change_statement,
 )
-from app.repositories.events import events_statement
+from app.repositories.events import events_statement, user_events_statement
 from app.repositories.searches import active_search_statement, search_statement
+from app.repositories.timeline import followups_statement
 from tests.factories import SEARCH_ID, USER_ID
 
 type Statement = Callable[..., Select[Any]]
@@ -31,6 +32,7 @@ STATEMENTS = {
     "events": (events_statement, OWNERSHIP_PREDICATES),
     "applications": (applications_statement, OWNERSHIP_PREDICATES),
     "application sources": (application_sources_statement, OWNERSHIP_PREDICATES),
+    "follow-ups": (followups_statement, OWNERSHIP_PREDICATES),
     "search": (search_statement, SEARCH_PREDICATES),
 }
 
@@ -86,3 +88,21 @@ def test_the_latest_change_reads_only_the_users_applications() -> None:
     assert bound == {USER_ID}
     assert "max(applications.updated_at)" in sql
     assert "applications.user_id =" in sql
+
+
+def test_the_user_events_read_every_confirmed_application_of_the_user() -> None:
+    bound, sql = user_wide(user_events_statement(user_id=USER_ID))
+
+    assert bound == {USER_ID}
+    assert [p for p in OWNERSHIP_PREDICATES if p not in sql] == [
+        "applications.search_id ="
+    ]
+    assert "searches" not in sql
+
+
+def test_the_follow_ups_read_only_the_sent_follow_ups_of_the_active_search() -> None:
+    bound, sql = user_wide(followups_statement(user_id=USER_ID, search_id=None))
+
+    assert bound == {USER_ID, "active", "followup_sent"}
+    assert "CAST(timeline_events.kind AS TEXT) =" in sql
+    assert [p for p in ACTIVE_SEARCH_PREDICATES if p not in sql] == []
