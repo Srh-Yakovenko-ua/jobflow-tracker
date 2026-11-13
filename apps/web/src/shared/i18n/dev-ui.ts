@@ -1,3 +1,4 @@
+import { devUiCharts } from './dev-ui-charts';
 import { devUiDomain } from './dev-ui-domain';
 import { devUiStates } from './dev-ui-states';
 
@@ -191,4 +192,5 @@ export const devUi = {
   },
   ...devUiDomain,
   ...devUiStates,
+  ...devUiCharts,
 } as const;

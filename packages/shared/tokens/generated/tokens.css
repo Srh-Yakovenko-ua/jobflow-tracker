@@ -67,6 +67,12 @@
   --rejected: oklch(70% 0.10 34);
   --ghosted: oklch(52% 0.014 78);
   --withdrawn: oklch(66% 0.04 275);
+  --data-1: oklch(48% 0.08 258);
+  --data-2: oklch(58% 0.10 235);
+  --data-3: oklch(68% 0.08 195);
+  --data-4: oklch(76% 0.09 130);
+  --data-5: oklch(83% 0.08 80);
+  --data-6: oklch(89% 0.05 45);
   --elevation-e1: 0 0 #0000;
   --elevation-e2: 0 0 #0000;
   --elevation-e3: 0 0 #0000;
@@ -95,6 +101,12 @@
     --rejected: oklch(70% 0.10 34);
     --ghosted: oklch(52% 0.014 78);
     --withdrawn: oklch(66% 0.04 275);
+    --data-1: oklch(48% 0.08 258);
+    --data-2: oklch(58% 0.10 235);
+    --data-3: oklch(68% 0.08 195);
+    --data-4: oklch(76% 0.09 130);
+    --data-5: oklch(83% 0.08 80);
+    --data-6: oklch(89% 0.05 45);
     --elevation-e1: 0 0 #0000;
     --elevation-e2: 0 0 #0000;
     --elevation-e3: 0 0 #0000;

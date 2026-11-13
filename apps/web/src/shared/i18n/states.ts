@@ -13,6 +13,7 @@ export const states = {
   empty: {
     meter: (count: number, goal: number) => `${String(count)} / ${String(goal)}`,
     meterLabel: 'Прогрес до першого висновку',
+    lowData: 'Мало даних',
   },
   async: {
     status: {

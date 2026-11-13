@@ -21,3 +21,9 @@ export function specimenOf(eyebrow: string) {
   if (specimen === null) throw new Error(`the "${eyebrow}" specimen is missing`);
   return within(specimen);
 }
+
+export function sectionTitled(title: string): HTMLElement {
+  const section = screen.getByRole('heading', { level: 2, name: title }).closest('section');
+  if (section === null) throw new Error(`the "${title}" section is missing`);
+  return section;
+}

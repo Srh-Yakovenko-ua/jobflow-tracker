@@ -1,17 +1,14 @@
 import type { Theme } from '@jobflow/shared';
 import { act, renderHook } from '@testing-library/react';
-import type { ReactNode } from 'react';
 import { beforeEach, describe, expect, it } from 'vitest';
 
+import { renderHookInTheme } from '@/test/theme';
+
 import { THEME_COOKIE } from './theme-cookie';
-import { ThemeProvider, useTheme } from './theme-provider';
+import { useTheme } from './theme-provider';
 
 function renderTheme(initialTheme: Theme) {
-  return renderHook(useTheme, {
-    wrapper: ({ children }: { children: ReactNode }) => (
-      <ThemeProvider initialTheme={initialTheme}>{children}</ThemeProvider>
-    ),
-  });
+  return renderHookInTheme(useTheme, initialTheme);
 }
 
 function pickTheme(theme: Theme) {

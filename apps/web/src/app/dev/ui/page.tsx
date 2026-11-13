@@ -6,6 +6,7 @@ import { uk } from '@/shared/i18n';
 import { ButtonsSection } from './buttons-section';
 import { CalendarSection } from './calendar-section';
 import { CardsSection } from './cards-section';
+import { ChartsSection } from './charts-section';
 import { ChoiceSection } from './choice-section';
 import { EmptyStatesSection } from './empty-states-section';
 import { ErrorStatesSection } from './error-states-section';
@@ -38,6 +39,7 @@ export default function DevUiPage() {
       <ChoiceSection />
       <NavigationSection />
       <FeedbackSection />
+      <ChartsSection />
       <ScoreSection />
       <StagesSection />
       <CardsSection />

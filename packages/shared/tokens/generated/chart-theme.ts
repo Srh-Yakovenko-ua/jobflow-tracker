@@ -71,12 +71,12 @@ export const CHART_THEME = {
       "final": "#D9B982"
     },
     "data": [
-      "#2A4367",
-      "#1C719A",
-      "#499B9B",
-      "#7FA76A",
-      "#D9B982",
-      "#EEC7B6"
+      "#415E8A",
+      "#3383AD",
+      "#56A8A7",
+      "#9EBD80",
+      "#E3C28C",
+      "#F8D1C0"
     ]
   },
   "font": {

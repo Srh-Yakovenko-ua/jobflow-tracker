@@ -14,16 +14,40 @@ function blockAfter(css: string, selector: string): string {
   return css.slice(start, css.indexOf('}', start));
 }
 
+function lightnessOf(color: ColorToken | undefined): number {
+  return Number(/^oklch\((\d+(?:\.\d+)?)%/.exec(color?.oklch ?? '')?.[1]);
+}
+
+function stepsOf(ladder: number[]): number[] {
+  return ladder.slice(1).map((value, index) => value - (ladder[index] ?? value));
+}
+
 function withColor(name: string, value: ColorToken): Tokens {
   return parseTokens({ ...tokens, color: { ...tokens.color, [name]: value } });
 }
 
 describe('tokens.json', () => {
-  it('gives every color key a dark value and has no dark key outside color or outcome', () => {
-    const lightKeys = [...Object.keys(tokens.color), ...Object.keys(tokens.outcome)];
+  it('gives every color key a dark value and has no dark key outside color, outcome or dataViz', () => {
+    const lightKeys = [
+      ...Object.keys(tokens.color),
+      ...Object.keys(tokens.outcome),
+      ...Object.keys(tokens.dataViz),
+    ];
 
     expect(Object.keys(tokens.dark).filter((key) => !lightKeys.includes(key))).toEqual([]);
     expect(Object.keys(tokens.color).filter((key) => !(key in tokens.dark))).toEqual([]);
+  });
+
+  it('climbs the data ramp by at least 5 L per step in light and dark', () => {
+    const darkRamp = Object.keys(tokens.dataViz).map((name) => tokens.dark[name]);
+    const ladders = [Object.values(tokens.dataViz), darkRamp].map((ramp) => ramp.map(lightnessOf));
+    const climbs = ladders.flatMap(stepsOf);
+
+    expect(ladders).toEqual([
+      [38, 52, 64, 72, 80, 86],
+      [48, 58, 68, 76, 83, 89],
+    ]);
+    expect(Math.min(...climbs)).toBeGreaterThanOrEqual(5);
   });
 
   it('keeps dataRules equal to the shared thresholds', () => {
@@ -86,6 +110,13 @@ describe('web theme', () => {
     expect(blockAfter(css, ':root')).toContain('--danger: oklch(46% 0.10 34);');
     expect(dark).toContain('--danger: oklch(70% 0.10 34);');
     expect(dark).toContain('--scrim: oklch(25% 0.013 62);');
+  });
+
+  it('lifts data-1 to 48% L in the dark tokens.css block', () => {
+    const css = renderTokensCss(tokens);
+
+    expect(blockAfter(css, ':root')).toContain('--data-1: oklch(38% 0.07 258);');
+    expect(blockAfter(css, "[data-theme='dark']")).toContain('--data-1: oklch(48% 0.08 258);');
   });
 
   it('keeps link at the drawn ghost text in light and lifts it to 72% L in dark', () => {
@@ -154,6 +185,26 @@ describe('native themes', () => {
     expect(CHART_THEME.animation).toEqual({ duration: 820, easing: 'easeOutQuart', stagger: 45 });
     expect(CHART_THEME.dark.colors.accent).toBe('#6AA9EE');
     expect(CHART_THEME.dark.stage.tech).toBe('#499B9B');
+  });
+
+  it('lifts the chart data ramp in dark and keeps the light ramp and stage', () => {
+    expect(CHART_THEME.light.data).toEqual([
+      '#2A4367',
+      '#1C719A',
+      '#499B9B',
+      '#7FA76A',
+      '#D9B982',
+      '#EEC7B6',
+    ]);
+    expect(CHART_THEME.dark.data).toEqual([
+      '#415E8A',
+      '#3383AD',
+      '#56A8A7',
+      '#9EBD80',
+      '#E3C28C',
+      '#F8D1C0',
+    ]);
+    expect(CHART_THEME.dark.stage).toEqual(CHART_THEME.light.stage);
   });
 
   it('gives the web the motion durations in ms and both easings as bezier tuples', () => {
