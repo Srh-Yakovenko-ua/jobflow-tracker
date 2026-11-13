@@ -1,9 +1,10 @@
-import { LIVE_EVENTS } from '@jobflow/shared';
+import { LIVE_EVENTS, LIVE_LIMITS } from '@jobflow/shared';
 import { buildJobUpdate } from '@jobflow/shared/testing';
 import { act, screen, waitFor, within } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
 import { applicationRoute } from '@/test/application-fixtures';
+import { advanceBy, fakeTimeoutsAndIntervals } from '@/test/fake-timeouts';
 import { latch } from '@/test/latch';
 import { bringLiveStreamUp } from '@/test/live-stream';
 import {
@@ -127,6 +128,31 @@ describe('AttachedResume', () => {
     await pickVersion(page, /CV v3/);
 
     expect(await screen.findByText(/обробляється/)).toBeDefined();
+  });
+
+  it('a relink on a draft stops asking for the score, since a draft gets no match job', async () => {
+    fakeTimeoutsAndIntervals();
+    const draft = { ...MATCHED_APPLICATION, isDraft: true };
+    const page = renderApplicationPage({
+      application: draft,
+      match: NO_MATCH,
+      resumes: { items: [...DESIGN_VERSIONS] },
+    });
+    const section = await screen.findByRole('region', KICKER);
+    server.use(
+      applicationRoute({ application: { ...draft, resumeVersionId: NEXT_VERSION.id } }).handler,
+    );
+
+    await pickVersion(page, /CV v3/);
+    expect(await within(section).findByText('CV v3 · для дизайн-ролей')).toBeDefined();
+    await advanceBy(LIVE_LIMITS.pollFallbackMs);
+    const asked = page.match.sent.length;
+    await advanceBy(LIVE_LIMITS.pollFallbackMs * 3);
+
+    expect(page.resumes.relinked).toEqual([
+      { applicationId: MATCHED_APPLICATION.id, resumeVersionId: NEXT_VERSION.id },
+    ]);
+    expect(page.match.sent).toHaveLength(asked);
   });
 
   it('with no CV linked offers the versions to pick from', async () => {

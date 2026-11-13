@@ -39,7 +39,7 @@ export class ResumeVersionsService {
         RESUME_VERSION_NOT_FOUND,
       );
       if (input.isArchived === true) {
-        await this.repository.clearActive(userId, { id, tx });
+        await this.repository.setActive(userId, { from: id, to: null, tx });
       }
       return owned(await this.repository.findOwned(userId, { id, tx }), RESUME_VERSION_NOT_FOUND);
     });
@@ -72,7 +72,7 @@ export class ResumeVersionsService {
       if (version.isArchived) {
         throw conflict('Unarchive the version before making it active');
       }
-      await this.repository.activate(userId, { id, tx });
+      await this.repository.setActive(userId, { to: id, tx });
     });
   }
 

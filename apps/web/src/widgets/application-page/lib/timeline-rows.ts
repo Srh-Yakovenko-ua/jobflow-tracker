@@ -37,7 +37,7 @@ export type TimelineRowsInput = {
   items: readonly TimelineItem[];
   application: ApplicationResponse;
   notes?: readonly Note[];
-  linkedVersion?: Pick<ResumeVersion, 'number'> | undefined;
+  linkedVersion?: Pick<ResumeVersion, 'number' | 'uploadedAt'> | undefined;
 };
 
 type Meta = TimelineItem['meta'];
@@ -166,9 +166,11 @@ function isApplied({ type, meta }: TimelineItem): boolean {
   return type === 'stage_changed' && meta.fromStage === null && meta.toStage === 'applied';
 }
 
-function sentVersionOf({ items, linkedVersion }: TimelineRowsInput) {
+function sentVersionOf({ items, application, linkedVersion }: TimelineRowsInput) {
+  if (linkedVersion === undefined) return undefined;
   const attachedLater = items.some((item) => item.type === 'resume_attached');
-  return attachedLater ? undefined : linkedVersion;
+  const uploadedLater = Date.parse(linkedVersion.uploadedAt) > Date.parse(application.createdAt);
+  return attachedLater || uploadedLater ? undefined : linkedVersion;
 }
 
 function titleOf(item: TimelineItem, sentVersion: TimelineRowsInput['linkedVersion']): string {

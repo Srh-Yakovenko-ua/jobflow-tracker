@@ -5,6 +5,7 @@ import { AI_JOB_ID } from '../../test/ai.js';
 import { FAKE_TRANSACTION, fakeTransactionModule } from '../../test/fake-prisma.js';
 import { FAKE_STORAGE_URL, FakeFileStorage } from '../../test/file-storage.js';
 import { type ByUser } from '../../test/recorded-events.js';
+import { ActiveVersions } from '../../test/resumes.js';
 import {
   BOHDAN_ID,
   OLENA_ID,
@@ -17,6 +18,7 @@ import {
   type ResumeVersionById,
   type ResumeVersionRow,
   ResumeVersionsRepository,
+  type SetActiveVersion,
   type UpdateResumeVersion,
 } from './resume-versions.repository.js';
 import { ResumeVersionsService } from './resume-versions.service.js';
@@ -52,7 +54,7 @@ const LINKED_CONFLICT = {
 class FakeResumeVersionsRepository {
   readonly updates: ByUser<UpdateResumeVersion>[] = [];
   readonly deletedIds: string[] = [];
-  readonly active = new Map<string, string | null>([
+  readonly active = new ActiveVersions([
     [OLENA_ID, RESUME_VERSION_ID],
     [BOHDAN_ID, null],
   ]);
@@ -80,16 +82,8 @@ class FakeResumeVersionsRepository {
     return Promise.resolve(1);
   }
 
-  clearActive(userId: string, { id }: ResumeVersionById): Promise<void> {
-    if (this.active.get(userId) === id) {
-      this.active.set(userId, null);
-    }
-    return Promise.resolve();
-  }
-
-  activate(userId: string, { id }: ResumeVersionById): Promise<void> {
-    this.active.set(userId, id);
-    return Promise.resolve();
+  setActive(userId: string, input: SetActiveVersion): Promise<void> {
+    return this.active.move(userId, input);
   }
 
   deleteUnlinked(userId: string, { id }: ResumeVersionById): Promise<number> {

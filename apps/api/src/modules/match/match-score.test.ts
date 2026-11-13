@@ -57,7 +57,7 @@ describe('scoreMatch', () => {
     expect(scored?.score).toBe(60);
   });
 
-  it('never goes below 0 when the rounded losses add up past 100', () => {
+  it('scores 0 when nothing is covered though the rounded losses add up past 100', () => {
     const scored = scoreMatch(
       requirementsOf([
         { name: 'Go', weight: 'must', coverage: 'missing' },
@@ -74,6 +74,23 @@ describe('scoreMatch', () => {
       { name: 'Linux', weight: 'nice', pointsLost: 13 },
     ]);
     expect(scored?.score).toBe(0);
+  });
+
+  it.each<{ case: string; covered: string[]; score: number }>([
+    { case: 'three equal musts all missing', covered: [], score: 0 },
+    { case: 'one of three equal musts fully covered', covered: ['Go'], score: 33 },
+  ])('scores $case from the unrounded share of points earned', ({ covered, score }) => {
+    const scored = scoreMatch(
+      requirementsOf(
+        ['Go', 'Kafka', 'Linux'].map((name): MatchOutput['requirements'][number] => ({
+          name,
+          weight: 'must',
+          coverage: covered.includes(name) ? 'full' : 'missing',
+        })),
+      ),
+    );
+
+    expect(scored?.score).toBe(score);
   });
 
   it('gives 100 when every weighed requirement is fully covered and only mentions are missing', () => {

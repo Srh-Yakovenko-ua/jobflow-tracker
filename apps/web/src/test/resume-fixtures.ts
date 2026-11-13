@@ -102,6 +102,7 @@ function versionsSpec(session: ResumeSession, numbered: { last: number }) {
         schema: createResumeVersionInputSchema,
         build: ({ body: { title, filename, mime }, id }) => {
           numbered.last += 1;
+          session.activeId ??= id;
           return buildResumeVersion({
             id,
             number: numbered.last,

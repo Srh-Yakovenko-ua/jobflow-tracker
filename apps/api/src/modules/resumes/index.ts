@@ -8,6 +8,7 @@ export type {
   RecordResumeEvent,
   ResumeProfile,
   ResumeVersionRow,
+  SetActiveVersion,
 } from './resume-versions.repository.js';
 export {
   RESUME_EVENTS,

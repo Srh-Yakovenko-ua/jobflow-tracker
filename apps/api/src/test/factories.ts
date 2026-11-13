@@ -49,7 +49,7 @@ export type NewReminder = {
 
 export type NewAiJob = {
   userId: string;
-  applicationId: string;
+  applicationId?: string;
   status: AiJobStatus;
   kind?: string;
   resumeVersionId?: string;

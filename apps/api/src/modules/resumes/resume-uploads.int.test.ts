@@ -18,6 +18,7 @@ import {
   PDF_ETAG,
   uploadedPdf,
   type Uploader,
+  uploadResumeVersion,
   UPLOADS_PATH,
 } from '../../test/resumes.js';
 import { pendingResumeKey } from './resume-storage-key.js';
@@ -123,6 +124,24 @@ describe('POST /uploads/resume and POST /uploads/resume/:uploadId/confirm', () =
       mime: PDF,
       etag: PDF_ETAG,
     });
+  });
+
+  it("makes version 1 active once it is created, keeps it after version 2 and leaves another user's settings alone", async () => {
+    const owner = await signedIn();
+    const stranger = await signedIn();
+    const activeOf = async ({ userId }: SignedInUploader) =>
+      (await testApp.prisma.userSettings.findUniqueOrThrow({ where: { userId } }))
+        .activeResumeVersionId;
+
+    const first = await uploadResumeVersion(testApp.app, owner);
+    const afterFirst = await activeOf(owner);
+    await uploadResumeVersion(testApp.app, owner);
+
+    expect([afterFirst, await activeOf(owner), await activeOf(stranger)]).toEqual([
+      first.version.id,
+      first.version.id,
+      null,
+    ]);
   });
 
   it('answers 401 without a token on both routes', async () => {

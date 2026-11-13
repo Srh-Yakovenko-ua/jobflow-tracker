@@ -2,19 +2,12 @@
 
 import type { ResumeUploadInput, ResumeVersion } from '@jobflow/shared';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import type { UseFormSetError } from 'react-hook-form';
 
-import {
-  activateResumeVersion,
-  resumeKeys,
-  VERSION_TITLE_FIELDS,
-  type VersionTitleForm,
-} from '@/entities/resume';
-import { userKeys, useSession } from '@/entities/user';
+import { resumeKeys, VERSION_TITLE_FIELDS, type VersionTitleForm } from '@/entities/resume';
+import { userKeys } from '@/entities/user';
 import { applyFieldErrors, putFile, type UploadProgress, useSubmitKey } from '@/shared/api';
-import { uk } from '@/shared/i18n';
-import { showErrorToast } from '@/shared/ui/error-toast';
 
 import { confirmUpload, createTicket, createVersion } from '../api/upload-resume';
 import { type UploadFailure, uploadFailureOf } from '../lib/upload-failure';
@@ -28,6 +21,8 @@ export type UploadResume = Readonly<{
   percent: number | null;
   failure: UploadFailure | null;
 }>;
+
+type StoredFile = Readonly<{ file: File; uploadId: string }>;
 
 type StoreFileOptions = Readonly<{
   request: ResumeUploadRequest;
@@ -51,26 +46,35 @@ async function storeFile({ request: { file, input }, onPercent }: StoreFileOptio
   return ticket.uploadId;
 }
 
-function activateFirstVersion(id: ResumeVersion['id']): Promise<void> {
-  return activateResumeVersion(id).catch(() => {
-    showErrorToast(uk.errors.saveFailed);
-  });
+function useStoredFile(onPercent: StoreFileOptions['onPercent']) {
+  const storedRef = useRef<StoredFile | null>(null);
+  return {
+    uploadIdFor: async (request: ResumeUploadRequest): Promise<string> => {
+      const stored = storedRef.current;
+      if (stored?.file === request.file) return stored.uploadId;
+      const uploadId = await storeFile({ request, onPercent });
+      storedRef.current = { file: request.file, uploadId };
+      return uploadId;
+    },
+    forget: () => {
+      storedRef.current = null;
+    },
+  };
 }
 
 export function useUploadResume(setError: UseFormSetError<VersionTitleForm>): UploadResume {
   const queryClient = useQueryClient();
-  const { settings } = useSession();
   const submitKey = useSubmitKey();
   const [percent, setPercent] = useState<number | null>(null);
+  const stored = useStoredFile(setPercent);
   const mutation = useMutation({
     mutationFn: async (request: ResumeUploadRequest): Promise<ResumeVersion> => {
-      const uploadId = await storeFile({ request, onPercent: setPercent });
+      const uploadId = await stored.uploadIdFor(request);
       const { filename, mime } = request.input;
       const body = { uploadId, filename, mime, title: request.title };
-      const version = await createVersion({ body, idempotencyKey: submitKey.keyFor(body) });
-      if (settings?.activeResumeVersionId === null) await activateFirstVersion(version.id);
-      return version;
+      return createVersion({ body, idempotencyKey: submitKey.keyFor(body) });
     },
+    onSuccess: stored.forget,
     onError: (error, { file }) => {
       const failure = uploadFailureOf({ error, file });
       if (failure.kind !== 'fields') return;
@@ -89,7 +93,10 @@ export function useUploadResume(setError: UseFormSetError<VersionTitleForm>): Up
     send: (request, onUploaded) => {
       mutation.mutate(request, { onSuccess: onUploaded });
     },
-    reset: mutation.reset,
+    reset: () => {
+      stored.forget();
+      mutation.reset();
+    },
     pending: mutation.isPending,
     percent,
     failure: error === null ? null : uploadFailureOf({ error, file: variables.file }),

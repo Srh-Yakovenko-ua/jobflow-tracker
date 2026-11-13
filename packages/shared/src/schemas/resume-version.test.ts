@@ -5,6 +5,7 @@ import {
   createResumeVersionInputSchema,
   RESUME_PROFILE_STATUSES,
   RESUME_VERSION_LIMITS,
+  resumeDownloadSchema,
   resumeProfileStatusSchema,
   resumeVersionLabel,
   updateResumeVersionInputSchema,
@@ -75,6 +76,26 @@ describe('createResumeVersionInputSchema', () => {
   ])('refuses $label at $path', ({ input, path }) => {
     expect(issuePathsOf(createResumeVersionInputSchema.safeParse(input))).toEqual([path]);
   });
+});
+
+describe('resumeDownloadSchema', () => {
+  const EXPIRES_AT = '2026-11-13T10:05:00.000Z';
+
+  it.for(['javascript:alert(1)', 'data:text/html,x'])('refuses a %s download url', (url) => {
+    expect(issuePathsOf(resumeDownloadSchema.safeParse({ url, expiresAt: EXPIRES_AT }))).toEqual([
+      'url',
+    ]);
+  });
+
+  it.for(['http://localhost:9000/resumes/cv.pdf', 'https://storage.example.com/resumes/cv.pdf'])(
+    'accepts the signed download url %s',
+    (url) => {
+      expect(resumeDownloadSchema.parse({ url, expiresAt: EXPIRES_AT })).toEqual({
+        url,
+        expiresAt: EXPIRES_AT,
+      });
+    },
+  );
 });
 
 describe('updateResumeVersionInputSchema', () => {

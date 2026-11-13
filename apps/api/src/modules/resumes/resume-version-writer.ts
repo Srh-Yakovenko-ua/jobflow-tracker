@@ -43,6 +43,7 @@ export class ResumeVersionWriter {
       tx,
     });
     const resumeVersionId = row.id;
+    await this.versions.setActive(userId, { from: null, to: resumeVersionId, tx });
     const aiJobId = await this.ai.createJob(userId, { kind: 'resume_parse', resumeVersionId, tx });
     await this.versions.recordEvent(userId, {
       event: { eventType: RESUME_EVENTS.versionUploaded, resumeVersionId, aiJobId },

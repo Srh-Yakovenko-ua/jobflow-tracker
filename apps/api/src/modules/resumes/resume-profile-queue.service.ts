@@ -73,7 +73,7 @@ export class ResumeProfileQueueService {
     }
     const input = AI_PAYLOAD_BUILDERS.resume_parse(extraction);
     await this.versions.saveExtractedText(userId, { id: resumeVersionId, text: input.text });
-    if (extraction.kind === 'text' && input.text.trim() === '') {
+    if (input.text.trim() === '' && input.pages.length === 0) {
       await this.fail(run, AI_JOB_FAILURES.needsText);
       return;
     }

@@ -28,7 +28,7 @@ export const resumeUploadInputSchema = z.object({
 
 export const resumeUploadTicketSchema = z.object({
   uploadId: uploadIdSchema,
-  url: z.url(),
+  url: z.url({ protocol: /^https?$/ }),
   method: z.literal('PUT'),
   headers: z.object({ 'Content-Type': resumeMimeSchema }),
   expiresAt: z.iso.datetime(),

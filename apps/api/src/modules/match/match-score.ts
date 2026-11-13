@@ -29,11 +29,12 @@ const isWeighed = (requirement: MatchRequirement): requirement is WeighedRequire
 const byLossThenName = (left: MissingRequirement, right: MissingRequirement) =>
   right.pointsLost - left.pointsLost || left.name.localeCompare(right.name, 'en');
 
-function scored(requirements: WeighedRequirement[]): ScoredRequirement[] {
-  const total = requirements.reduce((sum, { weight }) => sum + MATCH_POINTS[weight], 0);
+const earnedOf = ({ weight, coverage }: WeighedRequirement) =>
+  MATCH_POINTS[weight] * COVERAGE_CREDIT[coverage];
+
+function scored(requirements: WeighedRequirement[], total: number): ScoredRequirement[] {
   return requirements.map((requirement) => {
-    const uncovered =
-      MATCH_POINTS[requirement.weight] * (1 - COVERAGE_CREDIT[requirement.coverage]);
+    const uncovered = MATCH_POINTS[requirement.weight] - earnedOf(requirement);
     return { ...requirement, pointsLost: Math.round((100 * uncovered) / total) };
   });
 }
@@ -55,10 +56,12 @@ export function scoreMatch(output: MatchOutput): MatchBreakdown | null {
   if (matchFailure(output) !== null) {
     return null;
   }
-  const requirements = scored(output.requirements.filter(isWeighed));
-  const lost = requirements.reduce((sum, { pointsLost }) => sum + pointsLost, 0);
+  const weighed = output.requirements.filter(isWeighed);
+  const total = weighed.reduce((sum, { weight }) => sum + MATCH_POINTS[weight], 0);
+  const earned = weighed.reduce((sum, requirement) => sum + earnedOf(requirement), 0);
+  const requirements = scored(weighed, total);
   return {
-    score: Math.max(0, 100 - lost),
+    score: Math.round((100 * earned) / total),
     matched: matchedOf(requirements),
     missing: missingOf(requirements),
     ignored: output.requirements

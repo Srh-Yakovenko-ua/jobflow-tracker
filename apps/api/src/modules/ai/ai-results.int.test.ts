@@ -13,6 +13,7 @@ import {
   resumeVersionData,
 } from '../../test/factories.js';
 import { callRoute } from '../../test/http.js';
+import { listedProfileStatuses } from '../../test/resumes.js';
 import { minutesBefore, NOW } from '../../test/time.js';
 
 const EARLIER = minutesBefore(60);
@@ -25,6 +26,7 @@ type AiDataOwner = {
   scoredId: string;
   plainId: string;
   aiJobId: string;
+  resumeVersionId: string;
 };
 
 describe('DELETE /ai-results', () => {
@@ -47,7 +49,7 @@ describe('DELETE /ai-results', () => {
       ],
     });
     const resumeId = await createResume(prisma, userId);
-    await prisma.resumeVersion.create({
+    const { id: resumeVersionId } = await prisma.resumeVersion.create({
       data: { ...resumeVersionData({ userId, resumeId }), aiProfile: AI_PROFILE },
     });
     const aiResultId = await createAiResult(prisma, { userId });
@@ -58,7 +60,7 @@ describe('DELETE /ai-results', () => {
       status: 'done',
       aiResultId,
     });
-    return { userId, accessToken, scoredId, plainId, aiJobId };
+    return { userId, accessToken, scoredId, plainId, aiJobId, resumeVersionId };
   }
 
   async function aiDataOf(userId: string) {
@@ -112,6 +114,24 @@ describe('DELETE /ai-results', () => {
       matchScore: null,
       aiParsed: null,
     });
+  });
+
+  it('lists a profiled resume version as done before the delete and failed after it', async () => {
+    const olena = await ownerOfAiData();
+    await createAiJob(testApp.prisma, {
+      userId: olena.userId,
+      kind: 'resume_parse',
+      resumeVersionId: olena.resumeVersionId,
+      status: 'done',
+    });
+
+    const before = await listedProfileStatuses(testApp.app, olena);
+    await deleteAiResults(olena.accessToken);
+
+    expect([before, await listedProfileStatuses(testApp.app, olena)]).toEqual([
+      ['done'],
+      ['failed'],
+    ]);
   });
 
   it('leaves every AI row of another user untouched', async () => {

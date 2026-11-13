@@ -77,6 +77,10 @@ export const resumes = {
       body: 'Схоже, він пошкоджений. Збережи його ще раз як PDF або DOCX і спробуй знову.',
     },
     previewFailed: applicationPage.schedule.downloadFailed,
+    popupBlocked: {
+      title: 'Браузер не дав відкрити вкладку',
+      description: 'Дозволь спливні вікна для цього сайту і спробуй ще раз.',
+    },
   },
   formats: {
     'application/pdf': 'PDF',

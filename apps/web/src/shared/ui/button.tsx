@@ -56,7 +56,8 @@ export type ButtonShape = Required<Pick<ButtonLook, 'variant' | 'size'>> & {
   dimmed: boolean;
 };
 
-export type ButtonLinkLook = Pick<ButtonShape, 'variant' | 'size'>;
+export type ButtonLinkLook = Pick<ButtonShape, 'variant' | 'size'> &
+  Partial<Pick<ButtonShape, 'dimmed'>>;
 
 function buttonClasses({ variant, size, iconOnly, dimmed }: ButtonShape): string {
   return cn(
@@ -76,8 +77,8 @@ function isDimmed({
   return loading !== true && (disabled === true || String(ariaDisabled) === 'true');
 }
 
-export function buttonLinkClasses(look: ButtonLinkLook): string {
-  return buttonClasses({ ...look, iconOnly: false, dimmed: false });
+export function buttonLinkClasses({ dimmed = false, ...look }: ButtonLinkLook): string {
+  return buttonClasses({ ...look, iconOnly: false, dimmed });
 }
 
 export function Button({

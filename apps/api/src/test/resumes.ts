@@ -1,8 +1,10 @@
 import {
   type CreateResumeVersionInput,
+  type ResumeProfileStatus,
   type ResumeUploadTicket,
   resumeUploadTicketSchema,
   type ResumeVersion,
+  resumeVersionListResponseSchema,
   resumeVersionSchema,
 } from '@jobflow/shared';
 import type { NestExpressApplication } from '@nestjs/platform-express';
@@ -12,6 +14,7 @@ import type {
   ProfileSource,
   RecordResumeEvent,
   ResumeProfile,
+  SetActiveVersion,
 } from '../modules/resumes/index.js';
 import { applicationPath } from './applications.js';
 import { callRoute } from './http.js';
@@ -105,12 +108,30 @@ export async function uploadResumeVersion(
   return { ticket, version: resumeVersionSchema.parse(response.body) };
 }
 
+export async function listedProfileStatuses(
+  app: NestExpressApplication,
+  { accessToken }: Uploader,
+): Promise<ResumeProfileStatus[]> {
+  const response = await callRoute(app, { method: 'get', path: RESUME_VERSIONS_PATH, accessToken });
+  const { items } = resumeVersionListResponseSchema.parse(response.body);
+  return items.map(({ aiProfileStatus }) => aiProfileStatus);
+}
+
 export const PROFILE_SOURCE: ProfileSource = {
   storageKey: RESUME_VERSION_ROW.storageKey,
   filename: RESUME_VERSION_ROW.filename,
   mime: RESUME_VERSION_ROW.mime,
   aiProfile: null,
 };
+
+export class ActiveVersions extends Map<string, string | null> {
+  move(userId: string, { to, from }: SetActiveVersion): Promise<void> {
+    if (from === undefined || (this.get(userId) ?? null) === from) {
+      this.set(userId, to);
+    }
+    return Promise.resolve();
+  }
+}
 
 const ownsVersion = (userId: string, id: string) => userId === OLENA_ID && id === RESUME_VERSION_ID;
 
