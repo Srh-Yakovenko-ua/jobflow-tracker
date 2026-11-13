@@ -3,7 +3,7 @@ from functools import cache
 from pathlib import Path
 from typing import Final, Literal
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 from pydantic.alias_generators import to_camel
 
 ENUMS_FILE = Path(__file__).with_name("enums.json")
@@ -21,6 +21,8 @@ STAGE_ROLES: Final[Mapping[str, StageRole]] = {
     "withdrawn": "outcome",
 }
 
+GHOSTED_STAGE: Final = "ghosted"
+
 
 class EnumsModel(BaseModel):
     model_config = ConfigDict(
@@ -36,6 +38,12 @@ class RejectionReason(EnumsModel):
     sort_order: int
 
 
+class Thresholds(EnumsModel):
+    min_n_percent: int = Field(alias="MIN_N_PERCENT")
+    min_n_insight: int = Field(alias="MIN_N_INSIGHT")
+    min_n_forecast: int = Field(alias="MIN_N_FORECAST")
+
+
 class DomainEnums(EnumsModel):
     stages: tuple[str, ...]
     terminal_stages: tuple[str, ...]
@@ -44,6 +52,7 @@ class DomainEnums(EnumsModel):
     work_modes: tuple[str, ...]
     rejection_sides: tuple[str, ...]
     rejection_reasons: tuple[RejectionReason, ...]
+    thresholds: Thresholds
     token_scopes: tuple[str, ...]
 
 
