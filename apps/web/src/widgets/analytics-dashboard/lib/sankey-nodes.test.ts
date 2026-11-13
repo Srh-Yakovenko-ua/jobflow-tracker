@@ -1,56 +1,105 @@
-import { buildDesignSankey, buildFoldedSankey } from '@jobflow/shared/testing';
+import type { FunnelStage, RateResult } from '@jobflow/shared';
+import { buildDesignFunnel, buildDesignSankey, buildFoldedSankey } from '@jobflow/shared/testing';
 import { describe, expect, it } from 'vitest';
 
 import { uk } from '@/shared/i18n';
-import { DESIGN_NODE_LABELS } from '@/test/analytics-fixtures';
+import { DESIGN_ENDINGS, DESIGN_FUNNEL_ROWS } from '@/test/analytics-fixtures';
 
-import { boardHrefOf, ghostTotalOf, sankeyLayoutOf } from './sankey-nodes';
+import { boardHrefOf, endingsOf, type FunnelRow, funnelRowsOf, ghostTotalOf } from './sankey-nodes';
 
 const GHOST = uk.analytics.blocks.sankey.ghost;
 
-describe('sankeyLayoutOf', () => {
-  it('names every node of the 54 application search with its count, the larger of in and out', () => {
-    expect(sankeyLayoutOf(buildDesignSankey().merged).labels).toEqual(DESIGN_NODE_LABELS);
+const { stages } = buildDesignFunnel();
+
+const DESIGN = buildDesignSankey().merged;
+
+function textOf(rows: readonly FunnelRow[]) {
+  return rows.map(({ label, rate, exits }) => ({
+    stage: label,
+    conversion: rate,
+    exits: exits.map((exit) => exit.label),
+  }));
+}
+
+function markedIn(rows: readonly FunnelRow[]) {
+  return rows.filter((row) => row.biggestDrop).map((row) => row.node.id);
+}
+
+function withConversions(rates: readonly (RateResult | null)[]): FunnelStage[] {
+  return stages.map((stage, index) => ({ ...stage, conversion: rates[index] ?? null }));
+}
+
+const SHORT = stages.find((stage) => stage.stage === 'final')?.conversion ?? null;
+
+const HALF: RateResult = { status: 'ok', value: 0.5, low: 0.2, high: 0.8, successes: 4, trials: 8 };
+
+describe('funnelRowsOf', () => {
+  it('reads every stage of the 54 application search with its count, its conversion and where the rest went', () => {
+    const rows = funnelRowsOf({ graph: DESIGN, stages });
+
+    expect(textOf(rows)).toEqual(DESIGN_FUNNEL_ROWS);
+    expect(rows.map((row) => row.reached)).toEqual([54, 17, 9, 4, 1]);
+    expect(rows.map((row) => row.passed)).toEqual([17, 9, 4, 1, 0]);
   });
 
-  it('names reasons, the folded small reasons and the open applications in words, never by code', () => {
+  it('marks відгук → скринінг, 43% against 60% and 50%, as the biggest drop and no other stage', () => {
+    expect(markedIn(funnelRowsOf({ graph: DESIGN, stages }))).toEqual(['applied']);
+  });
+
+  it('marks nothing when no conversion has enough data, and the earlier stage wins a tie', () => {
+    const short = withConversions([SHORT, SHORT, SHORT, SHORT, null]);
+    const tied = withConversions([HALF, HALF, HALF, SHORT, null]);
+
+    expect(markedIn(funnelRowsOf({ graph: DESIGN, stages: short }))).toEqual([]);
+    expect(markedIn(funnelRowsOf({ graph: DESIGN, stages: tied }))).toEqual(['applied']);
+  });
+
+  it('shows no conversion and marks nothing before the funnel loads', () => {
+    const rows = funnelRowsOf({ graph: DESIGN, stages: undefined });
+
+    expect(rows.map((row) => row.rate)).toEqual([null, null, null, null, null]);
+    expect(rows.map((row) => row.conversion)).toEqual([null, null, null, null, null]);
+    expect(markedIn(rows)).toEqual([]);
+  });
+
+  it('puts open applications first, then the reasons and "інші" in graph order, each filled as a rejection', () => {
     const { merged, detailed } = buildFoldedSankey();
+    const [applied] = funnelRowsOf({ graph: merged, stages });
 
-    expect(sankeyLayoutOf(merged).labels).toEqual({
-      applied: 'відгук 380',
-      skills_gap: 'не вистачає скілів 3',
-      other: 'інші 2',
-      in_progress: 'у процесі 375',
-    });
-    expect(sankeyLayoutOf(detailed).labels.english_level).toBe('рівень англійської 2');
+    expect(applied?.exits.map((exit) => exit.label)).toEqual([
+      'у процесі 375',
+      'не вистачає скілів 3',
+      'інші 2',
+    ]);
+    expect(applied?.exits.map((exit) => exit.fill)).toEqual([
+      'bg-ink-3',
+      'bg-rejected',
+      'bg-rejected',
+    ]);
+    expect(textOf(funnelRowsOf({ graph: detailed, stages }))[0]?.exits).toContain(
+      'рівень англійської 2',
+    );
+  });
+});
+
+describe('endingsOf', () => {
+  it('counts where the 54 applications ended, offer included, every stage passed through left out', () => {
+    expect(endingsOf(DESIGN).map((ending) => `${ending.label} ${String(ending.total)}`)).toEqual(
+      DESIGN_ENDINGS,
+    );
   });
 
-  it('puts the five stages in columns 0 to 4 as drawn and keeps the API node order as priority', () => {
-    const layout = sankeyLayoutOf(buildDesignSankey().merged);
-
-    expect(layout.column).toEqual({
-      applied: 0,
-      screening: 1,
-      tech_interview: 2,
-      final: 3,
-      offer: 4,
-    });
-    expect(layout.priority).toEqual({
-      applied: 0,
-      screening: 1,
-      tech_interview: 2,
-      final: 3,
-      offer: 4,
-      rejected: 5,
-      ghosted: 6,
-      withdrawn: 7,
-    });
+  it('sums the reasons and "інші" into відмова and counts the open applications', () => {
+    expect(endingsOf(buildFoldedSankey().merged)).toEqual([
+      { id: 'in_progress', label: 'у процесі', total: 375, fill: 'bg-ink-3' },
+      { id: 'rejected', label: 'відмова', total: 5, fill: 'bg-rejected' },
+    ]);
   });
 });
 
 describe('ghostTotalOf', () => {
   it('adds up the ghost links: 17 companies stayed silent in the design search, none in the folded one', () => {
-    expect(ghostTotalOf(buildDesignSankey().merged)).toBe(17);
+    expect(ghostTotalOf(DESIGN)).toBe(17);
     expect(ghostTotalOf(buildFoldedSankey().merged)).toBe(0);
   });
 

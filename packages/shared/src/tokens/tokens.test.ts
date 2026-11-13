@@ -112,6 +112,11 @@ describe('web theme', () => {
     expect(dark).toContain('--scrim: oklch(25% 0.013 62);');
   });
 
+  it('keeps dark rejected a clay apart from dark danger', () => {
+    expect(tokens.dark.rejected?.oklch).not.toBe(tokens.dark.danger?.oklch);
+    expect(tokens.dark.rejected).toEqual({ oklch: 'oklch(62% 0.075 42)', hex: '#AD7762' });
+  });
+
   it('lifts data-1 to 48% L in the dark tokens.css block', () => {
     const css = renderTokensCss(tokens);
 

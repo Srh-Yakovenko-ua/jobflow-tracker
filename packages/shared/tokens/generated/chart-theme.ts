@@ -60,7 +60,7 @@ export const CHART_THEME = {
     },
     "outcome": {
       "offer": "#51BD85",
-      "rejected": "#D58775",
+      "rejected": "#AD7762",
       "ghosted": "#6D6860",
       "withdrawn": "#8B91AB"
     },
