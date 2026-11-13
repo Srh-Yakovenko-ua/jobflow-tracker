@@ -7,9 +7,14 @@ from fastapi.testclient import TestClient
 from app.core.config import DEPENDENCY_LIMITS
 from app.factory import create_app
 from app.services.readiness import ReadinessService
-from tests.factories import closed_port, serving, settings_for, silent_listener
-
-REQUEST_ID = "0d6f3a2b-7c41-4e8a-9b15-2f6c8d4e1a73"
+from tests.factories import (
+    REQUEST_ID,
+    closed_port,
+    problem_body,
+    serving,
+    settings_for,
+    silent_listener,
+)
 
 
 async def answer() -> None:
@@ -32,12 +37,12 @@ def test_answers_an_unknown_path_with_a_problem_and_a_fresh_request_id(
     body = response.json()
     assert (response.status_code, body) == (
         404,
-        {
-            "type": "not_found",
-            "title": "Not found",
-            "status": 404,
-            "requestId": response.headers["x-request-id"],
-        },
+        problem_body(
+            404,
+            type="not_found",
+            title="Not found",
+            request_id=response.headers["x-request-id"],
+        ),
     )
     assert UUID(body["requestId"]).version == 4
 
@@ -77,13 +82,12 @@ def test_reports_not_ready_when_postgres_and_redis_refuse() -> None:
 
     assert (response.status_code, response.json()) == (
         503,
-        {
-            "type": "not_ready",
-            "title": "Service not ready",
-            "status": 503,
-            "detail": "Not reachable: postgres, redis",
-            "requestId": REQUEST_ID,
-        },
+        problem_body(
+            503,
+            type="not_ready",
+            title="Service not ready",
+            detail="Not reachable: postgres, redis",
+        ),
     )
 
 

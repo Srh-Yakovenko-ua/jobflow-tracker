@@ -169,5 +169,11 @@
     "MIN_N_PERCENT": 5,
     "MIN_N_INSIGHT": 10,
     "MIN_N_FORECAST": 15
-  }
+  },
+  "tokenScopes": [
+    "user",
+    "analytics:read",
+    "capture",
+    "ai:invoke"
+  ]
 }

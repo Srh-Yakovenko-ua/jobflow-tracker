@@ -177,6 +177,24 @@ jobs:
         env:
           REDIS_URL: redis://localhost:6379
         run: for run in $(seq 20); do pnpm --filter @jobflow/api test:int live-load.int || exit 1; done
+      - name: Start the API for the analytics token check
+        env:
+          REDIS_URL: redis://localhost:6379
+          RATE_LIMIT_REGISTER_PER_HOUR: 100
+        run: |
+          pnpm turbo run build --filter=@jobflow/api
+          nohup pnpm --filter @jobflow/api start > "$RUNNER_TEMP/api.log" 2>&1 &
+          curl -fsS --retry 30 --retry-connrefused --retry-delay 1 http://127.0.0.1:4000/.well-known/jwks.json
+      - name: Analytics trusts tokens issued by the API
+        working-directory: services/analytics
+        env:
+          API_URL: http://127.0.0.1:4000
+          DATABASE_URL_ANALYTICS: postgresql://jobflow_analytics:jobflow_analytics@127.0.0.1:5432/jobflow_test
+          REDIS_URL: redis://127.0.0.1:6379
+        run: uv run pytest tests_api
+      - name: API log
+        if: failure()
+        run: cat "$RUNNER_TEMP/api.log"
       - name: Schema matches the migrations
         run: pnpm --filter @jobflow/api exec prisma migrate diff --from-config-datasource --to-schema prisma/schema.prisma --exit-code
 
