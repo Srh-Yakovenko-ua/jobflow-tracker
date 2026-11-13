@@ -2,6 +2,7 @@ import { UnrecoverableError } from 'bullmq';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 
 import { OutboxRelayService } from '../../outbox/outbox-relay.service.js';
+import { ScheduledJobsService } from '../../scheduled-jobs/scheduled-jobs.service.js';
 import { memoryLog } from '../../test/memory-log.js';
 import { processedJob } from '../../test/processed-job.js';
 import { compileProcessorModule } from '../../test/processor.js';
@@ -23,6 +24,27 @@ class FakeOutboxRelay {
   }
 }
 
+class FakeScheduledJobs {
+  readonly calls: string[] = [];
+
+  cleanup(): Promise<void> {
+    return this.called('cleanup');
+  }
+
+  sweepStaleAiJobs(): Promise<void> {
+    return this.called('sweepStaleAiJobs');
+  }
+
+  monthlySummaryUsers(): Promise<void> {
+    return this.called('monthlySummaryUsers');
+  }
+
+  private called(method: string): Promise<void> {
+    this.calls.push(method);
+    return Promise.resolve();
+  }
+}
+
 function pingJob(data: unknown) {
   return processedJob({ queueName: 'maintenance', name: 'ping', data, id: '42' });
 }
@@ -33,6 +55,7 @@ function tickJob(name: string) {
 
 describe('MaintenanceProcessor', () => {
   const outbox = new FakeOutboxRelay();
+  const scheduledJobs = new FakeScheduledJobs();
   let processor: MaintenanceProcessor;
   let close: () => Promise<void>;
 
@@ -40,6 +63,7 @@ describe('MaintenanceProcessor', () => {
     const moduleRef = await compileProcessorModule(log.sink, [
       MaintenanceProcessor,
       { provide: OutboxRelayService, useValue: outbox },
+      { provide: ScheduledJobsService, useValue: scheduledJobs },
     ]);
     processor = moduleRef.get(MaintenanceProcessor);
     close = () => moduleRef.close();
@@ -48,6 +72,7 @@ describe('MaintenanceProcessor', () => {
   beforeEach(() => {
     log.lines.length = 0;
     outbox.calls.length = 0;
+    scheduledJobs.calls.length = 0;
   });
 
   afterAll(async () => {
@@ -101,6 +126,42 @@ describe('MaintenanceProcessor', () => {
 
     expect(outbox.calls).toEqual(['deletePublished']);
   });
+
+  it('also deletes expired idempotency keys, refresh tokens and notifications for a maintenance.cleanup job', async () => {
+    await processor.process(tickJob('maintenance.cleanup'));
+
+    expect(scheduledJobs.calls).toEqual(['cleanup']);
+  });
+
+  it.each([
+    ['ai-jobs.sweep', 'sweepStaleAiJobs'],
+    ['monthly-summary.pick', 'monthlySummaryUsers'],
+  ])('runs the scheduled jobs step for a %s job', async (name, method) => {
+    await processor.process(tickJob(name));
+
+    expect(scheduledJobs.calls).toEqual([method]);
+    expect(outbox.calls).toEqual([]);
+  });
+
+  it.each(['silence.scan', 'auto-ghost.scan', 'event-reminders.scan'])(
+    'logs a %s run with its requestId, jobId, queue and job name',
+    async (name) => {
+      await processor.process(
+        processedJob({ queueName: 'maintenance', name, data: { requestId: 'req-9' }, id: '51' }),
+      );
+
+      expect(log.parsed()).toEqual([
+        expect.objectContaining({
+          msg: 'scheduled job ran',
+          requestId: 'req-9',
+          jobId: '51',
+          queue: 'maintenance',
+          jobName: name,
+        }),
+      ]);
+      expect(scheduledJobs.calls).toEqual([]);
+    },
+  );
 
   it('fails a job with an unknown name as unrecoverable and runs nothing', async () => {
     await expect(processor.process(tickJob('outbox.replay'))).rejects.toBeInstanceOf(

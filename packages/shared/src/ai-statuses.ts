@@ -16,6 +16,7 @@ export const AI_JOB_FAILURES = {
   rateLimited: 'rate_limited',
   invalidOutput: 'ai_invalid_output',
   needsText: 'needs_text',
+  abandoned: 'ai_abandoned',
 } as const;
 
 export const AI_RESULT_STATUSES = ['succeeded', 'failed'] as const;

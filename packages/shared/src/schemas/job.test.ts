@@ -21,6 +21,7 @@ describe('AI_JOB_FAILURES', () => {
       rateLimited: 'rate_limited',
       invalidOutput: 'ai_invalid_output',
       needsText: 'needs_text',
+      abandoned: 'ai_abandoned',
     });
   });
 });
