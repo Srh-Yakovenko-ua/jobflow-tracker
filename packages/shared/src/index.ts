@@ -15,6 +15,7 @@ export * from './plurals.js';
 export * from './rejection-reasons.js';
 export * from './reminders.js';
 export * from './scheduled-events.js';
+export * from './schemas/analytics-forecast.js';
 export * from './schemas/analytics-funnel.js';
 export * from './schemas/analytics-reasons.js';
 export * from './schemas/analytics-resume-ab.js';

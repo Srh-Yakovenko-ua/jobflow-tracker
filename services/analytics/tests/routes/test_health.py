@@ -59,6 +59,7 @@ def test_lists_the_health_and_metric_paths_in_the_openapi_schema(
     paths = client.get("/openapi.json").json()["paths"]
 
     assert sorted(paths) == [
+        "/analytics/forecast",
         "/analytics/funnel",
         "/analytics/norms",
         "/analytics/reasons",
