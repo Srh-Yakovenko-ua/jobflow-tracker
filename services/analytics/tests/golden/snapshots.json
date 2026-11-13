@@ -1,0 +1,1162 @@
+{
+  "forecast": {
+    "applications": 54,
+    "applicationsPerWeek": 4.75,
+    "horizonWeeks": 52,
+    "interval": {
+      "high": 24.68,
+      "low": 3.0
+    },
+    "likely": {
+      "high": 12.65,
+      "low": 4.22
+    },
+    "medianWeeks": 6.81,
+    "offers": 1,
+    "status": "ok",
+    "withinEightWeeks": 0.5753,
+    "withinFourWeeks": 0.2209
+  },
+  "funnel": {
+    "kpis": {
+      "daysInSearch": 84,
+      "interviews": {
+        "previousMonth": 3,
+        "thisMonth": 5,
+        "total": 9
+      },
+      "offers": {
+        "previousMonth": 0,
+        "thisMonth": 1,
+        "total": 1
+      },
+      "sent": {
+        "previousMonth": 15,
+        "thisMonth": 19,
+        "total": 54
+      }
+    },
+    "mostExpensive": {
+      "investedDaysMedian": 17.0,
+      "lost": 5,
+      "passed": 4,
+      "reached": 9,
+      "stage": "tech_interview",
+      "status": "ok"
+    },
+    "stages": [
+      {
+        "conversion": {
+          "high": 0.5780493146,
+          "low": 0.2850939256,
+          "status": "ok",
+          "successes": 17,
+          "trials": 40,
+          "value": 0.425
+        },
+        "dropOff": {
+          "ghosted": 14,
+          "rejected": 21,
+          "withdrawn": 2
+        },
+        "passed": 17,
+        "reached": 54,
+        "stage": "applied"
+      },
+      {
+        "conversion": {
+          "high": 0.8017550386,
+          "low": 0.3574683012,
+          "status": "ok",
+          "successes": 9,
+          "trials": 15,
+          "value": 0.6
+        },
+        "dropOff": {
+          "ghosted": 2,
+          "rejected": 5,
+          "withdrawn": 1
+        },
+        "passed": 9,
+        "reached": 17,
+        "stage": "screening"
+      },
+      {
+        "conversion": {
+          "high": 0.7847839378,
+          "low": 0.2152160622,
+          "status": "ok",
+          "successes": 4,
+          "trials": 8,
+          "value": 0.5
+        },
+        "dropOff": {
+          "ghosted": 1,
+          "rejected": 4,
+          "withdrawn": 0
+        },
+        "passed": 4,
+        "reached": 9,
+        "stage": "tech_interview"
+      },
+      {
+        "conversion": {
+          "have": 4,
+          "message": "Ще 1 відгук до першого висновку",
+          "need": 1,
+          "status": "insufficient_data"
+        },
+        "dropOff": {
+          "ghosted": 0,
+          "rejected": 2,
+          "withdrawn": 1
+        },
+        "passed": 1,
+        "reached": 4,
+        "stage": "final"
+      },
+      {
+        "conversion": null,
+        "dropOff": {
+          "ghosted": 0,
+          "rejected": 0,
+          "withdrawn": 0
+        },
+        "passed": null,
+        "reached": 1,
+        "stage": "offer"
+      }
+    ]
+  },
+  "insights": {
+    "insights": [
+      {
+        "block": "funnel",
+        "body": "21 відмова і 14 тиш із 54 — воронка закінчується там, де ти ще ні з ким не говорив.",
+        "evidence": {
+          "ghosted": 14,
+          "reached": 54,
+          "rejected": 21,
+          "stage": "applied"
+        },
+        "severity": "neutral",
+        "title": "Найширша втеча — на першому кроці"
+      },
+      {
+        "block": "funnel",
+        "body": "Дійшло 9, пройшло 4. Кожна втрата тут — це 2–3 тижні вже витраченого часу.",
+        "evidence": {
+          "investedDaysMedian": 17.0,
+          "lost": 5,
+          "passed": 4,
+          "reached": 9,
+          "stage": "tech_interview"
+        },
+        "severity": "warning",
+        "title": "Техінтерв'ю — найдорожчий етап"
+      },
+      {
+        "block": "reasons",
+        "body": "3 із 4 відмов на цьому етапі — «не вистачає скілів».",
+        "evidence": {
+          "code": "skills_gap",
+          "count": 3,
+          "of": 4,
+          "stage": "tech_interview"
+        },
+        "severity": "warning",
+        "title": "На техінтерв'ю тебе найчастіше валять: «не вистачає скілів»"
+      },
+      {
+        "block": "sources",
+        "body": "16 відгуків через LinkedIn дали 2 скринінги. Djinni при 24 — 9.",
+        "evidence": {
+          "comparison": "djinni",
+          "comparisonApplications": 24,
+          "comparisonScreenings": 9,
+          "strong": "referral",
+          "strongApplications": 3,
+          "strongScreenings": 3,
+          "weak": "linkedin",
+          "weakApplications": 16,
+          "weakScreenings": 2
+        },
+        "severity": "warning",
+        "title": "LinkedIn з'їдає час, рефералки — ні"
+      },
+      {
+        "block": "ghosted",
+        "body": "Це 31% твоїх відгуків — на 9 п.п. більше за ринок.",
+        "evidence": {
+          "applications": 54,
+          "gapPoints": 9,
+          "ghosted": 17,
+          "position": "above",
+          "sharePercent": 31
+        },
+        "severity": "neutral",
+        "title": "17 компаній не відповіли"
+      }
+    ]
+  },
+  "norms": {
+    "medianDaysToOffer": null,
+    "stageNormDays": {
+      "applied": 2,
+      "final": null,
+      "screening": 11,
+      "tech_interview": 6
+    }
+  },
+  "reasons": {
+    "headline": {
+      "code": "skills_gap",
+      "count": 3,
+      "of": 4,
+      "stage": "tech_interview",
+      "status": "ok"
+    },
+    "stages": [
+      {
+        "reasons": [
+          {
+            "code": "skills_gap",
+            "count": 3,
+            "share": {
+              "high": 0.4102945857,
+              "low": 0.0619112664,
+              "status": "ok",
+              "successes": 3,
+              "trials": 17,
+              "value": 0.1764705882
+            }
+          },
+          {
+            "code": "english_level",
+            "count": 3,
+            "share": {
+              "high": 0.4102945857,
+              "low": 0.0619112664,
+              "status": "ok",
+              "successes": 3,
+              "trials": 17,
+              "value": 0.1764705882
+            }
+          },
+          {
+            "code": "salary_expectations",
+            "count": 2,
+            "share": {
+              "high": 0.3433635059,
+              "low": 0.0328797738,
+              "status": "ok",
+              "successes": 2,
+              "trials": 17,
+              "value": 0.1176470588
+            }
+          },
+          {
+            "code": "chose_other",
+            "count": 2,
+            "share": {
+              "high": 0.3433635059,
+              "low": 0.0328797738,
+              "status": "ok",
+              "successes": 2,
+              "trials": 17,
+              "value": 0.1176470588
+            }
+          },
+          {
+            "code": "accepted_other",
+            "count": 2,
+            "share": {
+              "high": 0.3433635059,
+              "low": 0.0328797738,
+              "status": "ok",
+              "successes": 2,
+              "trials": 17,
+              "value": 0.1176470588
+            }
+          },
+          {
+            "code": "position_closed",
+            "count": 1,
+            "share": {
+              "high": 0.2698203064,
+              "low": 0.010460401,
+              "status": "ok",
+              "successes": 1,
+              "trials": 17,
+              "value": 0.0588235294
+            }
+          },
+          {
+            "code": "no_explanation",
+            "count": 1,
+            "share": {
+              "high": 0.2698203064,
+              "low": 0.010460401,
+              "status": "ok",
+              "successes": 1,
+              "trials": 17,
+              "value": 0.0588235294
+            }
+          },
+          {
+            "code": "low_salary",
+            "count": 1,
+            "share": {
+              "high": 0.2698203064,
+              "low": 0.010460401,
+              "status": "ok",
+              "successes": 1,
+              "trials": 17,
+              "value": 0.0588235294
+            }
+          },
+          {
+            "code": "office_schedule",
+            "count": 1,
+            "share": {
+              "high": 0.2698203064,
+              "low": 0.010460401,
+              "status": "ok",
+              "successes": 1,
+              "trials": 17,
+              "value": 0.0588235294
+            }
+          },
+          {
+            "code": "red_flags",
+            "count": 1,
+            "share": {
+              "high": 0.2698203064,
+              "low": 0.010460401,
+              "status": "ok",
+              "successes": 1,
+              "trials": 17,
+              "value": 0.0588235294
+            }
+          }
+        ],
+        "sides": {
+          "candidate": {
+            "count": 5,
+            "share": {
+              "high": 0.5313311007,
+              "low": 0.1327998961,
+              "status": "ok",
+              "successes": 5,
+              "trials": 17,
+              "value": 0.2941176471
+            }
+          },
+          "company": {
+            "count": 12,
+            "share": {
+              "high": 0.8672001039,
+              "low": 0.4686688993,
+              "status": "ok",
+              "successes": 12,
+              "trials": 17,
+              "value": 0.7058823529
+            }
+          }
+        },
+        "stage": "applied",
+        "stated": 17,
+        "top": null,
+        "total": 21,
+        "trend": null,
+        "unstated": [
+          {
+            "code": "silence_timeout",
+            "count": 2
+          },
+          {
+            "code": "unspecified",
+            "count": 2
+          }
+        ]
+      },
+      {
+        "reasons": [
+          {
+            "code": "salary_expectations",
+            "count": 1,
+            "share": {
+              "high": 0.6244653702,
+              "low": 0.0362241086,
+              "status": "ok",
+              "successes": 1,
+              "trials": 5,
+              "value": 0.2
+            }
+          },
+          {
+            "code": "chose_other",
+            "count": 1,
+            "share": {
+              "high": 0.6244653702,
+              "low": 0.0362241086,
+              "status": "ok",
+              "successes": 1,
+              "trials": 5,
+              "value": 0.2
+            }
+          },
+          {
+            "code": "position_closed",
+            "count": 1,
+            "share": {
+              "high": 0.6244653702,
+              "low": 0.0362241086,
+              "status": "ok",
+              "successes": 1,
+              "trials": 5,
+              "value": 0.2
+            }
+          },
+          {
+            "code": "no_explanation",
+            "count": 1,
+            "share": {
+              "high": 0.6244653702,
+              "low": 0.0362241086,
+              "status": "ok",
+              "successes": 1,
+              "trials": 5,
+              "value": 0.2
+            }
+          },
+          {
+            "code": "low_salary",
+            "count": 1,
+            "share": {
+              "high": 0.6244653702,
+              "low": 0.0362241086,
+              "status": "ok",
+              "successes": 1,
+              "trials": 5,
+              "value": 0.2
+            }
+          }
+        ],
+        "sides": {
+          "candidate": {
+            "count": 1,
+            "share": {
+              "high": 0.6244653702,
+              "low": 0.0362241086,
+              "status": "ok",
+              "successes": 1,
+              "trials": 5,
+              "value": 0.2
+            }
+          },
+          "company": {
+            "count": 4,
+            "share": {
+              "high": 0.9637758914,
+              "low": 0.3755346298,
+              "status": "ok",
+              "successes": 4,
+              "trials": 5,
+              "value": 0.8
+            }
+          }
+        },
+        "stage": "screening",
+        "stated": 5,
+        "top": null,
+        "total": 5,
+        "trend": null,
+        "unstated": []
+      },
+      {
+        "reasons": [
+          {
+            "code": "skills_gap",
+            "count": 3,
+            "share": {
+              "have": 4,
+              "message": "Ще 1 відгук до першого висновку",
+              "need": 1,
+              "status": "insufficient_data"
+            }
+          },
+          {
+            "code": "english_level",
+            "count": 1,
+            "share": {
+              "have": 4,
+              "message": "Ще 1 відгук до першого висновку",
+              "need": 1,
+              "status": "insufficient_data"
+            }
+          }
+        ],
+        "sides": {
+          "candidate": {
+            "count": 0,
+            "share": {
+              "have": 4,
+              "message": "Ще 1 відгук до першого висновку",
+              "need": 1,
+              "status": "insufficient_data"
+            }
+          },
+          "company": {
+            "count": 4,
+            "share": {
+              "have": 4,
+              "message": "Ще 1 відгук до першого висновку",
+              "need": 1,
+              "status": "insufficient_data"
+            }
+          }
+        },
+        "stage": "tech_interview",
+        "stated": 4,
+        "top": {
+          "code": "skills_gap",
+          "count": 3,
+          "of": 4,
+          "stage": "tech_interview",
+          "status": "ok"
+        },
+        "total": 4,
+        "trend": {
+          "changed": false,
+          "previous": "skills_gap"
+        },
+        "unstated": []
+      },
+      {
+        "reasons": [
+          {
+            "code": "office_schedule",
+            "count": 1,
+            "share": {
+              "have": 2,
+              "message": "Ще 3 відгуки до першого висновку",
+              "need": 3,
+              "status": "insufficient_data"
+            }
+          },
+          {
+            "code": "red_flags",
+            "count": 1,
+            "share": {
+              "have": 2,
+              "message": "Ще 3 відгуки до першого висновку",
+              "need": 3,
+              "status": "insufficient_data"
+            }
+          }
+        ],
+        "sides": {
+          "candidate": {
+            "count": 2,
+            "share": {
+              "have": 2,
+              "message": "Ще 3 відгуки до першого висновку",
+              "need": 3,
+              "status": "insufficient_data"
+            }
+          },
+          "company": {
+            "count": 0,
+            "share": {
+              "have": 2,
+              "message": "Ще 3 відгуки до першого висновку",
+              "need": 3,
+              "status": "insufficient_data"
+            }
+          }
+        },
+        "stage": "final",
+        "stated": 2,
+        "top": null,
+        "total": 2,
+        "trend": null,
+        "unstated": []
+      }
+    ]
+  },
+  "reasons_summary": {
+    "reasons": [
+      {
+        "code": "skills_gap",
+        "count": 3
+      },
+      {
+        "code": "english_level",
+        "count": 1
+      }
+    ],
+    "stage": "tech_interview",
+    "total": 4
+  },
+  "resume_ab": {
+    "comparison": {
+      "baseline": 1,
+      "challenger": 2,
+      "difference": -0.1155555556,
+      "pValue": 0.7026999697,
+      "probabilityBetter": 0.28361,
+      "switch": {
+        "after": {
+          "high": 0.6636911713,
+          "low": 0.3363088287,
+          "status": "ok",
+          "successes": 16,
+          "trials": 32,
+          "value": 0.5
+        },
+        "at": "2026-06-08T09:00:00Z",
+        "before": {
+          "have": 2,
+          "message": "Ще 3 відгуки до першого висновку",
+          "need": 3,
+          "status": "insufficient_data"
+        }
+      },
+      "test": "fisher_exact",
+      "verdict": {
+        "have": 9,
+        "message": "Ще 1 відгук до першого висновку",
+        "need": 1,
+        "status": "insufficient_data"
+      }
+    },
+    "versions": [
+      {
+        "applications": 6,
+        "conversion": {
+          "high": 0.5635028222,
+          "low": 0.0300533697,
+          "status": "ok",
+          "successes": 1,
+          "trials": 6,
+          "value": 0.1666666667
+        },
+        "number": 3,
+        "resumeVersionId": "3dccc6c7-cda6-5cbb-8c7e-b6a9dc46e82c",
+        "screenings": 1,
+        "title": "для дизайн-ролей"
+      },
+      {
+        "applications": 27,
+        "conversion": {
+          "high": 0.6293266813,
+          "low": 0.2666563888,
+          "status": "ok",
+          "successes": 11,
+          "trials": 25,
+          "value": 0.44
+        },
+        "number": 2,
+        "resumeVersionId": "6d882acf-2f7f-5c9a-af16-d350e0855539",
+        "screenings": 11,
+        "title": "акцент на продукті"
+      },
+      {
+        "applications": 21,
+        "conversion": {
+          "high": 0.8112214789,
+          "low": 0.2666512935,
+          "status": "ok",
+          "successes": 5,
+          "trials": 9,
+          "value": 0.5555555556
+        },
+        "number": 1,
+        "resumeVersionId": "8391ca4d-b33d-5e55-921b-737ac339a708",
+        "screenings": 5,
+        "title": "хронологічне"
+      }
+    ]
+  },
+  "sankey": {
+    "detailed": {
+      "links": [
+        {
+          "flow": 17,
+          "from": "applied",
+          "ghost": false,
+          "to": "screening"
+        },
+        {
+          "flow": 21,
+          "from": "applied",
+          "ghost": false,
+          "to": "rejected"
+        },
+        {
+          "flow": 14,
+          "from": "applied",
+          "ghost": true,
+          "to": "ghosted"
+        },
+        {
+          "flow": 2,
+          "from": "applied",
+          "ghost": false,
+          "to": "withdrawn"
+        },
+        {
+          "flow": 9,
+          "from": "screening",
+          "ghost": false,
+          "to": "tech_interview"
+        },
+        {
+          "flow": 5,
+          "from": "screening",
+          "ghost": false,
+          "to": "rejected"
+        },
+        {
+          "flow": 2,
+          "from": "screening",
+          "ghost": true,
+          "to": "ghosted"
+        },
+        {
+          "flow": 1,
+          "from": "screening",
+          "ghost": false,
+          "to": "withdrawn"
+        },
+        {
+          "flow": 4,
+          "from": "tech_interview",
+          "ghost": false,
+          "to": "final"
+        },
+        {
+          "flow": 4,
+          "from": "tech_interview",
+          "ghost": false,
+          "to": "rejected"
+        },
+        {
+          "flow": 1,
+          "from": "tech_interview",
+          "ghost": true,
+          "to": "ghosted"
+        },
+        {
+          "flow": 1,
+          "from": "final",
+          "ghost": false,
+          "to": "offer"
+        },
+        {
+          "flow": 2,
+          "from": "final",
+          "ghost": false,
+          "to": "rejected"
+        },
+        {
+          "flow": 1,
+          "from": "final",
+          "ghost": false,
+          "to": "withdrawn"
+        }
+      ],
+      "nodes": [
+        {
+          "id": "applied",
+          "kind": "stage"
+        },
+        {
+          "id": "screening",
+          "kind": "stage"
+        },
+        {
+          "id": "tech_interview",
+          "kind": "stage"
+        },
+        {
+          "id": "final",
+          "kind": "stage"
+        },
+        {
+          "id": "offer",
+          "kind": "stage"
+        },
+        {
+          "id": "rejected",
+          "kind": "outcome"
+        },
+        {
+          "id": "ghosted",
+          "kind": "outcome"
+        },
+        {
+          "id": "withdrawn",
+          "kind": "outcome"
+        }
+      ]
+    },
+    "merged": {
+      "links": [
+        {
+          "flow": 17,
+          "from": "applied",
+          "ghost": false,
+          "to": "screening"
+        },
+        {
+          "flow": 21,
+          "from": "applied",
+          "ghost": false,
+          "to": "rejected"
+        },
+        {
+          "flow": 14,
+          "from": "applied",
+          "ghost": true,
+          "to": "ghosted"
+        },
+        {
+          "flow": 2,
+          "from": "applied",
+          "ghost": false,
+          "to": "withdrawn"
+        },
+        {
+          "flow": 9,
+          "from": "screening",
+          "ghost": false,
+          "to": "tech_interview"
+        },
+        {
+          "flow": 5,
+          "from": "screening",
+          "ghost": false,
+          "to": "rejected"
+        },
+        {
+          "flow": 2,
+          "from": "screening",
+          "ghost": true,
+          "to": "ghosted"
+        },
+        {
+          "flow": 1,
+          "from": "screening",
+          "ghost": false,
+          "to": "withdrawn"
+        },
+        {
+          "flow": 4,
+          "from": "tech_interview",
+          "ghost": false,
+          "to": "final"
+        },
+        {
+          "flow": 4,
+          "from": "tech_interview",
+          "ghost": false,
+          "to": "rejected"
+        },
+        {
+          "flow": 1,
+          "from": "tech_interview",
+          "ghost": true,
+          "to": "ghosted"
+        },
+        {
+          "flow": 1,
+          "from": "final",
+          "ghost": false,
+          "to": "offer"
+        },
+        {
+          "flow": 2,
+          "from": "final",
+          "ghost": false,
+          "to": "rejected"
+        },
+        {
+          "flow": 1,
+          "from": "final",
+          "ghost": false,
+          "to": "withdrawn"
+        }
+      ],
+      "nodes": [
+        {
+          "id": "applied",
+          "kind": "stage"
+        },
+        {
+          "id": "screening",
+          "kind": "stage"
+        },
+        {
+          "id": "tech_interview",
+          "kind": "stage"
+        },
+        {
+          "id": "final",
+          "kind": "stage"
+        },
+        {
+          "id": "offer",
+          "kind": "stage"
+        },
+        {
+          "id": "rejected",
+          "kind": "outcome"
+        },
+        {
+          "id": "ghosted",
+          "kind": "outcome"
+        },
+        {
+          "id": "withdrawn",
+          "kind": "outcome"
+        }
+      ]
+    },
+    "split": null
+  },
+  "sources": {
+    "silentGhosts": {
+      "easyApply": 7,
+      "total": 14
+    },
+    "sources": [
+      {
+        "applications": 24,
+        "conversion": {
+          "high": 0.6579146575,
+          "low": 0.2581978583,
+          "status": "ok",
+          "successes": 9,
+          "trials": 20,
+          "value": 0.45
+        },
+        "easyApply": 0,
+        "ghostRate": {
+          "high": 0.3585307065,
+          "low": 0.0667867633,
+          "status": "ok",
+          "successes": 4,
+          "trials": 24,
+          "value": 0.1666666667
+        },
+        "medianResponse": {
+          "days": 2.0,
+          "samples": 19,
+          "status": "ok"
+        },
+        "note": null,
+        "screenings": 9,
+        "source": "djinni"
+      },
+      {
+        "applications": 6,
+        "conversion": {
+          "high": 0.7692757187,
+          "low": 0.1176207742,
+          "status": "ok",
+          "successes": 2,
+          "trials": 5,
+          "value": 0.4
+        },
+        "easyApply": 0,
+        "ghostRate": {
+          "high": 0.7000066849,
+          "low": 0.0967714111,
+          "status": "ok",
+          "successes": 2,
+          "trials": 6,
+          "value": 0.3333333333
+        },
+        "medianResponse": {
+          "days": 2.0,
+          "samples": 5,
+          "status": "ok"
+        },
+        "note": null,
+        "screenings": 2,
+        "source": "dou"
+      },
+      {
+        "applications": 16,
+        "conversion": {
+          "high": 0.5474110309,
+          "low": 0.0632251071,
+          "status": "ok",
+          "successes": 2,
+          "trials": 9,
+          "value": 0.2222222222
+        },
+        "easyApply": 7,
+        "ghostRate": {
+          "high": 0.7690134759,
+          "low": 0.331785564,
+          "status": "ok",
+          "successes": 9,
+          "trials": 16,
+          "value": 0.5625
+        },
+        "medianResponse": {
+          "days": 2.0,
+          "samples": 5,
+          "status": "ok"
+        },
+        "note": null,
+        "screenings": 2,
+        "source": "linkedin"
+      },
+      {
+        "applications": 3,
+        "conversion": {
+          "have": 3,
+          "message": "Ще 2 відгуки до першого висновку",
+          "need": 2,
+          "status": "insufficient_data"
+        },
+        "easyApply": 0,
+        "ghostRate": {
+          "have": 3,
+          "message": "Ще 2 відгуки до першого висновку",
+          "need": 2,
+          "status": "insufficient_data"
+        },
+        "medianResponse": {
+          "have": 3,
+          "message": "Ще 2 відгуки до першого висновку",
+          "need": 2,
+          "status": "insufficient_data"
+        },
+        "note": "вибірка мала, але напрям однозначний",
+        "screenings": 3,
+        "source": "referral"
+      },
+      {
+        "applications": 2,
+        "conversion": {
+          "have": 2,
+          "message": "Ще 3 відгуки до першого висновку",
+          "need": 3,
+          "status": "insufficient_data"
+        },
+        "easyApply": 0,
+        "ghostRate": {
+          "have": 2,
+          "message": "Ще 3 відгуки до першого висновку",
+          "need": 3,
+          "status": "insufficient_data"
+        },
+        "medianResponse": {
+          "have": 1,
+          "message": "Ще 4 відгуки до першого висновку",
+          "need": 4,
+          "status": "insufficient_data"
+        },
+        "note": null,
+        "screenings": 1,
+        "source": "company_site"
+      },
+      {
+        "applications": 3,
+        "conversion": {
+          "have": 1,
+          "message": "Ще 4 відгуки до першого висновку",
+          "need": 4,
+          "status": "insufficient_data"
+        },
+        "easyApply": 0,
+        "ghostRate": {
+          "have": 3,
+          "message": "Ще 2 відгуки до першого висновку",
+          "need": 2,
+          "status": "insufficient_data"
+        },
+        "medianResponse": {
+          "have": 0,
+          "message": "Ще 5 відгуків до першого висновку",
+          "need": 5,
+          "status": "insufficient_data"
+        },
+        "note": null,
+        "screenings": 0,
+        "source": "robota"
+      }
+    ]
+  },
+  "timings": {
+    "ghostRate": {
+      "gap": {
+        "points": 9,
+        "position": "above"
+      },
+      "market": {
+        "high": 0.22,
+        "low": 0.18,
+        "source": "Greenhouse platform data, 2024: 18 to 22% of jobs posted on Greenhouse in a quarter are ghost jobs",
+        "url": "https://www.entrepreneur.com/business-news/ghost-job-listings-on-the-rise-how-to-spot-avoid-experts/485494"
+      },
+      "rate": {
+        "high": 0.4474344482,
+        "low": 0.2067928066,
+        "status": "ok",
+        "successes": 17,
+        "trials": 54,
+        "value": 0.3148148148
+      }
+    },
+    "medianDaysToOffer": {
+      "have": 1,
+      "message": "Ще 4 відгуки до першого висновку",
+      "need": 4,
+      "status": "insufficient_data"
+    },
+    "responseTime": {
+      "hours": 144.0,
+      "samples": 33,
+      "status": "ok"
+    },
+    "stages": [
+      {
+        "lowerQuartileDays": 2.0,
+        "medianDays": 2.0,
+        "samples": 40,
+        "stage": "applied",
+        "status": "ok",
+        "upperQuartileDays": 6.0
+      },
+      {
+        "lowerQuartileDays": 2.0,
+        "medianDays": 11.0,
+        "samples": 15,
+        "stage": "screening",
+        "status": "ok",
+        "upperQuartileDays": 11.0
+      },
+      {
+        "lowerQuartileDays": 2.0,
+        "medianDays": 5.5,
+        "samples": 8,
+        "stage": "tech_interview",
+        "status": "ok",
+        "upperQuartileDays": 9.0
+      },
+      {
+        "have": 4,
+        "message": "Ще 1 відгук до першого висновку",
+        "need": 1,
+        "stage": "final",
+        "status": "insufficient_data"
+      }
+    ]
+  }
+}
