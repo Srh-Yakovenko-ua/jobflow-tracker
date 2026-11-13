@@ -86,13 +86,14 @@ describe.each([
 });
 
 describe('global shortcuts', () => {
-  it('G A and G R do nothing while their pages are behind the flags, N and G B still work', () => {
+  it('G R does nothing while reminders are behind the flag, N, G A and G B still work', () => {
     const actions = listen({ flags: FEATURE_FLAGS });
 
     press([LATIN.n, LATIN.g, LATIN.a, LATIN.g, LATIN.r, LATIN.g, LATIN.b]);
 
     expect(actions.onShortcut.mock.calls).toEqual([
       [{ kind: 'navigate', href: '/add' }],
+      [{ kind: 'navigate', href: '/analytics' }],
       [{ kind: 'navigate', href: '/board' }],
     ]);
   });

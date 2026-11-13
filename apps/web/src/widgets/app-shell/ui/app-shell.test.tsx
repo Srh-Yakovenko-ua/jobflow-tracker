@@ -45,13 +45,14 @@ function renderShell() {
 }
 
 describe('AppShell', () => {
-  it('Tab walks the skip link, the collapse toggle, Дошка, Календар, Резюме, Налаштування, the search, Додати вакансію and the user menu, and Enter collapses the sidebar', async () => {
+  it('Tab walks the skip link, the collapse toggle, Дошка, Аналітика, Календар, Резюме, Налаштування, the search, Додати вакансію and the user menu, and Enter collapses the sidebar', async () => {
     server.use(meRoute(), silentBoardRoute({}));
     const { user, sidebar } = renderShell();
     const stops = [
       screen.getByRole('link', { name: SHELL.skipToContent }),
       within(sidebar).getByRole('button', { name: SHELL.collapse }),
       within(sidebar).getByRole('link', { name: SHELL.nav.board }),
+      within(sidebar).getByRole('link', { name: SHELL.nav.analytics }),
       within(sidebar).getByRole('link', { name: SHELL.nav.calendar }),
       within(sidebar).getByRole('link', { name: SHELL.nav.resumes }),
       within(sidebar).getByRole('link', { name: SHELL.nav.settings }),
@@ -64,7 +65,7 @@ describe('AppShell', () => {
       await user.tab();
       expect(document.activeElement).toBe(stop);
     }
-    await user.keyboard('{Shift>}{Tab}{Tab}{Tab}{Tab}{Tab}{Tab}{Tab}{/Shift}');
+    await user.keyboard('{Shift>}{Tab}{Tab}{Tab}{Tab}{Tab}{Tab}{Tab}{Tab}{/Shift}');
     await user.keyboard('{Enter}');
 
     const toggle = within(sidebar).getByRole('button', { name: SHELL.expand });

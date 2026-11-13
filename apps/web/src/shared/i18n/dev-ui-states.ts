@@ -1,3 +1,4 @@
+import { analytics } from './analytics';
 import { board } from './board';
 import { resumes } from './resumes';
 
@@ -8,13 +9,7 @@ export const devUiStates = {
   emptyScreens: {
     index: '02',
     title: 'Порожні стани решти екранів',
-    analytics: {
-      content: {
-        eyebrow: 'Аналітика · 4 відгуки',
-        title: 'Порахувати ще нічого',
-        hint: "Перші висновки з'являються з 10 відгуків, прогноз офера з 15. До того аналітика показувала б випадковість.",
-      },
-    },
+    analytics: analytics.empty,
     resumes: resumes.empty,
     reminders: {
       content: {

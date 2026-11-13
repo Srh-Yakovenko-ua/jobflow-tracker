@@ -94,7 +94,9 @@ export function DashedBars({ view }: DashedBarsProps) {
   );
 }
 
-function ProgressMeter({ progress }: Readonly<{ progress: EmptyStateProgress }>) {
+export type ProgressMeterProps = Readonly<{ progress: EmptyStateProgress }>;
+
+export function ProgressMeter({ progress }: ProgressMeterProps) {
   const { count, goal } = progress;
   const filled = Math.min(count, goal);
   const segments = Array.from({ length: goal }, (_, position) => ({

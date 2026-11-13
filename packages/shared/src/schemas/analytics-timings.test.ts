@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
+import { buildDesignTimings } from '../../testing/index.js';
 import { issuePathsOf } from '../test/zod-issues.js';
 import {
   type NormsResponse,
@@ -117,6 +118,11 @@ describe('normsResponseSchema', () => {
 describe('timingsResponseSchema', () => {
   it('accepts the design timings with stage medians 4, 7, 9 and 17 days', () => {
     expect(timingsResponseSchema.parse(DESIGN_TIMINGS)).toEqual(DESIGN_TIMINGS);
+  });
+
+  it('accepts the timings of the 54 design applications with a 31% ghost rate', () => {
+    const body = buildDesignTimings();
+    expect(timingsResponseSchema.parse(body)).toEqual(body);
   });
 
   it('accepts an insufficient stage that keeps its stage and a gap of null', () => {

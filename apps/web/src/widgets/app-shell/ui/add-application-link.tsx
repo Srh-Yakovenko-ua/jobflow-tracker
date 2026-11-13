@@ -8,7 +8,7 @@ export function AddApplicationLink() {
   return (
     <Link href="/add" className={buttonLinkClasses({ variant: 'primary', size: 'md' })}>
       <Plus aria-hidden />
-      {uk.shell.addApplication}
+      <span className="max-md:sr-only">{uk.shell.addApplication}</span>
     </Link>
   );
 }

@@ -23,10 +23,11 @@ function actionsAt(...args: Parameters<typeof paletteActionsOf>) {
 }
 
 describe('shortcutsOf', () => {
-  it('keeps N, G B and ? while analytics and reminders are behind their flags', () => {
+  it('keeps N, G B, G A and ? while reminders are behind their flag', () => {
     expect(shortcutsOf(FEATURE_FLAGS).map((shortcut) => shortcut.id)).toEqual([
       'add',
       'board',
+      'analytics',
       'shortcuts',
     ]);
   });
@@ -46,6 +47,7 @@ describe('palettePagesOf', () => {
   it('offers the shipped pages plus the table view', () => {
     expect(palettePagesOf(FEATURE_FLAGS).map((page) => [page.label, page.href])).toEqual([
       ['Дошка', '/board'],
+      ['Аналітика', '/analytics'],
       ['Календар', '/calendar'],
       ['Резюме', '/resumes'],
       ['Налаштування', '/settings'],
@@ -55,10 +57,11 @@ describe('palettePagesOf', () => {
 });
 
 describe('paletteActionsOf', () => {
-  it('without a focused application and with the shipped flags offers add, paste, the theme and the cheat sheet', () => {
+  it('without a focused application and with the shipped flags offers add, paste, analytics, the theme and the cheat sheet', () => {
     expect(actionsAt(FEATURE_FLAGS, undefined)).toEqual([
       ['add', { kind: 'navigate', href: '/add' }],
       ['paste', { kind: 'navigate', href: '/add?path=paste' }],
+      ['analytics', { kind: 'navigate', href: '/analytics' }],
       ['theme', { kind: 'theme' }],
       ['shortcuts', { kind: 'shortcuts' }],
     ]);
@@ -69,6 +72,7 @@ describe('paletteActionsOf', () => {
       'add',
       'paste',
       'move',
+      'analytics',
       'theme',
       'shortcuts',
     ]);
@@ -93,6 +97,7 @@ describe('paletteActionsOf', () => {
     expect(actionsAt(FEATURE_FLAGS, REJECTED).map(([id]) => id)).toEqual([
       'add',
       'paste',
+      'analytics',
       'theme',
       'shortcuts',
     ]);
