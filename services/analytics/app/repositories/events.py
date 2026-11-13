@@ -10,7 +10,7 @@ from app.repositories.frames import read_frame
 from app.repositories.tables import applications, stage_events
 
 
-def events_statement(*, user_id: UUID, search_id: UUID) -> Select[Any]:
+def events_statement(*, user_id: UUID, search_id: UUID | None) -> Select[Any]:
     return (
         select(stage_events)
         .join(applications, applications.c.id == stage_events.c.application_id)
@@ -20,7 +20,7 @@ def events_statement(*, user_id: UUID, search_id: UUID) -> Select[Any]:
 
 
 async def load_events(
-    engine: AsyncEngine, *, user_id: UUID, search_id: UUID
+    engine: AsyncEngine, *, user_id: UUID, search_id: UUID | None
 ) -> pd.DataFrame:
     return await read_frame(
         engine, events_statement(user_id=user_id, search_id=search_id)

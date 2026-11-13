@@ -18,7 +18,7 @@ import { http, HttpResponse } from 'msw/http';
 
 import { FULL_APPLICATION, FULL_CARD } from '@/entities/application';
 
-import { apiUrl, errorReply } from './api-handlers';
+import { analyticsUrl, apiUrl, errorReply } from './api-handlers';
 import type { Latch } from './latch';
 
 export type ColumnCounts = Partial<Record<Stage, number>>;
@@ -79,8 +79,16 @@ export function boardOf(counts: ColumnCounts, shown?: ShownCards): ApplicationBo
 
 export type MoveRouteOptions = { reply?: HttpResponseResolver; latch?: Latch };
 
+export type ReasonsSummaryTarget = 'analytics' | 'api';
+
 export type ReasonsSummaryRouteOptions = MoveRouteOptions & {
   reasons?: RejectionReasonsSummary['reasons'];
+  target?: ReasonsSummaryTarget;
+};
+
+const REASONS_SUMMARY_URLS: Record<ReasonsSummaryTarget, string> = {
+  analytics: analyticsUrl('/analytics/reasons/summary'),
+  api: apiUrl('/applications/reasons-summary'),
 };
 
 type ResolverInfo = Parameters<HttpResponseResolver>[0];
@@ -148,9 +156,13 @@ export function undoRoute(control: MoveRouteOptions = {}) {
   return { handler, sent };
 }
 
-export function reasonsSummaryRoute({ reasons = [], ...control }: ReasonsSummaryRouteOptions = {}) {
+export function reasonsSummaryRoute({
+  reasons = [],
+  target = 'analytics',
+  ...control
+}: ReasonsSummaryRouteOptions = {}) {
   const sent: Stage[] = [];
-  const handler = http.get(apiUrl('/applications/reasons-summary'), (info) => {
+  const handler = http.get(REASONS_SUMMARY_URLS[target], (info) => {
     const query = Object.fromEntries(new URL(info.request.url).searchParams);
     const { stage } = rejectionReasonsSummaryQuerySchema.parse(query);
     sent.push(stage);

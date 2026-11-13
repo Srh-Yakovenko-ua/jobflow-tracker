@@ -8,10 +8,15 @@ export const rejectionReasonsSummaryQuerySchema = z.object({
   searchId: z.uuid().optional(),
 });
 
+export const reasonCountSchema = z.object({
+  code: rejectionReasonCodeSchema,
+  count: z.int32().min(1),
+});
+
 export const rejectionReasonsSummarySchema = z.object({
   stage: stageSchema,
   total: z.int32().min(0),
-  reasons: z.array(z.object({ code: rejectionReasonCodeSchema, count: z.int32().min(1) })),
+  reasons: z.array(reasonCountSchema),
 });
 
 export type RejectionReasonsSummaryQuery = z.infer<typeof rejectionReasonsSummaryQuerySchema>;

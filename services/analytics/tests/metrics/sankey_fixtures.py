@@ -2,7 +2,7 @@ from itertools import pairwise
 
 import pandas as pd
 
-from tests.factories import application, stage_event, stage_events_frame
+from tests.factories import StageEvent, application, stage_event, stage_events_frame
 
 type Move = tuple[str, str | None]
 type Journey = list[Move]
@@ -12,14 +12,16 @@ SCREENING = (*APPLIED, "screening")
 OFFER = (*SCREENING, "tech_interview", "final", "offer")
 
 
+def reasoned_events(journeys: list[Journey]) -> list[StageEvent]:
+    return [
+        stage_event(application(index), stage, from_stage=previous, reason=reason)
+        for index, journey in enumerate(journeys)
+        for (previous, _), (stage, reason) in pairwise([(None, None), *journey])
+    ]
+
+
 def reasoned_frame(journeys: list[Journey]) -> pd.DataFrame:
-    return stage_events_frame(
-        [
-            stage_event(application(index), stage, from_stage=previous, reason=reason)
-            for index, journey in enumerate(journeys)
-            for (previous, _), (stage, reason) in pairwise([(None, None), *journey])
-        ]
-    )
+    return stage_events_frame(reasoned_events(journeys))
 
 
 def cohort(path: tuple[str, ...], *, end: Move, count: int) -> list[Journey]:

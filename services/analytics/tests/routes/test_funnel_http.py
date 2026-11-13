@@ -14,7 +14,7 @@ from tests.factories import (
     problem_body,
     uvicorn_serving,
 )
-from tests.routes.test_funnel import SEARCH_PATHS
+from tests.routes.test_funnel import SEARCH_PATH_IDS, SEARCH_PATHS
 
 pytestmark = pytest.mark.enable_socket
 
@@ -34,16 +34,16 @@ REFUSALS = {
 type Refusal = tuple[dict[str, str], int, dict[str, Any]]
 
 
-@pytest.mark.parametrize("path", SEARCH_PATHS)
+@pytest.mark.parametrize(("path", "query"), SEARCH_PATHS, ids=SEARCH_PATH_IDS)
 @pytest.mark.parametrize("refusal", list(REFUSALS.values()), ids=list(REFUSALS))
 def test_refuses_a_search_metric_over_http_without_a_valid_analytics_token(
-    refusal: Refusal, path: str
+    refusal: Refusal, *, path: str, query: dict[str, str]
 ) -> None:
     headers, status, body = refusal
     with uvicorn_serving(auth_app()) as base_url:
         response = httpx2.get(
             f"{base_url}{path}",
-            params={"searchId": str(SEARCH_ID)},
+            params={"searchId": str(SEARCH_ID)} | query,
             headers=headers,
         )
 

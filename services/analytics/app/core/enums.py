@@ -24,6 +24,7 @@ STAGE_ROLES: Final[Mapping[str, StageRole]] = {
 GHOSTED_STAGE: Final = "ghosted"
 REJECTED_STAGE: Final = "rejected"
 UNSPECIFIED_REASON: Final = "unspecified"
+ACTIVE_SEARCH: Final = "active"
 
 
 class EnumsModel(BaseModel):
@@ -50,6 +51,7 @@ class DomainEnums(EnumsModel):
     stages: tuple[str, ...]
     terminal_stages: tuple[str, ...]
     interview_stages: tuple[str, ...]
+    allowed_transitions: Mapping[str, tuple[str, ...]]
     sources: tuple[str, ...]
     work_modes: tuple[str, ...]
     rejection_sides: tuple[str, ...]
@@ -74,6 +76,15 @@ def stages_with_role(role: StageRole) -> tuple[str, ...]:
 
 def progress_stages() -> tuple[str, ...]:
     return stages_with_role("progress")
+
+
+def rejectable_stages() -> tuple[str, ...]:
+    enums = load_domain_enums()
+    return tuple(
+        stage
+        for stage in enums.stages
+        if REJECTED_STAGE in enums.allowed_transitions[stage]
+    )
 
 
 def reason_codes() -> tuple[str, ...]:

@@ -5,7 +5,7 @@ from functools import partial
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.api.routes import funnel, health, sankey
+from app.api.routes import funnel, health, reasons, sankey
 from app.core.auth import key_source_for
 from app.core.config import Settings
 from app.core.enums import check_stages, load_domain_enums
@@ -31,6 +31,7 @@ def create_app(settings: Settings) -> FastAPI:
 
     app = FastAPI(title="JobFlow Analytics", redoc_url=None, lifespan=lifespan)
     app.state.engine = engine
+    app.state.redis = redis
     app.state.readiness = ReadinessService(
         {"postgres": partial(select_one, engine), "redis": redis.ping}
     )
@@ -48,4 +49,5 @@ def create_app(settings: Settings) -> FastAPI:
     app.include_router(health.router)
     app.include_router(funnel.router)
     app.include_router(sankey.router)
+    app.include_router(reasons.router)
     return app
