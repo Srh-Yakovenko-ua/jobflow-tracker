@@ -93,8 +93,8 @@ describe('SankeyBlock', () => {
 
     expect(await tableRows()).toEqual(DESIGN_ROWS);
     expect(lastDrawnChart().data.datasets[0]?.labels).toEqual(DESIGN_NODE_LABELS);
-    expect(screen.getByText('Сіра гілка — не твоя провина.').closest('p')?.textContent).toBe(
-      'Сіра гілка — не твоя провина. 17 компаній не відповіли. Вони не входять у розрахунок конверсій.',
+    expect(screen.getByText('Сіра гілка не твоя провина.').closest('p')?.textContent).toBe(
+      'Сіра гілка не твоя провина. 17 компаній не відповіли. Вони не входять у розрахунок конверсій.',
     );
     const legend = within(sankeyFrame()).getByRole('list');
     expect(
@@ -151,7 +151,7 @@ describe('SankeyBlock', () => {
       expect(await tableRows()).toEqual(MERGED_ROWS);
     });
     expect(lastDrawnChart().data.datasets[0]?.labels?.other).toBe('інші 2');
-    expect(screen.queryByText('Сіра гілка — не твоя провина.')).toBeNull();
+    expect(screen.queryByText('Сіра гілка не твоя провина.')).toBeNull();
 
     await user.click(screen.getByRole('button', { name: 'показати всі причини' }));
 

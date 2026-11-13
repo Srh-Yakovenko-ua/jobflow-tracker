@@ -68,7 +68,7 @@ export const analytics = {
       expand: 'показати всі причини',
       caption: {
         thickness: 'товщина = кількість відгуків',
-        hover: 'наведи на потік — покаже точні числа',
+        hover: 'наведи на потік, щоб побачити точні числа',
       },
       table: { caption: 'Воронка відгуків', from: 'звідки', to: 'куди', count: 'відгуків' },
       tooltip: {
@@ -84,7 +84,7 @@ export const analytics = {
         ghost: 'не входить у розрахунок конверсій',
       },
       ghost: {
-        lead: 'Сіра гілка — не твоя провина.',
+        lead: 'Сіра гілка не твоя провина.',
         body: (companies: number) =>
           `${countedUk(companies, FORMS.company)} ${pluralUk(companies, FORMS.silent)}. ${pluralUk(companies, FORMS.excluded)} у розрахунок конверсій.`,
       },
