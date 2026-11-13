@@ -1,8 +1,6 @@
 from collections.abc import Iterator
 from typing import Any
-from uuid import uuid4
 
-import httpx2
 import pytest
 from fastapi.testclient import TestClient
 
@@ -18,24 +16,6 @@ from tests.factories import (
 )
 
 pytestmark = pytest.mark.enable_socket
-
-REGISTER_PATH = "/api/v1/auth/register"
-
-
-@pytest.fixture(scope="module")
-def settings() -> Settings:
-    return Settings()
-
-
-@pytest.fixture(scope="module")
-def registered(settings: Settings) -> Any:
-    response = httpx2.post(
-        settings.api_url.rstrip("/") + REGISTER_PATH,
-        json={"email": f"an03-{uuid4()}@example.com", "password": "an03-password"},
-        timeout=10,
-    )
-    assert response.status_code == 201
-    return response.json()
 
 
 @pytest.fixture

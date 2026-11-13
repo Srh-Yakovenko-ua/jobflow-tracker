@@ -13,6 +13,7 @@ from uuid import UUID, uuid4, uuid5
 import jwt
 import pandas as pd
 import pytest
+import uvicorn
 from cryptography.hazmat.primitives.asymmetric import rsa
 from fastapi import APIRouter, FastAPI
 from fastapi.testclient import TestClient
@@ -70,13 +71,39 @@ def stage_event(
     )
 
 
-def stage_events_frame(rows: list[StageEvent]) -> pd.DataFrame:
+def moves(application_id: UUID, path: list[str]) -> list[StageEvent]:
+    return [
+        stage_event(application_id, to_stage, from_stage=from_stage)
+        for from_stage, to_stage in zip([None, *path], path, strict=False)
+    ]
+
+
+def stage_events_frame(
+    rows: list[StageEvent], *, occurred_at: list[datetime] | None = None
+) -> pd.DataFrame:
     columns = [column.name for column in fields(StageEvent)]
     frame = pd.DataFrame([asdict(row) for row in rows], columns=columns)
-    frame["occurred_at"] = [
+    frame["occurred_at"] = occurred_at or [
         EVENTS_BASE_TIME + timedelta(hours=order) for order in range(len(rows))
     ]
     return frame.astype({"from_stage": "str", "to_stage": "str", "reason_code": "str"})
+
+
+type TimedMove = tuple[str, datetime]
+
+
+def day(offset: float) -> datetime:
+    return EVENTS_BASE_TIME + timedelta(days=offset)
+
+
+def timed_frame(paths: list[list[TimedMove]]) -> pd.DataFrame:
+    rows = [
+        move
+        for index, path in enumerate(paths)
+        for move in moves(application(index), [stage for stage, _ in path])
+    ]
+    times = [moment for path in paths for _, moment in path]
+    return stage_events_frame(rows, occurred_at=times)
 
 
 def settings_for(
@@ -193,10 +220,39 @@ def with_probe(app: FastAPI) -> FastAPI:
     return app
 
 
-def auth_app(key_source: KeySource = SIGNER) -> FastAPI:
-    app = with_probe(create_app(settings_for()))
+def auth_app(
+    key_source: KeySource = SIGNER, *, settings: Settings | None = None
+) -> FastAPI:
+    app = with_probe(create_app(settings or settings_for()))
     app.dependency_overrides[get_key_source] = lambda: key_source
     return app
+
+
+SERVER_START_SECONDS = 5.0
+SERVER_POLL_SECONDS = 0.01
+
+
+def wait_until_started(server: uvicorn.Server) -> None:
+    deadline = time.monotonic() + SERVER_START_SECONDS
+    while not server.started:
+        if time.monotonic() > deadline:
+            raise TimeoutError("uvicorn did not start")
+        time.sleep(SERVER_POLL_SECONDS)
+
+
+@contextmanager
+def uvicorn_serving(app: FastAPI) -> Iterator[str]:
+    port = closed_port()
+    config = uvicorn.Config(app, host="127.0.0.1", port=port, log_level="warning")
+    server = uvicorn.Server(config)
+    thread = threading.Thread(target=server.run, daemon=True)
+    thread.start()
+    try:
+        wait_until_started(server)
+        yield f"http://127.0.0.1:{port}"
+    finally:
+        server.should_exit = True
+        thread.join(SERVER_START_SECONDS)
 
 
 @dataclass

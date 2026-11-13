@@ -53,10 +53,12 @@ def test_serves_swagger_ui_on_docs(client: TestClient) -> None:
     assert (response.status_code, "swagger-ui" in response.text) == (200, True)
 
 
-def test_lists_both_health_paths_in_the_openapi_schema(client: TestClient) -> None:
+def test_lists_the_health_and_metric_paths_in_the_openapi_schema(
+    client: TestClient,
+) -> None:
     paths = client.get("/openapi.json").json()["paths"]
 
-    assert sorted(paths) == ["/health", "/health/ready"]
+    assert sorted(paths) == ["/analytics/funnel", "/health", "/health/ready"]
 
 
 def test_reports_ready_when_postgres_and_redis_answer() -> None:

@@ -8,6 +8,7 @@ from app.core.enums import (
     UnhandledStageError,
     check_stages,
     load_domain_enums,
+    progress_stages,
 )
 
 
@@ -42,6 +43,16 @@ def test_reads_the_data_rule_thresholds_from_their_upper_case_keys() -> None:
         thresholds.min_n_insight,
         thresholds.min_n_forecast,
     ) == (5, 10, 15)
+
+
+def test_the_funnel_stages_are_the_progress_stages_in_enums_json_order() -> None:
+    assert progress_stages() == (
+        "applied",
+        "screening",
+        "tech_interview",
+        "final",
+        "offer",
+    )
 
 
 def test_the_ghosted_stage_is_a_stage_exported_by_the_shared_package() -> None:

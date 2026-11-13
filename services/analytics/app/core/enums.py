@@ -65,6 +65,15 @@ def load_domain_enums() -> DomainEnums:
     return DomainEnums.model_validate_json(ENUMS_FILE.read_bytes())
 
 
+def stages_with_role(role: StageRole) -> tuple[str, ...]:
+    stages = load_domain_enums().stages
+    return tuple(stage for stage in stages if STAGE_ROLES[stage] == role)
+
+
+def progress_stages() -> tuple[str, ...]:
+    return stages_with_role("progress")
+
+
 def check_stages(enums: DomainEnums) -> None:
     declared = set(enums.stages)
     without_role = sorted(declared - STAGE_ROLES.keys())

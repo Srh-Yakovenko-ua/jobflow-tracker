@@ -7,6 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncEngine
 
 from app.repositories.applications import load_applications
 from app.repositories.events import load_events
+from app.repositories.searches import load_search
 from app.repositories.tables import metadata
 
 pytestmark = [pytest.mark.anyio, pytest.mark.enable_socket]
@@ -74,6 +75,15 @@ async def test_loads_no_applications_for_a_user_without_applications(
     loaded = await load_applications(engine, user_id=uuid4(), search_id=uuid4())
 
     assert (len(loaded), list(loaded.columns)) == (0, APPLICATION_COLUMNS)
+
+
+async def test_loads_no_search_for_an_unknown_search_id(engine: AsyncEngine) -> None:
+    search = await load_search(engine, user_id=uuid4(), search_id=uuid4())
+
+    assert (len(search), list(search.columns)) == (
+        0,
+        ["started_at", "finished_at", "timezone"],
+    )
 
 
 @pytest.mark.parametrize(
