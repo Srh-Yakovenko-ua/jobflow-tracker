@@ -39,6 +39,14 @@ class FakeScheduledJobs {
     return this.called('monthlySummaryUsers');
   }
 
+  silenceScan(): Promise<void> {
+    return this.called('silenceScan');
+  }
+
+  interviewReminders(): Promise<void> {
+    return this.called('interviewReminders');
+  }
+
   private called(method: string): Promise<void> {
     this.calls.push(method);
     return Promise.resolve();
@@ -136,6 +144,8 @@ describe('MaintenanceProcessor', () => {
   it.each([
     ['ai-jobs.sweep', 'sweepStaleAiJobs'],
     ['monthly-summary.pick', 'monthlySummaryUsers'],
+    ['silence.scan', 'silenceScan'],
+    ['event-reminders.scan', 'interviewReminders'],
   ])('runs the scheduled jobs step for a %s job', async (name, method) => {
     await processor.process(tickJob(name));
 
@@ -143,7 +153,7 @@ describe('MaintenanceProcessor', () => {
     expect(outbox.calls).toEqual([]);
   });
 
-  it.each(['silence.scan', 'auto-ghost.scan', 'event-reminders.scan'])(
+  it.each(['auto-ghost.scan', 'silence.scan', 'event-reminders.scan'])(
     'logs a %s run with its requestId, jobId, queue and job name',
     async (name) => {
       await processor.process(
@@ -159,7 +169,6 @@ describe('MaintenanceProcessor', () => {
           jobName: name,
         }),
       ]);
-      expect(scheduledJobs.calls).toEqual([]);
     },
   );
 

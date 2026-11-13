@@ -1,3 +1,4 @@
+import { ACTIVE_STAGES } from '@jobflow/shared';
 import { Injectable } from '@nestjs/common';
 
 import type { Prisma } from '../generated/prisma/client.js';
@@ -18,6 +19,9 @@ const MONTHLY_SUMMARY_CANDIDATE_SELECT = {
 } satisfies Prisma.UserSettingsSelect;
 
 const countOf = async (batch: Promise<Prisma.BatchPayload>) => (await batch).count;
+
+const userIdsOf = async (rows: Promise<{ userId: string }[]>) =>
+  (await rows).map(({ userId }) => userId);
 
 @Injectable()
 export class ScheduledJobsRepository {
@@ -49,5 +53,25 @@ export class ScheduledJobsRepository {
       where: { monthlySummaryEnabled: true },
       select: MONTHLY_SUMMARY_CANDIDATE_SELECT,
     });
+  }
+
+  silenceScanUserIds(): Promise<string[]> {
+    return userIdsOf(
+      this.prisma.application.findMany({
+        where: { deletedAt: null, isDraft: false, currentStage: { in: [...ACTIVE_STAGES] } },
+        distinct: ['userId'],
+        select: { userId: true },
+      }),
+    );
+  }
+
+  dueInterviewUserIds(now: Date): Promise<string[]> {
+    return userIdsOf(
+      this.prisma.reminder.findMany({
+        where: { type: 'interview_soon', status: 'pending', dueAt: { lte: now } },
+        distinct: ['userId'],
+        select: { userId: true },
+      }),
+    );
   }
 }

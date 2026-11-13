@@ -7,8 +7,9 @@ import {
 import { Injectable } from '@nestjs/common';
 
 import { conflict } from '../../common/app-error.js';
-import { Prisma } from '../../generated/prisma/client.js';
+import type { Prisma } from '../../generated/prisma/client.js';
 import { PrismaService } from '../../prisma/prisma.service.js';
+import { isUniqueViolation } from '../../prisma/unique-violation.js';
 import { USER_SETTINGS_SELECT, type UserSettingsRow } from '../../prisma/user-settings-row.js';
 import { userRegisteredEvent } from './auth.events.js';
 import { OAUTH_PROVIDER_SPECS } from './oauth-profiles.js';
@@ -31,10 +32,6 @@ const AUTH_USER_SELECT = { id: true, email: true, displayName: true, locale: tru
 const CREDENTIALS_SELECT = { ...AUTH_USER_SELECT, passwordHash: true } as const;
 
 export type UserProfile = AuthUser & { settings: UserSettingsRow | null };
-
-function isUniqueViolation(error: unknown): boolean {
-  return error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002';
-}
 
 async function conflictOnDuplicate<T>(write: Promise<T>, detail: string): Promise<T> {
   try {

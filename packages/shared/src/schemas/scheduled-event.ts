@@ -76,7 +76,7 @@ export const calendarQuerySchema = calendarRangeSchema
     path: ['to'],
   });
 
-const calendarApplicationSchema = z.object({
+export const calendarApplicationSchema = z.object({
   applicationId: z.uuid(),
   company: z.string().min(1),
   stage: stageSchema,

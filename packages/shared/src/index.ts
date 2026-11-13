@@ -38,6 +38,7 @@ export * from './schemas/note.js';
 export * from './schemas/pagination.js';
 export * from './schemas/patch.js';
 export * from './schemas/rejection-reasons-summary.js';
+export * from './schemas/reminder.js';
 export * from './schemas/resume-upload.js';
 export * from './schemas/resume-version.js';
 export * from './schemas/scheduled-event.js';

@@ -12,6 +12,7 @@ import type { Prisma } from '../../generated/prisma/client.js';
 import { EFFECTIVE_STAGE_EVENTS } from '../../prisma/effective-stage-events.js';
 import { LATEST_AI_JOB_SELECT } from '../../prisma/latest-ai-job.js';
 import { PrismaService } from '../../prisma/prisma.service.js';
+import { silenceWindowWhere } from '../../prisma/silence-window-where.js';
 import type { DateCursor } from './application-cursor.js';
 import { LATEST_STAGE_EVENT_SELECT } from './applications.repository.js';
 import type { InSearch } from './search-applications.repository.js';
@@ -74,16 +75,6 @@ function cardSelectAt(now: Date) {
 }
 
 export type CardRow = Prisma.ApplicationGetPayload<{ select: ReturnType<typeof cardSelectAt> }>;
-
-function silenceWindowWhere({ stages, lastEventAtOrBefore, lastEventAfter }: SilenceWindow): Where {
-  return {
-    currentStage: { in: [...stages] },
-    lastEventAt: {
-      ...(lastEventAtOrBefore === undefined ? {} : { lte: lastEventAtOrBefore }),
-      ...(lastEventAfter === undefined ? {} : { gt: lastEventAfter }),
-    },
-  };
-}
 
 function salaryFromWhere(salaryFrom: number): Where {
   return {
