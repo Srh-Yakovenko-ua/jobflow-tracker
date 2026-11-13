@@ -95,6 +95,18 @@ def application_sources_frame(rows: list[ApplicationSource]) -> pd.DataFrame:
 
 
 @dataclass(frozen=True)
+class VersionLink:
+    application_id: UUID
+    resume_version_id: UUID
+    number: int
+    title: str
+
+
+def version_links_frame(rows: list[VersionLink]) -> pd.DataFrame:
+    return records_frame(rows, record=VersionLink)
+
+
+@dataclass(frozen=True)
 class Followup:
     application_id: UUID
     occurred_at: datetime

@@ -12,6 +12,7 @@ from app.repositories.applications import (
     latest_change_statement,
 )
 from app.repositories.events import events_statement, user_events_statement
+from app.repositories.resume_versions import version_links_statement
 from app.repositories.searches import active_search_statement, search_statement
 from app.repositories.timeline import followups_statement
 from tests.factories import SEARCH_ID, USER_ID
@@ -98,6 +99,15 @@ def test_the_user_events_read_every_confirmed_application_of_the_user() -> None:
         "applications.search_id ="
     ]
     assert "searches" not in sql
+
+
+def test_the_version_links_read_only_the_users_applications_and_versions() -> None:
+    bound, sql = user_wide(version_links_statement(user_id=USER_ID))
+
+    assert bound == {USER_ID}
+    assert [
+        p for p in (*OWNERSHIP_PREDICATES, "resume_versions.user_id =") if p not in sql
+    ] == ["applications.search_id ="]
 
 
 def test_the_follow_ups_read_only_the_sent_follow_ups_of_the_active_search() -> None:

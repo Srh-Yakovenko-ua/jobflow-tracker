@@ -3,7 +3,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
 
-import { resumeVersionsQueryOptions } from '@/entities/resume';
+import { resumeAbQueryOptions, resumeVersionsQueryOptions } from '@/entities/resume';
 import { useSession, useUserTimeZone } from '@/entities/user';
 import { ResumeUpload } from '@/features/upload-resume';
 import { uk } from '@/shared/i18n';
@@ -15,7 +15,7 @@ import { LoadingRegion } from '@/shared/ui/loading-region';
 import { TableSkeleton } from '@/shared/ui/skeleton';
 import { TOUCH_HEIGHT } from '@/shared/ui/touch-height';
 
-import { splitVersions } from '../model/split-versions';
+import { conversionsById, splitVersions } from '../model/split-versions';
 import { VersionsTable } from './versions-table';
 
 const COPY = uk.resumes;
@@ -25,7 +25,8 @@ function useResumeVersions() {
   const activeId = useSession().settings?.activeResumeVersionId ?? null;
   const timeZone = useUserTimeZone();
   const [now] = useState(() => new Date());
-  return { query, activeId, view: { now, timeZone } };
+  const conversions = conversionsById(useQuery(resumeAbQueryOptions()).data?.versions ?? []);
+  return { query, activeId, view: { now, timeZone, conversions } };
 }
 
 function PageHeading({ picker }: Readonly<{ picker: FilePicker | null }>) {
@@ -75,7 +76,14 @@ function VersionsBody({ picker }: Readonly<{ picker: FilePicker }>) {
   }
   return (
     <div className="flex min-w-0 flex-col gap-6">
-      <VersionsTable split={splitVersions({ versions: query.data.items, activeId })} view={view} />
+      <VersionsTable
+        split={splitVersions({
+          versions: query.data.items,
+          activeId,
+          conversions: view.conversions,
+        })}
+        view={view}
+      />
       <div className="grid grid-cols-[repeat(auto-fill,minmax(280px,1fr))] items-start gap-6">
         <ResumeUpload view={{ size: 'panel' }} picker={picker} />
       </div>

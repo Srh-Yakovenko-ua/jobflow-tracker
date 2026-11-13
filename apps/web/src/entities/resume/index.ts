@@ -1,3 +1,4 @@
+export { resumeAbQueryOptions } from './api/resume-ab';
 export {
   activateResumeVersion,
   RESUME_VERSIONS_PATH,

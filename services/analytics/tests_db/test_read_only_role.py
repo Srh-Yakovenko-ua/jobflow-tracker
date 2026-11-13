@@ -7,6 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncEngine
 
 from app.repositories.applications import load_applications
 from app.repositories.events import load_events
+from app.repositories.resume_versions import load_version_links
 from app.repositories.searches import load_active_search_id, load_search
 from app.repositories.tables import metadata
 
@@ -77,6 +78,17 @@ async def test_loads_no_applications_for_a_user_without_applications(
     loaded = await load_applications(engine, user_id=uuid4(), search_id=uuid4())
 
     assert (len(loaded), list(loaded.columns)) == (0, APPLICATION_COLUMNS)
+
+
+async def test_loads_no_version_links_for_a_user_without_applications(
+    engine: AsyncEngine,
+) -> None:
+    links = await load_version_links(engine, user_id=uuid4())
+
+    assert (len(links), list(links.columns)) == (
+        0,
+        ["application_id", "resume_version_id", "number", "title"],
+    )
 
 
 async def test_reads_no_active_search_for_a_user_without_searches(
