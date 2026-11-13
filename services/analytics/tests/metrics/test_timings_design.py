@@ -1,3 +1,5 @@
+import pytest
+
 from app.metrics.norms import norms
 from app.metrics.timings import timings
 from tests.metrics.timings_design import (
@@ -21,5 +23,9 @@ def test_answers_the_design_timings_body_with_medians_4_7_9_and_17_days() -> Non
         by_alias=True, mode="json"
     )
 
+    ghost = body["ghostRate"]
+    design_rate = DESIGN_TIMINGS_BODY["ghostRate"]["rate"]
+
     assert [stage["medianDays"] for stage in body["stages"]] == [4, 7, 9, 17]
-    assert body == DESIGN_TIMINGS_BODY
+    assert ghost["rate"] == pytest.approx(design_rate)
+    assert {**body, "ghostRate": {**ghost, "rate": design_rate}} == DESIGN_TIMINGS_BODY
