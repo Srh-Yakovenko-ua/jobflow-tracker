@@ -61,9 +61,12 @@ def insufficient(have: int, *, threshold: int) -> Insufficient | None:
     return Insufficient(have=have, need=need, message=message)
 
 
+def percent_shortfall(have: int) -> Insufficient | None:
+    return insufficient(have, threshold=load_domain_enums().thresholds.min_n_percent)
+
+
 def rate(successes: int, trials: int) -> Rate | Insufficient:
-    threshold = load_domain_enums().thresholds.min_n_percent
-    short = insufficient(trials, threshold=threshold)
+    short = percent_shortfall(trials)
     if short is not None:
         return short
     low, high = wilson_interval(successes, trials)

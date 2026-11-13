@@ -1,7 +1,9 @@
+from collections.abc import Iterator
 from dataclasses import dataclass
 from typing import Any
 
 import pytest
+from redis import Redis
 
 from app.core.config import Settings
 from tests.api_client import api_call, register, rejected_at_screening
@@ -10,6 +12,13 @@ from tests.api_client import api_call, register, rejected_at_screening
 @pytest.fixture(scope="module")
 def settings() -> Settings:
     return Settings()
+
+
+@pytest.fixture
+def cache(settings: Settings) -> Iterator[Redis]:
+    client = Redis.from_url(settings.redis_url)
+    yield client
+    client.close()
 
 
 @pytest.fixture(scope="module")
@@ -40,7 +49,10 @@ def owned_search(settings: Settings, registered: Any) -> OwnedSearch:
 
 
 def finished_search(settings: Settings) -> OwnedSearch:
-    finished = owned_search(settings, register(settings))
+    return finish_search(settings, owned_search(settings, register(settings)))
+
+
+def finish_search(settings: Settings, finished: OwnedSearch) -> OwnedSearch:
     finish = {
         "searchId": finished.search_id,
         "outcome": "paused",

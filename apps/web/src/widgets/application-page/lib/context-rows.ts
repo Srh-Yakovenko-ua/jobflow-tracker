@@ -3,7 +3,9 @@ import {
   countedUk,
   DAY_FORMS_UK,
   isActiveStage,
+  type NormsResponse,
   SOURCE_LABELS,
+  type Stage,
 } from '@jobflow/shared';
 
 import { daysInFunnelOf } from '@/entities/application';
@@ -17,6 +19,16 @@ export type ContextNorms = Readonly<{
 }>;
 
 export const NO_NORMS: ContextNorms = { medianDaysToOffer: null, stageNormDays: null };
+
+export type ContextNormsInput = Readonly<{ norms: NormsResponse | undefined; stage: Stage }>;
+
+export function contextNormsOf({ norms, stage }: ContextNormsInput): ContextNorms {
+  if (norms === undefined) return NO_NORMS;
+  return {
+    medianDaysToOffer: norms.medianDaysToOffer,
+    stageNormDays: isActiveStage(stage) ? norms.stageNormDays[stage] : null,
+  };
+}
 
 export type ContextRowId = 'source' | 'funnel' | 'median' | 'stage';
 

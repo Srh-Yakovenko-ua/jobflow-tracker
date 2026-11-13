@@ -1,12 +1,17 @@
 import type { ApplicationResponse } from '@jobflow/shared';
 import { useState } from 'react';
 
+import { useNormsQuery } from '@/entities/analytics';
 import { useUserTimeZone } from '@/entities/user';
 
-import { contextRowsOf, NO_NORMS } from '../lib/context-rows';
+import { contextNormsOf, contextRowsOf } from '../lib/context-rows';
 
 export function useApplicationContext(application: ApplicationResponse) {
   const [mountedAt] = useState(Date.now);
   const timeZone = useUserTimeZone();
-  return contextRowsOf({ application, now: new Date(mountedAt), timeZone, norms: NO_NORMS });
+  const norms = contextNormsOf({
+    norms: useNormsQuery().data,
+    stage: application.currentStage,
+  });
+  return contextRowsOf({ application, now: new Date(mountedAt), timeZone, norms });
 }

@@ -4,7 +4,7 @@ import { outcomeStageSchema, stageSchema } from '../stages.js';
 
 export const countSchema = z.int().nonnegative();
 
-const fractionSchema = z.number().min(0).max(1);
+export const fractionSchema = z.number().min(0).max(1);
 
 export const insufficientDataSchema = z.object({
   status: z.literal('insufficient_data'),

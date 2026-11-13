@@ -43,6 +43,14 @@ stage_events = Table(
     moment_column("occurred_at"),
 )
 
+timeline_events = Table(
+    "timeline_events",
+    metadata,
+    *map(uuid_column, ("id", "application_id")),
+    text_column("kind"),
+    moment_column("occurred_at"),
+)
+
 rejection_reasons = Table(
     "rejection_reasons",
     metadata,

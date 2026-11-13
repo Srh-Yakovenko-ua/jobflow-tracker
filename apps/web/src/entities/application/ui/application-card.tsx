@@ -60,12 +60,11 @@ function DaysInStage({
   context,
 }: Readonly<{ application: ApplicationCardData; context: ApplicationCardContext }>) {
   const stage = application.currentStage;
-  const { stageNormDays } = context;
-  if (!isActiveStage(stage) || stageNormDays === undefined) {
-    return null;
-  }
+  if (!isActiveStage(stage)) return null;
+  const stageNormDays = context.stageNorms?.[stage];
+  if (typeof stageNormDays !== 'number') return null;
   return (
-    <span className="flex items-center gap-2 text-[12px] text-ink-2 tabular-nums">
+    <span className="flex animate-fade-in items-center gap-2 text-[12px] text-ink-2 tabular-nums">
       <span
         aria-hidden
         className={cn('size-1.75 flex-none rounded-[2px]', STAGE_COLOR_CLASS[stage])}

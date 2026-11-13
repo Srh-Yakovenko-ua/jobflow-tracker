@@ -8,6 +8,7 @@ import {
 import { hashKey, keepPreviousData, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 
+import { useNormsQuery } from '@/entities/analytics';
 import {
   type ApplicationCardContext,
   applicationKeys,
@@ -93,11 +94,13 @@ export function useKanbanBoard() {
   const shown = useLastArrived({ query, arrived });
   const fallback = useQuery({ ...boardQueryOptions(shown), enabled: false });
   const timeZone = useUserTimeZone();
+  const stageNorms = useNormsQuery().data?.stageNormDays;
   const data = board.data ?? fallback.data;
   const context: ApplicationCardContext = {
     now: new Date(Math.max(board.dataUpdatedAt, mountedAt)),
     timeZone,
     parsingIds: parsingCardsOf(data).map((card) => card.id),
+    ...(stageNorms && { stageNorms }),
   };
   const failed = board.isError && !board.isFetching;
   const filtersChanged = filtersHashOf(query) !== filtersHashOf(shown);

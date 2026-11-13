@@ -2,8 +2,8 @@ import json
 import socket
 import threading
 import time
-from collections.abc import Iterator, Sequence
-from contextlib import contextmanager
+from collections.abc import Callable, Iterator, Sequence
+from contextlib import AbstractContextManager, contextmanager, nullcontext
 from dataclasses import asdict, dataclass, field, fields
 from datetime import UTC, datetime, timedelta
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
@@ -94,6 +94,16 @@ def application_sources_frame(rows: list[ApplicationSource]) -> pd.DataFrame:
     return records_frame(rows, record=ApplicationSource)
 
 
+@dataclass(frozen=True)
+class Followup:
+    application_id: UUID
+    occurred_at: datetime
+
+
+def followups_frame(rows: list[Followup]) -> pd.DataFrame:
+    return records_frame(rows, record=Followup)
+
+
 def stage_events_frame(
     rows: list[StageEvent], *, occurred_at: list[datetime] | None = None
 ) -> pd.DataFrame:
@@ -152,6 +162,14 @@ def closed_port() -> int:
 def silent_listener() -> Iterator[int]:
     with socket.create_server(("127.0.0.1", 0), backlog=8) as listener:
         yield listener.getsockname()[1]
+
+
+type Outage = Callable[[], AbstractContextManager[int]]
+
+OUTAGES: dict[str, Outage] = {
+    "refused": lambda: nullcontext(closed_port()),
+    "silent": silent_listener,
+}
 
 
 REQUEST_ID = "0d6f3a2b-7c41-4e8a-9b15-2f6c8d4e1a73"

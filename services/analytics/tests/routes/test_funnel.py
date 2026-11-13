@@ -18,6 +18,7 @@ from tests.factories import (
 )
 from tests.routes.test_reasons import REASONS_PATH, SUMMARY_PATH
 from tests.routes.test_sources import SOURCES_PATH
+from tests.routes.test_timings import TIMINGS_PATH
 
 FUNNEL_PATH = "/analytics/funnel"
 SCREENING = {"stage": "screening"}
@@ -30,6 +31,7 @@ SEARCH_PATHS: list[PathCase] = [
     (REASONS_PATH, {}),
     (SUMMARY_PATH, SCREENING),
     (SOURCES_PATH, {}),
+    (TIMINGS_PATH, {}),
 ]
 SEARCH_PATH_IDS = [path for path, _ in SEARCH_PATHS]
 OUTAGE_QUERIES: dict[str, PathCase] = {
@@ -40,6 +42,7 @@ OUTAGE_QUERIES: dict[str, PathCase] = {
     "reasons of the active search": (REASONS_PATH, {}),
     "summary of the active search": (SUMMARY_PATH, SCREENING),
     "sources of the active search": (SOURCES_PATH, {}),
+    "timings of the active search": (TIMINGS_PATH, {}),
 }
 NOT_READY_BODY = problem_body(
     503, type="not_ready", title="Service not ready", detail="Not reachable: postgres"

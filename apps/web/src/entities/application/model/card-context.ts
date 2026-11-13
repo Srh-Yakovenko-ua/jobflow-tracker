@@ -1,8 +1,8 @@
-import type { ApplicationCard } from '@jobflow/shared';
+import type { ApplicationCard, NormsResponse } from '@jobflow/shared';
 
 export type ApplicationCardContext = {
   now: Date;
   timeZone: string;
-  stageNormDays?: number;
+  stageNorms?: NormsResponse['stageNormDays'];
   parsingIds?: readonly ApplicationCard['id'][];
 };

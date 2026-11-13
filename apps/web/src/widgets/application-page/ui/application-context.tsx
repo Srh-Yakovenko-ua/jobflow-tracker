@@ -12,13 +12,19 @@ type ContextValueProps = Readonly<{ row: ContextRow }>;
 
 const COPY = uk.applicationPage.context;
 
-const VALUE = 'text-right font-medium tabular-nums';
+const VALUE = 'animate-fade-in text-right font-medium tabular-nums';
 
 function ContextValue({ row }: ContextValueProps) {
   const { value, hint } = row;
-  if (hint === null) return <dd className={VALUE}>{value}</dd>;
+  if (hint === null) {
+    return (
+      <dd key={value} className={VALUE}>
+        {value}
+      </dd>
+    );
+  }
   return (
-    <dd className={VALUE}>
+    <dd key={hint} className={VALUE}>
       {value === null ? null : <>{value} </>}
       <span className="font-normal text-ink-3">
         {value === null ? hint : COPY.afterValue(hint)}

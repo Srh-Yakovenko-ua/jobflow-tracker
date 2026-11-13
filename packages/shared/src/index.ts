@@ -19,6 +19,7 @@ export * from './schemas/analytics-funnel.js';
 export * from './schemas/analytics-reasons.js';
 export * from './schemas/analytics-sankey.js';
 export * from './schemas/analytics-sources.js';
+export * from './schemas/analytics-timings.js';
 export * from './schemas/application.js';
 export * from './schemas/application-list.js';
 export * from './schemas/auth.js';

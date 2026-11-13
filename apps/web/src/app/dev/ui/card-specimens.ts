@@ -172,7 +172,10 @@ export const CARD_SPECIMENS: readonly CardSpecimen[] = [
   {
     eyebrow: CARDS.norm,
     application: NORM_CARD,
-    context: { ...SPECIMEN_CONTEXT, stageNormDays: 17 },
+    context: {
+      ...SPECIMEN_CONTEXT,
+      stageNorms: { applied: null, screening: null, tech_interview: null, final: 17 },
+    },
   },
   { eyebrow: CARDS.long, application: LONG_TEXT_CARD, context: SPECIMEN_CONTEXT },
   { eyebrow: CARDS.warn, application: WARN_CARD, context: SPECIMEN_CONTEXT },

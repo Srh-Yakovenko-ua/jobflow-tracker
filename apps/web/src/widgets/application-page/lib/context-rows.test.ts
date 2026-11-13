@@ -2,8 +2,9 @@ import type { ApplicationResponse } from '@jobflow/shared';
 import { describe, expect, it } from 'vitest';
 
 import { applicationResponseOf } from '@/test/board-fixtures';
+import { DESIGN_NORMS, UNKNOWN_NORMS } from '@/test/norms-fixtures';
 
-import { type ContextNorms, contextRowsOf, NO_NORMS } from './context-rows';
+import { type ContextNorms, contextNormsOf, contextRowsOf, NO_NORMS } from './context-rows';
 
 const NOW = new Date('2026-11-15T09:00:00.000Z');
 
@@ -44,6 +45,31 @@ describe('contextRowsOf', () => {
       ['твоя медіана до офера', null, 'мало даних'],
       ['на етапі', '13 днів', 'мало даних'],
     ]);
+  });
+
+  it('contextNormsOf gives the median to offer and the norm of the active stage from the fetched norms', () => {
+    expect(contextNormsOf({ norms: DESIGN_NORMS, stage: 'final' })).toEqual({
+      medianDaysToOffer: 37,
+      stageNormDays: 17,
+    });
+  });
+
+  it.each(['offer', 'rejected', 'ghosted'] as const)(
+    'contextNormsOf gives a %s application the median to offer and no stage norm',
+    (stage) => {
+      expect(contextNormsOf({ norms: DESIGN_NORMS, stage })).toEqual({
+        medianDaysToOffer: 37,
+        stageNormDays: null,
+      });
+    },
+  );
+
+  it('contextNormsOf falls back to NO_NORMS while the norms are pending or failed', () => {
+    expect(contextNormsOf({ norms: undefined, stage: 'final' })).toBe(NO_NORMS);
+  });
+
+  it('contextNormsOf keeps a stage norm the service cut below 5 data points as unknown', () => {
+    expect(contextNormsOf({ norms: UNKNOWN_NORMS, stage: 'screening' })).toEqual(NO_NORMS);
   });
 
   it.each(['rejected', 'withdrawn'] as const)(
