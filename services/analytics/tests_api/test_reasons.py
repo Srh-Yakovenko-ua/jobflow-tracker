@@ -77,20 +77,39 @@ def test_leaves_the_rejections_of_a_finished_search_out_like_the_api(
     assert analytics == node_summary(settings, finished) == SKILLS_GAP_AT_SCREENING
 
 
-def test_answers_the_stored_summary_while_nothing_changed(
-    settings: Settings, owned: OwnedSearch, *, cache: Redis
-) -> None:
+def summary_key(settings: Settings, owned: OwnedSearch, *, cache: Redis) -> str:
     scope = f"screening:{owned.search_id}"
     pattern = f"analytics:{owned.user_id}:reasons-summary:{scope}:*"
     [key] = fresh_keys(
         cache, pattern=pattern, answer=lambda: summary_over_http(settings, owned)
     )
+    return key
+
+
+def test_answers_the_stored_summary_while_nothing_changed(
+    settings: Settings, owned: OwnedSearch, *, cache: Redis
+) -> None:
+    key = summary_key(settings, owned, cache=cache)
     cache.set(key, json.dumps(MARKER_BODY), keepttl=True)
 
     try:
         assert summary_over_http(settings, owned) == MARKER_BODY
     finally:
         cache.delete(key)
+
+
+def test_recomputes_a_stored_summary_it_cannot_read_and_stores_it_again(
+    settings: Settings, owned: OwnedSearch, *, cache: Redis
+) -> None:
+    key = summary_key(settings, owned, cache=cache)
+    cache.set(key, '{"stage":"screen', keepttl=True)
+
+    answer = summary_over_http(settings, owned)
+
+    assert (answer, json.loads(cache.get(key) or b"null")) == (
+        UNSPECIFIED_AT_SCREENING,
+        UNSPECIFIED_AT_SCREENING,
+    )
 
 
 def test_counts_a_rejection_just_recorded_and_drops_it_once_undone(

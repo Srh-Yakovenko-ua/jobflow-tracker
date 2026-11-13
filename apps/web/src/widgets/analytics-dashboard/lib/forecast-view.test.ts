@@ -70,10 +70,17 @@ describe('forecastViewOf', () => {
     expect(view.band.likely).toEqual({ left: 98.5, width: 1.5 });
   });
 
-  it('an 80% interval from week 0 with no upper bound names the horizon instead of "понад 0 тижнів"', () => {
+  it('an 80% interval from week 0 with no upper bound starts at 1 week and names the horizon instead of "понад 0 тижнів"', () => {
     const view = viewOf({ interval: { low: 0, high: null } });
 
-    expect(view.legend[1]).toBe('увесь 80% інтервал: від 0 до понад 52 тижнів');
+    expect(view.legend[1]).toBe('увесь 80% інтервал: від 1 до понад 52 тижнів');
+  });
+
+  it('a median under one week reads "1 тиждень" like the headline, never "0,0 тижня"', () => {
+    const view = viewOf({ medianWeeks: 0.04, likely: { low: 0.02, high: 0.3 } });
+
+    expect(view.headline).toBe('1 тиждень');
+    expect(view.legend[2]).toBe('медіана: 1 тиждень');
   });
 
   it('bounds that round to the same week read as one count, and a zero width corridor stays visible', () => {

@@ -29,6 +29,10 @@ def measured_switch(metrics: InsightMetrics) -> MeasuredSwitch | None:
         return None
     if not isinstance(before, Rate) or not isinstance(after, Rate):
         return None
+    if verdict.winner != comparison.challenger:
+        return None
+    if percent(after.value) <= percent(before.value):
+        return None
     return MeasuredSwitch(comparison, verdict, before, after)
 
 
@@ -38,14 +42,12 @@ def resume_switch(metrics: InsightMetrics) -> Insight | None:
     if measured is None:
         return None
     comparison, verdict, before, after = measured
-    falling = after.value < before.value
-    moved = "впала" if falling else "виросла"
     shift = f"з {percent(before.value)}% до {percent(after.value)}%"
     return Insight(
         block="resume_ab",
         title=verdict.message,
-        body=f"Після переходу на CV v{comparison.challenger} конверсія {moved} {shift}.",
-        severity="warning" if falling else "positive",
+        body=f"Після переходу на CV v{comparison.challenger} конверсія виросла {shift}.",
+        severity="positive",
         evidence={
             "challenger": comparison.challenger,
             "baseline": comparison.baseline,
@@ -60,10 +62,8 @@ def keep_winning_resume(metrics: InsightMetrics) -> InsightAction | None:
     measured = measured_switch(metrics)
     if measured is None:
         return None
-    comparison, verdict, before, after = measured
+    comparison, _, before, after = measured
     winner = comparison.challenger
-    if after.value < before.value or verdict.winner != winner:
-        return None
     return InsightAction(
         block="resume_ab",
         title=f"Відгукуватися з CV v{winner}",

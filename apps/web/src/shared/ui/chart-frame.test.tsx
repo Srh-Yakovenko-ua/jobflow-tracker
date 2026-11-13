@@ -43,21 +43,23 @@ describe('ChartFrame', () => {
     expect(within(frame).queryByText(PLOT)).toBeNull();
   });
 
-  it('shows how many records are missing before the chart can say anything', () => {
-    const frame = renderFrame({
-      status: 'insufficient_data',
-      have: 4,
-      need: 10,
-      message: 'Перші висновки з 10 відгуків. Зараз 4.',
-    });
+  it.each([
+    { have: 4, need: 6, message: 'Перші висновки з 10 відгуків. Зараз 4.', goal: '10' },
+    { have: 4, need: 1, message: 'Ще 1 відгук до першого висновку.', goal: '5' },
+  ])(
+    'with $have records and $need missing the meter counts toward $goal before the chart can say anything',
+    ({ have, need, message, goal }) => {
+      const frame = renderFrame({ status: 'insufficient_data', have, need, message });
 
-    expect(within(frame).getByRole('heading', { name: 'Мало даних' })).toBeDefined();
-    expect(within(frame).getByText('Перші висновки з 10 відгуків. Зараз 4.')).toBeDefined();
-    const meter = within(frame).getByRole('meter', { name: 'Прогрес до першого висновку' });
-    expect(meter.getAttribute('aria-valuenow')).toBe('4');
-    expect(meter.getAttribute('aria-valuemax')).toBe('10');
-    expect(within(frame).queryByText(PLOT)).toBeNull();
-  });
+      expect(within(frame).getByRole('heading', { name: 'Мало даних' })).toBeDefined();
+      expect(within(frame).getByText(message)).toBeDefined();
+      const meter = within(frame).getByRole('meter', { name: 'Прогрес до першого висновку' });
+      expect(meter.getAttribute('aria-valuenow')).toBe('4');
+      expect(meter.getAttribute('aria-valuemax')).toBe(goal);
+      expect(meter.getAttribute('aria-valuetext')).toBe(`4 / ${goal}`);
+      expect(within(frame).queryByText(PLOT)).toBeNull();
+    },
+  );
 
   it('a failed load explains the failure and retries on the button', async () => {
     const onRetry = vi.fn();

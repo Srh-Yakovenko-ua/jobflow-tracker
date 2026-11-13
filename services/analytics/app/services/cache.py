@@ -4,7 +4,7 @@ from datetime import UTC, datetime, timedelta
 from typing import Final
 
 from loguru import logger
-from pydantic import BaseModel
+from pydantic import BaseModel, ValidationError
 from redis.asyncio import Redis
 from redis.exceptions import RedisError
 
@@ -39,6 +39,16 @@ async def store(redis: Redis, *, key: str, body: str) -> None:
         redis_down(error)
 
 
+def readable[M: BaseModel](cached: bytes | str | None, *, model: type[M]) -> M | None:
+    if cached is None:
+        return None
+    try:
+        return model.model_validate_json(cached)
+    except ValidationError:
+        logger.warning("cache body unreadable", model=model.__name__)
+        return None
+
+
 async def cache_aside[M: BaseModel](
     redis: Redis, *, key: str, model: type[M], compute: Callable[[], Awaitable[M]]
 ) -> M:
@@ -47,8 +57,9 @@ async def cache_aside[M: BaseModel](
     except REDIS_FAILURES as error:
         redis_down(error)
         return await compute()
-    if cached is not None:
-        return model.model_validate_json(cached)
+    hit = readable(cached, model=model)
+    if hit is not None:
+        return hit
     answer = await compute()
     await store(redis, key=key, body=answer.model_dump_json(by_alias=True))
     return answer

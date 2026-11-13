@@ -26,6 +26,22 @@ function withColor(name: string, value: ColorToken): Tokens {
   return parseTokens({ ...tokens, color: { ...tokens.color, [name]: value } });
 }
 
+function luminanceOf(hex: string | undefined): number {
+  const channels = (hex?.match(/[\dA-F]{2}/gi) ?? []).map((pair) => {
+    const value = Number.parseInt(pair, 16) / 255;
+    return value <= 0.04045 ? value / 12.92 : ((value + 0.055) / 1.055) ** 2.4;
+  });
+  const [red = 0, green = 0, blue = 0] = channels;
+  return 0.2126 * red + 0.7152 * green + 0.0722 * blue;
+}
+
+function contrastRatio(first: string | undefined, second: string | undefined): number {
+  const [darker, lighter] = [luminanceOf(first), luminanceOf(second)].sort(
+    (left, right) => left - right,
+  );
+  return ((lighter ?? 0) + 0.05) / ((darker ?? 0) + 0.05);
+}
+
 describe('tokens.json', () => {
   it('gives every color key a dark value and has no dark key outside color, outcome or dataViz', () => {
     const lightKeys = [
@@ -48,6 +64,20 @@ describe('tokens.json', () => {
       [48, 58, 68, 76, 83, 89],
     ]);
     expect(Math.min(...climbs)).toBeGreaterThanOrEqual(5);
+  });
+
+  it('gives light data-4 the hex its oklch converts to', () => {
+    expect(tokens.dataViz['data-4']).toEqual({ oklch: 'oklch(72% 0.09 130)', hex: '#92B074' });
+  });
+
+  it('keeps dark ghosted at 3:1 or more on the dark surface', () => {
+    const surface = tokens.dark.surface?.hex;
+    const ratio = contrastRatio(tokens.dark.ghosted?.hex, surface);
+
+    expect(tokens.dark.ghosted).toEqual({ oklch: 'oklch(55% 0.014 78)', hex: '#767169' });
+    expect(ratio).toBeGreaterThanOrEqual(3);
+    expect(ratio).toBeCloseTo(3.13, 1);
+    expect(contrastRatio('#6D6860', surface)).toBeCloseTo(2.74, 1);
   });
 
   it('keeps dataRules equal to the shared thresholds', () => {
@@ -197,7 +227,7 @@ describe('native themes', () => {
       '#2A4367',
       '#1C719A',
       '#499B9B',
-      '#7FA76A',
+      '#92B074',
       '#D9B982',
       '#EEC7B6',
     ]);

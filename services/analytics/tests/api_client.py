@@ -2,6 +2,7 @@ import statistics
 import time
 from collections.abc import Callable, Iterator
 from contextlib import contextmanager
+from itertools import pairwise
 from typing import Any
 from uuid import uuid4
 
@@ -48,19 +49,26 @@ def api_call(settings: Settings, *, token: str, request: tuple[str, str, Any]) -
     return response.json()
 
 
-def rejected_at_screening(settings: Settings, *, token: str, reason: str) -> str:
+def application_through(
+    settings: Settings, *, token: str, path: list[str], reason: str = "unspecified"
+) -> str:
     created = api_call(
         settings,
         token=token,
         request=("POST", "/applications", {"company": "Acme", "position": "QA"}),
     )
-    path = f"/applications/{created['id']}/events"
-    for move in (
-        {"fromStage": "applied", "toStage": "screening"},
-        {"fromStage": "screening", "toStage": "rejected", "reasonCode": reason},
-    ):
-        api_call(settings, token=token, request=("POST", path, move))
+    events = f"/applications/{created['id']}/events"
+    for from_stage, to_stage in pairwise(["applied", *path]):
+        rejection = {"reasonCode": reason} if to_stage == "rejected" else {}
+        move = {"fromStage": from_stage, "toStage": to_stage} | rejection
+        api_call(settings, token=token, request=("POST", events, move))
     return str(created["id"])
+
+
+def rejected_at_screening(settings: Settings, *, token: str, reason: str) -> str:
+    return application_through(
+        settings, token=token, path=["screening", "rejected"], reason=reason
+    )
 
 
 @contextmanager

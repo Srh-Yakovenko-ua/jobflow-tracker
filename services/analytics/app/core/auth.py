@@ -9,7 +9,9 @@ from app.core.config import DEPENDENCY_LIMITS, Settings
 from app.core.errors import TOKEN_EXPIRED, ServiceError
 
 READ_SCOPE = "analytics:read"
-ACCESS_TOKEN_CLAIMS = ["exp", "sub", "jti", "scope"]
+ACCESS_TOKEN_ISSUER = "jobflow-api"
+ACCESS_TOKEN_AUDIENCE = "jobflow-analytics"
+ACCESS_TOKEN_CLAIMS = ["exp", "sub", "jti", "scope", "iss", "aud"]
 KEY_SET_LIFESPAN_SECONDS = 300
 UNKNOWN_KID_REFETCH_COOLDOWN_SECONDS = 30
 KEYS_UNREACHABLE = "The API signing keys could not be fetched"
@@ -42,6 +44,8 @@ def access_claims(token: str, key_source: KeySource) -> dict[str, Any]:
             token,
             key_source.get_signing_key_from_jwt(token),
             algorithms=["RS256"],
+            issuer=ACCESS_TOKEN_ISSUER,
+            audience=ACCESS_TOKEN_AUDIENCE,
             options={"require": ACCESS_TOKEN_CLAIMS},
         )
     except jwt.PyJWKClientConnectionError as error:

@@ -49,6 +49,9 @@ REFUSED_TOKENS = {
         iss="jobflow-api", aud="jobflow-ai", sub="worker", scope="ai:invoke"
     ),
     "non_uuid_sub": SIGNER.user_token(sub="worker"),
+    "wrong_issuer": SIGNER.user_token(iss="someone"),
+    "wrong_audience": SIGNER.user_token(aud="jobflow-ai"),
+    "no_audience": SIGNER.user_token(aud=None),
 }
 
 

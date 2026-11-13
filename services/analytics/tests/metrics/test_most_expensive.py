@@ -49,8 +49,16 @@ def test_no_events_need_the_whole_insight_threshold() -> None:
     assert (result.have, result.need) == (0, 10)
 
 
-def test_no_loss_names_no_stage() -> None:
-    assert leader([on_days(["applied", "screening"], [0, 2])] * 10) is None
+@pytest.mark.parametrize(
+    "path",
+    [
+        on_days(["applied", "screening"], [0, 2]),
+        on_days(["applied", "rejected"], [0, 1]),
+    ],
+    ids=["no loss", "losses only at applied cost no days"],
+)
+def test_no_costly_loss_names_no_stage(path: list[TimedMove]) -> None:
+    assert leader([path] * 10) is None
 
 
 @pytest.mark.parametrize(
@@ -76,6 +84,13 @@ def test_ten_applications_name_the_stage_whose_losses_cost_the_most_days(
     final_entry: float, cost_leader: MostExpensiveStage
 ) -> None:
     assert leader(ten_applications(final_entry=final_entry)) == cost_leader
+
+
+def test_a_skip_past_the_stage_neither_reaches_nor_passes_it() -> None:
+    paths = ten_applications(final_entry=15)
+    paths[4] = on_days(["applied", "screening", "offer"], [0, 3, 12])
+
+    assert leader(paths) == TECH_INTERVIEW_COST
 
 
 def test_dumps_to_the_camel_case_keys_of_the_shared_contract() -> None:

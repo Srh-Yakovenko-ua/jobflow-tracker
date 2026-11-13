@@ -63,8 +63,25 @@ def test_counts_interviews_and_offers_by_the_month_they_were_reached() -> None:
 
     assert (result.sent, result.interviews, result.offers) == (
         counted((3, 1, 2)),
+        counted((1, 1, 0)),
         counted((2, 1, 1)),
-        counted((2, 1, 1)),
+    )
+
+
+def test_a_skip_from_screening_to_offer_is_not_an_interview() -> None:
+    paths = [
+        [
+            ("applied", at("2026-07-01T10:00Z")),
+            ("screening", at("2026-07-02T10:00Z")),
+            ("offer", at("2026-08-03T10:00Z")),
+        ]
+    ]
+
+    result = kpis_of(paths, period=KYIV_SEARCH, now=MID_AUGUST)
+
+    assert (result.interviews, result.offers) == (
+        counted((0, 0, 0)),
+        counted((1, 1, 0)),
     )
 
 

@@ -1,3 +1,4 @@
+import threading
 import time
 from collections.abc import Callable, Coroutine
 from typing import Any
@@ -13,6 +14,7 @@ from app.core.request_id import request_id_of
 from app.extract.document import extract_document
 
 MULTIPART_OVERHEAD_BYTES = 64 * 1024
+EXTRACTION_LOCK = threading.Lock()
 
 type RouteHandler = Callable[[Request], Coroutine[Any, Any, Response]]
 
@@ -49,7 +51,8 @@ def extract(file: UploadFile, request: Request) -> DocumentExtraction:
     data = file.file.read(LIMITS.max_bytes + 1)
     if len(data) > LIMITS.max_bytes:
         raise too_large()
-    file_type, extraction = extract_document(data)
+    with EXTRACTION_LOCK:
+        file_type, extraction = extract_document(data)
     logger.info(
         "document extracted",
         sizeBytes=len(data),

@@ -5,10 +5,10 @@ import pytest
 
 from app.core.config import Settings
 from app.factory import create_app
-from tests.api_client import register
+from tests.api_client import application_through, register
 from tests.factories import bearer, problem_body, uvicorn_serving
 from tests.routes.test_funnel import FUNNEL_PATH, SEARCH_PATH_IDS, SEARCH_PATHS
-from tests_api.conftest import OwnedSearch
+from tests_api.conftest import OwnedSearch, active_search
 
 pytestmark = pytest.mark.enable_socket
 
@@ -16,6 +16,13 @@ SANKEY_LINKS = {
     "no split": ({}, "rejected"),
     "reason split": ({"split": "reason"}, "unspecified"),
 }
+
+INTERVIEW_PATHS = [
+    ["screening", "offer"],
+    ["tech_interview", "tech_interview", "final", "offer"],
+    ["screening", "tech_interview", "rejected"],
+    ["screening", "final"],
+]
 
 
 def funnel_over_http(
@@ -101,3 +108,17 @@ def test_answers_not_found_for_another_users_search(
         404,
         problem_body(404, type="not_found", title="Not found"),
     )
+
+
+def test_the_funnel_kpi_and_the_search_summary_count_the_same_interviews(
+    settings: Settings,
+) -> None:
+    token = register(settings)["accessToken"]
+    for path in INTERVIEW_PATHS:
+        application_through(settings, token=token, path=path)
+    active = active_search(settings, token=token)
+
+    funnel = funnel_over_http(settings, token=token, search_id=str(active["id"]))
+
+    interviews = funnel.json()["kpis"]["interviews"]["total"]
+    assert (active["interviews"], interviews) == (3, 3)

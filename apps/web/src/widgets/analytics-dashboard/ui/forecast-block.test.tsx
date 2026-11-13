@@ -99,6 +99,25 @@ describe('ForecastBlock', () => {
     expect(frame.getByText('10,0')).toBeDefined();
   });
 
+  it('an observed pace of 2.3 reads 2,5 in the caption and on the slider, the step the slider starts at', async () => {
+    renderDashboardBlocks({ forecast: { ...buildForecast(), applicationsPerWeek: 2.3 } });
+    const frame = await shownForecast();
+
+    expect(
+      frame.getByText(
+        'Ймовірний коридор: половина симуляцій. Темп 2,5 на тиждень, поточні конверсії.',
+      ),
+    ).toBeDefined();
+    expect(frame.getByRole('slider', { name: RATE })).toHaveProperty('value', '2.5');
+    expect(frame.getByText('2,5')).toBeDefined();
+  });
+
+  it('a corridor from 0.4 to 2.5 weeks reads from 1 to 3 weeks, the range the stage action prints', async () => {
+    renderDashboardBlocks({ forecast: { ...buildForecast(), likely: { low: 0.4, high: 2.5 } } });
+
+    expect(await within(frameOf(FRAME)).findByText('1–3 тижні')).toBeDefined();
+  });
+
   it('three quick slider steps send one request after the debounce and keep the old band until the new range arrives', async () => {
     const { sent, held } = renderHeld((params) => params.has('applicationsPerWeek'));
     const frame = await shownForecast();

@@ -17,11 +17,11 @@ type NoteText = Readonly<{ key: string; lead: string; body: string }>;
 
 export type FunnelNotesProps = Readonly<{
   notes: readonly FunnelNote[];
-  graph: SankeyResponse | undefined;
+  graph: SankeyResponse;
 }>;
 
 function localGhostOf({ notes, graph }: FunnelNotesProps): NoteText[] {
-  const silent = graph === undefined ? 0 : ghostTotalOf(graph.merged);
+  const silent = ghostTotalOf(graph.merged);
   if (silent === 0 || notes.some(({ block }) => block === 'ghosted')) return [];
   return [{ key: 'local-ghost', lead: COPY.ghost.lead, body: COPY.ghost.body(silent) }];
 }
@@ -38,7 +38,7 @@ function textsOf(props: FunnelNotesProps): NoteText[] {
 export function FunnelNotes(props: FunnelNotesProps) {
   const texts = textsOf(props);
   return (
-    <AnimatePresence initial={false}>
+    <AnimatePresence initial={false} propagate>
       {texts.length > 0 && (
         <Fade key="notes">
           <div

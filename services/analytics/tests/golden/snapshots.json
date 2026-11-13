@@ -1,21 +1,21 @@
 {
   "forecast": {
     "applications": 54,
-    "applicationsPerWeek": 4.75,
+    "applicationsPerWeek": 4.0,
     "horizonWeeks": 52,
     "interval": {
-      "high": 24.68,
-      "low": 3.0
+      "high": 28.85,
+      "low": 3.15
     },
     "likely": {
-      "high": 12.65,
-      "low": 4.22
+      "high": 14.48,
+      "low": 4.52
     },
-    "medianWeeks": 6.81,
+    "medianWeeks": 7.59,
     "offers": 1,
     "status": "ok",
-    "withinEightWeeks": 0.5753,
-    "withinFourWeeks": 0.2209
+    "withinEightWeeks": 0.5243,
+    "withinFourWeeks": 0.1905
   },
   "funnel": {
     "kpis": {
@@ -132,7 +132,7 @@
     "actions": [
       {
         "block": "funnel",
-        "expectedEffect": "Прогноз офера звузиться до діапазону від 3 до 11 тижнів, якщо конверсія дійде до 60%.",
+        "expectedEffect": "Прогноз офера звузиться до діапазону від 4 до 12 тижнів, якщо конверсія дійде до 60%.",
         "title": "Підготуватися до наступного техінтерв'ю"
       },
       {
@@ -161,7 +161,7 @@
       },
       {
         "block": "funnel",
-        "body": "Дійшло 9, пройшло 4. Кожна втрата тут — це 2–3 тижні вже витраченого часу.",
+        "body": "Дійшло 9, пройшли 4. Кожна втрата тут — це 2–3 тижні вже витраченого часу.",
         "evidence": {
           "investedDaysMedian": 17.0,
           "lost": 5,

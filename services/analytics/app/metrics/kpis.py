@@ -44,12 +44,11 @@ def monthly(moments: pd.Series, *, zone: ZoneInfo, now: datetime) -> MonthlyCoun
 
 def kpis(rows: pd.DataFrame, *, period: SearchPeriod, now: datetime) -> FunnelKpis:
     stages = progress_stages()
-    first_interview = min(map(stages.index, load_domain_enums().interview_stages))
     count = partial(monthly, zone=ZoneInfo(period.timezone), now=now)
     searching = (period.finished_at or now) - period.started_at
     return FunnelKpis(
         sent=count(rows["started_at"]),
-        interviews=count(rows[list(stages[first_interview:])].min(axis=1)),
+        interviews=count(rows[list(load_domain_enums().interview_stages)].min(axis=1)),
         offers=count(rows[stages[-1]]),
         days_in_search=max(searching.days, 0),
     )

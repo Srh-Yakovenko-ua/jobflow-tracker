@@ -122,7 +122,7 @@ function FrameStates() {
           state={{
             status: 'insufficient_data',
             have: 4,
-            need: 10,
+            need: 6,
             message: STATES.insufficient.message,
           }}
         />

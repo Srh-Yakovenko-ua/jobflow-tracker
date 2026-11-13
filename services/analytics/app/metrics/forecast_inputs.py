@@ -11,6 +11,7 @@ from app.metrics.journeys import ended_at, reached
 RATE_WINDOW: Final = timedelta(weeks=4)
 WEEK: Final = pd.Timedelta(weeks=1)
 DAY: Final = pd.Timedelta(days=1)
+PACE_LIMITS: Final = (1.0, 4.0)
 
 type Days = npt.NDArray[np.float64]
 
@@ -63,4 +64,5 @@ def applications_per_week(rows: pd.DataFrame, *, now: datetime) -> float:
     started = rows["started_at"]
     recent = int(((started >= now - RATE_WINDOW) & (started < now)).sum())
     weeks = (pd.Timestamp(now) - started.min()) / WEEK
-    return recent / float(np.clip(weeks, 1, RATE_WINDOW / WEEK))
+    observed = recent / float(np.clip(weeks, 1, RATE_WINDOW / WEEK))
+    return float(np.clip(observed, *PACE_LIMITS))

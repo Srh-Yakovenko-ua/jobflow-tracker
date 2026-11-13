@@ -18,6 +18,8 @@ WEEK_FORMS: Final = PluralForms("тиждень", "тижні", "тижнів")
 UP_TO_WEEK_FORMS: Final = PluralForms("тижня", "тижнів", "тижнів")
 NO_REPLY_FORMS: Final = PluralForms("не відповіла", "не відповіли", "не відповіли")
 GAVE_FORMS: Final = PluralForms("дав", "дали", "дали")
+REACHED_FORMS: Final = PluralForms("дійшов", "дійшли", "дійшло")
+PASSED_FORMS: Final = PluralForms("пройшов", "пройшли", "пройшло")
 
 
 def plural_uk(count: int, forms: PluralForms) -> str:

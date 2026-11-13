@@ -2,7 +2,7 @@ import { randomUUID } from 'node:crypto';
 
 import { type TokenScope, USER_TOKEN_SCOPES } from '@jobflow/shared';
 import { Injectable } from '@nestjs/common';
-import { errors, type JWTVerifyOptions } from 'jose';
+import { errors, type JWTPayload, type JWTVerifyOptions } from 'jose';
 import { z } from 'zod';
 
 import { type AppError, tokenExpired, unauthorized } from '../../common/app-error.js';
@@ -19,8 +19,15 @@ export type SignAccessTokenInput = {
   scope?: readonly TokenScope[] | undefined;
 };
 
+const ACCESS_TOKEN_CLAIMS: JWTPayload = {
+  iss: 'jobflow-api',
+  aud: ['jobflow-api', 'jobflow-analytics'],
+};
+
 const VERIFY_OPTIONS: JWTVerifyOptions = {
   algorithms: ['RS256'],
+  issuer: 'jobflow-api',
+  audience: 'jobflow-api',
   requiredClaims: ['sub', 'jti', 'scope', 'exp'],
 };
 
@@ -38,7 +45,12 @@ export function signAccessToken({
 }: SignAccessTokenInput): Promise<string> {
   return signWithKeys({
     keys,
-    claims: { scope: scope.join(' '), sub: userId, jti: randomUUID() },
+    claims: {
+      ...ACCESS_TOKEN_CLAIMS,
+      scope: scope.join(' '),
+      sub: userId,
+      jti: randomUUID(),
+    },
     ttlSeconds: ACCESS_TOKEN_TTL_SECONDS,
     issuedAt,
   });

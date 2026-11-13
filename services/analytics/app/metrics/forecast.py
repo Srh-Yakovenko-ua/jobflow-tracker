@@ -9,6 +9,7 @@ from pydantic import Field
 from app.core.enums import load_domain_enums
 from app.metrics.data_rules import clean_events
 from app.metrics.forecast_inputs import (
+    PassCounts,
     applications_per_week,
     in_flight,
     stage_pass_counts,
@@ -28,6 +29,9 @@ from app.metrics.stage_timing import stage_stays
 FORECAST_SEED: Final = 2026
 NO_REPLY: Final = Insufficient(
     have=0, need=1, message="Прогноз з'явиться після першої відповіді компанії"
+)
+NO_RESULT_AT_EVERY_STAGE: Final = (
+    "Прогноз з'явиться, коли кожен етап матиме хоча б один результат"
 )
 
 
@@ -66,6 +70,19 @@ def weeks_range(times: Weeks, *, low: float, high: float) -> WeeksRange:
     return WeeksRange(low=weeks_at(times, share=low), high=weeks_at(times, share=high))
 
 
+def evidence_shortfall(passes: PassCounts) -> Insufficient | None:
+    decided = [
+        successes + failures > 0
+        for successes, failures in zip(passes.successes, passes.failures, strict=True)
+    ]
+    if all(decided):
+        return None
+    have = sum(decided)
+    return Insufficient(
+        have=have, need=len(decided) - have, message=NO_RESULT_AT_EVERY_STAGE
+    )
+
+
 def forecast(
     events: pd.DataFrame, *, now: datetime, what_if: WhatIf, seed: int = FORECAST_SEED
 ) -> Forecast | Insufficient:
@@ -79,9 +96,13 @@ def forecast(
     if stays.empty:
         return NO_REPLY
     rows = journeys(clean)
+    passes = stage_pass_counts(rows)
+    unproven = evidence_shortfall(passes)
+    if unproven is not None:
+        return unproven
     rate = what_if.applications_per_week
     pipeline = Pipeline(
-        passes=stage_pass_counts(rows),
+        passes=passes,
         stays=stay_pools(stays),
         in_flight=in_flight(clean, now=now),
         rate=applications_per_week(rows, now=now) if rate is None else rate,

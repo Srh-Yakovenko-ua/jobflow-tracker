@@ -77,7 +77,7 @@ function FrameBody({ state, plot, children }: FrameBodyProps) {
       return (
         <EmptyState
           content={{ title: COPY.lowData, hint: state.message }}
-          progress={{ count: state.have, goal: state.need }}
+          progress={{ count: state.have, goal: state.have + state.need }}
           slots={{ figure: <DashedBars view={{ density: 'compact' }} /> }}
           view={{ size: 'compact' }}
         />

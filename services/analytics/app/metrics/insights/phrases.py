@@ -61,6 +61,10 @@ def sentence(text: str) -> str:
     return text[:1].upper() + text[1:]
 
 
+def whole_weeks(value: float) -> int:
+    return max(1, floor(value + 0.5))
+
+
 def spent_time(days: float) -> str:
     if days < DAYS_IN_WEEK:
         return counted_uk(round(days), DAY_FORMS)

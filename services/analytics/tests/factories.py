@@ -228,11 +228,18 @@ class TokenSigner:
             "sub": str(USER_ID),
             "jti": str(uuid4()),
             "scope": "user analytics:read",
+            "iss": "jobflow-api",
+            "aud": ["jobflow-api", "jobflow-analytics"],
             "iat": issued,
             "exp": issued + TOKEN_LIFETIME_SECONDS,
         }
+        signed = {
+            name: value
+            for name, value in (payload | claims).items()
+            if value is not None
+        }
         headers = {"kid": self.kid}
-        return jwt.encode(payload | claims, self.key, "RS256", headers=headers)
+        return jwt.encode(signed, self.key, "RS256", headers=headers)
 
     def expired_token(self) -> str:
         issued = int(time.time()) - 2 * TOKEN_LIFETIME_SECONDS

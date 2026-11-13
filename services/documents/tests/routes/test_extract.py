@@ -1,12 +1,16 @@
 import base64
 import json
+import threading
 import time
+from concurrent.futures import ThreadPoolExecutor
 
 import pytest
 from fastapi.testclient import TestClient
 from httpx2 import Response
 from loguru import logger
 
+from app.contracts.document_extraction import DocumentExtraction, Kind
+from app.extract.detect import FileType
 from tests.factories import (
     MAX_JPEG_BYTES,
     RENAMED_DOCUMENT,
@@ -206,3 +210,29 @@ def test_logs_the_shape_of_the_document_but_not_its_text(client: TestClient) -> 
     )
     assert extra["sizeBytes"] == len(two_page_pdf())
     assert not [line for line in lines if "Senior Python developer" in line]
+
+
+def test_runs_one_extraction_at_a_time(
+    client: TestClient, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    running = {"now": 0, "peak": 0}
+    counter = threading.Lock()
+
+    def slow_extract(data: bytes) -> tuple[FileType, DocumentExtraction]:
+        with counter:
+            running["now"] += 1
+            running["peak"] = max(running["peak"], running["now"])
+        time.sleep(0.2)
+        with counter:
+            running["now"] -= 1
+        return "pdf", DocumentExtraction(
+            kind=Kind.text, text="", pages=[], page_count=1
+        )
+
+    monkeypatch.setattr("app.api.routes.extract.extract_document", slow_extract)
+    with ThreadPoolExecutor(max_workers=2) as pool:
+        statuses = list(
+            pool.map(lambda _: post_file(client, b"%PDF").status_code, range(2))
+        )
+
+    assert (statuses, running["peak"]) == ([200, 200], 1)

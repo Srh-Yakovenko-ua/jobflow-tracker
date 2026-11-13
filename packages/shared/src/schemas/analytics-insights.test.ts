@@ -9,8 +9,11 @@ const DESIGN_INSIGHTS = designInsightsBody();
 describe('insightsResponseSchema', () => {
   it('accepts the six design headlines and four actions from the analytics snapshot', () => {
     expect(insightsResponseSchema.parse(DESIGN_INSIGHTS)).toEqual(DESIGN_INSIGHTS);
+    expect(DESIGN_INSIGHTS.insights[1]?.body).toBe(
+      'Дійшло 9, пройшли 4. Кожна втрата тут — це 2–3 тижні вже витраченого часу.',
+    );
     expect(DESIGN_INSIGHTS.actions.map(({ expectedEffect }) => expectedEffect)).toEqual([
-      'Прогноз офера звузиться до діапазону від 3 до 11 тижнів, якщо конверсія дійде до 60%.',
+      'Прогноз офера звузиться до діапазону від 4 до 12 тижнів, якщо конверсія дійде до 60%.',
       'Ті самі 16 відгуків через Djinni дали б 6 скринінгів замість 2.',
       '3 скринінги на 3 відгуки через рефералки. Вибірка мала, але напрям однозначний.',
       'Конверсія у скринінг 41% проти 24% до переходу на CV v2.',

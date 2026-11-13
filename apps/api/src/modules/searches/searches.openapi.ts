@@ -55,7 +55,7 @@ const FINISH = {
   openApplications: 'withdraw',
 } satisfies FinishSearchInput;
 
-const TOTALS = `applications counts the applications now in the search, leaving out drafts and deleted ones; interviews counts the stage events into ${INTERVIEW_STAGES.join(' or ')} since the search started, each round once; offers counts the applications that reached offer; days runs from the start to the finish, or to today for the active search; daysToOffer runs from the start to the first offer, or is null. Undone moves are left out.`;
+const TOTALS = `applications counts the applications now in the search, leaving out drafts and deleted ones; interviews counts the applications that reached ${INTERVIEW_STAGES.join(' or ')}, each once; offers counts the applications that reached offer; days runs from the start to the finish, or to today for the active search; daysToOffer runs from the start to the first offer, or is null. Undone moves are left out.`;
 
 const HANDED_OVER_STAGES = ACTIVE_STAGES.join(', ');
 
