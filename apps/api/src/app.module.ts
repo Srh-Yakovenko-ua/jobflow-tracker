@@ -19,6 +19,7 @@ import { LiveStreamModule } from './modules/live/index.js';
 import { MaintenanceModule } from './modules/maintenance/index.js';
 import { MatchModule } from './modules/match/index.js';
 import { NotesModule } from './modules/notes/index.js';
+import { RemindersModule } from './modules/reminders/index.js';
 import { ResumesModule } from './modules/resumes/index.js';
 import { ScheduleModule } from './modules/schedule/index.js';
 import { SearchesModule } from './modules/searches/index.js';
@@ -45,6 +46,7 @@ import { RedisModule } from './redis/redis.module.js';
     NotesModule,
     ContactsModule,
     ScheduleModule,
+    RemindersModule,
     SettingsModule,
     SearchesModule,
     AiModule,

@@ -41,6 +41,10 @@
       "description": "Scheduled events and follow-ups across Applications"
     },
     {
+      "name": "reminders",
+      "description": "Follow-up and interview reminders of the signed-in user"
+    },
+    {
       "name": "resumes",
       "description": "Resume files of the signed-in user, uploaded straight to storage"
     },
@@ -12950,6 +12954,975 @@
                   "type": "forbidden",
                   "title": "Forbidden",
                   "status": 403,
+                  "requestId": "0199f0c4-5d2e-7b31-8c4f-6a7b8c9d0e1f"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Invalid request",
+            "content": {
+              "application/json": {
+                "example": {
+                  "type": "validation_error",
+                  "title": "Invalid request",
+                  "status": 422,
+                  "errors": [
+                    {
+                      "path": "email",
+                      "message": "Invalid input: expected string, received undefined"
+                    }
+                  ],
+                  "requestId": "0199f0c4-5d2e-7b31-8c4f-6a7b8c9d0e1f"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too many requests: 300 per 60 s by default (RATE_LIMIT_API_PER_MINUTE)",
+            "headers": {
+              "Retry-After": {
+                "schema": {
+                  "type": "integer",
+                  "exclusiveMinimum": 0,
+                  "description": "Seconds until the limit window resets"
+                },
+                "required": true,
+                "description": "Seconds until the limit window resets"
+              }
+            },
+            "content": {
+              "application/json": {
+                "example": {
+                  "type": "rate_limited",
+                  "title": "Too many requests",
+                  "status": 429,
+                  "requestId": "0199f0c4-5d2e-7b31-8c4f-6a7b8c9d0e1f"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal error",
+            "content": {
+              "application/json": {
+                "example": {
+                  "type": "internal_error",
+                  "title": "Internal error",
+                  "status": 500,
+                  "requestId": "0199f0c4-5d2e-7b31-8c4f-6a7b8c9d0e1f"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/reminders": {
+      "get": {
+        "tags": [
+          "reminders"
+        ],
+        "summary": "List the pending and snoozed reminders",
+        "description": "Follow-ups the silence scan wrote and interview reminders, of non-deleted applications whose stage is one of applied, screening, tech_interview, final, offer; earliest dueAt first, then id. No pagination: an application has at most one active reminder of each type and event.",
+        "responses": {
+          "200": {
+            "description": "The active reminders",
+            "content": {
+              "application/json": {
+                "example": {
+                  "items": [
+                    {
+                      "id": "0199f2b0-1a2b-7c3d-8e4f-5a6b7c8d9e0f",
+                      "applicationId": "0199f0c4-6e3f-7c42-9d50-7b8c9d0e1f2a",
+                      "company": "Acme",
+                      "stage": "tech_interview",
+                      "type": "followup",
+                      "status": "pending",
+                      "scheduledEventId": null,
+                      "dueAt": "2026-11-03T09:00:00.000Z",
+                      "snoozedUntil": null
+                    }
+                  ]
+                },
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "applicationId": {
+                            "type": "string",
+                            "format": "uuid"
+                          },
+                          "company": {
+                            "type": "string",
+                            "minLength": 1
+                          },
+                          "stage": {
+                            "type": "string",
+                            "enum": [
+                              "applied",
+                              "screening",
+                              "tech_interview",
+                              "final",
+                              "offer",
+                              "rejected",
+                              "ghosted",
+                              "withdrawn"
+                            ]
+                          },
+                          "id": {
+                            "type": "string",
+                            "format": "uuid"
+                          },
+                          "type": {
+                            "type": "string",
+                            "enum": [
+                              "followup",
+                              "interview_soon"
+                            ]
+                          },
+                          "status": {
+                            "type": "string",
+                            "enum": [
+                              "pending",
+                              "done",
+                              "snoozed",
+                              "dismissed"
+                            ]
+                          },
+                          "scheduledEventId": {
+                            "type": [
+                              "string",
+                              "null"
+                            ],
+                            "format": "uuid"
+                          },
+                          "dueAt": {
+                            "type": "string",
+                            "format": "date-time"
+                          },
+                          "snoozedUntil": {
+                            "type": [
+                              "string",
+                              "null"
+                            ],
+                            "format": "date-time"
+                          }
+                        },
+                        "required": [
+                          "applicationId",
+                          "company",
+                          "stage",
+                          "id",
+                          "type",
+                          "status",
+                          "scheduledEventId",
+                          "dueAt",
+                          "snoozedUntil"
+                        ]
+                      }
+                    }
+                  },
+                  "required": [
+                    "items"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "example": {
+                  "type": "unauthorized",
+                  "title": "Unauthorized",
+                  "status": 401,
+                  "requestId": "0199f0c4-5d2e-7b31-8c4f-6a7b8c9d0e1f"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "example": {
+                  "type": "forbidden",
+                  "title": "Forbidden",
+                  "status": 403,
+                  "requestId": "0199f0c4-5d2e-7b31-8c4f-6a7b8c9d0e1f"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too many requests: 300 per 60 s by default (RATE_LIMIT_API_PER_MINUTE)",
+            "headers": {
+              "Retry-After": {
+                "schema": {
+                  "type": "integer",
+                  "exclusiveMinimum": 0,
+                  "description": "Seconds until the limit window resets"
+                },
+                "required": true,
+                "description": "Seconds until the limit window resets"
+              }
+            },
+            "content": {
+              "application/json": {
+                "example": {
+                  "type": "rate_limited",
+                  "title": "Too many requests",
+                  "status": 429,
+                  "requestId": "0199f0c4-5d2e-7b31-8c4f-6a7b8c9d0e1f"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal error",
+            "content": {
+              "application/json": {
+                "example": {
+                  "type": "internal_error",
+                  "title": "Internal error",
+                  "status": 500,
+                  "requestId": "0199f0c4-5d2e-7b31-8c4f-6a7b8c9d0e1f"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/reminders/{id}/done": {
+      "post": {
+        "tags": [
+          "reminders"
+        ],
+        "summary": "Mark a reminder done",
+        "description": "A pending or snoozed reminder of the signed-in user; a missing id or another user’s id answers 404, a reminder already done or dismissed answers 409.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "example": "0199f2b0-1a2b-7c3d-8e4f-5a6b7c8d9e0f"
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The changed reminder",
+            "content": {
+              "application/json": {
+                "example": {
+                  "id": "0199f2b0-1a2b-7c3d-8e4f-5a6b7c8d9e0f",
+                  "applicationId": "0199f0c4-6e3f-7c42-9d50-7b8c9d0e1f2a",
+                  "company": "Acme",
+                  "stage": "tech_interview",
+                  "type": "followup",
+                  "status": "done",
+                  "scheduledEventId": null,
+                  "dueAt": "2026-11-03T09:00:00.000Z",
+                  "snoozedUntil": null
+                },
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "applicationId": {
+                      "type": "string",
+                      "format": "uuid"
+                    },
+                    "company": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "stage": {
+                      "type": "string",
+                      "enum": [
+                        "applied",
+                        "screening",
+                        "tech_interview",
+                        "final",
+                        "offer",
+                        "rejected",
+                        "ghosted",
+                        "withdrawn"
+                      ]
+                    },
+                    "id": {
+                      "type": "string",
+                      "format": "uuid"
+                    },
+                    "type": {
+                      "type": "string",
+                      "enum": [
+                        "followup",
+                        "interview_soon"
+                      ]
+                    },
+                    "status": {
+                      "type": "string",
+                      "enum": [
+                        "pending",
+                        "done",
+                        "snoozed",
+                        "dismissed"
+                      ]
+                    },
+                    "scheduledEventId": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "format": "uuid"
+                    },
+                    "dueAt": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "snoozedUntil": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "format": "date-time"
+                    }
+                  },
+                  "required": [
+                    "applicationId",
+                    "company",
+                    "stage",
+                    "id",
+                    "type",
+                    "status",
+                    "scheduledEventId",
+                    "dueAt",
+                    "snoozedUntil"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "example": {
+                  "type": "unauthorized",
+                  "title": "Unauthorized",
+                  "status": 401,
+                  "requestId": "0199f0c4-5d2e-7b31-8c4f-6a7b8c9d0e1f"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "example": {
+                  "type": "forbidden",
+                  "title": "Forbidden",
+                  "status": 403,
+                  "requestId": "0199f0c4-5d2e-7b31-8c4f-6a7b8c9d0e1f"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "example": {
+                  "type": "not_found",
+                  "title": "Not found",
+                  "status": 404,
+                  "requestId": "0199f0c4-5d2e-7b31-8c4f-6a7b8c9d0e1f"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "example": {
+                  "type": "conflict",
+                  "title": "Conflict",
+                  "status": 409,
+                  "requestId": "0199f0c4-5d2e-7b31-8c4f-6a7b8c9d0e1f"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Invalid request",
+            "content": {
+              "application/json": {
+                "example": {
+                  "type": "validation_error",
+                  "title": "Invalid request",
+                  "status": 422,
+                  "errors": [
+                    {
+                      "path": "email",
+                      "message": "Invalid input: expected string, received undefined"
+                    }
+                  ],
+                  "requestId": "0199f0c4-5d2e-7b31-8c4f-6a7b8c9d0e1f"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too many requests: 300 per 60 s by default (RATE_LIMIT_API_PER_MINUTE)",
+            "headers": {
+              "Retry-After": {
+                "schema": {
+                  "type": "integer",
+                  "exclusiveMinimum": 0,
+                  "description": "Seconds until the limit window resets"
+                },
+                "required": true,
+                "description": "Seconds until the limit window resets"
+              }
+            },
+            "content": {
+              "application/json": {
+                "example": {
+                  "type": "rate_limited",
+                  "title": "Too many requests",
+                  "status": 429,
+                  "requestId": "0199f0c4-5d2e-7b31-8c4f-6a7b8c9d0e1f"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal error",
+            "content": {
+              "application/json": {
+                "example": {
+                  "type": "internal_error",
+                  "title": "Internal error",
+                  "status": 500,
+                  "requestId": "0199f0c4-5d2e-7b31-8c4f-6a7b8c9d0e1f"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/reminders/{id}/dismiss": {
+      "post": {
+        "tags": [
+          "reminders"
+        ],
+        "summary": "Dismiss a reminder and wait longer",
+        "description": "A pending or snoozed reminder of the signed-in user; a missing id or another user’s id answers 404, a reminder already done or dismissed answers 409.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "example": "0199f2b0-1a2b-7c3d-8e4f-5a6b7c8d9e0f"
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The changed reminder",
+            "content": {
+              "application/json": {
+                "example": {
+                  "id": "0199f2b0-1a2b-7c3d-8e4f-5a6b7c8d9e0f",
+                  "applicationId": "0199f0c4-6e3f-7c42-9d50-7b8c9d0e1f2a",
+                  "company": "Acme",
+                  "stage": "tech_interview",
+                  "type": "followup",
+                  "status": "dismissed",
+                  "scheduledEventId": null,
+                  "dueAt": "2026-11-03T09:00:00.000Z",
+                  "snoozedUntil": null
+                },
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "applicationId": {
+                      "type": "string",
+                      "format": "uuid"
+                    },
+                    "company": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "stage": {
+                      "type": "string",
+                      "enum": [
+                        "applied",
+                        "screening",
+                        "tech_interview",
+                        "final",
+                        "offer",
+                        "rejected",
+                        "ghosted",
+                        "withdrawn"
+                      ]
+                    },
+                    "id": {
+                      "type": "string",
+                      "format": "uuid"
+                    },
+                    "type": {
+                      "type": "string",
+                      "enum": [
+                        "followup",
+                        "interview_soon"
+                      ]
+                    },
+                    "status": {
+                      "type": "string",
+                      "enum": [
+                        "pending",
+                        "done",
+                        "snoozed",
+                        "dismissed"
+                      ]
+                    },
+                    "scheduledEventId": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "format": "uuid"
+                    },
+                    "dueAt": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "snoozedUntil": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "format": "date-time"
+                    }
+                  },
+                  "required": [
+                    "applicationId",
+                    "company",
+                    "stage",
+                    "id",
+                    "type",
+                    "status",
+                    "scheduledEventId",
+                    "dueAt",
+                    "snoozedUntil"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "example": {
+                  "type": "unauthorized",
+                  "title": "Unauthorized",
+                  "status": 401,
+                  "requestId": "0199f0c4-5d2e-7b31-8c4f-6a7b8c9d0e1f"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "example": {
+                  "type": "forbidden",
+                  "title": "Forbidden",
+                  "status": 403,
+                  "requestId": "0199f0c4-5d2e-7b31-8c4f-6a7b8c9d0e1f"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "example": {
+                  "type": "not_found",
+                  "title": "Not found",
+                  "status": 404,
+                  "requestId": "0199f0c4-5d2e-7b31-8c4f-6a7b8c9d0e1f"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "example": {
+                  "type": "conflict",
+                  "title": "Conflict",
+                  "status": 409,
+                  "requestId": "0199f0c4-5d2e-7b31-8c4f-6a7b8c9d0e1f"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Invalid request",
+            "content": {
+              "application/json": {
+                "example": {
+                  "type": "validation_error",
+                  "title": "Invalid request",
+                  "status": 422,
+                  "errors": [
+                    {
+                      "path": "email",
+                      "message": "Invalid input: expected string, received undefined"
+                    }
+                  ],
+                  "requestId": "0199f0c4-5d2e-7b31-8c4f-6a7b8c9d0e1f"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too many requests: 300 per 60 s by default (RATE_LIMIT_API_PER_MINUTE)",
+            "headers": {
+              "Retry-After": {
+                "schema": {
+                  "type": "integer",
+                  "exclusiveMinimum": 0,
+                  "description": "Seconds until the limit window resets"
+                },
+                "required": true,
+                "description": "Seconds until the limit window resets"
+              }
+            },
+            "content": {
+              "application/json": {
+                "example": {
+                  "type": "rate_limited",
+                  "title": "Too many requests",
+                  "status": 429,
+                  "requestId": "0199f0c4-5d2e-7b31-8c4f-6a7b8c9d0e1f"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal error",
+            "content": {
+              "application/json": {
+                "example": {
+                  "type": "internal_error",
+                  "title": "Internal error",
+                  "status": 500,
+                  "requestId": "0199f0c4-5d2e-7b31-8c4f-6a7b8c9d0e1f"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/reminders/{id}/snooze": {
+      "post": {
+        "tags": [
+          "reminders"
+        ],
+        "summary": "Snooze a reminder for a number of days",
+        "description": "A pending or snoozed reminder of the signed-in user; a missing id or another user’s id answers 404, a reminder already done or dismissed answers 409. days is a whole number from 1 to 30; snoozedUntil becomes now plus days, also for a reminder already snoozed.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "example": "0199f2b0-1a2b-7c3d-8e4f-5a6b7c8d9e0f"
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "example": {
+                "days": 3
+              },
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "days": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 30
+                  }
+                },
+                "required": [
+                  "days"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The snoozed reminder",
+            "content": {
+              "application/json": {
+                "example": {
+                  "id": "0199f2b0-1a2b-7c3d-8e4f-5a6b7c8d9e0f",
+                  "applicationId": "0199f0c4-6e3f-7c42-9d50-7b8c9d0e1f2a",
+                  "company": "Acme",
+                  "stage": "tech_interview",
+                  "type": "followup",
+                  "status": "snoozed",
+                  "scheduledEventId": null,
+                  "dueAt": "2026-11-03T09:00:00.000Z",
+                  "snoozedUntil": "2026-11-06T09:00:00.000Z"
+                },
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "applicationId": {
+                      "type": "string",
+                      "format": "uuid"
+                    },
+                    "company": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "stage": {
+                      "type": "string",
+                      "enum": [
+                        "applied",
+                        "screening",
+                        "tech_interview",
+                        "final",
+                        "offer",
+                        "rejected",
+                        "ghosted",
+                        "withdrawn"
+                      ]
+                    },
+                    "id": {
+                      "type": "string",
+                      "format": "uuid"
+                    },
+                    "type": {
+                      "type": "string",
+                      "enum": [
+                        "followup",
+                        "interview_soon"
+                      ]
+                    },
+                    "status": {
+                      "type": "string",
+                      "enum": [
+                        "pending",
+                        "done",
+                        "snoozed",
+                        "dismissed"
+                      ]
+                    },
+                    "scheduledEventId": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "format": "uuid"
+                    },
+                    "dueAt": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "snoozedUntil": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "format": "date-time"
+                    }
+                  },
+                  "required": [
+                    "applicationId",
+                    "company",
+                    "stage",
+                    "id",
+                    "type",
+                    "status",
+                    "scheduledEventId",
+                    "dueAt",
+                    "snoozedUntil"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "example": {
+                  "type": "bad_request",
+                  "title": "Bad request",
+                  "status": 400,
+                  "detail": "Unexpected end of JSON input",
+                  "requestId": "0199f0c4-5d2e-7b31-8c4f-6a7b8c9d0e1f"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "example": {
+                  "type": "unauthorized",
+                  "title": "Unauthorized",
+                  "status": 401,
+                  "requestId": "0199f0c4-5d2e-7b31-8c4f-6a7b8c9d0e1f"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "example": {
+                  "type": "forbidden",
+                  "title": "Forbidden",
+                  "status": 403,
+                  "requestId": "0199f0c4-5d2e-7b31-8c4f-6a7b8c9d0e1f"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "example": {
+                  "type": "not_found",
+                  "title": "Not found",
+                  "status": 404,
+                  "requestId": "0199f0c4-5d2e-7b31-8c4f-6a7b8c9d0e1f"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "example": {
+                  "type": "conflict",
+                  "title": "Conflict",
+                  "status": 409,
                   "requestId": "0199f0c4-5d2e-7b31-8c4f-6a7b8c9d0e1f"
                 },
                 "schema": {

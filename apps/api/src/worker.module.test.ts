@@ -16,6 +16,7 @@ import {
   MatchTriggerProcessor,
   MatchTriggerSubscriber,
 } from './modules/match/index.js';
+import { RemindersSubscriber } from './modules/reminders/index.js';
 import { ResumeProfileSubscriber } from './modules/resumes/index.js';
 import { DomainEventsProcessor } from './outbox/domain-events.processor.js';
 import { RedisService } from './redis/redis.service.js';
@@ -49,6 +50,7 @@ describe('WorkerModule', () => {
       MatchTriggerSubscriber,
       MatchTriggerProcessor,
       LivePublisher,
+      RemindersSubscriber,
     ]) {
       expect(moduleRef.get(provider, { strict: false })).toBeInstanceOf(provider);
     }

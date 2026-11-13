@@ -39,6 +39,14 @@ class FakeScheduledJobs {
     return this.called('monthlySummaryUsers');
   }
 
+  silenceScan(): Promise<void> {
+    return this.called('silenceScan');
+  }
+
+  interviewReminders(): Promise<void> {
+    return this.called('interviewReminders');
+  }
+
   private called(method: string): Promise<void> {
     this.calls.push(method);
     return Promise.resolve();
@@ -136,6 +144,8 @@ describe('MaintenanceProcessor', () => {
   it.each([
     ['ai-jobs.sweep', 'sweepStaleAiJobs'],
     ['monthly-summary.pick', 'monthlySummaryUsers'],
+    ['silence.scan', 'silenceScan'],
+    ['event-reminders.scan', 'interviewReminders'],
   ])('runs the scheduled jobs step for a %s job', async (name, method) => {
     await processor.process(tickJob(name));
 
@@ -143,25 +153,27 @@ describe('MaintenanceProcessor', () => {
     expect(outbox.calls).toEqual([]);
   });
 
-  it.each(['silence.scan', 'auto-ghost.scan', 'event-reminders.scan'])(
-    'logs a %s run with its requestId, jobId, queue and job name',
-    async (name) => {
-      await processor.process(
-        processedJob({ queueName: 'maintenance', name, data: { requestId: 'req-9' }, id: '51' }),
-      );
+  it('logs an auto-ghost.scan run with its requestId, jobId, queue and job name', async () => {
+    await processor.process(
+      processedJob({
+        queueName: 'maintenance',
+        name: 'auto-ghost.scan',
+        data: { requestId: 'req-9' },
+        id: '51',
+      }),
+    );
 
-      expect(log.parsed()).toEqual([
-        expect.objectContaining({
-          msg: 'scheduled job ran',
-          requestId: 'req-9',
-          jobId: '51',
-          queue: 'maintenance',
-          jobName: name,
-        }),
-      ]);
-      expect(scheduledJobs.calls).toEqual([]);
-    },
-  );
+    expect(log.parsed()).toEqual([
+      expect.objectContaining({
+        msg: 'scheduled job ran',
+        requestId: 'req-9',
+        jobId: '51',
+        queue: 'maintenance',
+        jobName: 'auto-ghost.scan',
+      }),
+    ]);
+    expect(scheduledJobs.calls).toEqual([]);
+  });
 
   it('fails a job with an unknown name as unrecoverable and runs nothing', async () => {
     await expect(processor.process(tickJob('outbox.replay'))).rejects.toBeInstanceOf(

@@ -37,9 +37,9 @@ export class MaintenanceProcessor extends WorkerHost {
     [MAINTENANCE_JOBS.cleanup]: () => this.cleanup(),
     [MAINTENANCE_JOBS.aiJobsSweep]: () => this.scheduledJobs.sweepStaleAiJobs(),
     [MAINTENANCE_JOBS.monthlySummaryPick]: () => this.scheduledJobs.monthlySummaryUsers(),
-    [MAINTENANCE_JOBS.silenceScan]: (job) => this.ran(job),
+    [MAINTENANCE_JOBS.silenceScan]: () => this.scheduledJobs.silenceScan(),
     [MAINTENANCE_JOBS.autoGhostScan]: (job) => this.ran(job),
-    [MAINTENANCE_JOBS.eventRemindersScan]: (job) => this.ran(job),
+    [MAINTENANCE_JOBS.eventRemindersScan]: () => this.scheduledJobs.interviewReminders(),
   };
 
   constructor(

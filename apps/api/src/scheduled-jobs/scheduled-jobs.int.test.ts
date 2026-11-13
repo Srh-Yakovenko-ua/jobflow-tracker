@@ -3,6 +3,7 @@ import { randomUUID } from 'node:crypto';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 import { Clock } from '../common/clock.js';
+import { InterviewAlertsService, SilenceScanService } from '../modules/reminders/index.js';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { useTestDatabase } from '../test/database.js';
 import { createAiJob, createUser } from '../test/factories.js';
@@ -36,6 +37,8 @@ describe('ScheduledJobsService on the database', () => {
       ScheduledJobsRepository,
       { provide: PrismaService, useValue: database.prisma },
       { provide: Clock, useValue: fixedClock(NOW) },
+      { provide: SilenceScanService, useValue: {} },
+      { provide: InterviewAlertsService, useValue: {} },
     ]);
     service = moduleRef.get(ScheduledJobsService);
     repository = moduleRef.get(ScheduledJobsRepository);

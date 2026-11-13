@@ -8,6 +8,7 @@ import {
   type createApplicationInputSchema,
   type MoveApplicationInput,
 } from '@jobflow/shared';
+import type { ModuleMetadata } from '@nestjs/common';
 import type { NestExpressApplication } from '@nestjs/platform-express';
 import { beforeAll, beforeEach, expect } from 'vitest';
 import type { z } from 'zod';
@@ -220,8 +221,10 @@ export async function createMovedApplication(
   return id;
 }
 
-export function useStageMoveTestApp(clock: SettableClock): TestApp {
-  const testApp = useTestApp(() => appTestingModule().overrideProvider(Clock).useValue(clock));
+export function useStageMoveTestApp(clock: SettableClock, metadata: ModuleMetadata = {}): TestApp {
+  const testApp = useTestApp(() =>
+    appTestingModule(metadata).overrideProvider(Clock).useValue(clock),
+  );
   beforeAll(() => seedRejectionReasons(testApp.prisma));
   beforeEach(() => {
     clock.at(NOW);

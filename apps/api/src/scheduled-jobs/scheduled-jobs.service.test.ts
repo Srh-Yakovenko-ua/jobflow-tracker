@@ -1,6 +1,7 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 
 import { Clock } from '../common/clock.js';
+import { InterviewAlertsService, SilenceScanService } from '../modules/reminders/index.js';
 import { memoryLog } from '../test/memory-log.js';
 import { compileProcessorModule } from '../test/processor.js';
 import { NOW, settableClock } from '../test/time.js';
@@ -37,9 +38,32 @@ class FakeScheduledJobsRepository {
     return Promise.resolve(this.candidates);
   }
 
+  silenceScanUserIds(): Promise<string[]> {
+    return Promise.resolve([KYIV_USER.userId, UTC_USER.userId]);
+  }
+
+  dueInterviewUserIds(at: Date): Promise<string[]> {
+    this.calls.push({ method: 'dueInterviewUserIds', at });
+    return Promise.resolve([UTC_USER.userId, KOLKATA_USER.userId]);
+  }
+
   private counted(call: RepositoryCall, count: number): Promise<number> {
     this.calls.push(call);
     return Promise.resolve(count);
+  }
+}
+
+class RecordingReminderScans {
+  readonly calls: unknown[][] = [];
+
+  startSilence(userId: string, now: Date) {
+    this.calls.push(['startSilence', userId, now]);
+    return Promise.resolve({ started: 2, alreadyStarted: 1 });
+  }
+
+  fireDue(userId: string, now: Date): Promise<number> {
+    this.calls.push(['fireDue', userId, now]);
+    return Promise.resolve(3);
   }
 }
 
@@ -51,6 +75,7 @@ const KOLKATA_USER = { userId: 'user-kolkata', timezone: 'Asia/Kolkata' };
 
 describe('ScheduledJobsService', () => {
   const repository = new FakeScheduledJobsRepository();
+  const scans = new RecordingReminderScans();
   const clock = settableClock(NOW);
   let service: ScheduledJobsService;
   let close: () => Promise<void>;
@@ -60,6 +85,8 @@ describe('ScheduledJobsService', () => {
       ScheduledJobsService,
       { provide: ScheduledJobsRepository, useValue: repository },
       { provide: Clock, useValue: clock },
+      { provide: SilenceScanService, useValue: scans },
+      { provide: InterviewAlertsService, useValue: scans },
     ]);
     service = moduleRef.get(ScheduledJobsService);
     close = () => moduleRef.close();
@@ -68,6 +95,7 @@ describe('ScheduledJobsService', () => {
   beforeEach(() => {
     log.lines.length = 0;
     repository.calls.length = 0;
+    scans.calls.length = 0;
     repository.candidates = [KYIV_USER, UTC_USER, KOLKATA_USER];
     clock.at(NOW);
   });
@@ -128,4 +156,38 @@ describe('ScheduledJobsService', () => {
       ]);
     },
   );
+
+  it('starts the silence of every user with an active application at one instant and logs the totals', async () => {
+    await expect(service.silenceScan()).resolves.toEqual({
+      users: 2,
+      started: 4,
+      alreadyStarted: 2,
+    });
+
+    expect(scans.calls).toEqual([
+      ['startSilence', 'user-kyiv', NOW],
+      ['startSilence', 'user-utc', NOW],
+    ]);
+    expect(log.parsed()).toEqual([
+      expect.objectContaining({
+        users: 2,
+        started: 4,
+        alreadyStarted: 2,
+        msg: 'silence scan done',
+      }),
+    ]);
+  });
+
+  it('fires the due interview reminders of every user that has one and logs the alerts', async () => {
+    await expect(service.interviewReminders()).resolves.toEqual({ users: 2, alerted: 6 });
+
+    expect(repository.calls).toEqual([{ method: 'dueInterviewUserIds', at: NOW }]);
+    expect(scans.calls).toEqual([
+      ['fireDue', 'user-utc', NOW],
+      ['fireDue', 'user-kolkata', NOW],
+    ]);
+    expect(log.parsed()).toEqual([
+      expect.objectContaining({ users: 2, alerted: 6, msg: 'interview reminders fired' }),
+    ]);
+  });
 });

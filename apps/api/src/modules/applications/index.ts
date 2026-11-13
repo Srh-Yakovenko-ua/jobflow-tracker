@@ -15,6 +15,7 @@ export {
   APPLICATION_EVENTS,
   applicationCaptureRequestedPayloadSchema,
   applicationCreatedPayloadSchema,
+  applicationStageChangedPayloadSchema,
   applicationUpdatedPayloadSchema,
 } from './applications.events.js';
 export { ApplicationsModule, ApplicationsWorkerModule } from './applications.module.js';
