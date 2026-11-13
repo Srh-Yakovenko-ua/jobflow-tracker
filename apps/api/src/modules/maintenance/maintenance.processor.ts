@@ -37,9 +37,10 @@ export class MaintenanceProcessor extends WorkerHost {
     [MAINTENANCE_JOBS.cleanup]: () => this.cleanup(),
     [MAINTENANCE_JOBS.aiJobsSweep]: () => this.scheduledJobs.sweepStaleAiJobs(),
     [MAINTENANCE_JOBS.monthlySummaryPick]: () => this.scheduledJobs.monthlySummaryUsers(),
-    [MAINTENANCE_JOBS.silenceScan]: () => this.scheduledJobs.silenceScan(),
+    [MAINTENANCE_JOBS.silenceScan]: (job) => this.ran(job, () => this.scheduledJobs.silenceScan()),
     [MAINTENANCE_JOBS.autoGhostScan]: (job) => this.ran(job),
-    [MAINTENANCE_JOBS.eventRemindersScan]: () => this.scheduledJobs.interviewReminders(),
+    [MAINTENANCE_JOBS.eventRemindersScan]: (job) =>
+      this.ran(job, () => this.scheduledJobs.interviewReminders()),
   };
 
   constructor(
@@ -85,8 +86,11 @@ export class MaintenanceProcessor extends WorkerHost {
     await this.scheduledJobs.cleanup();
   }
 
-  private ran(job: ProcessedJob): Promise<void> {
+  private async ran(
+    job: ProcessedJob,
+    step: () => Promise<unknown> = () => Promise.resolve(),
+  ): Promise<void> {
+    await step();
     this.logger.log({ requestId: requestIdOf(job), ...jobFields(job) }, 'scheduled job ran');
-    return Promise.resolve();
   }
 }
