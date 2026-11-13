@@ -1,78 +1,18 @@
 import { describe, expect, it } from 'vitest';
 
+import { buildDesignSankey, buildFoldedSankey } from '../../testing/index.js';
 import { issuePathsOf } from '../test/zod-issues.js';
-import {
-  sankeyQuerySchema,
-  type SankeyResponse,
-  sankeyResponseSchema,
-} from './analytics-sankey.js';
+import { type SankeyGraph, sankeyQuerySchema, sankeyResponseSchema } from './analytics-sankey.js';
 
-const DESIGN_GRAPH = {
-  nodes: [
-    { id: 'applied', kind: 'stage' },
-    { id: 'screening', kind: 'stage' },
-    { id: 'tech_interview', kind: 'stage' },
-    { id: 'final', kind: 'stage' },
-    { id: 'offer', kind: 'stage' },
-    { id: 'rejected', kind: 'outcome' },
-    { id: 'ghosted', kind: 'outcome' },
-    { id: 'withdrawn', kind: 'outcome' },
-  ],
-  links: [
-    { from: 'applied', to: 'screening', flow: 17, ghost: false },
-    { from: 'applied', to: 'rejected', flow: 21, ghost: false },
-    { from: 'applied', to: 'ghosted', flow: 14, ghost: true },
-    { from: 'applied', to: 'withdrawn', flow: 2, ghost: false },
-    { from: 'screening', to: 'tech_interview', flow: 9, ghost: false },
-    { from: 'screening', to: 'rejected', flow: 5, ghost: false },
-    { from: 'screening', to: 'ghosted', flow: 2, ghost: true },
-    { from: 'screening', to: 'withdrawn', flow: 1, ghost: false },
-    { from: 'tech_interview', to: 'final', flow: 4, ghost: false },
-    { from: 'tech_interview', to: 'rejected', flow: 4, ghost: false },
-    { from: 'tech_interview', to: 'ghosted', flow: 1, ghost: true },
-    { from: 'final', to: 'offer', flow: 1, ghost: false },
-    { from: 'final', to: 'rejected', flow: 2, ghost: false },
-    { from: 'final', to: 'withdrawn', flow: 1, ghost: false },
-  ],
-} as const satisfies SankeyResponse['detailed'];
+const DESIGN_SANKEY = buildDesignSankey();
 
-const DESIGN_SANKEY = {
-  split: null,
-  detailed: DESIGN_GRAPH,
-  merged: DESIGN_GRAPH,
-} as const satisfies SankeyResponse;
+const [FIRST_LINK, ...OTHER_LINKS] = DESIGN_SANKEY.detailed.links;
 
-const SPLIT_SANKEY = {
-  split: 'reason',
-  detailed: {
-    nodes: [
-      { id: 'applied', kind: 'stage' },
-      { id: 'skills_gap', kind: 'reason' },
-      { id: 'red_flags', kind: 'reason' },
-      { id: 'in_progress', kind: 'in_progress' },
-    ],
-    links: [
-      { from: 'applied', to: 'skills_gap', flow: 40, ghost: false },
-      { from: 'applied', to: 'red_flags', flow: 2, ghost: false },
-      { from: 'applied', to: 'in_progress', flow: 9, ghost: false },
-    ],
-  },
-  merged: {
-    nodes: [
-      { id: 'applied', kind: 'stage' },
-      { id: 'skills_gap', kind: 'reason' },
-      { id: 'other', kind: 'other' },
-      { id: 'in_progress', kind: 'in_progress' },
-    ],
-    links: [
-      { from: 'applied', to: 'skills_gap', flow: 40, ghost: false },
-      { from: 'applied', to: 'other', flow: 2, ghost: false },
-      { from: 'applied', to: 'in_progress', flow: 9, ghost: false },
-    ],
-  },
-} as const satisfies SankeyResponse;
-
-const [FIRST_LINK, ...OTHER_LINKS] = DESIGN_GRAPH.links;
+function linkRowsOf(graph: SankeyGraph): string[] {
+  return graph.links.map(
+    (link) => `${link.from}>${link.to} ${String(link.flow)}${link.ghost ? ' ghost' : ''}`,
+  );
+}
 
 describe('sankeyQuerySchema', () => {
   it('accepts a search with the reason split', () => {
@@ -87,22 +27,49 @@ describe('sankeyQuerySchema', () => {
 });
 
 describe('sankeyResponseSchema', () => {
-  it.for([
-    { label: 'the 14 design flows', body: DESIGN_SANKEY },
-    { label: 'a reason split folding small reasons into other', body: SPLIT_SANKEY },
-  ])('accepts $label', ({ body }) => {
-    expect(sankeyResponseSchema.parse(body)).toEqual(body);
+  it('accepts the 14 design flows with merged equal to detailed', () => {
+    expect(linkRowsOf(DESIGN_SANKEY.detailed)).toEqual([
+      'applied>screening 17',
+      'applied>rejected 21',
+      'applied>ghosted 14 ghost',
+      'applied>withdrawn 2',
+      'screening>tech_interview 9',
+      'screening>rejected 5',
+      'screening>ghosted 2 ghost',
+      'screening>withdrawn 1',
+      'tech_interview>final 4',
+      'tech_interview>rejected 4',
+      'tech_interview>ghosted 1 ghost',
+      'final>offer 1',
+      'final>rejected 2',
+      'final>withdrawn 1',
+    ]);
+    expect(DESIGN_SANKEY.merged).toEqual(DESIGN_SANKEY.detailed);
+  });
+
+  it('accepts a reason split folding a two-wide reason into other', () => {
+    const folded = buildFoldedSankey();
+    expect(linkRowsOf(folded.detailed)).toEqual([
+      'applied>skills_gap 3',
+      'applied>english_level 2',
+      'applied>in_progress 375',
+    ]);
+    expect(linkRowsOf(folded.merged)).toEqual([
+      'applied>skills_gap 3',
+      'applied>other 2',
+      'applied>in_progress 375',
+    ]);
   });
 
   it.for([
     {
       label: 'a link with flow 0',
-      graph: { ...DESIGN_GRAPH, links: [{ ...FIRST_LINK, flow: 0 }, ...OTHER_LINKS] },
+      graph: { ...DESIGN_SANKEY.detailed, links: [{ ...FIRST_LINK, flow: 0 }, ...OTHER_LINKS] },
       path: 'detailed.links.0.flow',
     },
     {
       label: 'an unknown node id',
-      graph: { ...DESIGN_GRAPH, links: [{ ...FIRST_LINK, to: 'hired' }, ...OTHER_LINKS] },
+      graph: { ...DESIGN_SANKEY.detailed, links: [{ ...FIRST_LINK, to: 'hired' }, ...OTHER_LINKS] },
       path: 'detailed.links.0.to',
     },
   ])('refuses $label at $path', ({ graph, path }) => {

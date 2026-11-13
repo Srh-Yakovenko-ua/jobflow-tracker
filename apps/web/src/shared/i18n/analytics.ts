@@ -1,8 +1,11 @@
-import { countedUk, type PluralForms } from '@jobflow/shared';
+import { countedUk, type PluralForms, pluralUk } from '@jobflow/shared';
 
 const FORMS = {
   application: { one: 'відгук', few: 'відгуки', other: 'відгуків' },
   week: { one: 'тиждень', few: 'тижні', other: 'тижнів' },
+  company: { one: 'компанія', few: 'компанії', other: 'компаній' },
+  silent: { one: 'не відповіла', other: 'не відповіли' },
+  excluded: { one: 'Вона не входить', other: 'Вони не входять' },
 } as const satisfies Record<string, PluralForms>;
 
 const EYEBROW = 'аналітика воронки';
@@ -60,6 +63,31 @@ export const analytics = {
     sankey: {
       eyebrow: 'головне · воронка цілком',
       title: (sent: number) => `Куди пішли всі ${applications(sent)}`,
+      nodes: { in_progress: 'у процесі', other: 'інші' },
+      split: 'розбити відмови за причинами',
+      expand: 'показати всі причини',
+      caption: {
+        thickness: 'товщина = кількість відгуків',
+        hover: 'наведи на потік — покаже точні числа',
+      },
+      table: { caption: 'Воронка відгуків', from: 'звідки', to: 'куди', count: 'відгуків' },
+      tooltip: {
+        reached: (reached: number, passed: number) =>
+          `дійшло ${String(reached)}, пройшло ${String(passed)}`,
+        conversion: ({
+          step,
+          value,
+          low,
+          high,
+        }: Readonly<Record<'value' | 'low' | 'high', number> & { step: string }>) =>
+          `конверсія ${step}: ${String(value)}% (${String(low)}–${String(high)}%)`,
+        ghost: 'не входить у розрахунок конверсій',
+      },
+      ghost: {
+        lead: 'Сіра гілка — не твоя провина.',
+        body: (companies: number) =>
+          `${countedUk(companies, FORMS.company)} ${pluralUk(companies, FORMS.silent)}. ${pluralUk(companies, FORMS.excluded)} у розрахунок конверсій.`,
+      },
     },
     reasons: { eyebrow: 'причини відмов за етапами', fallback: 'Де відмовляють найчастіше' },
     sources: { eyebrow: 'конверсія за джерелами', fallback: 'Яке джерело працює' },

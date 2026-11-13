@@ -10,21 +10,26 @@ import {
 import { type QueryKey, queryOptions } from '@tanstack/react-query';
 import type { z } from 'zod';
 
-import { analyticsClient, withSearchParams } from '@/shared/api';
+import { analyticsClient, type SearchParams, withSearchParams } from '@/shared/api';
 
-import { analyticsKeys } from '../model/keys';
+import { analyticsKeys, type SankeyScope } from '../model/keys';
 
-type AnalyticsRoute<T> = Readonly<{
-  path: string;
-  schema: z.ZodType<T>;
-  keyOf: (searchId?: string) => QueryKey;
-}>;
+type AnalyticsPath<T> = Readonly<{ path: string; schema: z.ZodType<T> }>;
+
+type AnalyticsRoute<T> = AnalyticsPath<T> & Readonly<{ keyOf: (searchId?: string) => QueryKey }>;
 
 type ScopedRequest<T> = Readonly<{ route: AnalyticsRoute<T>; searchId: string | undefined }>;
 
+type PathRequest<T> = Readonly<{
+  route: AnalyticsPath<T>;
+  queryKey: QueryKey;
+  params: SearchParams;
+}>;
+
+const SANKEY_ROUTE = { path: '/analytics/sankey', schema: sankeyResponseSchema };
+
 const ROUTES = {
   funnel: { path: '/analytics/funnel', schema: funnelResponseSchema, keyOf: analyticsKeys.funnel },
-  sankey: { path: '/analytics/sankey', schema: sankeyResponseSchema, keyOf: analyticsKeys.sankey },
   reasons: {
     path: '/analytics/reasons',
     schema: reasonsResponseSchema,
@@ -52,27 +57,35 @@ const ROUTES = {
   },
 } as const;
 
-function scopedQueryOptions<T>({ route, searchId }: ScopedRequest<T>) {
+function pathQueryOptions<T>({ route, queryKey, params }: PathRequest<T>) {
   return queryOptions({
-    queryKey: route.keyOf(searchId),
+    queryKey,
     queryFn: ({ signal }) =>
       analyticsClient.request({
-        path: withSearchParams(route.path, { searchId }),
+        path: withSearchParams(route.path, params),
         schema: route.schema,
         signal,
       }),
   });
 }
 
-function searchBoundQueryOptions<T>(request: ScopedRequest<T>) {
-  return { ...scopedQueryOptions(request), enabled: request.searchId !== undefined };
+function scopedQueryOptions<T>({ route, searchId }: ScopedRequest<T>) {
+  return pathQueryOptions({ route, queryKey: route.keyOf(searchId), params: { searchId } });
 }
 
-export const funnelQueryOptions = (searchId: string | undefined) =>
-  searchBoundQueryOptions({ route: ROUTES.funnel, searchId });
+export const funnelQueryOptions = (searchId: string | undefined) => ({
+  ...scopedQueryOptions({ route: ROUTES.funnel, searchId }),
+  enabled: searchId !== undefined,
+});
 
-export const sankeyQueryOptions = (searchId: string | undefined) =>
-  searchBoundQueryOptions({ route: ROUTES.sankey, searchId });
+export const sankeyQueryOptions = (scope: SankeyScope) => ({
+  ...pathQueryOptions({
+    route: SANKEY_ROUTE,
+    queryKey: analyticsKeys.sankey(scope),
+    params: scope,
+  }),
+  enabled: scope.searchId !== undefined,
+});
 
 export const reasonsQueryOptions = (searchId?: string) =>
   scopedQueryOptions({ route: ROUTES.reasons, searchId });

@@ -2,6 +2,7 @@
 
 import type { FunnelKpis } from '@jobflow/shared';
 import { AnimatePresence } from 'motion/react';
+import { useState } from 'react';
 
 import { useSilenceDays } from '@/entities/user';
 import { uk } from '@/shared/i18n';
@@ -37,9 +38,17 @@ function DashboardHeader({ kpis, scope }: DashboardHeaderProps) {
 
 export function AnalyticsDashboard() {
   const scope = useSearchScope();
-  const queries = useDashboardQueries(scope);
+  const [byReason, setByReason] = useState(false);
+  const queries = useDashboardQueries({ ...scope, split: byReason ? 'reason' : undefined });
   const view = dashboardViewOf({ queries, searches: scope.searches });
   const silenceDays = useSilenceDays();
+  const sankey = {
+    searchId: scope.searchId,
+    byReason,
+    toggle: () => {
+      setByReason((shown) => !shown);
+    },
+  };
   return (
     <div className="flex min-w-0 flex-col gap-10">
       <DashboardHeader kpis={view.kpis} scope={scope} />
@@ -48,7 +57,7 @@ export function AnalyticsDashboard() {
           {view.kpis !== undefined && view.lowData ? (
             <LowDataDashboard kpis={view.kpis} />
           ) : (
-            <DashboardBlocks view={view} silenceDays={silenceDays} />
+            <DashboardBlocks view={view} silenceDays={silenceDays} sankey={sankey} />
           )}
         </Fade>
       </AnimatePresence>

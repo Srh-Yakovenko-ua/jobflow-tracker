@@ -8,6 +8,18 @@ const HEADER = { eyebrow: 'Відгуки та скринінги', title: 'Те
 
 const PLOT = 'полотно чарту';
 
+const ACTION = 'перемикач';
+
+const HERO_VIEW = { plot: 'hero', actions: <button type="button">{ACTION}</button> } as const;
+
+function heroFrame(state: ChartFrameState) {
+  return (
+    <ChartFrame header={HEADER} state={state} view={HERO_VIEW}>
+      <p>{PLOT}</p>
+    </ChartFrame>
+  );
+}
+
 function renderFrame(state: ChartFrameState) {
   render(
     <ChartFrame header={HEADER} state={state}>
@@ -64,5 +76,34 @@ describe('ChartFrame', () => {
     expect(within(frame).getByText(PLOT)).toBeDefined();
     expect(frame.querySelector('[aria-busy]')).toBeNull();
     expect(within(frame).queryByRole('alert')).toBeNull();
+  });
+
+  it('a hero plot loads at the 380 px canvas height and hands the ready body to the chart unwrapped', () => {
+    const { rerender } = render(heroFrame({ status: 'loading' }));
+    const frame = screen.getByRole('region', { name: HEADER.title });
+
+    expect(frame.querySelector('[aria-hidden="true"]')?.className).toContain('h-95');
+
+    rerender(heroFrame({ status: 'ready' }));
+
+    expect(within(frame).getByText(PLOT).parentElement?.className).not.toContain('h-55');
+  });
+
+  it('keeps the header actions mounted and focused while the body loads, fails and draws', async () => {
+    const { rerender } = render(heroFrame({ status: 'ready' }));
+    await userEvent.tab();
+    const action = screen.getByRole('button', { name: ACTION });
+    expect(document.activeElement).toBe(action);
+
+    rerender(heroFrame({ status: 'loading' }));
+    expect(document.activeElement).toBe(action);
+
+    rerender(heroFrame({ status: 'failed', onRetry: vi.fn() }));
+    expect(screen.getByRole('alert')).toBeDefined();
+    expect(document.activeElement).toBe(action);
+
+    rerender(heroFrame({ status: 'ready' }));
+    expect(screen.getByText(PLOT)).toBeDefined();
+    expect(document.activeElement).toBe(action);
   });
 });

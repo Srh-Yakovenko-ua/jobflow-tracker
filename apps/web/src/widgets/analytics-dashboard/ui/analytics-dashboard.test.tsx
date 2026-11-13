@@ -20,6 +20,7 @@ import { meRoute } from '@/test/session-fixtures';
 import { AnalyticsDashboard } from './analytics-dashboard';
 
 vi.mock('next/navigation', () => import('@/test/navigation'));
+vi.mock('react-chartjs-2', () => import('@/test/recorded-chart'));
 
 const FRAMES = {
   sankey: 'головне · воронка цілком',

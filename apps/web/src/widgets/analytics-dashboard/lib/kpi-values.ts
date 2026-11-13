@@ -44,7 +44,7 @@ export type KpiContent = Readonly<{
 
 export type ResponseKpiInput = Readonly<{ timings: TimingsResponse; silenceDays: number }>;
 
-const percentOf = (fraction: number) => Math.round(fraction * PERCENT);
+export const percentOf = (fraction: number) => Math.round(fraction * PERCENT);
 
 export function searchWeeks(daysInSearch: number): number {
   return Math.max(1, Math.round(daysInSearch / DAYS_IN_WEEK));
