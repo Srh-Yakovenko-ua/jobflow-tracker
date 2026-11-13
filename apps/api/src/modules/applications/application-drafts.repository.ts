@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 
 import { Prisma } from '../../generated/prisma/client.js';
-import { LATEST_AI_JOB_SELECT, UNSETTLED_AI_JOB_STATUSES } from '../../prisma/latest-ai-job.js';
+import { LATEST_AI_JOB_SELECT, UNSETTLED_AI_JOB_WHERE } from '../../prisma/latest-ai-job.js';
 import { PrismaService } from '../../prisma/prisma.service.js';
 import type { DraftData } from './application-draft-fields.js';
 import type { ApplicationById } from './applications.repository.js';
@@ -31,7 +31,7 @@ export type LockedDraft = DraftFlags & { runningJobId: string | null };
 
 const RUNNING_PARSE = {
   kind: 'vacancy_parse',
-  status: { in: UNSETTLED_AI_JOB_STATUSES },
+  ...UNSETTLED_AI_JOB_WHERE,
 } satisfies Prisma.AiJobWhereInput;
 
 @Injectable()

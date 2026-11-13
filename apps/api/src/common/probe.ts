@@ -1,5 +1,7 @@
 import { setTimeout as delay } from 'node:timers/promises';
 
+import { errorFor } from './app-error.js';
+
 export const DEPENDENCY_LIMITS = {
   connectTimeoutMs: 2000,
   pingTimeoutMs: 1000,
@@ -23,4 +25,12 @@ export async function withinLimit<T>(work: Promise<T>, limitMs: number): Promise
     throw new Error(`timed out after ${String(limitMs)} ms`);
   });
   return Promise.race([work, timedOut]);
+}
+
+export async function redisAnswered<Reply>(call: Promise<Reply>): Promise<Reply> {
+  try {
+    return await withinLimit(call, DEPENDENCY_LIMITS.pingTimeoutMs);
+  } catch {
+    throw errorFor(503, 'Redis is not reachable');
+  }
 }

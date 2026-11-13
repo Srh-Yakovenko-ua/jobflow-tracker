@@ -12,6 +12,7 @@ import {
   warnWorkerError,
 } from '../../queues/processed-job.js';
 import { QUEUES } from '../../queues/queues.js';
+import { ScheduledJobsService } from '../../scheduled-jobs/scheduled-jobs.service.js';
 import {
   MAINTENANCE_JOBS,
   type MaintenanceJobName,
@@ -23,6 +24,9 @@ type MaintenanceHandler = (job: ProcessedJob) => Promise<unknown>;
 
 const requestIdSchema = pingJobSchema.pick({ requestId: true });
 
+const requestIdOf = (job: ProcessedJob | undefined) =>
+  requestIdSchema.safeParse(job?.data).data?.requestId;
+
 @Processor(QUEUES.maintenance.name, { concurrency: QUEUES.maintenance.concurrency })
 export class MaintenanceProcessor extends WorkerHost {
   private readonly logger = new Logger(MaintenanceProcessor.name);
@@ -30,10 +34,18 @@ export class MaintenanceProcessor extends WorkerHost {
   private readonly handlers: Record<MaintenanceJobName, MaintenanceHandler> = {
     [MAINTENANCE_JOBS.ping]: (job) => this.ping(job),
     [MAINTENANCE_JOBS.outboxRelay]: () => this.outbox.relay(),
-    [MAINTENANCE_JOBS.cleanup]: () => this.outbox.deletePublished(),
+    [MAINTENANCE_JOBS.cleanup]: () => this.cleanup(),
+    [MAINTENANCE_JOBS.aiJobsSweep]: () => this.scheduledJobs.sweepStaleAiJobs(),
+    [MAINTENANCE_JOBS.monthlySummaryPick]: () => this.scheduledJobs.monthlySummaryUsers(),
+    [MAINTENANCE_JOBS.silenceScan]: (job) => this.ran(job),
+    [MAINTENANCE_JOBS.autoGhostScan]: (job) => this.ran(job),
+    [MAINTENANCE_JOBS.eventRemindersScan]: (job) => this.ran(job),
   };
 
-  constructor(private readonly outbox: OutboxRelayService) {
+  constructor(
+    private readonly outbox: OutboxRelayService,
+    private readonly scheduledJobs: ScheduledJobsService,
+  ) {
     super();
   }
 
@@ -48,8 +60,7 @@ export class MaintenanceProcessor extends WorkerHost {
 
   @OnWorkerEvent('failed')
   onFailed(job: ProcessedJob | undefined, error: Error): void {
-    const requestId = requestIdSchema.safeParse(job?.data).data?.requestId;
-    this.logger.warn({ requestId, ...failedJobFields(job, error) }, 'job failed');
+    this.logger.warn({ requestId: requestIdOf(job), ...failedJobFields(job, error) }, 'job failed');
   }
 
   @OnWorkerEvent('error')
@@ -67,5 +78,15 @@ export class MaintenanceProcessor extends WorkerHost {
     this.logger.log(fields, 'ping started');
     await delay(ping.data.holdMs);
     this.logger.log(fields, 'ping processed');
+  }
+
+  private async cleanup(): Promise<void> {
+    await this.outbox.deletePublished();
+    await this.scheduledJobs.cleanup();
+  }
+
+  private ran(job: ProcessedJob): Promise<void> {
+    this.logger.log({ requestId: requestIdOf(job), ...jobFields(job) }, 'scheduled job ran');
+    return Promise.resolve();
   }
 }

@@ -3,7 +3,11 @@ import { Injectable } from '@nestjs/common';
 
 import { Prisma } from '../../generated/prisma/client.js';
 import type { InTransaction } from '../../prisma/in-transaction.js';
-import { UNSETTLED_AI_JOB_STATUSES } from '../../prisma/latest-ai-job.js';
+import {
+  type FailedAiJobChange,
+  failedAiJobChange,
+  UNSETTLED_AI_JOB_WHERE,
+} from '../../prisma/latest-ai-job.js';
 import { PrismaService } from '../../prisma/prisma.service.js';
 import { AI_BUDGET } from './ai-budget.js';
 import { AI_QUEUE_ESTIMATE } from './ai-queue-estimate.js';
@@ -27,7 +31,7 @@ export type AiJobChange = { id: string; now: Date };
 
 export type FinishAiJob = AiJobChange & { aiResultId: string };
 
-export type FailAiJob = AiJobChange & { errorType: string };
+export type FailAiJob = AiJobChange & FailedAiJobChange;
 
 export type AiJobFailure = Pick<FailAiJob, 'id' | 'errorType'>;
 
@@ -93,7 +97,7 @@ export class AiRepository {
 
   async startJob(userId: string, { id, now }: AiJobChange): Promise<number> {
     const { count } = await this.prisma.aiJob.updateMany({
-      where: { id, userId, status: { in: UNSETTLED_AI_JOB_STATUSES } },
+      where: { id, userId, ...UNSETTLED_AI_JOB_WHERE },
       data: { status: 'processing', step: AI_JOB_STEPS.processing, startedAt: now },
     });
     return count;
@@ -107,10 +111,10 @@ export class AiRepository {
     return count;
   }
 
-  async failJob(userId: string, { id, errorType, now }: FailAiJob): Promise<number> {
+  async failJob(userId: string, { id, ...failure }: FailAiJob): Promise<number> {
     const { count } = await this.prisma.aiJob.updateMany({
-      where: { id, userId, status: { in: UNSETTLED_AI_JOB_STATUSES } },
-      data: { status: 'failed', errorType, finishedAt: now },
+      where: { id, userId, ...UNSETTLED_AI_JOB_WHERE },
+      data: failedAiJobChange(failure),
     });
     return count;
   }
