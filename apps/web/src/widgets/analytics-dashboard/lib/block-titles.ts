@@ -8,6 +8,18 @@ export type BlockTitleInput = Readonly<{ insights: readonly Insight[]; block: Ti
 
 export type BlockHeader = Readonly<{ title: string; body?: string }>;
 
+export type FunnelNote = Pick<Insight, 'block' | 'title' | 'body'>;
+
+const NOTE_BLOCKS: readonly InsightBlock[] = ['funnel', 'ghosted'];
+
+export function funnelNotesOf(insights: readonly Insight[]): FunnelNote[] {
+  return NOTE_BLOCKS.flatMap((block) =>
+    insights
+      .filter((insight) => insight.block === block)
+      .map(({ title, body }) => ({ block, title, body })),
+  );
+}
+
 export function blockHeaderOf({ insights, block }: BlockTitleInput): BlockHeader {
   const insight = insights.find((candidate) => candidate.block === block);
   return insight === undefined

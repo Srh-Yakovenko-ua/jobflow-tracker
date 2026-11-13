@@ -10,6 +10,7 @@ DAYS_IN_WEEK: Final = 7
 class StagePhrase(NamedTuple):
     name: str
     at: str
+    next: str
 
 
 class SourcePhrase(NamedTuple):
@@ -18,11 +19,21 @@ class SourcePhrase(NamedTuple):
 
 
 STAGE_PHRASES: Final[Mapping[str, StagePhrase]] = {
-    "applied": StagePhrase("відгук", "на етапі відгуку"),
-    "screening": StagePhrase("скринінг", "на скринінгу"),
-    "tech_interview": StagePhrase("техінтерв'ю", "на техінтерв'ю"),
-    "final": StagePhrase("фінальна співбесіда", "на фінальній співбесіді"),
-    "offer": StagePhrase("офер", "на офері"),
+    "applied": StagePhrase("відгук", "на етапі відгуку", "наступного відгуку"),
+    "screening": StagePhrase("скринінг", "на скринінгу", "наступного скринінгу"),
+    "tech_interview": StagePhrase(
+        "техінтерв'ю", "на техінтерв'ю", "наступного техінтерв'ю"
+    ),
+    "final": StagePhrase(
+        "фінальна співбесіда",
+        "на фінальній співбесіді",
+        "наступної фінальної співбесіди",
+    ),
+    "offer": StagePhrase("офер", "на офері", "наступного оферу"),
+}
+
+LEAN_ON_SOURCE_TITLES: Final[Mapping[str, str]] = {
+    "referral": "Попросити ще кілька рефералок",
 }
 
 SOURCE_PHRASES: Final[Mapping[str, SourcePhrase]] = {

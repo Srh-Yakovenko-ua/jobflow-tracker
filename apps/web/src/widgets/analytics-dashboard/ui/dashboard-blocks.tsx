@@ -7,6 +7,7 @@ import { KpiRow } from './kpi-row';
 import { ReasonsBlock } from './reasons-block';
 import { SankeyBlock, type SankeyControls } from './sankey-block';
 import { SourcesBlock } from './sources-block';
+import { WhatToDoPanel } from './what-to-do-panel';
 
 const GRID = 'grid items-start gap-4.5';
 
@@ -36,6 +37,7 @@ export function DashboardBlocks({ view, silenceDays, sankey, forecast }: Dashboa
       <div className={cn(GRID, NARROW_COLUMNS)}>
         <ChartFrame header={frames.timings.header} state={frames.timings.state} />
       </div>
+      <WhatToDoPanel view={view.actions} />
     </div>
   );
 }

@@ -1,4 +1,8 @@
-import type { Insight, InsightsResponse } from '../src/schemas/analytics-insights.js';
+import type {
+  Insight,
+  InsightAction,
+  InsightsResponse,
+} from '../src/schemas/analytics-insights.js';
 
 const DESIGN_INSIGHTS: Insight[] = [
   {
@@ -67,8 +71,34 @@ const DESIGN_INSIGHTS: Insight[] = [
   },
 ];
 
+const DESIGN_ACTIONS: InsightAction[] = [
+  {
+    block: 'funnel',
+    title: "Підготуватися до наступного техінтерв'ю",
+    expectedEffect:
+      'Прогноз офера звузиться до діапазону від 3 до 11 тижнів, якщо конверсія дійде до 60%.',
+  },
+  {
+    block: 'sources',
+    title: 'Прибрати LinkedIn з рутини',
+    expectedEffect: 'Ті самі 16 відгуків через Djinni дали б 6 скринінгів замість 2.',
+  },
+  {
+    block: 'sources',
+    title: 'Попросити ще кілька рефералок',
+    expectedEffect:
+      '3 скринінги на 3 відгуки через рефералки. Вибірка мала, але напрям однозначний.',
+  },
+  {
+    block: 'resume_ab',
+    title: 'Відгукуватися з CV v2',
+    expectedEffect: 'Конверсія у скринінг 41% проти 24% до переходу на CV v2.',
+  },
+];
+
 export function designInsightsBody(): InsightsResponse {
   return {
     insights: DESIGN_INSIGHTS.map((insight) => ({ ...insight, evidence: { ...insight.evidence } })),
+    actions: DESIGN_ACTIONS.map((action) => ({ ...action })),
   };
 }

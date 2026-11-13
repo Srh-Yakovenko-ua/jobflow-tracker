@@ -18,6 +18,6 @@ def test_no_rule_speaks_below_ten_applications_and_the_rules_speak_at_ten(
         design_frame(ghosted=ghosted), source="other", links=version_links_frame([])
     )
 
-    said = insights(metrics).insights
+    said = insights(metrics)
 
-    assert [insight.block for insight in said] == blocks
+    assert ([insight.block for insight in said.insights], said.actions) == (blocks, [])

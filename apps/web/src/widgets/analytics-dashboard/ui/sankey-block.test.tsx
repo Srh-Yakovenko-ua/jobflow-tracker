@@ -1,3 +1,4 @@
+import { designInsightsBody } from '@jobflow/shared/testing';
 import { screen, waitFor, within } from '@testing-library/react';
 import { MotionGlobalConfig } from 'motion/react';
 import type { HttpResponseResolver } from 'msw';
@@ -11,7 +12,7 @@ import {
   type SentRequest,
 } from '@/test/analytics-fixtures';
 import { errorReply } from '@/test/api-handlers';
-import { frameOf } from '@/test/dashboard-frames';
+import { frameOf, renderDashboardBlocks } from '@/test/dashboard-frames';
 import { advancePastQueryRetries, fakeTimeouts } from '@/test/fake-timeouts';
 import { latch } from '@/test/latch';
 import { type MotionPreference, stubMotionPreference } from '@/test/motion-preference';
@@ -35,9 +36,15 @@ const SPLIT = 'розбити відмови за причинами';
 
 const FUNNEL = 'етапи воронки';
 
+const LOADED = { timeout: 2500 } as const;
+
 const ENDINGS = 'чим закінчились';
 
 const BIGGEST_DROP = 'найбільша втрата';
+
+const NOTES = 'Висновки про воронку';
+
+const GHOST_LEAD = 'Сіра гілка не твоя провина.';
 
 const DESIGN_ROWS = [
   ['відгук', 'скринінг', '17'],
@@ -99,6 +106,11 @@ function rowText(row: HTMLElement) {
   };
 }
 
+function notesText(): (string | null)[] {
+  const notes = screen.queryByRole('group', { name: NOTES });
+  return notes === null ? [] : [...notes.querySelectorAll('p')].map((note) => note.textContent);
+}
+
 function itemsText(list: HTMLElement): (string | null)[] {
   return within(list)
     .getAllByRole('listitem')
@@ -121,7 +133,7 @@ afterEach(() => {
 describe('SankeyBlock', () => {
   it('draws the 54 application search as a funnel: each stage with its count and conversion, where the rest went, how it ended', async () => {
     renderDashboard();
-    const funnel = await screen.findByRole('list', { name: FUNNEL });
+    const funnel = await screen.findByRole('list', { name: FUNNEL }, LOADED);
 
     expect(rowsOf(funnel).map(rowText)).toEqual(DESIGN_FUNNEL_ROWS);
     expect(rowsOf(funnel).map((row) => within(row).queryByText(BIGGEST_DROP) !== null)).toEqual([
@@ -133,14 +145,39 @@ describe('SankeyBlock', () => {
     ]);
     expect(itemsText(screen.getByRole('list', { name: ENDINGS }))).toEqual(DESIGN_ENDINGS);
     expect(tableCells(screen.getByRole('table', { name: TABLE }))).toEqual(DESIGN_ROWS);
-    expect(screen.getByText('Сіра гілка не твоя провина.').closest('p')?.textContent).toBe(
+  });
+
+  it('under the funnel reads its insights as paragraphs, and the served ghosted insight replaces the local grey branch note', async () => {
+    renderDashboard();
+
+    await waitFor(() => {
+      expect(notesText()).toEqual([
+        'Найширша втеча — на першому кроці. 21 відмова і 14 тиш із 54 — воронка закінчується там, де ти ще ні з ким не говорив.',
+        "Техінтерв'ю — найдорожчий етап. Дійшло 9, пройшло 4. Кожна втрата тут — це 2–3 тижні вже витраченого часу.",
+        '17 компаній не відповіли. Це 31% твоїх відгуків — на 9 п.п. більше за ринок.',
+      ]);
+    });
+    expect(screen.getByText(FRAME)).toBeDefined();
+    expect(screen.queryByText(GHOST_LEAD)).toBeNull();
+  });
+
+  it('without a served ghosted insight the local grey branch note closes the funnel notes', async () => {
+    const { insights, actions } = designInsightsBody();
+    renderDashboardBlocks({
+      insights: { insights: insights.filter(({ block }) => block !== 'ghosted'), actions },
+    });
+
+    await waitFor(() => {
+      expect(notesText()).toHaveLength(3);
+    });
+    expect(notesText().at(-1)).toBe(
       'Сіра гілка не твоя провина. 17 компаній не відповіли. Вони не входять у розрахунок конверсій.',
     );
   });
 
   it('puts no text on a bar, keeps a one application segment visible, and shows the table to a keyboard user', async () => {
     renderDashboard();
-    const funnel = await screen.findByRole('list', { name: FUNNEL });
+    const funnel = await screen.findByRole('list', { name: FUNNEL }, LOADED);
     const table = screen.getByRole('table', { name: TABLE });
 
     const hidden = [...funnel.querySelectorAll('[aria-hidden="true"]')];
@@ -181,7 +218,7 @@ describe('SankeyBlock', () => {
 
   it('hover or keyboard focus on an exit shows its flow, the stage counts and the Wilson interval; a stage link is 44 px and dims the other rows', async () => {
     const { user } = renderDashboard();
-    const funnel = await screen.findByRole('list', { name: FUNNEL });
+    const funnel = await screen.findByRole('list', { name: FUNNEL }, LOADED);
 
     await user.hover(screen.getByRole('link', { name: 'відмова 21' }));
     const tooltip = await screen.findByRole('tooltip');
@@ -234,7 +271,7 @@ describe('SankeyBlock', () => {
       'у процесі 375',
       'відмова 5',
     ]);
-    expect(screen.queryByText('Сіра гілка не твоя провина.')).toBeNull();
+    expect(screen.queryByText(GHOST_LEAD)).toBeNull();
 
     await user.click(screen.getByRole('button', { name: 'показати всі причини' }));
 
@@ -280,7 +317,7 @@ describe('SankeyBlock', () => {
     MotionGlobalConfig.skipAnimations = false;
     stubMotionPreference(preference);
     renderDashboard();
-    const funnel = await screen.findByRole('list', { name: FUNNEL });
+    const funnel = await screen.findByRole('list', { name: FUNNEL }, LOADED);
 
     const bars = [...funnel.querySelectorAll<HTMLElement>('.origin-left')];
     expect(bars.length).toBeGreaterThan(5);

@@ -1,7 +1,17 @@
 from typing import NamedTuple
 
-from app.metrics.insights.engine import Insight, InsightMetrics, insight_rule
-from app.metrics.insights.phrases import SOURCE_PHRASES, sentence
+from app.metrics.insights.engine import (
+    Insight,
+    InsightAction,
+    InsightMetrics,
+    action_rule,
+    insight_rule,
+)
+from app.metrics.insights.phrases import (
+    LEAN_ON_SOURCE_TITLES,
+    SOURCE_PHRASES,
+    sentence,
+)
 from app.metrics.plurals import (
     APPLICATION_FORMS,
     GAVE_FORMS,
@@ -77,4 +87,41 @@ def weak_and_strong_source(metrics: InsightMetrics) -> Insight | None:
         f"при {comparison.applications} — {comparison.screenings}.",
         severity="warning",
         evidence=gap_evidence(gap),
+    )
+
+
+@action_rule
+def cut_weak_source(metrics: InsightMetrics) -> InsightAction | None:
+    gap = source_gap(metrics.sources.sources)
+    if gap is None:
+        return None
+    weak, _, comparison = gap
+    expected = round(
+        weak.applications * comparison.screenings / comparison.applications
+    )
+    if expected <= weak.screenings:
+        return None
+    weak_sent = counted_uk(weak.applications, APPLICATION_FORMS)
+    return InsightAction(
+        block="sources",
+        title=f"Прибрати {SOURCE_PHRASES[weak.source].name} з рутини",
+        expected_effect=f"Ті самі {weak_sent} через "
+        f"{SOURCE_PHRASES[comparison.source].name} дали б "
+        f"{counted_uk(expected, SCREENING_FORMS)} замість {weak.screenings}.",
+    )
+
+
+@action_rule
+def lean_on_strong_source(metrics: InsightMetrics) -> InsightAction | None:
+    gap = source_gap(metrics.sources.sources)
+    if gap is None:
+        return None
+    strong = gap.strong
+    name = SOURCE_PHRASES[strong.source].name
+    small = f" {sentence(SMALL_BUT_CLEAR)}." if strong.note == SMALL_BUT_CLEAR else ""
+    return InsightAction(
+        block="sources",
+        title=LEAN_ON_SOURCE_TITLES.get(strong.source, f"Більше відгуків через {name}"),
+        expected_effect=f"{counted_uk(strong.screenings, SCREENING_FORMS)} на "
+        f"{counted_uk(strong.applications, APPLICATION_FORMS)} через {name}.{small}",
     )

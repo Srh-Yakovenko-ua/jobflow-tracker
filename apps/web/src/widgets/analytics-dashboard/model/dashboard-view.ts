@@ -1,6 +1,7 @@
 import {
   type ForecastResponse,
   type FunnelStage,
+  type InsightAction,
   type ReasonsResponse,
   type SankeyResponse,
   type SourcesResponse,
@@ -11,7 +12,12 @@ import { uk } from '@/shared/i18n';
 import type { ChartFrameHeader, ChartFrameState } from '@/shared/ui/chart-frame';
 import { chartFrameStateOf, type FrameQuery } from '@/shared/ui/chart-frame-state';
 
-import { blockHeaderOf, type TitledBlock } from '../lib/block-titles';
+import {
+  blockHeaderOf,
+  type FunnelNote,
+  funnelNotesOf,
+  type TitledBlock,
+} from '../lib/block-titles';
 import type { DashboardQueries } from './use-dashboard-queries';
 
 const BLOCKS = uk.analytics.blocks;
@@ -22,7 +28,16 @@ export type DashboardFrameId =
   'sankey' | 'reasons' | 'sources' | 'resumeAb' | 'forecast' | 'timings';
 
 export type SankeyFrame = DashboardFrame &
-  Readonly<{ graph: SankeyResponse | undefined; stages: readonly FunnelStage[] | undefined }>;
+  Readonly<{
+    graph: SankeyResponse | undefined;
+    stages: readonly FunnelStage[] | undefined;
+    notes: readonly FunnelNote[];
+  }>;
+
+export type ActionsView = Readonly<{
+  state: ChartFrameState;
+  actions: readonly InsightAction[] | undefined;
+}>;
 
 export type ReasonsFrame = DashboardFrame & Readonly<{ data: ReasonsResponse | undefined }>;
 
@@ -62,6 +77,7 @@ function framesOf({ queries, searches }: DashboardViewInput): DashboardFrames {
       state: searchBoundState({ query: queries.sankey, searches }),
       graph: queries.sankey.data,
       stages: queries.funnel.data?.stages,
+      notes: funnelNotesOf(insights),
     },
     reasons: {
       header: titled('reasons'),
@@ -84,12 +100,17 @@ function framesOf({ queries, searches }: DashboardViewInput): DashboardFrames {
 }
 
 export function dashboardViewOf(input: DashboardViewInput) {
-  const { funnel, timings } = input.queries;
+  const { funnel, timings, insights } = input.queries;
   const kpis = funnel.data?.kpis;
+  const actions: ActionsView = {
+    state: chartFrameStateOf(insights),
+    actions: insights.data?.actions,
+  };
   return {
     kpis,
     lowData: kpis !== undefined && kpis.sent.total < THRESHOLDS.MIN_N_INSIGHT,
     frames: framesOf(input),
+    actions,
     kpi: {
       funnel: {
         state: searchBoundState({ query: funnel, searches: input.searches }),

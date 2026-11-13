@@ -64,6 +64,8 @@ const TOASTER = 'Сповіщення';
 
 const HERO_TITLE = 'Куди пішли всі 54 відгуки';
 
+const WHAT_TO_DO = 'що зробити';
+
 const AFFECTED: Record<Exclude<DashboardRoute, 'insights'>, readonly Block[]> = {
   searches: ['sankey', 'sent', 'screening'],
   funnel: ['sent', 'screening'],
@@ -166,14 +168,18 @@ describe('AnalyticsDashboard', () => {
     expect(screen.getByRole('heading', { name: 'Схоже, CV v2 працює краще' })).toBeDefined();
     expect(screen.getByRole('region', { name: FRAMES.forecast })).toBeDefined();
     expect(screen.getByRole('region', { name: FRAMES.timings })).toBeDefined();
-    expect(blockRegions()).toHaveLength(6);
+    expect(screen.getByRole('region', { name: WHAT_TO_DO })).toBeDefined();
+    expect(blockRegions()).toHaveLength(7);
     expect(screen.queryByRole('heading', { name: /зарплат/i })).toBeNull();
     expect(screen.queryByText(/саммарі/i)).toBeNull();
   });
 
   it('without insights the blocks ask neutral questions instead of stating conclusions', async () => {
-    renderDashboard({ insights: { insights: [] } });
+    renderDashboard({ insights: { insights: [], actions: [] } });
     await screen.findByRole('heading', { name: HERO_TITLE });
+    await waitFor(() => {
+      expect(screen.queryByText(WHAT_TO_DO)).toBeNull();
+    });
 
     expect(screen.getByRole('heading', { name: 'Де відмовляють найчастіше' })).toBeDefined();
     expect(screen.getByRole('heading', { name: 'Яке джерело працює' })).toBeDefined();
@@ -194,6 +200,7 @@ describe('AnalyticsDashboard', () => {
     expect(screen.getByText(/^Додати ще 6 відгуків цього тижня\./)).toBeDefined();
     expect(screen.getByRole('link', { name: 'Додати вакансію' }).getAttribute('href')).toBe('/add');
     expect(blockRegions()).toHaveLength(0);
+    expect(screen.queryByText(WHAT_TO_DO)).toBeNull();
     expect(screen.queryByRole('group', { name: TILES.screening })).toBeNull();
   });
 

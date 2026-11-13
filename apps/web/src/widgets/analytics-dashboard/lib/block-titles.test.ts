@@ -2,9 +2,45 @@ import type { Insight } from '@jobflow/shared';
 import { designInsightsBody } from '@jobflow/shared/testing';
 import { describe, expect, it } from 'vitest';
 
-import { blockHeaderOf, type TitledBlock } from './block-titles';
+import { blockHeaderOf, funnelNotesOf, type TitledBlock } from './block-titles';
 
 const { insights } = designInsightsBody();
+
+const FUNNEL_NOTES = [
+  {
+    block: 'funnel',
+    title: 'Найширша втеча — на першому кроці',
+    body: '21 відмова і 14 тиш із 54 — воронка закінчується там, де ти ще ні з ким не говорив.',
+  },
+  {
+    block: 'funnel',
+    title: "Техінтерв'ю — найдорожчий етап",
+    body: 'Дійшло 9, пройшло 4. Кожна втрата тут — це 2–3 тижні вже витраченого часу.',
+  },
+];
+
+describe('funnelNotesOf', () => {
+  it('reads the funnel insights under the funnel in served order and closes with the ghosted one', () => {
+    expect(funnelNotesOf(insights)).toEqual([
+      ...FUNNEL_NOTES,
+      {
+        block: 'ghosted',
+        title: '17 компаній не відповіли',
+        body: 'Це 31% твоїх відгуків — на 9 п.п. більше за ринок.',
+      },
+    ]);
+  });
+
+  it('without a ghosted insight keeps only the funnel notes', () => {
+    const unghosted = insights.filter((insight) => insight.block !== 'ghosted');
+
+    expect(funnelNotesOf(unghosted)).toEqual(FUNNEL_NOTES);
+  });
+
+  it('without insights there is nothing to read under the funnel', () => {
+    expect(funnelNotesOf([])).toEqual([]);
+  });
+});
 
 describe('blockHeaderOf', () => {
   it.each<{ block: TitledBlock; title: string; body: string }>([

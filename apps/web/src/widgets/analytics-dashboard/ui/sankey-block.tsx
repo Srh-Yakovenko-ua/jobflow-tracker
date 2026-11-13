@@ -10,9 +10,10 @@ import { ChartFrame } from '@/shared/ui/chart-frame';
 import { Fade } from '@/shared/ui/fade';
 import { Switch } from '@/shared/ui/switch';
 
-import { endingsOf, ghostTotalOf } from '../lib/sankey-nodes';
+import { endingsOf } from '../lib/sankey-nodes';
 import type { SankeyFrame } from '../model/dashboard-view';
 import { FunnelChart } from './funnel-chart';
+import { FunnelNotes } from './funnel-notes';
 import { SankeyTable } from './sankey-table';
 import { Swatch } from './swatch';
 
@@ -94,27 +95,6 @@ function SankeyPlot({ graph, stages }: SankeyPlotProps) {
   );
 }
 
-type GhostNoteProps = Readonly<{ graph: SankeyResponse | undefined }>;
-
-function GhostNote({ graph }: GhostNoteProps) {
-  const silent = graph === undefined ? 0 : ghostTotalOf(graph.merged);
-  return (
-    <AnimatePresence initial={false}>
-      {silent > 0 && (
-        <Fade
-          key="ghost"
-          className="grid grid-cols-[repeat(auto-fit,minmax(min(260px,100%),1fr))] gap-4.5"
-        >
-          <p className="text-[14px] leading-[1.65] text-pretty text-ink-2 tabular-nums">
-            <span className="font-semibold text-ink">{COPY.ghost.lead}</span>{' '}
-            {COPY.ghost.body(silent)}
-          </p>
-        </Fade>
-      )}
-    </AnimatePresence>
-  );
-}
-
 export function SankeyBlock({ frame, controls }: SankeyBlockProps) {
   const { graph, state } = frame;
   const loaded = state.status === 'ready' ? graph : undefined;
@@ -133,7 +113,7 @@ export function SankeyBlock({ frame, controls }: SankeyBlockProps) {
           />
         )}
       </ChartFrame>
-      <GhostNote graph={loaded} />
+      <FunnelNotes notes={frame.notes} graph={loaded} />
     </>
   );
 }

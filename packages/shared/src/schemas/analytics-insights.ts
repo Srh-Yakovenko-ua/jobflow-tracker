@@ -12,11 +12,19 @@ export const insightSchema = z.object({
   evidence: z.record(z.string(), z.union([z.string(), z.number()])),
 });
 
+export const insightActionSchema = z.object({
+  block: z.enum(INSIGHT_BLOCKS),
+  title: z.string().min(1),
+  expectedEffect: z.string().min(1),
+});
+
 export const insightsResponseSchema = z.object({
   insights: z.array(insightSchema),
+  actions: z.array(insightActionSchema),
 });
 
 export type InsightBlock = Insight['block'];
 export type InsightSeverity = Insight['severity'];
 export type Insight = z.infer<typeof insightSchema>;
+export type InsightAction = z.infer<typeof insightActionSchema>;
 export type InsightsResponse = z.infer<typeof insightsResponseSchema>;
