@@ -9,14 +9,21 @@ from loguru import logger
 
 from tests.factories import (
     MAX_JPEG_BYTES,
+    RENAMED_DOCUMENT,
+    UPPER_CASE_DEFAULT,
+    UPPER_CASE_OVERRIDE,
+    bloated_xml_docx,
     corrupt_deflate_docx,
+    encrypted_entry_docx,
     encrypted_pdf,
     oversized_pdf,
+    pixel_bomb_png,
     resume_docx,
     scan_pdf,
     text_pdf,
     two_page_pdf,
     unsupported_method_docx,
+    wrong_root_docx,
     zip_without_document,
 )
 
@@ -96,6 +103,25 @@ def test_returns_jpeg_pages_under_the_cap_for_a_scan(client: TestClient) -> None
         (zip_without_document(), 415, "unsupported_type"),
         (corrupt_deflate_docx(), 422, "unreadable_file"),
         (unsupported_method_docx(), 422, "unreadable_file"),
+        (encrypted_entry_docx(), 422, "unreadable_file"),
+        (wrong_root_docx(), 422, "unreadable_file"),
+        (bloated_xml_docx(), 422, "unreadable_file"),
+        (bloated_xml_docx(document_name=RENAMED_DOCUMENT), 422, "unreadable_file"),
+        (
+            bloated_xml_docx(
+                document_name=RENAMED_DOCUMENT, types_edit=UPPER_CASE_OVERRIDE
+            ),
+            422,
+            "unreadable_file",
+        ),
+        (
+            bloated_xml_docx(
+                document_name=RENAMED_DOCUMENT, types_edit=UPPER_CASE_DEFAULT
+            ),
+            422,
+            "unreadable_file",
+        ),
+        (pixel_bomb_png(), 422, "unreadable_file"),
     ],
     ids=[
         "encrypted",
@@ -106,6 +132,13 @@ def test_returns_jpeg_pages_under_the_cap_for_a_scan(client: TestClient) -> None
         "plain-zip",
         "corrupt-deflate-docx",
         "unsupported-method-docx",
+        "encrypted-entry-docx",
+        "wrong-root-docx",
+        "xml-parts-over-cap-docx",
+        "xml-part-renamed-over-cap-docx",
+        "xml-part-upper-case-override-over-cap-docx",
+        "xml-part-upper-case-default-over-cap-docx",
+        "pixel-bomb-png",
     ],
 )
 def test_answers_an_error_with_the_request_id(

@@ -1,6 +1,7 @@
 import time
 from collections.abc import Callable, Iterator
 from contextlib import AbstractContextManager, contextmanager
+from dataclasses import replace
 
 import httpx2
 import jwt
@@ -18,6 +19,7 @@ from tests.factories import (
     auth_app,
     bearer,
     closed_port,
+    jwks_cooldown_clock,
     jwks_server,
     problem_body,
     serving,
@@ -29,6 +31,7 @@ from tests.factories import (
 
 OTHER_USER_ID = "0196f0a1-7c2e-7b3d-8a41-5e6f7a8b9c2f"
 HMAC_SECRET = "analytics-test-shared-secret-of-32-bytes"
+PAST_THE_COOLDOWN = 31.0
 
 
 def hs256_copy(token: str) -> str:
@@ -103,15 +106,38 @@ def test_forbids_a_token_without_the_analytics_read_scope() -> None:
 
 
 @pytest.mark.enable_socket
-def test_refetches_the_key_set_for_an_unknown_kid_and_not_for_a_known_one() -> None:
+def test_refetches_the_key_set_for_an_unknown_kid_and_not_for_a_known_one(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    clock = jwks_cooldown_clock(monkeypatch)
     with jwks_server([SIGNER]) as server, serving(served_by(server.port)) as client:
         first = client.get("/probe/me", headers=bearer(SIGNER.user_token()))
         server.signers.append(ROTATED_SIGNER)
+        clock.now = PAST_THE_COOLDOWN
         rotated = client.get("/probe/me", headers=bearer(ROTATED_SIGNER.user_token()))
         known = client.get("/probe/me", headers=bearer(SIGNER.user_token()))
 
     statuses = [response.status_code for response in (first, rotated, known)]
     assert (statuses, server.hits) == ([200, 200, 200], 2)
+
+
+@pytest.mark.enable_socket
+def test_a_burst_of_unknown_kids_fetches_the_key_set_once_per_cooldown(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    clock = jwks_cooldown_clock(monkeypatch)
+    unknown = [replace(SIGNER, kid=f"unknown-{n}").user_token() for n in range(21)]
+    with jwks_server([SIGNER]) as server, serving(served_by(server.port)) as client:
+        burst = [
+            client.get("/probe/me", headers=bearer(token)) for token in unknown[:20]
+        ]
+        valid = client.get("/probe/me", headers=bearer(SIGNER.user_token()))
+        within_cooldown = server.hits
+        clock.now = PAST_THE_COOLDOWN
+        client.get("/probe/me", headers=bearer(unknown[20]))
+
+    statuses = [response.status_code for response in (*burst, valid)]
+    assert (statuses, within_cooldown, server.hits) == ([401] * 20 + [200], 1, 2)
 
 
 @pytest.mark.enable_socket

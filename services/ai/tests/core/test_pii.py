@@ -1,9 +1,10 @@
 import json
 from pathlib import Path
+from time import perf_counter
 
 import pytest
 
-from app.core.pii import scrub
+from app.core.pii import EMAIL, scrub
 
 VACANCY_CASES = Path(__file__).parents[4] / "apps/api/src/modules/ai/evals/vacancy"
 
@@ -12,6 +13,7 @@ VACANCY_CASES = Path(__file__).parents[4] / "apps/api/src/modules/ai/evals/vacan
     ("text", "scrubbed"),
     [
         ("Write to jane.doe+jobs@example.com.ua today", "Write to [email] today"),
+        ("Mail jane.doe+cv@example.co.uk", "Mail [email]"),
         ("Call +380 67 123 45 67, ask for HR", "Call [phone], ask for HR"),
         ("Call +380671234567", "Call [phone]"),
         ("Phone (067) 123-45-67 or 067 123 45 67", "Phone [phone] or [phone]"),
@@ -53,6 +55,20 @@ def test_replaces_contacts_and_addresses_with_placeholders(
 )
 def test_keeps_salary_ranges_years_and_tech_names(text: str) -> None:
     assert scrub(text) == text
+
+
+@pytest.mark.parametrize(
+    "text",
+    ["a" * 20000, "7" * 20000, "a." * 10000],
+    ids=["letters", "digits", "dotted letters"],
+)
+def test_matches_emails_in_linear_time_on_long_tokens(text: str) -> None:
+    started = perf_counter()
+    scrubbed = EMAIL.sub("[email]", text)
+    elapsed = perf_counter() - started
+
+    assert scrubbed == text
+    assert elapsed < 0.1
 
 
 @pytest.mark.parametrize(

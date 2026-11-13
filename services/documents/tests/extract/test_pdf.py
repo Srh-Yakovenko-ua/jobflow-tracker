@@ -7,6 +7,7 @@ from app.extract.pdf import extract_pdf
 from tests.factories import (
     MAX_JPEG_BYTES,
     encrypted_pdf,
+    image_pdf,
     scan_pdf,
     text_pdf,
     two_page_pdf,
@@ -53,6 +54,18 @@ def test_renders_the_first_three_pages_of_a_scan_under_the_jpeg_cap() -> None:
         assert max(jpeg_size(jpeg)) <= 1600
 
 
+def test_renders_a_page_with_a_large_embedded_image_at_the_capped_size() -> None:
+    extraction = extract_pdf(image_pdf(width=4000, height=5000))
+
+    assert (extraction.kind.value, extraction.page_count, len(extraction.pages)) == (
+        "scan",
+        1,
+        1,
+    )
+    jpeg = base64.b64decode(extraction.pages[0].jpeg_base64)
+    assert (jpeg_size(jpeg), len(jpeg) <= MAX_JPEG_BYTES) == ((1237, 1600), True)
+
+
 def test_treats_a_pdf_under_fifty_characters_a_page_as_a_scan() -> None:
     extraction = extract_pdf(text_pdf([["Page one has a few words"], ["and two"]]))
 
@@ -65,8 +78,9 @@ def test_treats_a_pdf_under_fifty_characters_a_page_as_a_scan() -> None:
         (encrypted_pdf(user_password="user-secret"), (422, "encrypted_pdf")),
         (b"%PDF-1.7\nnot a real document", (422, "unreadable_file")),
         (text_pdf([["Overflow page with enough text"]] * 21), (413, "file_too_large")),
+        (image_pdf(width=8000, height=7000), (422, "unreadable_file")),
     ],
-    ids=["encrypted", "corrupt", "over-twenty-pages"],
+    ids=["encrypted", "corrupt", "over-twenty-pages", "image-over-the-pixel-cap"],
 )
 def test_refuses_a_pdf_it_cannot_read(data: bytes, expected: tuple[int, str]) -> None:
     with pytest.raises(DocumentError) as raised:

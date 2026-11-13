@@ -4,7 +4,7 @@ from pypdfium2 import raw
 from app.contracts.document_extraction import DocumentExtraction, Kind, Page
 from app.core.errors import DocumentError
 from app.core.limits import LIMITS
-from app.extract.image import MAX_LONG_SIDE, to_jpeg_page
+from app.extract.image import MAX_LONG_SIDE, MAX_PIXELS, to_jpeg_page
 
 SCAN_DPI = 150
 POINTS_PER_INCH = 72
@@ -26,7 +26,17 @@ def page_text(page: pdfium.PdfPage) -> str:
     return page.get_textpage().get_text_bounded().replace("\r\n", "\n").strip()
 
 
+def check_image_pixels(page: pdfium.PdfPage) -> None:
+    images = page.get_objects(filter=[raw.FPDF_PAGEOBJ_IMAGE])
+    sizes = (image.get_px_size() for image in images)
+    if sum(width * height for width, height in sizes) > MAX_PIXELS:
+        raise DocumentError(
+            "unreadable_file", detail="The page images have too many pixels"
+        )
+
+
 def render_page(page: pdfium.PdfPage, index: int) -> Page:
+    check_image_pixels(page)
     scale = min(SCAN_DPI / POINTS_PER_INCH, MAX_LONG_SIDE / max(page.get_size()))
     return to_jpeg_page(page.render(scale=scale).to_pil(), index)
 

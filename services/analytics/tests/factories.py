@@ -12,6 +12,7 @@ from uuid import UUID, uuid4, uuid5
 
 import jwt
 import pandas as pd
+import pytest
 from cryptography.hazmat.primitives.asymmetric import rsa
 from fastapi import APIRouter, FastAPI
 from fastapi.testclient import TestClient
@@ -196,6 +197,20 @@ def auth_app(key_source: KeySource = SIGNER) -> FastAPI:
     app = with_probe(create_app(settings_for()))
     app.dependency_overrides[get_key_source] = lambda: key_source
     return app
+
+
+@dataclass
+class FakeClock:
+    now: float = 0.0
+
+    def monotonic(self) -> float:
+        return self.now
+
+
+def jwks_cooldown_clock(monkeypatch: pytest.MonkeyPatch) -> FakeClock:
+    clock = FakeClock()
+    monkeypatch.setattr(jwt.jwks_client, "time", clock)
+    return clock
 
 
 @dataclass

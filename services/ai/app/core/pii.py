@@ -1,6 +1,6 @@
 import re
 
-EMAIL = re.compile(r"[\w.+-]+@[\w-]+(?:\.[\w-]+)+")
+EMAIL = re.compile(r"(?<![\w.+-])[\w.+-]+@[\w-]+(?:\.[\w-]+)+")
 
 TELEGRAM = re.compile(
     r"(?<![\w.@])(?:"
