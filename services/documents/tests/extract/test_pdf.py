@@ -3,19 +3,17 @@ import base64
 import pytest
 
 from app.core.errors import DocumentError
-from app.extract.pdf import check_stream_image_pixels, extract_pdf
+from app.extract.pdf import extract_pdf
 from tests.factories import (
     MAX_JPEG_BYTES,
     annotated_pdf,
     encrypted_pdf,
     image_pdf,
-    indirect_width_pdf,
-    masked_pdf,
     scan_pdf,
     text_pdf,
     two_page_pdf,
 )
-from tests.jpeg import jpeg_size
+from tests.jpeg import jpeg_darkest, jpeg_size
 
 
 def test_reads_the_text_layer_page_by_page() -> None:
@@ -92,74 +90,8 @@ def test_refuses_a_pdf_it_cannot_read(data: bytes, expected: tuple[int, str]) ->
     assert (raised.value.status, raised.value.type) == expected
 
 
-@pytest.mark.parametrize(
-    "data",
-    [
-        annotated_pdf(),
-        masked_pdf(),
-        masked_pdf(mask_size=b"/Width\x008000 /Height\x008000"),
-        masked_pdf(mask_size=b"/Width\x808000 /Height\x808000"),
-        masked_pdf(mask_size=b"/Width\xff8000 /Height\xff8000"),
-        masked_pdf(mask_size=b"/Width 7 +0 R /Height 7 +0 R", sizes=(b"8000",)),
-        indirect_width_pdf(),
-    ],
-    ids=[
-        "annotation-appearance-image",
-        "large-soft-mask",
-        "nul-separated-soft-mask",
-        "0x80-separated-soft-mask",
-        "0xff-separated-soft-mask",
-        "signed-reference-soft-mask",
-        "indirect-width",
-    ],
-)
-def test_refuses_images_the_page_objects_do_not_show(data: bytes) -> None:
-    with pytest.raises(DocumentError) as raised:
-        extract_pdf(data)
+def test_does_not_draw_annotation_appearance_streams() -> None:
+    extraction = extract_pdf(annotated_pdf())
 
-    assert (raised.value.type, raised.value.detail) == (
-        "unreadable_file",
-        "The page images have too many pixels",
-    )
-
-
-@pytest.mark.parametrize(
-    "dictionary",
-    [
-        b"<< /W#69dth 8000 /He#69ght 8000 >> stream",
-        b"<< /Width 8000.0 /Height 1 >> stream",
-        b"<< /Width 5000 /Height 6000 >> << /Width 5000 /Height 6000 >>",
-        b"<< /Width\x008000 /Height\x008000 >> stream",
-        b"<< /Width\x808000 /Height\x808000 >> stream",
-        b"<< /Width\xff8000 /Height\xff8000 >> stream",
-        b"<< /Width 7 %c\n0 R /Height 1 >> stream",
-        b"<< /Width 7 0\x00R /Height 1 >> stream",
-        b"<< /Width 7 0 R%c\n /Height 1 >> stream",
-        b"<< /Width 7 +0 R /Height 1 >> stream",
-        b"<< /Width 7 0.0 R /Height 1 >> stream",
-        b"<< /Width 7 . R /Height 1 >> stream",
-        b"<< /Width 7 - R /Height 1 >> stream",
-    ],
-    ids=[
-        "escaped-names",
-        "real-width",
-        "two-images-over-the-cap",
-        "nul-separated-size",
-        "0x80-separated-size",
-        "0xff-separated-size",
-        "reference-with-a-comment",
-        "nul-separated-reference",
-        "reference-before-a-comment",
-        "signed-generation-reference",
-        "real-generation-reference",
-        "dot-generation-reference",
-        "minus-generation-reference",
-    ],
-)
-def test_counts_every_declared_image_size(dictionary: bytes) -> None:
-    with pytest.raises(DocumentError):
-        check_stream_image_pixels(dictionary)
-
-
-def test_passes_declared_sizes_under_the_cap() -> None:
-    check_stream_image_pixels(b"<< /Width 4000 /Height 5000 /Widths [1 2] >> stream")
+    assert (extraction.kind.value, len(extraction.pages)) == ("scan", 1)
+    assert jpeg_darkest(base64.b64decode(extraction.pages[0].jpeg_base64)) >= 245

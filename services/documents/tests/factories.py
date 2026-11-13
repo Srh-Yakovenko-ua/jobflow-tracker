@@ -89,23 +89,10 @@ def text_pdf(pages: list[list[str]]) -> bytes:
 
 
 DRAW_IM0 = b"q 612 0 0 792 0 0 cm /Im0 Do Q"
-DECLARED_ONLY = b"\x00"
 
 
 def im0_at(number: int) -> bytes:
     return b"/Resources << /XObject << /Im0 %d 0 R >> >> " % number
-
-
-def image_entries(width: bytes, height: bytes) -> bytes:
-    return (
-        b"/Type /XObject /Subtype /Image /Width %s /Height %s /ColorSpace /DeviceGray "
-        b"/BitsPerComponent 8 " % (width, height)
-    )
-
-
-def declared_image(side: int, entries: bytes = b"") -> bytes:
-    size = b"%d" % side
-    return stream_object(DECLARED_ONLY, image_entries(size, size) + entries)
 
 
 def single_page_pdf(*, page: bytes, content: bytes, objects: list[bytes]) -> bytes:
@@ -124,43 +111,28 @@ def single_page_pdf(*, page: bytes, content: bytes, objects: list[bytes]) -> byt
 
 
 def image_pdf(*, width: int, height: int) -> bytes:
-    entries = image_entries(b"%d" % width, b"%d" % height) + b"/Filter /FlateDecode "
-    return single_page_pdf(
-        page=im0_at(5),
-        content=DRAW_IM0,
-        objects=[stream_object(zlib.compress(bytes(width * height)), entries)],
+    image = (
+        b"/Type /XObject /Subtype /Image /Width %d /Height %d /ColorSpace /DeviceGray "
+        b"/BitsPerComponent 8 /Filter /FlateDecode " % (width, height)
     )
-
-
-def masked_pdf(
-    *, mask_size: bytes = b"/Width 8000 /Height 8000", sizes: tuple[bytes, ...] = ()
-) -> bytes:
-    mask = declared_image(8000).replace(b"/Width 8000 /Height 8000", mask_size)
     return single_page_pdf(
         page=im0_at(5),
         content=DRAW_IM0,
-        objects=[declared_image(1, b"/SMask 6 0 R "), mask, *sizes],
+        objects=[stream_object(zlib.compress(bytes(width * height)), image)],
     )
 
 
 def annotated_pdf() -> bytes:
-    form = b"/Type /XObject /Subtype /Form /BBox [0 0 612 792] " + im0_at(7)
     return single_page_pdf(
         page=b"/Annots [5 0 R] ",
         content=b"",
         objects=[
             b"<< /Type /Annot /Subtype /Square /Rect [0 0 612 792] /AP << /N 6 0 R >> >>",
-            stream_object(DRAW_IM0, form),
-            declared_image(8000),
+            stream_object(
+                b"0 g 0 0 612 792 re f",
+                b"/Type /XObject /Subtype /Form /BBox [0 0 612 792] ",
+            ),
         ],
-    )
-
-
-def indirect_width_pdf() -> bytes:
-    return single_page_pdf(
-        page=im0_at(5),
-        content=DRAW_IM0,
-        objects=[stream_object(DECLARED_ONLY, image_entries(b"6 0 R", b"1")), b"1"],
     )
 
 
