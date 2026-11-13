@@ -8,6 +8,7 @@ from app.core.config import Settings
 from app.factory import create_app
 from tests.api_client import api_call, register
 from tests.factories import bearer, problem_body, uvicorn_serving
+from tests.routes.test_funnel import FUNNEL_PATH, SEARCH_PATHS
 
 pytestmark = pytest.mark.enable_socket
 
@@ -15,6 +16,11 @@ SCREENING_THEN_REJECTED = [
     {"fromStage": "applied", "toStage": "screening"},
     {"fromStage": "screening", "toStage": "rejected", "reasonCode": "unspecified"},
 ]
+
+SANKEY_LINKS = {
+    "no split": ({}, "rejected"),
+    "reason split": ({"split": "reason"}, "unspecified"),
+}
 
 
 @dataclass(frozen=True)
@@ -39,11 +45,18 @@ def owned(settings: Settings, registered: Any) -> OwnedSearch:
     return OwnedSearch(token=token, search_id=str(active["id"]))
 
 
-def funnel_over_http(settings: Settings, *, token: str, search_id: str) -> Any:
+def funnel_over_http(
+    settings: Settings,
+    *,
+    token: str,
+    search_id: str,
+    path: str = FUNNEL_PATH,
+    query: dict[str, str] | None = None,
+) -> Any:
     with uvicorn_serving(create_app(settings)) as base_url:
         return httpx2.get(
-            f"{base_url}/analytics/funnel",
-            params={"searchId": search_id},
+            f"{base_url}{path}",
+            params={"searchId": search_id} | (query or {}),
             headers=bearer(token),
             timeout=10,
         )
@@ -75,13 +88,36 @@ def test_counts_a_rejection_after_screening_at_screening_over_http(
     }
 
 
+@pytest.mark.parametrize(
+    ("query", "rejected_node"), list(SANKEY_LINKS.values()), ids=list(SANKEY_LINKS)
+)
+def test_draws_a_rejection_after_screening_as_sankey_links_over_http(
+    settings: Settings, owned: OwnedSearch, *, query: dict[str, str], rejected_node: str
+) -> None:
+    response = funnel_over_http(
+        settings,
+        token=owned.token,
+        search_id=owned.search_id,
+        path="/analytics/sankey",
+        query=query,
+    )
+
+    body = response.json()
+    assert (response.status_code, body["merged"]) == (200, body["detailed"])
+    assert body["detailed"]["links"] == [
+        {"from": "applied", "to": "screening", "flow": 1, "ghost": False},
+        {"from": "screening", "to": rejected_node, "flow": 1, "ghost": False},
+    ]
+
+
+@pytest.mark.parametrize("path", SEARCH_PATHS)
 def test_answers_not_found_for_another_users_search(
-    settings: Settings, owned: OwnedSearch
+    settings: Settings, owned: OwnedSearch, *, path: str
 ) -> None:
     stranger = register(settings)
 
     response = funnel_over_http(
-        settings, token=stranger["accessToken"], search_id=owned.search_id
+        settings, token=stranger["accessToken"], search_id=owned.search_id, path=path
     )
 
     assert (response.status_code, response.json()) == (

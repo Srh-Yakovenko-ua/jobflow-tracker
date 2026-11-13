@@ -16,6 +16,7 @@ from tests.factories import (
 )
 
 FUNNEL_PATH = "/analytics/funnel"
+SEARCH_PATHS = [FUNNEL_PATH, "/analytics/sankey"]
 NOT_READY_BODY = problem_body(
     503, type="not_ready", title="Service not ready", detail="Not reachable: postgres"
 )
@@ -37,12 +38,12 @@ def test_refuses_a_search_id_that_is_not_a_uuid_at_query_search_id(
     assert [error["path"] for error in body["errors"]] == ["query.searchId"]
 
 
-def funnel_with_postgres_on(port: int) -> tuple[int, object, float]:
+def search_with_postgres_on(port: int, *, path: str) -> tuple[int, object, float]:
     app = auth_app(settings=settings_for(postgres_port=port))
     with serving(app) as client:
         started = time.monotonic()
         response = client.get(
-            FUNNEL_PATH,
+            path,
             params={"searchId": str(SEARCH_ID)},
             headers=bearer(SIGNER.user_token()),
         )
@@ -51,16 +52,18 @@ def funnel_with_postgres_on(port: int) -> tuple[int, object, float]:
 
 
 @pytest.mark.enable_socket
-def test_answers_not_ready_when_postgres_refuses_the_connection() -> None:
-    status, body, _ = funnel_with_postgres_on(closed_port())
+@pytest.mark.parametrize("path", SEARCH_PATHS)
+def test_answers_not_ready_when_postgres_refuses_the_connection(path: str) -> None:
+    status, body, _ = search_with_postgres_on(closed_port(), path=path)
 
     assert (status, body) == (503, NOT_READY_BODY)
 
 
 @pytest.mark.enable_socket
-def test_gives_up_on_a_silent_postgres_within_the_connect_limit() -> None:
+@pytest.mark.parametrize("path", SEARCH_PATHS)
+def test_gives_up_on_a_silent_postgres_within_the_connect_limit(path: str) -> None:
     with silent_listener() as port:
-        status, body, elapsed = funnel_with_postgres_on(port)
+        status, body, elapsed = search_with_postgres_on(port, path=path)
 
     assert (status, body) == (503, NOT_READY_BODY)
     assert DEPENDENCY_LIMITS.connect - 0.1 <= elapsed < DEPENDENCY_LIMITS.connect + 1

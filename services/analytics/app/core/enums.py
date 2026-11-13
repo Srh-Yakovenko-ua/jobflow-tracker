@@ -22,6 +22,8 @@ STAGE_ROLES: Final[Mapping[str, StageRole]] = {
 }
 
 GHOSTED_STAGE: Final = "ghosted"
+REJECTED_STAGE: Final = "rejected"
+UNSPECIFIED_REASON: Final = "unspecified"
 
 
 class EnumsModel(BaseModel):
@@ -72,6 +74,13 @@ def stages_with_role(role: StageRole) -> tuple[str, ...]:
 
 def progress_stages() -> tuple[str, ...]:
     return stages_with_role("progress")
+
+
+def reason_codes() -> tuple[str, ...]:
+    reasons = load_domain_enums().rejection_reasons
+    return tuple(
+        reason.code for reason in sorted(reasons, key=lambda reason: reason.sort_order)
+    )
 
 
 def check_stages(enums: DomainEnums) -> None:
