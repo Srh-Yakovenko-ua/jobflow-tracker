@@ -7,12 +7,12 @@ import {
   sourcesResponseSchema,
   timingsResponseSchema,
 } from '@jobflow/shared';
-import { type QueryKey, queryOptions } from '@tanstack/react-query';
+import { hashKey, type QueryKey, queryOptions } from '@tanstack/react-query';
 import type { z } from 'zod';
 
 import { analyticsClient, type SearchParams, withSearchParams } from '@/shared/api';
 
-import { analyticsKeys, type SankeyScope } from '../model/keys';
+import { analyticsKeys, type ForecastScope, type SankeyScope } from '../model/keys';
 
 type AnalyticsPath<T> = Readonly<{ path: string; schema: z.ZodType<T> }>;
 
@@ -27,6 +27,10 @@ type PathRequest<T> = Readonly<{
 }>;
 
 const SANKEY_ROUTE = { path: '/analytics/sankey', schema: sankeyResponseSchema };
+
+const FORECAST_ROUTE = { path: '/analytics/forecast', schema: forecastResponseSchema };
+
+const SEARCH_KEY_LENGTH = 4;
 
 const ROUTES = {
   funnel: { path: '/analytics/funnel', schema: funnelResponseSchema, keyOf: analyticsKeys.funnel },
@@ -44,11 +48,6 @@ const ROUTES = {
     path: '/analytics/timings',
     schema: timingsResponseSchema,
     keyOf: analyticsKeys.timings,
-  },
-  forecast: {
-    path: '/analytics/forecast',
-    schema: forecastResponseSchema,
-    keyOf: analyticsKeys.forecast,
   },
   insights: {
     path: '/analytics/insights',
@@ -96,8 +95,23 @@ export const sourcesQueryOptions = (searchId?: string) =>
 export const timingsQueryOptions = (searchId?: string) =>
   scopedQueryOptions({ route: ROUTES.timings, searchId });
 
-export const forecastQueryOptions = (searchId?: string) =>
-  scopedQueryOptions({ route: ROUTES.forecast, searchId });
+const searchPartOf = (queryKey: QueryKey) => hashKey(queryKey.slice(0, SEARCH_KEY_LENGTH));
+
+export function forecastQueryOptions({ searchId, applicationsPerWeek, improve }: ForecastScope) {
+  const queryKey = analyticsKeys.forecast({ searchId, applicationsPerWeek, improve });
+  return queryOptions({
+    ...pathQueryOptions({
+      route: FORECAST_ROUTE,
+      queryKey,
+      params: { searchId, applicationsPerWeek, improve },
+    }),
+    queryKey,
+    placeholderData: (previous, previousQuery) =>
+      previousQuery !== undefined && searchPartOf(previousQuery.queryKey) === searchPartOf(queryKey)
+        ? previous
+        : undefined,
+  });
+}
 
 export const insightsQueryOptions = (searchId?: string) =>
   scopedQueryOptions({ route: ROUTES.insights, searchId });

@@ -24,6 +24,18 @@ describe('EmptyState', () => {
     expect(screen.getByText('4 / 10').className).toContain('tabular-nums');
   });
 
+  it('a meter toward a named goal reads that goal instead of the first result', () => {
+    render(
+      <EmptyState
+        content={ANALYTICS}
+        progress={{ count: 12, goal: 15, label: 'Прогрес до прогнозу' }}
+      />,
+    );
+
+    expect(screen.getByRole('meter', { name: 'Прогрес до прогнозу' })).toBeDefined();
+    expect(screen.queryByRole('meter', { name: 'Прогрес до першого висновку' })).toBeNull();
+  });
+
   it('shows no meter when nothing is counted toward a first result', () => {
     render(<EmptyState content={ANALYTICS} />);
 

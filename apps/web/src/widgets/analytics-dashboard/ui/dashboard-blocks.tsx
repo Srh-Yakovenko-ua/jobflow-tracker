@@ -1,7 +1,8 @@
 import { cn } from '@/shared/lib/cn';
 import { ChartFrame } from '@/shared/ui/chart-frame';
 
-import type { DashboardFrameId, DashboardView } from '../model/dashboard-view';
+import type { DashboardView } from '../model/dashboard-view';
+import { ForecastBlock, type ForecastControls } from './forecast-block';
 import { KpiRow } from './kpi-row';
 import { ReasonsBlock } from './reasons-block';
 import { SankeyBlock, type SankeyControls } from './sankey-block';
@@ -9,26 +10,16 @@ import { SourcesBlock } from './sources-block';
 
 const GRID = 'grid items-start gap-4.5';
 
-const GRIDS: readonly { id: string; columns: string; frames: readonly DashboardFrameId[] }[] = [
-  {
-    id: 'resume-forecast',
-    columns: 'grid-cols-[repeat(auto-fit,minmax(min(300px,100%),1fr))]',
-    frames: ['resumeAb', 'forecast'],
-  },
-  {
-    id: 'timings',
-    columns: 'grid-cols-[repeat(auto-fit,minmax(min(300px,100%),1fr))]',
-    frames: ['timings'],
-  },
-];
+const NARROW_COLUMNS = 'grid-cols-[repeat(auto-fit,minmax(min(300px,100%),1fr))]';
 
 export type DashboardBlocksProps = Readonly<{
   view: DashboardView;
   silenceDays: number;
   sankey: SankeyControls;
+  forecast: ForecastControls;
 }>;
 
-export function DashboardBlocks({ view, silenceDays, sankey }: DashboardBlocksProps) {
+export function DashboardBlocks({ view, silenceDays, sankey, forecast }: DashboardBlocksProps) {
   const { frames } = view;
   return (
     <div className="flex min-w-0 flex-col gap-4.5">
@@ -38,13 +29,13 @@ export function DashboardBlocks({ view, silenceDays, sankey }: DashboardBlocksPr
         <ReasonsBlock frame={frames.reasons} />
         <SourcesBlock frame={frames.sources} />
       </div>
-      {GRIDS.map((grid) => (
-        <div key={grid.id} className={cn(GRID, grid.columns)}>
-          {grid.frames.map((id) => (
-            <ChartFrame key={id} header={frames[id].header} state={frames[id].state} />
-          ))}
-        </div>
-      ))}
+      <div className={cn(GRID, NARROW_COLUMNS)}>
+        <ChartFrame header={frames.resumeAb.header} state={frames.resumeAb.state} />
+        <ForecastBlock frame={frames.forecast} controls={forecast} />
+      </div>
+      <div className={cn(GRID, NARROW_COLUMNS)}>
+        <ChartFrame header={frames.timings.header} state={frames.timings.state} />
+      </div>
     </div>
   );
 }

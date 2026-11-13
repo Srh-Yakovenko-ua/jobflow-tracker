@@ -1,4 +1,5 @@
 import {
+  type ForecastResponse,
   type FunnelStage,
   type ReasonsResponse,
   type SankeyResponse,
@@ -27,10 +28,13 @@ export type ReasonsFrame = DashboardFrame & Readonly<{ data: ReasonsResponse | u
 
 export type SourcesFrame = DashboardFrame & Readonly<{ data: SourcesResponse | undefined }>;
 
+export type ForecastFrame = DashboardFrame & Readonly<{ data: ForecastResponse | undefined }>;
+
 export type DashboardFrames = Record<DashboardFrameId, DashboardFrame> & {
   sankey: SankeyFrame;
   reasons: ReasonsFrame;
   sources: SourcesFrame;
+  forecast: ForecastFrame;
 };
 
 export type DashboardViewInput = Readonly<{ queries: DashboardQueries; searches: FrameQuery }>;
@@ -70,7 +74,11 @@ function framesOf({ queries, searches }: DashboardViewInput): DashboardFrames {
       data: queries.sources.data,
     },
     resumeAb: { header: titled('resume_ab'), state: chartFrameStateOf(queries.resumeAb) },
-    forecast: { header: BLOCKS.forecast, state: chartFrameStateOf(queries.forecast) },
+    forecast: {
+      header: { eyebrow: BLOCKS.forecast.eyebrow },
+      state: chartFrameStateOf(queries.forecast),
+      data: queries.forecast.data,
+    },
     timings: { header: BLOCKS.timings, state: chartFrameStateOf(queries.timings) },
   };
 }
