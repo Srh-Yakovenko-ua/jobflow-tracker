@@ -1,4 +1,5 @@
 import { type ApplicationResponse, countedUk, DAY_FORMS_UK } from '@jobflow/shared';
+import { useEffect } from 'react';
 
 import { FollowupPanel } from '@/features/generate-followup';
 import { uk } from '@/shared/i18n';
@@ -25,8 +26,18 @@ function FollowupBody({ application, followup }: FollowupBodyProps) {
   return <FollowupPanel application={application} followup={{ response, job }} />;
 }
 
+const ANCHOR = 'follow-up';
+
+function useAnchorArrival() {
+  useEffect(() => {
+    if (window.location.hash !== `#${ANCHOR}`) return;
+    document.getElementById(ANCHOR)?.scrollIntoView({ block: 'start' });
+  }, []);
+}
+
 export function ApplicationFollowup({ application }: ApplicationFollowupProps) {
   const followup = useApplicationFollowup(application);
+  useAnchorArrival();
   if (!followup.shown) return null;
   const days = followup.response?.silenceDays;
   const silence = days !== undefined && (
@@ -42,8 +53,9 @@ export function ApplicationFollowup({ application }: ApplicationFollowupProps) {
       title={{ text: uk.followup.kicker, look: 'eyebrow' }}
       header={{ after: silence, className: 'flex items-center justify-between gap-3' }}
       view={{
+        id: ANCHOR,
         className:
-          'flex flex-col gap-3.5 rounded-lg bg-surface p-4.5 shadow-e1 inset-ring inset-ring-accent/25',
+          'flex scroll-mt-6 flex-col gap-3.5 rounded-lg bg-surface p-4.5 shadow-e1 inset-ring inset-ring-accent/25',
         busy: followup.load.pending,
       }}
     >

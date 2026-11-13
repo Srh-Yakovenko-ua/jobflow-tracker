@@ -6,7 +6,8 @@ import { FAILED_MARK } from '@/shared/ui/async-state';
 import { Button } from '@/shared/ui/button';
 import { TOUCH_HEIGHT } from '@/shared/ui/touch-height';
 
-import { type FollowupMethods, FollowupRequestShell } from './followup-request-shell';
+import type { FollowupMethods } from './followup-choices';
+import { FollowupRequestShell } from './followup-request-shell';
 
 export type FollowupFailureProps = Readonly<{
   methods: FollowupMethods;

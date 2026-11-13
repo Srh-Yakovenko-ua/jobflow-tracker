@@ -67,11 +67,12 @@ describe('paletteActionsOf', () => {
     ]);
   });
 
-  it('a focused application adds the move', () => {
+  it('a focused application adds the move and the follow-up', () => {
     expect(actionsAt(FEATURE_FLAGS, ACME_APPLICATION).map(([id]) => id)).toEqual([
       'add',
       'paste',
       'move',
+      'followUp',
       'analytics',
       'theme',
       'shortcuts',
@@ -93,7 +94,7 @@ describe('paletteActionsOf', () => {
     ]);
   });
 
-  it('a rejected application has nowhere to move, so the move is left out', () => {
+  it('a rejected application has nowhere to move and nobody to follow up, so both are left out', () => {
     expect(actionsAt(FEATURE_FLAGS, REJECTED).map(([id]) => id)).toEqual([
       'add',
       'paste',

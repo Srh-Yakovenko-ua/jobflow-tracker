@@ -1,5 +1,6 @@
 'use client';
 
+import type { ApplicationResponse, FollowupOutput } from '@jobflow/shared';
 import { useState } from 'react';
 
 import { uk } from '@/shared/i18n';
@@ -13,10 +14,18 @@ import { STATE_TEXT } from '@/shared/ui/state-text';
 import { Textarea } from '@/shared/ui/textarea';
 import { TOUCH_HEIGHT } from '@/shared/ui/touch-height';
 
+import { type DraftEdit, readDraftEdit, rememberDraftEdit } from '../lib/draft-edits';
 import type { FollowupReady } from '../lib/followup-view';
+import { FollowupChoices, type FollowupMethods } from './followup-choices';
+
+export type FollowupEditorDraft = Readonly<{
+  ready: FollowupReady;
+  applicationId: ApplicationResponse['id'];
+}>;
 
 export type FollowupEditorProps = Readonly<{
-  ready: FollowupReady;
+  draft: FollowupEditorDraft;
+  methods: FollowupMethods;
   actions: Readonly<{ onVariant: () => void; onSent: () => void }>;
   status: Readonly<{ generating: boolean; marking: boolean; sent: boolean }>;
 }>;
@@ -29,9 +38,26 @@ function letterOf(subject: string, body: string): string {
   return [subject, body].filter((part) => part.trim() !== '').join('\n\n');
 }
 
-export function FollowupEditor({ ready, actions, status }: FollowupEditorProps) {
-  const [subject, setSubject] = useState(ready.draft.subject);
-  const [body, setBody] = useState(ready.draft.body);
+function initialEdit({ ready, applicationId }: FollowupEditorDraft): DraftEdit {
+  const stored = readDraftEdit(applicationId);
+  if (stored?.key === ready.key) return stored;
+  return { key: ready.key, subject: ready.draft.subject, body: ready.draft.body };
+}
+
+function useEditedDraft(draft: FollowupEditorDraft) {
+  const [edit, setEdit] = useState(() => initialEdit(draft));
+  const change = (part: Partial<FollowupOutput>) => {
+    const next = { ...edit, ...part };
+    setEdit(next);
+    rememberDraftEdit(draft.applicationId, next);
+  };
+  return { edit, change };
+}
+
+export function FollowupEditor({ draft, methods, actions, status }: FollowupEditorProps) {
+  const { ready } = draft;
+  const { edit, change } = useEditedDraft(draft);
+  const { subject, body } = edit;
   const empty = body.trim() === '';
   return (
     <div className="flex flex-col gap-3">
@@ -43,7 +69,7 @@ export function FollowupEditor({ ready, actions, status }: FollowupEditorProps) 
         <Input
           value={subject}
           onChange={(event) => {
-            setSubject(event.target.value);
+            change({ subject: event.target.value });
           }}
         />
       </Field>
@@ -52,10 +78,11 @@ export function FollowupEditor({ ready, actions, status }: FollowupEditorProps) 
           rows={9}
           value={body}
           onChange={(event) => {
-            setBody(event.target.value);
+            change({ body: event.target.value });
           }}
         />
       </Field>
+      <FollowupChoices methods={methods} />
       <div className="flex flex-wrap gap-2">
         <Button
           className={ACTION}

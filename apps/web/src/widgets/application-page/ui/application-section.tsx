@@ -8,7 +8,7 @@ type TitleLook = 'eyebrow' | 'display';
 export type ApplicationSectionProps = Readonly<{
   title: Readonly<{ text: ReactNode; look: TitleLook }>;
   header?: Readonly<{ before?: ReactNode; after?: ReactNode; className?: string }>;
-  view: Readonly<{ className: string; busy?: boolean }>;
+  view: Readonly<{ className: string; busy?: boolean; id?: string }>;
   children: ReactNode;
 }>;
 
@@ -26,6 +26,7 @@ export function ApplicationSection({ title, header, view, children }: Applicatio
   );
   return (
     <section
+      id={view.id}
       aria-labelledby={headingId}
       aria-busy={view.busy || undefined}
       className={view.className}

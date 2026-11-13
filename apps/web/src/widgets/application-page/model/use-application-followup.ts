@@ -1,6 +1,6 @@
 'use client';
 
-import { type ApplicationResponse, isActiveStage } from '@jobflow/shared';
+import { type ApplicationResponse, type FollowupResponse, isActiveStage } from '@jobflow/shared';
 import { useQuery } from '@tanstack/react-query';
 
 import { aiJobOf, applicationFollowupQueryOptions, jobQueryOptions } from '@/entities/application';
@@ -13,17 +13,20 @@ function followupShown(application: ApplicationResponse): boolean {
   return !application.isDraft && isActiveStage(application.currentStage);
 }
 
+function waitingIn(data: FollowupResponse | undefined): boolean {
+  return data !== undefined && followupWaiting(data);
+}
+
 export function useApplicationFollowup(application: ApplicationResponse) {
   const pollMs = useLivePollMs();
   const shown = followupShown(application);
   const followup = useQuery({
     ...applicationFollowupQueryOptions(application.id),
     enabled: shown,
-    refetchInterval: ({ state }) =>
-      state.data !== undefined && followupWaiting(state.data) ? pollMs : false,
+    refetchOnMount: ({ state }) => (waitingIn(state.data) ? 'always' : true),
+    refetchInterval: ({ state }) => (waitingIn(state.data) ? pollMs : false),
   });
-  const waitingJob =
-    followup.data !== undefined && followupWaiting(followup.data) ? followup.data.job : null;
+  const waitingJob = waitingIn(followup.data) ? (followup.data?.job ?? null) : null;
   const job = useQuery({ ...jobQueryOptions(waitingJob?.id ?? null), refetchInterval: pollMs });
   return {
     shown,
