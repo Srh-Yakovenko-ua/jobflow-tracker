@@ -188,17 +188,13 @@ describe('RemindersService.resolveFollowups', () => {
 });
 
 describe('RemindersService.startFollowup', () => {
-  it('writes a follow-up due now, silence_started and a silence notification in one transaction', async () => {
+  it('writes a follow-up due now and silence_started in one transaction', async () => {
     const { repository, timeline, service } = await serviceWithFake();
 
-    await service.startFollowup(OLENA_ID, {
-      applicationId: APPLICATION_ID,
-      company: 'Ромашка',
-      lastEventAt: daysBefore(7),
-      now: NOW,
-    });
+    await service.startFollowup(OLENA_ID, { applicationId: APPLICATION_ID, days: 7, now: NOW });
 
     expect(repository.rows).toEqual([storedReminder({ dueAt: NOW })]);
+    expect(repository.followupTransactions).toEqual([FAKE_TRANSACTION]);
     expect(timeline.events).toEqual([
       {
         userId: OLENA_ID,
@@ -206,14 +202,6 @@ describe('RemindersService.startFollowup', () => {
         kind: 'silence_started',
         payload: { silenceDays: 7 },
         occurredAt: NOW,
-        tx: FAKE_TRANSACTION,
-      },
-    ]);
-    expect(repository.notifications).toEqual([
-      {
-        userId: OLENA_ID,
-        type: 'silence',
-        payload: { applicationId: APPLICATION_ID, company: 'Ромашка', days: 7 },
         tx: FAKE_TRANSACTION,
       },
     ]);

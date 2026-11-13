@@ -324,17 +324,20 @@ describe('AuthService.signInWithOAuth', () => {
 });
 
 describe('AuthService.me', () => {
-  it('answers the user and their settings with quiet hours as HH:MM', async () => {
-    const { service } = await authServiceWith([], [{ ...ANNA, settings: NEW_USER_SETTINGS_ROW }]);
+  it('answers the user, their settings with quiet hours as HH:MM and their unread notifications', async () => {
+    const { service } = await authServiceWith(
+      [],
+      [{ ...ANNA, settings: NEW_USER_SETTINGS_ROW, _count: { notifications: 2 } }],
+    );
 
     const me = await service.me(ANNA.id);
 
-    expect(me).toEqual({ user: ANNA, settings: NEW_USER_SETTINGS });
+    expect(me).toEqual({ user: ANNA, settings: NEW_USER_SETTINGS, unreadNotifications: 2 });
   });
 
   it.each([
     ['an unknown user', []],
-    ['a user without settings', [{ ...ANNA, settings: null }]],
+    ['a user without settings', [{ ...ANNA, settings: null, _count: { notifications: 0 } }]],
   ])('refuses %s with 401', async (_case, profiles: UserProfile[]) => {
     const { service } = await authServiceWith([], profiles);
 

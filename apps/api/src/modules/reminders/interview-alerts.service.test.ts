@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
 
 import { FAKE_TRANSACTION, fakeTransactionModule } from '../../test/fake-prisma.js';
+import { RecordingNotifications } from '../../test/notifications.js';
 import type { ByUser } from '../../test/recorded-events.js';
-import { FakeRemindersRepository } from '../../test/reminders.js';
 import {
   APPLICATION_ID,
   OLENA_ID,
@@ -10,13 +10,13 @@ import {
   SCHEDULED_EVENT_ID,
 } from '../../test/service-fixtures.js';
 import { minutesAfter, NOW } from '../../test/time.js';
+import { NotificationsService } from '../notifications/index.js';
 import {
   type DueInterviewRow,
   InterviewAlertsRepository,
   type RearmInterview,
 } from './interview-alerts.repository.js';
 import { InterviewAlertsService } from './interview-alerts.service.js';
-import { RemindersRepository } from './reminders.repository.js';
 
 type StoredAlert = ByUser<DueInterviewRow> & { status: string };
 
@@ -73,18 +73,17 @@ const alertRow = ({
 
 async function alertsOf(fields: AlertFields) {
   const alerts = new FakeInterviewAlertsRepository();
-  const reminders = new FakeRemindersRepository();
+  const notifications = new RecordingNotifications();
   alerts.rows.push(alertRow(fields));
   const moduleRef = await fakeTransactionModule({
-    providers: [InterviewAlertsService, InterviewAlertsRepository, RemindersRepository],
+    providers: [
+      InterviewAlertsService,
+      { provide: InterviewAlertsRepository, useValue: alerts },
+      { provide: NotificationsService, useValue: notifications },
+    ],
     now: NOW,
-  })
-    .overrideProvider(InterviewAlertsRepository)
-    .useValue(alerts)
-    .overrideProvider(RemindersRepository)
-    .useValue(reminders)
-    .compile();
-  return { alerts, reminders, service: moduleRef.get(InterviewAlertsService) };
+  }).compile();
+  return { alerts, notifications, service: moduleRef.get(InterviewAlertsService) };
 }
 
 const stateOf = ({ status, dueAt }: StoredAlert) => [status, dueAt.toISOString()];
@@ -95,14 +94,14 @@ describe('InterviewAlertsService.fireDue', () => {
     { case: 'on a tick 2 minutes late', minutesAway: 118, dueAt: minutesAfter(-2) },
   ])('alerts $case and re-arms the row to the 15 minute mark', async ({ minutesAway, dueAt }) => {
     const startsAt = minutesAfter(minutesAway);
-    const { alerts, reminders, service } = await alertsOf({ startsAt, dueAt });
+    const { alerts, notifications, service } = await alertsOf({ startsAt, dueAt });
 
     await expect(service.fireDue(OLENA_ID, NOW)).resolves.toBe(1);
 
     expect(alerts.rows.map(stateOf)).toEqual([
       ['pending', new Date(startsAt.getTime() - 15 * 60_000).toISOString()],
     ]);
-    expect(reminders.notifications).toEqual([
+    expect(notifications.notifications).toEqual([
       {
         userId: OLENA_ID,
         type: 'interview_soon',
@@ -119,12 +118,12 @@ describe('InterviewAlertsService.fireDue', () => {
   });
 
   it('alerts on the 15 minute mark and closes the row as done', async () => {
-    const { alerts, reminders, service } = await alertsOf({ startsAt: minutesAfter(15) });
+    const { alerts, notifications, service } = await alertsOf({ startsAt: minutesAfter(15) });
 
     await expect(service.fireDue(OLENA_ID, NOW)).resolves.toBe(1);
 
     expect(alerts.rows.map(stateOf)).toEqual([['done', NOW.toISOString()]]);
-    expect(reminders.notifications.map(({ payload }) => payload)).toEqual([
+    expect(notifications.notifications.map(({ payload }) => payload)).toEqual([
       expect.objectContaining({ minutesBefore: 15 }),
     ]);
   });
@@ -142,20 +141,20 @@ describe('InterviewAlertsService.fireDue', () => {
       status: 'dismissed',
     },
   ] as const)('closes the row of $case as $status without an alert', async ({ fields, status }) => {
-    const { alerts, reminders, service } = await alertsOf(fields);
+    const { alerts, notifications, service } = await alertsOf(fields);
 
     await expect(service.fireDue(OLENA_ID, NOW)).resolves.toBe(0);
 
     expect(alerts.rows.map(stateOf)).toEqual([[status, NOW.toISOString()]]);
-    expect(reminders.notifications).toEqual([]);
+    expect(notifications.notifications).toEqual([]);
   });
 
   it('writes no alert when another tick has already moved the row', async () => {
-    const { alerts, reminders, service } = await alertsOf({ startsAt: minutesAfter(120) });
+    const { alerts, notifications, service } = await alertsOf({ startsAt: minutesAfter(120) });
     alerts.losesRace = true;
 
     await expect(service.fireDue(OLENA_ID, NOW)).resolves.toBe(0);
 
-    expect(reminders.notifications).toEqual([]);
+    expect(notifications.notifications).toEqual([]);
   });
 });

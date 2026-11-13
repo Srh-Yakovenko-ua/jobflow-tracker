@@ -8,6 +8,7 @@ import { ApplicationsWorkerModule } from './modules/applications/index.js';
 import { CaptureWorkerModule } from './modules/capture/index.js';
 import { MaintenanceWorkerModule } from './modules/maintenance/index.js';
 import { MatchWorkerModule } from './modules/match/index.js';
+import { NotificationsWorkerModule } from './modules/notifications/index.js';
 import { RemindersWorkerModule } from './modules/reminders/index.js';
 import { ResumesWorkerModule } from './modules/resumes/index.js';
 import { PrismaModule } from './prisma/prisma.module.js';
@@ -26,6 +27,7 @@ import { QueuesModule } from './queues/queues.module.js';
     ResumesWorkerModule,
     MatchWorkerModule,
     RemindersWorkerModule,
+    NotificationsWorkerModule,
   ],
 })
 export class WorkerModule {}

@@ -1,8 +1,10 @@
-import type { Stage } from '@jobflow/shared';
+import { silenceNotificationPayloadSchema, type Stage } from '@jobflow/shared';
 import { describe, expect, it } from 'vitest';
 
 import { RemindersService } from '../modules/reminders/index.js';
-import { postStageMove, useStageMoveTestApp } from '../test/applications.js';
+import { postStageMove, signedInWithSearch, useStageMoveTestApp } from '../test/applications.js';
+import { createApplicationRows } from '../test/factories.js';
+import { outboxRows } from '../test/outbox.js';
 import {
   notificationsOf,
   ownedStageApplication,
@@ -59,11 +61,39 @@ describe('the silence scan on the database', () => {
       { type: 'followup', status: 'pending', dueAt: daysAfter(7) },
     ]);
     expect(await notificationsOf(testApp.prisma, userId)).toEqual([
-      { type: 'silence', payload: { applicationId, company: 'Acme', days: 7 } },
+      { type: 'silence', payload: { items: [{ applicationId, company: 'Acme', days: 7 }] } },
     ]);
     expect(await silenceStartsOf(applicationId)).toEqual([
       { payload: { silenceDays: 7 }, occurredAt: daysAfter(7) },
     ]);
+  });
+
+  it('groups three applications that fell silent in one scan into one notification', async () => {
+    const { userId, searchId } = await signedInWithSearch(testApp.prisma);
+    const companies = ['Acme', 'Globex', 'Initech'];
+    const applicationIds = await createApplicationRows(testApp.prisma, {
+      userId,
+      searchId,
+      rows: companies.map((company) => ({ company, currentStage: 'applied', lastEventAt: NOW })),
+    });
+
+    await scanAt(daysAfter(7), daysAfter(8));
+
+    const [grouped, ...rest] = await notificationsOf(testApp.prisma, userId);
+    expect(rest).toEqual([]);
+    expect(grouped?.type).toBe('silence');
+    expect(silenceNotificationPayloadSchema.parse(grouped?.payload).items).toEqual(
+      expect.arrayContaining(
+        applicationIds.map((applicationId, index) => ({
+          applicationId,
+          company: companies[index],
+          days: 7,
+        })),
+      ),
+    );
+    expect(await outboxRows(testApp.prisma, { eventType: 'notification.created' })).toHaveLength(1);
+    const followups = await testApp.prisma.reminder.count({ where: { userId, type: 'followup' } });
+    expect(followups).toBe(3);
   });
 
   it('waits 14 days on the final stage', async () => {
@@ -78,7 +108,7 @@ describe('the silence scan on the database', () => {
       { type: 'followup', status: 'pending', dueAt: daysAfter(14) },
     ]);
     expect(await notificationsOf(testApp.prisma, userId)).toEqual([
-      { type: 'silence', payload: { applicationId, company: 'Acme', days: 14 } },
+      { type: 'silence', payload: { items: [{ applicationId, company: 'Acme', days: 14 }] } },
     ]);
   });
 

@@ -16,6 +16,9 @@ import {
   signUp,
 } from '../../test/auth.js';
 import { bookmarkletStatus, issueCaptureToken } from '../../test/capture.js';
+import { createUser } from '../../test/factories.js';
+import { callRoute } from '../../test/http.js';
+import { createNotifications, NOTIFICATIONS_READ_PATH } from '../../test/notifications.js';
 
 const NEW_PASSWORD = 'olena-password-2';
 
@@ -46,6 +49,28 @@ describe('the signed-in account', () => {
       settings: { silenceDays: 7, quietHoursStart: '22:00', theme: 'system' },
     });
     expect(cacheControlOf(response)).toEqual(['no-store']);
+  });
+
+  it("counts only the user's unread notifications in GET /auth/me and drops the count after a read", async () => {
+    const { user, accessToken } = await signUp(testApp.app, OLENA);
+    const bohdan = await createUser(testApp.prisma);
+    const [first = ''] = await createNotifications(testApp.prisma, {
+      userId: user.id,
+      readAt: [null, null, LONG_AGO],
+    });
+    await createNotifications(testApp.prisma, { userId: bohdan.id, readAt: [null] });
+    const unreadOf = async () =>
+      meResponseSchema.parse((await me(accessToken)).body).unreadNotifications;
+    expect(await unreadOf()).toBe(2);
+
+    await callRoute(testApp.app, {
+      method: 'post',
+      path: NOTIFICATIONS_READ_PATH,
+      accessToken,
+      body: { ids: [first] },
+    });
+
+    expect(await unreadOf()).toBe(1);
   });
 
   it.each([

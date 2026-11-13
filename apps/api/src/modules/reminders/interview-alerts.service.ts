@@ -3,13 +3,13 @@ import { Injectable } from '@nestjs/common';
 import { differenceInMinutes } from 'date-fns';
 
 import { PrismaService } from '../../prisma/prisma.service.js';
+import { type NewNotification, NotificationsService } from '../notifications/index.js';
 import {
   type DueInterviewRow,
   type InterviewAlertChange,
   InterviewAlertsRepository,
 } from './interview-alerts.repository.js';
 import { nextInterviewReminderAt } from './interview-reminders.js';
-import { type NewNotification, RemindersRepository } from './reminders.repository.js';
 
 type DueInterview = { row: DueInterviewRow; now: Date };
 
@@ -46,7 +46,7 @@ function settlementOf({ row, now }: DueInterview): Settlement {
 export class InterviewAlertsService {
   constructor(
     private readonly alerts: InterviewAlertsRepository,
-    private readonly reminders: RemindersRepository,
+    private readonly notifications: NotificationsService,
     private readonly prisma: PrismaService,
   ) {}
 
@@ -67,7 +67,7 @@ export class InterviewAlertsService {
       if (count === 0 || alert === undefined) {
         return false;
       }
-      await this.reminders.insertNotification(userId, { ...alert, tx });
+      await this.notifications.record(userId, { ...alert, tx });
       return true;
     });
   }

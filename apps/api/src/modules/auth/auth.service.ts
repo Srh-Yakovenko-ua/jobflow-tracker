@@ -94,7 +94,11 @@ export class AuthService {
     if (profile?.settings == null) {
       throw unauthorized();
     }
-    return { user: toAuthUser(profile), settings: toUserSettings(profile.settings) };
+    return {
+      user: toAuthUser(profile),
+      settings: toUserSettings(profile.settings),
+      unreadNotifications: profile._count.notifications,
+    };
   }
 
   private async verified(

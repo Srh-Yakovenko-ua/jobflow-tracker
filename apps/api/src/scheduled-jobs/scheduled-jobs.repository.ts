@@ -36,7 +36,11 @@ export class ScheduledJobsRepository {
   }
 
   deleteNotificationsBefore(cutoff: Date): Promise<number> {
-    return countOf(this.prisma.notification.deleteMany({ where: { createdAt: { lt: cutoff } } }));
+    return countOf(
+      this.prisma.notification.deleteMany({
+        where: { createdAt: { lt: cutoff }, type: { not: 'insight_unlocked' } },
+      }),
+    );
   }
 
   failStaleAiJobs({ createdBefore, ...failure }: StaleAiJobs): Promise<number> {

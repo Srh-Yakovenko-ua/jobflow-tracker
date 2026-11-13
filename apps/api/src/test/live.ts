@@ -5,13 +5,14 @@ import type { INestApplicationContext } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import type { NestExpressApplication } from '@nestjs/platform-express';
 import { Test } from '@nestjs/testing';
-import { vi } from 'vitest';
+import { afterEach, beforeAll, vi } from 'vitest';
 
 import { type AppConfig, configModule } from '../config/app-config.js';
 import { validateEnv } from '../config/env.js';
 import type { User } from '../generated/prisma/client.js';
 import { type LiveEventBody, LiveHub, LivePublisher } from '../modules/live/index.js';
 import { RedisService } from '../redis/redis.service.js';
+import type { TestApp } from './app.js';
 import { accessTokenFor } from './auth.js';
 import { exampleEnv } from './example-env.js';
 import { callRoute } from './http.js';
@@ -83,4 +84,16 @@ export async function liveHubSubscribed(app: INestApplicationContext): Promise<v
     if (received === 0) throw new Error('the live hub has not subscribed yet');
   });
   subscription.unsubscribe();
+}
+
+export function useLiveStreams(testApp: Pick<TestApp, 'app'>): SseStream[] {
+  const streams: SseStream[] = [];
+
+  beforeAll(() => liveHubSubscribed(testApp.app));
+
+  afterEach(async () => {
+    await Promise.all(streams.splice(0).map((stream) => stream.close()));
+  });
+
+  return streams;
 }

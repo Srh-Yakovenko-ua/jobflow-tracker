@@ -1,8 +1,8 @@
 import {
   type Reminder,
   type ReminderListResponse,
+  type SilenceItem,
   type SnoozeReminderInput,
-  wholeDaysBetween,
 } from '@jobflow/shared';
 import { Injectable } from '@nestjs/common';
 import { addMilliseconds, milliseconds } from 'date-fns';
@@ -38,12 +38,7 @@ export type PlanInterview = InterviewOfApplication & { startsAt: Date; now: Date
 
 export type SnoozeReminder = SnoozeReminderInput & { id: string };
 
-export type StartFollowup = {
-  applicationId: string;
-  company: string;
-  lastEventAt: Date;
-  now: Date;
-};
+export type StartFollowup = Omit<SilenceItem, 'company'> & { now: Date };
 
 @Injectable()
 export class RemindersService {
@@ -76,9 +71,7 @@ export class RemindersService {
     return this.repository.closeActiveFollowups(userId, { applicationId, status: 'done' });
   }
 
-  async startFollowup(userId: string, start: StartFollowup): Promise<void> {
-    const { applicationId, company, lastEventAt, now } = start;
-    const days = wholeDaysBetween(lastEventAt, now);
+  async startFollowup(userId: string, { applicationId, days, now }: StartFollowup): Promise<void> {
     await this.prisma.$transaction(async (tx) => {
       await this.repository.insertFollowup(userId, { applicationId, dueAt: now, tx });
       await this.timeline.record(userId, {
@@ -88,8 +81,6 @@ export class RemindersService {
         occurredAt: now,
         tx,
       });
-      const payload = { applicationId, company, days };
-      await this.repository.insertNotification(userId, { type: 'silence', payload, tx });
     });
   }
 

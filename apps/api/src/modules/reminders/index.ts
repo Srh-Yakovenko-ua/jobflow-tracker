@@ -11,7 +11,6 @@ export type {
   InsertFollowup,
   InsertInterviewReminder,
   InterviewReminderOutcome,
-  NewNotification,
   ReminderRow,
 } from './reminders.repository.js';
 export { type PlanInterview, RemindersService } from './reminders.service.js';

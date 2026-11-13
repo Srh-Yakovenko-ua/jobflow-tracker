@@ -45,6 +45,10 @@
       "description": "Follow-up and interview reminders of the signed-in user"
     },
     {
+      "name": "notifications",
+      "description": "The in-app notification feed of the signed-in user"
+    },
+    {
       "name": "resumes",
       "description": "Resume files of the signed-in user, uploaded straight to storage"
     },
@@ -1832,7 +1836,8 @@
                     "analyticsOptOut": true,
                     "singleKeyShortcuts": false,
                     "activeResumeVersionId": "0199f0b3-2b3c-7d4e-9f50-6b7c8d9e0f1a"
-                  }
+                  },
+                  "unreadNotifications": 3
                 },
                 "schema": {
                   "type": "object",
@@ -1944,11 +1949,16 @@
                         "singleKeyShortcuts",
                         "activeResumeVersionId"
                       ]
+                    },
+                    "unreadNotifications": {
+                      "type": "integer",
+                      "minimum": 0
                     }
                   },
                   "required": [
                     "user",
-                    "settings"
+                    "settings",
+                    "unreadNotifications"
                   ]
                 }
               }
@@ -13923,6 +13933,695 @@
                   "type": "conflict",
                   "title": "Conflict",
                   "status": 409,
+                  "requestId": "0199f0c4-5d2e-7b31-8c4f-6a7b8c9d0e1f"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Invalid request",
+            "content": {
+              "application/json": {
+                "example": {
+                  "type": "validation_error",
+                  "title": "Invalid request",
+                  "status": 422,
+                  "errors": [
+                    {
+                      "path": "email",
+                      "message": "Invalid input: expected string, received undefined"
+                    }
+                  ],
+                  "requestId": "0199f0c4-5d2e-7b31-8c4f-6a7b8c9d0e1f"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too many requests: 300 per 60 s by default (RATE_LIMIT_API_PER_MINUTE)",
+            "headers": {
+              "Retry-After": {
+                "schema": {
+                  "type": "integer",
+                  "exclusiveMinimum": 0,
+                  "description": "Seconds until the limit window resets"
+                },
+                "required": true,
+                "description": "Seconds until the limit window resets"
+              }
+            },
+            "content": {
+              "application/json": {
+                "example": {
+                  "type": "rate_limited",
+                  "title": "Too many requests",
+                  "status": 429,
+                  "requestId": "0199f0c4-5d2e-7b31-8c4f-6a7b8c9d0e1f"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal error",
+            "content": {
+              "application/json": {
+                "example": {
+                  "type": "internal_error",
+                  "title": "Internal error",
+                  "status": 500,
+                  "requestId": "0199f0c4-5d2e-7b31-8c4f-6a7b8c9d0e1f"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/notifications": {
+      "get": {
+        "tags": [
+          "notifications"
+        ],
+        "summary": "List the notifications of the signed-in user",
+        "description": "Newest first. Pages follow nextCursor until it is null.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 50
+            },
+            "required": false,
+            "name": "limit",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "description": "The nextCursor of the previous page; anything but a uuid answers 422 at cursor"
+            },
+            "required": false,
+            "description": "The nextCursor of the previous page; anything but a uuid answers 422 at cursor",
+            "name": "cursor",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "description": "true keeps the unread notifications only, false the read ones only"
+            },
+            "required": false,
+            "description": "true keeps the unread notifications only, false the read ones only",
+            "name": "unread",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "One page of notifications",
+            "content": {
+              "application/json": {
+                "example": {
+                  "items": [
+                    {
+                      "id": "0199f4b1-2c3d-7e4f-8a51-6b7c8d9e0f1c",
+                      "type": "silence",
+                      "payload": {
+                        "items": [
+                          {
+                            "applicationId": "0199f0c4-6e3f-7c42-9d50-7b8c9d0e1f2a",
+                            "company": "Acme",
+                            "days": 7
+                          }
+                        ]
+                      },
+                      "readAt": null,
+                      "createdAt": "2026-11-03T09:00:00.000Z"
+                    }
+                  ],
+                  "nextCursor": null
+                },
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "oneOf": [
+                          {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string",
+                                "format": "uuid"
+                              },
+                              "readAt": {
+                                "type": [
+                                  "string",
+                                  "null"
+                                ],
+                                "format": "date-time"
+                              },
+                              "createdAt": {
+                                "type": "string",
+                                "format": "date-time"
+                              },
+                              "type": {
+                                "type": "string",
+                                "enum": [
+                                  "silence"
+                                ]
+                              },
+                              "payload": {
+                                "type": "object",
+                                "properties": {
+                                  "items": {
+                                    "type": "array",
+                                    "items": {
+                                      "type": "object",
+                                      "properties": {
+                                        "applicationId": {
+                                          "type": "string",
+                                          "format": "uuid"
+                                        },
+                                        "company": {
+                                          "type": "string",
+                                          "minLength": 1
+                                        },
+                                        "days": {
+                                          "type": "integer",
+                                          "exclusiveMinimum": 0
+                                        }
+                                      },
+                                      "required": [
+                                        "applicationId",
+                                        "company",
+                                        "days"
+                                      ]
+                                    },
+                                    "minItems": 1
+                                  }
+                                },
+                                "required": [
+                                  "items"
+                                ]
+                              }
+                            },
+                            "required": [
+                              "id",
+                              "readAt",
+                              "createdAt",
+                              "type",
+                              "payload"
+                            ]
+                          },
+                          {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string",
+                                "format": "uuid"
+                              },
+                              "readAt": {
+                                "type": [
+                                  "string",
+                                  "null"
+                                ],
+                                "format": "date-time"
+                              },
+                              "createdAt": {
+                                "type": "string",
+                                "format": "date-time"
+                              },
+                              "type": {
+                                "type": "string",
+                                "enum": [
+                                  "interview_soon"
+                                ]
+                              },
+                              "payload": {
+                                "type": "object",
+                                "properties": {
+                                  "applicationId": {
+                                    "type": "string",
+                                    "format": "uuid"
+                                  },
+                                  "scheduledEventId": {
+                                    "type": "string",
+                                    "format": "uuid"
+                                  },
+                                  "company": {
+                                    "type": "string",
+                                    "minLength": 1
+                                  },
+                                  "startsAt": {
+                                    "type": "string",
+                                    "format": "date-time"
+                                  },
+                                  "minutesBefore": {
+                                    "type": "integer",
+                                    "exclusiveMinimum": 0
+                                  }
+                                },
+                                "required": [
+                                  "applicationId",
+                                  "scheduledEventId",
+                                  "company",
+                                  "startsAt",
+                                  "minutesBefore"
+                                ]
+                              }
+                            },
+                            "required": [
+                              "id",
+                              "readAt",
+                              "createdAt",
+                              "type",
+                              "payload"
+                            ]
+                          },
+                          {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string",
+                                "format": "uuid"
+                              },
+                              "readAt": {
+                                "type": [
+                                  "string",
+                                  "null"
+                                ],
+                                "format": "date-time"
+                              },
+                              "createdAt": {
+                                "type": "string",
+                                "format": "date-time"
+                              },
+                              "type": {
+                                "type": "string",
+                                "enum": [
+                                  "ai_done"
+                                ]
+                              },
+                              "payload": {
+                                "type": "object",
+                                "properties": {
+                                  "aiJobId": {
+                                    "type": "string",
+                                    "format": "uuid"
+                                  },
+                                  "kind": {
+                                    "type": "string",
+                                    "enum": [
+                                      "vacancy_parse",
+                                      "resume_parse"
+                                    ]
+                                  },
+                                  "applicationId": {
+                                    "type": "string",
+                                    "format": "uuid"
+                                  },
+                                  "resumeVersionId": {
+                                    "type": "string",
+                                    "format": "uuid"
+                                  }
+                                },
+                                "required": [
+                                  "aiJobId",
+                                  "kind"
+                                ]
+                              }
+                            },
+                            "required": [
+                              "id",
+                              "readAt",
+                              "createdAt",
+                              "type",
+                              "payload"
+                            ]
+                          },
+                          {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string",
+                                "format": "uuid"
+                              },
+                              "readAt": {
+                                "type": [
+                                  "string",
+                                  "null"
+                                ],
+                                "format": "date-time"
+                              },
+                              "createdAt": {
+                                "type": "string",
+                                "format": "date-time"
+                              },
+                              "type": {
+                                "type": "string",
+                                "enum": [
+                                  "ai_failed"
+                                ]
+                              },
+                              "payload": {
+                                "type": "object",
+                                "properties": {
+                                  "aiJobId": {
+                                    "type": "string",
+                                    "format": "uuid"
+                                  },
+                                  "kind": {
+                                    "type": "string",
+                                    "enum": [
+                                      "vacancy_parse",
+                                      "resume_parse"
+                                    ]
+                                  },
+                                  "applicationId": {
+                                    "type": "string",
+                                    "format": "uuid"
+                                  },
+                                  "resumeVersionId": {
+                                    "type": "string",
+                                    "format": "uuid"
+                                  },
+                                  "errorType": {
+                                    "type": "string",
+                                    "minLength": 1
+                                  }
+                                },
+                                "required": [
+                                  "aiJobId",
+                                  "kind",
+                                  "errorType"
+                                ]
+                              }
+                            },
+                            "required": [
+                              "id",
+                              "readAt",
+                              "createdAt",
+                              "type",
+                              "payload"
+                            ]
+                          },
+                          {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string",
+                                "format": "uuid"
+                              },
+                              "readAt": {
+                                "type": [
+                                  "string",
+                                  "null"
+                                ],
+                                "format": "date-time"
+                              },
+                              "createdAt": {
+                                "type": "string",
+                                "format": "date-time"
+                              },
+                              "type": {
+                                "type": "string",
+                                "enum": [
+                                  "insight_unlocked"
+                                ]
+                              },
+                              "payload": {
+                                "type": "object",
+                                "properties": {
+                                  "applications": {
+                                    "type": "integer",
+                                    "exclusiveMinimum": 0
+                                  }
+                                },
+                                "required": [
+                                  "applications"
+                                ]
+                              }
+                            },
+                            "required": [
+                              "id",
+                              "readAt",
+                              "createdAt",
+                              "type",
+                              "payload"
+                            ]
+                          }
+                        ]
+                      }
+                    },
+                    "nextCursor": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "items",
+                    "nextCursor"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "example": {
+                  "type": "unauthorized",
+                  "title": "Unauthorized",
+                  "status": 401,
+                  "requestId": "0199f0c4-5d2e-7b31-8c4f-6a7b8c9d0e1f"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "example": {
+                  "type": "forbidden",
+                  "title": "Forbidden",
+                  "status": 403,
+                  "requestId": "0199f0c4-5d2e-7b31-8c4f-6a7b8c9d0e1f"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Invalid request",
+            "content": {
+              "application/json": {
+                "example": {
+                  "type": "validation_error",
+                  "title": "Invalid request",
+                  "status": 422,
+                  "errors": [
+                    {
+                      "path": "email",
+                      "message": "Invalid input: expected string, received undefined"
+                    }
+                  ],
+                  "requestId": "0199f0c4-5d2e-7b31-8c4f-6a7b8c9d0e1f"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too many requests: 300 per 60 s by default (RATE_LIMIT_API_PER_MINUTE)",
+            "headers": {
+              "Retry-After": {
+                "schema": {
+                  "type": "integer",
+                  "exclusiveMinimum": 0,
+                  "description": "Seconds until the limit window resets"
+                },
+                "required": true,
+                "description": "Seconds until the limit window resets"
+              }
+            },
+            "content": {
+              "application/json": {
+                "example": {
+                  "type": "rate_limited",
+                  "title": "Too many requests",
+                  "status": 429,
+                  "requestId": "0199f0c4-5d2e-7b31-8c4f-6a7b8c9d0e1f"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal error",
+            "content": {
+              "application/json": {
+                "example": {
+                  "type": "internal_error",
+                  "title": "Internal error",
+                  "status": 500,
+                  "requestId": "0199f0c4-5d2e-7b31-8c4f-6a7b8c9d0e1f"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/notifications/read": {
+      "post": {
+        "tags": [
+          "notifications"
+        ],
+        "summary": "Mark notifications read",
+        "description": "ids marks 1 to 100 notifications, all: true marks every unread one. Unknown ids, ids of another user and notifications already read are skipped. Answers the unread count after the change.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "example": {
+                "ids": [
+                  "0199f4b1-2c3d-7e4f-8a51-6b7c8d9e0f1c"
+                ]
+              },
+              "schema": {
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "ids": {
+                        "type": "array",
+                        "items": {
+                          "type": "string",
+                          "format": "uuid"
+                        },
+                        "minItems": 1,
+                        "maxItems": 100
+                      }
+                    },
+                    "required": [
+                      "ids"
+                    ]
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "all": {
+                        "type": "boolean",
+                        "enum": [
+                          true
+                        ]
+                      }
+                    },
+                    "required": [
+                      "all"
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The unread count after the change",
+            "content": {
+              "application/json": {
+                "example": {
+                  "unread": 0
+                },
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "unread": {
+                      "type": "integer",
+                      "minimum": 0
+                    }
+                  },
+                  "required": [
+                    "unread"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "example": {
+                  "type": "bad_request",
+                  "title": "Bad request",
+                  "status": 400,
+                  "detail": "Unexpected end of JSON input",
+                  "requestId": "0199f0c4-5d2e-7b31-8c4f-6a7b8c9d0e1f"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "example": {
+                  "type": "unauthorized",
+                  "title": "Unauthorized",
+                  "status": 401,
+                  "requestId": "0199f0c4-5d2e-7b31-8c4f-6a7b8c9d0e1f"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "example": {
+                  "type": "forbidden",
+                  "title": "Forbidden",
+                  "status": 403,
                   "requestId": "0199f0c4-5d2e-7b31-8c4f-6a7b8c9d0e1f"
                 },
                 "schema": {
