@@ -64,6 +64,10 @@ def test_wilson_interval_of_no_successes_starts_at_exactly_zero() -> None:
     assert wilson_interval(0, 20)[0] == 0.0
 
 
+def test_wilson_interval_of_only_successes_ends_at_exactly_one() -> None:
+    assert wilson_interval(20, 20)[1] == 1.0
+
+
 def test_a_rate_dumps_to_the_response_keys_with_its_status() -> None:
     dumped = rate(4, 5).model_dump(by_alias=True)
 

@@ -40,10 +40,9 @@ def wilson_interval(successes: int, trials: int) -> tuple[float, float]:
     spread = Z * Z / trials
     center = share + spread / 2
     margin = Z * sqrt(share * (1 - share) / trials + spread / (4 * trials))
-    return (
-        max(0.0, (center - margin) / (1 + spread)),
-        min(1.0, (center + margin) / (1 + spread)),
-    )
+    low = 0.0 if successes == 0 else max(0.0, (center - margin) / (1 + spread))
+    high = 1.0 if successes == trials else min(1.0, (center + margin) / (1 + spread))
+    return low, high
 
 
 def _applications_word(count: int) -> str:
