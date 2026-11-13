@@ -8,6 +8,8 @@ import {
   VACANCY_PARSE_LIMITS,
 } from '@jobflow/shared';
 
+import { followupPayload } from './followup-payload.js';
+
 export type VacancySource = { rawText: string };
 
 export type MatchInputSource = Pick<Application, 'position' | 'stack'> & {
@@ -35,4 +37,5 @@ export const AI_PAYLOAD_BUILDERS = {
     vacancy: { position, stack, text: vacancyTextOf(rawText) },
     profile: matchProfileSchema.parse(profile),
   }),
+  followup: followupPayload,
 } satisfies AiPayloadBuilders;

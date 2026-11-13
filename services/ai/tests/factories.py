@@ -97,6 +97,31 @@ def match_body(
     return {"input": {"vacancy": vacancy, "profile": MATCH_PROFILE}}
 
 
+FOLLOWUP_PATH = "/v1/complete/followup"
+FOLLOWUP_FIXTURE: dict[str, Any] = json.loads(fixture_of("followup"))
+FOLLOWUP_INPUT = {
+    "recruiterFirstName": "Оксана",
+    "company": "Acme",
+    "position": "Senior React developer",
+    "stage": "tech_interview",
+    "silenceDays": 6,
+    "lastInterview": {"kind": "tech_interview", "date": "2026-09-03"},
+    "senderName": "Андрій",
+    "language": "uk",
+    "tone": "warm",
+    "hint": "згадай, що я дорозв'язав задачу з динамічним програмуванням",
+}
+
+
+def followup_body(**overrides: Any) -> Any:
+    return {"input": {**FOLLOWUP_INPUT, **overrides}}
+
+
+def draft_of(words: int, *, ending: str = "") -> str:
+    body = " ".join(["слово"] * words)
+    return json.dumps({"subject": "Наступний крок", "body": f"{body}{ending}"})
+
+
 PII_RESUME = (
     "Olena Koval, React developer\n"
     "olena.koval@example.com | +380 67 123 45 67 | @olena_dev\n"

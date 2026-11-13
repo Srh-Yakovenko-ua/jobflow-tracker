@@ -1,5 +1,6 @@
 export { applicationQueryOptions } from './api/application';
 export { boardQueryOptions } from './api/board';
+export { applicationFollowupQueryOptions } from './api/followup';
 export { jobQueryOptions } from './api/job';
 export { applicationListQueryOptions } from './api/list';
 export { applicationMatchQueryOptions } from './api/match';

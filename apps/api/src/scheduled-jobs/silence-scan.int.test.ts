@@ -40,7 +40,7 @@ describe('the silence scan on the database', () => {
     const input = { ...TO_SCREENING, occurredAt: daysAfter(6).toISOString() };
     const response = await postStageMove(testApp.app, { accessToken, id: applicationId, input });
     expect(response.status).toBe(201);
-    await testApp.app.get(RemindersService).resolveFollowups(userId, applicationId);
+    await testApp.app.get(RemindersService).resolveFollowups(userId, { applicationId });
   }
 
   const silenceStartsOf = (applicationId: string) =>
@@ -146,7 +146,7 @@ describe('the silence scan on the database', () => {
       where: { id: applicationId },
       data: { lastEventAt: daysAfter(8) },
     });
-    await testApp.app.get(RemindersService).resolveFollowups(userId, applicationId);
+    await testApp.app.get(RemindersService).resolveFollowups(userId, { applicationId });
 
     await scanAt(minutesAfter(15 * DAY_MINUTES - 1));
     expect(await notificationsOf(testApp.prisma, userId)).toHaveLength(1);

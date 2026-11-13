@@ -2,10 +2,12 @@ import {
   AI_PAYLOAD_FIELDS,
   type Application,
   type Contact,
+  followupInputSchema,
   matchInputSchema,
   type NoteInput,
   resumeParseInputSchema,
 } from '@jobflow/shared';
+import { buildFollowupInput } from '@jobflow/shared/testing';
 import { describe, expect, it } from 'vitest';
 
 import {
@@ -21,7 +23,9 @@ import {
   SCAN_PAGE_JPEG,
   TEXT_EXTRACTION,
 } from '../../test/documents.js';
+import { privatePayloadPaths } from './ai-payload-guard.js';
 import { AI_PAYLOAD_BUILDERS, type VacancySource } from './ai-payloads.js';
+import type { FollowupSource } from './followup-payload.js';
 
 type ApplicationWithPrivateData = VacancySource &
   Pick<Application, 'company' | 'position'> & {
@@ -94,6 +98,50 @@ describe('AI_PAYLOAD_BUILDERS.match', () => {
 
     expect(payload.vacancy.text).toHaveLength(20_000);
     expect(matchInputSchema.safeParse(payload).success).toBe(true);
+  });
+});
+
+describe('AI_PAYLOAD_BUILDERS.followup', () => {
+  const HINT = "згадай, що я дорозв'язав задачу";
+  const SOURCE: FollowupSource = {
+    application: {
+      company: 'Acme',
+      position: 'Senior React developer',
+      currentStage: 'tech_interview',
+      lastEventAt: new Date('2026-09-03T12:00:00.000Z'),
+    },
+    recruiterName: '  Оксана Петренко ',
+    lastInterview: { kind: 'tech_interview', startsAt: new Date('2026-09-02T22:30:00.000Z') },
+    senderName: ' Андрій ',
+    timezone: 'Europe/Kyiv',
+    request: { tone: 'warm', language: 'uk', hint: HINT },
+    now: new Date('2026-09-10T11:00:00.000Z'),
+  };
+
+  it('sends the first word of the recruiter name, the whole days of silence and the interview day in the user timezone, and nothing private', () => {
+    const payload = AI_PAYLOAD_BUILDERS.followup(SOURCE);
+
+    expect(payload).toEqual(buildFollowupInput({ hint: HINT }));
+    expect(Object.keys(payload).sort()).toEqual([...AI_PAYLOAD_FIELDS.followup].sort());
+    expect(privatePayloadPaths(payload)).toEqual([]);
+  });
+
+  it('sends null for a missing recruiter, interview, sender name and hint', () => {
+    const payload = AI_PAYLOAD_BUILDERS.followup({
+      ...SOURCE,
+      recruiterName: null,
+      lastInterview: null,
+      senderName: ' ',
+      request: { tone: 'short', language: 'en' },
+    });
+
+    expect(payload).toMatchObject({
+      recruiterFirstName: null,
+      lastInterview: null,
+      senderName: null,
+      hint: null,
+    });
+    expect(followupInputSchema.safeParse(payload).success).toBe(true);
   });
 });
 

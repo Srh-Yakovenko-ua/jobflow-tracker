@@ -2,6 +2,7 @@ import type {
   ApplicationMatchResponse,
   ApplicationResponse,
   ApplicationTimelineResponse,
+  FollowupResponse,
 } from '@jobflow/shared';
 import { screen } from '@testing-library/react';
 import type { ReactNode } from 'react';
@@ -30,6 +31,7 @@ import {
   undoRoute,
 } from './board-fixtures';
 import { contactRoutes, type ContactRoutesOptions } from './contact-fixtures';
+import { followupRoutes } from './followup-fixtures';
 import { LiveUpdates } from './live-stream';
 import { matchRoute } from './match-fixtures';
 import {
@@ -62,6 +64,7 @@ export type ApplicationPageSetup = Partial<Pick<ApplicationRouteOptions, 'reply'
   board?: BoardRouteOptions;
   contacts?: ContactRoutesOptions;
   match?: ApplicationMatchResponse;
+  followup?: FollowupResponse;
   resumes?: ResumeRoutesOptions;
   inShell?: boolean;
   live?: boolean;
@@ -131,6 +134,7 @@ export function renderApplicationPage({
   board,
   contacts,
   match: matchResponse,
+  followup: followupResponse,
   resumes,
   inShell = false,
   live,
@@ -146,6 +150,7 @@ export function renderApplicationPage({
   const recruiters = contactRoutes(contacts);
   const match = matchRoute(matchResponse);
   const versions = resumeRoutes(resumes);
+  const followup = followupRoutes({ response: followupResponse });
   server.use(
     meRoute(),
     page.handler,
@@ -161,6 +166,7 @@ export function renderApplicationPage({
     ...recruiters.handlers,
     match.handler,
     ...versions.handlers,
+    ...followup.handlers,
   );
   const ui = shownPage({ id, mode, inShell, live, wrap: beside.wrap });
   const { user, view } = renderViewInApp(ui);
@@ -180,6 +186,7 @@ export function renderApplicationPage({
     board: beside.sent,
     contacts: recruiters.sent,
     match,
+    followup,
     resumes: versions.sent,
   };
 }

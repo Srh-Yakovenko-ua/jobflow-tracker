@@ -18,7 +18,7 @@ import { type AiJobFailure, AiRepository, type CreateAiJob } from './ai.reposito
 import { budgetWindow } from './ai-budget.js';
 import { AiClient } from './ai-client.js';
 import { FAILED_CALL, isFinal, OUTPUT_FAILURES } from './ai-failures.js';
-import { aiInputHash } from './ai-input-hash.js';
+import { jobInputHash } from './ai-input-hash.js';
 import type { SettledAiJob } from './ai-job-router.js';
 import { jobUpdateOf } from './ai-job-update.js';
 import { AiPayloadError, privatePayloadPaths } from './ai-payload-guard.js';
@@ -75,8 +75,8 @@ export class AiService {
       return null;
     }
     await attempt.progressed(jobUpdateOf({ job: attempt.job, status: 'processing' }));
-    const run = { ...attempt, now, inputHash: aiInputHash(attempt.job) };
-    return (await this.fromCache(run)) ?? this.callWithinBudget(run);
+    const run = { ...attempt, now, inputHash: jobInputHash(attempt.job) };
+    return (attempt.job.fresh ? null : await this.fromCache(run)) ?? this.callWithinBudget(run);
   }
 
   createJob(userId: string, job: CreateAiJob): Promise<string> {
@@ -133,10 +133,10 @@ export class AiService {
 
   private async call(run: AiRun): Promise<AiOutcome> {
     const { job, inputHash, now } = run;
-    const { userId, kind, input, requestId } = job;
+    const { userId, kind, input, options, requestId } = job;
     this.guardPayload(run);
     const { output, ...meta } = await this.ai
-      .complete({ kind, input, requestId })
+      .complete({ kind, input, options, requestId })
       .catch((error: unknown) => this.refuse(run, error));
     const succeeded = {
       kind,
@@ -201,7 +201,7 @@ export class AiService {
     if (!(error instanceof AiServiceError)) {
       throw error;
     }
-    const final = isFinal(error);
+    const final = isFinal({ error, kind: run.job.kind });
     if (final || run.finalAttempt) {
       await this.recordFailure(run, error.type);
     }

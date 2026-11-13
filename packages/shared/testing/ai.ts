@@ -1,4 +1,5 @@
 import type { AiCompletion } from '../src/ai/completion.js';
+import type { FollowupInput, FollowupOutput } from '../src/ai/followup.js';
 import { AI_PROMPT_VERSIONS } from '../src/ai/kinds.js';
 import type { MatchOutput } from '../src/ai/match.js';
 import type { ResumeParseOutput } from '../src/ai/resume-parse.js';
@@ -68,6 +69,30 @@ export function buildMatchOutput(overrides: Partial<MatchOutput> = {}): MatchOut
       { name: 'Домен fintech', weight: 'mentioned', coverage: 'missing' },
     ],
     explanation: 'Стек збігається, бракує AWS і досвіду ліда.',
+    ...overrides,
+  };
+}
+
+export function buildFollowupInput(overrides: Partial<FollowupInput> = {}): FollowupInput {
+  return {
+    recruiterFirstName: 'Оксана',
+    company: 'Acme',
+    position: 'Senior React developer',
+    stage: 'tech_interview',
+    silenceDays: 6,
+    lastInterview: { kind: 'tech_interview', date: '2026-09-03' },
+    senderName: 'Андрій',
+    language: 'uk',
+    tone: 'warm',
+    hint: "згадай, що я дорозв'язав задачу з динамічним програмуванням",
+    ...overrides,
+  };
+}
+
+export function buildFollowupOutput(overrides: Partial<FollowupOutput> = {}): FollowupOutput {
+  return {
+    subject: 'Технічна співбесіда в Acme: наступний крок',
+    body: "Вітаю, Оксано! Дякую за технічну співбесіду на позицію Senior React developer в Acme. Задачі були цікаві, особливо та, що з динамічним програмуванням. Після розмови я дорозв'язав її до кінця і можу надіслати рішення, якщо це доречно. Буду радий продовжити розмову з командою і відповісти на додаткові запитання. Підкажіть, будь ласка, чи вже є рішення щодо моєї кандидатури та коли орієнтовно чекати на наступний крок? Дякую! Андрій",
     ...overrides,
   };
 }

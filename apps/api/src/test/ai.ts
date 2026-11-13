@@ -4,10 +4,13 @@ import {
   type AiJobStatus,
   type AiKind,
   type Contact,
+  FOLLOWUP_LIMITS,
   type MatchProfile,
   type NoteInput,
 } from '@jobflow/shared';
 import {
+  buildFollowupInput,
+  buildFollowupOutput,
   buildMatchCompletion,
   buildMatchOutput,
   buildResumeParseOutput,
@@ -38,7 +41,7 @@ import type {
   SettledAiJob,
 } from '../modules/ai/index.js';
 import type { PrismaService } from '../prisma/prisma.service.js';
-import { OLENA_ID } from './service-fixtures.js';
+import { APPLICATION_ID, OLENA_ID } from './service-fixtures.js';
 
 export const VACANCY_TEXT = VACANCY_SAMPLE_TEXT;
 
@@ -119,6 +122,27 @@ export const VACANCY_CALL: AiCompleteCall = {
   kind: VACANCY_JOB.kind,
   input: VACANCY_JOB.input,
   requestId: VACANCY_JOB.requestId,
+};
+
+export const FOLLOWUP_COMPLETION: AiCompletion<'followup'> = {
+  ...VACANCY_COMPLETION,
+  output: buildFollowupOutput(),
+  promptVersion: AI_PROMPT_VERSIONS.followup,
+};
+
+export const FOLLOWUP_JOB: AiCompleteJob = {
+  aiJobId: AI_JOB_ID,
+  userId: OLENA_ID,
+  kind: 'followup',
+  input: buildFollowupInput(),
+  applicationId: APPLICATION_ID,
+  requestId: 'req-followup-1',
+};
+
+export const FOLLOWUP_VARIANT_JOB: AiCompleteJob = {
+  ...FOLLOWUP_JOB,
+  options: { temperature: FOLLOWUP_LIMITS.variantTemperature },
+  fresh: true,
 };
 
 export const PRIVATE_NOTE: NoteInput = {

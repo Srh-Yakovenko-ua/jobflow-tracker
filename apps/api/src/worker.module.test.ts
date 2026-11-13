@@ -8,6 +8,7 @@ import { AiProcessor } from './modules/ai/index.js';
 import { ApplicationLiveSubscriber } from './modules/applications/index.js';
 import { JwtKeys } from './modules/auth/index.js';
 import { CaptureSubscriber } from './modules/capture/index.js';
+import { FollowupsSubscriber } from './modules/followups/index.js';
 import { LivePublisher } from './modules/live/index.js';
 import { MaintenanceProcessor, MaintenanceScheduler } from './modules/maintenance/index.js';
 import {
@@ -54,6 +55,7 @@ describe('WorkerModule', () => {
       MatchQueueService,
       MatchTriggerSubscriber,
       MatchTriggerProcessor,
+      FollowupsSubscriber,
       LivePublisher,
       RemindersSubscriber,
       NotificationsSubscriber,

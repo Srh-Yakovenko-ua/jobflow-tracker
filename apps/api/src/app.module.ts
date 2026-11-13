@@ -13,6 +13,7 @@ import { AuthModule } from './modules/auth/index.js';
 import { CaptureModule } from './modules/capture/index.js';
 import { ContactsModule } from './modules/contacts/index.js';
 import { EventsModule } from './modules/events/index.js';
+import { FollowupsModule } from './modules/followups/index.js';
 import { HealthModule } from './modules/health/index.js';
 import { JobsModule } from './modules/jobs/index.js';
 import { LiveStreamModule } from './modules/live/index.js';
@@ -55,6 +56,7 @@ import { RedisModule } from './redis/redis.module.js';
     CaptureModule,
     ResumesModule,
     MatchModule,
+    FollowupsModule,
     JobsModule,
     LiveStreamModule,
   ],

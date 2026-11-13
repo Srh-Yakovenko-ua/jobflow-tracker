@@ -7,7 +7,13 @@ from pydantic import BaseModel, ValidationError
 
 from app.contracts.embed_request import EmbedRequest, Text
 from app.contracts.embed_response import EmbedResponse
-from app.core.errors import INVALID_OUTPUT, AppError, field_errors, timeout_error
+from app.core.errors import (
+    INVALID_OUTPUT,
+    AppError,
+    FieldError,
+    field_errors,
+    timeout_error,
+)
 from app.core.limiter import RateLimiter
 from app.core.pii import scrub
 from app.prompts.base import BuiltPrompt
@@ -62,14 +68,21 @@ async def attempt(request: CompletionRequest, runtime: Runtime) -> Completion:
     return await vendor_call(lambda: runtime.provider.complete(safe), runtime)
 
 
-def repair_request(
-    request: CompletionRequest, *, answer: Completion, error: ValidationError
-) -> CompletionRequest:
+def schema_repair(error: ValidationError) -> str:
     problems = "; ".join(
         f"{field.path or 'answer'}: {field.message}"
         for field in field_errors(error.errors())
     )
-    repair = f"Your answer did not match the JSON schema: {problems}. Answer again with JSON that matches the schema."
+    return f"Your answer did not match the JSON schema: {problems}. Answer again with JSON that matches the schema."
+
+
+def rules_repair(problems: list[str]) -> str:
+    return f"Your answer broke these rules: {'; '.join(problems)}. Answer again with JSON that matches the schema and keeps every rule."
+
+
+def repair_request(
+    request: CompletionRequest, *, answer: Completion, repair: str
+) -> CompletionRequest:
     return replace(
         request,
         messages=[
@@ -80,9 +93,17 @@ def repair_request(
     )
 
 
-def repaired_output(model: type[BaseModel], answer: Completion) -> BaseModel:
+def checked_answer(
+    call: StructuredCall, answer: Completion
+) -> tuple[BaseModel, list[str]]:
+    output = call.output_model.model_validate_json(answer.text)
+    problems = call.prompt.problems
+    return output, [] if problems is None else problems(output)
+
+
+def repaired_output(call: StructuredCall, answer: Completion) -> BaseModel:
     try:
-        return model.model_validate_json(answer.text)
+        output, problems = checked_answer(call, answer)
     except ValidationError as error:
         raise AppError(
             422,
@@ -90,19 +111,32 @@ def repaired_output(model: type[BaseModel], answer: Completion) -> BaseModel:
             detail="The model output did not match the schema after one repair",
             errors=field_errors(error.errors()),
         ) from error
+    if problems:
+        raise AppError(
+            422,
+            problem=INVALID_OUTPUT,
+            detail="The model output broke the kind's rules after one repair",
+            errors=[FieldError(path="output", message=problem) for problem in problems],
+        )
+    return output
 
 
 async def validated_answers(
-    model: type[BaseModel], *, request: CompletionRequest, runtime: Runtime
+    call: StructuredCall, *, request: CompletionRequest, runtime: Runtime
 ) -> tuple[BaseModel, list[Completion]]:
     first = await attempt(request, runtime)
     try:
-        return model.model_validate_json(first.text), [first]
+        output, problems = checked_answer(call, first)
     except ValidationError as error:
-        second = await attempt(
-            repair_request(request, answer=first, error=error), runtime
-        )
-        return repaired_output(model, second), [first, second]
+        repair = schema_repair(error)
+    else:
+        if not problems:
+            return output, [first]
+        repair = rules_repair(problems)
+    second = await attempt(
+        repair_request(request, answer=first, repair=repair), runtime
+    )
+    return repaired_output(call, second), [first, second]
 
 
 async def complete_structured(
@@ -119,9 +153,7 @@ async def complete_structured(
         temperature=call.prompt.temperature,
         max_tokens=call.prompt.max_tokens,
     )
-    output, answers = await validated_answers(
-        call.output_model, request=request, runtime=runtime
-    )
+    output, answers = await validated_answers(call, request=request, runtime=runtime)
     return StructuredResult(
         output=output,
         model=answers[-1].model,

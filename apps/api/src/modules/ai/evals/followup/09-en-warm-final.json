@@ -1,0 +1,15 @@
+{
+  "recruiterFirstName": "Sophie",
+  "company": "Harbor Cloud",
+  "position": "Platform Engineer",
+  "stage": "final",
+  "silenceDays": 14,
+  "lastInterview": {
+    "kind": "final_interview",
+    "date": "2026-08-27"
+  },
+  "senderName": "Olena",
+  "language": "en",
+  "tone": "warm",
+  "hint": "thank them for the system design discussion"
+}

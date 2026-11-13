@@ -4,7 +4,11 @@ import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { matchInputSchema } from '@jobflow/shared';
-import { buildMatchCompletion, buildMatchOutput } from '@jobflow/shared/testing';
+import {
+  buildFollowupInput,
+  buildMatchCompletion,
+  buildMatchOutput,
+} from '@jobflow/shared/testing';
 import { Test } from '@nestjs/testing';
 import { describe, expect, it } from 'vitest';
 
@@ -13,6 +17,7 @@ import { AiClient, AiServiceError } from '../modules/ai/index.js';
 import { DocumentsClient, DocumentsError } from '../modules/resumes/index.js';
 import {
   FakeAiClient,
+  FOLLOWUP_COMPLETION,
   MATCH_COMPLETION,
   RESUME_COMPLETION,
   VACANCY_COMPLETION,
@@ -267,5 +272,24 @@ describe('AiEvalService.resume', () => {
       'Eval case 01-cv.expected.json has no document beside it',
     );
     expect([documents.calls, ai.calls]).toEqual([[], []]);
+  });
+});
+
+describe('AiEvalService.followup', () => {
+  it('sends each case as the followup input and prints every draft with its word count', async () => {
+    const ai = new FakeAiClient();
+    ai.answer = () => Promise.resolve(FOLLOWUP_COMPLETION);
+    const dir = await casesDir({ '01-uk.json': buildFollowupInput() });
+
+    const report = await (await evalService(ai)).followup(dir);
+
+    expect(ai.calls).toEqual([{ kind: 'followup', input: buildFollowupInput() }]);
+    expect(report.lines.slice(0, 4)).toEqual([
+      'case\twords\tinvented_numbers\tresult',
+      '01-uk.json\t66\t-\tok',
+      '',
+      '## 01-uk.json',
+    ]);
+    expect(report.passed).toBe(true);
   });
 });

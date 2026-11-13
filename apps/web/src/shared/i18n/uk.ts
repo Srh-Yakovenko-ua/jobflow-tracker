@@ -12,6 +12,7 @@ import { calendar } from './calendar';
 import { calendarPage } from './calendar-page';
 import { contact } from './contact';
 import { devUi } from './dev-ui';
+import { followup } from './followup';
 import { resumes } from './resumes';
 import { settings } from './settings';
 import { shell } from './shell';
@@ -57,6 +58,7 @@ export const uk = {
   devUi,
   application,
   applicationPage,
+  followup,
   contact,
   timeline,
   states,

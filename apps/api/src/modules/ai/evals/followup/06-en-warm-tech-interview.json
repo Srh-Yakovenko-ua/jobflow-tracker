@@ -1,0 +1,15 @@
+{
+  "recruiterFirstName": "Emily",
+  "company": "Northwind Labs",
+  "position": "Senior TypeScript Engineer",
+  "stage": "tech_interview",
+  "silenceDays": 6,
+  "lastInterview": {
+    "kind": "tech_interview",
+    "date": "2026-09-04"
+  },
+  "senderName": "Andrii",
+  "language": "en",
+  "tone": "warm",
+  "hint": null
+}

@@ -75,6 +75,11 @@ describe('notification payloads', () => {
     ]);
   });
 
+  it('keeps an AI done payload for a followup draft', () => {
+    const followup = { ...AI_DONE, kind: 'followup' };
+    expect(aiDoneNotificationPayloadSchema.parse(followup)).toStrictEqual(followup);
+  });
+
   it('refuses an AI done payload for the match kind', () => {
     expect(
       issuePathsOf(aiDoneNotificationPayloadSchema.safeParse({ ...AI_DONE, kind: 'match' })),

@@ -3,6 +3,7 @@ import { join } from 'node:path';
 
 import {
   AI_JOB_FAILURES,
+  followupOutputSchema,
   matchOutputSchema,
   type ResumeParseOutput,
   resumeParseOutputSchema,
@@ -16,6 +17,8 @@ import { AI_PAYLOAD_BUILDERS, AiClient } from '../modules/ai/index.js';
 import { scoreMatch } from '../modules/match/index.js';
 import { detectResumeFormat, DocumentsClient } from '../modules/resumes/index.js';
 import type { EvalReport } from './eval-cases.js';
+import { type FollowupEvalCase, loadFollowupCases } from './followup-cases.js';
+import { type FollowupCaseAnswer, followupReport } from './followup-report.js';
 import { loadMatchCases, type MatchEvalCase } from './match-cases.js';
 import { type MatchCaseAnswer, matchReport } from './match-report.js';
 import { loadResumeCases, type ResumeEvalCase } from './resume-cases.js';
@@ -60,6 +63,12 @@ export class AiEvalService {
     const cases = await loadMatchCases(casesDir);
     const answers = await this.answerAll(cases, (evalCase) => this.matchAnswer(evalCase));
     return Array.isArray(answers) ? matchReport(answers) : answers;
+  }
+
+  async followup(casesDir: string): Promise<EvalReport> {
+    const cases = await loadFollowupCases(casesDir);
+    const answers = await this.answerAll(cases, (evalCase) => this.followupAnswer(evalCase));
+    return Array.isArray(answers) ? followupReport(answers) : answers;
   }
 
   async resume(casesDir: string): Promise<EvalReport> {
@@ -113,6 +122,18 @@ export class AiEvalService {
       return { file, manualRank: rank, score: breakdown?.score ?? null };
     } catch (error) {
       return { file, manualRank: rank, ...refusalOf(error) };
+    }
+  }
+
+  private async followupAnswer({
+    file,
+    ...input
+  }: FollowupEvalCase): Promise<FollowupCaseAnswer | Stopped> {
+    try {
+      const { output } = await this.ai.complete({ kind: 'followup', input });
+      return { file, input, output: followupOutputSchema.parse(output) };
+    } catch (error) {
+      return { file, input, ...refusalOf(error) };
     }
   }
 

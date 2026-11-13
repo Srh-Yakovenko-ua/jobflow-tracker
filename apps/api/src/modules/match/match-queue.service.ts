@@ -1,4 +1,3 @@
-import { AI_JOB_FAILURES } from '@jobflow/shared';
 import { InjectQueue } from '@nestjs/bullmq';
 import { Injectable, Logger } from '@nestjs/common';
 import { Queue } from 'bullmq';
@@ -8,7 +7,7 @@ import {
   AI_PAYLOAD_BUILDERS,
   type AiCompleteJob,
   AiService,
-  queueAiCompletion,
+  queueOrFailAiJob,
 } from '../ai/index.js';
 import { MatchRepository } from './match.repository.js';
 
@@ -46,14 +45,7 @@ export class MatchQueueService {
   }
 
   private async queued(job: AiCompleteJob): Promise<void> {
-    try {
-      await queueAiCompletion(this.queue, job);
-    } catch (error) {
-      const errorType = AI_JOB_FAILURES.notReady;
-      await this.ai.failJob(job.userId, { id: job.aiJobId, errorType });
-      this.logger.warn({ aiJobId: job.aiJobId, errorType }, 'match job not queued');
-      throw error;
-    }
+    await queueOrFailAiJob({ queue: this.queue, ai: this.ai, logger: this.logger }, job);
     this.logger.log({ aiJobId: job.aiJobId, applicationId: job.applicationId }, 'match queued');
   }
 }

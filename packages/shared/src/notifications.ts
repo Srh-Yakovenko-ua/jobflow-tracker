@@ -16,6 +16,7 @@ export const NOTIFICATION_TYPES = [
 export const NOTIFIED_AI_KINDS = [
   'vacancy_parse',
   'resume_parse',
+  'followup',
 ] as const satisfies readonly AiKind[];
 
 export const NOTIFICATION_LIMITS = { readIdsMax: 100 } as const;

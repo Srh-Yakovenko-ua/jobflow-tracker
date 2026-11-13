@@ -1,4 +1,4 @@
-import { aiKindSchema } from '@jobflow/shared';
+import { aiCompleteOptionsSchema, aiKindSchema } from '@jobflow/shared';
 import type { Job, Queue } from 'bullmq';
 import { z } from 'zod';
 
@@ -15,6 +15,8 @@ export const aiCompleteJobSchema = z.object({
   applicationId: z.uuid().optional(),
   resumeVersionId: z.uuid().optional(),
   requestId: z.string().min(1).optional(),
+  options: aiCompleteOptionsSchema.optional(),
+  fresh: z.literal(true).optional(),
 });
 
 export type AiCompleteJob = z.infer<typeof aiCompleteJobSchema>;

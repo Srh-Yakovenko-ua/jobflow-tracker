@@ -174,7 +174,9 @@ describe('the reminders API', () => {
     const olena = await owner();
     await reminderOf(olena, { dueAt: NOW });
 
-    await testApp.app.get(RemindersService).resolveFollowups(olena.userId, olena.applicationId);
+    await testApp.app
+      .get(RemindersService)
+      .resolveFollowups(olena.userId, { applicationId: olena.applicationId });
 
     expect(await listOf(olena.accessToken)).toEqual([]);
     expect(await testApp.prisma.reminder.findMany({ select: { status: true } })).toEqual([

@@ -13,6 +13,10 @@ export type {
   InterviewReminderOutcome,
   ReminderRow,
 } from './reminders.repository.js';
-export { type PlanInterview, RemindersService } from './reminders.service.js';
+export {
+  type PlanInterview,
+  RemindersService,
+  type ResolveFollowups,
+} from './reminders.service.js';
 export { RemindersSubscriber } from './reminders.subscriber.js';
 export { type SilenceScanCounts, SilenceScanService } from './silence-scan.service.js';

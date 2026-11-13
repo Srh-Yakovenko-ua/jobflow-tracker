@@ -23,6 +23,7 @@ import {
 } from '../model/use-application-page';
 import { ApplicationActions } from './application-actions';
 import { ApplicationContext } from './application-context';
+import { ApplicationFollowup } from './application-followup';
 import { ApplicationHeader } from './application-header';
 import { ApplicationMatch } from './application-match';
 import { ApplicationNotes } from './application-notes';
@@ -89,6 +90,8 @@ function LoadedPage({ application, page, view }: LoadedPageProps) {
   const match = useApplicationMatch(application);
   const { panel } = page;
   const editing = panel?.kind === 'edit' ? panel.field : null;
+  const singleColumn = view.mode === 'sheet';
+  const followup = <ApplicationFollowup application={application} />;
   const focusTitle = () => {
     titleRef.current?.focus();
   };
@@ -127,11 +130,13 @@ function LoadedPage({ application, page, view }: LoadedPageProps) {
               </Reveal>
             </div>
           </ApplicationHeader>
+          {singleColumn && followup}
           <ApplicationMatch match={match} />
           <ApplicationTimeline application={application} />
           <ApplicationNotes key={application.id} application={application} />
         </div>
         <div className="flex min-w-0 flex-col gap-6">
+          {!singleColumn && followup}
           <ApplicationRecruiter key={application.id} application={application} />
           <AttachedResume application={application} actions={{ onRelinked: match.onRelinked }} />
           <ApplicationContext application={application} />

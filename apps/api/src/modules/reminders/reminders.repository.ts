@@ -37,7 +37,10 @@ export type CloseInterviewReminder = InterviewOfApplication & { status: Intervie
 
 export type InsertInterviewReminder = InterviewOfApplication & { dueAt: Date };
 
-export type CloseFollowups = { applicationId: string; status: InterviewReminderOutcome };
+export type CloseFollowups = InTransaction & {
+  applicationId: string;
+  status: InterviewReminderOutcome;
+};
 
 export type InsertFollowup = InTransaction & { applicationId: string; dueAt: Date };
 
@@ -73,8 +76,12 @@ export class RemindersRepository {
     return this.closeActiveOfType(userId, { where, status, ...(tx && { tx }) });
   }
 
-  closeActiveFollowups(userId: string, { applicationId, status }: CloseFollowups): Promise<number> {
-    return this.closeActiveOfType(userId, { where: { applicationId, type: 'followup' }, status });
+  closeActiveFollowups(
+    userId: string,
+    { applicationId, status, tx }: CloseFollowups,
+  ): Promise<number> {
+    const where = { applicationId, type: 'followup' as const };
+    return this.closeActiveOfType(userId, { where, status, ...(tx && { tx }) });
   }
 
   async insertInterview(

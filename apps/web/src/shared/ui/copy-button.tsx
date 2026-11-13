@@ -16,7 +16,7 @@ const OUTCOMES = {
   refused: { tone: 'error', title: uk.ui.copyFailed },
 } as const satisfies Record<string, ToastContent>;
 
-function copyToClipboard(value: string): void {
+export function copyToClipboard(value: string): void {
   void Promise.resolve()
     .then(() => navigator.clipboard.writeText(value))
     .then(

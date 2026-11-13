@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
-import { keyOf, requestHashOf } from './idempotency-request.js';
+import { type KeyedRequest, keyOf, requestHashOf, storedReplyOf } from './idempotency-request.js';
+import type { IdempotentOptions } from './idempotent.decorator.js';
 
 const NOTES_URL = '/api/v1/applications/0199f0c4-6e3f-7c42-9d50-7b8c9d0e1f2a/notes';
 
@@ -10,9 +11,11 @@ const KEY = '0199f3a0-1b2c-7d3e-8f40-5a6b7c8d9e0f';
 
 const keyedWith = (key: string) => ({ headers: { 'idempotency-key': key } });
 
-function refusalOf(key: string): unknown {
+type KeyCall = { request: KeyedRequest; options?: IdempotentOptions };
+
+function refusalOf({ request, options }: KeyCall): unknown {
   try {
-    keyOf(keyedWith(key));
+    keyOf(request, options);
     return undefined;
   } catch (error: unknown) {
     return error;
@@ -50,12 +53,23 @@ describe('keyOf', () => {
     expect(keyOf({ headers: {} })).toBeUndefined();
   });
 
-  it.each([
-    { case: 'an empty key', key: '' },
-    { case: 'a key of 256 characters', key: 'k'.repeat(256) },
-  ])('refuses $case with 422 at Idempotency-Key', ({ key }) => {
-    expect(refusalOf(key)).toMatchObject({
+  it.each<KeyCall & { case: string }>([
+    { case: 'an empty key', request: keyedWith('') },
+    { case: 'a key of 256 characters', request: keyedWith('k'.repeat(256)) },
+    {
+      case: 'a missing key on a route that requires one',
+      request: { headers: {} },
+      options: { keyRequired: true },
+    },
+  ])('refuses $case with 422 at Idempotency-Key', (call) => {
+    expect(refusalOf(call)).toMatchObject({
       body: { status: 422, type: 'validation_error', errors: [{ path: 'Idempotency-Key' }] },
     });
+  });
+});
+
+describe('storedReplyOf', () => {
+  it('stores a 204 reply without a body as a null body', () => {
+    expect(storedReplyOf({ body: undefined })).toEqual({ body: null });
   });
 });

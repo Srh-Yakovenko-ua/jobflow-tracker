@@ -177,7 +177,9 @@ describe('RemindersService.resolveFollowups', () => {
       storedReminder({ id: BOHDAN_ID, userId: BOHDAN_ID }),
     ]);
 
-    await expect(service.resolveFollowups(OLENA_ID, APPLICATION_ID)).resolves.toBe(1);
+    await expect(
+      service.resolveFollowups(OLENA_ID, { applicationId: APPLICATION_ID }),
+    ).resolves.toBe(1);
     expect(repository.rows.map(({ status }) => status)).toEqual([
       'done',
       'pending',
