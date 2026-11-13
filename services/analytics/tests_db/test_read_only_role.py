@@ -36,6 +36,7 @@ APPLICATION_COLUMNS = [
     "search_id",
     "resume_version_id",
     "source",
+    "url",
     "current_stage",
     "work_mode",
     "currency",
