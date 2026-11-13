@@ -9,6 +9,8 @@ const FILE_REFUSED = states.errors.fileTooBig.eyebrow;
 
 const TITLE_MAX = String(RESUME_VERSION_LIMITS.titleMaxLength);
 
+const percent = (value: number) => `${String(value)}%`;
+
 export const resumes = {
   title: 'Версії резюме',
   lead: "Кожен відгук прив'язаний до версії. Саме тому аналітика вміє сказати, яке резюме працює, і саме тому варто прив'язувати чесно.",
@@ -23,6 +25,7 @@ export const resumes = {
   active: 'активна',
   lowData: 'мало даних',
   needMore: (missing: number) => `потрібно ще ${String(missing)}`,
+  percent,
   upload: {
     eyebrow: 'Завантаження версії',
     title: 'Перетягни PDF або DOCX сюди',
@@ -31,7 +34,7 @@ export const resumes = {
     pick: 'Обрати файл',
     submit: 'Завантажити',
     progressLabel: 'Завантаження файлу',
-    percent: (percent: number) => `${String(percent)}%`,
+    percent,
   },
   titleField: {
     label: 'Назва версії',

@@ -8,6 +8,7 @@ import { type ReactNode, useId } from 'react';
 import { uk } from '@/shared/i18n';
 import { cn } from '@/shared/lib/cn';
 import { usePrefersReducedMotion } from '@/shared/lib/reduced-motion';
+import { useDataTransition } from '@/shared/lib/use-data-transition';
 
 import { type MatchRow, matchRowsOf } from '../lib/match-rows';
 import type { ScoredMatch } from '../lib/match-view';
@@ -27,13 +28,6 @@ const PERCENT = 100;
 
 const MS = 1000;
 
-const GROW = {
-  duration: CHART_THEME.animation.duration / MS,
-  ease: CHART_THEME.motion.easing,
-} as const;
-
-const STILL = { duration: 0 } as const;
-
 const ROW: Variants = { hidden: { opacity: 0, y: 4 }, shown: { opacity: 1, y: 0 } };
 
 const LIST: Variants = {
@@ -44,7 +38,7 @@ const LIST: Variants = {
 const LIST_STILL: Variants = { hidden: {}, shown: {} };
 
 function MatchBar({ score }: Readonly<{ score: number }>) {
-  const reduced = usePrefersReducedMotion();
+  const transition = useDataTransition();
   return (
     <span aria-hidden className="flex h-3 overflow-hidden rounded-pill bg-line-soft">
       <motion.span
@@ -53,7 +47,7 @@ function MatchBar({ score }: Readonly<{ score: number }>) {
         style={{ width: `${String(Math.min(score, PERCENT))}%` }}
         initial={{ scaleX: 0 }}
         animate={{ scaleX: 1 }}
-        transition={reduced ? STILL : GROW}
+        transition={transition}
       />
     </span>
   );

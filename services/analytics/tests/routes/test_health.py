@@ -63,6 +63,7 @@ def test_lists_the_health_and_metric_paths_in_the_openapi_schema(
         "/analytics/norms",
         "/analytics/reasons",
         "/analytics/reasons/summary",
+        "/analytics/resume-ab",
         "/analytics/sankey",
         "/analytics/sources",
         "/analytics/timings",

@@ -1,11 +1,13 @@
-import type { ResumeVersion } from '@jobflow/shared';
+import type { ResumeAbResponse, ResumeVersion } from '@jobflow/shared';
 import { screen, within } from '@testing-library/react';
+import type { HttpResponseResolver } from 'msw';
 import { http } from 'msw/http';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { apiUrl, errorReply } from '@/test/api-handlers';
 import { advancePastQueryRetries, fakeTimeoutsAndClock } from '@/test/fake-timeouts';
 import { renderInApp } from '@/test/render-in-app';
+import { DESIGN_RESUME_AB, resumeAbRoute } from '@/test/resume-ab-fixtures';
 import {
   buildResumeVersion,
   buildResumeVersions,
@@ -24,9 +26,15 @@ const ACTIVE = 'активна';
 
 const LONG_TITLE = 'для продуктових компаній з акцентом на дизайн-системи та B2B SaaS';
 
-function renderPage(options: ResumeRoutesOptions = {}) {
+type PageRoutesOptions = ResumeRoutesOptions & {
+  resumeAb?: ResumeAbResponse | HttpResponseResolver;
+};
+
+const DESIGN_COUNTS: Record<number, number> = { 3: 3, 2: 27, 1: 21 };
+
+function renderPage({ resumeAb, ...options }: PageRoutesOptions = {}) {
   const routes = resumeRoutes(options);
-  server.use(...routes.handlers);
+  server.use(resumeAbRoute(resumeAb), ...routes.handlers);
   const user = renderInApp(<ResumesPage />);
   return { user, routes };
 }
@@ -40,6 +48,18 @@ function rowOf(rows: readonly HTMLElement[], label: string): HTMLElement {
   const row = rows.find((candidate) => within(candidate).queryByText(label) !== null);
   if (row === undefined) throw new Error(`no row for ${label}`);
   return row;
+}
+
+function designPage(resumeAb: ResumeAbResponse | HttpResponseResolver): PageRoutesOptions {
+  const items = buildResumeVersions(3).map((version) => ({
+    ...version,
+    applicationsCount: DESIGN_COUNTS[version.number] ?? 0,
+  }));
+  return { items, activeId: items[1]?.id ?? null, resumeAb };
+}
+
+function barOf(row: HTMLElement): Element | null {
+  return row.querySelector('[data-conversion-bar]');
 }
 
 function onlyVersion(overrides: Partial<ResumeVersion>): ResumeRoutesOptions {
@@ -139,6 +159,7 @@ describe('ResumesPage', () => {
       http.get(apiUrl('/resumes/versions'), () =>
         outage.on ? errorReply({ status: 500, type: 'internal_error' }) : undefined,
       ),
+      resumeAbRoute(),
       ...routes.handlers,
     );
     const user = renderInApp(<ResumesPage />);
@@ -149,5 +170,50 @@ describe('ResumesPage', () => {
     await user.click(retry);
 
     expect(await dataRowsOf(TABLE.name)).toHaveLength(1);
+  });
+
+  it('the design numbers show 41% with its bar on the active CV v2, 24% on CV v1 and too little data on CV v3', async () => {
+    renderPage(designPage(DESIGN_RESUME_AB));
+
+    await screen.findByText('41%');
+    const rows = await dataRowsOf(TABLE.name);
+    const v2 = rowOf(rows, 'CV v2 · версія 2');
+    const v1 = rowOf(rows, 'CV v1 · версія 1');
+    const v3 = rowOf(rows, 'CV v3 · версія 3');
+
+    expect(within(v2).getByText('41%')).toBeDefined();
+    expect(within(v1).getByText('24%')).toBeDefined();
+    expect(barOf(v2)?.className).toContain('bg-data-2');
+    expect(barOf(v2)?.getAttribute('style')).toContain('translateX(-59%)');
+    expect(barOf(v1)?.className).toContain('bg-data-6');
+    expect(barOf(v1)?.getAttribute('style')).toContain('translateX(-76%)');
+    expect(within(v3).getByText('потрібно ще 2')).toBeDefined();
+    expect(within(v3).getByText('мало даних')).toBeDefined();
+    expect(barOf(v3)).toBeNull();
+  });
+
+  it('the rows other than the active one go by conversion, so CV v1 at 24% comes before the newer CV v3', async () => {
+    renderPage(designPage(DESIGN_RESUME_AB));
+    await screen.findByText('41%');
+
+    const rows = await dataRowsOf(TABLE.name);
+
+    expect(rows.map((row) => within(row).getByTitle(/^CV v/).textContent)).toEqual([
+      'CV v2 · версія 2',
+      'CV v1 · версія 1',
+      'CV v3 · версія 3',
+    ]);
+  });
+
+  it('an analytics outage keeps the table with the sample counts and no percent', async () => {
+    renderPage(designPage(() => errorReply({ status: 503, type: 'dependency_unavailable' })));
+    await advancePastQueryRetries();
+
+    const rows = await dataRowsOf(TABLE.name);
+
+    expect(within(rowOf(rows, 'CV v3 · версія 3')).getByText('потрібно ще 2')).toBeDefined();
+    expect(screen.getAllByText('мало даних')).toHaveLength(3);
+    expect(screen.getByRole('table', TABLE).textContent).not.toContain('%');
+    expect(screen.queryByRole('button', { name: 'Спробувати ще раз' })).toBeNull();
   });
 });

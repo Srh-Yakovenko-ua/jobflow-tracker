@@ -75,11 +75,15 @@ export function buildResumeVersion(overrides: Partial<ResumeVersion> = {}): Resu
   });
 }
 
+export function resumeVersionIdOf(number: number): string {
+  return fixtureIdOf(SERIAL_FROM + number);
+}
+
 export function buildResumeVersions(count: number): ResumeVersion[] {
   return Array.from({ length: count }, (_, offset) => {
     const number = count - offset;
     return buildResumeVersion({
-      id: fixtureIdOf(SERIAL_FROM + number),
+      id: resumeVersionIdOf(number),
       number,
       title: `версія ${String(number)}`,
       filename: `cv_v${String(number)}.pdf`,
