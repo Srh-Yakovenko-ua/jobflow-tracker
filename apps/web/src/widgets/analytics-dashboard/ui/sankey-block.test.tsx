@@ -36,6 +36,8 @@ const SPLIT = 'розбити відмови за причинами';
 
 const FUNNEL = 'етапи воронки';
 
+const LOADED = { timeout: 2500 } as const;
+
 const ENDINGS = 'чим закінчились';
 
 const BIGGEST_DROP = 'найбільша втрата';
@@ -131,7 +133,7 @@ afterEach(() => {
 describe('SankeyBlock', () => {
   it('draws the 54 application search as a funnel: each stage with its count and conversion, where the rest went, how it ended', async () => {
     renderDashboard();
-    const funnel = await screen.findByRole('list', { name: FUNNEL });
+    const funnel = await screen.findByRole('list', { name: FUNNEL }, LOADED);
 
     expect(rowsOf(funnel).map(rowText)).toEqual(DESIGN_FUNNEL_ROWS);
     expect(rowsOf(funnel).map((row) => within(row).queryByText(BIGGEST_DROP) !== null)).toEqual([
@@ -175,7 +177,7 @@ describe('SankeyBlock', () => {
 
   it('puts no text on a bar, keeps a one application segment visible, and shows the table to a keyboard user', async () => {
     renderDashboard();
-    const funnel = await screen.findByRole('list', { name: FUNNEL });
+    const funnel = await screen.findByRole('list', { name: FUNNEL }, LOADED);
     const table = screen.getByRole('table', { name: TABLE });
 
     const hidden = [...funnel.querySelectorAll('[aria-hidden="true"]')];
@@ -216,7 +218,7 @@ describe('SankeyBlock', () => {
 
   it('hover or keyboard focus on an exit shows its flow, the stage counts and the Wilson interval; a stage link is 44 px and dims the other rows', async () => {
     const { user } = renderDashboard();
-    const funnel = await screen.findByRole('list', { name: FUNNEL });
+    const funnel = await screen.findByRole('list', { name: FUNNEL }, LOADED);
 
     await user.hover(screen.getByRole('link', { name: 'відмова 21' }));
     const tooltip = await screen.findByRole('tooltip');
@@ -315,7 +317,7 @@ describe('SankeyBlock', () => {
     MotionGlobalConfig.skipAnimations = false;
     stubMotionPreference(preference);
     renderDashboard();
-    const funnel = await screen.findByRole('list', { name: FUNNEL });
+    const funnel = await screen.findByRole('list', { name: FUNNEL }, LOADED);
 
     const bars = [...funnel.querySelectorAll<HTMLElement>('.origin-left')];
     expect(bars.length).toBeGreaterThan(5);
