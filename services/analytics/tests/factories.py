@@ -4,12 +4,14 @@ import threading
 import time
 from collections.abc import Iterator
 from contextlib import contextmanager
-from dataclasses import dataclass, field
+from dataclasses import asdict, dataclass, field, fields
+from datetime import UTC, datetime, timedelta
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from typing import Any
-from uuid import UUID, uuid4
+from uuid import UUID, uuid4, uuid5
 
 import jwt
+import pandas as pd
 from cryptography.hazmat.primitives.asymmetric import rsa
 from fastapi import APIRouter, FastAPI
 from fastapi.testclient import TestClient
@@ -31,6 +33,49 @@ WEB_ORIGIN = REQUIRED_ENV["WEB_ORIGIN"]
 
 USER_ID = UUID("0196f0a1-7c2e-7b3d-8a41-5e6f7a8b9c0d")
 SEARCH_ID = UUID("0196f0a1-7c2e-7b3d-8a41-5e6f7a8b9c1e")
+EVENTS_BASE_TIME = datetime(2026, 11, 2, 9, 0, tzinfo=UTC)
+
+
+def application(index: int) -> UUID:
+    return uuid5(SEARCH_ID, f"application-{index}")
+
+
+@dataclass(frozen=True)
+class StageEvent:
+    id: UUID
+    application_id: UUID
+    compensates_event_id: UUID | None
+    from_stage: str | None
+    to_stage: str
+    reason_code: str | None
+
+
+def stage_event(
+    application_id: UUID,
+    to_stage: str,
+    *,
+    from_stage: str | None = None,
+    compensates: UUID | None = None,
+    reason: str | None = None,
+) -> StageEvent:
+    move = f"{application_id}:{from_stage}:{to_stage}:{compensates}"
+    return StageEvent(
+        id=uuid5(application_id, move),
+        application_id=application_id,
+        compensates_event_id=compensates,
+        from_stage=from_stage,
+        to_stage=to_stage,
+        reason_code=reason,
+    )
+
+
+def stage_events_frame(rows: list[StageEvent]) -> pd.DataFrame:
+    columns = [column.name for column in fields(StageEvent)]
+    frame = pd.DataFrame([asdict(row) for row in rows], columns=columns)
+    frame["occurred_at"] = [
+        EVENTS_BASE_TIME + timedelta(hours=order) for order in range(len(rows))
+    ]
+    return frame.astype({"from_stage": "str", "to_stage": "str", "reason_code": "str"})
 
 
 def settings_for(

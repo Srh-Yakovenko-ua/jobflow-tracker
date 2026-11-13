@@ -2,6 +2,7 @@ import pytest
 
 from app.core.auth import READ_SCOPE
 from app.core.enums import (
+    GHOSTED_STAGE,
     STAGE_ROLES,
     DomainEnums,
     UnhandledStageError,
@@ -31,6 +32,20 @@ def test_reads_the_reason_taxonomy_with_its_camel_case_keys() -> None:
         "Skills gap",
         1,
     )
+
+
+def test_reads_the_data_rule_thresholds_from_their_upper_case_keys() -> None:
+    thresholds = load_domain_enums().thresholds
+
+    assert (
+        thresholds.min_n_percent,
+        thresholds.min_n_insight,
+        thresholds.min_n_forecast,
+    ) == (5, 10, 15)
+
+
+def test_the_ghosted_stage_is_a_stage_exported_by_the_shared_package() -> None:
+    assert GHOSTED_STAGE in load_domain_enums().stages
 
 
 def test_the_read_scope_is_a_token_scope_exported_by_the_shared_package() -> None:
