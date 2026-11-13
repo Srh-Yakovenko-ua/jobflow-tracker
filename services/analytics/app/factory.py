@@ -6,6 +6,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.routes import (
+    forecast,
     funnel,
     health,
     reasons,
@@ -61,4 +62,5 @@ def create_app(settings: Settings) -> FastAPI:
     app.include_router(sources.router)
     app.include_router(timings.router)
     app.include_router(resume_ab.router)
+    app.include_router(forecast.router)
     return app
