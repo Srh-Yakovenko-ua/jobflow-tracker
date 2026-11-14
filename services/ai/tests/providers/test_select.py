@@ -1,4 +1,5 @@
 import pytest
+from pydantic import ValidationError
 
 from app.core.config import Settings
 from app.providers import provider_for
@@ -15,6 +16,23 @@ def provider_from_env(monkeypatch: pytest.MonkeyPatch, env: dict[str, str]) -> o
 
 def test_picks_the_fake_provider_by_default(monkeypatch: pytest.MonkeyPatch) -> None:
     assert type(provider_from_env(monkeypatch, {})) is FakeAiProvider
+
+
+@pytest.mark.parametrize(
+    ("env", "delay"), [({}, 0), ({"AI_FAKE_DELAY_SECONDS": "3"}, 3)]
+)
+def test_paces_the_fake_provider_by_the_demo_delay(
+    monkeypatch: pytest.MonkeyPatch, *, env: dict[str, str], delay: float
+) -> None:
+    provider = provider_from_env(monkeypatch, env)
+
+    assert isinstance(provider, FakeAiProvider)
+    assert provider.delay_seconds == delay
+
+
+def test_refuses_a_negative_fake_delay() -> None:
+    with pytest.raises(ValidationError, match="ai_fake_delay_seconds"):
+        Settings(_env_file=None, ai_fake_delay_seconds=-1)
 
 
 @pytest.mark.parametrize(

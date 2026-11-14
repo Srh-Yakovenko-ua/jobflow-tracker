@@ -22,6 +22,7 @@ class Settings(BaseSettings):
     ai_timeout_seconds: float = Field(default=30, gt=0)
     ai_max_retries: int = Field(default=2, ge=0)
     ai_rate_limit_per_minute: int = Field(default=35, gt=0)
+    ai_fake_delay_seconds: float = Field(default=0, ge=0)
     api_jwks_url: str = "http://localhost:4000/.well-known/jwks.json"
     jwks_timeout_seconds: float = Field(default=2, gt=0)
     log_level: str = "INFO"

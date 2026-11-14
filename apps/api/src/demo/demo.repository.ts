@@ -47,6 +47,7 @@ export class DemoRepository {
     await tx.notification.deleteMany({ where: { userId } });
     await tx.search.deleteMany({ where: { userId } });
     await tx.resume.deleteMany({ where: { userId } });
+    await tx.idempotencyKey.deleteMany({ where: { userId } });
   }
 
   async createApplication(

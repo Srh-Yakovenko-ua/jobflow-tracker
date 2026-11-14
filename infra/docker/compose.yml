@@ -190,10 +190,11 @@ services:
       context: ../..
       dockerfile: services/ai/Dockerfile
     env_file:
-      - path: ../../services/ai/.env
+      - path: ../../services/ai/${AI_ENV_FILE:-.env}
         required: false
     environment:
       API_JWKS_URL: http://api:4000/.well-known/jwks.json
+      AI_FAKE_DELAY_SECONDS: ${AI_FAKE_DELAY_SECONDS:-0}
     ports:
       - '127.0.0.1:8001:8001'
     healthcheck:

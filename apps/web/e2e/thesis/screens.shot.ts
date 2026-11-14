@@ -1,14 +1,15 @@
 import path from 'node:path';
 
-import { applicationListResponseSchema, DEMO_USER, summaryResponseSchema } from '@jobflow/shared';
-import type { APIRequestContext, Locator, Page } from '@playwright/test';
+import { DEMO_USER } from '@jobflow/shared';
+import type { Locator, Page } from '@playwright/test';
 
 import { uk } from '@/shared/i18n';
 
 import { analyticsBlock, designSankey, resumeAbTable } from '../test/analytics-fixture';
 import { boardCards } from '../test/board';
-import { expect, loginToken, signedOutTest, signIn } from '../test/session';
-import { apiUrl, REPO_ROOT } from '../test/stack';
+import { type DemoTargets, demoTargets } from '../test/demo';
+import { expect, signedOutTest, signIn } from '../test/session';
+import { REPO_ROOT } from '../test/stack';
 
 const SCHEMES = ['light', 'dark'] as const;
 
@@ -22,8 +23,6 @@ type Screen = Readonly<{
   ready?: (page: Page) => Locator;
   details?: readonly Detail[];
 }>;
-
-type DemoTargets = Readonly<{ applicationId: string; month: string }>;
 
 type Shot = Readonly<{ page: Page; scheme: Scheme }>;
 
@@ -70,18 +69,6 @@ function signedIn({ applicationId, month }: DemoTargets): readonly Screen[] {
 }
 
 const shotPath = (name: string, scheme: Scheme) => path.join(SHOTS.dir, `${name}-${scheme}.png`);
-
-async function demoTargets(request: APIRequestContext): Promise<DemoTargets> {
-  const headers = { Authorization: `Bearer ${await loginToken(request, DEMO_USER)}` };
-  const list = await request.get(apiUrl('/applications'), { headers });
-  const latest = await request.get(apiUrl('/summaries/latest'), { headers });
-  const first = applicationListResponseSchema.parse(await list.json()).items[0];
-  const { summary } = summaryResponseSchema.parse(await latest.json());
-  if (first === undefined || summary === null) {
-    throw new Error('thesis screenshots need the demo data: run pnpm demo:seed first');
-  }
-  return { applicationId: first.id, month: summary.month };
-}
 
 async function settle(page: Page, screen: Screen): Promise<void> {
   await expect(page.getByRole('heading', { level: 1 }).first()).toBeVisible(SHOTS.wait);
