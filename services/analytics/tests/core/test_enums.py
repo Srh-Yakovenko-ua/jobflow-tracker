@@ -50,6 +50,16 @@ def test_reads_the_data_rule_thresholds_from_their_upper_case_keys() -> None:
     ) == (5, 10, 15, 0.6)
 
 
+def test_reads_the_analytics_cache_key_templates_shared_with_the_worker() -> None:
+    cache = load_domain_enums().analytics_cache
+
+    assert (cache.version_key, cache.entry_key, cache.ttl_seconds) == (
+        "analytics:{userId}:version",
+        "analytics:{userId}:v{version}:{metric}:{paramsHash}",
+        3600,
+    )
+
+
 def test_the_funnel_stages_are_the_progress_stages_in_enums_json_order() -> None:
     assert progress_stages() == (
         "applied",

@@ -4,6 +4,7 @@ import { LoggerModule } from 'nestjs-pino';
 import { loggerParams } from './common/logger.js';
 import { configModule } from './config/app-config.js';
 import { AiWorkerModule } from './modules/ai/index.js';
+import { AnalyticsCacheWorkerModule } from './modules/analytics-cache/index.js';
 import { ApplicationsWorkerModule } from './modules/applications/index.js';
 import { CaptureWorkerModule } from './modules/capture/index.js';
 import { FollowupsWorkerModule } from './modules/followups/index.js';
@@ -32,6 +33,7 @@ import { QueuesModule } from './queues/queues.module.js';
     SummariesWorkerModule,
     RemindersWorkerModule,
     NotificationsWorkerModule,
+    AnalyticsCacheWorkerModule,
   ],
 })
 export class WorkerModule {}

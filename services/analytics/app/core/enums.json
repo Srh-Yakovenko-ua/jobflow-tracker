@@ -195,5 +195,10 @@
     "analytics:read",
     "capture",
     "ai:invoke"
-  ]
+  ],
+  "analyticsCache": {
+    "versionKey": "analytics:{userId}:version",
+    "entryKey": "analytics:{userId}:v{version}:{metric}:{paramsHash}",
+    "ttlSeconds": 3600
+  }
 }

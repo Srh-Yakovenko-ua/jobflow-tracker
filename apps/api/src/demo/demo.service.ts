@@ -19,7 +19,7 @@ export class DemoService {
     private readonly clock: Clock,
   ) {}
 
-  async run(): Promise<PutObject[]> {
+  async run(): Promise<{ userId: string; cvFiles: PutObject[] }> {
     await this.seed.run();
     const story = shiftStory(openDemoJourneys(await loadDemoStory()), { now: this.clock.now() });
     const { userId, summary, matches, cvFiles } = await this.writer.replace({
@@ -31,6 +31,6 @@ export class DemoService {
     this.logger.log(
       `Demo story seeded: ${String(story.applications.length)} applications, ${String(events)} stage events, ${String(story.resumeVersions.length)} resume versions, ${String(matches)} matches, summary for ${summary.month} with ${String(plan.items.length)} plan items`,
     );
-    return cvFiles;
+    return { userId, cvFiles };
   }
 }

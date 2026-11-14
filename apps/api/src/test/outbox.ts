@@ -45,6 +45,13 @@ const SAMPLE_APPLICATION_EVENTS: SampleApplicationEvents = {
   }),
 };
 
+export type SamplePayloadOf = { eventType: ApplicationEventType; userId: string };
+
+export function sampleApplicationPayload({ eventType, userId }: SamplePayloadOf) {
+  return applicationEventRow({ ...SAMPLE_APPLICATION_EVENTS[eventType](randomUUID()), userId })
+    .payload;
+}
+
 export type RecordingHandler = {
   readonly events: DomainEvent[];
   readonly handle: DomainEventHandler;
