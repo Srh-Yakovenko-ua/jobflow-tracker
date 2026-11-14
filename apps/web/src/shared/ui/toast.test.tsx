@@ -5,13 +5,13 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { uk } from '@/shared/i18n';
 
-import { showToast, ToastCard } from './toast';
+import { showToast, ToastCard, type ToastContent } from './toast';
 
 const COPY = uk.devUi.feedback.realToast;
 
 const UNDO = uk.devUi.feedback.toasts.undo;
 
-function showActionToast() {
+function showActionToast(content: Partial<ToastContent> = {}) {
   const onAction = vi.fn();
   render(<Toaster />);
   act(() => {
@@ -20,6 +20,7 @@ function showActionToast() {
       title: COPY.title,
       description: COPY.description,
       action: { label: COPY.action, onAction },
+      ...content,
     });
   });
   return onAction;
@@ -54,6 +55,23 @@ describe('showToast', () => {
     await user.dblClick(await screen.findByRole('button', { name: COPY.action }));
 
     expect(onAction).toHaveBeenCalledTimes(1);
+  });
+
+  it('the dismiss button runs only its own handler, once, and the toast leaves', async () => {
+    const user = userEvent.setup();
+    const onDismiss = vi.fn();
+    const onAction = showActionToast({
+      tone: 'info',
+      dismiss: { label: uk.app.close, onAction: onDismiss },
+    });
+
+    await user.dblClick(await screen.findByRole('button', { name: uk.app.close }));
+
+    expect(onDismiss).toHaveBeenCalledTimes(1);
+    expect(onAction).not.toHaveBeenCalled();
+    await waitFor(() => {
+      expect(screen.queryByText(COPY.title)).toBeNull();
+    });
   });
 
   it('a static specimen card that never leaves runs its action on every press', async () => {

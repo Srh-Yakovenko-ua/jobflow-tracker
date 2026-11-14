@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { clearAccessToken } from '@/shared/api';
 import { uk } from '@/shared/i18n';
 import { AUTH_ROUTES } from '@/shared/lib/return-to';
+import { dropPushSubscription } from '@/shared/lib/web-push';
 import { showErrorToast } from '@/shared/ui/error-toast';
 
 import { logout } from '../api/logout';
@@ -26,6 +27,7 @@ export function useSession(): Session {
     onSuccess: () => {
       if (me !== undefined) forgetRecentApplications(me.user.id);
       clearAccessToken();
+      void dropPushSubscription();
       router.replace(AUTH_ROUTES.login);
     },
     onError: () => {

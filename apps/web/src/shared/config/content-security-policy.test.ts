@@ -8,15 +8,21 @@ const ORIGINS = [
   'http://localhost:9000/resumes',
 ];
 
-function scriptSources(policy: string): string | undefined {
-  return policy.split('; ').find((directive) => directive.startsWith('script-src '));
+function directiveOf(policy: string, name: string): string | undefined {
+  return policy.split('; ').find((directive) => directive.startsWith(`${name} `));
 }
 
 describe('buildContentSecurityPolicy', () => {
   it('allows scripts only by nonce and lists the API, analytics and files origins in production', () => {
     expect(buildContentSecurityPolicy({ nonce: 'bm9uY2U=', dev: false, origins: ORIGINS })).toBe(
-      "default-src 'self'; script-src 'self' 'nonce-bm9uY2U=' 'strict-dynamic'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self' http://localhost:4000 http://localhost:8000 http://localhost:9000; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'",
+      "default-src 'self'; script-src 'self' 'nonce-bm9uY2U=' 'strict-dynamic'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self' http://localhost:4000 http://localhost:8000 http://localhost:9000; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; worker-src 'self'",
     );
+  });
+
+  it.each([false, true])('lets only this origin start a service worker when dev is %s', (dev) => {
+    expect(
+      directiveOf(buildContentSecurityPolicy({ nonce: 'n', dev, origins: ORIGINS }), 'worker-src'),
+    ).toBe("worker-src 'self'");
   });
 
   it('adds only unsafe-eval to the scripts in development', () => {
@@ -30,7 +36,7 @@ describe('buildContentSecurityPolicy', () => {
 
   it.each([false, true])('never allows inline scripts when dev is %s', (dev) => {
     expect(
-      scriptSources(buildContentSecurityPolicy({ nonce: 'n', dev, origins: ORIGINS })),
+      directiveOf(buildContentSecurityPolicy({ nonce: 'n', dev, origins: ORIGINS }), 'script-src'),
     ).not.toContain("'unsafe-inline'");
   });
 });

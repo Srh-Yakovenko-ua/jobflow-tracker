@@ -22,7 +22,7 @@ vi.mock('next/navigation', () => import('@/test/navigation'));
 
 const SECTIONS = ['Пошук і тиша', 'Повідомлення', 'AI та приватність', 'Вигляд і тема', 'Акаунт'];
 
-const HIDDEN_ITEMS = ['Пуші в браузері', 'Листи на пошту', 'Видалити акаунт'];
+const HIDDEN_ITEMS = ['Листи на пошту', 'Видалити акаунт'];
 
 const REVOKE_BOOKMARKLET = { name: 'Вимкнути букмарклет' } as const;
 
@@ -125,6 +125,14 @@ describe('SettingsPage', () => {
     for (const name of HIDDEN_ITEMS) {
       expect(screen.queryByText(name)).toBeNull();
     }
+  });
+
+  it('shows the browser push switch in Повідомлення', async () => {
+    await renderLoadedSettings();
+
+    expect(
+      within(regionOf('Повідомлення')).getByRole('switch', { name: /Пуші в браузері/ }),
+    ).toBeDefined();
   });
 
   it('shows the name and the email read-only', async () => {

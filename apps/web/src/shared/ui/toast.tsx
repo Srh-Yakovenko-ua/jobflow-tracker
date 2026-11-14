@@ -15,11 +15,12 @@ export type ToastContent = {
   title: string;
   description?: string;
   action?: ToastAction;
+  dismiss?: ToastAction;
 };
 
 export type ToastOptions = { id?: string; duration?: number };
 
-type ToastSurface = { card: string; description: string; action: string };
+type ToastSurface = { card: string; description: string; action: string; dismiss: string };
 
 type ToastMark = { Icon: LucideIcon; className: string };
 
@@ -30,6 +31,7 @@ const PLAIN: ToastSurface = {
   description: 'text-ink-2',
   action:
     '-my-2.5 min-h-11 px-1.75 text-[13px] text-link hover:bg-accent-tint active:bg-accent-tint',
+  dismiss: 'text-ink-2',
 };
 
 const INVERSE: ToastSurface = {
@@ -37,6 +39,7 @@ const INVERSE: ToastSurface = {
   description: 'text-paper/75',
   action:
     'touch-target bg-paper/12 px-2.5 py-1.5 text-[12.5px] text-paper hover:bg-paper/18 active:bg-paper/24',
+  dismiss: 'text-paper/75',
 };
 
 const TONES: Record<ToastTone, ToastLook> = {
@@ -58,6 +61,29 @@ function ToneMark({ mark }: Readonly<{ mark: ToastMark }>) {
     >
       <Icon size={14} />
     </span>
+  );
+}
+
+type ToastButtonProps = Readonly<{
+  action: ToastAction;
+  className: string;
+  onPress: (action: ToastAction) => void;
+}>;
+
+function ToastButton({ action, className, onPress }: ToastButtonProps) {
+  return (
+    <button
+      type="button"
+      onClick={() => {
+        onPress(action);
+      }}
+      className={cn(
+        'flex-none self-center rounded-sm font-semibold transition-colors duration-(--duration-instant) ease-standard',
+        className,
+      )}
+    >
+      {action.label}
+    </button>
   );
 }
 
@@ -88,22 +114,22 @@ export function ToastCard({ content, onDismiss }: ToastCardProps) {
           </p>
         )}
       </div>
+      {content.dismiss && (
+        <ToastButton
+          action={content.dismiss}
+          className={cn(surface.action, surface.dismiss)}
+          onPress={runAction}
+        />
+      )}
       {content.action && (
-        <button
-          type="button"
-          onClick={() => {
-            if (content.action) runAction(content.action);
-          }}
-          className={cn(
-            'flex-none self-center rounded-sm font-semibold transition-colors duration-(--duration-instant) ease-standard',
-            surface.action,
-          )}
-        >
-          {content.action.label}
-        </button>
+        <ToastButton action={content.action} className={surface.action} onPress={runAction} />
       )}
     </div>
   );
+}
+
+export function dismissToast(id: string): void {
+  toast.dismiss(id);
 }
 
 export function showToast(content: ToastContent, options: ToastOptions = {}): void {

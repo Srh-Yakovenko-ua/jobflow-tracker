@@ -21,8 +21,10 @@ export function databaseName(): string {
   return name === '' ? 'jobflow' : name;
 }
 
-export function postAnswered(page: Page, route: string): Promise<Response> {
+type ApiCall = { method: string; route: string };
+
+export function apiAnswered(page: Page, { method, route }: ApiCall): Promise<Response> {
   return page.waitForResponse(
-    (response) => response.request().method() === 'POST' && response.url() === apiUrl(route),
+    (response) => response.request().method() === method && response.url() === apiUrl(route),
   );
 }

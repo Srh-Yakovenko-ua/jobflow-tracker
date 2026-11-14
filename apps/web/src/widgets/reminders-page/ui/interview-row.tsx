@@ -4,8 +4,7 @@ import { STAGE_LABELS } from '@jobflow/shared';
 import Link from 'next/link';
 
 import { type ApplicationCardContext, NextEventChip } from '@/entities/application';
-
-import type { UpcomingInterview } from '../lib/upcoming-interviews';
+import type { UpcomingInterview } from '@/entities/scheduled-event';
 
 export type InterviewRowProps = Readonly<{
   interview: UpcomingInterview;

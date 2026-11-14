@@ -15,10 +15,10 @@ export const SETTINGS_SECTIONS = [
 
 export type SettingsSectionId = (typeof SETTINGS_SECTIONS)[number];
 
-const ANCHOR_SECTIONS = { bookmarklet: 'aiPrivacy' } as const satisfies Record<
-  SettingsAnchor,
-  SettingsSectionId
->;
+const ANCHOR_SECTIONS = {
+  bookmarklet: 'aiPrivacy',
+  notifications: 'notifications',
+} as const satisfies Record<SettingsAnchor, SettingsSectionId>;
 
 export function sectionOfHash(hash: string): SettingsSectionId {
   return (

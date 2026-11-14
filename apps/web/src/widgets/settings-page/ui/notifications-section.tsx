@@ -6,6 +6,7 @@ import { useUpdateSettingsMutation } from '@/features/update-settings';
 import { uk } from '@/shared/i18n';
 
 import type { SettingsItems } from '../model/settings-items';
+import { PushSettingRow } from './push-setting-row';
 import { QuietHours } from './quiet-hours';
 import { SaveStatus } from './save-status';
 import { SettingSwitch } from './setting-rows';
@@ -32,15 +33,7 @@ export function NotificationsSection({ settings, items }: NotificationsSectionPr
               save({ notifyInApp });
             }}
           />
-          {items.notifyPush && (
-            <SettingSwitch
-              copy={COPY.push}
-              checked={settings.notifyPush}
-              onCheckedChange={(notifyPush) => {
-                save({ notifyPush });
-              }}
-            />
-          )}
+          {items.notifyPush && <PushSettingRow settings={settings} save={save} />}
           {items.notifyEmail && (
             <SettingSwitch
               copy={COPY.email}

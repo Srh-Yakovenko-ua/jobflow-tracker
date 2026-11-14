@@ -18,19 +18,24 @@ export function SettingText({ copy }: SettingTextProps) {
   );
 }
 
+export type SettingSwitchState = Readonly<{ disabled?: boolean; describedBy?: string | undefined }>;
+
 export type SettingSwitchProps = Readonly<{
   copy: Required<SettingsHeading>;
   checked: boolean;
   onCheckedChange: (checked: boolean) => void;
+  state?: SettingSwitchState;
 }>;
 
-export function SettingSwitch({ copy, checked, onCheckedChange }: SettingSwitchProps) {
+export function SettingSwitch({ copy, checked, onCheckedChange, state = {} }: SettingSwitchProps) {
   return (
     <div className={ROW}>
       <Switch
         placement="end"
         checked={checked}
         onCheckedChange={onCheckedChange}
+        disabled={state.disabled}
+        aria-describedby={state.describedBy}
         label={<SettingText copy={copy} />}
       />
     </div>
