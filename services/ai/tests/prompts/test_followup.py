@@ -65,8 +65,18 @@ def test_uses_temperature_0_4_and_700_tokens_unless_the_request_sets_them() -> N
 @pytest.mark.parametrize(
     ("reply", "problems"),
     [
-        (draft_of(45), ["body has 45 words, it needs 60 to 120"]),
-        (draft_of(130), ["body has 130 words, it needs 60 to 120"]),
+        (
+            draft_of(45),
+            [
+                "body has 45 words, it needs 60 to 120: add 45 words to reach about 90, one more clause in each sentence"
+            ],
+        ),
+        (
+            draft_of(130),
+            [
+                "body has 130 words, it needs 60 to 120: remove 40 words to reach about 90"
+            ],
+        ),
         (
             draft_of(70, ending=" за 15 днів, а не 6, 2026 09 3"),
             ["the number 15 is not in the input"],
@@ -74,7 +84,7 @@ def test_uses_temperature_0_4_and_700_tokens_unless_the_request_sets_them() -> N
         (
             draft_of(40, ending=" 15 15 7"),
             [
-                "body has 43 words, it needs 60 to 120",
+                "body has 43 words, it needs 60 to 120: add 47 words to reach about 90, one more clause in each sentence",
                 "the number 15 is not in the input",
                 "the number 7 is not in the input",
             ],
@@ -115,9 +125,19 @@ def test_accepts_the_fixture_draft_and_wires_the_check_into_the_prompt() -> None
 
     assert prompt.problems is not None
     assert prompt.problems(output_of(draft_of(45))) == [
-        "body has 45 words, it needs 60 to 120"
+        "body has 45 words, it needs 60 to 120: add 45 words to reach about 90, one more clause in each sentence"
     ]
     assert followup.problems_of(request, FIXTURE_OUTPUT) == []
+
+
+def test_tells_a_short_ukrainian_draft_of_56_words_to_add_24_to_reach_about_80() -> (
+    None
+):
+    request = request_of(followup_body(tone="short"))
+
+    assert followup.problems_of(request, output_of(draft_of(56))) == [
+        "body has 56 words, it needs 60 to 120: add 24 words to reach about 80, one more clause in each sentence"
+    ]
 
 
 def test_the_fake_draft_invents_no_number_for_an_input_without_a_date_or_hint() -> None:
@@ -129,10 +149,11 @@ def test_the_fake_draft_invents_no_number_for_an_input_without_a_date_or_hint() 
 @pytest.mark.parametrize(
     "rule",
     [
-        "aim for about 90 (about 70 when tone is short)",
+        "aim for about 90 (about 80 when tone is short)",
         "a body under 60 words is rejected",
         "Write five to seven full sentences",
         "short is plain and direct, still at least 60 words",
+        "Ukrainian with tone short still writes at least six of these sentences",
     ],
 )
 def test_system_prompt_plans_a_body_inside_the_word_range(rule: str) -> None:
@@ -163,4 +184,4 @@ def test_checked_returns_the_model_output_unchanged() -> None:
 
 
 def test_prompt_version_equals_the_shared_ai_prompt_version() -> None:
-    assert (followup.PROMPT_VERSION, load_prompt_versions()["followup"]) == ("v2", "v2")
+    assert (followup.PROMPT_VERSION, load_prompt_versions()["followup"]) == ("v3", "v3")

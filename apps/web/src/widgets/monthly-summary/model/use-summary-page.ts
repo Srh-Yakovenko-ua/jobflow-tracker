@@ -33,7 +33,8 @@ function archivedViewOf({ month, archive }: MonthViewInput): SummaryMonthView | 
 function monthViewOf(input: MonthViewInput): SummaryMonthView {
   const { month, monthly } = input;
   const { state, latestMonth } = monthly;
-  if (state.status === 'loading' || state.status === 'load-failed') return state;
+  if (state.status === 'load-failed') return archivedViewOf(input) ?? state;
+  if (state.status === 'loading') return state;
   if (latestMonth === month) return { status: 'latest', state };
   return archivedViewOf(input) ?? { status: 'not-found', latestMonth };
 }

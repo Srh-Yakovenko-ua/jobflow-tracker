@@ -104,6 +104,15 @@ describe('NotificationBell', () => {
     expect(sent.reads).toEqual([{ all: true }]);
   });
 
+  it('day headings sit one level below the bell header, at h3', async () => {
+    const { popover } = await openBell();
+
+    expect(
+      await within(popover).findByRole('heading', { level: 3, name: 'Сьогодні' }),
+    ).toBeDefined();
+    expect(within(popover).getByRole('heading', { level: 3, name: 'Вчора' })).toBeDefined();
+  });
+
   it('with no rows says everyone answered', async () => {
     const { popover } = await openBell({ feed: { items: [], nextCursor: null } });
 

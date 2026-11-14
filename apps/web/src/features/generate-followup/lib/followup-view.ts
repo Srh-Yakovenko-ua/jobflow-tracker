@@ -1,10 +1,13 @@
 import { AI_JOB_FAILURES, type FollowupOutput, type FollowupResponse } from '@jobflow/shared';
 
+export type FollowupFailed = Readonly<{ timeout: boolean }>;
+
 export type FollowupReady = Readonly<{
   kind: 'ready';
   draft: FollowupOutput;
   key: string;
   own: boolean;
+  failure: FollowupFailed | null;
 }>;
 
 export type FollowupView =
@@ -19,25 +22,34 @@ export type FollowupViewInput = Readonly<{
   refused: boolean;
 }>;
 
-const OWN_DRAFT: FollowupReady = {
-  kind: 'ready',
-  draft: { subject: '', body: '' },
-  key: 'own',
-  own: true,
-};
+const REFUSED: FollowupFailed = { timeout: false };
 
 export function followupWaiting({ job }: Pick<FollowupResponse, 'job'>): boolean {
   return job?.status === 'queued' || job?.status === 'processing';
 }
 
-export function followupViewOf({ response, manual, refused }: FollowupViewInput): FollowupView {
-  if (manual) return OWN_DRAFT;
-  if (refused) return { kind: 'failed', timeout: false };
-  const { job, draft } = response;
-  if (followupWaiting(response)) return { kind: 'waiting' };
-  if (job?.status === 'failed') {
-    return { kind: 'failed', timeout: job.errorType === AI_JOB_FAILURES.timeout };
-  }
-  if (draft === null) return { kind: 'idle' };
-  return { kind: 'ready', draft, key: draft.generatedAt, own: false };
+function ownDraftOf({ response, refused }: FollowupViewInput): FollowupReady {
+  const { draft } = response;
+  return {
+    kind: 'ready',
+    draft: draft ?? { subject: '', body: '' },
+    key: draft?.generatedAt ?? 'own',
+    own: true,
+    failure: refused ? REFUSED : null,
+  };
+}
+
+function failureOf({ job }: FollowupResponse): FollowupFailed | null {
+  if (job?.status !== 'failed') return null;
+  return { timeout: job.errorType === AI_JOB_FAILURES.timeout };
+}
+
+export function followupViewOf(input: FollowupViewInput): FollowupView {
+  if (input.manual) return ownDraftOf(input);
+  const { response, refused } = input;
+  if (!refused && followupWaiting(response)) return { kind: 'waiting' };
+  const failure = refused ? REFUSED : failureOf(response);
+  const { draft } = response;
+  if (draft === null) return failure === null ? { kind: 'idle' } : { kind: 'failed', ...failure };
+  return { kind: 'ready', draft, key: draft.generatedAt, own: false, failure };
 }

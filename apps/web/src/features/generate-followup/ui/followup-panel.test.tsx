@@ -9,6 +9,7 @@ import { rateLimitedReply } from '@/test/api-handlers';
 import { ACME_APPLICATION } from '@/test/application-fixtures';
 import {
   DESIGN_FOLLOWUP,
+  FAILED_AFTER_DRAFT,
   followupJob,
   followupRoutes,
   NO_FOLLOWUP,
@@ -248,6 +249,38 @@ describe('FollowupPanel', () => {
         { tone: 'neutral', language: 'uk', hint: 'дорозвʼязав', variant: false },
         { tone: 'short', language: 'uk', hint: 'дорозвʼязав задачу', variant: false },
       ]);
+  });
+
+  it('a failed variant keeps the last good draft in the editor and shows the failure alert', () => {
+    renderPanel(FAILED_AFTER_DRAFT);
+
+    expect(draftFields().body.value).toBe(DESIGN_FOLLOWUP.body);
+    expect(screen.getByRole('alert').textContent).toContain(TIMEOUT_COPY);
+    expect(screen.getByRole('button', { name: 'Спробувати ще' })).toBeDefined();
+    expect(screen.getByRole('button', { name: 'Написати самому' })).toBeDefined();
+  });
+
+  it('the edited letter survives a 429 on «Ще варіант», on screen and after coming back', async () => {
+    const { user, reopen } = renderPanel(READY_FOLLOWUP, {
+      generateReply: () => rateLimitedReply({ 'Retry-After': '120' }),
+    });
+    await user.clear(draftFields().body);
+    await user.type(draftFields().body, 'Дякую!');
+
+    await user.click(screen.getByRole('button', { name: 'Ще варіант' }));
+    await screen.findByText(OTHER_COPY);
+
+    expect(draftFields().body.value).toBe('Дякую!');
+    reopen();
+    expect(draftFields().body.value).toBe('Дякую!');
+  });
+
+  it('the subject and body stop at the follow-up limits of 120 and 1200 characters', () => {
+    renderPanel(READY_FOLLOWUP);
+    const { subject, body } = draftFields();
+
+    expect(subject.maxLength).toBe(120);
+    expect(body.maxLength).toBe(1200);
   });
 
   it('a refused request, such as the hourly AI limit, shows the plain error with both ways out', async () => {

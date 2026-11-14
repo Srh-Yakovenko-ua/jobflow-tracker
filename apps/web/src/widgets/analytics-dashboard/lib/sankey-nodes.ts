@@ -5,6 +5,7 @@ import {
   type SankeyGraph,
   type SankeyLink,
   type SankeyNode,
+  type SankeyResponse,
   STAGES,
 } from '@jobflow/shared';
 
@@ -157,6 +158,11 @@ export function endingsOf(graph: SankeyGraph): FunnelEnding[] {
 
 export function ghostTotalOf({ links }: SankeyGraph): number {
   return links.reduce((total, link) => (link.ghost ? total + link.flow : total), 0);
+}
+
+export function firstRevealedNode({ detailed, merged }: SankeyResponse): SankeyNode | undefined {
+  const folded = new Set(merged.nodes.map(({ id }) => id));
+  return detailed.nodes.find(({ id }) => !folded.has(id));
 }
 
 export function boardHrefOf({ id, kind }: SankeyNode): string | null {

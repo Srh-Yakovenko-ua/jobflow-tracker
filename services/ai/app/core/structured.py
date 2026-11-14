@@ -77,7 +77,7 @@ def schema_repair(error: ValidationError) -> str:
 
 
 def rules_repair(problems: list[str]) -> str:
-    return f"Your answer broke these rules: {'; '.join(problems)}. Answer again with JSON that matches the schema and keeps every rule."
+    return f"Your answer broke these rules: {'; '.join(problems)}. Write the fields these rules name again from the start and change them as the rules say; a copy of your previous answer is rejected. Answer with JSON that matches the schema and keeps every rule."
 
 
 def repair_request(

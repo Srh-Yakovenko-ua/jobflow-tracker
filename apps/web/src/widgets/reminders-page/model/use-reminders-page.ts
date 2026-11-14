@@ -14,8 +14,8 @@ import { latestPlanQueryOptions } from '@/entities/plan';
 import { remindersQueryOptions } from '@/entities/reminder';
 import { calendarQueryOptions } from '@/entities/scheduled-event';
 import { useSettledTimeZone, useSilenceDays } from '@/entities/user';
+import { type SilentRow, silentRowsOf } from '@/features/snooze-reminder';
 
-import { type SilentRow, silentRowsOf } from '../lib/silent-rows';
 import { type UpcomingInterview, upcomingInterviewsOf } from '../lib/upcoming-interviews';
 import { useReplyMove } from './use-reply-move';
 

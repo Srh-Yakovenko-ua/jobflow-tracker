@@ -111,7 +111,7 @@ export function ResumeUpload({ view, picker }: ResumeUploadProps) {
             <UploadForm
               file={picked.file}
               form={{ methods: choice.methods, onSubmit }}
-              state={{ ...upload, retryable: upload.failure?.kind === 'retry' }}
+              state={upload}
             />
           </Fade>
         )}

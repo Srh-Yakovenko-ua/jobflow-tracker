@@ -95,13 +95,9 @@ type StatusLineProps<Status extends AiJobStatus> = Readonly<{
   label: string | undefined;
 }>;
 
-function isWaiting(status: AiJobStatus): boolean {
-  return status === 'queued' || status === 'processing';
-}
-
 function StatusLine<Status extends AiJobStatus>({ job, label }: StatusLineProps<Status>) {
   const look: JobLook<Status> = LOOKS[job.status];
-  const line = label !== undefined && isWaiting(job.status) ? label : look.line(job);
+  const line = label !== undefined && job.status === 'processing' ? label : look.line(job);
   return (
     <p className={cn('flex items-center gap-2.25 tabular-nums', look.tone)}>
       {look.marker}

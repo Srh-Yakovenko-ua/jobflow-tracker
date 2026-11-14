@@ -20,6 +20,8 @@ export type QuerySettle = Readonly<{ queryKey: QueryKey; status: QueryStatus | '
 
 const RETRIED_ERROR_TIMEOUT_MS = 2500;
 
+export const AFTER_QUERY_RETRIES = { timeout: RETRIED_ERROR_TIMEOUT_MS } as const;
+
 function probeName(queryKey: QueryKey): string {
   return `query ${JSON.stringify(queryKey)}`;
 }

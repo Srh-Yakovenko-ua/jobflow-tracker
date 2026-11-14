@@ -32,6 +32,7 @@ export const notifications = {
   readAll: 'Прочитати все',
   all: 'Усі сповіщення',
   unread: 'непрочитане',
+  markRead: 'Позначити прочитаним',
   popoverEmpty: 'Усі відповіли. Найкращий вигляд цього списку.',
   filters: {
     label: 'Які сповіщення показати',

@@ -18,7 +18,6 @@ import type { HttpResponseResolver, JsonBodyType } from 'msw';
 import { http, HttpResponse } from 'msw/http';
 
 import { analyticsUrl, apiUrl } from './api-handlers';
-import { DESIGN_RESUME_AB, RESUME_AB_URL } from './resume-ab-fixtures';
 import { summaryRoutes } from './summary-fixtures';
 
 export const DASHBOARD_ROUTES = [
@@ -30,7 +29,6 @@ export const DASHBOARD_ROUTES = [
   'timings',
   'forecast',
   'insights',
-  'resume-ab',
 ] as const;
 
 export type DashboardRoute = (typeof DASHBOARD_ROUTES)[number];
@@ -114,7 +112,6 @@ const URLS: Record<DashboardRoute, string> = {
   timings: analyticsUrl('/analytics/timings'),
   forecast: analyticsUrl('/analytics/forecast'),
   insights: analyticsUrl('/analytics/insights'),
-  'resume-ab': RESUME_AB_URL,
 };
 
 const sankeyReply: HttpResponseResolver = ({ request }) =>
@@ -134,7 +131,6 @@ function designBodies(): Record<DashboardRoute, JsonBodyType | HttpResponseResol
     timings: buildDesignTimings(),
     forecast: buildForecast(),
     insights: designInsightsBody(),
-    'resume-ab': DESIGN_RESUME_AB,
   };
 }
 

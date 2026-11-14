@@ -52,9 +52,7 @@ const BLOCKS: readonly Block[] = [
   'sankey',
   'reasons',
   'sources',
-  'resumeAb',
   'forecast',
-  'timings',
   'sent',
   'screening',
   'response',
@@ -67,15 +65,16 @@ const HERO_TITLE = 'Куди пішли всі 54 відгуки';
 
 const WHAT_TO_DO = 'що зробити';
 
+const ADD_LINK = 'Додати вакансію';
+
 const AFFECTED: Record<Exclude<DashboardRoute, 'insights'>, readonly Block[]> = {
   searches: ['sankey', 'sent', 'screening'],
   funnel: ['sent', 'screening'],
   sankey: ['sankey'],
   reasons: ['reasons'],
   sources: ['sources'],
-  timings: ['timings', 'response', 'ghost'],
+  timings: ['response', 'ghost'],
   forecast: ['forecast'],
-  'resume-ab': ['resumeAb'],
 };
 
 const RETRIED: Partial<Record<DashboardRoute, readonly DashboardRoute[]>> = {
@@ -166,11 +165,11 @@ describe('AnalyticsDashboard', () => {
     expect(
       screen.getByRole('heading', { name: "LinkedIn з'їдає час, рефералки — ні" }),
     ).toBeDefined();
-    expect(screen.getByRole('heading', { name: 'Схоже, CV v2 працює краще' })).toBeDefined();
+    expect(screen.queryByRole('heading', { name: 'Схоже, CV v2 працює краще' })).toBeNull();
     expect(screen.getByRole('region', { name: FRAMES.forecast })).toBeDefined();
-    expect(screen.getByRole('region', { name: FRAMES.timings })).toBeDefined();
+    expect(screen.queryByRole('region', { name: FRAMES.timings })).toBeNull();
     expect(screen.getByRole('region', { name: WHAT_TO_DO })).toBeDefined();
-    expect(blockRegions()).toHaveLength(7);
+    expect(blockRegions()).toHaveLength(5);
     expect(screen.queryByRole('heading', { name: /зарплат/i })).toBeNull();
     expect(screen.queryByText(/саммарі/i)).toBeNull();
   });
@@ -182,7 +181,7 @@ describe('AnalyticsDashboard', () => {
     await waitFor(() => {
       expect(screen.queryByRole('region', { name: WHAT_TO_DO })).toBeNull();
     });
-    expect(blockRegions()).toHaveLength(6);
+    expect(blockRegions()).toHaveLength(4);
   });
 
   it('without insights the blocks ask neutral questions instead of stating conclusions', async () => {
@@ -194,7 +193,7 @@ describe('AnalyticsDashboard', () => {
 
     expect(screen.getByRole('heading', { name: 'Де відмовляють найчастіше' })).toBeDefined();
     expect(screen.getByRole('heading', { name: 'Яке джерело працює' })).toBeDefined();
-    expect(screen.getByRole('heading', { name: 'Яка версія CV працює краще' })).toBeDefined();
+    expect(screen.queryByRole('heading', { name: 'Яка версія CV працює краще' })).toBeNull();
   });
 
   it('four applications turn the whole dashboard into its low data state with one useful action', async () => {
@@ -215,6 +214,18 @@ describe('AnalyticsDashboard', () => {
     expect(screen.queryByRole('group', { name: TILES.screening })).toBeNull();
   });
 
+  it('an archived search in its low data state offers no link to add an application', async () => {
+    const { user } = renderDashboard({ funnel: lowDataFunnel() });
+    expect(await screen.findByRole('link', { name: ADD_LINK })).toBeDefined();
+
+    await selectArchivedSearch(user);
+
+    await waitFor(() => {
+      expect(screen.queryByRole('link', { name: ADD_LINK })).toBeNull();
+    });
+    expect(screen.getByRole('meter', { name: 'Прогрес до першого висновку' })).toBeDefined();
+  });
+
   it('the current search sends funnel and sankey with the active id, the rest with no search, and the archived one scopes every search request', async () => {
     const { user, sent } = renderDashboard();
     await screen.findByRole('heading', { name: HERO_TITLE });
@@ -231,7 +242,6 @@ describe('AnalyticsDashboard', () => {
         timings: '',
         forecast: '',
         insights: '',
-        'resume-ab': '',
       });
     });
     sent.length = 0;

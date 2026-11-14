@@ -4,10 +4,10 @@ import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
-import { useSilentCount } from '@/entities/application';
 import { calendarQueryOptions } from '@/entities/scheduled-event';
 import { useSettledTimeZone } from '@/entities/user';
 import { useRescheduleEventMutation } from '@/features/schedule-event';
+import { useSilentCount } from '@/features/snooze-reminder';
 import { useMediaQuery } from '@/shared/lib/use-media-query';
 
 import type { GridActions, ShownPeriod } from '../lib/grid-handlers';

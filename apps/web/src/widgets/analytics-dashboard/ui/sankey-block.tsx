@@ -2,7 +2,7 @@
 
 import type { FunnelStage, SankeyGraph, SankeyResponse } from '@jobflow/shared';
 import { AnimatePresence } from 'motion/react';
-import { useId, useState } from 'react';
+import { useEffect, useId, useRef, useState } from 'react';
 
 import { uk } from '@/shared/i18n';
 import { Button } from '@/shared/ui/button';
@@ -10,7 +10,7 @@ import { ChartFrame } from '@/shared/ui/chart-frame';
 import { Fade } from '@/shared/ui/fade';
 import { Switch } from '@/shared/ui/switch';
 
-import { endingsOf } from '../lib/sankey-nodes';
+import { endingsOf, firstRevealedNode } from '../lib/sankey-nodes';
 import type { SankeyFrame } from '../model/dashboard-view';
 import { FunnelChart } from './funnel-chart';
 import { FunnelNotes } from './funnel-notes';
@@ -70,15 +70,31 @@ type SankeyPlotProps = Readonly<{
   stages: readonly FunnelStage[] | undefined;
 }>;
 
-function SankeyPlot({ graph, stages }: SankeyPlotProps) {
+function useRevealFocus(graph: SankeyResponse) {
   const [expanded, setExpanded] = useState(false);
-  const shown = expanded ? graph.detailed : graph.merged;
-  const folded = !expanded && graph.merged.nodes.some(({ kind }) => kind === 'other');
+  const plotRef = useRef<HTMLDivElement>(null);
+  const revealingRef = useRef(false);
+  useEffect(() => {
+    const revealed = revealingRef.current ? firstRevealedNode(graph) : undefined;
+    revealingRef.current = false;
+    if (revealed === undefined) return;
+    plotRef.current
+      ?.querySelector<HTMLElement>(`[data-node-id="${CSS.escape(revealed.id)}"]`)
+      ?.focus();
+  }, [expanded, graph]);
   const expand = () => {
+    revealingRef.current = true;
     setExpanded(true);
   };
+  return { expanded, plotRef, expand };
+}
+
+function SankeyPlot({ graph, stages }: SankeyPlotProps) {
+  const { expanded, plotRef, expand } = useRevealFocus(graph);
+  const shown = expanded ? graph.detailed : graph.merged;
+  const folded = !expanded && graph.merged.nodes.some(({ kind }) => kind === 'other');
   return (
-    <div className="flex min-w-0 flex-col gap-3">
+    <div ref={plotRef} className="flex min-w-0 flex-col gap-3">
       <FunnelChart graph={shown} stages={stages} actions={{ onExpand: expand }} />
       <AnimatePresence initial={false}>
         {folded && (

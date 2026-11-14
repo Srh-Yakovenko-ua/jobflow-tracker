@@ -34,6 +34,12 @@ const OLDER = buildNotification({
   payload: { applications: 10 },
 });
 
+const NO_TARGET = buildNotification({
+  serial: 41,
+  type: 'ai_failed',
+  payload: { aiJobId: notificationIdOf(42), kind: 'vacancy_parse', errorType: 'ai_timeout' },
+});
+
 pinClockInEachTest(NOTIFICATION_NOW);
 
 function renderPage(routes: NotificationRoutesOptions = {}) {
@@ -66,6 +72,29 @@ describe('NotificationsPage', () => {
     await screen.findByRole('heading', { name: 'Вчора' });
 
     expect(screen.getByRole('heading', { level: 1, name: COPY.title })).toBeDefined();
+  });
+
+  it('day headings sit one level below the page h1, at h2', async () => {
+    renderPage();
+
+    expect(await screen.findByRole('heading', { level: 2, name: 'Сьогодні' })).toBeDefined();
+    expect(screen.getByRole('heading', { level: 2, name: 'Вчора' })).toBeDefined();
+  });
+
+  it('an unread notification that leads nowhere can be marked read on its own', async () => {
+    const { user } = renderPage({ feed: { items: [NO_TARGET], nextCursor: null } });
+    const markRead = await screen.findByRole('button', { name: COPY.markRead });
+    const read = { ...NO_TARGET, readAt: NOTIFICATION_NOW.toISOString() };
+    const afterRead = notificationRoutes({ feed: { items: [read], nextCursor: null } });
+    server.use(...afterRead.handlers);
+
+    await user.click(markRead);
+
+    await waitFor(() => {
+      expect(screen.queryByRole('button', { name: COPY.markRead })).toBeNull();
+    });
+    expect(afterRead.sent.reads).toEqual([{ ids: [NO_TARGET.id] }]);
+    expect(document.activeElement).not.toBe(document.body);
   });
 
   it('Показати ще asks for the page after the cursor and adds its rows', async () => {

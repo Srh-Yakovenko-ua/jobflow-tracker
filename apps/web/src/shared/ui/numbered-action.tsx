@@ -10,7 +10,7 @@ export type NumberedActionTone = keyof typeof TONES;
 export type NumberedActionContent = Readonly<{
   position: number;
   title: string;
-  lines: readonly string[];
+  lines: readonly Readonly<{ id: string; text: string }>[];
 }>;
 
 export type NumberedActionProps = Readonly<{
@@ -36,10 +36,10 @@ export function NumberedAction({ action, view }: NumberedActionProps) {
         </p>
         {action.lines.map((line) => (
           <p
-            key={line}
+            key={line.id}
             className="text-[12.5px] leading-normal text-pretty text-ink-2 tabular-nums"
           >
-            {line}
+            {line.text}
           </p>
         ))}
       </div>

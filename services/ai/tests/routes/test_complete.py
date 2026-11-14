@@ -52,12 +52,12 @@ def invalid_output(*, detail: str, errors: list[dict[str, str]]) -> dict[str, ob
 
 
 RULES_REPAIR = (
-    "Your answer broke these rules: body has 5 words, it needs 60 to 120. "
-    "Answer again with JSON that matches the schema and keeps every rule."
+    "Your answer broke these rules: body has 5 words, it needs 60 to 120: add 85 words to reach about 90, one more clause in each sentence. "
+    "Write the fields these rules name again from the start and change them as the rules say; a copy of your previous answer is rejected. Answer with JSON that matches the schema and keeps every rule."
 )
 NUMBER_REPAIR = (
     "Your answer broke these rules: the number 37 is not in the input. "
-    "Answer again with JSON that matches the schema and keeps every rule."
+    "Write the fields these rules name again from the start and change them as the rules say; a copy of your previous answer is rejected. Answer with JSON that matches the schema and keeps every rule."
 )
 
 
@@ -112,7 +112,7 @@ async def test_returns_the_followup_draft_at_temperature_0_4() -> None:
         {
             "output": FOLLOWUP_FIXTURE,
             "model": "fake",
-            "promptVersion": "v2",
+            "promptVersion": "v3",
             "tokensIn": 100,
             "tokensOut": 50,
         },
@@ -159,7 +159,7 @@ async def test_regenerates_a_monthly_summary_with_an_invented_number_once() -> N
             FOLLOWUP_PATH,
             followup_body(),
             [draft_of(5), draft_of(50)],
-            "body has 50 words, it needs 60 to 120",
+            "body has 50 words, it needs 60 to 120: add 40 words to reach about 90, one more clause in each sentence",
             id="followup_still_short",
         ),
         pytest.param(

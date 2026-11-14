@@ -2,7 +2,6 @@ import type { ReactNode } from 'react';
 
 import { ANALYTICS_ANCHORS, type AnalyticsBlock } from '@/shared/lib/analytics-anchors';
 import { cn } from '@/shared/lib/cn';
-import { ChartFrame } from '@/shared/ui/chart-frame';
 
 import type { DashboardView } from '../model/dashboard-view';
 import { ForecastBlock, type ForecastControls } from './forecast-block';
@@ -13,8 +12,6 @@ import { SourcesBlock } from './sources-block';
 import { WhatToDoPanel } from './what-to-do-panel';
 
 const GRID = 'grid items-start gap-4.5';
-
-const NARROW_COLUMNS = 'grid-cols-[repeat(auto-fit,minmax(min(300px,100%),1fr))]';
 
 export type DashboardBlocksProps = Readonly<{
   view: DashboardView;
@@ -51,17 +48,9 @@ export function DashboardBlocks({ view, silenceDays, sankey, forecast }: Dashboa
           <SourcesBlock frame={frames.sources} />
         </Anchored>
       </div>
-      <div className={cn(GRID, NARROW_COLUMNS)}>
-        <Anchored block="resumeAb">
-          <ChartFrame header={frames.resumeAb.header} state={frames.resumeAb.state} />
-        </Anchored>
-        <Anchored block="forecast">
-          <ForecastBlock frame={frames.forecast} controls={forecast} />
-        </Anchored>
-      </div>
-      <div className={cn(GRID, NARROW_COLUMNS)}>
-        <ChartFrame header={frames.timings.header} state={frames.timings.state} />
-      </div>
+      <Anchored block="forecast">
+        <ForecastBlock frame={frames.forecast} controls={forecast} />
+      </Anchored>
       <WhatToDoPanel view={view.actions} />
     </div>
   );

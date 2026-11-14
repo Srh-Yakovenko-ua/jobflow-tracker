@@ -9,11 +9,14 @@ import {
   Sparkles,
   TrendingUp,
 } from 'lucide-react';
+import { AnimatePresence } from 'motion/react';
 import Link from 'next/link';
+import { type RefObject, useRef } from 'react';
 
 import { notificationTargetOf } from '@/entities/notification';
 import { uk } from '@/shared/i18n';
 import { cn } from '@/shared/lib/cn';
+import { Fade } from '@/shared/ui/fade';
 
 import { notificationCopyOf } from '../model/notification-copy';
 import { useMarkReadMutation } from '../model/use-mark-read';
@@ -36,22 +39,63 @@ export type NotificationRowProps = Readonly<{
   context: NotificationRowContext;
 }>;
 
-function useFollow({ notification, context }: NotificationRowProps) {
+const ACTION =
+  'touch-target mt-0.5 w-fit rounded-sm text-[11.5px] font-semibold text-link transition-colors duration-(--duration-instant) ease-standard hover:text-accent-press active:text-accent-press disabled:opacity-60';
+
+type RowActionProps = NotificationRowProps &
+  Readonly<{ label: string; rowRef: RefObject<HTMLDivElement | null> }>;
+
+function useRowActions({ notification, context, rowRef }: Omit<RowActionProps, 'label'>) {
   const markRead = useMarkReadMutation();
-  return () => {
-    if (notification.readAt === null) markRead.mutate({ ids: [notification.id] });
+  const ids = [notification.id];
+  const read = () => {
+    markRead.mutate({ ids }, { onSuccess: () => rowRef.current?.focus() });
+  };
+  const follow = () => {
+    if (notification.readAt === null) markRead.mutate({ ids });
     context.onFollow?.();
   };
+  return { read, follow, reading: markRead.isPending };
+}
+
+function RowAction({ label, ...row }: RowActionProps) {
+  const { notification } = row;
+  const target = notificationTargetOf(notification);
+  const actions = useRowActions(row);
+  if (target !== null) {
+    return (
+      <Link href={target} onClick={actions.follow} className={ACTION}>
+        {label}
+      </Link>
+    );
+  }
+  return (
+    <AnimatePresence initial={false}>
+      {notification.readAt === null && (
+        <Fade key="mark-read">
+          <button
+            type="button"
+            disabled={actions.reading}
+            onClick={actions.read}
+            className={ACTION}
+          >
+            {uk.notifications.markRead}
+          </button>
+        </Fade>
+      )}
+    </AnimatePresence>
+  );
 }
 
 export function NotificationRow({ notification, context }: NotificationRowProps) {
   const unread = notification.readAt === null;
   const copy = notificationCopyOf(notification, context.timeZone);
-  const target = notificationTargetOf(notification);
-  const follow = useFollow({ notification, context });
   const Icon = ICONS[notification.type];
+  const rowRef = useRef<HTMLDivElement>(null);
   return (
     <div
+      ref={rowRef}
+      tabIndex={-1}
       className={cn(
         'flex items-start gap-2.5 rounded-[9px] p-2.25 hover:bg-surface-3 active:bg-surface-3',
         FADE,
@@ -74,15 +118,12 @@ export function NotificationRow({ notification, context }: NotificationRowProps)
           {unread && <span className="sr-only">{`, ${uk.notifications.unread}`}</span>}
         </p>
         <p className="text-[11.5px] leading-[1.45] wrap-break-word text-ink-2">{copy.text}</p>
-        {target !== null && (
-          <Link
-            href={target}
-            onClick={follow}
-            className="touch-target mt-0.5 w-fit rounded-sm text-[11.5px] font-semibold text-link transition-colors duration-(--duration-instant) ease-standard hover:text-accent-press active:text-accent-press"
-          >
-            {copy.action}
-          </Link>
-        )}
+        <RowAction
+          notification={notification}
+          context={context}
+          label={copy.action}
+          rowRef={rowRef}
+        />
       </div>
       <span
         aria-hidden

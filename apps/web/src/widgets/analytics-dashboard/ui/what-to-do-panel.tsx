@@ -28,7 +28,7 @@ export function WhatToDoPanel({ view }: WhatToDoPanelProps) {
                   action={{
                     position: index + 1,
                     title: action.title,
-                    lines: [action.expectedEffect],
+                    lines: [{ id: 'effect', text: action.expectedEffect }],
                   }}
                   view={{ tone: 'accent' }}
                 />

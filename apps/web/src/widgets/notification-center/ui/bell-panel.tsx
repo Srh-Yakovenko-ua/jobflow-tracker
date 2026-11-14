@@ -44,6 +44,7 @@ function BellRows({ onFollow }: Readonly<{ onFollow: () => void }>) {
   return (
     <NotificationDays
       days={days}
+      headingLevel={3}
       context={{ timeZone, onFollow }}
       className="max-h-[min(420px,60dvh)] overflow-y-auto"
     />

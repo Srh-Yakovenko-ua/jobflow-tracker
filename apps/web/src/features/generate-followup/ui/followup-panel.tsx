@@ -8,18 +8,20 @@ import {
   followupRequestSchema,
   type FollowupResponse,
 } from '@jobflow/shared';
+import { AnimatePresence } from 'motion/react';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 
 import { type AiJob, AsyncState } from '@/shared/ui/async-state';
+import { Fade } from '@/shared/ui/fade';
 import { Reveal } from '@/shared/ui/reveal';
 
 import { forgetDraftEdit, readDraftEdit } from '../lib/draft-edits';
-import { type FollowupView, followupViewOf } from '../lib/followup-view';
+import { type FollowupReady, type FollowupView, followupViewOf } from '../lib/followup-view';
 import { useGenerateFollowup } from '../model/use-generate-followup';
 import { useMarkFollowupSent } from '../model/use-mark-followup-sent';
 import { FollowupEditor } from './followup-editor';
-import { FollowupFailure } from './followup-failure';
+import { FollowupFailure, FollowupFailureAlert } from './followup-failure';
 import { FollowupQueued } from './followup-queued';
 import { FollowupRequestForm } from './followup-request-form';
 
@@ -45,10 +47,11 @@ function usePanelControls({ application, followup }: FollowupPanelProps) {
   const marking = useMarkFollowupSent(application.id);
   const ask = ({ variant }: Ask) => {
     void methods.handleSubmit((request) => {
-      setManual(false);
-      forgetDraftEdit(application.id);
       marking.reset();
-      generation.generate({ ...request, variant });
+      generation.generate({ ...request, variant }, () => {
+        setManual(false);
+        forgetDraftEdit(application.id);
+      });
     })();
   };
   const view = followupViewOf({ response: followup.response, manual, refused: generation.refused });
@@ -60,16 +63,49 @@ function usePanelControls({ application, followup }: FollowupPanelProps) {
       ask({ variant: true });
     },
     onManual: () => {
+      generation.reset();
       setManual(true);
     },
   };
   return { applicationId: application.id, methods, generation, marking, view, actions };
 }
 
+function ReadyState({
+  controls,
+  ready,
+}: Readonly<{ controls: PanelControls; ready: FollowupReady }>) {
+  const { generation, marking, actions } = controls;
+  return (
+    <div className="flex flex-col gap-3.5">
+      <AnimatePresence initial={false}>
+        {ready.failure !== null && (
+          <Fade key="failure">
+            <FollowupFailureAlert
+              failure={{ ...ready.failure, retrying: generation.isPending }}
+              actions={{ onRetry: actions.onVariant, onManual: actions.onManual }}
+            />
+          </Fade>
+        )}
+      </AnimatePresence>
+      <FollowupEditor
+        key={ready.key}
+        draft={{ ready, applicationId: controls.applicationId }}
+        methods={controls.methods}
+        actions={{ onVariant: actions.onVariant, onSent: marking.mark }}
+        status={{
+          generating: generation.isPending,
+          marking: marking.isPending,
+          sent: marking.isSuccess,
+        }}
+      />
+    </div>
+  );
+}
+
 const IN_SECTION = { className: 'bg-transparent p-0 shadow-none' };
 
 function PanelState({ controls, job }: Readonly<{ controls: PanelControls; job: AiJob }>) {
-  const { view, generation, marking, actions } = controls;
+  const { view, generation, actions } = controls;
   if (view.kind === 'waiting') {
     return (
       <AsyncState job={job} view={IN_SECTION}>
@@ -94,19 +130,7 @@ function PanelState({ controls, job }: Readonly<{ controls: PanelControls; job: 
       />
     );
   }
-  return (
-    <FollowupEditor
-      key={view.key}
-      draft={{ ready: view, applicationId: controls.applicationId }}
-      methods={controls.methods}
-      actions={{ onVariant: actions.onVariant, onSent: marking.mark }}
-      status={{
-        generating: generation.isPending,
-        marking: marking.isPending,
-        sent: marking.isSuccess,
-      }}
-    />
-  );
+  return <ReadyState controls={controls} ready={view} />;
 }
 
 function stateIdOf(view: FollowupView): string {

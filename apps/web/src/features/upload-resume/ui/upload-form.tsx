@@ -1,5 +1,6 @@
 'use client';
 
+import { AnimatePresence } from 'motion/react';
 import type { SubmitEvent } from 'react';
 import type { UseFormReturn } from 'react-hook-form';
 
@@ -7,18 +8,25 @@ import { VersionTitleField, type VersionTitleForm } from '@/entities/resume';
 import { uk } from '@/shared/i18n';
 import { cn } from '@/shared/lib/cn';
 import { formatFileSize } from '@/shared/lib/state-format';
-import { Banner } from '@/shared/ui/banner';
+import { Banner, type BannerContent } from '@/shared/ui/banner';
 import { Button } from '@/shared/ui/button';
+import { Fade } from '@/shared/ui/fade';
 import { FormServerError } from '@/shared/ui/form-server-error';
 import { TOUCH_HEIGHT } from '@/shared/ui/touch-height';
 
+import type { UploadFailure } from '../lib/upload-failure';
 import type { UploadResume } from '../model/use-upload-resume';
 
 const COPY = uk.resumes.upload;
 
 const PERCENT = 100;
 
-export type UploadFormState = Pick<UploadResume, 'pending' | 'percent'> & { retryable: boolean };
+export type UploadFormState = Pick<UploadResume, 'pending' | 'percent' | 'failure'>;
+
+const SEND_AGAIN: Partial<Record<UploadFailure['kind'], BannerContent>> = {
+  retry: uk.errors.saveFailed,
+  expired: COPY.expired,
+};
 
 export type UploadFormProps = Readonly<{
   file: File;
@@ -53,6 +61,7 @@ function UploadProgress({ percent }: Readonly<{ percent: number }>) {
 }
 
 export function UploadForm({ file, form, state }: UploadFormProps) {
+  const sendAgain = state.failure === null ? undefined : SEND_AGAIN[state.failure.kind];
   return (
     <form
       noValidate
@@ -66,7 +75,13 @@ export function UploadForm({ file, form, state }: UploadFormProps) {
         <span className="flex-none text-ink-3 tabular-nums">{formatFileSize(file.size)}</span>
       </p>
       <FormServerError control={form.methods.control} />
-      {state.retryable && <Banner tone="error" content={uk.errors.saveFailed} />}
+      <AnimatePresence initial={false}>
+        {sendAgain !== undefined && (
+          <Fade key={sendAgain.title}>
+            <Banner tone="error" content={sendAgain} />
+          </Fade>
+        )}
+      </AnimatePresence>
       <VersionTitleField methods={form.methods} />
       {state.percent !== null && <UploadProgress percent={state.percent} />}
       <Button type="submit" loading={state.pending} className={cn(TOUCH_HEIGHT, 'self-start')}>

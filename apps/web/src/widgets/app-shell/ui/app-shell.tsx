@@ -3,8 +3,8 @@
 import { usePathname } from 'next/navigation';
 import type { ReactNode } from 'react';
 
-import { useSilentCount } from '@/entities/application';
 import { useSingleKeyShortcuts } from '@/entities/user';
+import { useSilentCount } from '@/features/snooze-reminder';
 import { FEATURE_FLAGS } from '@/shared/config';
 import { uk } from '@/shared/i18n';
 import { cn } from '@/shared/lib/cn';

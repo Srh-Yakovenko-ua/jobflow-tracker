@@ -7,13 +7,16 @@ export type TooltipProps = Readonly<{
   content: ReactNode;
   children: ReactElement;
   side?: 'top' | 'right' | 'bottom' | 'left';
+  describes?: boolean;
 }>;
 
-export function Tooltip({ content, children, side = 'top' }: TooltipProps) {
+export function Tooltip({ content, children, side = 'top', describes = true }: TooltipProps) {
   return (
     <TooltipPrimitive.Provider delayDuration={300}>
       <TooltipPrimitive.Root>
-        <TooltipPrimitive.Trigger asChild>{children}</TooltipPrimitive.Trigger>
+        <TooltipPrimitive.Trigger asChild>
+          {describes ? children : <span>{children}</span>}
+        </TooltipPrimitive.Trigger>
         <TooltipPrimitive.Portal>
           <TooltipPrimitive.Content
             side={side}

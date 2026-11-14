@@ -20,8 +20,6 @@ describe('summaryParagraphsOf', () => {
     expect(linkedOf(summaryParagraphsOf(DESIGN_TEXT))).toEqual([
       ['19', 'kpis'],
       ['4', 'kpis'],
-      ['24%', 'resumeAb'],
-      ['41%', 'resumeAb'],
       ['9', 'funnel'],
       ['4', 'funnel'],
       ['3', 'reasons'],
@@ -42,6 +40,21 @@ describe('summaryParagraphsOf', () => {
     const [paragraph] = summaryParagraphsOf('Прогноз 4,5 тижня. Далі 7 кроків.');
 
     expect(linkedOf(paragraph === undefined ? [] : [paragraph])).toEqual([['4,5', 'forecast']]);
+  });
+
+  it('серпень 2026 and the dates 01.09 and 15.09.2026 are not links, the counts beside them are', () => {
+    const paragraphs = summaryParagraphsOf(
+      'За серпень 2026 ти надіслав 19 відгуків. Скринінги з 01.09 по 15.09.2026 дали 4 техінтерв’ю.',
+    );
+
+    expect(linkedOf(paragraphs)).toEqual([
+      ['19', 'kpis'],
+      ['4', 'funnel'],
+    ]);
+  });
+
+  it('a CV number stays plain text while the A/B block is hidden', () => {
+    expect(linkedOf(summaryParagraphsOf('CV v2 дало 41% скринінгів, а v1 лише 24%.'))).toEqual([]);
   });
 
   it('splits the text into paragraphs on blank lines', () => {
