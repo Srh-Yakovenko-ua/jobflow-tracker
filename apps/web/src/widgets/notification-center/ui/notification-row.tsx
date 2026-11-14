@@ -4,6 +4,7 @@ import type { Notification } from '@jobflow/shared';
 import {
   CircleAlert,
   CircleDashed,
+  Ghost,
   type LucideIcon,
   PhoneCall,
   Sparkles,
@@ -28,6 +29,7 @@ const ICONS: Record<Notification['type'], LucideIcon> = {
   ai_failed: CircleAlert,
   insight_unlocked: TrendingUp,
   monthly_summary_ready: Sparkles,
+  auto_ghosted: Ghost,
 };
 
 const FADE = 'transition-[background-color,color,opacity] duration-(--duration-base) ease-standard';

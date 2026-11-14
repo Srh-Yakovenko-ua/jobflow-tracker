@@ -6,7 +6,7 @@ export const PAST_UNDO_WINDOW = new Date('2026-10-22T09:00:10.001Z');
 
 const MINUTE_MS = 60 * 1000;
 
-const DAY_MINUTES = 24 * 60;
+export const DAY_MINUTES = 24 * 60;
 
 export const minutesBefore = (minutes: number) => new Date(NOW.getTime() - minutes * MINUTE_MS);
 

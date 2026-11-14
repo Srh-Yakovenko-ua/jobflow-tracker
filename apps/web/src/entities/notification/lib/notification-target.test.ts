@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { fixtureIdOf } from '@/test/board-fixtures';
 import {
   AI_DONE_NOTIFICATION,
+  AUTO_GHOSTED_NOTIFICATION,
   buildNotification,
   INTERVIEW_NOTIFICATION,
   MONTHLY_SUMMARY_NOTIFICATION,
@@ -99,6 +100,11 @@ describe('notificationTargetOf', () => {
       name: 'monthly_summary_ready opens the summary page of its month',
       notification: MONTHLY_SUMMARY_NOTIFICATION,
       target: '/analytics/summary/2026-10',
+    },
+    {
+      name: 'auto_ghosted opens the board',
+      notification: AUTO_GHOSTED_NOTIFICATION,
+      target: '/board',
     },
   ])('$name', ({ notification, target }) => {
     expect(notificationTargetOf(notification)).toBe(target);

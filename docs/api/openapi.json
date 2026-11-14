@@ -16426,6 +16426,78 @@
                               "type",
                               "payload"
                             ]
+                          },
+                          {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string",
+                                "format": "uuid"
+                              },
+                              "readAt": {
+                                "type": [
+                                  "string",
+                                  "null"
+                                ],
+                                "format": "date-time"
+                              },
+                              "createdAt": {
+                                "type": "string",
+                                "format": "date-time"
+                              },
+                              "type": {
+                                "type": "string",
+                                "enum": [
+                                  "auto_ghosted"
+                                ]
+                              },
+                              "payload": {
+                                "type": "object",
+                                "properties": {
+                                  "items": {
+                                    "type": "array",
+                                    "items": {
+                                      "type": "object",
+                                      "properties": {
+                                        "applicationId": {
+                                          "type": "string",
+                                          "format": "uuid"
+                                        },
+                                        "company": {
+                                          "type": "string",
+                                          "minLength": 1
+                                        },
+                                        "days": {
+                                          "type": "integer",
+                                          "exclusiveMinimum": 0
+                                        }
+                                      },
+                                      "required": [
+                                        "applicationId",
+                                        "company",
+                                        "days"
+                                      ]
+                                    },
+                                    "minItems": 1
+                                  },
+                                  "autoGhostDays": {
+                                    "type": "integer",
+                                    "exclusiveMinimum": 0
+                                  }
+                                },
+                                "required": [
+                                  "items",
+                                  "autoGhostDays"
+                                ]
+                              }
+                            },
+                            "required": [
+                              "id",
+                              "readAt",
+                              "createdAt",
+                              "type",
+                              "payload"
+                            ]
                           }
                         ]
                       }

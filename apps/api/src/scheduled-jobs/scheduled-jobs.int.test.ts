@@ -6,10 +6,10 @@ import { Clock } from '../common/clock.js';
 import { InterviewAlertsService, SilenceScanService } from '../modules/reminders/index.js';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { useTestDatabase } from '../test/database.js';
-import { createAiJob, createUser } from '../test/factories.js';
+import { createActiveVersionOwner, createAiJob, createUser } from '../test/factories.js';
 import { memoryLog } from '../test/memory-log.js';
 import { compileProcessorModule } from '../test/processor.js';
-import { fixedClock, NOW } from '../test/time.js';
+import { daysBefore, fixedClock, NOW } from '../test/time.js';
 import { ScheduledJobsRepository } from './scheduled-jobs.repository.js';
 import { ScheduledJobsService } from './scheduled-jobs.service.js';
 
@@ -166,6 +166,44 @@ describe('ScheduledJobsService on the database', () => {
 
     await expect(repository.monthlySummaryCandidates()).resolves.toEqual([
       { userId: subscribed.id, timezone: 'Europe/Kyiv' },
+    ]);
+  });
+
+  it("lists as ghost candidates only the user's own live active cards silent up to the cutoff, oldest first", async () => {
+    const { prisma } = database;
+    const cutoff = daysBefore(30);
+    const olena = await createActiveVersionOwner(prisma, [
+      { company: 'At cutoff', currentStage: 'final', lastEventAt: cutoff },
+      { company: 'Older', lastEventAt: daysBefore(45) },
+      { company: 'Younger', lastEventAt: daysBefore(29) },
+      { company: 'Draft', isDraft: true, lastEventAt: daysBefore(45) },
+      { company: 'Deleted', deletedAt: NOW, lastEventAt: daysBefore(45) },
+      { company: 'Rejected', currentStage: 'rejected', lastEventAt: daysBefore(45) },
+    ]);
+    await createActiveVersionOwner(prisma, [{ company: 'Bohdan', lastEventAt: daysBefore(45) }]);
+
+    const rows = await repository.ghostCandidates(olena.userId, cutoff);
+
+    expect(rows.map(({ company, currentStage }) => [company, currentStage])).toEqual([
+      ['Older', 'applied'],
+      ['At cutoff', 'final'],
+    ]);
+  });
+
+  it('lists as auto ghost candidates only users with the setting on and a live active card', async () => {
+    const { prisma } = database;
+    const watched = await createActiveVersionOwner(prisma, [{ lastEventAt: daysBefore(45) }]);
+    const off = await createActiveVersionOwner(prisma, [{ lastEventAt: daysBefore(45) }]);
+    await prisma.userSettings.update({
+      where: { userId: off.userId },
+      data: { autoGhostDays: null },
+    });
+    await createActiveVersionOwner(prisma, [
+      { currentStage: 'ghosted', lastEventAt: daysBefore(45) },
+    ]);
+
+    await expect(repository.autoGhostCandidates()).resolves.toEqual([
+      { userId: watched.userId, autoGhostDays: 30 },
     ]);
   });
 });

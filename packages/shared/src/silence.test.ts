@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import {
   effectiveSilenceDays,
   SILENCE_LEVELS,
+  silenceItemOf,
   type SilenceLevel,
   silenceLevelOf,
   type SilenceWindow,
@@ -145,6 +146,21 @@ describe('wholeDaysBetween', () => {
     ['2026-10-18T10:00:00.000Z', '2026-10-25T09:59:59.999Z', 6],
   ] as const)('counts %s to %s across a Kyiv clock change as %i', ([start, end, expected]) => {
     expect(wholeDaysBetween(new Date(start), new Date(end))).toBe(expected);
+  });
+});
+
+describe('silenceItemOf', () => {
+  it('names the application, its company and the whole days of silence', () => {
+    const row = {
+      id: '019a0000-0000-7000-8000-000000000001',
+      company: 'Grammarly',
+      lastEventAt: new Date('2026-10-01T09:00:00.000Z'),
+    };
+    expect(silenceItemOf(row, new Date('2026-10-31T08:00:00.000Z'))).toEqual({
+      applicationId: '019a0000-0000-7000-8000-000000000001',
+      company: 'Grammarly',
+      days: 29,
+    });
   });
 });
 

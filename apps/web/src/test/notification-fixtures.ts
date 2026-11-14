@@ -85,6 +85,18 @@ export const MONTHLY_SUMMARY_NOTIFICATION = buildNotification({
   payload: { aiJobId: fixtureIdOf(51), month: '2026-10' },
 });
 
+export const AUTO_GHOSTED_NOTIFICATION = buildNotification({
+  serial: 6,
+  type: 'auto_ghosted',
+  payload: {
+    items: [
+      { applicationId: fixtureIdOf(61), company: 'Acme', days: 30 },
+      { applicationId: fixtureIdOf(62), company: 'Kvit Software', days: 34 },
+    ],
+    autoGhostDays: 30,
+  },
+});
+
 export const DESIGN_FEED: NotificationListResponse = {
   items: [INTERVIEW_NOTIFICATION, SILENCE_NOTIFICATION, AI_DONE_NOTIFICATION],
   nextCursor: null,

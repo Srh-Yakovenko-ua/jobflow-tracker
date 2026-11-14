@@ -119,6 +119,10 @@ describe('notificationSchema', () => {
       'a monthly summary ready',
       { ...ROW, type: 'monthly_summary_ready', payload: MONTHLY_SUMMARY_READY },
     ],
+    [
+      'an auto ghosted',
+      { ...ROW, type: 'auto_ghosted', payload: { ...SILENCE, autoGhostDays: 30 } },
+    ],
   ])('keeps %s notification as sent', (_label, notification) => {
     expect(notificationSchema.parse(notification)).toStrictEqual(notification);
   });
@@ -151,6 +155,11 @@ describe('notificationSchema', () => {
       label: 'a silence carrying an AI payload',
       notification: { type: 'silence', payload: AI_DONE },
       path: 'payload.items',
+    },
+    {
+      label: 'an auto ghosted without the day setting',
+      notification: { type: 'auto_ghosted', payload: SILENCE },
+      path: 'payload.autoGhostDays',
     },
   ])('refuses $label', ({ notification, path }) => {
     expect(issuePathsOf(notificationSchema.safeParse({ ...ROW, ...notification }))).toEqual([path]);

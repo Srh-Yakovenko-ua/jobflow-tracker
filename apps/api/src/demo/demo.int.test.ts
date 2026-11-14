@@ -46,7 +46,13 @@ const STORY_TO_PINNED_MS = (84 * 24 * 60 - 90) * 60 * 1000;
 
 const DEMO_DUMP_SELECT = {
   email: true,
-  settings: { select: { timezone: true, activeResumeVersion: { select: { number: true } } } },
+  settings: {
+    select: {
+      timezone: true,
+      autoGhostDays: true,
+      activeResumeVersion: { select: { number: true } },
+    },
+  },
   searches: { select: { title: true, status: true, startedAt: true, createdAt: true } },
   resumes: { select: { title: true, createdAt: true } },
   resumeVersions: {
@@ -271,7 +277,11 @@ describe('the demo story seed', () => {
       '3 для дизайн-ролей',
     ]);
     expect(dump.resumeVersions.every(({ aiProfile }) => aiProfile !== null)).toBe(true);
-    expect(dump.settings).toEqual({ timezone: 'Europe/Kyiv', activeResumeVersion: { number: 2 } });
+    expect(dump.settings).toEqual({
+      timezone: 'Europe/Kyiv',
+      autoGhostDays: null,
+      activeResumeVersion: { number: 2 },
+    });
     expect(dump.aiJobs.map(({ status, createdAt }) => ({ status, createdAt }))).toEqual([
       { status: 'done', createdAt: new Date('2026-11-01T02:00:00.000Z') },
     ]);
