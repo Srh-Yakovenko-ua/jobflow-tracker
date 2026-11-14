@@ -1,4 +1,4 @@
-import { screen } from '@testing-library/react';
+import { screen, within } from '@testing-library/react';
 import { createElement } from 'react';
 
 import { AnalyticsDashboard } from '@/widgets/analytics-dashboard';
@@ -28,6 +28,35 @@ export function renderDashboardBlocks(options: DashboardRoutesOptions = {}) {
   const routes = dashboardRoutes(options);
   server.use(meRoute(), ...routes.handlers);
   return { user: renderInApp(createElement(AnalyticsDashboard)), sent: routes.sent };
+}
+
+export type FrameRender = Readonly<{
+  eyebrow: string;
+  options: DashboardRoutesOptions;
+  shows: string;
+}>;
+
+export async function renderedFrame({
+  eyebrow,
+  options,
+  shows,
+}: FrameRender): Promise<HTMLElement> {
+  renderDashboardBlocks(options);
+  const frame = frameOf(eyebrow);
+  await within(frame).findByText(shows);
+  return frame;
+}
+
+export function meterOf(frame: HTMLElement): (string | null)[] {
+  const meter = within(frame).getByRole('meter', { name: 'Прогрес до першого висновку' });
+  return [meter.getAttribute('aria-valuenow'), meter.getAttribute('aria-valuemax')];
+}
+
+export function smallNoteOf(frame: HTMLElement): (string | null)[] {
+  const note = within(frame).getByText('n<5').parentElement;
+  return within(note ?? frame)
+    .getAllByRole('listitem')
+    .map(({ textContent }) => textContent);
 }
 
 export async function selectArchivedSearch(user: ReturnType<typeof renderInApp>): Promise<void> {

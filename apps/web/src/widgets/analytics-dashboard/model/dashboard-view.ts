@@ -2,10 +2,13 @@ import {
   type ForecastResponse,
   type FunnelStage,
   type InsightAction,
+  type MatchValidationResponse,
   type ReasonsResponse,
+  type ResumeAbResponse,
   type SankeyResponse,
   type SourcesResponse,
   THRESHOLDS,
+  type TimingsResponse,
 } from '@jobflow/shared';
 
 import { uk } from '@/shared/i18n';
@@ -18,13 +21,18 @@ import {
   funnelNotesOf,
   type TitledBlock,
 } from '../lib/block-titles';
+import type { InsufficientState } from '../lib/interval-bars';
+import { matchHeaderOf, matchLowOf } from '../lib/match-bars';
+import { resumeAbHeaderOf, resumeAbLowOf } from '../lib/resume-ab-view';
+import { timingsLowOf } from '../lib/timing-bars';
 import type { DashboardQueries } from './use-dashboard-queries';
 
 const BLOCKS = uk.analytics.blocks;
 
 export type DashboardFrame = Readonly<{ header: ChartFrameHeader; state: ChartFrameState }>;
 
-export type DashboardFrameId = 'sankey' | 'reasons' | 'sources' | 'forecast';
+export type DashboardFrameId =
+  'sankey' | 'reasons' | 'sources' | 'resumeAb' | 'forecast' | 'timings' | 'matchValidation';
 
 export type SankeyFrame = DashboardFrame &
   Readonly<{
@@ -45,16 +53,63 @@ export type SourcesFrame = DashboardFrame & Readonly<{ data: SourcesResponse | u
 
 export type ForecastFrame = DashboardFrame & Readonly<{ data: ForecastResponse | undefined }>;
 
+export type ResumeAbFrame = DashboardFrame & Readonly<{ data: ResumeAbResponse | undefined }>;
+
+export type TimingsFrame = DashboardFrame & Readonly<{ data: TimingsResponse | undefined }>;
+
+export type MatchValidationFrame = DashboardFrame &
+  Readonly<{ data: MatchValidationResponse | undefined }>;
+
 export type DashboardFrames = Record<DashboardFrameId, DashboardFrame> & {
   sankey: SankeyFrame;
   reasons: ReasonsFrame;
   sources: SourcesFrame;
+  resumeAb: ResumeAbFrame;
   forecast: ForecastFrame;
+  timings: TimingsFrame;
+  matchValidation: MatchValidationFrame;
 };
 
 export type DashboardViewInput = Readonly<{ queries: DashboardQueries; searches: FrameQuery }>;
 
 type SearchBoundQuery = Readonly<{ query: FrameQuery; searches: FrameQuery }>;
+
+type LowDataQuery<Data> = Readonly<{
+  query: FrameQuery & Readonly<{ data: Data | undefined }>;
+  low: (data: Data) => InsufficientState | undefined;
+}>;
+
+type EvidenceFrames = Pick<DashboardFrames, 'resumeAb' | 'timings' | 'matchValidation'>;
+
+function lowDataStateOf<Data>({ query, low }: LowDataQuery<Data>): ChartFrameState {
+  const state = chartFrameStateOf(query);
+  if (state.status !== 'ready' || query.data === undefined) return state;
+  return low(query.data) ?? state;
+}
+
+function evidenceFramesOf({
+  resumeAb,
+  timings,
+  matchValidation,
+}: DashboardQueries): EvidenceFrames {
+  return {
+    resumeAb: {
+      header: resumeAbHeaderOf(resumeAb.data),
+      state: lowDataStateOf({ query: resumeAb, low: resumeAbLowOf }),
+      data: resumeAb.data,
+    },
+    timings: {
+      header: { eyebrow: BLOCKS.timings.eyebrow },
+      state: lowDataStateOf({ query: timings, low: timingsLowOf }),
+      data: timings.data,
+    },
+    matchValidation: {
+      header: matchHeaderOf(matchValidation.data),
+      state: lowDataStateOf({ query: matchValidation, low: matchLowOf }),
+      data: matchValidation.data,
+    },
+  };
+}
 
 function searchBoundState({ query, searches }: SearchBoundQuery): ChartFrameState {
   return chartFrameStateOf(searches.data === undefined ? searches : query);
@@ -94,6 +149,7 @@ function framesOf({ queries, searches }: DashboardViewInput): DashboardFrames {
       state: chartFrameStateOf(queries.forecast),
       data: queries.forecast.data,
     },
+    ...evidenceFramesOf(queries),
   };
 }
 

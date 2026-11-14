@@ -107,7 +107,7 @@ describe('SummaryPage', () => {
     await screen.findByRole('heading', { name: 'Як пройшов серпень' });
 
     expect(hrefOf('19, Дивитись на графіку: відгуки')).toBe('/analytics#kpis');
-    expect(screen.queryByRole('link', { name: /^24%/ })).toBeNull();
+    expect(hrefOf('24%, Дивитись на графіку: A/B резюме')).toBe('/analytics#resume-ab');
     expect(screen.getAllByRole('link', { name: /Дивитись на графіку: воронка$/ })).toHaveLength(2);
     expect(screen.queryByRole('link', { name: /^v2/ })).toBeNull();
 

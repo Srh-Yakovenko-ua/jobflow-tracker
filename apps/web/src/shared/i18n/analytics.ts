@@ -1,15 +1,7 @@
-import { countedUk, type PluralForms, pluralUk } from '@jobflow/shared';
+import { countedUk, pluralUk } from '@jobflow/shared';
 
-const FORMS = {
-  application: { one: 'відгук', few: 'відгуки', other: 'відгуків' },
-  screening: { one: 'скринінг', few: 'скринінги', other: 'скринінгів' },
-  week: { one: 'тиждень', few: 'тижні', other: 'тижнів' },
-  weekFraction: { other: 'тижня' },
-  offer: { one: 'офер', few: 'офери', other: 'оферів' },
-  company: { one: 'компанія', few: 'компанії', other: 'компаній' },
-  silent: { one: 'не відповіла', other: 'не відповіли' },
-  excluded: { one: 'Вона не входить', other: 'Вони не входять' },
-} as const satisfies Record<string, PluralForms>;
+import { evidence } from './analytics-evidence';
+import { applications, FORMS, type SourceCounts, sourceCounts } from './analytics-forms';
 
 const EYEBROW = 'аналітика воронки';
 
@@ -17,14 +9,7 @@ const MINUS = '−';
 
 const signed = (value: number) => `${value > 0 ? '+' : MINUS}${String(Math.abs(value))}`;
 
-const applications = (count: number) => countedUk(count, FORMS.application);
-
 const weeks = (count: number) => countedUk(count, FORMS.week);
-
-const sourceCounts = ({ applied, screened }: SourceCounts) =>
-  `${applications(applied)}, ${countedUk(screened, FORMS.screening)}`;
-
-export type SourceCounts = Readonly<{ applied: number; screened: number }>;
 
 export const analytics = {
   title: 'Дашборд аналітики',
@@ -50,6 +35,11 @@ export const analytics = {
   lowData: (...details: string[]) => ['мало даних', ...details].join(' · '),
   percent: (value: number) => `${String(value)}%`,
   summary: (caption: string, parts: readonly string[]) => `${caption}: ${parts.join(', ')}`,
+  interval: {
+    label: 'інтервал',
+    range: (low: number, high: number) => `інтервал: ${String(low)}–${String(high)}%`,
+  },
+  small: { tag: 'n<5', noise: 'Відсоток на такій вибірці лише шум.' },
   kpi: {
     sent: {
       label: 'Відгуків надіслано',
@@ -123,7 +113,6 @@ export const analytics = {
       eyebrow: 'конверсія за джерелами',
       fallback: 'Яке джерело працює',
       step: 'у скринінг',
-      interval: 'інтервал',
       counts: sourceCounts,
       table: {
         caption: 'Конверсія за джерелами',
@@ -133,17 +122,15 @@ export const analytics = {
         conversion: 'конверсія у скринінг',
       },
       small: {
-        tag: 'n<5',
         line: ({ label, ...counts }: SourceCounts & Readonly<{ label: string }>) =>
           `${label}: ${sourceCounts(counts)}.`,
-        noise: 'Відсоток на такій вибірці лише шум.',
       },
       empty: {
         title: 'Джерел ще немає',
         hint: "Тут з'явиться конверсія кожного майданчика, звідки ти відгукуєшся.",
       },
     },
-    resume_ab: { eyebrow: 'A/B версій резюме', fallback: 'Яка версія CV працює краще' },
+    ...evidence,
     forecast: {
       eyebrow: 'прогноз офера',
       span: (low: number, high: number) => `${String(low)}–${weeks(high)}`,
@@ -182,7 +169,6 @@ export const analytics = {
         meter: 'Прогрес до прогнозу',
       },
     },
-    timings: { eyebrow: 'час на етапах · медіана' },
   },
   whatToDo: { eyebrow: 'що зробити', list: 'Що зробити далі' },
   lowDataState: {

@@ -22,6 +22,7 @@ export * from './scheduled-events.js';
 export * from './schemas/analytics-forecast.js';
 export * from './schemas/analytics-funnel.js';
 export * from './schemas/analytics-insights.js';
+export * from './schemas/analytics-match-validation.js';
 export * from './schemas/analytics-reasons.js';
 export * from './schemas/analytics-resume-ab.js';
 export * from './schemas/analytics-sankey.js';

@@ -3,15 +3,21 @@ import type { ReactNode } from 'react';
 import { ANALYTICS_ANCHORS, type AnalyticsBlock } from '@/shared/lib/analytics-anchors';
 import { cn } from '@/shared/lib/cn';
 
+import { matchBarsOf } from '../lib/match-bars';
+import { sourcesViewOf } from '../lib/source-bars';
+import { timingBarsOf } from '../lib/timing-bars';
 import type { DashboardView } from '../model/dashboard-view';
+import { EvidenceBlock } from './evidence-block';
 import { ForecastBlock, type ForecastControls } from './forecast-block';
 import { KpiRow } from './kpi-row';
 import { ReasonsBlock } from './reasons-block';
+import { ResumeAbBlock } from './resume-ab-block';
 import { SankeyBlock, type SankeyControls } from './sankey-block';
-import { SourcesBlock } from './sources-block';
 import { WhatToDoPanel } from './what-to-do-panel';
 
 const GRID = 'grid items-start gap-4.5';
+
+const NARROW_COLUMNS = 'grid-cols-[repeat(auto-fit,minmax(min(300px,100%),1fr))]';
 
 export type DashboardBlocksProps = Readonly<{
   view: DashboardView;
@@ -45,12 +51,21 @@ export function DashboardBlocks({ view, silenceDays, sankey, forecast }: Dashboa
           <ReasonsBlock frame={frames.reasons} />
         </Anchored>
         <Anchored block="sources">
-          <SourcesBlock frame={frames.sources} />
+          <EvidenceBlock frame={frames.sources} viewOf={sourcesViewOf} />
         </Anchored>
       </div>
-      <Anchored block="forecast">
-        <ForecastBlock frame={frames.forecast} controls={forecast} />
-      </Anchored>
+      <div className={cn(GRID, NARROW_COLUMNS)}>
+        <Anchored block="resumeAb">
+          <ResumeAbBlock frame={frames.resumeAb} />
+        </Anchored>
+        <Anchored block="forecast">
+          <ForecastBlock frame={frames.forecast} controls={forecast} />
+        </Anchored>
+      </div>
+      <div className={cn(GRID, NARROW_COLUMNS)}>
+        <EvidenceBlock frame={frames.timings} viewOf={timingBarsOf} />
+        <EvidenceBlock frame={frames.matchValidation} viewOf={matchBarsOf} />
+      </div>
       <WhatToDoPanel view={view.actions} />
     </div>
   );

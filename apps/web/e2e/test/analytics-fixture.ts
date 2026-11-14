@@ -1,6 +1,8 @@
 import {
   buildDesignFunnel,
+  buildDesignMatchValidation,
   buildDesignReasons,
+  buildDesignResumeAb,
   buildDesignSankey,
   buildDesignSources,
   buildDesignTimings,
@@ -26,6 +28,8 @@ const DESIGN_REPLIES: Readonly<Record<string, DesignReply>> = {
   '/analytics/timings': () => buildDesignTimings(),
   '/analytics/forecast': () => buildForecast(),
   '/analytics/insights': () => designInsightsBody(),
+  '/analytics/resume-ab': () => buildDesignResumeAb(),
+  '/analytics/match-validation': () => buildDesignMatchValidation(),
 };
 
 async function replyWithDesign(route: Route): Promise<void> {

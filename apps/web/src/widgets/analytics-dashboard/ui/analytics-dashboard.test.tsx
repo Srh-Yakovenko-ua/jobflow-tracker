@@ -31,6 +31,7 @@ const FRAMES = {
   resumeAb: 'A/B версій резюме',
   forecast: 'прогноз офера',
   timings: 'час на етапах · медіана',
+  matchValidation: 'Match Score · перевірка на відгуках',
 } as const;
 
 const TILES = {
@@ -52,7 +53,10 @@ const BLOCKS: readonly Block[] = [
   'sankey',
   'reasons',
   'sources',
+  'resumeAb',
   'forecast',
+  'timings',
+  'matchValidation',
   'sent',
   'screening',
   'response',
@@ -73,8 +77,10 @@ const AFFECTED: Record<Exclude<DashboardRoute, 'insights'>, readonly Block[]> = 
   sankey: ['sankey'],
   reasons: ['reasons'],
   sources: ['sources'],
-  timings: ['response', 'ghost'],
+  timings: ['timings', 'response', 'ghost'],
   forecast: ['forecast'],
+  'resume-ab': ['resumeAb'],
+  'match-validation': ['matchValidation'],
 };
 
 const RETRIED: Partial<Record<DashboardRoute, readonly DashboardRoute[]>> = {
@@ -154,7 +160,7 @@ describe('AnalyticsDashboard', () => {
     expect(ghost.getByText('ринок: 18–22%')).toBeDefined();
   });
 
-  it('block titles are the conclusions from the insights, forecast and timings keep only the eyebrow, salary and the AI summary are absent', async () => {
+  it('block titles are the conclusions from the insights and the served verdicts, forecast and timings keep only the eyebrow, salary and the AI summary are absent', async () => {
     renderDashboard();
 
     expect(
@@ -165,11 +171,11 @@ describe('AnalyticsDashboard', () => {
     expect(
       screen.getByRole('heading', { name: "LinkedIn з'їдає час, рефералки — ні" }),
     ).toBeDefined();
-    expect(screen.queryByRole('heading', { name: 'Схоже, CV v2 працює краще' })).toBeNull();
+    expect(screen.getByRole('heading', { name: 'Схоже, CV v2 працює краще' })).toBeDefined();
     expect(screen.getByRole('region', { name: FRAMES.forecast })).toBeDefined();
-    expect(screen.queryByRole('region', { name: FRAMES.timings })).toBeNull();
+    expect(screen.getByRole('region', { name: FRAMES.timings })).toBeDefined();
     expect(screen.getByRole('region', { name: WHAT_TO_DO })).toBeDefined();
-    expect(blockRegions()).toHaveLength(5);
+    expect(blockRegions()).toHaveLength(8);
     expect(screen.queryByRole('heading', { name: /зарплат/i })).toBeNull();
     expect(screen.queryByText(/саммарі/i)).toBeNull();
   });
@@ -181,10 +187,10 @@ describe('AnalyticsDashboard', () => {
     await waitFor(() => {
       expect(screen.queryByRole('region', { name: WHAT_TO_DO })).toBeNull();
     });
-    expect(blockRegions()).toHaveLength(4);
+    expect(blockRegions()).toHaveLength(7);
   });
 
-  it('without insights the blocks ask neutral questions instead of stating conclusions', async () => {
+  it('without insights the blocks ask neutral questions, the CV block keeps its served verdict', async () => {
     renderDashboard({ insights: { insights: [], actions: [] } });
     await screen.findByRole('heading', { name: HERO_TITLE });
     await waitFor(() => {
@@ -193,7 +199,7 @@ describe('AnalyticsDashboard', () => {
 
     expect(screen.getByRole('heading', { name: 'Де відмовляють найчастіше' })).toBeDefined();
     expect(screen.getByRole('heading', { name: 'Яке джерело працює' })).toBeDefined();
-    expect(screen.queryByRole('heading', { name: 'Яка версія CV працює краще' })).toBeNull();
+    expect(screen.getByRole('heading', { name: 'Схоже, CV v2 працює краще' })).toBeDefined();
   });
 
   it('four applications turn the whole dashboard into its low data state with one useful action', async () => {
@@ -242,6 +248,8 @@ describe('AnalyticsDashboard', () => {
         timings: '',
         forecast: '',
         insights: '',
+        'resume-ab': '',
+        'match-validation': '',
       });
     });
     sent.length = 0;

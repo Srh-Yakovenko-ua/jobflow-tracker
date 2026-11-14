@@ -20,6 +20,8 @@ describe('summaryParagraphsOf', () => {
     expect(linkedOf(summaryParagraphsOf(DESIGN_TEXT))).toEqual([
       ['19', 'kpis'],
       ['4', 'kpis'],
+      ['24%', 'resumeAb'],
+      ['41%', 'resumeAb'],
       ['9', 'funnel'],
       ['4', 'funnel'],
       ['3', 'reasons'],
@@ -53,8 +55,11 @@ describe('summaryParagraphsOf', () => {
     ]);
   });
 
-  it('a CV number stays plain text while the A/B block is hidden', () => {
-    expect(linkedOf(summaryParagraphsOf('CV v2 дало 41% скринінгів, а v1 лише 24%.'))).toEqual([]);
+  it('a CV number links to the A/B block and the version number stays plain', () => {
+    expect(linkedOf(summaryParagraphsOf('CV v2 дало 41% скринінгів, а v1 лише 24%.'))).toEqual([
+      ['41%', 'resumeAb'],
+      ['24%', 'resumeAb'],
+    ]);
   });
 
   it('splits the text into paragraphs on blank lines', () => {
