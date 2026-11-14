@@ -341,6 +341,23 @@ describe('the demo story seed', () => {
     });
   });
 
+  it("forgets the demo user's idempotency keys, so the same page captured again that day makes a new draft, and keeps another user's", async () => {
+    await demo().run();
+    const { id: demoId } = await testApp.prisma.user.findUniqueOrThrow({
+      where: { email: DEMO_USER.email },
+    });
+    const { id: otherId } = await createUser(testApp.prisma);
+    const key = { key: 'bm-2026-11-20-141303d0', requestHash: 'hash' };
+    await testApp.prisma.idempotencyKey.createMany({
+      data: [demoId, otherId].map((userId) => ({ ...key, userId })),
+    });
+
+    await demo().run();
+
+    const left = await testApp.prisma.idempotencyKey.findMany({ select: { userId: true } });
+    expect(left).toEqual([{ userId: otherId }]);
+  });
+
   it('keeps a demo user that existed before the run instead of registering it again', async () => {
     const existing = await createUser(testApp.prisma, { email: DEMO_USER.email });
 

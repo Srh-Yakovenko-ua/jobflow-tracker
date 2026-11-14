@@ -50,8 +50,8 @@ export function resumeAbTable(page: Page): Locator {
   return page.getByRole('table', { name: uk.resumes.title, exact: true });
 }
 
-export function designSankey(page: Page): Locator {
+export function designSankey(page: Page, addedApplications = 0): Locator {
   return page.getByRole('region', {
-    name: uk.analytics.blocks.sankey.title(buildDesignFunnel().kpis.sent.total),
+    name: uk.analytics.blocks.sankey.title(buildDesignFunnel().kpis.sent.total + addedApplications),
   });
 }
