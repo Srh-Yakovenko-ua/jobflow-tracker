@@ -87,7 +87,9 @@ describe('refresh token rotation and revocation', () => {
     const warnings = log
       .parsed()
       .filter((line) => line.msg === 'refresh token reuse, family revoked');
-    expect(warnings).toEqual([expect.objectContaining({ level: 40, userId: user.id, familyId })]);
+    const userHash: unknown = expect.stringMatching(/^[0-9a-f]{16}$/);
+    expect(warnings).toEqual([expect.objectContaining({ level: 40, userId: userHash, familyId })]);
+    expect(log.lines.join('')).not.toContain(user.id);
     const family = await familyRows(familyId);
     expect(family.map((row) => row.revokedAt instanceof Date)).toEqual([true, true]);
     expect((await refreshWith(testApp.app, { refreshToken: second })).status).toBe(401);

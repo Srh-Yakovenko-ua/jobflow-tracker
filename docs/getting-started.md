@@ -59,7 +59,7 @@ docker compose up -d
 docker compose up -d --build --wait api worker
 ```
 
-Команда збирає образ api (ціль `dev`, `apps/api/src` змонтовано в контейнер) і повертає керування, коли healthcheck api стане `healthy`, а worker запуститься. Worker використовує той самий образ з іншою командою, порту не має і healthcheck-а теж, тому в `docker compose ps` у колонці `STATUS` у нього лише `Up`, без `(healthy)`. `--build` потрібен, щоб після pull образ підхопив нові залежності. Health відповідає на http://localhost:4000/api/v1/health. Контейнер api займає той самий порт 4000, що й `pnpm dev`, тому одночасно працює щось одне. Контейнер ai описано в розділі [AI](#ai), analytics і documents нижче. Моніторинг (Grafana, Jaeger та інші) вмикатиметься профілем: `docker compose --profile observability up -d`, коли з'являться картки OBS.
+Команда збирає образ api (ціль `dev`, `apps/api/src` змонтовано в контейнер) і повертає керування, коли healthcheck api стане `healthy`, а worker запуститься. Worker використовує той самий образ з іншою командою, порту не має і healthcheck-а теж, тому в `docker compose ps` у колонці `STATUS` у нього лише `Up`, без `(healthy)`. `--build` потрібен, щоб після pull образ підхопив нові залежності. Health відповідає на http://localhost:4000/api/v1/health. Контейнер api займає той самий порт 4000, що й `pnpm dev`, тому одночасно працює щось одне. Контейнер ai описано в розділі [AI](#ai), analytics і documents нижче. Моніторинг (Loki, Alloy, Grafana) вмикається профілем: `docker compose --profile observability up -d`.
 
 Лише web:
 
@@ -106,27 +106,51 @@ docker compose down
 
 Усі порти слухають лише 127.0.0.1.
 
-| Сервіс        | Порт                       | Стан               |
-| ------------- | -------------------------- | ------------------ |
-| Postgres      | 5432                       | працює             |
-| Redis         | 6379                       | працює             |
-| MinIO         | 9000 (API), 9001 (консоль) | працює             |
-| Mailpit       | 1025 (SMTP), 8025 (UI)     | працює             |
-| api           | 4000                       | працює             |
-| worker        | без порту                  | працює             |
-| web (Next.js) | 3000                       | працює             |
-| analytics     | 8000                       | працює             |
-| ai            | 8001                       | працює             |
-| documents     | 8002                       | працює             |
-| Prometheus    | 9090                       | з'явиться в OBS-02 |
-| Grafana       | 3001                       | з'явиться в OBS-02 |
-| Loki          | 3100                       | з'явиться в OBS-01 |
-| Alloy         | 12345, OTLP 4317 і 4318    | з'явиться в OBS-01 |
-| Jaeger        | 16686                      | з'явиться в OBS-03 |
-| GlitchTip     | 8003                       | з'явиться в OBS-04 |
-| Uptime Kuma   | 3002                       | з'явиться в OBS-05 |
+| Сервіс        | Порт                       | Стан                                |
+| ------------- | -------------------------- | ----------------------------------- |
+| Postgres      | 5432                       | працює                              |
+| Redis         | 6379                       | працює                              |
+| MinIO         | 9000 (API), 9001 (консоль) | працює                              |
+| Mailpit       | 1025 (SMTP), 8025 (UI)     | працює                              |
+| api           | 4000                       | працює                              |
+| worker        | без порту                  | працює                              |
+| web (Next.js) | 3000                       | працює                              |
+| analytics     | 8000                       | працює                              |
+| ai            | 8001                       | працює                              |
+| documents     | 8002                       | працює                              |
+| Prometheus    | 9090                       | з'явиться в OBS-02                  |
+| Grafana       | 3001                       | профіль `observability`, без логіну |
+| Loki          | 3100                       | профіль `observability`             |
+| Alloy         | 12345 (UI)                 | профіль `observability`             |
+| Jaeger        | 16686                      | з'явиться в OBS-03                  |
+| GlitchTip     | 8003                       | з'явиться в OBS-04                  |
+| Uptime Kuma   | 3002                       | з'явиться в OBS-05                  |
 
-Сервіси моніторингу запускатимуться лише з профілем `observability`.
+Сервіси моніторингу запускаються лише з профілем `observability`, як описано в розділі [Логи](#логи).
+
+## Логи
+
+Логи всіх сервісів збираються в Loki, і їх можна шукати в одному місці за id запиту. Стек разом з моніторингом:
+
+```bash
+docker compose -f infra/docker/compose.yml -f infra/docker/compose.override.yml --profile observability up -d
+```
+
+Профіль додає Loki, Grafana Alloy і Grafana. Без нього жоден з трьох не стартує. Grafana відкривається на http://localhost:3001 без логіну, джерело даних Loki і дашборд уже налаштовані.
+
+Дашборд `JobFlow logs` (http://localhost:3001/d/jobflow-logs) має три панелі:
+
+- «Errors, last hour»: рядки з рівнем `error` і вище за останню годину.
+- «One request across services»: усі рядки одного запиту з api, worker, analytics і ai. Id вводиться в поле `requestId` угорі дашборду.
+- «Slow AI jobs»: рядки worker `ai completion done`, де `latencyMs` більше 10000.
+
+Кожну панель можна відкрити в Explore і змінити там запит.
+
+Кожна відповідь API має заголовок `x-request-id`. Його значення, наприклад з DevTools, вставте в поле `requestId` або відкрийте http://localhost:3001/d/jobflow-logs?var-requestId=<id>. Worker передає той самий id в analytics і ai, тому панель показує весь шлях запиту. Якщо надсилаєте власний `x-request-id`, беріть UUID: analytics приймає лише його.
+
+У Loki лише дві мітки: `service` (назва сервісу в compose) і `level`. Id запиту лишається в тексті рядка. Id користувача api і worker пишуть лише як хеш, а паролі, токени й cookie в логи не потрапляють.
+
+Alloy читає лише контейнери compose-проєкту `jobflow`. Застосунки, запущені на хості через `pnpm dev`, у Loki не потрапляють, їхні логи лишаються в терміналі.
 
 ## Команди
 

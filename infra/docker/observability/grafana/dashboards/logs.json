@@ -1,0 +1,77 @@
+{
+  "uid": "jobflow-logs",
+  "title": "JobFlow logs",
+  "tags": ["jobflow", "logs"],
+  "schemaVersion": 41,
+  "editable": false,
+  "time": { "from": "now-6h", "to": "now" },
+  "refresh": "",
+  "templating": {
+    "list": [
+      {
+        "type": "textbox",
+        "name": "requestId",
+        "label": "Request id",
+        "query": "",
+        "current": { "text": "", "value": "" },
+        "hide": 0
+      }
+    ]
+  },
+  "panels": [
+    {
+      "id": 1,
+      "type": "logs",
+      "title": "Errors, last hour",
+      "timeFrom": "1h",
+      "gridPos": { "h": 10, "w": 24, "x": 0, "y": 0 },
+      "datasource": { "type": "loki", "uid": "loki" },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "loki", "uid": "loki" },
+          "queryType": "range",
+          "expr": "{service=~\".+\", level=~\"error|fatal|critical\"}"
+        }
+      ],
+      "options": { "showTime": true, "wrapLogMessage": true, "sortOrder": "Descending" }
+    },
+    {
+      "id": 2,
+      "type": "logs",
+      "title": "One request across services",
+      "gridPos": { "h": 12, "w": 24, "x": 0, "y": 10 },
+      "datasource": { "type": "loki", "uid": "loki" },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "loki", "uid": "loki" },
+          "queryType": "range",
+          "expr": "{service=~\".+\"} |= \"$requestId\""
+        }
+      ],
+      "options": {
+        "showTime": true,
+        "showLabels": true,
+        "wrapLogMessage": true,
+        "sortOrder": "Ascending"
+      }
+    },
+    {
+      "id": 3,
+      "type": "logs",
+      "title": "Slow AI jobs",
+      "gridPos": { "h": 10, "w": 24, "x": 0, "y": 22 },
+      "datasource": { "type": "loki", "uid": "loki" },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "loki", "uid": "loki" },
+          "queryType": "range",
+          "expr": "{service=\"worker\"} | json | msg=\"ai completion done\" | latencyMs > 10000"
+        }
+      ],
+      "options": { "showTime": true, "wrapLogMessage": true, "sortOrder": "Descending" }
+    }
+  ]
+}

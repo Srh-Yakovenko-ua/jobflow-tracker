@@ -1,6 +1,7 @@
-import { Controller, Get, Logger } from '@nestjs/common';
+import { Controller, Get, Logger, Req } from '@nestjs/common';
 import type { NestExpressApplication } from '@nestjs/platform-express';
 import { Test } from '@nestjs/testing';
+import type { Request } from 'express';
 import { LoggerModule } from 'nestjs-pino';
 import request from 'supertest';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
@@ -9,6 +10,9 @@ import { configModule } from '../config/app-config.js';
 import { APP_OPTIONS, configureApp } from '../configure-app.js';
 import { memoryLog } from '../test/memory-log.js';
 import { loggerParams } from './logger.js';
+
+const MARKER_USER_ID = 'marker-user';
+const MARKER_USER_HASH = '4d6314b81e2fc0fe';
 
 @Controller('probe')
 class ProbeController {
@@ -30,6 +34,18 @@ class ProbeController {
   captureToken(): { handled: true } {
     const created = { token: 'marker-nested-token', captureToken: 'marker-nested-capture' };
     this.logger.log({ token: 'marker-token', captureToken: 'marker-capture', created }, 'token');
+    return { handled: true };
+  }
+
+  @Get('user')
+  user(): { handled: true } {
+    this.logger.log({ userId: MARKER_USER_ID }, 'user line');
+    return { handled: true };
+  }
+
+  @Get('signed-in')
+  signedIn(@Req() req: Request): { handled: true } {
+    req.user = { id: MARKER_USER_ID, scope: ['user'] };
     return { handled: true };
   }
 }
@@ -114,6 +130,22 @@ describe('request logs', () => {
     const completed = log.parsed().find((line) => line.msg === 'request completed');
     expect(completed?.req).toMatchObject({ url: '/api/v1/probe', query: { ticket: '[Redacted]' } });
     expect(log.lines.join('\n')).not.toContain('secret-');
+  });
+
+  it('writes a logged userId as its hash and never the raw id', async () => {
+    await request(app.getHttpServer()).get('/api/v1/probe/user');
+
+    const [userLine] = log.parsed();
+    expect(userLine).toMatchObject({ msg: 'user line', userId: MARKER_USER_HASH });
+    expect(log.lines.join('\n')).not.toContain(MARKER_USER_ID);
+  });
+
+  it("puts the signed-in user's hash on the request completed line", async () => {
+    await request(app.getHttpServer()).get('/api/v1/probe/signed-in');
+
+    const completed = log.parsed().find((line) => line.msg === 'request completed');
+    expect(completed).toMatchObject({ userId: MARKER_USER_HASH });
+    expect(log.lines.join('\n')).not.toContain(MARKER_USER_ID);
   });
 
   it('writes no request line for the health check', async () => {

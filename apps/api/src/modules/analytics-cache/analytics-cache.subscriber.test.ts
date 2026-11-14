@@ -151,10 +151,11 @@ describe('AnalyticsCacheSubscriber', () => {
         expect.objectContaining({
           msg: 'analytics cache not invalidated',
           eventId: MOVE_EVENT_ID,
-          userId: OLENA_ID,
+          userId: '33d3c10ead285aee',
           err: error,
         }),
       ]);
+      expect(log.lines.join('')).not.toContain(OLENA_ID);
     },
   );
 });
