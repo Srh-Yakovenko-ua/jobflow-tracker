@@ -1,4 +1,8 @@
-import type { Notification } from '@jobflow/shared';
+import type {
+  AutoGhostedNotificationPayload,
+  Notification,
+  SilenceNotificationPayload,
+} from '@jobflow/shared';
 
 import { uk } from '@/shared/i18n';
 import { formatClock } from '@/shared/lib/state-format';
@@ -8,20 +12,28 @@ export type NotificationCopy = Readonly<{ title: string; text: string; action: s
 
 const COPY = uk.notifications;
 
-function silenceCopy({ items }: Extract<Notification, { type: 'silence' }>['payload']) {
+function silenceTextOf({ items }: SilenceNotificationPayload): string {
   const companies = items.map((item) => item.company).join(', ');
   const longest = Math.max(...items.map((item) => item.days));
-  return {
-    title: COPY.silentCards(items.length),
-    text: COPY.silence.text(companies, longest),
-    action: COPY.silence.action,
-  };
+  return COPY.silence.text(companies, longest);
+}
+
+function silenceCopy(payload: SilenceNotificationPayload): NotificationCopy {
+  const title = COPY.silentCards(payload.items.length);
+  return { title, text: silenceTextOf(payload), action: COPY.silence.action };
+}
+
+function autoGhostedCopy(payload: AutoGhostedNotificationPayload): NotificationCopy {
+  const title = COPY.autoGhosted.title(payload.items.length, payload.autoGhostDays);
+  return { title, text: silenceTextOf(payload), action: COPY.autoGhosted.action };
 }
 
 export function notificationCopyOf(notification: Notification, timeZone: string): NotificationCopy {
   switch (notification.type) {
     case 'silence':
       return silenceCopy(notification.payload);
+    case 'auto_ghosted':
+      return autoGhostedCopy(notification.payload);
     case 'interview_soon': {
       const { startsAt, company } = notification.payload;
       const clock = formatClock({ at: new Date(startsAt), timeZone });

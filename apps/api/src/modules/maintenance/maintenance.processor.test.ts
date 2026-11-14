@@ -2,6 +2,7 @@ import { UnrecoverableError } from 'bullmq';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 
 import { OutboxRelayService } from '../../outbox/outbox-relay.service.js';
+import { AutoGhostScanService } from '../../scheduled-jobs/auto-ghost-scan.service.js';
 import { ScheduledJobsService } from '../../scheduled-jobs/scheduled-jobs.service.js';
 import { memoryLog } from '../../test/memory-log.js';
 import { processedJob } from '../../test/processed-job.js';
@@ -57,6 +58,15 @@ class FakeScheduledJobs {
 
 const PICKED_USER_IDS = ['user-kyiv', 'user-kolkata'];
 
+class RecordingAutoGhostScan {
+  scans = 0;
+
+  scan() {
+    this.scans += 1;
+    return Promise.resolve({ users: 0, moved: 0, skipped: 0 });
+  }
+}
+
 class RecordingSummaryRequests {
   readonly requested: string[][] = [];
 
@@ -78,6 +88,7 @@ describe('MaintenanceProcessor', () => {
   const outbox = new FakeOutboxRelay();
   const scheduledJobs = new FakeScheduledJobs();
   const summaries = new RecordingSummaryRequests();
+  const autoGhost = new RecordingAutoGhostScan();
   let processor: MaintenanceProcessor;
   let close: () => Promise<void>;
 
@@ -87,6 +98,7 @@ describe('MaintenanceProcessor', () => {
       { provide: OutboxRelayService, useValue: outbox },
       { provide: ScheduledJobsService, useValue: scheduledJobs },
       { provide: SummaryRequestsService, useValue: summaries },
+      { provide: AutoGhostScanService, useValue: autoGhost },
     ]);
     processor = moduleRef.get(MaintenanceProcessor);
     close = () => moduleRef.close();
@@ -97,6 +109,7 @@ describe('MaintenanceProcessor', () => {
     outbox.calls.length = 0;
     scheduledJobs.calls.length = 0;
     summaries.requested.length = 0;
+    autoGhost.scans = 0;
   });
 
   afterAll(async () => {
@@ -173,6 +186,13 @@ describe('MaintenanceProcessor', () => {
     await processor.process(tickJob('monthly-summary.pick'));
 
     expect(summaries.requested).toEqual([['user-kyiv', 'user-kolkata']]);
+  });
+
+  it('runs the auto ghost scan for an auto-ghost.scan job', async () => {
+    await processor.process(tickJob('auto-ghost.scan'));
+
+    expect(autoGhost.scans).toBe(1);
+    expect(scheduledJobs.calls).toEqual([]);
   });
 
   it.each(['auto-ghost.scan', 'silence.scan', 'event-reminders.scan'])(

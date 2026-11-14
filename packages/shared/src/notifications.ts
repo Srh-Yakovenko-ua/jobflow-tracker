@@ -12,6 +12,7 @@ export const NOTIFICATION_TYPES = [
   'monthly_summary_ready',
   'insight_unlocked',
   'plan_item_due',
+  'auto_ghosted',
 ] as const;
 
 export const NOTIFIED_AI_KINDS = [
@@ -34,6 +35,10 @@ export const silenceItemSchema = z.object({
 
 export const silenceNotificationPayloadSchema = z.object({
   items: z.array(silenceItemSchema).min(1),
+});
+
+export const autoGhostedNotificationPayloadSchema = silenceNotificationPayloadSchema.extend({
+  autoGhostDays: z.int().positive(),
 });
 
 export const interviewSoonNotificationPayloadSchema = z.object({
@@ -84,6 +89,7 @@ export const notificationSchema = z.discriminatedUnion('type', [
   notificationOf('ai_failed', aiFailedNotificationPayloadSchema),
   notificationOf('insight_unlocked', insightUnlockedNotificationPayloadSchema),
   notificationOf('monthly_summary_ready', monthlySummaryReadyNotificationPayloadSchema),
+  notificationOf('auto_ghosted', autoGhostedNotificationPayloadSchema),
 ]);
 
 export const notificationListQuerySchema = paginationQuerySchema.extend({
@@ -105,6 +111,7 @@ export const markNotificationsReadResponseSchema = z.object({
 export type NotifiedAiKind = (typeof NOTIFIED_AI_KINDS)[number];
 export type SilenceItem = z.infer<typeof silenceItemSchema>;
 export type SilenceNotificationPayload = z.infer<typeof silenceNotificationPayloadSchema>;
+export type AutoGhostedNotificationPayload = z.infer<typeof autoGhostedNotificationPayloadSchema>;
 export type InterviewSoonNotificationPayload = z.infer<
   typeof interviewSoonNotificationPayloadSchema
 >;

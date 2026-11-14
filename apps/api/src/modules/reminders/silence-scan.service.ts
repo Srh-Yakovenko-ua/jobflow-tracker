@@ -1,4 +1,4 @@
-import { type SilenceItem, silenceWindows, wholeDaysBetween } from '@jobflow/shared';
+import { type SilenceItem, silenceItemOf, silenceWindows } from '@jobflow/shared';
 import { Injectable } from '@nestjs/common';
 
 import { isUniqueViolation } from '../../prisma/unique-violation.js';
@@ -16,15 +16,6 @@ type SilenceStart = { item: SilenceItem; row: SilentApplicationRow; now: Date };
 
 const isNewSilence = ({ lastEventAt, reminders: [latest], stageEvents }: SilentApplicationRow) =>
   latest === undefined || latest.dueAt < (stageEvents[0]?.createdAt ?? lastEventAt);
-
-const silenceItemOf = (
-  { id, company, lastEventAt }: SilentApplicationRow,
-  now: Date,
-): SilenceItem => ({
-  applicationId: id,
-  company,
-  days: wholeDaysBetween(lastEventAt, now),
-});
 
 @Injectable()
 export class SilenceScanService {

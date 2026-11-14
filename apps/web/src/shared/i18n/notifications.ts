@@ -8,6 +8,12 @@ const SILENT_CARDS = {
   other: 'карток у тиші',
 } as const satisfies PluralForms;
 
+const SILENT_COMPANIES = {
+  one: 'компанія мовчить',
+  few: 'компанії мовчать',
+  other: 'компаній мовчать',
+} as const satisfies PluralForms;
+
 const APPLICATIONS = {
   one: 'відгук',
   few: 'відгуки',
@@ -52,6 +58,11 @@ export const notifications = {
     text: (companies: string, days: number) =>
       `${companies} · ${countedUk(days, DAY_FORMS_UK)} без відповіді`,
     action: shell.palette.actions.followUp,
+  },
+  autoGhosted: {
+    title: (count: number, days: number) =>
+      `${countedUk(count, SILENT_COMPANIES)} понад ${countedUk(days, DAY_FORMS_UK)}, перенесено в ghosted`,
+    action: shell.shortcuts.items.board,
   },
   interviewSoon: {
     title: (clock: string) => `Співбесіда о ${clock}`,

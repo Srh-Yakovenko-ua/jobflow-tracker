@@ -38,6 +38,8 @@ export function notificationTargetOf(notification: Notification): string | null 
     case 'ai_done':
     case 'ai_failed':
       return AI_TARGETS[notification.payload.kind](notification.payload);
+    case 'auto_ghosted':
+      return '/board';
     case 'insight_unlocked':
       return '/analytics';
     case 'monthly_summary_ready':

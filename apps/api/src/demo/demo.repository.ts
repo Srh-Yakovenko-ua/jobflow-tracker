@@ -106,7 +106,7 @@ export class DemoRepository {
   ): Promise<number> {
     const { count } = await tx.userSettings.updateMany({
       where: { userId },
-      data: { activeResumeVersionId, timezone },
+      data: { activeResumeVersionId, timezone, autoGhostDays: null },
     });
     return count;
   }

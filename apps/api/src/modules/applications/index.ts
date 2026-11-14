@@ -30,3 +30,4 @@ export type {
   StageEventPlan,
   StageState,
 } from './stage-transition.repository.js';
+export { type StageMove, StageTransitionService } from './stage-transition.service.js';

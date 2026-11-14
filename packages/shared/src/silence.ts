@@ -1,6 +1,7 @@
 import { differenceInMilliseconds, milliseconds, subMilliseconds } from 'date-fns';
 import { z } from 'zod';
 
+import type { SilenceItem } from './notifications.js';
 import type { UserSettings } from './schemas/user-settings.js';
 import { ACTIVE_STAGES, INACTIVE_STAGES, isActiveStage, type Stage } from './stages.js';
 
@@ -94,4 +95,13 @@ const ONE_DAY_MS = milliseconds({ days: 1 });
 
 export function wholeDaysBetween(from: Date, to: Date): number {
   return Math.max(0, Math.floor(differenceInMilliseconds(to, from) / ONE_DAY_MS));
+}
+
+export type SilenceItemSource = { id: string; company: string; lastEventAt: Date };
+
+export function silenceItemOf(
+  { id, company, lastEventAt }: SilenceItemSource,
+  now: Date,
+): SilenceItem {
+  return { applicationId: id, company, days: wholeDaysBetween(lastEventAt, now) };
 }

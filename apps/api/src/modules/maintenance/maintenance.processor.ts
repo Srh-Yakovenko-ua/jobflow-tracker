@@ -12,6 +12,7 @@ import {
   warnWorkerError,
 } from '../../queues/processed-job.js';
 import { QUEUES } from '../../queues/queues.js';
+import { AutoGhostScanService } from '../../scheduled-jobs/auto-ghost-scan.service.js';
 import { ScheduledJobsService } from '../../scheduled-jobs/scheduled-jobs.service.js';
 import { SummaryRequestsService } from '../summaries/index.js';
 import {
@@ -40,7 +41,7 @@ export class MaintenanceProcessor extends WorkerHost {
     [MAINTENANCE_JOBS.monthlySummaryPick]: async () =>
       this.summaries.requestScheduledFor(await this.scheduledJobs.monthlySummaryUsers()),
     [MAINTENANCE_JOBS.silenceScan]: (job) => this.ran(job, () => this.scheduledJobs.silenceScan()),
-    [MAINTENANCE_JOBS.autoGhostScan]: (job) => this.ran(job),
+    [MAINTENANCE_JOBS.autoGhostScan]: (job) => this.ran(job, () => this.autoGhost.scan()),
     [MAINTENANCE_JOBS.eventRemindersScan]: (job) =>
       this.ran(job, () => this.scheduledJobs.interviewReminders()),
   };
@@ -49,6 +50,7 @@ export class MaintenanceProcessor extends WorkerHost {
     private readonly outbox: OutboxRelayService,
     private readonly scheduledJobs: ScheduledJobsService,
     private readonly summaries: SummaryRequestsService,
+    private readonly autoGhost: AutoGhostScanService,
   ) {
     super();
   }
@@ -89,10 +91,7 @@ export class MaintenanceProcessor extends WorkerHost {
     await this.scheduledJobs.cleanup();
   }
 
-  private async ran(
-    job: ProcessedJob,
-    step: () => Promise<unknown> = () => Promise.resolve(),
-  ): Promise<void> {
+  private async ran(job: ProcessedJob, step: () => Promise<unknown>): Promise<void> {
     await step();
     this.logger.log({ requestId: requestIdOf(job), ...jobFields(job) }, 'scheduled job ran');
   }

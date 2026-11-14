@@ -138,6 +138,7 @@ enum NotificationType {
   monthly_summary_ready
   insight_unlocked
   plan_item_due
+  auto_ghosted
 
   @@map("notification_type")
 }
