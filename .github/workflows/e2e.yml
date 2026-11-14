@@ -31,7 +31,7 @@ jobs:
         run: |
           code=true
           if files=$(git -c core.quotePath=false diff --name-only "$BASE" HEAD); then
-            if ! grep -qvE '^docs/|\.md$' <<< "$files" && ! grep -qxF -e 'docs/diagrams/erd.md' -e 'docs/api/openapi.json' <<< "$files"; then
+            if ! grep -qvE '^docs/|\.md$' <<< "$files" && ! grep -qxF -e 'docs/diagrams/erd.md' -e 'docs/api/openapi.json' -e README.md -e README.en.md <<< "$files"; then
               code=false
             fi
           fi
@@ -43,25 +43,24 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 25
     env:
-      COMPOSE_FILE: infra/docker/compose.yml:infra/docker/compose.ci.yml
       API_NODE_ENV: test
       DATABASE_URL: postgresql://jobflow_app:jobflow_app@localhost:5432/jobflow
     steps:
       - uses: actions/checkout@v7.0.1
       - uses: ./.github/actions/setup
       - uses: ./.github/actions/images
-      - name: Environment and keys
+      - name: README quick start
         run: |
-          cp .env.example .env
-          echo 'RATE_LIMIT_REGISTER_PER_HOUR=100' >> .env
-          echo 'RATE_LIMIT_LOGIN_PER_MINUTE=60' >> .env
-          pnpm gen:keys
-          chmod -R a+rX .secrets
-      - run: pnpm infra:up
-      - run: pnpm db:migrate
-      - run: pnpm db:seed
-      - name: Start the app stack
-        run: docker compose up -d --wait --wait-timeout 180 --no-build api worker analytics ai documents web
+          quick_start() { sed -n '/^<!-- quick-start -->$/,/^<!-- \/quick-start -->$/p' "$1" | sed '/^<!--/d;/^```/d'; }
+          diff <(quick_start README.md) <(quick_start README.en.md)
+          quick_start README.md > "$RUNNER_TEMP/quick-start.sh"
+          grep -qx 'pnpm demo:seed' "$RUNNER_TEMP/quick-start.sh"
+          bash -euo pipefail "$RUNNER_TEMP/quick-start.sh"
+          docker compose config --images | grep -qx jobflow-web:ci
+      - name: Raise the sign-up limits for the suite
+        run: |
+          printf 'RATE_LIMIT_REGISTER_PER_HOUR=100\nRATE_LIMIT_LOGIN_PER_MINUTE=60\n' >> .env
+          docker compose up -d --wait --force-recreate api
       - id: playwright
         run: echo "version=$(jq -r '.devDependencies["@playwright/test"]' apps/web/package.json)" >> "$GITHUB_OUTPUT"
       - uses: actions/cache@v6.1.0

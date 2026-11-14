@@ -15,15 +15,26 @@ function newUser(): E2eUser {
   return { email: `e2e-${randomUUID()}@example.com`, password: randomUUID() };
 }
 
-async function register(page: Page): Promise<E2eUser> {
-  const user = newUser();
-  await page.goto('/register');
+type AuthFormInput = { user: E2eUser; submit: string };
+
+async function submitAuthForm(page: Page, { user, submit }: AuthFormInput): Promise<void> {
   const form = page.locator('form');
   await form.getByLabel(AUTH.email.label, { exact: true }).fill(user.email);
   await form.getByLabel(AUTH.password.label, { exact: true }).fill(user.password);
-  await form.getByRole('button', { name: AUTH.register.submit }).click();
+  await form.getByRole('button', { name: submit }).click();
   await page.waitForURL('**/board');
+}
+
+async function register(page: Page): Promise<E2eUser> {
+  const user = newUser();
+  await page.goto('/register');
+  await submitAuthForm(page, { user, submit: AUTH.register.submit });
   return user;
+}
+
+export async function signIn(page: Page, user: E2eUser): Promise<void> {
+  await page.goto('/login');
+  await submitAuthForm(page, { user, submit: AUTH.login.submit });
 }
 
 export async function loginToken(request: APIRequestContext, user: E2eUser): Promise<string> {

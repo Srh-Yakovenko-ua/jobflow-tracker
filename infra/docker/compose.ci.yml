@@ -28,8 +28,6 @@ services:
     image: jobflow-ai:ci
     build:
       target: prod
-    environment:
-      AI_PROVIDER: fake
 
   documents:
     image: jobflow-documents:ci

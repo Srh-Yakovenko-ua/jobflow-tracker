@@ -1,6 +1,7 @@
 import {
   DEFAULT_SEARCH_TITLE,
   DEFAULT_SILENCE_DAYS,
+  DEMO_USER,
   silenceLevelOf,
   wholeDaysBetween,
 } from '@jobflow/shared';
@@ -14,7 +15,7 @@ import { ResumeVersionsRepository } from '../modules/resumes/index.js';
 import { SearchesRepository } from '../modules/searches/index.js';
 import type { PrismaService } from '../prisma/prisma.service.js';
 import { SeedRepository } from '../seed/seed.repository.js';
-import { DEMO_USER, SeedService } from '../seed/seed.service.js';
+import { SeedService } from '../seed/seed.service.js';
 import { FileStorage } from '../storage/file-storage.js';
 import { StorageModule } from '../storage/storage.module.js';
 import { appTestingModule, useTestApp } from '../test/app.js';

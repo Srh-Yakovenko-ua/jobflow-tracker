@@ -10,6 +10,7 @@ export * from './ai/payload-fields.js';
 export * from './ai/resume-parse.js';
 export * from './ai/vacancy-parse.js';
 export * from './ai-statuses.js';
+export * from './demo-user.js';
 export * from './labels.js';
 export * from './notifications.js';
 export * from './oauth-providers.js';

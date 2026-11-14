@@ -8,7 +8,9 @@ import {
   buildForecast,
   designInsightsBody,
 } from '@jobflow/shared/testing';
-import type { Page, Route } from '@playwright/test';
+import type { Locator, Page, Route } from '@playwright/test';
+
+import { uk } from '@/shared/i18n';
 
 import { ANALYTICS_ORIGIN } from './stack';
 
@@ -37,4 +39,10 @@ async function replyWithDesign(route: Route): Promise<void> {
 
 export async function routeDesignAnalytics(page: Page): Promise<void> {
   await page.route(`${ANALYTICS_ORIGIN}/analytics/**`, replyWithDesign);
+}
+
+export function designSankey(page: Page): Locator {
+  return page.getByRole('region', {
+    name: uk.analytics.blocks.sankey.title(buildDesignFunnel().kpis.sent.total),
+  });
 }

@@ -1,6 +1,7 @@
 import {
   authResponseSchema,
   DEFAULT_SEARCH_TITLE,
+  DEMO_USER,
   registerInputSchema,
   REJECTION_REASONS,
 } from '@jobflow/shared';
@@ -13,7 +14,7 @@ import { PrismaService } from '../prisma/prisma.service.js';
 import { appTestingModule, startTestApp } from '../test/app.js';
 import { resetDatabase } from '../test/database.js';
 import { SeedRepository } from './seed.repository.js';
-import { DEMO_USER, SeedService } from './seed.service.js';
+import { SeedService } from './seed.service.js';
 
 const REASON_SELECT = { code: true, side: true, labelUk: true, labelEn: true, sortOrder: true };
 

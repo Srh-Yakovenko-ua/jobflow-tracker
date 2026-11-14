@@ -1,8 +1,8 @@
-import { buildDesignFunnel, designInsightsBody } from '@jobflow/shared/testing';
+import { designInsightsBody } from '@jobflow/shared/testing';
 
 import { uk } from '@/shared/i18n';
 
-import { routeDesignAnalytics } from './test/analytics-fixture';
+import { designSankey, routeDesignAnalytics } from './test/analytics-fixture';
 import { expect, test } from './test/session';
 
 const BLOCKS = uk.analytics.blocks;
@@ -15,9 +15,7 @@ test('the dashboard shows the funnel, the offer forecast and the insight headlin
   await routeDesignAnalytics(page);
   await page.goto('/analytics');
 
-  const sankey = page.getByRole('region', {
-    name: BLOCKS.sankey.title(buildDesignFunnel().kpis.sent.total),
-  });
+  const sankey = designSankey(page);
   await expect(sankey.getByRole('list', { name: BLOCKS.sankey.funnel })).toBeVisible();
   await expect(sankey.getByRole('table', { name: BLOCKS.sankey.table.caption })).toBeAttached();
 
