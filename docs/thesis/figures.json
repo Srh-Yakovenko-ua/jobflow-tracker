@@ -1,0 +1,294 @@
+{
+  "figures": [
+    {
+      "id": "c4-context",
+      "type": "diagram",
+      "caption": "Діаграма контексту системи JobFlow Tracker (C4, рівень 1)",
+      "source": "docs/diagrams/c4-context.mmd"
+    },
+    {
+      "id": "c4-container",
+      "type": "diagram",
+      "caption": "Діаграма контейнерів JobFlow Tracker з портами (C4, рівень 2)",
+      "source": "docs/diagrams/c4-container.mmd"
+    },
+    {
+      "id": "deployment",
+      "type": "diagram",
+      "caption": "Розгортання системи в Docker Compose на локальній машині",
+      "source": "docs/diagrams/deployment.mmd"
+    },
+    {
+      "id": "erd",
+      "type": "diagram",
+      "caption": "ER-діаграма бази даних, згенерована зі схеми Prisma",
+      "source": "docs/diagrams/erd.md"
+    },
+    {
+      "id": "capture",
+      "type": "diagram",
+      "caption": "Послідовність збереження вакансії букмарклетом: Capture-токен, Idempotency-Key, outbox і AI-розбір",
+      "source": "docs/diagrams/capture.mmd"
+    },
+    {
+      "id": "stage-change-outbox",
+      "type": "diagram",
+      "caption": "Послідовність зміни етапу заявки: canTransition, stage_events і outbox в одній транзакції",
+      "source": "docs/diagrams/stage-change-outbox.mmd"
+    },
+    {
+      "id": "ai-job",
+      "type": "diagram",
+      "caption": "Послідовність AI-задачі у worker: кеш ai_results, бюджет, AiClient і services/ai",
+      "source": "docs/diagrams/ai-job.mmd"
+    },
+    {
+      "id": "refresh-rotation",
+      "type": "diagram",
+      "caption": "Послідовність ротації refresh-токена з виявленням повторного використання",
+      "source": "docs/diagrams/refresh-rotation.mmd"
+    },
+    {
+      "id": "login-light",
+      "type": "screenshot",
+      "caption": "Екран входу, світла тема, демо-дані",
+      "source": "docs/screenshots/login-light.png"
+    },
+    {
+      "id": "login-dark",
+      "type": "screenshot",
+      "caption": "Екран входу, темна тема, демо-дані",
+      "source": "docs/screenshots/login-dark.png"
+    },
+    {
+      "id": "register-light",
+      "type": "screenshot",
+      "caption": "Екран реєстрації, світла тема, демо-дані",
+      "source": "docs/screenshots/register-light.png"
+    },
+    {
+      "id": "register-dark",
+      "type": "screenshot",
+      "caption": "Екран реєстрації, темна тема, демо-дані",
+      "source": "docs/screenshots/register-dark.png"
+    },
+    {
+      "id": "board-light",
+      "type": "screenshot",
+      "caption": "Канбан-дошка заявок, світла тема, демо-дані",
+      "source": "docs/screenshots/board-light.png"
+    },
+    {
+      "id": "board-dark",
+      "type": "screenshot",
+      "caption": "Канбан-дошка заявок, темна тема, демо-дані",
+      "source": "docs/screenshots/board-dark.png"
+    },
+    {
+      "id": "applications-light",
+      "type": "screenshot",
+      "caption": "Таблиця заявок, світла тема, демо-дані",
+      "source": "docs/screenshots/applications-light.png"
+    },
+    {
+      "id": "applications-dark",
+      "type": "screenshot",
+      "caption": "Таблиця заявок, темна тема, демо-дані",
+      "source": "docs/screenshots/applications-dark.png"
+    },
+    {
+      "id": "application-light",
+      "type": "screenshot",
+      "caption": "Картка заявки, світла тема, демо-дані",
+      "source": "docs/screenshots/application-light.png"
+    },
+    {
+      "id": "application-dark",
+      "type": "screenshot",
+      "caption": "Картка заявки, темна тема, демо-дані",
+      "source": "docs/screenshots/application-dark.png"
+    },
+    {
+      "id": "add-light",
+      "type": "screenshot",
+      "caption": "Додавання вакансії, світла тема, демо-дані",
+      "source": "docs/screenshots/add-light.png"
+    },
+    {
+      "id": "add-dark",
+      "type": "screenshot",
+      "caption": "Додавання вакансії, темна тема, демо-дані",
+      "source": "docs/screenshots/add-dark.png"
+    },
+    {
+      "id": "dashboard-light",
+      "type": "screenshot",
+      "caption": "Дашборд аналітики, світла тема, демо-дані",
+      "source": "docs/screenshots/dashboard-light.png"
+    },
+    {
+      "id": "dashboard-dark",
+      "type": "screenshot",
+      "caption": "Дашборд аналітики, темна тема, демо-дані",
+      "source": "docs/screenshots/dashboard-dark.png"
+    },
+    {
+      "id": "summary-light",
+      "type": "screenshot",
+      "caption": "Місячний підсумок, світла тема, демо-дані",
+      "source": "docs/screenshots/summary-light.png"
+    },
+    {
+      "id": "summary-dark",
+      "type": "screenshot",
+      "caption": "Місячний підсумок, темна тема, демо-дані",
+      "source": "docs/screenshots/summary-dark.png"
+    },
+    {
+      "id": "calendar-light",
+      "type": "screenshot",
+      "caption": "Календар подій, світла тема, демо-дані",
+      "source": "docs/screenshots/calendar-light.png"
+    },
+    {
+      "id": "calendar-dark",
+      "type": "screenshot",
+      "caption": "Календар подій, темна тема, демо-дані",
+      "source": "docs/screenshots/calendar-dark.png"
+    },
+    {
+      "id": "reminders-light",
+      "type": "screenshot",
+      "caption": "Нагадування, світла тема, демо-дані",
+      "source": "docs/screenshots/reminders-light.png"
+    },
+    {
+      "id": "reminders-dark",
+      "type": "screenshot",
+      "caption": "Нагадування, темна тема, демо-дані",
+      "source": "docs/screenshots/reminders-dark.png"
+    },
+    {
+      "id": "notifications-light",
+      "type": "screenshot",
+      "caption": "Сповіщення, світла тема, демо-дані",
+      "source": "docs/screenshots/notifications-light.png"
+    },
+    {
+      "id": "notifications-dark",
+      "type": "screenshot",
+      "caption": "Сповіщення, темна тема, демо-дані",
+      "source": "docs/screenshots/notifications-dark.png"
+    },
+    {
+      "id": "resumes-light",
+      "type": "screenshot",
+      "caption": "Версії резюме, світла тема, демо-дані",
+      "source": "docs/screenshots/resumes-light.png"
+    },
+    {
+      "id": "resumes-dark",
+      "type": "screenshot",
+      "caption": "Версії резюме, темна тема, демо-дані",
+      "source": "docs/screenshots/resumes-dark.png"
+    },
+    {
+      "id": "settings-light",
+      "type": "screenshot",
+      "caption": "Налаштування, світла тема, демо-дані",
+      "source": "docs/screenshots/settings-light.png"
+    },
+    {
+      "id": "settings-dark",
+      "type": "screenshot",
+      "caption": "Налаштування, темна тема, демо-дані",
+      "source": "docs/screenshots/settings-dark.png"
+    },
+    {
+      "id": "method-sources-light",
+      "type": "screenshot",
+      "caption": "Рейтинг джерел з інтервалами Вілсона, дашборд аналітики",
+      "source": "docs/screenshots/method-sources-light.png"
+    },
+    {
+      "id": "method-forecast-light",
+      "type": "screenshot",
+      "caption": "Прогноз першого офера методом Монте-Карло, дашборд аналітики",
+      "source": "docs/screenshots/method-forecast-light.png"
+    },
+    {
+      "id": "method-resume-ab-light",
+      "type": "screenshot",
+      "caption": "Байєсівське A/B порівняння версій резюме",
+      "source": "docs/screenshots/method-resume-ab-light.png"
+    },
+    {
+      "id": "ai-eval-vacancy",
+      "type": "table",
+      "builder": "aiEval",
+      "caption": "Точність розбору вакансій по полях на наборі кейсів AI-03",
+      "source": "docs/thesis/data/ai-eval-vacancy.tsv"
+    },
+    {
+      "id": "ai-eval-resume",
+      "type": "table",
+      "builder": "aiEval",
+      "caption": "Якість розбору резюме на наборі кейсів AI-03",
+      "source": "docs/thesis/data/ai-eval-resume.tsv"
+    },
+    {
+      "id": "ai-eval-match",
+      "type": "table",
+      "builder": "aiEval",
+      "caption": "Узгодженість Match Score з ручним рангом вакансій",
+      "source": "docs/thesis/data/ai-eval-match.tsv"
+    },
+    {
+      "id": "ai-eval-followup",
+      "type": "table",
+      "builder": "aiEval",
+      "caption": "Перевірка чернеток follow-up листів",
+      "source": "docs/thesis/data/ai-eval-followup.tsv"
+    },
+    {
+      "id": "ai-cost",
+      "type": "table",
+      "builder": "aiCost",
+      "caption": "Токени, затримка і вартість одного AI-виклику за видами запитів, виміряні під час оцінювання; ціна з AI_USD_PER_MILLION_TOKENS_IN і AI_USD_PER_MILLION_TOKENS_OUT",
+      "source": [
+        "docs/thesis/data/ai-eval-vacancy.tsv",
+        "docs/thesis/data/ai-eval-resume.tsv",
+        "docs/thesis/data/ai-eval-match.tsv",
+        "docs/thesis/data/ai-eval-followup.tsv"
+      ]
+    },
+    {
+      "id": "coverage",
+      "type": "table",
+      "builder": "coverage",
+      "caption": "Покриття коду тестами і кількість тестів по пакетах",
+      "source": "docs/thesis/data/coverage.json"
+    },
+    {
+      "id": "e2e",
+      "type": "table",
+      "builder": "e2e",
+      "caption": "Перелік E2E-тестів Playwright",
+      "source": "docs/thesis/data/e2e.json"
+    },
+    {
+      "id": "audit",
+      "type": "table",
+      "builder": "audit",
+      "caption": "Вразливості production-залежностей за pnpm audit --prod",
+      "source": "docs/thesis/data/audit.json"
+    },
+    {
+      "id": "security-headers",
+      "type": "table",
+      "builder": "securityHeaders",
+      "caption": "Директиви Content Security Policy і заголовки безпеки вебзастосунку (SEC-01)",
+      "source": "docs/security.md"
+    }
+  ]
+}

@@ -19,6 +19,8 @@
     "ai:rematch": "pnpm --filter @jobflow/api ai:rematch",
     "tokens:build": "pnpm --filter @jobflow/shared tokens:build",
     "api:openapi": "turbo run build --filter=@jobflow/api && pnpm --filter @jobflow/api openapi",
+    "docs:build": "pnpm --filter @jobflow/api db:erd && pnpm api:openapi && pnpm --filter @jobflow/analytics docs:openapi && pnpm --filter @jobflow/docs render",
+    "docs:data": "pnpm --filter @jobflow/docs data",
     "gen:vapid": "node packages/config/bin/run-task.js gen:vapid BE-36",
     "format": "git ls-files -z --cached --others --exclude-standard | xargs -0 prettier --write --ignore-unknown --no-error-on-unmatched-pattern",
     "format:check": "git ls-files -z --cached --others --exclude-standard | xargs -0 prettier --check --ignore-unknown --no-error-on-unmatched-pattern",

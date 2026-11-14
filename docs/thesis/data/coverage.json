@@ -1,0 +1,53 @@
+{
+  "packages": [
+    {
+      "package": "@jobflow/api",
+      "tests": 2629,
+      "lines": 77.3,
+      "branches": 72.95,
+      "functions": 69.79
+    },
+    {
+      "package": "@jobflow/web",
+      "tests": 2174,
+      "lines": 97.58,
+      "branches": 81.22,
+      "functions": 96.97
+    },
+    {
+      "package": "@jobflow/shared",
+      "tests": 932,
+      "lines": 99.47,
+      "branches": 100,
+      "functions": 100
+    },
+    {
+      "package": "@jobflow/bookmarklet",
+      "tests": 103,
+      "lines": 98.88,
+      "branches": 100,
+      "functions": 100
+    },
+    {
+      "package": "@jobflow/analytics",
+      "tests": 455,
+      "lines": 97.22,
+      "branches": null,
+      "functions": null
+    },
+    {
+      "package": "@jobflow/ai",
+      "tests": 244,
+      "lines": 99.32,
+      "branches": null,
+      "functions": null
+    },
+    {
+      "package": "@jobflow/documents",
+      "tests": 71,
+      "lines": 93.36,
+      "branches": null,
+      "functions": null
+    }
+  ]
+}

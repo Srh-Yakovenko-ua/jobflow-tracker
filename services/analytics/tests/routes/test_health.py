@@ -8,6 +8,7 @@ from app.core.config import DEPENDENCY_LIMITS
 from app.factory import create_app
 from app.services.readiness import ReadinessService
 from tests.factories import (
+    OPENAPI_PATHS,
     REQUEST_ID,
     closed_port,
     problem_body,
@@ -58,20 +59,7 @@ def test_lists_the_health_and_metric_paths_in_the_openapi_schema(
 ) -> None:
     paths = client.get("/openapi.json").json()["paths"]
 
-    assert sorted(paths) == [
-        "/analytics/forecast",
-        "/analytics/funnel",
-        "/analytics/insights",
-        "/analytics/norms",
-        "/analytics/reasons",
-        "/analytics/reasons/summary",
-        "/analytics/resume-ab",
-        "/analytics/sankey",
-        "/analytics/sources",
-        "/analytics/timings",
-        "/health",
-        "/health/ready",
-    ]
+    assert sorted(paths) == OPENAPI_PATHS
 
 
 def test_reports_ready_when_postgres_and_redis_answer() -> None:

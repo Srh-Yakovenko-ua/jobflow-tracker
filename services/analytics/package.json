@@ -3,6 +3,7 @@
   "version": "0.0.0",
   "private": true,
   "scripts": {
-    "dev": "uv run uvicorn app.main:app --reload --host 127.0.0.1 --port 8000"
+    "dev": "uv run uvicorn app.main:app --reload --host 127.0.0.1 --port 8000",
+    "docs:openapi": "uv run python -m app.openapi_export ../../docs/thesis/build/api/analytics-openapi.json"
   }
 }

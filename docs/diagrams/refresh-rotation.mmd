@@ -1,0 +1,49 @@
+sequenceDiagram
+  autonumber
+  participant web as web
+  participant controller as AuthController
+  participant cookie as refresh-cookie.ts
+  participant session as SessionService
+  participant repository as SessionRepository
+  participant postgres as postgres
+
+  web->>controller: POST /api/v1/auth/refresh<br/>cookie refresh_token, path /api/v1/auth
+  controller->>cookie: readRefreshToken(req, body)
+  Note over cookie: X-Client: mobile бере токен з тіла
+  controller->>session: refresh(presented)
+  session->>session: newRefreshToken: 32 випадкові байти<br/>hashRefreshToken: SHA-256
+  session->>repository: rotate(tokenHash, next, now)
+  rect rgb(235, 242, 255)
+    Note over repository,postgres: Одна транзакція prisma.$transaction
+    repository->>postgres: findUnique refresh_tokens за token_hash
+    alt Токена немає або expires_at минув
+      repository-->>session: invalid
+    else Токен знайдено
+      repository->>postgres: revoke: UPDATE revoked_at, де revoked_at IS NULL
+      alt Відкликано зараз, count = 1
+        repository->>postgres: insertNext: новий токен у тій самій family_id
+        repository-->>session: rotated
+      else Уже відкликаний раніше, count = 0
+        alt revoked_at старший за REFRESH_REUSE_GRACE_MS, 30 с
+          repository->>postgres: revoke усієї family_id
+          repository-->>session: reused
+        else У межах 30 с, у сім'ї є живий токен
+          repository->>postgres: insertNext у тій самій family_id
+          repository-->>session: rotated
+        else У межах 30 с, сім'я вже мертва
+          repository-->>session: invalid
+        end
+      end
+    end
+  end
+  alt reused
+    session->>session: logger.warn: refresh token reuse, family revoked
+    session-->>controller: 401
+  else invalid
+    session-->>controller: 401
+  else rotated
+    session->>session: accessTokens.sign: RS256 на 15 хв
+    session-->>controller: accessToken, refreshToken
+    controller->>cookie: sendSession: Cache-Control no-store
+    cookie-->>web: Set-Cookie refresh_token, httpOnly, SameSite=Strict,<br/>Max-Age REFRESH_TOKEN_TTL_MS, 30 днів
+  end

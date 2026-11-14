@@ -1,0 +1,13 @@
+case	skills_recall	seniority	english	ms	result
+01-backend-senior-two-pages.expected.json	1.000	senior/senior	upper_intermediate/upper_intermediate	3650	PASS
+02-frontend-middle.expected.json	1.000	middle/null	intermediate/intermediate	3492	PASS
+03-qa-junior.expected.json	1.000	junior/junior	pre_intermediate/pre_intermediate	2726	PASS
+04-devops-lead.expected.json	1.000	lead/null	advanced/advanced	3038	PASS
+05-java-middle-scan.expected.json	1.000	middle/null	upper_intermediate/intermediate	4034	PASS
+
+skills_recall_mean	1.000
+case_ms_limit	15000
+PASS
+
+kind	model	calls	tokens_in	tokens_out	avg_tokens_in	avg_tokens_out	avg_latency_ms	cost_usd_per_call	usd_per_million_tokens_in	usd_per_million_tokens_out
+resume_parse	private/nvidia/nemotron-3.5-super-120b-a12b	5	4070	1841	814	368	3314	0.000000	0	0

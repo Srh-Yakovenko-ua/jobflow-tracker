@@ -1,0 +1,8 @@
+{
+  "extends": ["//"],
+  "tasks": {
+    "test": {
+      "inputs": ["$TURBO_DEFAULT$", "$TURBO_ROOT$/docs/**", "$TURBO_ROOT$/infra/docker/compose.yml"]
+    }
+  }
+}

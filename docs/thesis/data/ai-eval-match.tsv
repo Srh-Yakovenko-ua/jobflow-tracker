@@ -1,0 +1,23 @@
+case	manual_rank	score	score_rank
+01-djinni-uk-react-net-no-currency.json	2	68	2
+02-djinni-uk-python-gross-uah.json	6	47	3
+03-dou-en-java-eur.json	9	21	10
+04-djinni-en-qa-no-salary.json	4	24	7
+05-dou-uk-dotnet-hybrid-dnipro.json	9	9	14
+06-djinni-ru-go-remote.json	8	29	6
+07-dou-ru-php-net-uah.json	5	36	5
+08-djinni-ru-node-team-lead.json	3	40	4
+09-dou-en-data-engineer-lviv-office.json	11	13	12
+10-djinni-en-devops-gross-usd.json	12	4	15
+11-djinni-uk-flutter-junior.json	15	12	13
+12-dou-uk-requirements-only.json	6	17	11
+13-djinni-uk-product-designer.json	14	23	8
+14-dou-en-fullstack-hybrid-kyiv.json	1	87	1
+15-djinni-en-ml-engineer.json	12	22	9
+
+rho	0.774
+rho_min	0.7
+PASS
+
+kind	model	calls	tokens_in	tokens_out	avg_tokens_in	avg_tokens_out	avg_latency_ms	cost_usd_per_call	usd_per_million_tokens_in	usd_per_million_tokens_out
+match	private/nvidia/nemotron-3.5-super-120b-a12b	15	14382	3682	959	245	3166	0.000000	0	0

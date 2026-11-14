@@ -33,6 +33,21 @@ REQUIRED_ENV = {
 UNUSED_PORT = 9
 WEB_ORIGIN = REQUIRED_ENV["WEB_ORIGIN"]
 
+OPENAPI_PATHS = [
+    "/analytics/forecast",
+    "/analytics/funnel",
+    "/analytics/insights",
+    "/analytics/norms",
+    "/analytics/reasons",
+    "/analytics/reasons/summary",
+    "/analytics/resume-ab",
+    "/analytics/sankey",
+    "/analytics/sources",
+    "/analytics/timings",
+    "/health",
+    "/health/ready",
+]
+
 USER_ID = UUID("0196f0a1-7c2e-7b3d-8a41-5e6f7a8b9c0d")
 SEARCH_ID = UUID("0196f0a1-7c2e-7b3d-8a41-5e6f7a8b9c1e")
 EVENTS_BASE_TIME = datetime(2026, 11, 2, 9, 0, tzinfo=UTC)

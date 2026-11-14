@@ -1,0 +1,26 @@
+C4Context
+  title Контекст системи JobFlow Tracker
+
+  Person(user, "Користувач", "Шукає роботу і веде свої заявки")
+
+  System_Boundary(client, "Пристрій користувача") {
+    System_Ext(browser, "Браузер", "Вебзастосунок web на Next.js")
+    System_Ext(bookmarklet, "Букмарклет", "Скрипт на сторінці вакансії, надсилає її текст")
+  }
+
+  System(jobflow, "JobFlow Tracker", "Заявки, етапи, нагадування, аналітика, AI-розбір вакансій і резюме")
+  System_Ext(aiVendor, "AI-провайдер", "NVIDIA у розробці, Anthropic або OpenAI за AI_PROVIDER")
+
+  Rel(user, browser, "Веде дошку")
+  Rel(user, bookmarklet, "Зберігає вакансію")
+  Rel(browser, jobflow, "REST і SSE", "JWT RS256, cookie refresh_token")
+  Rel(bookmarklet, jobflow, "POST /capture/bookmarklet", "Capture-токен, Idempotency-Key")
+  Rel(jobflow, aiVendor, "Промпт і JSON Schema", "HTTPS")
+
+  UpdateRelStyle(user, browser, $offsetX="-150", $offsetY="60")
+  UpdateRelStyle(user, bookmarklet, $offsetX="20", $offsetY="-40")
+  UpdateRelStyle(browser, jobflow, $offsetX="-150", $offsetY="40")
+  UpdateRelStyle(bookmarklet, jobflow, $offsetX="20", $offsetY="40")
+  UpdateRelStyle(jobflow, aiVendor, $offsetX="-60", $offsetY="-50")
+
+  UpdateLayoutConfig($c4ShapeInRow="3", $c4BoundaryInRow="1")

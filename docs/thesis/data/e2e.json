@@ -1,0 +1,72 @@
+{
+  "tests": [
+    {
+      "file": "a11y.test.ts",
+      "title": "the signed-out pages have no serious axe violations in light"
+    },
+    {
+      "file": "a11y.test.ts",
+      "title": "the signed-in pages have no serious axe violations in light"
+    },
+    {
+      "file": "a11y.test.ts",
+      "title": "the signed-out pages have no serious axe violations in dark"
+    },
+    {
+      "file": "a11y.test.ts",
+      "title": "the signed-in pages have no serious axe violations in dark"
+    },
+    {
+      "file": "a11y.test.ts",
+      "title": "at 390 px the notifications and application pages pass axe and Tab meets the follow-up before the notes"
+    },
+    {
+      "file": "a11y.test.ts",
+      "title": "at 390 px no signed-in page scrolls sideways"
+    },
+    {
+      "file": "a11y.test.ts",
+      "title": "reduced motion turns the duration token to zero"
+    },
+    {
+      "file": "api-down.test.ts",
+      "title": "the API is down › a refused API keeps the session, and the tab is back on the board once it answers"
+    },
+    {
+      "file": "api-down.test.ts",
+      "title": "the API is down › a hanging API times out into the error state and the tab stays on its page"
+    },
+    {
+      "file": "capture-paste.test.ts",
+      "title": "a pasted vacancy shows its skeleton, is parsed and lands on the board"
+    },
+    {
+      "file": "dashboard.test.ts",
+      "title": "the dashboard shows the funnel, the offer forecast and the insight headlines"
+    },
+    {
+      "file": "demo.test.ts",
+      "title": "the demo account sees its seeded funnel on the dashboard"
+    },
+    {
+      "file": "reject-undo.test.ts",
+      "title": "reject with a reason, undo and a refused move › a card rejected by keyboard with a reason comes back to відгук through undo"
+    },
+    {
+      "file": "reject-undo.test.ts",
+      "title": "reject with a reason, undo and a refused move › a move refused with 409 rolls back, names the reason in a toast and closes by keyboard"
+    },
+    {
+      "file": "resume-match.test.ts",
+      "title": "an uploaded CV gives a pasted vacancy its Match Score and an open breakdown"
+    },
+    {
+      "file": "silence-followup.test.ts",
+      "title": "a silent card reaches reminders, gets a follow-up, and the panel opens from the table and the calendar"
+    },
+    {
+      "file": "bookmarklet.test.ts",
+      "title": "the bookmarklet adds a DOU vacancy once and says a changed Djinni page was already added"
+    }
+  ]
+}
