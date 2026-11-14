@@ -34,9 +34,11 @@ const REDACTED_PATHS = [
   '*.captureToken',
 ];
 
+export const withoutQuery = (url: string): string => url.split('?', 1)[0] ?? url;
+
 const withoutQueryString = (req: SerializedRequest): SerializedRequest => ({
   ...req,
-  url: req.url.split('?', 1)[0] ?? req.url,
+  url: withoutQuery(req.url),
 });
 
 const HTTP_LOG_OPTIONS: Options<Request, Response> = {

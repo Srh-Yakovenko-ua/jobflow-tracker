@@ -5,11 +5,17 @@ const httpUrl = z.url({ protocol: /^https?$/ });
 const webConfigSchema = z.object({
   NEXT_PUBLIC_API_URL: httpUrl.default('http://localhost:4000'),
   NEXT_PUBLIC_ANALYTICS_URL: httpUrl.default('http://localhost:8000'),
+  NEXT_PUBLIC_FILES_URL: httpUrl.default('http://localhost:9000'),
 });
 
 type WebEnv = Partial<Record<keyof z.input<typeof webConfigSchema>, string | undefined>>;
 
-export type WebConfig = { apiUrl: string; apiBaseUrl: string; analyticsBaseUrl: string };
+export type WebConfig = {
+  apiUrl: string;
+  apiBaseUrl: string;
+  analyticsBaseUrl: string;
+  filesUrl: string;
+};
 
 function withoutTrailingSlash(url: string): string {
   return url.replace(/\/+$/, '');
@@ -26,10 +32,12 @@ export function parseWebConfig(env: WebEnv): WebConfig {
     apiUrl,
     apiBaseUrl: `${apiUrl}/api/v1`,
     analyticsBaseUrl: withoutTrailingSlash(result.data.NEXT_PUBLIC_ANALYTICS_URL),
+    filesUrl: withoutTrailingSlash(result.data.NEXT_PUBLIC_FILES_URL),
   };
 }
 
 export const config = parseWebConfig({
   NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL,
   NEXT_PUBLIC_ANALYTICS_URL: process.env.NEXT_PUBLIC_ANALYTICS_URL,
+  NEXT_PUBLIC_FILES_URL: process.env.NEXT_PUBLIC_FILES_URL,
 });
