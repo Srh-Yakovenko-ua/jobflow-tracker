@@ -1,5 +1,6 @@
-import { screen, within } from '@testing-library/react';
+import { screen, waitFor, within } from '@testing-library/react';
 import { http, HttpResponse } from 'msw/http';
+import { toast } from 'sonner';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { applicationKeys } from '@/entities/application';
@@ -8,12 +9,15 @@ import { uk } from '@/shared/i18n';
 import { apiUrl, OUTAGES, validationReply } from '@/test/api-handlers';
 import { axeViolations } from '@/test/axe';
 import { boardOf, type ColumnCounts } from '@/test/board-fixtures';
+import { calendarRoute } from '@/test/calendar-fixtures';
 import { route } from '@/test/navigation';
+import { installPushBrowser, pushRoutes } from '@/test/push-browser';
 import { QueryProbe, waitForQuery } from '@/test/query-status';
 import { remindersRoutes } from '@/test/reminder-fixtures';
 import { renderInApp } from '@/test/render-in-app';
 import { server } from '@/test/server';
 import { meRoute } from '@/test/session-fixtures';
+import { settingsRoutes } from '@/test/settings-fixtures';
 
 import { AppShell } from './app-shell';
 
@@ -21,6 +25,8 @@ vi.mock('next/navigation', () => import('@/test/navigation'));
 
 afterEach(() => {
   route.pathname = '/board';
+  toast.dismiss();
+  localStorage.clear();
 });
 
 const SHELL = uk.shell;
@@ -138,6 +144,25 @@ describe('AppShell', () => {
     expect(screen.getByRole('link', { name: SHELL.addApplication }).getAttribute('href')).toBe(
       '/add',
     );
+  });
+
+  it('a silent card brings the push offer, and enabling it saves push on for the user', async () => {
+    const fake = installPushBrowser({ answer: 'granted' });
+    const settings = settingsRoutes();
+    server.use(
+      ...settings.handlers,
+      ...pushRoutes().handlers,
+      calendarRoute({ items: [] }).handler,
+      silentBoardRoute({ applied: 1 }),
+    );
+    const { user } = renderShell();
+
+    await user.click(await screen.findByRole('button', { name: uk.push.offer.enable }));
+
+    expect(fake.notification.requestPermission).toHaveBeenCalledTimes(1);
+    await waitFor(() => {
+      expect(settings.patches).toEqual([{ notifyPush: true }]);
+    });
   });
 
   it('passes axe with every landmark named', async () => {

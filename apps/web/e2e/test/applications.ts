@@ -10,7 +10,7 @@ import type { Page } from '@playwright/test';
 
 import { uk } from '@/shared/i18n';
 
-import { postAnswered, WORKER_WAIT } from './stack';
+import { apiAnswered, WORKER_WAIT } from './stack';
 
 export type HandCard = Pick<CreateApplicationInput, 'company' | 'position'>;
 
@@ -30,7 +30,7 @@ export function uniqueCompany(name: string): string {
 
 export async function addByHand(page: Page, card: HandCard): Promise<ApplicationResponse['id']> {
   await page.goto('/add');
-  const created = postAnswered(page, '/applications');
+  const created = apiAnswered(page, { method: 'POST', route: '/applications' });
   await page.getByLabel(COPY.manual.fields.company, { exact: true }).fill(card.company);
   await page.getByLabel(COPY.manual.fields.position, { exact: true }).fill(card.position);
   await page.getByRole('button', { name: COPY.manual.submit }).click();

@@ -4,6 +4,10 @@ const CI = process.env.CI !== undefined && process.env.CI !== '';
 
 const BOOKMARKLET_SPEC = /bookmarklet\.test\.ts$/;
 
+const PUSH_SPEC = /push\.test\.ts$/;
+
+const PUSH_DELIVERY_SPEC = /push-delivery\.test\.ts$/;
+
 const E2E_LIMITS = { globalTimeoutMs: 6 * 60_000, testTimeoutMs: 150_000, ciWorkers: 2 } as const;
 
 export default defineConfig({
@@ -25,12 +29,17 @@ export default defineConfig({
     {
       name: 'chromium',
       use: { ...devices['Desktop Chrome'] },
-      testIgnore: BOOKMARKLET_SPEC,
+      testIgnore: [BOOKMARKLET_SPEC, PUSH_SPEC, PUSH_DELIVERY_SPEC],
+    },
+    {
+      name: 'chromium-push',
+      use: { ...devices['Desktop Chrome'], channel: 'chromium' },
+      testMatch: [PUSH_SPEC, PUSH_DELIVERY_SPEC],
     },
     {
       name: 'firefox',
       use: { ...devices['Desktop Firefox'] },
-      testMatch: BOOKMARKLET_SPEC,
+      testMatch: [BOOKMARKLET_SPEC, PUSH_SPEC],
     },
   ],
 });

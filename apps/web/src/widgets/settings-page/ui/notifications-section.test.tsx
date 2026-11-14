@@ -1,11 +1,92 @@
 import { screen, waitFor, within } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
+import {
+  installPushBrowser,
+  type PushBrowserOptions,
+  pushRoutes,
+  SUBSCRIBED_BROWSER,
+} from '@/test/push-browser';
 import { regionOf, renderLoadedSettings } from '@/test/render-settings-page';
+import { server } from '@/test/server';
 
 vi.mock('next/navigation', () => import('@/test/navigation'));
 
 const notifications = () => within(regionOf('Повідомлення'));
+
+const pushSwitch = () => notifications().getByRole('switch', { name: /Пуші в браузері/ });
+
+const TEST_BUTTON = { name: 'Надіслати тестове сповіщення' } as const;
+
+type PushSeed = { browser: PushBrowserOptions; notifyPush: boolean };
+
+async function renderWithPush({ browser, notifyPush }: PushSeed) {
+  const fake = installPushBrowser(browser);
+  server.use(...pushRoutes().handlers);
+  const page = await renderLoadedSettings({ settings: { notifyPush } });
+  return { ...page, fake };
+}
+
+describe('NotificationsSection, browser push', () => {
+  it('a browser without push shows the switch disabled with a note', async () => {
+    await renderLoadedSettings();
+
+    expect(pushSwitch().hasAttribute('disabled')).toBe(true);
+    expect(
+      notifications().getByText('Цей браузер не вміє показувати пуші. Спробуй Chrome або Firefox.'),
+    ).toBeDefined();
+    expect(notifications().queryByRole('button', TEST_BUTTON)).toBeNull();
+  });
+
+  it('a blocked site shows how to unblock it and never asks for the permission', async () => {
+    const { user, fake } = await renderWithPush({
+      browser: { permission: 'denied' },
+      notifyPush: false,
+    });
+
+    const note = await notifications().findByText(/Сповіщення для цього сайту заблоковані/);
+    await user.click(pushSwitch());
+
+    expect(note.textContent).toBe(
+      'Сповіщення для цього сайту заблоковані в браузері. Натисни значок зліва від адреси сайту, дозволь сповіщення й онови сторінку.',
+    );
+    expect(pushSwitch().getAttribute('aria-describedby')).toBe(note.id);
+    expect(pushSwitch().hasAttribute('disabled')).toBe(true);
+    expect(fake.notification.requestPermission).not.toHaveBeenCalled();
+  });
+
+  it('with push on and granted the test button shows a local JobFlow notification', async () => {
+    const { user, fake } = await renderWithPush({ browser: SUBSCRIBED_BROWSER, notifyPush: true });
+
+    await user.click(await notifications().findByRole('button', TEST_BUTTON));
+    expect(pushSwitch().getAttribute('aria-checked')).toBe('true');
+
+    await waitFor(() => {
+      expect(fake.registration.showNotification).toHaveBeenCalledWith(
+        'Сповіщення працюють',
+        expect.objectContaining({ tag: 'jobflow-test' }),
+      );
+    });
+  });
+
+  it('switching push off saves only that field and hides the test button', async () => {
+    const { user, routes, fake } = await renderWithPush({
+      browser: SUBSCRIBED_BROWSER,
+      notifyPush: true,
+    });
+    expect(await notifications().findByRole('button', TEST_BUTTON)).toBeDefined();
+
+    await user.click(pushSwitch());
+
+    await waitFor(() => {
+      expect(routes.patches).toEqual([{ notifyPush: false }]);
+    });
+    await waitFor(() => {
+      expect(notifications().queryByRole('button', TEST_BUTTON)).toBeNull();
+    });
+    expect(fake.notification.requestPermission).not.toHaveBeenCalled();
+  });
+});
 
 describe('NotificationsSection', () => {
   it('the in-app switch saves only its own field', async () => {

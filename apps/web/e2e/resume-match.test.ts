@@ -6,7 +6,7 @@ import { addByPaste, boardAfterParse, parsedSampleCard } from './test/applicatio
 import { boardCard } from './test/board';
 import { reloadUntilVisible } from './test/reload';
 import { expect, test } from './test/session';
-import { postAnswered, REPO_ROOT } from './test/stack';
+import { apiAnswered, REPO_ROOT } from './test/stack';
 
 const QA_JUNIOR_CV = path.join(REPO_ROOT, 'apps/api/src/modules/ai/evals/resume/03-qa-junior.pdf');
 
@@ -25,7 +25,7 @@ test('an uploaded CV gives a pasted vacancy its Match Score and an open breakdow
 }) => {
   await page.goto('/resumes');
   await page.getByLabel(RESUMES.upload.pick).first().setInputFiles(QA_JUNIOR_CV);
-  const created = postAnswered(page, '/resumes/versions');
+  const created = apiAnswered(page, { method: 'POST', route: '/resumes/versions' });
   await page.getByRole('button', { name: RESUMES.upload.submit, exact: true }).click();
   expect((await created).ok()).toBe(true);
   await reloadUntilVisible(page, page.getByText(RESUMES.aiProfile.done));

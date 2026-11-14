@@ -1,8 +1,7 @@
 'use client';
 
-import type { CalendarQuery, Plan } from '@jobflow/shared';
+import type { Plan } from '@jobflow/shared';
 import { useQuery, type UseQueryResult } from '@tanstack/react-query';
-import { addDays } from 'date-fns';
 import { useState } from 'react';
 
 import {
@@ -12,14 +11,16 @@ import {
 } from '@/entities/application';
 import { latestPlanQueryOptions } from '@/entities/plan';
 import { remindersQueryOptions } from '@/entities/reminder';
-import { calendarQueryOptions } from '@/entities/scheduled-event';
+import {
+  calendarQueryOptions,
+  interviewRangeFrom,
+  type UpcomingInterview,
+  upcomingInterviewsOf,
+} from '@/entities/scheduled-event';
 import { useSettledTimeZone, useSilenceDays } from '@/entities/user';
 import { type SilentRow, silentRowsOf } from '@/features/snooze-reminder';
 
-import { type UpcomingInterview, upcomingInterviewsOf } from '../lib/upcoming-interviews';
 import { useReplyMove } from './use-reply-move';
-
-const INTERVIEW_WINDOW_DAYS = 14;
 
 export type SectionLoad = Readonly<{ failed: boolean; retrying: boolean; onRetry: () => void }>;
 
@@ -48,10 +49,6 @@ function loadOf(queries: readonly UseQueryResult[]): SectionLoad {
       queries.filter((query) => query.isError).forEach((query) => void query.refetch());
     },
   };
-}
-
-function interviewRangeFrom(now: Date): CalendarQuery {
-  return { from: now.toISOString(), to: addDays(now, INTERVIEW_WINDOW_DAYS).toISOString() };
 }
 
 function useSilenceSection(now: Date): SilenceSection {

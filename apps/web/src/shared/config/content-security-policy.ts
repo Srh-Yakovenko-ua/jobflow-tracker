@@ -27,6 +27,7 @@ export function buildContentSecurityPolicy({
     'base-uri': ["'self'"],
     'form-action': ["'self'"],
     'frame-ancestors': ["'none'"],
+    'worker-src': ["'self'"],
   };
   return Object.entries(directives)
     .map(([directive, sources]) => [directive, ...sources].join(' '))

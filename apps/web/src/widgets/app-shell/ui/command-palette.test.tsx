@@ -39,9 +39,8 @@ import { type RecentApplication, rememberRecentApplication } from '../model/rece
 vi.mock('next/navigation', () => import('@/test/navigation'));
 vi.mock('next/link', () => import('@/test/link'));
 vi.mock(import('@/shared/config'), async (importOriginal) => {
-  const actual = await importOriginal();
-  const { switchableFlags } = await import('@/test/feature-flags');
-  return { ...actual, FEATURE_FLAGS: switchableFlags(actual.FEATURE_FLAGS) };
+  const { switchableConfig } = await import('@/test/feature-flags');
+  return switchableConfig(importOriginal);
 });
 
 type Found = Readonly<Record<string, readonly ApplicationListItem[]>>;

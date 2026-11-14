@@ -5,6 +5,8 @@ import type { ReactNode } from 'react';
 
 import { useSingleKeyShortcuts } from '@/entities/user';
 import { useSilentCount } from '@/features/snooze-reminder';
+import { usePushOffer } from '@/features/subscribe-push';
+import { useUpdateSettingsMutation } from '@/features/update-settings';
 import { FEATURE_FLAGS } from '@/shared/config';
 import { uk } from '@/shared/i18n';
 import { cn } from '@/shared/lib/cn';
@@ -68,6 +70,12 @@ function ShellSurfacesLayer({ surfaces }: Readonly<{ surfaces: ShellSurfaces }>)
 export function AppShell({ initial, children, slots = {} }: AppShellProps) {
   const surfaces = useShellSurfaces();
   const pathname = usePathname();
+  const { save } = useUpdateSettingsMutation();
+  usePushOffer({
+    onEnabled: () => {
+      save({ notifyPush: true });
+    },
+  });
   const nav: ShellNav = {
     items: ITEMS,
     activeHref: activeHrefOf(pathname, ITEMS),

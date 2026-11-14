@@ -7,6 +7,7 @@ import { SESSION_COOKIE } from '@/shared/lib/session-cookie';
 import { apiUrl, recordSentRequests, SESSION_TOKENS } from '@/test/api-handlers';
 import { fixtureIdOf } from '@/test/board-fixtures';
 import { replace } from '@/test/navigation';
+import { installPushBrowser, OLD_PUSH_KEY } from '@/test/push-browser';
 import { refuseStorage } from '@/test/refusing-storage';
 import { renderHookInApp } from '@/test/render-in-app';
 import { server } from '@/test/server';
@@ -85,6 +86,26 @@ describe('useSession logout', () => {
         expect(localStorage.getItem(MY_RECENTS)).toBeNull();
       });
       expect(localStorage.getItem(OTHER_RECENTS)).toBe(STORED_RECENTS);
+    },
+  );
+
+  it.each(['logout', 'logoutEverywhere'] as const)(
+    '%s drops the browser push subscription so the next user gets none of these pushes',
+    async (leave) => {
+      const fake = installPushBrowser({
+        permission: 'granted',
+        registered: true,
+        subscribedWith: OLD_PUSH_KEY,
+      });
+      const result = await renderSignedIn();
+
+      act(() => {
+        result.current[leave]();
+      });
+
+      await waitFor(() => {
+        expect(fake.registration.state.subscription?.unsubscribe).toHaveBeenCalledTimes(1);
+      });
     },
   );
 
