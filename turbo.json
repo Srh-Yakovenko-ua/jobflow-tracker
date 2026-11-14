@@ -28,7 +28,8 @@
     },
     "test:e2e": {
       "dependsOn": ["^build"],
-      "cache": false
+      "cache": false,
+      "passThroughEnv": ["CI", "COMPOSE_FILE", "DATABASE_URL"]
     },
     "test:watch": {
       "dependsOn": ["^build"],
