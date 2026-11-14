@@ -2,6 +2,7 @@ import {
   forecastResponseSchema,
   funnelResponseSchema,
   insightsResponseSchema,
+  matchValidationResponseSchema,
   reasonsResponseSchema,
   sankeyResponseSchema,
   sourcesResponseSchema,
@@ -29,6 +30,11 @@ type PathRequest<T> = Readonly<{
 const SANKEY_ROUTE = { path: '/analytics/sankey', schema: sankeyResponseSchema };
 
 const FORECAST_ROUTE = { path: '/analytics/forecast', schema: forecastResponseSchema };
+
+const MATCH_VALIDATION_ROUTE = {
+  path: '/analytics/match-validation',
+  schema: matchValidationResponseSchema,
+};
 
 const SEARCH_KEY_LENGTH = 4;
 
@@ -115,3 +121,10 @@ export function forecastQueryOptions({ searchId, applicationsPerWeek, improve }:
 
 export const insightsQueryOptions = (searchId?: string) =>
   scopedQueryOptions({ route: ROUTES.insights, searchId });
+
+export const matchValidationQueryOptions = () =>
+  pathQueryOptions({
+    route: MATCH_VALIDATION_ROUTE,
+    queryKey: analyticsKeys.matchValidation(),
+    params: {},
+  });

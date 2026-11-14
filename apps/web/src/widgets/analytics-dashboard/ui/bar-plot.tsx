@@ -5,6 +5,7 @@ import { merge } from 'chart.js/helpers';
 import { Chart } from 'react-chartjs-2';
 
 import { type ChartThemeOptions, useChartTheme } from '@/shared/lib/chart';
+import { cn } from '@/shared/lib/cn';
 
 import { type BarLook, barLookOf, type BarPress } from '../lib/bar-look';
 
@@ -14,6 +15,7 @@ export type BarPlotContent = Readonly<{
   data: ChartData<'bar', BarPoint[]>;
   look: ChartOptions<'bar'>;
   summary: string;
+  height?: string;
 }>;
 
 export type BarPlotProps = Readonly<{ plot: BarPlotContent; press: BarPress }>;
@@ -22,7 +24,7 @@ export function BarPlot({ plot, press }: BarPlotProps) {
   const { palette, options } = useChartTheme();
   const base = barLookOf({ palette, press });
   return (
-    <div className="relative h-55 min-w-0">
+    <div className={cn('relative h-55 min-w-0', plot.height)}>
       <Chart
         type="bar"
         role="img"

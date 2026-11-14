@@ -1,23 +1,32 @@
 import {
+  ACTIVE_STAGES,
   DEFAULT_SEARCH_TITLE,
   type FunnelResponse,
+  type MatchValidationResponse,
+  type ResumeAbResponse,
   type SearchListResponse,
   type SearchSummary,
+  type TimingsResponse,
 } from '@jobflow/shared';
 import {
   buildDesignFunnel,
+  buildDesignMatchValidation,
   buildDesignReasons,
+  buildDesignResumeAb,
+  buildDesignResumeAbComparison,
   buildDesignSankey,
   buildDesignSources,
   buildDesignTimings,
   buildFoldedSankey,
   buildForecast,
   designInsightsBody,
+  INSUFFICIENT_RATES,
 } from '@jobflow/shared/testing';
 import type { HttpResponseResolver, JsonBodyType } from 'msw';
 import { http, HttpResponse } from 'msw/http';
 
 import { analyticsUrl, apiUrl } from './api-handlers';
+import { DESIGN_RESUME_AB, RESUME_AB_URL } from './resume-ab-fixtures';
 import { summaryRoutes } from './summary-fixtures';
 
 export const DASHBOARD_ROUTES = [
@@ -29,6 +38,8 @@ export const DASHBOARD_ROUTES = [
   'timings',
   'forecast',
   'insights',
+  'resume-ab',
+  'match-validation',
 ] as const;
 
 export type DashboardRoute = (typeof DASHBOARD_ROUTES)[number];
@@ -103,6 +114,38 @@ export function lowDataFunnel(): FunnelResponse {
   return { ...funnel, kpis: { ...funnel.kpis, sent, daysInSearch: 3 } };
 }
 
+const TWO_SHORT = INSUFFICIENT_RATES.twoMore;
+
+const SIX_SHORT = {
+  status: 'insufficient_data',
+  have: 4,
+  need: 6,
+  message: 'Ще 6 відгуків до першого висновку',
+} as const;
+
+export function lowDataResumeAb(): ResumeAbResponse {
+  return {
+    ...buildDesignResumeAb(),
+    comparison: { ...buildDesignResumeAbComparison(), verdict: SIX_SHORT },
+  };
+}
+
+export function lowDataTimings(): TimingsResponse {
+  return {
+    ...buildDesignTimings(),
+    stages: ACTIVE_STAGES.map((stage) => ({ ...TWO_SHORT, stage })),
+  };
+}
+
+export function lowDataMatchValidation(): MatchValidationResponse {
+  const { buckets, ...design } = buildDesignMatchValidation();
+  return {
+    ...design,
+    buckets: buckets.map((bucket) => ({ ...bucket, screening: TWO_SHORT, interview: TWO_SHORT })),
+    statistics: SIX_SHORT,
+  };
+}
+
 const URLS: Record<DashboardRoute, string> = {
   searches: apiUrl('/searches'),
   funnel: analyticsUrl('/analytics/funnel'),
@@ -112,6 +155,8 @@ const URLS: Record<DashboardRoute, string> = {
   timings: analyticsUrl('/analytics/timings'),
   forecast: analyticsUrl('/analytics/forecast'),
   insights: analyticsUrl('/analytics/insights'),
+  'resume-ab': RESUME_AB_URL,
+  'match-validation': analyticsUrl('/analytics/match-validation'),
 };
 
 const sankeyReply: HttpResponseResolver = ({ request }) =>
@@ -131,6 +176,8 @@ function designBodies(): Record<DashboardRoute, JsonBodyType | HttpResponseResol
     timings: buildDesignTimings(),
     forecast: buildForecast(),
     insights: designInsightsBody(),
+    'resume-ab': DESIGN_RESUME_AB,
+    'match-validation': buildDesignMatchValidation(),
   };
 }
 

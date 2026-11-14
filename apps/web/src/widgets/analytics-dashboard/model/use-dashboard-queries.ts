@@ -8,11 +8,13 @@ import {
   type ForecastWhatIf,
   funnelQueryOptions,
   insightsQueryOptions,
+  matchValidationQueryOptions,
   reasonsQueryOptions,
   sankeyQueryOptions,
   sourcesQueryOptions,
   timingsQueryOptions,
 } from '@/entities/analytics';
+import { resumeAbQueryOptions } from '@/entities/resume';
 import { latestSummaryQueryOptions } from '@/entities/summary';
 
 import type { SearchScope } from './use-search-scope';
@@ -29,6 +31,8 @@ export function useDashboardQueries({ selectedId, searchId, split, whatIf }: Das
     timings: useQuery(timingsQueryOptions(selectedId)),
     forecast: useQuery(forecastQueryOptions({ searchId: selectedId, ...whatIf })),
     insights: useQuery(insightsQueryOptions(selectedId)),
+    resumeAb: useQuery(resumeAbQueryOptions()),
+    matchValidation: useQuery(matchValidationQueryOptions()),
     summary: useQuery(latestSummaryQueryOptions()),
   };
 }

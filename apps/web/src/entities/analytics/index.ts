@@ -2,6 +2,7 @@ export {
   forecastQueryOptions,
   funnelQueryOptions,
   insightsQueryOptions,
+  matchValidationQueryOptions,
   reasonsQueryOptions,
   sankeyQueryOptions,
   sourcesQueryOptions,

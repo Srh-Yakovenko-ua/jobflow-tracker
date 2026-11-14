@@ -1,5 +1,4 @@
 import {
-  type RateResult,
   type Source,
   SOURCE_LABELS,
   type SourcePerformance,
@@ -10,12 +9,16 @@ import { withSearchParams } from '@/shared/api';
 import { uk } from '@/shared/i18n';
 import type { ChartTableRow } from '@/shared/ui/chart-table';
 
-import { percentOf } from './kpi-values';
-import { rateLabelOf } from './rate-label';
+import { conversionRowOf, type EvidenceView, percentScaleOf } from './interval-bars';
+import { conversionTipOf, type MeasuredRate, rateBarOf } from './rate-bar';
 
-const BLOCKS = uk.analytics.blocks;
+const ANALYTICS = uk.analytics;
 
-const COPY = BLOCKS.sources;
+const COPY = ANALYTICS.blocks.sources;
+
+const TABLE = COPY.table;
+
+const FULL_AXIS = 100;
 
 export type PlottedSource = Readonly<{
   source: Source;
@@ -34,8 +37,6 @@ export type SourceBars = Readonly<{
   rows: ChartTableRow[];
 }>;
 
-type MeasuredRate = Extract<RateResult, { status: 'ok' }>;
-
 type MeasuredSource = Readonly<{ row: SourcePerformance; rate: MeasuredRate }>;
 
 const nameOf = (source: Source) => SOURCE_LABELS[source].labelUk;
@@ -48,19 +49,14 @@ const countsOf = ({ applications, screenings }: SourcePerformance) => ({
 });
 
 function plottedOf({ row, rate }: MeasuredSource): PlottedSource {
-  const value = percentOf(rate.value);
-  const low = percentOf(rate.low);
-  const high = percentOf(rate.high);
+  const bar = rateBarOf(rate);
   return {
     source: row.source,
-    label: [nameOf(row.source), uk.analytics.search.applications(row.applications)],
-    value,
-    whisker: [low, high],
+    label: [nameOf(row.source), ANALYTICS.search.applications(row.applications)],
+    value: bar.value,
+    whisker: bar.whisker,
     href: boardHrefOf(row.source),
-    tip: [
-      BLOCKS.sankey.tooltip.conversion({ step: COPY.step, value, low, high }),
-      COPY.counts(countsOf(row)),
-    ],
+    tip: [conversionTipOf({ step: COPY.step, bar }), COPY.counts(countsOf(row))],
   };
 }
 
@@ -68,21 +64,20 @@ function smallOf(row: SourcePerformance): SmallSource {
   return {
     source: row.source,
     line: COPY.small.line({ label: nameOf(row.source), ...countsOf(row) }),
-    note: row.note ?? COPY.small.noise,
+    note: row.note ?? ANALYTICS.small.noise,
     href: boardHrefOf(row.source),
   };
 }
 
 function rowOf(row: SourcePerformance): ChartTableRow {
-  return {
+  return conversionRowOf({
     key: row.source,
-    cells: [
-      { text: nameOf(row.source), href: boardHrefOf(row.source) },
-      { text: String(row.applications) },
-      { text: String(row.screenings) },
-      { text: rateLabelOf(row.conversion) },
-    ],
-  };
+    name: nameOf(row.source),
+    href: boardHrefOf(row.source),
+    applications: row.applications,
+    screenings: row.screenings,
+    conversion: row.conversion,
+  });
 }
 
 export function sourceBarsOf({ sources }: SourcesResponse): SourceBars {
@@ -92,5 +87,25 @@ export function sourceBarsOf({ sources }: SourcesResponse): SourceBars {
     ),
     small: sources.filter((row) => row.conversion.status !== 'ok').map(smallOf),
     rows: sources.map(rowOf),
+  };
+}
+
+export function sourcesViewOf(response: SourcesResponse): EvidenceView {
+  const { plotted, small, rows } = sourceBarsOf(response);
+  if (rows.length === 0) return { status: 'empty', content: COPY.empty };
+  return {
+    status: 'plotted',
+    chart: {
+      rows: plotted,
+      names: { series: TABLE.conversion, caption: TABLE.caption },
+      scale: percentScaleOf(FULL_AXIS),
+    },
+    notes: [],
+    small: small.map(({ source, line, note }) => ({ key: source, text: `${line} ${note}` })),
+    table: {
+      caption: TABLE.caption,
+      heads: [TABLE.source, TABLE.applications, TABLE.screenings, TABLE.conversion],
+      rows,
+    },
   };
 }

@@ -26,7 +26,8 @@ export function barLookOf({ palette, press }: BarLookInput) {
     },
     onHover: (event: ChartEvent, elements: readonly BarHit[]) => {
       const target = event.native?.target;
-      if (target instanceof HTMLElement) target.style.cursor = elements.length > 0 ? 'pointer' : '';
+      const pressable = elements.some((hit) => press.hrefAt(hit.index) !== undefined);
+      if (target instanceof HTMLElement) target.style.cursor = pressable ? 'pointer' : '';
     },
     scales: {
       x: {

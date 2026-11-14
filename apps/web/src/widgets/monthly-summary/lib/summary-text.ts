@@ -11,8 +11,6 @@ const NUMBER = /(?<![\p{L}\d])\d+(?:[.,]\d+)?(?:\.\d{4})?%?/gu;
 
 const YEAR_OR_DATE = /^(?:(?:19|20)\d{2}|\d{1,2}\.\d{2}(?:\.\d{4})?)$/u;
 
-const CHARTLESS: ReadonlySet<AnalyticsBlock> = new Set(['resumeAb']);
-
 const CLAUSE_SEPARATOR = /((?<!\d)[,;:.!?]|[,;:.!?](?!\d))/u;
 
 const SENTENCE_END = /[.!?]/u;
@@ -45,7 +43,7 @@ function clausesOf(paragraph: string): Piece[] {
 }
 
 function numbersOf({ text, block }: Piece): Piece[] {
-  if (block === null || CHARTLESS.has(block)) return [{ text, block: null }];
+  if (block === null) return [{ text, block }];
   const pieces: Piece[] = [];
   let cursor = 0;
   for (const match of text.matchAll(NUMBER)) {
