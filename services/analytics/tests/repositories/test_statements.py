@@ -10,6 +10,7 @@ from app.repositories.applications import (
     application_sources_statement,
     applications_statement,
     latest_change_statement,
+    match_scores_statement,
 )
 from app.repositories.events import events_statement, user_events_statement
 from app.repositories.resume_versions import version_links_statement
@@ -91,8 +92,13 @@ def test_the_latest_change_reads_only_the_users_applications() -> None:
     assert "applications.user_id =" in sql
 
 
-def test_the_user_events_read_every_confirmed_application_of_the_user() -> None:
-    bound, sql = user_wide(user_events_statement(user_id=USER_ID))
+@pytest.mark.parametrize(
+    "statement",
+    [user_events_statement, match_scores_statement],
+    ids=["user events", "match scores"],
+)
+def test_reads_every_confirmed_application_of_the_user(statement: Statement) -> None:
+    bound, sql = user_wide(statement(user_id=USER_ID))
 
     assert bound == {USER_ID}
     assert [p for p in OWNERSHIP_PREDICATES if p not in sql] == [

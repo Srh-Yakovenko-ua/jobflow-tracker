@@ -9,6 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncEngine
 from app.core.config import DEPENDENCY_LIMITS
 from app.core.errors import ServiceError
 from app.core.resources import create_redis
+from app.services.match_validation import user_match_validation
 from app.services.norms import cached_norms
 from app.services.resume_ab import user_resume_ab
 from tests.factories import OUTAGES, USER_ID, Outage, closed_port, settings_for
@@ -21,6 +22,9 @@ type UserRead = Callable[[AsyncEngine, Redis], Awaitable[BaseModel]]
 USER_READS: dict[str, UserRead] = {
     "norms": lambda engine, redis: cached_norms(engine, redis, user_id=USER_ID),
     "resume ab": lambda engine, _: user_resume_ab(engine, user_id=USER_ID),
+    "match validation": lambda engine, _: user_match_validation(
+        engine, user_id=USER_ID
+    ),
 }
 
 

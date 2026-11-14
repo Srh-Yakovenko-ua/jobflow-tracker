@@ -48,6 +48,12 @@ def application_sources_statement(
     ).where(*confirmed_in_search(user_id=user_id, search_id=search_id))
 
 
+def match_scores_statement(*, user_id: UUID) -> Select[Any]:
+    return select(
+        applications.c.id.label("application_id"), applications.c.match_score
+    ).where(*confirmed_of(user_id))
+
+
 def latest_change_statement(*, user_id: UUID) -> Select[Any]:
     return select(func.max(applications.c.updated_at)).where(
         applications.c.user_id == user_id
@@ -68,6 +74,10 @@ async def load_application_sources(
     return await read_frame(
         engine, application_sources_statement(user_id=user_id, search_id=search_id)
     )
+
+
+async def load_match_scores(engine: AsyncEngine, *, user_id: UUID) -> pd.DataFrame:
+    return await read_frame(engine, match_scores_statement(user_id=user_id))
 
 
 async def load_latest_change(engine: AsyncEngine, *, user_id: UUID) -> datetime | None:
