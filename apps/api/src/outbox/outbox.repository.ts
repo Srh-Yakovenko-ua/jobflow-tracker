@@ -26,6 +26,15 @@ export class OutboxRepository {
     await tx.outboxEvent.updateMany({ where: { id: { in: ids } }, data: { publishedAt: now } });
   }
 
+  async oldestUnpublishedAt(): Promise<Date | null> {
+    const oldest = await this.prisma.outboxEvent.findFirst({
+      where: { publishedAt: null },
+      orderBy: { createdAt: 'asc' },
+      select: { createdAt: true },
+    });
+    return oldest?.createdAt ?? null;
+  }
+
   async deletePublishedBefore(cutoff: Date): Promise<number> {
     const { count } = await this.prisma.outboxEvent.deleteMany({
       where: { publishedAt: { lt: cutoff } },

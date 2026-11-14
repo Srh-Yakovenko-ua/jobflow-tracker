@@ -5,6 +5,7 @@ import pytest
 from pydantic import TypeAdapter
 
 from app.core.config import DEPENDENCY_LIMITS
+from app.core.metrics import metrics_registry
 from app.core.resources import create_redis
 from app.metrics.norms import Norms
 from app.services.metric_cache import CacheScope, cached_body
@@ -18,6 +19,8 @@ SCOPE = CacheScope(user_id=USER_ID, metric="funnel", params_hash=PARAMS_HASH)
 VERSION_KEY = f"analytics:{USER_ID}:version"
 COMPUTED_BODY = b'{"stageNormDays":{"final":17},"medianDaysToOffer":null}'
 STORED_BODY = b'{"stageNormDays":{"final":99},"medianDaysToOffer":1}'
+REGISTRY = metrics_registry()
+LOOKUP_RESULTS = ["hit", "miss", "bypass"]
 
 
 def entry(version: int) -> str:
@@ -28,6 +31,48 @@ async def body_of(redis: Any, compute: Computation) -> bytes:
     return await cached_body(
         redis, scope=SCOPE, adapter=TypeAdapter(Norms), compute=compute
     )
+
+
+def tally() -> dict[str, float]:
+    lookups = {
+        result: REGISTRY.get_sample_value(
+            "analytics_cache_lookups_total", {"metric": "funnel", "result": result}
+        )
+        for result in LOOKUP_RESULTS
+    }
+    computes = REGISTRY.get_sample_value(
+        "analytics_metric_compute_seconds_count", {"metric": "funnel"}
+    )
+    return {
+        name: value or 0.0 for name, value in (lookups | {"computes": computes}).items()
+    }
+
+
+async def counted(redis: Any, compute: Computation) -> tuple[bytes, dict[str, float]]:
+    before = tally()
+    body = await body_of(redis, compute)
+    return body, {name: value - before[name] for name, value in tally().items()}
+
+
+LOOKUPS = {
+    "hit": (
+        {VERSION_KEY: b"3", entry(3): STORED_BODY},
+        (STORED_BODY, {"hit": 1.0, "miss": 0.0, "bypass": 0.0, "computes": 0.0}),
+    ),
+    "miss": (
+        {},
+        (COMPUTED_BODY, {"hit": 0.0, "miss": 1.0, "bypass": 0.0, "computes": 1.0}),
+    ),
+}
+
+
+@pytest.mark.parametrize(
+    ("bodies", "expected"), list(LOOKUPS.values()), ids=list(LOOKUPS)
+)
+async def test_counts_each_lookup_by_result_and_times_only_the_computation(
+    bodies: dict[str, bytes], expected: tuple[bytes, dict[str, float]]
+) -> None:
+    assert await counted(FakeRedis(dict(bodies)), Computation()) == expected
 
 
 async def test_answers_the_stored_body_of_the_current_version_without_computing() -> (
@@ -74,9 +119,13 @@ async def test_computes_without_storing_when_the_version_read_fails(
     with outage() as port:
         redis = create_redis(settings_for(redis_port=port))
         started = time.monotonic()
-        body = await body_of(redis, compute)
+        body, deltas = await counted(redis, compute)
         elapsed = time.monotonic() - started
         await redis.aclose()
 
-    assert (body, compute.calls) == (COMPUTED_BODY, 1)
+    assert (body, deltas, compute.calls) == (
+        COMPUTED_BODY,
+        {"hit": 0.0, "miss": 0.0, "bypass": 1.0, "computes": 1.0},
+        1,
+    )
     assert elapsed < DEPENDENCY_LIMITS.ping + 1

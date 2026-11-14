@@ -7,6 +7,7 @@ import { IdempotencyModule } from './common/idempotency/idempotency.module.js';
 import { loggerParams } from './common/logger.js';
 import { SchemaValidationPipe } from './common/validation.js';
 import { configModule } from './config/app-config.js';
+import { MetricsModule } from './metrics/metrics.module.js';
 import { AiModule } from './modules/ai/index.js';
 import { ApplicationsModule } from './modules/applications/index.js';
 import { AuthModule } from './modules/auth/index.js';
@@ -39,6 +40,7 @@ import { RedisModule } from './redis/redis.module.js';
     configModule,
     LoggerModule.forRoot(loggerParams()),
     PrismaModule,
+    MetricsModule,
     RedisModule,
     RateLimitModule,
     IdempotencyModule,

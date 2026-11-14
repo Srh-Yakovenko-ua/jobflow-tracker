@@ -9,6 +9,7 @@ import { ApplicationDuplicatesRepository } from './application-duplicates.reposi
 import { ApplicationListRepository } from './application-list.repository.js';
 import { ApplicationListService } from './application-list.service.js';
 import { ApplicationLiveSubscriber } from './application-live.subscriber.js';
+import { ApplicationMetricsSubscriber } from './application-metrics.subscriber.js';
 import { ApplicationSearchRepository } from './application-search.repository.js';
 import { ApplicationsController } from './applications.controller.js';
 import { ApplicationsRepository } from './applications.repository.js';
@@ -46,6 +47,6 @@ export class ApplicationsModule {}
 
 @Module({
   imports: [OutboxWorkerModule, LiveModule],
-  providers: [ApplicationLiveSubscriber],
+  providers: [ApplicationLiveSubscriber, ApplicationMetricsSubscriber],
 })
 export class ApplicationsWorkerModule {}

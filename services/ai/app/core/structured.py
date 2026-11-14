@@ -15,9 +15,17 @@ from app.core.errors import (
     timeout_error,
 )
 from app.core.limiter import RateLimiter
+from app.core.metrics import (
+    REPAIR_RETRIES,
+    count_tokens,
+    counted_error,
+    timed_vendor_call,
+)
 from app.core.pii import scrub
 from app.prompts.base import BuiltPrompt
 from app.providers.base import AiProvider, Completion, CompletionRequest, Message
+
+EMBED_KIND = "embed"
 
 
 @dataclass(frozen=True, kw_only=True)
@@ -48,13 +56,16 @@ def elapsed_ms(started: float) -> int:
     return round((time.perf_counter() - started) * 1000)
 
 
-async def vendor_call[T](call: Callable[[], Awaitable[T]], runtime: Runtime) -> T:
-    runtime.limiter.acquire()
-    try:
-        async with asyncio.timeout(runtime.timeout_seconds):
-            return await call()
-    except TimeoutError as error:
-        raise timeout_error(runtime.timeout_seconds) from error
+async def vendor_call[T](
+    call: Callable[[], Awaitable[T]], runtime: Runtime, *, kind: str, model: str
+) -> T:
+    with timed_vendor_call(kind, model=model):
+        runtime.limiter.acquire()
+        try:
+            async with asyncio.timeout(runtime.timeout_seconds):
+                return await call()
+        except TimeoutError as error:
+            raise timeout_error(runtime.timeout_seconds) from error
 
 
 async def attempt(request: CompletionRequest, runtime: Runtime) -> Completion:
@@ -65,7 +76,19 @@ async def attempt(request: CompletionRequest, runtime: Runtime) -> Completion:
             for message in request.messages
         ],
     )
-    return await vendor_call(lambda: runtime.provider.complete(safe), runtime)
+    answer = await vendor_call(
+        lambda: runtime.provider.complete(safe),
+        runtime,
+        kind=request.kind,
+        model=runtime.provider.model_of(request),
+    )
+    count_tokens(
+        request.kind,
+        model=answer.model,
+        tokens_in=answer.tokens_in,
+        tokens_out=answer.tokens_out,
+    )
+    return answer
 
 
 def schema_repair(error: ValidationError) -> str:
@@ -133,10 +156,17 @@ async def validated_answers(
         if not problems:
             return output, [first]
         repair = rules_repair(problems)
+    model = runtime.provider.model_of(request)
+    REPAIR_RETRIES.labels(kind=call.kind, model=model).inc()
     second = await attempt(
         repair_request(request, answer=first, repair=repair), runtime
     )
-    return repaired_output(call, second), [first, second]
+    try:
+        output = repaired_output(call, second)
+    except AppError as error:
+        counted_error(call.kind, error, model=model)
+        raise
+    return output, [first, second]
 
 
 async def complete_structured(
@@ -170,7 +200,15 @@ async def embed_texts(request: EmbedRequest, runtime: Runtime) -> EmbedResponse:
             "texts": [Text.model_construct(scrub(text.root)) for text in request.texts]
         }
     )
-    embedding = await vendor_call(lambda: runtime.provider.embed(safe), runtime)
+    embedding = await vendor_call(
+        lambda: runtime.provider.embed(safe),
+        runtime,
+        kind=EMBED_KIND,
+        model=runtime.provider.model_of(safe),
+    )
+    count_tokens(
+        EMBED_KIND, model=embedding.model, tokens_in=embedding.tokens_in, tokens_out=0
+    )
     return EmbedResponse(
         vectors=embedding.vectors,
         model=embedding.model,

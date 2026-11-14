@@ -6,6 +6,7 @@ from app.core.config import Settings
 from app.core.errors import install_error_handlers
 from app.core.limiter import RateLimiter
 from app.core.logging import configure_logging
+from app.core.metrics import install_metrics
 from app.core.request_id import assign_request_id
 from app.core.structured import Runtime
 from app.prompts import check_prompt_versions, load_prompt_versions
@@ -27,4 +28,5 @@ def create_app(settings: Settings) -> FastAPI:
     app.middleware("http")(assign_request_id)
     for router in (health.router, complete.router, embed.router):
         app.include_router(router)
+    install_metrics(app)
     return app

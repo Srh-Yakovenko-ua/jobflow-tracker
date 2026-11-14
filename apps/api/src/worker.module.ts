@@ -3,6 +3,8 @@ import { LoggerModule } from 'nestjs-pino';
 
 import { loggerParams } from './common/logger.js';
 import { configModule } from './config/app-config.js';
+import { MetricsModule } from './metrics/metrics.module.js';
+import { MetricsWorkerModule } from './metrics/metrics-worker.module.js';
 import { AiWorkerModule } from './modules/ai/index.js';
 import { AnalyticsCacheWorkerModule } from './modules/analytics-cache/index.js';
 import { ApplicationsWorkerModule } from './modules/applications/index.js';
@@ -24,6 +26,8 @@ import { QueuesModule } from './queues/queues.module.js';
     LoggerModule.forRoot(loggerParams()),
     PrismaModule,
     QueuesModule,
+    MetricsModule,
+    MetricsWorkerModule,
     MaintenanceWorkerModule,
     AiWorkerModule,
     ApplicationsWorkerModule,

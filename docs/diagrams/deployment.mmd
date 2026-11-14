@@ -15,10 +15,21 @@ flowchart LR
     mailpit["mailpit<br/>SMTP :1025, UI :8025"]
   end
 
+  subgraph observability["Профіль observability"]
+    loki[("loki<br/>логи, :3100")]
+    alloy["alloy<br/>збирає логи контейнерів, UI :12345"]
+    prometheus[("prometheus<br/>метрики, :9090")]
+    node_exporter["node-exporter<br/>метрики машини"]
+    cadvisor["cadvisor<br/>метрики контейнерів"]
+    grafana["grafana<br/>дашборди, :3001"]
+  end
+
   subgraph volumes["Іменовані томи"]
     pgdata[("pgdata")]
     redisdata[("redisdata")]
     miniodata[("miniodata")]
+    lokidata[("lokidata")]
+    prometheusdata[("prometheusdata")]
   end
 
   browser --> web
@@ -41,3 +52,12 @@ flowchart LR
   postgres --- pgdata
   redis --- redisdata
   minio --- miniodata
+  alloy --> loki
+  prometheus -->|"метрики, схема в metrics.mmd"| compose
+  prometheus --> node_exporter
+  prometheus --> cadvisor
+  grafana --> loki
+  grafana --> prometheus
+  browser --> grafana
+  loki --- lokidata
+  prometheus --- prometheusdata

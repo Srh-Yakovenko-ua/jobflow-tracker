@@ -1,6 +1,7 @@
 import { LIVE_LIMITS, type LiveEvent, liveEventSchema } from '@jobflow/shared';
 import { Injectable, Logger, type MessageEvent, type OnModuleDestroy } from '@nestjs/common';
 import type { Redis } from 'ioredis';
+import { Gauge } from 'prom-client';
 import {
   defer,
   filter,
@@ -19,6 +20,7 @@ import {
 import { errorFor } from '../../common/app-error.js';
 import { errorMessageOf } from '../../common/error-message.js';
 import { parsedJson } from '../../common/parsed-json.js';
+import { MetricsRegistry } from '../../metrics/metrics-registry.js';
 import { RedisService } from '../../redis/redis.service.js';
 import type { AccessUser } from '../auth/index.js';
 import { LIVE_CHANNEL } from './live-publisher.js';
@@ -57,7 +59,11 @@ export class LiveHub implements OnModuleDestroy {
     share(),
   );
 
-  constructor(private readonly redis: RedisService) {
+  constructor(
+    private readonly redis: RedisService,
+    metrics: MetricsRegistry,
+  ) {
+    this.countOpenStreams(metrics);
     this.subscriber = redis.client.duplicate();
     this.subscriber.on('error', (error: Error) => {
       this.logger.warn({ err: error.message }, 'live subscriber connection error');
@@ -92,6 +98,18 @@ export class LiveHub implements OnModuleDestroy {
   onModuleDestroy(): void {
     this.closed.next();
     this.subscriber.disconnect();
+  }
+
+  private countOpenStreams({ registry }: MetricsRegistry): void {
+    const { openStreams } = this;
+    new Gauge({
+      name: 'jobflow_sse_connections',
+      help: 'Open live event streams across all users',
+      registers: [registry],
+      collect() {
+        this.set([...openStreams.values()].reduce((total, open) => total + open, 0));
+      },
+    });
   }
 
   private eventsOf(userId: string): Observable<MessageEvent> {

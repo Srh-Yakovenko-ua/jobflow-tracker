@@ -55,6 +55,7 @@ const envFields = z.object({
   API_URL: httpUrl,
   HOST: z.union([z.ipv4(), z.ipv6()]).default('127.0.0.1'),
   PORT: z.coerce.number().int().min(1).max(65535).default(4000),
+  WORKER_METRICS_PORT: z.coerce.number().int().min(0).max(65535).default(9464),
   WEB_ORIGIN: httpUrl,
   AI_SERVICE_URL: httpUrl.default('http://localhost:8001'),
   DOCUMENTS_SERVICE_URL: httpUrl.default('http://localhost:8002'),

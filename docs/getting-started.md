@@ -59,7 +59,7 @@ docker compose up -d
 docker compose up -d --build --wait api worker
 ```
 
-Команда збирає образ api (ціль `dev`, `apps/api/src` змонтовано в контейнер) і повертає керування, коли healthcheck api стане `healthy`, а worker запуститься. Worker використовує той самий образ з іншою командою, порту не має і healthcheck-а теж, тому в `docker compose ps` у колонці `STATUS` у нього лише `Up`, без `(healthy)`. `--build` потрібен, щоб після pull образ підхопив нові залежності. Health відповідає на http://localhost:4000/api/v1/health. Контейнер api займає той самий порт 4000, що й `pnpm dev`, тому одночасно працює щось одне. Контейнер ai описано в розділі [AI](#ai), analytics і documents нижче. Моніторинг (Loki, Alloy, Grafana) вмикається профілем: `docker compose --profile observability up -d`.
+Команда збирає образ api (ціль `dev`, `apps/api/src` змонтовано в контейнер) і повертає керування, коли healthcheck api стане `healthy`, а worker запуститься. Worker використовує той самий образ з іншою командою, порту не має і healthcheck-а теж, тому в `docker compose ps` у колонці `STATUS` у нього лише `Up`, без `(healthy)`. `--build` потрібен, щоб після pull образ підхопив нові залежності. Health відповідає на http://localhost:4000/api/v1/health. Контейнер api займає той самий порт 4000, що й `pnpm dev`, тому одночасно працює щось одне. Контейнер ai описано в розділі [AI](#ai), analytics і documents нижче. Моніторинг (Loki, Alloy, Prometheus, node-exporter, cAdvisor і Grafana) вмикається профілем: `docker compose --profile observability up -d`.
 
 Лише web:
 
@@ -118,7 +118,7 @@ docker compose down
 | analytics     | 8000                       | працює                              |
 | ai            | 8001                       | працює                              |
 | documents     | 8002                       | працює                              |
-| Prometheus    | 9090                       | з'явиться в OBS-02                  |
+| Prometheus    | 9090                       | профіль `observability`             |
 | Grafana       | 3001                       | профіль `observability`, без логіну |
 | Loki          | 3100                       | профіль `observability`             |
 | Alloy         | 12345 (UI)                 | профіль `observability`             |
@@ -126,7 +126,7 @@ docker compose down
 | GlitchTip     | 8003                       | з'явиться в OBS-04                  |
 | Uptime Kuma   | 3002                       | з'явиться в OBS-05                  |
 
-Сервіси моніторингу запускаються лише з профілем `observability`, як описано в розділі [Логи](#логи).
+Сервіси моніторингу запускаються лише з профілем `observability`, як описано в розділах [Логи](#логи) і [Метрики](#метрики).
 
 ## Логи
 
@@ -136,7 +136,7 @@ docker compose down
 docker compose -f infra/docker/compose.yml -f infra/docker/compose.override.yml --profile observability up -d
 ```
 
-Профіль додає Loki, Grafana Alloy і Grafana. Без нього жоден з трьох не стартує. Grafana відкривається на http://localhost:3001 без логіну, джерело даних Loki і дашборд уже налаштовані.
+Профіль додає Loki, Grafana Alloy, Grafana і сервіси метрик з розділу [Метрики](#метрики). Без нього жоден з них не стартує. Grafana відкривається на http://localhost:3001 без логіну, джерела даних Loki і Prometheus і дашборди вже налаштовані.
 
 Дашборд `JobFlow logs` (http://localhost:3001/d/jobflow-logs) має три панелі:
 
@@ -151,6 +151,19 @@ docker compose -f infra/docker/compose.yml -f infra/docker/compose.override.yml 
 У Loki лише дві мітки: `service` (назва сервісу в compose) і `level`. Id запиту лишається в тексті рядка. Id користувача api і worker пишуть лише як хеш, а паролі, токени й cookie в логи не потрапляють.
 
 Alloy читає лише контейнери compose-проєкту `jobflow`. Застосунки, запущені на хості через `pnpm dev`, у Loki не потрапляють, їхні логи лишаються в терміналі.
+
+## Метрики
+
+Той самий профіль `observability` піднімає Prometheus на http://127.0.0.1:9090, node-exporter і cAdvisor. Кожні 15 секунд Prometheus збирає метрики api (`:4000/metrics`), worker (`:9464` у мережі compose, на хості порту немає), analytics (`:8000/metrics`), ai (`:8001/metrics`), node-exporter (CPU і пам'ять машини) і cAdvisor (CPU і пам'ять кожного контейнера). Схема збору: [metrics.mmd](diagrams/metrics.mmd). Стан кожної цілі показує http://127.0.0.1:9090/targets, у справного стоїть `UP`.
+
+У Grafana на http://127.0.0.1:3001 уже налаштовано два дашборди:
+
+- `JobFlow System` (http://127.0.0.1:3001/d/jobflow-system): p95 дошки (панель «Board p95»), затримка p50 і p95 api за маршрутами, частка відповідей 5xx, CPU і пам'ять контейнерів, глибина черг і тривалість задач, затримка outbox, з'єднання SSE, частка влучань у кеш analytics.
+- `JobFlow Product` (http://127.0.0.1:3001/d/jobflow-product): заявки і переходи етапів за день, AI-задачі, збої, токени і вартість AI. Вартість рахується з `AI_USD_PER_MILLION_TOKENS_IN` і `AI_USD_PER_MILLION_TOKENS_OUT`. У `.env.example` обидві ціни 0, тому панелі вартості показують 0 USD, поки ціни не задано.
+
+Метрики є лише в контейнерів compose: застосунки, запущені на хості через `pnpm dev`, Prometheus не бачить.
+
+Prometheus завантажує два приклади правил тривоги: `JobflowHighErrorRate` (понад 5% відповідей api з кодом 5xx протягом 5 хвилин) і `JobflowOutboxLag` (затримка outbox понад 30 секунд протягом хвилини). Їхній стан видно на http://127.0.0.1:9090/alerts. Сповіщення нікуди не надсилаються: Alertmanager у стеку немає.
 
 ## Команди
 

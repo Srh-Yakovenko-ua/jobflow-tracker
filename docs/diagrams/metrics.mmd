@@ -1,0 +1,23 @@
+flowchart LR
+  subgraph targets["Цілі збору, мережа jobflow, кожні 15 с"]
+    api["api<br/>:4000/metrics"]
+    worker["worker<br/>:9464/metrics"]
+    analytics["analytics<br/>:8000/metrics"]
+    ai["ai<br/>:8001/metrics"]
+    node_exporter["node-exporter<br/>:9100"]
+    cadvisor["cadvisor<br/>:8080"]
+  end
+
+  subgraph observability["Профіль observability"]
+    prometheus[("prometheus<br/>127.0.0.1:9090, rules.yml")]
+    grafana["grafana<br/>127.0.0.1:3001<br/>JobFlow System, JobFlow Product"]
+  end
+
+  api -->|job api| prometheus
+  worker -->|job worker| prometheus
+  analytics -->|job analytics| prometheus
+  ai -->|job ai| prometheus
+  node_exporter -->|job node| prometheus
+  cadvisor -->|job cadvisor| prometheus
+  prometheus -->|job prometheus| prometheus
+  prometheus -->|PromQL, джерело даних prometheus| grafana

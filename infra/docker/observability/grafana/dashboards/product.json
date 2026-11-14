@@ -1,0 +1,151 @@
+{
+  "uid": "jobflow-product",
+  "title": "JobFlow Product",
+  "tags": ["jobflow", "metrics"],
+  "schemaVersion": 41,
+  "editable": false,
+  "time": { "from": "now-7d", "to": "now" },
+  "refresh": "1m",
+  "panels": [
+    {
+      "id": 1,
+      "type": "timeseries",
+      "title": "Applications per day",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 0 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum(increase(jobflow_applications_created_total[1d]))",
+          "legendFormat": "created"
+        }
+      ],
+      "fieldConfig": { "defaults": { "unit": "short", "decimals": 0 }, "overrides": [] }
+    },
+    {
+      "id": 2,
+      "type": "timeseries",
+      "title": "Stage moves per day by stage",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 0 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum by (to_stage) (increase(jobflow_stage_moves_total[1d]))",
+          "legendFormat": "{{to_stage}}"
+        }
+      ],
+      "fieldConfig": { "defaults": { "unit": "short", "decimals": 0 }, "overrides": [] }
+    },
+    {
+      "id": 3,
+      "type": "timeseries",
+      "title": "AI jobs per day by kind and status",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 8 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum by (kind, status) (increase(jobflow_ai_jobs_total[1d]))",
+          "legendFormat": "{{kind}} {{status}}"
+        }
+      ],
+      "fieldConfig": { "defaults": { "unit": "short", "decimals": 0 }, "overrides": [] }
+    },
+    {
+      "id": 4,
+      "type": "timeseries",
+      "title": "AI failures per day by error type",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 8 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum by (error_type) (increase(jobflow_ai_jobs_total{status=\"failed\"}[1d]))",
+          "legendFormat": "{{error_type}}"
+        }
+      ],
+      "fieldConfig": { "defaults": { "unit": "short", "decimals": 0 }, "overrides": [] }
+    },
+    {
+      "id": 5,
+      "type": "timeseries",
+      "title": "AI tokens per day by kind and direction",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 16 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum by (kind, direction) (increase(jobflow_ai_tokens_total[1d]))",
+          "legendFormat": "{{kind}} {{direction}}"
+        }
+      ],
+      "fieldConfig": { "defaults": { "unit": "short", "decimals": 0 }, "overrides": [] }
+    },
+    {
+      "id": 6,
+      "type": "stat",
+      "title": "AI cost, selected range",
+      "gridPos": { "h": 8, "w": 4, "x": 12, "y": 16 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum(increase(jobflow_ai_tokens_total[$__range]) * on(direction) group_left() jobflow_ai_price_usd_per_million_tokens) / 1e6"
+        }
+      ],
+      "fieldConfig": { "defaults": { "unit": "currencyUSD", "decimals": 4 }, "overrides": [] },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false } }
+    },
+    {
+      "id": 7,
+      "type": "timeseries",
+      "title": "AI cost per day by kind",
+      "gridPos": { "h": 8, "w": 8, "x": 16, "y": 16 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum by (kind) (increase(jobflow_ai_tokens_total[1d]) * on(direction) group_left() jobflow_ai_price_usd_per_million_tokens) / 1e6",
+          "legendFormat": "{{kind}}"
+        }
+      ],
+      "fieldConfig": { "defaults": { "unit": "currencyUSD", "decimals": 4 }, "overrides": [] }
+    },
+    {
+      "id": 8,
+      "type": "timeseries",
+      "title": "AI vendor latency p95 by kind, model and outcome",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 24 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "histogram_quantile(0.95, sum by (kind, model, outcome, le) (rate(jobflow_ai_vendor_call_seconds_bucket[5m])))",
+          "legendFormat": "{{kind}} {{model}} {{outcome}}"
+        }
+      ],
+      "fieldConfig": { "defaults": { "unit": "s" }, "overrides": [] }
+    },
+    {
+      "id": 9,
+      "type": "timeseries",
+      "title": "AI repair retries and vendor errors per day by model",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 24 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum by (kind, model) (increase(jobflow_ai_repair_retries_total[1d]))",
+          "legendFormat": "retries {{kind}} {{model}}"
+        },
+        {
+          "refId": "B",
+          "expr": "sum by (kind, model, error) (increase(jobflow_ai_vendor_errors_total[1d]))",
+          "legendFormat": "errors {{kind}} {{model}} {{error}}"
+        }
+      ],
+      "fieldConfig": { "defaults": { "unit": "short", "decimals": 0 }, "overrides": [] }
+    }
+  ]
+}

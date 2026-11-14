@@ -22,6 +22,7 @@ from app.core.config import Settings
 from app.core.enums import check_stages, load_domain_enums
 from app.core.errors import install_error_handlers
 from app.core.logging import configure_logging
+from app.core.metrics import install_metrics
 from app.core.request_id import REQUEST_ID_HEADER, RequestIdMiddleware
 from app.core.resources import create_engine, create_redis
 from app.repositories.health import select_one
@@ -67,4 +68,5 @@ def create_app(settings: Settings) -> FastAPI:
     app.include_router(forecast.router)
     app.include_router(insights.router)
     app.include_router(match_validation.router)
+    install_metrics(app)
     return app

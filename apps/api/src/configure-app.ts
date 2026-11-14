@@ -11,6 +11,9 @@ import { API_PREFIX, JWKS_PATH, rejectOutsidePrefix } from './common/api-prefix.
 import { BOOKMARKLET_PATH, corsFor } from './common/cors.js';
 import { requestId } from './common/request-id.middleware.js';
 import type { AppConfig } from './config/app-config.js';
+import { httpMetrics } from './metrics/http-metrics.middleware.js';
+import { mountMetrics } from './metrics/metrics-endpoint.js';
+import { MetricsRegistry } from './metrics/metrics-registry.js';
 import { mountApiDocs } from './openapi/api-docs.js';
 import { mountBullBoard } from './queues/bull-board.js';
 
@@ -20,6 +23,8 @@ export function configureApp(app: NestExpressApplication): NestExpressApplicatio
   const config = app.get<AppConfig>(ConfigService);
   app.useLogger(app.get(Logger));
   app.use(requestId);
+  app.use(httpMetrics(app.get(MetricsRegistry).registry));
+  mountMetrics(app);
   if (config.get('NODE_ENV', { infer: true }) === 'development') {
     mountBullBoard(app);
     mountApiDocs(app);

@@ -22,6 +22,7 @@ export { type AiJobOfUser, type AiOutcome, AiService } from './ai.service.js';
 export { AiClient, type AiCompleteCall } from './ai-client.js';
 export { AiJobRouter, type SettledAiJob } from './ai-job-router.js';
 export { AiJobStatusService } from './ai-job-status.service.js';
+export { AiMetricsSubscriber } from './ai-metrics.subscriber.js';
 export { AI_PAYLOAD_BUILDERS, type MatchInputSource, type VacancySource } from './ai-payloads.js';
 export { type GuardedCompletion, queueOrFailAiJob } from './ai-queue.js';
 export type { AiQueuePosition } from './ai-queue-estimate.js';

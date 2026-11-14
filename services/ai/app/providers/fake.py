@@ -41,6 +41,9 @@ class FakeAiProvider:
                 return fail(self, request)
         return self.replies.pop(0) if self.replies else fixture_of(request.kind)
 
+    def model_of(self, request: CompletionRequest | EmbedRequest) -> str:
+        return FAKE_MODEL
+
     async def complete(self, request: CompletionRequest) -> Completion:
         self.requests.append(request)
         await asyncio.sleep(self.delay_seconds)

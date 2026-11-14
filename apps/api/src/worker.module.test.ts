@@ -4,9 +4,13 @@ import { Logger } from 'nestjs-pino';
 import { describe, expect, it } from 'vitest';
 
 import type { AppConfig } from './config/app-config.js';
-import { AiProcessor } from './modules/ai/index.js';
+import { WorkerMetricsServer } from './metrics/worker-metrics-server.js';
+import { AiMetricsSubscriber, AiProcessor } from './modules/ai/index.js';
 import { AnalyticsCacheSubscriber } from './modules/analytics-cache/index.js';
-import { ApplicationLiveSubscriber } from './modules/applications/index.js';
+import {
+  ApplicationLiveSubscriber,
+  ApplicationMetricsSubscriber,
+} from './modules/applications/index.js';
 import { JwtKeys } from './modules/auth/index.js';
 import { CaptureSubscriber } from './modules/capture/index.js';
 import { FollowupsSubscriber } from './modules/followups/index.js';
@@ -66,6 +70,9 @@ describe('WorkerModule', () => {
       PushSubscriber,
       PushProcessor,
       AnalyticsCacheSubscriber,
+      ApplicationMetricsSubscriber,
+      AiMetricsSubscriber,
+      WorkerMetricsServer,
     ]) {
       expect(moduleRef.get(provider, { strict: false })).toBeInstanceOf(provider);
     }

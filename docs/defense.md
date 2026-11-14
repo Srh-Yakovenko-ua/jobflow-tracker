@@ -46,8 +46,8 @@
 - Легкий event sourcing: `stage_events` лише доповнюється, undo пише компенсуючу подію ([ADR-0003](adr/0003-append-only-stage-events.md)).
 - Легкий CQRS: api володіє записом, analytics лише читає і рахує, api ніколи не викликає analytics ([ADR-0002](adr/0002-python-fastapi-analytics.md), [ADR-0011](adr/0011-api-never-calls-analytics.md)).
 - Strategy для AI: інтерфейс `AiProvider` з провайдерами Anthropic, OpenAI-сумісним (NVIDIA) і `FakeAiProvider`, вибір через `AI_PROVIDER` ([ADR-0009](adr/0009-ai-provider-strategy.md)).
-- Інженерний фінал: шлях зміни етапу через outbox і шлях AI-задачі. Grafana і Jaeger сюди додадуть картки OBS-02 і OBS-03, коли їх буде зроблено.
-- Рисунки: [stage-change-outbox.mmd](diagrams/stage-change-outbox.mmd), [ai-job.mmd](diagrams/ai-job.mmd).
+- Інженерний фінал: шлях зміни етапу через outbox і шлях AI-задачі, потім Grafana на http://127.0.0.1:3001: p95 дошки (панель «Board p95») на дашборді `JobFlow System` і панелі вартості AI («AI cost, selected range», «AI cost per day by kind») на дашборді `JobFlow Product`. Jaeger сюди додасть картка OBS-03, коли її буде зроблено.
+- Рисунки: [stage-change-outbox.mmd](diagrams/stage-change-outbox.mmd), [ai-job.mmd](diagrams/ai-job.mmd), [metrics.mmd](diagrams/metrics.mmd).
 - Час: 1 хв.
 
 ### 6. Методи аналітики

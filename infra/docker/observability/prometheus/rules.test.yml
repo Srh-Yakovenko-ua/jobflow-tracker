@@ -1,0 +1,66 @@
+rule_files:
+  - rules.yml
+
+evaluation_interval: 1m
+
+tests:
+  - interval: 1m
+    input_series:
+      - series: 'analytics_cache_lookups_total{result="hit"}'
+        values: '0+3x10'
+      - series: 'analytics_cache_lookups_total{result="miss"}'
+        values: '0+1x10'
+    promql_expr_test:
+      - expr: analytics_cache_hit_ratio
+        eval_time: 10m
+        exp_samples:
+          - labels: 'analytics_cache_hit_ratio'
+            value: 0.75
+
+  - interval: 1m
+    input_series:
+      - series: 'http_request_duration_seconds_count{job="api",status="500"}'
+        values: '0+1x20'
+      - series: 'http_request_duration_seconds_count{job="api",status="200"}'
+        values: '0+9x20'
+    alert_rule_test:
+      - eval_time: 15m
+        alertname: JobflowHighErrorRate
+        exp_alerts:
+          - exp_labels:
+              severity: warning
+            exp_annotations:
+              summary: More than 5% of api requests answer 5xx
+
+  - interval: 1m
+    input_series:
+      - series: 'http_request_duration_seconds_count{job="api",status="500"}'
+        values: '0x20'
+      - series: 'http_request_duration_seconds_count{job="api",status="200"}'
+        values: '0+10x20'
+    alert_rule_test:
+      - eval_time: 15m
+        alertname: JobflowHighErrorRate
+        exp_alerts: []
+
+  - interval: 1m
+    input_series:
+      - series: 'jobflow_outbox_lag_seconds{instance="worker:9464",job="worker"}'
+        values: '45x10'
+    alert_rule_test:
+      - eval_time: 5m
+        alertname: JobflowOutboxLag
+        exp_alerts:
+          - exp_labels:
+              severity: warning
+            exp_annotations:
+              summary: The oldest unpublished outbox row is older than 30 seconds
+
+  - interval: 1m
+    input_series:
+      - series: 'jobflow_outbox_lag_seconds{instance="worker:9464",job="worker"}'
+        values: '5x10'
+    alert_rule_test:
+      - eval_time: 5m
+        alertname: JobflowOutboxLag
+        exp_alerts: []

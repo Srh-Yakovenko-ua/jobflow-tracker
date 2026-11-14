@@ -3,11 +3,13 @@ from collections.abc import Callable
 import httpx2
 import pytest
 
+from app.contracts.embed_request import EmbedRequest
 from app.core.errors import AppError
 from app.providers.anthropic import AnthropicProvider
 from app.providers.openai import OpenAiProvider
 from tests.factories import (
     COMPLETION_REQUEST,
+    SCAN_REQUEST,
     ScriptedVendor,
     anthropic_message,
     chat_completion,
@@ -28,6 +30,17 @@ ANSWERS: dict[ProviderClass, Callable[[], httpx2.Response]] = {
     AnthropicProvider: lambda: anthropic_message({"company": "Acme"}),
     OpenAiProvider: lambda: chat_completion('{"company": "Acme"}'),
 }
+
+
+@pytest.mark.parametrize("provider_class", PROVIDERS)
+def test_names_the_model_each_request_goes_to(provider_class: ProviderClass) -> None:
+    provider = provider_class(vendor_settings())
+    embed = EmbedRequest.model_validate({"texts": ["React"], "inputType": "query"})
+
+    assert [
+        provider.model_of(request)
+        for request in (COMPLETION_REQUEST, SCAN_REQUEST, embed)
+    ] == ["test-model", "test-vision", "test-embed"]
 
 
 @pytest.mark.parametrize("provider_class", PROVIDERS)
