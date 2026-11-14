@@ -3,6 +3,7 @@ import { type ArgumentsHost, Catch, type ExceptionFilter, Logger } from '@nestjs
 import { HttpAdapterHost } from '@nestjs/core';
 import type { Request } from 'express';
 
+import { withoutQuery } from './logger.js';
 import { readRequestId } from './request-id.middleware.js';
 import { toAppError } from './to-app-error.js';
 
@@ -34,7 +35,7 @@ export class AppExceptionFilter implements ExceptionFilter {
       : {
           requestId: body.requestId,
           method: req.method,
-          url: req.originalUrl,
+          url: withoutQuery(req.originalUrl),
           status: body.status,
         };
     if (failed) {

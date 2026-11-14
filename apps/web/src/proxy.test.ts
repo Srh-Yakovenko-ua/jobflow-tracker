@@ -65,4 +65,32 @@ describe('proxy', () => {
       location,
     });
   });
+
+  it('answers a signed-in board with a script nonce that matches the policy forwarded to Next', () => {
+    const response = proxy(requestTo({ path: '/board', signedIn: true }));
+    const policy = response.headers.get('content-security-policy') ?? '';
+
+    expect(policy).toMatch(/script-src 'self' 'nonce-[A-Za-z0-9+/=]{20,}' 'strict-dynamic'/);
+    expect(response.headers.get('x-middleware-request-content-security-policy')).toBe(policy);
+  });
+
+  it('gives each request its own nonce', () => {
+    const [first, second] = [1, 2].map(() =>
+      proxy(requestTo({ path: '/board', signedIn: true })).headers.get('content-security-policy'),
+    );
+
+    expect(first).toContain("'nonce-");
+    expect(first).not.toBe(second);
+  });
+
+  it.each(['/design-system', '/dev/ui'])('lets a signed-out %s through with the policy', (path) => {
+    const response = proxy(requestTo({ path, signedIn: false }));
+
+    expect({
+      status: response.status,
+      frameAncestors: response.headers
+        .get('content-security-policy')
+        ?.includes("frame-ancestors 'none'"),
+    }).toEqual({ status: 200, frameAncestors: true });
+  });
 });

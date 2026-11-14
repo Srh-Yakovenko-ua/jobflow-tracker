@@ -8,6 +8,7 @@ describe('parseWebConfig', () => {
       apiUrl: 'http://localhost:4000',
       apiBaseUrl: 'http://localhost:4000/api/v1',
       analyticsBaseUrl: 'http://localhost:8000',
+      filesUrl: 'http://localhost:9000',
     });
   });
 
@@ -27,12 +28,14 @@ describe('parseWebConfig', () => {
       apiUrl: 'http://127.0.0.1:4100',
       apiBaseUrl: 'http://127.0.0.1:4100/api/v1',
       analyticsBaseUrl: 'https://analytics.test',
+      filesUrl: 'http://localhost:9000',
     });
   });
 
   it.each([
     ['NEXT_PUBLIC_API_URL', 'ftp://x'],
     ['NEXT_PUBLIC_ANALYTICS_URL', 'not a url'],
+    ['NEXT_PUBLIC_FILES_URL', 'not a url'],
   ])('refuses a malformed %s and names it', (key, value) => {
     expect(() => parseWebConfig({ [key]: value })).toThrow(key);
   });

@@ -161,6 +161,17 @@ describe('the API over HTTP', () => {
     ]);
   });
 
+  it('logs a rejected request outside /api/v1 without its query string', async () => {
+    await request(app.getHttpServer())
+      .get('/health?code=secret&state=x')
+      .set('x-request-id', 'outside-query');
+
+    expect(linesFor('outside-query')).toEqual([
+      expect.objectContaining({ msg: 'request rejected', url: '/health' }),
+    ]);
+    expect(log.lines.filter((line) => line.includes('secret'))).toEqual([]);
+  });
+
   it('keeps a well-formed incoming x-request-id', async () => {
     const response = await request(app.getHttpServer())
       .get('/api/v1/does-not-exist')

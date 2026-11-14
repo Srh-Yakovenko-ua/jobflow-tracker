@@ -14,7 +14,12 @@ const nextConfig: NextConfig = {
     Promise.resolve([
       {
         source: '/:path*',
-        headers: [{ key: 'Cross-Origin-Opener-Policy', value: 'same-origin' }],
+        headers: [
+          { key: 'Cross-Origin-Opener-Policy', value: 'same-origin' },
+          { key: 'X-Frame-Options', value: 'DENY' },
+          { key: 'X-Content-Type-Options', value: 'nosniff' },
+          { key: 'Referrer-Policy', value: 'no-referrer' },
+        ],
       },
     ]),
 };

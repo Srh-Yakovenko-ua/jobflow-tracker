@@ -119,6 +119,15 @@ describe('web preset', () => {
     assert.ok(ruleIds.includes('@next/next/no-img-element'));
   });
 
+  it('refuses dangerouslySetInnerHTML and eval as errors', () => {
+    const errorRuleIds = messagesByFile['unsafe-html.tsx']
+      .filter((message) => message.severity === 2)
+      .map((message) => message.ruleId);
+
+    assert.ok(errorRuleIds.includes('@eslint-react/dom-no-dangerously-set-innerhtml'));
+    assert.ok(errorRuleIds.includes('no-eval'));
+  });
+
   describe('raw colours', () => {
     const RAW_COLOUR_MESSAGE =
       'Raw colour in a component: use a design token (token class, CSS variable or CHART_THEME)';

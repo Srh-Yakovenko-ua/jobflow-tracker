@@ -82,6 +82,7 @@ export function base(rootDir) {
         'simple-import-sort/imports': 'error',
         'simple-import-sort/exports': 'error',
         'no-console': 'error',
+        'no-eval': 'error',
         'no-restricted-syntax': ['error', ...RESTRICTED_SYNTAX],
         ...SHAPE_RULES,
       },
@@ -164,6 +165,7 @@ export function web(rootDir) {
       files: [tseslint.globs.ts],
       extends: [eslintReact.configs['recommended-typescript']],
       rules: {
+        '@eslint-react/dom-no-dangerously-set-innerhtml': 'error',
         '@eslint-react/error-boundaries': 'off',
         '@eslint-react/exhaustive-deps': 'off',
         '@eslint-react/purity': 'off',
