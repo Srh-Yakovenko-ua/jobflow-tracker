@@ -8,7 +8,7 @@ import { type FunnelActions, NodeAction } from './node-action';
 import { Swatch } from './swatch';
 
 const EXIT_ACTION =
-  'inline-flex min-h-11 items-center gap-1.75 rounded-sm text-ink-2 underline-offset-2 hover:text-ink hover:underline transition-colors duration-(--duration-instant) ease-standard';
+  'inline-flex min-h-11 items-center gap-1.75 rounded-sm text-ink-2 underline-offset-2 hover:text-ink active:text-ink hover:underline active:underline transition-colors duration-(--duration-instant) ease-standard';
 
 export type FunnelExitsProps = Readonly<{
   exits: readonly FunnelExit[];

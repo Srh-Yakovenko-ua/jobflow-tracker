@@ -14,7 +14,7 @@ export const metadata: Metadata = { title: SPECIMEN_COPY.pageTitle };
 
 const CARD = 'rounded-3xl bg-surface p-7 flex flex-col';
 const TILE =
-  'rounded-lg bg-surface p-4.5 flex flex-col shadow-e1 transition-shadow duration-(--duration-fast) ease-standard hover:shadow-e2';
+  'rounded-lg bg-surface p-4.5 flex flex-col shadow-e1 transition-shadow duration-(--duration-fast) ease-standard hover:shadow-e2 active:shadow-e2';
 
 type CardHeadProps = { head: { eyebrow: string; family: string } };
 

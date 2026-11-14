@@ -106,7 +106,7 @@ describe('AppShell', () => {
     },
   );
 
-  it('on the table the heading reads Таблиця while the Дошка link stays the current page', async () => {
+  it('on the table the heading reads Таблиця and no sidebar link claims the current page', async () => {
     route.pathname = '/applications';
     server.use(meRoute(), silentBoardRoute({}));
     const { sidebar } = renderShell();
@@ -114,8 +114,10 @@ describe('AppShell', () => {
 
     expect(screen.getByRole('heading', { level: 1 }).textContent).toBe('Таблиця');
     expect(
-      within(sidebar).getByRole('link', { name: SHELL.nav.board }).getAttribute('aria-current'),
-    ).toBe('page');
+      within(sidebar)
+        .getAllByRole('link')
+        .filter((link) => link.hasAttribute('aria-current')),
+    ).toEqual([]);
   });
 
   it('links Додати вакансію in the header to /add', async () => {

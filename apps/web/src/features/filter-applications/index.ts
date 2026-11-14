@@ -12,4 +12,5 @@ export { FilterMenus } from './ui/filter-menus';
 export { FilterSearch, type FilterSearchProps } from './ui/filter-search';
 export { FiltersEmptyState, type FiltersEmptyStateProps } from './ui/filters-empty-state';
 export { ResetFiltersButton } from './ui/reset-filters-button';
+export { StageChips, type StageChipsProps } from './ui/stage-chips';
 export { type ApplicationsView, ViewSwitch, type ViewSwitchProps } from './ui/view-switch';

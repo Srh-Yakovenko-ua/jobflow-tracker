@@ -13,7 +13,7 @@ const LINK =
 
 const ACTIVE = 'bg-line-soft font-semibold text-ink';
 
-const IDLE = 'text-ink-3 hover:bg-surface-3 hover:text-ink';
+const IDLE = 'text-ink-3 hover:bg-surface-3 active:bg-surface-3 hover:text-ink active:text-ink';
 
 function subscribe(onChange: () => void) {
   window.addEventListener('hashchange', onChange);

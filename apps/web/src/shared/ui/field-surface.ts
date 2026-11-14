@@ -33,7 +33,7 @@ export const OVERLAY_SURFACE =
 export const MENU_SURFACE = cn(OVERLAY_SURFACE, 'flex flex-col gap-px overflow-y-auto p-1.5');
 
 export const ICON_ACTION =
-  'touch-target flex flex-none items-center justify-center rounded-sm text-ink-3 transition-colors duration-(--duration-instant) ease-standard hover:bg-surface-3 hover:text-ink';
+  'touch-target flex flex-none items-center justify-center rounded-sm text-ink-3 transition-colors duration-(--duration-instant) ease-standard hover:bg-surface-3 active:bg-surface-3 hover:text-ink active:text-ink';
 
 export const CHOICE_ROW =
   'flex min-h-11 w-fit cursor-pointer items-center gap-2.5 text-body text-ink has-disabled:cursor-not-allowed has-disabled:text-ink-3';

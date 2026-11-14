@@ -56,7 +56,7 @@ const SCORED: readonly ApplicationListItem[] = [
 ];
 
 const COLUMN_NAMES = [
-  'Вакансія',
+  'Компанія',
   'Етап',
   'Match Score',
   'Вилка',
@@ -260,7 +260,8 @@ describe('ApplicationsTable sorting and columns', () => {
     );
     await user.click(screen.getByRole('button', { name: 'Колонки' }));
 
-    expect(checkboxNamed('Вакансія').hasAttribute('disabled')).toBe(true);
+    expect(screen.getByRole('columnheader', { name: 'компанія' })).toBeDefined();
+    expect(checkboxNamed('Компанія').hasAttribute('disabled')).toBe(true);
     expect(checkboxNamed('Етап').hasAttribute('disabled')).toBe(false);
   });
 
@@ -429,7 +430,7 @@ describe('ApplicationsTable filters', () => {
     await act(() => vi.advanceTimersByTimeAsync(250));
 
     expect(await screen.findByText('Немає карток за «react»')).toBeDefined();
-    expect(sentQueryOf(route.sent.at(-1))).toEqual({
+    expect(route.sent.map(sentQueryOf)).toContainEqual({
       stage: 'screening',
       source: 'djinni',
       q: 'react',
@@ -443,6 +444,37 @@ describe('ApplicationsTable filters', () => {
     expect(views.getByRole('radio', { name: 'Таблиця' }).getAttribute('aria-checked')).toBe('true');
     await user.click(views.getByRole('radio', { name: 'Дошка' }));
     expect(push).toHaveBeenCalledExactlyOnceWith('/board?stage=screening&source=djinni');
+  });
+
+  it('the stage chips count every card per open stage, and a picked chip asks for its stage while the counts stay whole', async () => {
+    const route = pagedListRoute({
+      items: (params) =>
+        SCORED.filter((item) => (params.get('stage') ?? item.currentStage) === item.currentStage),
+    });
+    const user = renderTableOver({ handlers: [route.handler] });
+    await screen.findByRole('link', { name: 'Альфа' });
+    const chips = within(screen.getByRole('group', { name: 'Етап' }));
+
+    expect(chips.getAllByRole('button').map((chip) => chip.textContent)).toEqual([
+      'відгук1',
+      'скринінг1',
+      "техінтерв'ю1",
+      'фінал1',
+    ]);
+    await user.click(chips.getByRole('button', { name: /^скринінг/ }));
+
+    await waitFor(() => {
+      expect(screen.queryByRole('link', { name: 'Альфа' })).toBeNull();
+    });
+    expect(route.sent.map(sentQueryOf)).toContainEqual({
+      stage: 'screening',
+      limit: '100',
+      sort: '-lastEventAt',
+    });
+    expect(chips.getByRole('button', { name: /^скринінг/ }).getAttribute('aria-pressed')).toBe(
+      'true',
+    );
+    expect(chips.getByRole('button', { name: /^відгук/ }).textContent).toBe('відгук1');
   });
 
   it('no cards at all shows the first run without the toolbar', async () => {

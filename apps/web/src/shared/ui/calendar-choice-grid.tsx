@@ -31,7 +31,7 @@ type ChoiceLook = Readonly<{ current: boolean; muted: boolean | undefined }>;
 function toneOf({ current, muted }: ChoiceLook): string {
   if (current) return 'bg-accent font-semibold text-surface';
   return cn(
-    'bg-surface-2 inset-ring inset-ring-line-soft hover:bg-surface-3',
+    'bg-surface-2 inset-ring inset-ring-line-soft hover:bg-surface-3 active:bg-surface-3',
     muted ? 'text-ink-3' : 'text-ink',
   );
 }

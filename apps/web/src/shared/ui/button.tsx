@@ -12,13 +12,17 @@ const BASE =
 
 const VARIANTS = {
   primary:
-    'bg-accent text-surface shadow-accent not-disabled:hover:bg-accent-press dark:not-disabled:hover:text-paper',
-  secondary: 'bg-surface-2 text-ink inset-ring inset-ring-line not-disabled:hover:bg-surface-3',
-  ghost: 'bg-transparent text-link not-disabled:hover:bg-accent-tint',
-  danger: 'bg-danger/6 text-danger inset-ring inset-ring-danger/30 not-disabled:hover:bg-danger/10',
-  outline: 'bg-transparent text-ink inset-ring inset-ring-line not-disabled:hover:bg-surface-3',
+    'bg-accent text-surface shadow-accent not-disabled:hover:bg-accent-press not-disabled:active:bg-accent-press dark:not-disabled:hover:text-paper dark:not-disabled:active:text-paper',
+  secondary:
+    'bg-surface-2 text-ink inset-ring inset-ring-line not-disabled:hover:bg-surface-3 not-disabled:active:bg-surface-3',
+  ghost:
+    'bg-transparent text-link not-disabled:hover:bg-accent-tint not-disabled:active:bg-accent-tint',
+  danger:
+    'bg-danger/6 text-danger inset-ring inset-ring-danger/30 not-disabled:hover:bg-danger/10 not-disabled:active:bg-danger/10',
+  outline:
+    'bg-transparent text-ink inset-ring inset-ring-line not-disabled:hover:bg-surface-3 not-disabled:active:bg-surface-3',
   reject:
-    'bg-transparent text-danger inset-ring inset-ring-rejected not-disabled:hover:bg-rejected/8',
+    'bg-transparent text-danger inset-ring inset-ring-rejected not-disabled:hover:bg-rejected/8 not-disabled:active:bg-rejected/8',
 } as const;
 
 const SIZES = {

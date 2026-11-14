@@ -21,7 +21,7 @@ const ROW = cn(
 );
 
 const STAGE_ACTION =
-  'inline-flex min-h-11 items-center rounded-sm text-[14px] font-semibold text-ink tabular-nums underline-offset-2 hover:underline';
+  'inline-flex min-h-11 items-center rounded-sm text-[14px] font-semibold text-ink tabular-nums underline-offset-2 hover:underline active:underline';
 
 export type FunnelRowProps = Readonly<{
   row: Row;

@@ -25,18 +25,8 @@ export function Checkbox({ label, className, ...props }: CheckboxProps) {
         )}
       >
         <CheckboxPrimitive.Indicator className="animate-check-in data-[state=unchecked]:animate-check-out">
-          <Check
-            aria-hidden
-            size={12}
-            strokeWidth={2.4}
-            className="group-data-[state=indeterminate]:hidden"
-          />
-          <Minus
-            aria-hidden
-            size={12}
-            strokeWidth={2.4}
-            className="hidden group-data-[state=indeterminate]:block"
-          />
+          <Check aria-hidden size={14} className="group-data-[state=indeterminate]:hidden" />
+          <Minus aria-hidden size={12} className="hidden group-data-[state=indeterminate]:block" />
         </CheckboxPrimitive.Indicator>
       </CheckboxPrimitive.Root>
       {label}

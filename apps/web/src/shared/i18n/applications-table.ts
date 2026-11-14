@@ -13,7 +13,7 @@ const CARDS_TAKEN = {
 } as const satisfies PluralForms;
 
 const columns = {
-  vacancy: { header: 'вакансія', menu: 'Вакансія' },
+  vacancy: { header: 'компанія', menu: 'Компанія' },
   stage: { header: 'етап', menu: 'Етап' },
   score: { header: 'score', menu: 'Match Score' },
   salary: { header: 'вилка', menu: 'Вилка' },

@@ -67,7 +67,7 @@ export function SortHeader({ id, sort }: SortHeaderProps) {
         type="button"
         onClick={sort.onToggle}
         className={cn(
-          'touch-target flex w-full items-center gap-1.5 rounded-xs uppercase select-none hover:text-ink focus-visible:focus-ring',
+          'touch-target flex w-full items-center gap-1.5 rounded-xs uppercase select-none hover:text-ink active:text-ink focus-visible:focus-ring',
           TOUCH_HEIGHT,
           look.align === 'end' && 'justify-end',
           sort.direction !== false && 'text-ink-2',

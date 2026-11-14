@@ -37,4 +37,5 @@ export { ScoreBadge, type ScoreBadgeProps } from './ui/score-badge';
 export { SearchSnippet, type SearchSnippetProps } from './ui/search-snippet';
 export { SilenceIndicator, type SilenceIndicatorProps } from './ui/silence-indicator';
 export { StageChip, type StageChipProps } from './ui/stage-chip';
+export { STAGE_COLOR_CLASS } from './ui/stage-color';
 export { StageMarker, type StageMarkerProps } from './ui/stage-marker';

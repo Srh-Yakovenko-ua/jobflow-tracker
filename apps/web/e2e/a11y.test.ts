@@ -111,6 +111,24 @@ test('at 390 px the notifications and application pages pass axe and Tab meets t
   ).toBe('followup');
 });
 
+test('at 390 px no signed-in page scrolls sideways', async ({ page }) => {
+  const applicationId = await addByHand(page, {
+    company: uniqueCompany('Reflow'),
+    position: 'Frontend Developer',
+  });
+  await page.setViewportSize(NARROW);
+  for (const route of [...SIGNED_IN_PAGES, `/applications/${applicationId}`]) {
+    await test.step(route, async () => {
+      await page.goto(route);
+      await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
+      const overflow = await page.evaluate(
+        () => document.documentElement.scrollWidth - window.innerWidth,
+      );
+      expect(overflow).toBeLessThanOrEqual(0);
+    });
+  }
+});
+
 signedOutTest('reduced motion turns the duration token to zero', async ({ page }) => {
   await page.goto('/login');
   const duration = await page.evaluate(() =>

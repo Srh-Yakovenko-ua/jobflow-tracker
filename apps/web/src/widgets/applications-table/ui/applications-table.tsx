@@ -39,11 +39,16 @@ function TableLoading({ failed, onRetry }: Readonly<{ failed: boolean; onRetry: 
 }
 
 function TableContent() {
-  const { table, loaded, load, search, timeZone } = useApplicationsTable();
+  const { table, loaded, load, search, stageRows, timeZone } = useApplicationsTable();
   if (!loaded) {
     return (
       <TableFrame>
-        <TableToolbar table={table} timeZone={timeZone} view={{ rows: false }} />
+        <TableToolbar
+          table={table}
+          timeZone={timeZone}
+          view={{ rows: false }}
+          stageRows={stageRows}
+        />
         <TableLoading failed={load.failed} onRetry={load.onRetry} />
       </TableFrame>
     );
@@ -59,7 +64,12 @@ function TableContent() {
   const picked = rows.filter((row) => row.getIsSelected()).map((row) => row.original);
   return (
     <TableFrame>
-      <TableToolbar table={table} timeZone={timeZone} view={{ rows: rows.length > 0 }} />
+      <TableToolbar
+        table={table}
+        timeZone={timeZone}
+        view={{ rows: rows.length > 0 }}
+        stageRows={stageRows}
+      />
       {load.failed && <LoadFailedAlert className="px-4 py-2" onRetry={load.onRetry} />}
       {picked.length > 0 && (
         <BulkBar

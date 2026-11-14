@@ -10,7 +10,7 @@ import type { ChoiceOption } from './radio-group';
 import { TOUCH_HEIGHT } from './touch-height';
 
 const ITEM = cn(
-  'touch-target h-7.5 min-w-11 rounded-[7px] px-3.25 font-ui text-[12.5px] font-semibold whitespace-nowrap text-ink-2 transition-colors duration-(--duration-fast) ease-standard hover:text-ink data-[state=checked]:text-ink',
+  'touch-target h-7.5 min-w-11 rounded-[7px] px-3.25 font-ui text-[12.5px] font-semibold whitespace-nowrap text-ink-2 tabular-nums transition-colors duration-(--duration-fast) ease-standard hover:text-ink active:text-ink data-[state=checked]:text-ink',
   TOUCH_HEIGHT,
 );
 

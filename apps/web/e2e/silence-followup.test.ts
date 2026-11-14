@@ -31,11 +31,11 @@ async function sendFollowup(page: Page): Promise<void> {
 async function openFromCalendar(page: Page, card: HandCard): Promise<void> {
   await page.goto('/calendar');
   const event = page.getByRole('main').getByRole('button', { name: card.company }).first();
-  const inThisWeek = await event.waitFor(CALENDAR_LOAD).then(
+  const inShownPeriod = await event.waitFor(CALENDAR_LOAD).then(
     () => true,
     () => false,
   );
-  if (!inThisWeek) await page.getByRole('button', { name: uk.calendarPage.next }).click();
+  if (!inShownPeriod) await page.getByRole('button', { name: uk.calendarPage.next }).click();
   await event.click();
 }
 

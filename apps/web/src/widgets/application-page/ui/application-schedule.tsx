@@ -43,7 +43,7 @@ function EventLocation({ location }: Readonly<{ location: string | null }>) {
     <a
       href={href}
       {...NEW_TAB}
-      className="min-w-0 truncate text-[13px] text-link underline-offset-2 hover:underline"
+      className="min-w-0 truncate text-[13px] text-link underline-offset-2 hover:underline active:underline"
     >
       {location}
     </a>

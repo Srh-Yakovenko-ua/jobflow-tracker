@@ -18,7 +18,7 @@ export type PageTopBarProps = Readonly<{
 const COPY = uk.applicationPage;
 
 const BACK =
-  'touch-target inline-flex min-h-10 items-center gap-2 rounded-sm text-[13.5px] text-ink-3 transition-colors duration-(--duration-fast) ease-standard hover:text-ink';
+  'touch-target inline-flex min-h-10 items-center gap-2 rounded-sm text-[13.5px] text-ink-3 transition-colors duration-(--duration-fast) ease-standard hover:text-ink active:text-ink';
 
 function BackToBoard({ mode }: Readonly<{ mode: ApplicationPageMode }>) {
   const label = (

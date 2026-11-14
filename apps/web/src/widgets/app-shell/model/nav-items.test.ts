@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { FEATURE_FLAGS } from '@/shared/config';
 import { EVERY_FLAG_ON } from '@/test/feature-flags';
 
-import { activeHrefOf, NAV_ITEMS, visibleNavItems } from './nav-items';
+import { activeHrefOf, NAV_ITEMS, shellTitleOf, visibleNavItems } from './nav-items';
 
 describe('visibleNavItems', () => {
   it('shows the shipped pages: the board, analytics, the calendar, resumes, reminders and settings', () => {
@@ -35,10 +35,20 @@ describe('activeHrefOf', () => {
     ['/board/archive', '/board'],
     ['/settings', '/settings'],
     ['/boardroom', undefined],
-    ['/applications', '/board'],
+    ['/applications', undefined],
     ['/applications/1', undefined],
     ['/applications/table', undefined],
   ])('marks %s as %s', (pathname, active) => {
     expect(activeHrefOf(pathname, NAV_ITEMS)).toBe(active);
+  });
+});
+
+describe('shellTitleOf', () => {
+  it.each([
+    ['/board', 'Дошка'],
+    ['/applications', 'Таблиця'],
+    ['/applications/1', undefined],
+  ])('titles %s as %s', (pathname, title) => {
+    expect(shellTitleOf(pathname, NAV_ITEMS)).toBe(title);
   });
 });

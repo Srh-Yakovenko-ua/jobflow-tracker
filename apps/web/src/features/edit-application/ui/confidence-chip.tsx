@@ -38,7 +38,7 @@ export function ConfidenceChip({ field, reviews }: ConfidenceChipProps) {
         type="button"
         aria-label={COPY.chip(REVIEW_NAMES[field], mark)}
         className={cn(
-          'touch-target flex-none cursor-help rounded-sm font-ui text-[10px] leading-[1.4] font-semibold transition-colors duration-(--duration-instant) ease-standard hover:text-ink',
+          'touch-target flex-none cursor-help rounded-sm font-ui text-[10px] leading-[1.4] font-semibold transition-colors duration-(--duration-instant) ease-standard hover:text-ink active:text-ink',
           TONES[confidence],
         )}
       >

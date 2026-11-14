@@ -23,7 +23,7 @@ function SavedLine() {
       <span className="text-[13.5px] font-semibold text-ink">{COPY.saved}</span>
       <Link
         href="/reminders"
-        className="inline-flex min-h-11 items-center text-[13.5px] text-link underline underline-offset-4 transition-colors duration-(--duration-instant) ease-standard hover:text-ink"
+        className="inline-flex min-h-11 items-center text-[13.5px] text-link underline underline-offset-4 transition-colors duration-(--duration-instant) ease-standard hover:text-ink active:text-ink"
       >
         {COPY.open}
       </Link>
