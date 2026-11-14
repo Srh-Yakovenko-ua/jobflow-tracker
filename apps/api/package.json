@@ -25,6 +25,7 @@
     "db:reset": "prisma migrate reset --force && pnpm run db:seed",
     "db:erd": "prisma generate",
     "gen:keys": "node scripts/gen-keys.js",
+    "gen:vapid": "node scripts/gen-vapid.js",
     "ai:usage": "nest build -p tsconfig.seed.json && node dist-seed/ai-usage.js",
     "ai:eval": "nest build -p tsconfig.seed.json && node dist-seed/ai-eval.js",
     "ai:rematch": "nest build -p tsconfig.seed.json && node dist-seed/ai-rematch.js",
@@ -63,6 +64,7 @@
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.2",
     "swagger-ui-express": "^5.0.1",
+    "web-push": "4.0.0",
     "zod": "^4.6.7"
   },
   "devDependencies": {
@@ -76,6 +78,7 @@
     "@types/node": "^26.6.4",
     "@types/supertest": "^7.2.1",
     "@types/swagger-ui-express": "^4.1.8",
+    "@types/web-push": "3.6.4",
     "@vitest/coverage-v8": "^4.1.12",
     "eslint": "^10.13.0",
     "ical.js": "^2.2.1",

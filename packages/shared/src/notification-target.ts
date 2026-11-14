@@ -2,8 +2,9 @@ import type {
   AiDoneNotificationPayload,
   Notification,
   NotifiedAiKind,
+  SilenceItem,
   SilenceNotificationPayload,
-} from '@jobflow/shared';
+} from './notifications.js';
 
 const FOLLOW_UP_ANCHOR = '#follow-up';
 
@@ -13,11 +14,17 @@ function followUpOf(applicationId: string): string {
   return `/applications/${applicationId}${FOLLOW_UP_ANCHOR}`;
 }
 
-function longestSilentOf({ items }: SilenceNotificationPayload): string | null {
+export function longestSilentItemOf({
+  items,
+}: SilenceNotificationPayload): SilenceItem | undefined {
   const [first, ...rest] = items;
-  if (first === undefined) return null;
-  const longest = rest.reduce((kept, item) => (item.days > kept.days ? item : kept), first);
-  return followUpOf(longest.applicationId);
+  if (first === undefined) return undefined;
+  return rest.reduce((kept, item) => (item.days > kept.days ? item : kept), first);
+}
+
+function longestSilentOf(payload: SilenceNotificationPayload): string | null {
+  const longest = longestSilentItemOf(payload);
+  return longest === undefined ? null : followUpOf(longest.applicationId);
 }
 
 const AI_TARGETS: Record<NotifiedAiKind, (payload: AiDoneNotificationPayload) => string | null> = {

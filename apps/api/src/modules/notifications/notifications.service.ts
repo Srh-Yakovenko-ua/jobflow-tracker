@@ -77,6 +77,11 @@ export class NotificationsService {
     return { unread: await this.repository.countUnread(userId) };
   }
 
+  async find(userId: string, notificationId: string): Promise<Notification | undefined> {
+    const row = await this.repository.findOne(userId, notificationId);
+    return row === null ? undefined : toNotification(row);
+  }
+
   async record(userId: string, { tx, ...notification }: RecordNotification): Promise<void> {
     const write = (client: Prisma.TransactionClient) =>
       this.repository.insert(userId, { ...notification, tx: client });

@@ -221,3 +221,36 @@ describe('OAuth credentials', () => {
     expect(failedPaths({ ...exampleEnv, [given]: 'half-of-a-pair' })).toEqual([missing]);
   });
 });
+
+describe('VAPID keys', () => {
+  const VAPID = {
+    VAPID_PUBLIC_KEY: `B${'A'.repeat(86)}`,
+    VAPID_PRIVATE_KEY: 'A'.repeat(43),
+  };
+
+  it('leaves push off without keys and reads a whole pair', () => {
+    const off = validateEnv(exampleEnv);
+    const on = validateEnv({ ...exampleEnv, ...VAPID });
+
+    expect([off.VAPID_PUBLIC_KEY, off.VAPID_PRIVATE_KEY]).toEqual([undefined, undefined]);
+    expect([on.VAPID_PUBLIC_KEY, on.VAPID_PRIVATE_KEY]).toEqual([
+      VAPID.VAPID_PUBLIC_KEY,
+      VAPID.VAPID_PRIVATE_KEY,
+    ]);
+  });
+
+  it.each([
+    { given: 'VAPID_PUBLIC_KEY', missing: 'VAPID_PRIVATE_KEY' },
+    { given: 'VAPID_PRIVATE_KEY', missing: 'VAPID_PUBLIC_KEY' },
+  ] as const)('refuses $given without $missing at boot', ({ given, missing }) => {
+    expect(failedPaths({ ...exampleEnv, [given]: VAPID[given] })).toEqual([missing]);
+  });
+
+  it.each([
+    { key: 'VAPID_PUBLIC_KEY', value: 'A'.repeat(86) },
+    { key: 'VAPID_PRIVATE_KEY', value: 'A'.repeat(44) },
+    { key: 'VAPID_PRIVATE_KEY', value: `${'A'.repeat(42)}+` },
+  ] as const)('refuses a $key that is not a base64url key of its length', ({ key, value }) => {
+    expect(failedPaths({ ...exampleEnv, ...VAPID, [key]: value })).toEqual([key]);
+  });
+});

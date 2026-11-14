@@ -1,4 +1,9 @@
-import { applicationResponseSchema, errorResponseSchema, meResponseSchema } from '@jobflow/shared';
+import {
+  applicationResponseSchema,
+  errorResponseSchema,
+  meResponseSchema,
+  pushSubscriptionCreatedSchema,
+} from '@jobflow/shared';
 import request from 'supertest';
 import { describe, expect, it } from 'vitest';
 
@@ -6,6 +11,7 @@ import { useTestApp } from './test/app.js';
 import { applicationPath, createApplication, ROMASHKA } from './test/applications.js';
 import { BOHDAN, OLENA, signUp } from './test/auth.js';
 import { callRoute, type RouteCall } from './test/http.js';
+import { CHROME_SUBSCRIPTION, PUSH_SUBSCRIPTIONS_PATH, pushSubscriptionPath } from './test/push.js';
 import {
   activationPath,
   downloadPath,
@@ -337,4 +343,29 @@ describe("another user's data", () => {
       expect(owner.status).toBe(ownerStatus);
     },
   );
+
+  it("answers BOHDAN's DELETE /push/subscriptions/:id on OLENA's subscription with 404 and keeps it", async () => {
+    const olena = await signUp(testApp.app, OLENA);
+    const bohdan = await signUp(testApp.app, BOHDAN);
+    const created = await callRoute(testApp.app, {
+      method: 'post',
+      path: PUSH_SUBSCRIPTIONS_PATH,
+      body: CHROME_SUBSCRIPTION,
+      accessToken: olena.accessToken,
+    });
+    const { id } = pushSubscriptionCreatedSchema.parse(created.body);
+    const remove = { method: 'delete', path: pushSubscriptionPath(id) } as const;
+
+    const intruder = await callRoute(testApp.app, { ...remove, accessToken: bohdan.accessToken });
+
+    expect([intruder.status, errorResponseSchema.parse(intruder.body).type]).toEqual([
+      404,
+      'not_found',
+    ]);
+    expect(
+      await testApp.prisma.pushSubscription.findMany({ select: { id: true, userId: true } }),
+    ).toEqual([{ id, userId: olena.user.id }]);
+    const owner = await callRoute(testApp.app, { ...remove, accessToken: olena.accessToken });
+    expect(owner.status).toBe(204);
+  });
 });

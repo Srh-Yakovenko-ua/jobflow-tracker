@@ -22,6 +22,7 @@ import { MatchModule } from './modules/match/index.js';
 import { NotesModule } from './modules/notes/index.js';
 import { NotificationsModule } from './modules/notifications/index.js';
 import { PlansModule } from './modules/plans/index.js';
+import { PushModule } from './modules/push/index.js';
 import { RemindersModule } from './modules/reminders/index.js';
 import { ResumesModule } from './modules/resumes/index.js';
 import { ScheduleModule } from './modules/schedule/index.js';
@@ -52,6 +53,7 @@ import { RedisModule } from './redis/redis.module.js';
     ScheduleModule,
     RemindersModule,
     NotificationsModule,
+    PushModule,
     SettingsModule,
     SearchesModule,
     AiModule,

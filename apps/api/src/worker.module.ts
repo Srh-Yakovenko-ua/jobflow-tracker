@@ -11,6 +11,7 @@ import { FollowupsWorkerModule } from './modules/followups/index.js';
 import { MaintenanceWorkerModule } from './modules/maintenance/index.js';
 import { MatchWorkerModule } from './modules/match/index.js';
 import { NotificationsWorkerModule } from './modules/notifications/index.js';
+import { PushWorkerModule } from './modules/push/index.js';
 import { RemindersWorkerModule } from './modules/reminders/index.js';
 import { ResumesWorkerModule } from './modules/resumes/index.js';
 import { SummariesWorkerModule } from './modules/summaries/index.js';
@@ -33,6 +34,7 @@ import { QueuesModule } from './queues/queues.module.js';
     SummariesWorkerModule,
     RemindersWorkerModule,
     NotificationsWorkerModule,
+    PushWorkerModule,
     AnalyticsCacheWorkerModule,
   ],
 })
