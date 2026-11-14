@@ -43,8 +43,12 @@ export async function addByPaste(page: Page, text: string = VACANCY_SAMPLE_TEXT)
   await page.getByRole('button', { name: COPY.paste.submit }).click();
 }
 
-export async function confirmParsed(page: Page): Promise<void> {
-  const review = page.getByRole('form', { name: COPY.review.title });
-  await review.getByRole('button', { name: COPY.review.confirm }).click(WORKER_WAIT);
+export async function boardAfterParse(page: Page): Promise<void> {
+  const live = page.getByRole('region', { name: COPY.explainer.title });
+  const ready = live.getByRole('link', { name: COPY.added.toBoard });
+  const review = live
+    .getByRole('form', { name: COPY.review.title })
+    .getByRole('button', { name: COPY.review.confirm });
+  await ready.or(review).click(WORKER_WAIT);
   await page.waitForURL('**/board');
 }

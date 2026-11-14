@@ -13,6 +13,8 @@ const FOLLOWUP = uk.followup;
 
 const SCHEDULE = uk.applicationPage.schedule;
 
+const FAKE_DRAFT_HINT = 'mention the task from the 3 September interview';
+
 function followupPanelIn(page: Page, card: HandCard) {
   return page
     .getByRole('dialog', { name: card.position })
@@ -21,6 +23,7 @@ function followupPanelIn(page: Page, card: HandCard) {
 
 async function sendFollowup(page: Page): Promise<void> {
   const panel = page.getByRole('region', { name: FOLLOWUP.kicker });
+  await panel.getByLabel(FOLLOWUP.hint.label).fill(FAKE_DRAFT_HINT);
   await panel.getByRole('button', { name: FOLLOWUP.generate }).click();
   await panel.getByRole('button', { name: FOLLOWUP.markSent }).click(WORKER_WAIT);
   await expect(toastRegion(page).getByText(FOLLOWUP.sent)).toBeVisible();
@@ -55,6 +58,6 @@ test('a silent card reaches reminders, gets a follow-up, and the panel opens fro
   await expect(followupPanelIn(page, card)).toBeVisible();
 
   await page.goto('/calendar');
-  await page.locator('.fc-event').filter({ hasText: card.company }).first().click();
+  await page.getByRole('main').getByRole('button', { name: card.company }).first().click();
   await expect(followupPanelIn(page, card)).toBeVisible();
 });

@@ -2,7 +2,7 @@ import path from 'node:path';
 
 import { uk } from '@/shared/i18n';
 
-import { addByPaste, confirmParsed, parsedSampleCard } from './test/applications';
+import { addByPaste, boardAfterParse, parsedSampleCard } from './test/applications';
 import { boardCard } from './test/board';
 import { reloadUntilVisible } from './test/reload';
 import { expect, test } from './test/session';
@@ -31,7 +31,7 @@ test('an uploaded CV gives a pasted vacancy its Match Score and an open breakdow
   await reloadUntilVisible(page, page.getByText(RESUMES.aiProfile.done));
 
   await addByPaste(page);
-  await confirmParsed(page);
+  await boardAfterParse(page);
 
   const card = boardCard(page, PARSED);
   const score = card.getByRole('img', { name: scorePattern(uk.application.score.value) });
