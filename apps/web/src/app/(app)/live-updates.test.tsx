@@ -11,6 +11,7 @@ import {
   jobKeys,
   timelineKeys,
 } from '@/entities/application';
+import { notificationKeys } from '@/entities/notification';
 import { userKeys } from '@/entities/user';
 import { useMoveApplicationMutation } from '@/features/move-application';
 import {
@@ -25,8 +26,15 @@ import { liveTicketRoute, stubEventSource } from '@/test/fake-event-source';
 import { fakeTimeouts } from '@/test/fake-timeouts';
 import { latch } from '@/test/latch';
 import { bringLiveStreamUp } from '@/test/live-stream';
+import {
+  DESIGN_FEED,
+  INTERVIEW_NOTIFICATION,
+  notificationRoutes,
+  unreadMeRoute,
+} from '@/test/notification-fixtures';
 import { renderInApp } from '@/test/render-in-app';
 import { server } from '@/test/server';
+import { ME_RESPONSE } from '@/test/session-fixtures';
 import { KanbanBoard } from '@/widgets/kanban-board';
 
 import { LiveUpdates } from './live-updates';
@@ -63,6 +71,7 @@ const OPEN = {
   otherTimeline: timelineKeys.detail(fixtureIdOf(2)),
   reasons: applicationKeys.reasonsSummary('rejected'),
   me: userKeys.me(),
+  notifications: notificationKeys.latest(),
 } satisfies Record<string, QueryKey>;
 
 type OpenName = keyof typeof OPEN;
@@ -73,6 +82,7 @@ const OPEN_NAMES: OpenName[] = [
   'job',
   'list',
   'me',
+  'notifications',
   'otherDetail',
   'otherJob',
   'otherTimeline',
@@ -86,6 +96,8 @@ const REFETCHED_ON_RECONNECT: OpenName[] = [
   'detail',
   'job',
   'list',
+  'me',
+  'notifications',
   'otherDetail',
   'otherJob',
   'otherTimeline',
@@ -94,6 +106,12 @@ const REFETCHED_ON_RECONNECT: OpenName[] = [
   'timeline',
 ];
 
+const OPEN_DATA: Partial<Record<OpenName, unknown>> = {
+  board: BOARD,
+  me: ME_RESPONSE,
+  notifications: DESIGN_FEED,
+};
+
 const fetched: OpenName[] = [];
 
 function OpenQuery({ name }: Readonly<{ name: OpenName }>) {
@@ -101,7 +119,7 @@ function OpenQuery({ name }: Readonly<{ name: OpenName }>) {
     queryKey: OPEN[name],
     queryFn: () => {
       fetched.push(name);
-      return name === 'board' ? BOARD : name;
+      return OPEN_DATA[name] ?? name;
     },
   });
   return null;
@@ -193,7 +211,7 @@ describe('LiveUpdates', () => {
         type: LIVE_EVENTS.notificationCreated,
         data: { notificationId: fixtureIdOf(9) },
       },
-      refetched: [],
+      refetched: ['me', 'notifications'],
     },
   ])('$name refetches $refetched', async ({ event, refetched }) => {
     const { source } = await pageWithOpenStream();
@@ -232,6 +250,23 @@ describe('LiveUpdates', () => {
     expect(await screen.findByRole('img', { name: 'Match Score 85' })).toBeDefined();
   });
 
+  it('a notification.created frame for an interview soon shows its toast with notifications in the app on', async () => {
+    server.use(unreadMeRoute(1, { notifyInApp: true }), ...notificationRoutes().handlers);
+    const source = await bringLiveStreamUp(() => {
+      renderInApp(<LiveUpdates />);
+    });
+
+    act(() => {
+      source.send({
+        id: EVENT_ID,
+        type: LIVE_EVENTS.notificationCreated,
+        data: { notificationId: INTERVIEW_NOTIFICATION.id },
+      });
+    });
+
+    expect(await screen.findByText('Співбесіда о 16:00')).toBeDefined();
+  });
+
   it('a job.updated frame during a pending move refetches the job at once and reads the board once, after the move settles', async () => {
     const held = latch();
     const moves = moveRoute({ latch: held });
@@ -253,7 +288,7 @@ describe('LiveUpdates', () => {
     expect(fetched.filter((name) => name === 'board')).toEqual(['board']);
   });
 
-  it('a reconnect refetches nothing on open, and every open application, job and timeline query and nothing else once it has stayed open 10 s', async () => {
+  it('a reconnect refetches nothing on open, and every open application, job, timeline, me and notification query and nothing else once it has stayed open 10 s', async () => {
     fakeTimeouts();
     const { stream, source } = await pageWithOpenStream();
     act(() => {
