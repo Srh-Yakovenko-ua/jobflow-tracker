@@ -37,6 +37,7 @@ OPENAPI_PATHS = [
     "/analytics/forecast",
     "/analytics/funnel",
     "/analytics/insights",
+    "/analytics/match-validation",
     "/analytics/norms",
     "/analytics/reasons",
     "/analytics/reasons/summary",
@@ -119,6 +120,16 @@ class VersionLink:
 
 def version_links_frame(rows: list[VersionLink]) -> pd.DataFrame:
     return records_frame(rows, record=VersionLink)
+
+
+@dataclass(frozen=True)
+class MatchScore:
+    application_id: UUID
+    match_score: int | None
+
+
+def match_scores_frame(rows: list[MatchScore]) -> pd.DataFrame:
+    return records_frame(rows, record=MatchScore)
 
 
 @dataclass(frozen=True)

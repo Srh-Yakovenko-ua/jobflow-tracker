@@ -263,6 +263,13 @@
       ]
     },
     {
+      "id": "match-validation",
+      "type": "table",
+      "builder": "aiEval",
+      "caption": "Перевірка Match Score на синтетичних даних: частка заявок, що дійшли до скринінгу та інтерв'ю, за діапазонами балу, точково-бісеріальна кореляція і нахил логістичної регресії",
+      "source": "docs/thesis/data/match-validation.tsv"
+    },
+    {
       "id": "coverage",
       "type": "table",
       "builder": "coverage",
