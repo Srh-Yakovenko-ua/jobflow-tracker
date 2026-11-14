@@ -7,7 +7,11 @@ const PER_LOAD = { timeout: 5_000 } as const;
 
 export async function reloadUntilVisible(page: Page, target: Locator): Promise<void> {
   await expect(async () => {
-    await page.reload();
-    await expect(target).toBeVisible(PER_LOAD);
+    try {
+      await expect(target).toBeVisible(PER_LOAD);
+    } catch (missing) {
+      await page.reload();
+      throw missing;
+    }
   }).toPass(WORKER_WAIT);
 }

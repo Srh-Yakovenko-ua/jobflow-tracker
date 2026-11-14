@@ -13,6 +13,8 @@ const FOLLOWUP = uk.followup;
 
 const SCHEDULE = uk.applicationPage.schedule;
 
+const CALENDAR_LOAD = { timeout: 10_000 } as const;
+
 const FAKE_DRAFT_HINT = 'mention the task from the 3 September interview';
 
 function followupPanelIn(page: Page, card: HandCard) {
@@ -27,6 +29,17 @@ async function sendFollowup(page: Page): Promise<void> {
   await panel.getByRole('button', { name: FOLLOWUP.generate }).click();
   await panel.getByRole('button', { name: FOLLOWUP.markSent }).click(WORKER_WAIT);
   await expect(toastRegion(page).getByText(FOLLOWUP.sent)).toBeVisible();
+}
+
+async function openFromCalendar(page: Page, card: HandCard): Promise<void> {
+  await page.goto('/calendar');
+  const event = page.getByRole('main').getByRole('button', { name: card.company }).first();
+  const inThisWeek = await event.waitFor(CALENDAR_LOAD).then(
+    () => true,
+    () => false,
+  );
+  if (!inThisWeek) await page.getByRole('button', { name: uk.calendarPage.next }).click();
+  await event.click();
 }
 
 async function scheduleTomorrow(page: Page): Promise<void> {
@@ -57,7 +70,6 @@ test('a silent card reaches reminders, gets a follow-up, and the panel opens fro
   await page.getByRole('link').filter({ hasText: card.company }).first().click();
   await expect(followupPanelIn(page, card)).toBeVisible();
 
-  await page.goto('/calendar');
-  await page.getByRole('main').getByRole('button', { name: card.company }).first().click();
+  await openFromCalendar(page, card);
   await expect(followupPanelIn(page, card)).toBeVisible();
 });
