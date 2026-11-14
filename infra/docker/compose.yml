@@ -140,7 +140,9 @@ services:
     env_file:
       - path: ../../.env
         required: false
-    environment: *api-environment
+    environment:
+      <<: *api-environment
+      HOST: 0.0.0.0
     volumes:
       - ../../.secrets:/app/.secrets:ro
     depends_on:
@@ -307,6 +309,8 @@ services:
     depends_on:
       loki:
         condition: service_started
+      prometheus:
+        condition: service_healthy
     healthcheck:
       test: ['CMD', 'wget', '-q', '-O', '/dev/null', 'http://127.0.0.1:3000/api/health']
       interval: 5s
@@ -314,6 +318,66 @@ services:
       retries: 10
       start_period: 20s
     mem_limit: 512m
+    networks:
+      - jobflow
+
+  prometheus:
+    image: prom/prometheus:v3.16.0
+    profiles: [observability]
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.path=/prometheus
+      - --storage.tsdb.retention.time=7d
+    volumes:
+      - ./observability/prometheus:/etc/prometheus:ro
+      - prometheusdata:/prometheus
+    ports:
+      - '127.0.0.1:9090:9090'
+    healthcheck:
+      test: ['CMD', 'wget', '-q', '-O', '/dev/null', 'http://127.0.0.1:9090/-/ready']
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 10s
+    mem_limit: 512m
+    networks:
+      - jobflow
+
+  node-exporter:
+    image: prom/node-exporter:v1.12.1
+    profiles: [observability]
+    healthcheck:
+      test: ['CMD', 'wget', '-q', '-O', '/dev/null', 'http://127.0.0.1:9100/metrics']
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    mem_limit: 64m
+    networks:
+      - jobflow
+
+  cadvisor:
+    image: ghcr.io/google/cadvisor:v0.60.6
+    profiles: [observability]
+    privileged: true
+    devices:
+      - /dev/kmsg
+    command:
+      - --docker_only=true
+      - --housekeeping_interval=15s
+      - --store_container_labels=false
+      - --whitelisted_container_labels=com.docker.compose.service
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:ro
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+    healthcheck:
+      test: ['CMD', 'wget', '-q', '-O', '/dev/null', 'http://127.0.0.1:8080/healthz']
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 10s
+    mem_limit: 256m
     networks:
       - jobflow
 
@@ -326,3 +390,4 @@ volumes:
   redisdata:
   miniodata:
   lokidata:
+  prometheusdata:

@@ -7,6 +7,7 @@ from pydantic import TypeAdapter
 from redis.asyncio import Redis
 
 from app.core.enums import load_domain_enums
+from app.core.metrics import CACHE_LOOKUPS, METRIC_COMPUTE_SECONDS
 from app.services.cache import (
     REDIS_FAILURES,
     cache_aside,
@@ -37,6 +38,12 @@ async def stored_version(redis: Redis, *, user_id: UUID) -> int:
 
 def looked_up(scope: CacheScope, *, result: str) -> None:
     logger.info("analytics cache", metric=scope.metric, result=result)
+    CACHE_LOOKUPS.labels(metric=scope.metric, result=result).inc()
+
+
+async def timed[T](scope: CacheScope, compute: Callable[[], Awaitable[T]]) -> T:
+    with METRIC_COMPUTE_SECONDS.labels(metric=scope.metric).time():
+        return await compute()
 
 
 async def cached_body[T](
@@ -51,13 +58,13 @@ async def cached_body[T](
     except REDIS_FAILURES as error:
         redis_down(error)
         looked_up(scope, result="bypass")
-        return adapter.dump_json(await compute(), by_alias=True)
+        return adapter.dump_json(await timed(scope, compute), by_alias=True)
     computed = False
 
     async def missed() -> T:
         nonlocal computed
         computed = True
-        return await compute()
+        return await timed(scope, compute)
 
     key = entry_key(scope, version=version)
     answer = await cache_aside(redis, key=key, adapter=adapter, compute=missed)

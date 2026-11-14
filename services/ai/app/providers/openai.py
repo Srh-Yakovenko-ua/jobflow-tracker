@@ -19,6 +19,7 @@ from app.providers.base import (
     Embedding,
     Message,
     VendorErrors,
+    VendorProvider,
     VendorSettings,
     model_for,
     vendor_errors,
@@ -56,7 +57,7 @@ def chat_message(message: Message) -> ChatCompletionMessageParam:
     return ChatCompletionUserMessageParam(role="user", content=message.content)
 
 
-class OpenAiProvider:
+class OpenAiProvider(VendorProvider):
     def __init__(
         self, vendor: VendorSettings, *, http_client: httpx2.AsyncClient | None = None
     ) -> None:

@@ -10,6 +10,7 @@ export type {
 export { ApplicationDraftsService } from './application-drafts.service.js';
 export type { DuplicateProbe } from './application-duplicates.repository.js';
 export { ApplicationLiveSubscriber } from './application-live.subscriber.js';
+export { ApplicationMetricsSubscriber } from './application-metrics.subscriber.js';
 export type { ApplicationEvent } from './applications.events.js';
 export {
   APPLICATION_EVENTS,

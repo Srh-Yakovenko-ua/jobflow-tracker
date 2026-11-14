@@ -10,6 +10,7 @@ import { AiService } from './ai.service.js';
 import { AiClient } from './ai-client.js';
 import { AiJobRouter } from './ai-job-router.js';
 import { AiJobStatusService } from './ai-job-status.service.js';
+import { AiMetricsSubscriber } from './ai-metrics.subscriber.js';
 
 @Module({
   imports: [JwtKeysModule],
@@ -21,6 +22,6 @@ export class AiModule {}
 
 @Module({
   imports: [AiModule, LiveModule],
-  providers: [AiProcessor],
+  providers: [AiProcessor, AiMetricsSubscriber],
 })
 export class AiWorkerModule {}

@@ -46,6 +46,8 @@ class AiProvider(Protocol):
 
     async def embed(self, request: EmbedRequest) -> Embedding: ...
 
+    def model_of(self, request: CompletionRequest | EmbedRequest) -> str: ...
+
 
 @dataclass(frozen=True, kw_only=True)
 class VendorSettings:
@@ -59,9 +61,18 @@ class VendorSettings:
     vision_model: str = ""
 
 
-def model_for(request: CompletionRequest, vendor: VendorSettings) -> str:
+def model_for(request: CompletionRequest | EmbedRequest, vendor: VendorSettings) -> str:
+    if isinstance(request, EmbedRequest):
+        return vendor.embedding_model
     seeing = any(message.images for message in request.messages)
     return vendor.vision_model if seeing else vendor.model
+
+
+class VendorProvider:
+    vendor: VendorSettings
+
+    def model_of(self, request: CompletionRequest | EmbedRequest) -> str:
+        return model_for(request, self.vendor)
 
 
 @dataclass(frozen=True, kw_only=True)

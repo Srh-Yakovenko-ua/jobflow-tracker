@@ -49,6 +49,12 @@
       "source": "docs/diagrams/refresh-rotation.mmd"
     },
     {
+      "id": "metrics",
+      "type": "diagram",
+      "caption": "Збір метрик: Prometheus опитує api, worker, analytics, ai, node-exporter і cAdvisor, Grafana будує дашборди JobFlow System і JobFlow Product",
+      "source": "docs/diagrams/metrics.mmd"
+    },
+    {
       "id": "login-light",
       "type": "screenshot",
       "caption": "Екран входу, світла тема, демо-дані",

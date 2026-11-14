@@ -18,6 +18,7 @@ from app.providers.base import (
     Embedding,
     Message,
     VendorErrors,
+    VendorProvider,
     VendorSettings,
     model_for,
     vendor_errors,
@@ -45,7 +46,7 @@ def message_content(message: Message) -> str | list[ContentBlockParam]:
     ]
 
 
-class AnthropicProvider:
+class AnthropicProvider(VendorProvider):
     def __init__(
         self, vendor: VendorSettings, *, http_client: httpx2.AsyncClient | None = None
     ) -> None:

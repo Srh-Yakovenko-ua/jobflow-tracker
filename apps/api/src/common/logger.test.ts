@@ -8,6 +8,7 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 
 import { configModule } from '../config/app-config.js';
 import { APP_OPTIONS, configureApp } from '../configure-app.js';
+import { MetricsModule } from '../metrics/metrics.module.js';
 import { memoryLog } from '../test/memory-log.js';
 import { loggerParams } from './logger.js';
 
@@ -57,7 +58,7 @@ describe('request logs', () => {
 
   beforeAll(async () => {
     const moduleRef = await Test.createTestingModule({
-      imports: [configModule, LoggerModule.forRoot(loggerParams(log.sink))],
+      imports: [configModule, LoggerModule.forRoot(loggerParams(log.sink)), MetricsModule],
       controllers: [ProbeController],
     }).compile();
     app = configureApp(moduleRef.createNestApplication<NestExpressApplication>(APP_OPTIONS));

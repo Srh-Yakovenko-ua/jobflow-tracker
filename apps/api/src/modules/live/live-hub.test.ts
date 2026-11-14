@@ -6,10 +6,12 @@ import type { MessageEvent } from '@nestjs/common';
 import { addSeconds } from 'date-fns';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { MetricsRegistry } from '../../metrics/metrics-registry.js';
 import { RedisService } from '../../redis/redis.service.js';
 import { FakeDependency } from '../../test/fake-dependency.js';
 import { liveUserOf } from '../../test/live.js';
 import { memoryLog } from '../../test/memory-log.js';
+import { samplesOf } from '../../test/metrics.js';
 import { compileProcessorModule } from '../../test/processor.js';
 import { BOHDAN_ID, MOVE_EVENT_ID, OLENA_ID } from '../../test/service-fixtures.js';
 import type { AccessUser } from '../auth/index.js';
@@ -81,15 +83,18 @@ const expiringIn = (userId: string, seconds: number) =>
 describe('LiveHub', () => {
   let redis: FakeRedis;
   let hub: LiveHub;
+  let metrics: MetricsRegistry;
 
   beforeEach(async () => {
     log.lines.length = 0;
     redis = new FakeRedis();
     const moduleRef = await compileProcessorModule(log.sink, [
       LiveHub,
+      MetricsRegistry,
       { provide: RedisService, useValue: redis },
     ]);
     hub = moduleRef.get(LiveHub);
+    metrics = moduleRef.get(MetricsRegistry);
     vi.useFakeTimers();
   });
 
@@ -279,6 +284,20 @@ describe('LiveHub', () => {
       Array.from({ length: 6 }, () => undefined),
     );
     expect([expiring.ended, afterOneEnded.ended]).toEqual([true, false]);
+  });
+
+  it('counts the open streams of every user in jobflow_sse_connections and drops one that ended', async () => {
+    openedAs(hub, expiringIn(OLENA_ID, 60));
+    opened(hub, BOHDAN_ID);
+
+    const whileBothOpen = await samplesOf(metrics, 'jobflow_sse_connections');
+    await vi.advanceTimersByTimeAsync(60_000);
+    const afterOneEnded = await samplesOf(metrics, 'jobflow_sse_connections');
+
+    expect([whileBothOpen, afterOneEnded]).toEqual([
+      [{ labels: {}, value: 2 }],
+      [{ labels: {}, value: 1 }],
+    ]);
   });
 
   it('ends the open streams and closes its connection when the module is destroyed', () => {
