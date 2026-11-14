@@ -94,7 +94,7 @@ function toneOf(cell: MonthCell, look: DayLook): string {
   if (look.selected) return 'bg-accent font-semibold text-surface';
   if (look.disabled) return 'cursor-not-allowed bg-surface-3 text-ink-3/60';
   return cn(
-    'cursor-pointer hover:bg-surface-3',
+    'cursor-pointer hover:bg-surface-3 active:bg-surface-3',
     cell.outside ? 'text-ink-3' : 'text-ink',
     look.today && 'font-semibold inset-ring-[1.5px] inset-ring-accent',
   );

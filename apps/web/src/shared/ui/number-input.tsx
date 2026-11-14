@@ -20,7 +20,7 @@ export type NumberInputProps = Readonly<{
 }>;
 
 const STEP_BUTTON =
-  'touch-target flex h-7 w-6.5 flex-none items-center justify-center rounded-xs bg-surface text-ink-2 shadow-e1 transition-colors duration-(--duration-instant) ease-standard enabled:hover:bg-accent-tint disabled:cursor-not-allowed disabled:text-ink-3/60 disabled:shadow-none';
+  'touch-target flex h-7 w-6.5 flex-none items-center justify-center rounded-xs bg-surface text-ink-2 shadow-e1 transition-colors duration-(--duration-instant) ease-standard enabled:hover:bg-accent-tint enabled:active:bg-accent-tint disabled:cursor-not-allowed disabled:text-ink-3/60 disabled:shadow-none';
 
 const STEPS = [
   {

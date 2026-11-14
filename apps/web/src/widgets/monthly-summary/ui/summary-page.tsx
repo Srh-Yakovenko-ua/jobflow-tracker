@@ -21,7 +21,7 @@ import { SummaryStateView } from './summary-state-view';
 const COPY = uk.summary;
 
 const TEXT_LINK =
-  'inline-flex min-h-11 items-center gap-1.5 text-[13.5px] text-link underline-offset-4 transition-colors duration-(--duration-instant) ease-standard hover:text-ink hover:underline';
+  'inline-flex min-h-11 items-center gap-1.5 text-[13.5px] text-link underline-offset-4 transition-colors duration-(--duration-instant) ease-standard hover:text-ink active:text-ink hover:underline active:underline';
 
 type MonthContentProps = Readonly<{
   month: YearMonth;

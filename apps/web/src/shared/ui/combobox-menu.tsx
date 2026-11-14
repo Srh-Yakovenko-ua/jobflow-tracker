@@ -57,7 +57,7 @@ function countOptions(groups: readonly SelectOptionGroup[]): number {
 function BoxMark({ checked }: Readonly<{ checked: boolean }>) {
   return (
     <span aria-hidden className={cn(CHECK_BOX.base, checked ? CHECK_BOX.on : CHECK_BOX.off)}>
-      {checked && <Check size={12} strokeWidth={2.4} />}
+      {checked && <Check size={12} />}
     </span>
   );
 }

@@ -15,7 +15,7 @@ export const CALENDAR_CONTROL =
 
 const NAV = cn(
   CALENDAR_CONTROL,
-  'w-8 bg-surface-2 text-ink-2 inset-ring inset-ring-line hover:bg-surface-3',
+  'w-8 bg-surface-2 text-ink-2 inset-ring inset-ring-line hover:bg-surface-3 active:bg-surface-3',
 );
 
 const TOGGLE = cn(
@@ -74,7 +74,9 @@ function PanelToggle({ expanded, onToggle, children }: PanelToggleProps) {
       onClick={onToggle}
       className={cn(
         TOGGLE,
-        expanded ? 'bg-accent-tint text-accent-ink' : 'bg-surface-2 text-ink hover:bg-surface-3',
+        expanded
+          ? 'bg-accent-tint text-accent-ink'
+          : 'bg-surface-2 text-ink hover:bg-surface-3 active:bg-surface-3',
       )}
     >
       {children}

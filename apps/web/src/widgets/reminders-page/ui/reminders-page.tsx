@@ -6,7 +6,6 @@ import { useRef } from 'react';
 import { RejectionReasonDialog } from '@/features/reject-with-reason';
 import { uk } from '@/shared/i18n';
 import { Fade } from '@/shared/ui/fade';
-import { PAGE_TITLE } from '@/shared/ui/page-title';
 
 import {
   type InterviewsSection,
@@ -69,7 +68,6 @@ export function RemindersPage() {
   const { silence, interviews, plan, reply } = page;
   return (
     <div className="flex max-w-180 min-w-0 flex-col gap-8">
-      <h2 className={PAGE_TITLE}>{COPY.title}</h2>
       <SectionFrame title={COPY.silence.title} titleRef={silenceTitleRef}>
         <SectionBody load={silence.load} ready={silence.rows !== undefined}>
           <SilenceList

@@ -64,7 +64,7 @@ function VersionName({ version, view }: VersionCellProps) {
         )}
       </div>
       <span className="flex min-w-0 flex-wrap items-center gap-x-1.5 gap-y-0.5 text-[11px] font-semibold text-ink-3">
-        <span className="flex-none">{uploaded}</span>
+        <span className="flex-none tabular-nums">{uploaded}</span>
         <MetaItem className="min-w-0 truncate">{version.filename}</MetaItem>
         <MetaItem className="tabular-nums">{formatFileSize(version.sizeBytes)}</MetaItem>
         <MetaItem>

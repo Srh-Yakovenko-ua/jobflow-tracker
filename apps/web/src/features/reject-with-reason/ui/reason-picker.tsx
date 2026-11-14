@@ -19,12 +19,12 @@ const SIDE_LOOK: Record<PickedSide, SideLook> = {
   company: {
     Icon: CircleMinus,
     mark: 'text-rejected',
-    chip: 'bg-rejected/6 text-[color:color-mix(in_oklab,var(--color-rejected)_55%,var(--color-ink))] inset-ring-rejected/20 not-disabled:hover:bg-rejected/10',
+    chip: 'bg-rejected/6 text-[color:color-mix(in_oklab,var(--color-rejected)_55%,var(--color-ink))] inset-ring-rejected/20 not-disabled:hover:bg-rejected/10 not-disabled:active:bg-rejected/10',
   },
   candidate: {
     Icon: CircleSlash2,
     mark: 'text-withdrawn',
-    chip: 'bg-withdrawn/6 text-[color:color-mix(in_oklab,var(--color-withdrawn)_55%,var(--color-ink))] inset-ring-withdrawn/20 not-disabled:hover:bg-withdrawn/10',
+    chip: 'bg-withdrawn/6 text-[color:color-mix(in_oklab,var(--color-withdrawn)_55%,var(--color-ink))] inset-ring-withdrawn/20 not-disabled:hover:bg-withdrawn/10 not-disabled:active:bg-withdrawn/10',
   },
 };
 

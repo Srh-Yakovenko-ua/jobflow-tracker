@@ -26,7 +26,7 @@ export const TABLE_LOOK = {
   table: 'w-full min-w-280 table-fixed border-separate border-spacing-0',
   cell: 'border-b border-line-soft px-1.5 first:pl-4 last:pr-4 [&_label]:min-h-0',
   head: 'sticky top-0 z-10 h-8.5 bg-surface-2 text-left text-[11px] font-semibold tracking-[0.06em] text-ink-3 uppercase',
-  row: 'h-11.5 cursor-pointer text-[13px] transition-colors duration-(--duration-instant) ease-standard hover:bg-surface-2 data-[state=selected]:bg-accent-tint',
+  row: 'h-11.5 cursor-pointer text-[13px] transition-colors duration-(--duration-instant) ease-standard hover:bg-surface-2 active:bg-surface-2 data-[state=selected]:bg-accent-tint',
   end: 'text-right',
   muted: 'text-ink-3',
 } as const;

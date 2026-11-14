@@ -30,12 +30,12 @@ const YEARS = { shown: 12, decadeEnd: 9 } as const;
 
 const TODAY = cn(
   CALENDAR_CONTROL,
-  'h-7.5 gap-1.75 px-2.5 text-[12.5px] font-semibold text-link hover:bg-accent-tint',
+  'h-7.5 gap-1.75 px-2.5 text-[12.5px] font-semibold text-link hover:bg-accent-tint active:bg-accent-tint',
 );
 
 const DONE = cn(
   CALENDAR_CONTROL,
-  'h-7.5 bg-accent px-3.25 text-label text-surface shadow-accent hover:bg-accent-press dark:hover:text-paper',
+  'h-7.5 bg-accent px-3.25 text-label text-surface shadow-accent hover:bg-accent-press active:bg-accent-press dark:hover:text-paper dark:active:text-paper',
 );
 
 const MONTH_CHOICES: readonly CalendarChoice[] = COPY.monthsShort.map((label, index) => ({

@@ -55,20 +55,8 @@ export function visibleNavItems(flags: FeatureFlags): readonly NavItem[] {
   return NAV_ITEMS.filter((item) => isFlagOn(flags, item.flag));
 }
 
-function aliasAt(item: NavItem, pathname: string): NavAlias | undefined {
-  return item.aliases?.find((alias) => alias.href === pathname);
-}
-
-function isActiveAt(item: NavItem, pathname: string): boolean {
-  return (
-    pathname === item.href ||
-    pathname.startsWith(`${item.href}/`) ||
-    aliasAt(item, pathname) !== undefined
-  );
-}
-
 function activeItemOf(pathname: string, items: readonly NavItem[]): NavItem | undefined {
-  return items.find((item) => isActiveAt(item, pathname));
+  return items.find((item) => pathname === item.href || pathname.startsWith(`${item.href}/`));
 }
 
 export function activeHrefOf(pathname: string, items: readonly NavItem[]): string | undefined {
@@ -77,8 +65,10 @@ export function activeHrefOf(pathname: string, items: readonly NavItem[]): strin
 
 export function shellTitleOf(pathname: string, items: readonly NavItem[]): string | undefined {
   const item = activeItemOf(pathname, items);
-  if (item === undefined) return undefined;
-  return aliasAt(item, pathname)?.title ?? uk.shell.nav[item.id];
+  if (item !== undefined) return uk.shell.nav[item.id];
+  return items
+    .flatMap((candidate) => candidate.aliases ?? [])
+    .find((alias) => alias.href === pathname)?.title;
 }
 
 export function navStatusOf(nav: ShellNav, item: NavItem) {

@@ -33,7 +33,7 @@ export type CalendarPageModel = Readonly<{
 function useCalendarView(controller: CalendarController) {
   const narrow = useMediaQuery(NARROW_SCREEN_QUERY);
   const [picked, setPicked] = useState<CalendarView | null>(null);
-  const view = picked ?? (narrow ? 'listWeek' : 'timeGridWeek');
+  const view = picked ?? (narrow ? 'listWeek' : 'dayGridMonth');
   useEffect(() => {
     controller.changeView(view);
   }, [controller, view]);

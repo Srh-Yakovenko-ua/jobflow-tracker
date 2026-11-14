@@ -73,7 +73,7 @@ function NoScore({ view }: ViewProps) {
       {COPY.noCv.lead}
       <Link
         href={RESUMES_HREF}
-        className="touch-target rounded-xs font-semibold text-link underline-offset-2 hover:underline"
+        className="touch-target rounded-xs font-semibold text-link underline-offset-2 hover:underline active:underline"
       >
         {COPY.noCv.link}
       </Link>

@@ -12,6 +12,8 @@ import { TOUCH_HEIGHT } from '@/shared/ui/touch-height';
 
 const COPY = uk.calendarPage;
 
+const DAY_LABEL = 'text-[10.5px] font-semibold tracking-[.06em] text-ink-3 uppercase';
+
 export const GRID_OPTIONS = {
   plugins: [classicTheme, dayGridPlugin, timeGridPlugin, listPlugin, interactionPlugin],
   locale: ukLocale,
@@ -31,14 +33,15 @@ export const GRID_OPTIONS = {
   eventTimeFormat: { hour: '2-digit', minute: '2-digit', hour12: false },
   eventInteractive: true,
   className: 'font-ui text-[12.5px] text-ink',
-  dayHeaderInnerClass:
-    'px-1.5 py-2 text-[10.5px] font-semibold tracking-[.06em] text-ink-3 uppercase',
+  dayHeaderInnerClass: cn('px-1.5 py-2', DAY_LABEL),
+  allDayHeaderInnerClass: DAY_LABEL,
   dayCellTopInnerClass: 'px-2 py-1.5 text-[12.5px] font-medium tabular-nums',
-  blockEventClass: 'mx-1 mt-px mb-0.5 rounded-[7px] border-0 hover:brightness-97',
+  blockEventClass:
+    'mx-1 mt-px mb-0.5 rounded-[7px] border-0 hover:brightness-97 active:brightness-97',
   blockEventInnerClass: 'px-1.75 py-0.5 text-[11.5px] font-medium',
   columnEventClass: 'rounded-lg border-0',
   columnEventInnerClass: 'px-1.5 py-0.75 text-[11.5px] font-medium',
-  listItemEventClass: cn('text-[12.5px] hover:bg-surface-2', TOUCH_HEIGHT),
+  listItemEventClass: cn('text-[12.5px] hover:bg-surface-2 active:bg-surface-2', TOUCH_HEIGHT),
   listDayHeaderInnerClass: 'text-[12px] font-semibold',
   moreLinkClass: 'text-[11px] font-semibold text-link',
   rowMoreLinkClass: 'px-1.5',

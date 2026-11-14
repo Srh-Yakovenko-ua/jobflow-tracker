@@ -114,12 +114,13 @@ describe('RemindersPage', () => {
     );
   });
 
-  it('leaves the one h1 to the app shell and titles the page with a second-level heading', async () => {
+  it('leaves the page title to the app shell h1 and opens on the silence section, not a second Нагадування', async () => {
     renderPage();
     await silentCompanies();
 
     expect(screen.queryByRole('heading', { level: 1 })).toBeNull();
-    expect(screen.getByRole('heading', { level: 2, name: COPY.title })).toBeDefined();
+    expect(screen.queryByRole('heading', { name: 'Нагадування' })).toBeNull();
+    expect(screen.getAllByRole('heading', { level: 2 })[0]?.textContent).toBe('Тиша');
   });
 
   it('a card the silence scan has not reached yet has no snooze, only the other two actions', async () => {

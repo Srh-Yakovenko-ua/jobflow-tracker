@@ -56,7 +56,7 @@ export function TabsTrigger({ count, children, className, ...props }: TabsTrigge
     <TabsPrimitive.Trigger
       {...props}
       className={cn(
-        'touch-target flex h-8 items-center gap-2 rounded-md px-3 font-ui text-[13px] font-medium text-ink-2 transition-colors duration-(--duration-fast) ease-standard hover:text-ink data-[state=active]:text-ink',
+        'touch-target flex h-8 items-center gap-2 rounded-md px-3 font-ui text-[13px] font-medium text-ink-2 transition-colors duration-(--duration-fast) ease-standard hover:text-ink active:text-ink data-[state=active]:text-ink',
         className,
       )}
     >

@@ -28,7 +28,8 @@ type ToastLook = { surface: ToastSurface; mark?: ToastMark };
 const PLAIN: ToastSurface = {
   card: 'bg-surface text-ink inset-ring inset-ring-line-soft',
   description: 'text-ink-2',
-  action: '-my-2.5 min-h-11 px-1.75 text-[13px] text-link hover:bg-accent-tint',
+  action:
+    '-my-2.5 min-h-11 px-1.75 text-[13px] text-link hover:bg-accent-tint active:bg-accent-tint',
 };
 
 const INVERSE: ToastSurface = {

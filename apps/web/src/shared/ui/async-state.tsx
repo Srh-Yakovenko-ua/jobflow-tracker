@@ -45,7 +45,8 @@ type FailedFooterProps = Readonly<{
   view?: AsyncStateView | undefined;
 }>;
 
-const DELETE_LOOK = 'text-ink-3 not-disabled:hover:bg-surface-3 not-disabled:hover:text-ink';
+const DELETE_LOOK =
+  'text-ink-3 not-disabled:hover:bg-surface-3 not-disabled:active:bg-surface-3 not-disabled:hover:text-ink not-disabled:active:text-ink';
 
 type JobLook<Status extends AiJobStatus> = {
   tone: string;

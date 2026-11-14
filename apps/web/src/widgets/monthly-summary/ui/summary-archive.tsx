@@ -41,7 +41,7 @@ export function SummaryArchive({ items }: SummaryArchiveProps) {
           >
             <Link
               href={`/analytics/summary/${item.month}`}
-              className="inline-flex min-h-11 items-center text-[14px] font-semibold text-ink underline-offset-4 transition-colors duration-(--duration-instant) ease-standard hover:text-link hover:underline"
+              className="inline-flex min-h-11 items-center text-[14px] font-semibold text-ink underline-offset-4 transition-colors duration-(--duration-instant) ease-standard hover:text-link active:text-link hover:underline active:underline"
             >
               {COPY.month(monthNameOf(item.month), yearOf(item.month))}
             </Link>

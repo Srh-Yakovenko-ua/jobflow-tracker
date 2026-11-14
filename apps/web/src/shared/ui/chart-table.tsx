@@ -17,7 +17,7 @@ function CellContent({ text, href }: ChartTableCell) {
   return (
     <Link
       href={href}
-      className="inline-flex min-h-11 min-w-11 items-center text-link underline-offset-2 hover:underline"
+      className="inline-flex min-h-11 min-w-11 items-center text-link underline-offset-2 hover:underline active:underline"
     >
       {text}
     </Link>

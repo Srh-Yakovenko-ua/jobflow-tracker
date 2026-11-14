@@ -49,6 +49,8 @@ const EMPTY_WEEK = 'Цього тижня співбесід немає';
 
 const NEXT_KYIV_WEEK = { from: '2026-11-08T22:00:00.000Z', to: '2026-11-15T22:00:00.000Z' };
 
+const KYIV_MONTH = { from: '2026-10-25T22:00:00.000Z', to: '2026-12-06T22:00:00.000Z' };
+
 const TRANSIENT_RETRY_MS = 3000;
 
 type CalendarSetup = CalendarRouteOptions & {
@@ -76,6 +78,12 @@ function viewRadio(name: string): HTMLElement {
   return screen.getByRole('radio', { name });
 }
 
+async function renderWeekCalendar(setup: CalendarSetup = {}) {
+  const rendered = renderCalendar(setup);
+  await rendered.user.click(await screen.findByRole('radio', { name: 'Тиждень' }));
+  return rendered;
+}
+
 async function waitForAsked(range: { from: string; to: string }, sent: readonly object[]) {
   await waitFor(() => {
     expect(sent.at(-1)).toEqual(range);
@@ -93,11 +101,11 @@ afterEach(() => {
 });
 
 describe('CalendarPage', () => {
-  it('opens on the Kyiv week in the week grid at desktop width and asks for it in UTC', async () => {
+  it('opens on the Kyiv month in the month grid at desktop width, as the calendar grid is drawn, and asks for it in UTC', async () => {
     const { sent } = renderCalendar();
 
-    await waitForAsked(KYIV_WEEK, sent);
-    expect(viewRadio('Тиждень').getAttribute('aria-checked')).toBe('true');
+    await waitForAsked(KYIV_MONTH, sent);
+    expect(viewRadio('Місяць').getAttribute('aria-checked')).toBe('true');
   });
 
   it('lays the week out in the zone from the settings, not the browser one', async () => {
@@ -133,20 +141,20 @@ describe('CalendarPage', () => {
     expect(viewRadio('Список').getAttribute('aria-checked')).toBe('true');
   });
 
-  it('moves to the next week and to the whole month from the toolbar', async () => {
+  it('moves to the next month and back to this week from the toolbar', async () => {
     const { user, sent } = renderCalendar();
-    await waitForAsked(KYIV_WEEK, sent);
+    await waitForAsked(KYIV_MONTH, sent);
 
     await user.click(screen.getByRole('button', { name: 'Наступний період' }));
-    await waitForAsked(NEXT_KYIV_WEEK, sent);
+    await waitForAsked({ from: '2026-11-29T22:00:00.000Z', to: '2027-01-10T22:00:00.000Z' }, sent);
     await user.click(screen.getByRole('button', { name: 'Сьогодні' }));
-    await user.click(viewRadio('Місяць'));
+    await user.click(viewRadio('Тиждень'));
 
-    await waitForAsked({ from: '2026-10-25T22:00:00.000Z', to: '2026-12-06T22:00:00.000Z' }, sent);
+    await waitForAsked(KYIV_WEEK, sent);
   });
 
   it('marks Сьогодні as already shown on this week, not on the next one or on October whose trailing week holds today', async () => {
-    const { user, sent } = renderCalendar();
+    const { user, sent } = await renderWeekCalendar();
     await waitForAsked(KYIV_WEEK, sent);
     const today = screen.getByRole('button', { name: 'Сьогодні' });
     expect(today.getAttribute('aria-disabled')).toBe('true');
@@ -197,7 +205,7 @@ describe('CalendarPage', () => {
   });
 
   it('focuses a week grid interview whose press the drag kept from focusing, before its card opens, so closing the card lands there', async () => {
-    renderCalendar({ items: [INTERVIEW] });
+    await renderWeekCalendar({ items: [INTERVIEW] });
     const title = await screen.findByText(INTERVIEW.title);
     const event = title.closest<HTMLElement>('[tabindex]');
     let opener: Element | null = null;
@@ -223,7 +231,7 @@ describe('CalendarPage', () => {
   });
 
   it('with no interview this week, counts the silent cards and links to them on the board', async () => {
-    renderCalendar({ items: [FOLLOWUP_ITEM], silent: { applied: 2, screening: 1 } });
+    await renderWeekCalendar({ items: [FOLLOWUP_ITEM], silent: { applied: 2, screening: 1 } });
 
     expect(await screen.findByText(EMPTY_WEEK)).toBeDefined();
     expect(await screen.findByText('3 тихі картки')).toBeDefined();
@@ -233,7 +241,7 @@ describe('CalendarPage', () => {
 
   it('with reminders shipped, the empty week links to the reminders', async () => {
     flags.reminders = true;
-    renderCalendar({ silent: { applied: 1 } });
+    await renderWeekCalendar({ silent: { applied: 1 } });
 
     expect(await screen.findByText(EMPTY_WEEK)).toBeDefined();
     const link = screen.getByRole('link', { name: 'До нагадувань' });
@@ -241,7 +249,7 @@ describe('CalendarPage', () => {
   });
 
   it('on another week with no interview, does not call it this week', async () => {
-    const { user, sent } = renderCalendar();
+    const { user, sent } = await renderWeekCalendar();
     await waitForAsked(KYIV_WEEK, sent);
     expect(await screen.findByText(EMPTY_WEEK)).toBeDefined();
 
@@ -267,7 +275,7 @@ describe('CalendarPage', () => {
         start: `2026-11-06T${time}:00.000Z`,
       }),
     );
-    renderCalendar({ items: crowded });
+    await renderWeekCalendar({ items: crowded });
 
     expect(await screen.findAllByText(INTERVIEW.title)).toHaveLength(1);
     expect(screen.getByTitle('ще 2').textContent).toBe('+2');
@@ -275,15 +283,24 @@ describe('CalendarPage', () => {
   });
 
   it('names the timed rows of the week grid in Ukrainian for a screen reader', async () => {
-    const { sent } = renderCalendar();
+    const { sent } = await renderWeekCalendar();
     await waitForAsked(KYIV_WEEK, sent);
 
     expect(screen.queryByText('Timed')).toBeNull();
     expect(screen.getAllByText('за годинами').length).toBeGreaterThan(0);
   });
 
+  it('sets the весь день label of the week grid in the small ink-3 type of the day headers', async () => {
+    const { sent } = await renderWeekCalendar();
+    await waitForAsked(KYIV_WEEK, sent);
+
+    const label = screen.getByText('весь день');
+    expect(label.className).toContain('text-ink-3');
+    expect(label.className).toContain('text-[10.5px]');
+  });
+
   it('says nothing about an empty week once an interview is in it', async () => {
-    renderCalendar({ items: [INTERVIEW] });
+    await renderWeekCalendar({ items: [INTERVIEW] });
 
     expect(await screen.findByText(INTERVIEW.title)).toBeDefined();
     expect(screen.queryByText(EMPTY_WEEK)).toBeNull();

@@ -6,11 +6,12 @@ import { cn } from '@/shared/lib/cn';
 const TONES = {
   accent: {
     chip: 'bg-accent-tint font-medium text-accent-ink inset-ring-accent/20',
-    remove: 'size-4.25 after:right-[-6.5px] hover:bg-accent/15',
+    remove: 'size-4.25 after:right-[-6.5px] hover:bg-accent/15 active:bg-accent/15',
   },
   neutral: {
     chip: 'bg-surface inset-ring-line',
-    remove: 'size-4 text-ink-3 after:right-[-7px] hover:bg-danger/8 hover:text-danger',
+    remove:
+      'size-4 text-ink-3 after:right-[-7px] hover:bg-danger/8 active:bg-danger/8 hover:text-danger active:text-danger',
   },
 } as const;
 

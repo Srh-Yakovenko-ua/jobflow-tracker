@@ -9,7 +9,7 @@ export type EditTriggerProps = Readonly<{
 }>;
 
 const TRIGGER =
-  'touch-target -mx-1 cursor-text rounded-sm px-1 text-start transition-colors duration-(--duration-fast) ease-standard hover:bg-surface-3';
+  'touch-target -mx-1 cursor-text rounded-sm px-1 text-start transition-colors duration-(--duration-fast) ease-standard hover:bg-surface-3 active:bg-surface-3';
 
 export function EditTrigger({ onEdit, children, className }: EditTriggerProps) {
   return (

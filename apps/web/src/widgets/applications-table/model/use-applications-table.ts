@@ -42,6 +42,10 @@ export function useApplicationsTable() {
     ...applicationTableQueryOptions(sent),
     placeholderData: keepPreviousData,
   });
+  const everyStage = useQuery({
+    ...applicationTableQueryOptions({ ...sent, stage: undefined }),
+    placeholderData: keepPreviousData,
+  });
   const selection = useSelectionPerFilters(sent);
   const table = useTable({
     features: applicationTableFeatures,
@@ -65,6 +69,7 @@ export function useApplicationsTable() {
     loaded: query.data !== undefined,
     load,
     search: { filtered, q: sent.q },
+    stageRows: everyStage.data,
     timeZone,
   };
 }
