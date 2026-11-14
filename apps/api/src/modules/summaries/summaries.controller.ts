@@ -1,6 +1,7 @@
 import {
   type CaptureRetryResponse,
   type Plan,
+  type SummaryArchive,
   type SummaryResponse,
   summarySchema,
 } from '@jobflow/shared';
@@ -19,6 +20,11 @@ export class SummariesController {
     private readonly summaries: SummariesService,
     private readonly requests: SummaryRequestsService,
   ) {}
+
+  @Get()
+  archive(@CurrentUser() user: AccessUser): Promise<SummaryArchive> {
+    return this.summaries.archive(user.id);
+  }
 
   @Get('latest')
   latest(@CurrentUser() user: AccessUser): Promise<SummaryResponse> {

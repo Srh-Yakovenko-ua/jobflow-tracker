@@ -127,6 +127,23 @@ describe('AsyncState', () => {
     expect(document.activeElement).toBe(screen.getByRole('button', { name: 'Заповнити вручну' }));
   });
 
+  it('a failed job with no manual way offers only the retry', () => {
+    render(<AsyncState job={{ status: 'failed' }} actions={{ onRetry: vi.fn() }} />);
+
+    const buttons = screen.getAllByRole('button').map((button) => button.textContent);
+    expect(buttons).toEqual(['Спробувати ще раз']);
+  });
+
+  it.each<{ job: AiJob; line: string }>([
+    { job: { status: 'queued', ahead: 1, etaSeconds: 10 }, line: 'AI пише саммарі' },
+    { job: { status: 'processing', step: 1, steps: 3 }, line: 'AI пише саммарі' },
+    { job: { status: 'failed' }, line: 'AI не впорався' },
+  ])('a caller label names the $job.status work, a failed line keeps its own', ({ job, line }) => {
+    render(<AsyncState job={job} view={{ label: uk.summary.generating }} />);
+
+    expect(within(screen.getByRole('status')).getByText(line)).toBeDefined();
+  });
+
   it('a caller can drop the surface box, its class winning over the kit one', () => {
     render(
       <AsyncState

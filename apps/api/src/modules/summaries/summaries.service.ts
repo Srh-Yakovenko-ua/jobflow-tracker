@@ -2,15 +2,20 @@ import {
   monthlySummaryOutputSchema,
   type Plan,
   type Summary,
+  SUMMARY_LIMITS,
+  type SummaryArchive,
+  type SummaryArchiveItem,
   type SummaryResponse,
   type YearMonth,
 } from '@jobflow/shared';
 import { Injectable } from '@nestjs/common';
+import { subMonths } from 'date-fns';
 
 import { notFound } from '../../common/app-error.js';
+import { Clock } from '../../common/clock.js';
 import { localMonthOf, shiftMonth } from '../../common/year-month.js';
 import { timeZoneOf } from '../../prisma/user-time-zone.js';
-import { PlansService } from '../plans/index.js';
+import { planProgressOf, PlansService } from '../plans/index.js';
 import { SummariesRepository, type SummaryJobRow } from './summaries.repository.js';
 
 type SummaryView = { summary: Summary; aiResultId: string; planMonth: YearMonth };
@@ -36,12 +41,31 @@ function viewOf({ id, createdAt, finishedAt, user, aiResult }: SummaryJobRow): S
 
 const viewOrNull = (row: SummaryJobRow | null) => (row === null ? null : viewOf(row));
 
+function newestPerMonth(rows: SummaryJobRow[]): SummaryArchiveItem[] {
+  const byMonth = new Map<YearMonth, SummaryArchiveItem>();
+  for (const row of rows) {
+    const summary = viewOf(row)?.summary;
+    if (summary !== undefined && !byMonth.has(summary.month)) {
+      const plan = planProgressOf(row.aiResult?.plans[0]?.items ?? []);
+      byMonth.set(summary.month, { ...summary, plan });
+    }
+  }
+  return [...byMonth.values()];
+}
+
 @Injectable()
 export class SummariesService {
   constructor(
     private readonly repository: SummariesRepository,
     private readonly plans: PlansService,
+    private readonly clock: Clock,
   ) {}
+
+  async archive(userId: string): Promise<SummaryArchive> {
+    const since = subMonths(this.clock.now(), SUMMARY_LIMITS.archiveMonths + 1);
+    const rows = await this.repository.findDoneSummariesSince(userId, since);
+    return { items: newestPerMonth(rows).slice(0, SUMMARY_LIMITS.archiveMonths) };
+  }
 
   async latest(userId: string): Promise<SummaryResponse> {
     const [row, job] = await Promise.all([

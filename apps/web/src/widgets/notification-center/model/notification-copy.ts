@@ -1,13 +1,12 @@
-import type { Notification, YearMonth } from '@jobflow/shared';
+import type { Notification } from '@jobflow/shared';
 
 import { uk } from '@/shared/i18n';
 import { formatClock } from '@/shared/lib/state-format';
+import { monthNameOf } from '@/shared/lib/year-month';
 
 export type NotificationCopy = Readonly<{ title: string; text: string; action: string }>;
 
 const COPY = uk.notifications;
-
-const MONTH_DIGITS_FROM = 'YYYY-'.length;
 
 function silenceCopy({ items }: Extract<Notification, { type: 'silence' }>['payload']) {
   const companies = items.map((item) => item.company).join(', ');
@@ -17,10 +16,6 @@ function silenceCopy({ items }: Extract<Notification, { type: 'silence' }>['payl
     text: COPY.silence.text(companies, longest),
     action: COPY.silence.action,
   };
-}
-
-function monthNameOf(month: YearMonth): string {
-  return uk.calendar.months[Number(month.slice(MONTH_DIGITS_FROM)) - 1] ?? month;
 }
 
 export function notificationCopyOf(notification: Notification, timeZone: string): NotificationCopy {

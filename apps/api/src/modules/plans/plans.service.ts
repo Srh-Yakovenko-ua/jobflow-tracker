@@ -14,6 +14,7 @@ import { Clock } from '../../common/clock.js';
 import { owned } from '../../common/owned.js';
 import { firstDayOf, monthNameOf } from '../../common/year-month.js';
 import { PrismaService } from '../../prisma/prisma.service.js';
+import { planProgressOf } from './plan-progress.js';
 import { type PlanItemRow, type PlanRow, PlansRepository } from './plans.repository.js';
 
 export type PlanFromSummary = {
@@ -82,11 +83,7 @@ export class PlansService {
   }
 
   async progress(userId: string, month: YearMonth): Promise<PlanProgress | null> {
-    const items = await this.repository.findItemsOfMonth(userId, firstDayOf(month));
-    if (items.length === 0) {
-      return null;
-    }
-    return { items: items.length, done: items.filter(({ doneAt }) => doneAt !== null).length };
+    return planProgressOf(await this.repository.findItemsOfMonth(userId, firstDayOf(month)));
   }
 
   async patchItem(userId: string, { planId, itemId, patch }: PlanItemUpdate): Promise<PlanItem> {

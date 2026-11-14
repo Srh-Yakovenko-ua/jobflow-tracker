@@ -19,6 +19,7 @@ import { http, HttpResponse } from 'msw/http';
 
 import { analyticsUrl, apiUrl } from './api-handlers';
 import { DESIGN_RESUME_AB, RESUME_AB_URL } from './resume-ab-fixtures';
+import { summaryRoutes } from './summary-fixtures';
 
 export const DASHBOARD_ROUTES = [
   'searches',
@@ -163,5 +164,5 @@ export function dashboardRoutes(options: DashboardRoutesOptions = {}) {
     }),
     ...repliesOf({ url: URLS[route], override: options[route], design: design[route] }),
   ]);
-  return { handlers, sent };
+  return { handlers: [...handlers, ...summaryRoutes().handlers], sent };
 }

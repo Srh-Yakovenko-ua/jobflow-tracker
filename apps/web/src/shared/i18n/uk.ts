@@ -19,6 +19,7 @@ import { resumes } from './resumes';
 import { settings } from './settings';
 import { shell } from './shell';
 import { states } from './states';
+import { summary } from './summary';
 import { timeline } from './timeline';
 
 export const uk = {
@@ -82,6 +83,7 @@ export const uk = {
   resumes,
   settings,
   analytics,
+  summary,
   designSystem: {
     pageTitle: 'Дизайн-система',
     typography: {

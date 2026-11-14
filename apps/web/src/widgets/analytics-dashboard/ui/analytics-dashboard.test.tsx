@@ -17,6 +17,7 @@ import { advancePastQueryRetries, fakeTimeouts } from '@/test/fake-timeouts';
 import { renderInApp } from '@/test/render-in-app';
 import { server } from '@/test/server';
 import { meRoute } from '@/test/session-fixtures';
+import { NO_SUMMARY, READY_SUMMARY, summaryRoutes } from '@/test/summary-fixtures';
 
 import { AnalyticsDashboard } from './analytics-dashboard';
 
@@ -85,9 +86,9 @@ const OUTAGE_CASES = DASHBOARD_ROUTES.flatMap((route) =>
   route === 'insights' ? [] : OUTAGES.map((outage) => ({ route, blocks: AFFECTED[route], outage })),
 );
 
-function renderDashboard(options: DashboardRoutesOptions = {}) {
+function renderDashboard(options: DashboardRoutesOptions = {}, latest = NO_SUMMARY) {
   const routes = dashboardRoutes(options);
-  server.use(meRoute(), ...routes.handlers);
+  server.use(meRoute(), ...summaryRoutes({ latest }).handlers, ...routes.handlers);
   const user = renderInApp(<AnalyticsDashboard />);
   return { user, sent: routes.sent };
 }
@@ -172,6 +173,16 @@ describe('AnalyticsDashboard', () => {
     expect(blockRegions()).toHaveLength(7);
     expect(screen.queryByRole('heading', { name: /зарплат/i })).toBeNull();
     expect(screen.queryByText(/саммарі/i)).toBeNull();
+  });
+
+  it('a done monthly summary takes the place of the insight actions', async () => {
+    renderDashboard({}, READY_SUMMARY);
+    await screen.findByRole('heading', { name: HERO_TITLE });
+
+    await waitFor(() => {
+      expect(screen.queryByRole('region', { name: WHAT_TO_DO })).toBeNull();
+    });
+    expect(blockRegions()).toHaveLength(6);
   });
 
   it('without insights the blocks ask neutral questions instead of stating conclusions', async () => {

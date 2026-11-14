@@ -1,6 +1,8 @@
 import type { RouteConfig } from '@asteasolutions/zod-to-openapi';
 import {
   captureRetryResponseSchema,
+  type SummaryArchive,
+  summaryArchiveSchema,
   type SummaryResponse,
   summaryResponseSchema,
   summarySchema,
@@ -36,7 +38,26 @@ const summaryParams = z.object({
   aiJobId: summarySchema.shape.aiJobId.meta({ example: JOB_ID }),
 });
 
+const ARCHIVE = {
+  items: [{ ...SUMMARY.summary, planId: PLAN_RESPONSE.example.id, plan: { items: 4, done: 3 } }],
+} satisfies SummaryArchive;
+
 export const SUMMARIES_OPENAPI_PATHS: RouteConfig[] = [
+  {
+    method: 'get',
+    path: '/summaries',
+    tags: ['summaries'],
+    summary: 'Read the archive of monthly summaries',
+    description:
+      'The summarized months of the signed-in user, newest first, at most 12: for each month the newest done monthly summary made in the last 13 months, with the progress of the plan saved from it (items and done items), or null before that plan is saved. A capped list without a cursor. Read only.',
+    responses: {
+      200: {
+        description: 'The summarized months, newest first',
+        content: jsonContent(summaryArchiveSchema, ARCHIVE),
+      },
+      ...errorResponses([401, 403]),
+    },
+  },
   {
     method: 'get',
     path: '/summaries/latest',

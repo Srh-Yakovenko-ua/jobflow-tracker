@@ -2,7 +2,7 @@
 
 import type { FunnelKpis } from '@jobflow/shared';
 import { AnimatePresence } from 'motion/react';
-import { useState } from 'react';
+import { type ReactNode, useState } from 'react';
 
 import { useSilenceDays } from '@/entities/user';
 import { uk } from '@/shared/i18n';
@@ -36,7 +36,9 @@ function DashboardHeader({ kpis, scope }: DashboardHeaderProps) {
   );
 }
 
-export function AnalyticsDashboard() {
+export type AnalyticsDashboardProps = Readonly<{ summary?: ReactNode }>;
+
+export function AnalyticsDashboard({ summary }: AnalyticsDashboardProps = {}) {
   const scope = useSearchScope();
   const [byReason, setByReason] = useState(false);
   const { whatIf, sent, actions } = useForecastWhatIf(scope.selectedId);
@@ -71,6 +73,7 @@ export function AnalyticsDashboard() {
           )}
         </Fade>
       </AnimatePresence>
+      {summary}
     </div>
   );
 }

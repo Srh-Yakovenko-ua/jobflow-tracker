@@ -1,4 +1,9 @@
-import { captureRetryResponseSchema, planSchema, summaryResponseSchema } from '@jobflow/shared';
+import {
+  captureRetryResponseSchema,
+  planSchema,
+  summaryArchiveSchema,
+  summaryResponseSchema,
+} from '@jobflow/shared';
 import { buildMonthlySummaryOutput } from '@jobflow/shared/testing';
 import { describe, expect, it, vi } from 'vitest';
 
@@ -8,7 +13,13 @@ import { type SignedInSearcher, signedInWithSearch } from '../../test/applicatio
 import { callRoute, statusAndType } from '../../test/http.js';
 import { outboxRows } from '../../test/outbox.js';
 import { expectHourlyAiLimit } from '../../test/rate-limit.js';
-import { planPath, SUMMARIES_PATH, summaryOwner } from '../../test/summaries.js';
+import {
+  archive,
+  planItemPath,
+  planPath,
+  SUMMARIES_PATH,
+  summaryOwner,
+} from '../../test/summaries.js';
 import { NOW, settableClock } from '../../test/time.js';
 
 vi.hoisted(() => {
@@ -107,6 +118,27 @@ describe('the monthly summary API', () => {
     });
   });
 
+  it('answers the summarized month with the progress of its saved plan, and an empty archive to another user', async () => {
+    const olena = await summaryOwner(testApp.prisma);
+    const bohdan = await signedInWithSearch(testApp.prisma);
+    const plan = planSchema.parse((await saveAsPlan(olena.accessToken, olena.aiJobId)).body);
+    await callRoute(testApp.app, {
+      method: 'patch',
+      path: planItemPath(plan.id, plan.items[0]?.id ?? ''),
+      accessToken: olena.accessToken,
+      body: { done: true },
+    });
+    const { summary } = summaryResponseSchema.parse((await latest(olena)).body);
+
+    const response = await archive(testApp.app, olena);
+
+    expect(response.status).toBe(200);
+    expect(summaryArchiveSchema.parse(response.body)).toEqual({
+      items: [{ ...summary, planId: plan.id, plan: { items: 4, done: 1 } }],
+    });
+    expect((await archive(testApp.app, bohdan)).body).toEqual({ items: [] });
+  });
+
   it("answers 404 to saving another user's summary as a plan and stores no plan", async () => {
     const olena = await summaryOwner(testApp.prisma);
     const bohdan = await signedInWithSearch(testApp.prisma);
@@ -127,6 +159,7 @@ describe('the monthly summary API', () => {
   });
 
   it.each([
+    { method: 'get', path: SUMMARIES_PATH },
     { method: 'get', path: `${SUMMARIES_PATH}/latest` },
     { method: 'post', path: SUMMARIES_PATH },
     { method: 'post', path: planPath('0199f0a0-0000-7000-8000-000000000201') },

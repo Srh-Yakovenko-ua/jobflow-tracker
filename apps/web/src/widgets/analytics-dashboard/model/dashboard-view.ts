@@ -37,6 +37,7 @@ export type SankeyFrame = DashboardFrame &
 export type ActionsView = Readonly<{
   state: ChartFrameState;
   actions: readonly InsightAction[] | undefined;
+  hidden: boolean;
 }>;
 
 export type ReasonsFrame = DashboardFrame & Readonly<{ data: ReasonsResponse | undefined }>;
@@ -100,11 +101,12 @@ function framesOf({ queries, searches }: DashboardViewInput): DashboardFrames {
 }
 
 export function dashboardViewOf(input: DashboardViewInput) {
-  const { funnel, timings, insights } = input.queries;
+  const { funnel, timings, insights, summary } = input.queries;
   const kpis = funnel.data?.kpis;
   const actions: ActionsView = {
     state: chartFrameStateOf(insights),
     actions: insights.data?.actions,
+    hidden: Boolean(summary.data?.summary),
   };
   return {
     kpis,
