@@ -31,3 +31,6 @@ minimumReleaseAgeExclude:
   - '@rollup/rollup-openbsd-x64@4.64.9'
   - '@rollup/rollup-openharmony-arm64@4.64.9'
   - bullmq@6.3.17
+  - '@playwright/test@1.65.1'
+  - playwright-core@1.65.1
+  - playwright@1.65.1

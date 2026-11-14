@@ -1,11 +1,13 @@
 services:
   api:
+    image: jobflow-api:ci
     build:
       target: prod
     environment:
-      NODE_ENV: production
+      NODE_ENV: ${API_NODE_ENV:-production}
 
   worker:
+    image: jobflow-api:ci
     build:
       target: prod
     command: ['node', 'dist/worker.js']
@@ -13,19 +15,23 @@ services:
       NODE_ENV: production
 
   web:
+    image: jobflow-web:ci
     build:
       target: prod
 
   analytics:
+    image: jobflow-analytics:ci
     build:
       target: prod
 
   ai:
+    image: jobflow-ai:ci
     build:
       target: prod
     environment:
       AI_PROVIDER: fake
 
   documents:
+    image: jobflow-documents:ci
     build:
       target: prod
