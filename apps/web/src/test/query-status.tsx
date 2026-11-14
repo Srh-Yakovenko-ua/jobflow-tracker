@@ -10,6 +10,8 @@ import { screen, waitFor } from '@testing-library/react';
 import { useSyncExternalStore } from 'react';
 import { expect } from 'vitest';
 
+import { uk } from '@/shared/i18n';
+
 export type QueryProbeProps = Readonly<{ queryKey: QueryKey }>;
 
 export type StaleQueryProps = QueryProbeProps & Readonly<{ data: unknown }>;
@@ -42,6 +44,14 @@ export async function waitForQuery({ queryKey, status }: QuerySettle) {
     () => {
       expect(screen.getByLabelText(probeName(queryKey)).textContent).toBe(status);
     },
+    { timeout: RETRIED_ERROR_TIMEOUT_MS },
+  );
+}
+
+export function findRetryAfterQueryRetries() {
+  return screen.findByRole(
+    'button',
+    { name: uk.states.errors.loadFailed.action },
     { timeout: RETRIED_ERROR_TIMEOUT_MS },
   );
 }

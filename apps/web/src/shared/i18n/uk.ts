@@ -14,6 +14,7 @@ import { contact } from './contact';
 import { devUi } from './dev-ui';
 import { followup } from './followup';
 import { notifications } from './notifications';
+import { reminders } from './reminders';
 import { resumes } from './resumes';
 import { settings } from './settings';
 import { shell } from './shell';
@@ -65,6 +66,7 @@ export const uk = {
   states,
   shell,
   notifications,
+  reminders,
   errors: {
     saveFailed: {
       title: 'Не вдалося зберегти',

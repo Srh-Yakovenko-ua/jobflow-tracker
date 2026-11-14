@@ -8,7 +8,7 @@ import {
   TERMINAL_STAGES,
 } from '@jobflow/shared';
 import { CalendarPlus, Ellipsis, Pencil, Trash2 } from 'lucide-react';
-import { type RefObject, useRef } from 'react';
+import type { RefObject } from 'react';
 
 import {
   nextStageOf,
@@ -17,6 +17,7 @@ import {
 } from '@/features/move-application';
 import { RejectionReasonDialog, useRejectionPrompt } from '@/features/reject-with-reason';
 import { uk } from '@/shared/i18n';
+import { useMenuChoice } from '@/shared/lib/use-menu-choice';
 import { NEW_TAB, webUrlOf } from '@/shared/lib/web-url';
 import { Button, buttonLinkClasses } from '@/shared/ui/button';
 import { DANGER_MENU_ITEM, Menu, MenuContent, MenuItem, MenuTrigger } from '@/shared/ui/menu';
@@ -33,7 +34,9 @@ export type ApplicationActionsProps = Readonly<{
 const COPY = uk.applicationPage;
 
 function MoreMenu({ actions }: Readonly<{ actions: ApplicationPageActions }>) {
-  const editChosenRef = useRef(false);
+  const edit = useMenuChoice(() => {
+    actions.onEdit('position');
+  });
   return (
     <Menu>
       <MenuTrigger asChild>
@@ -43,19 +46,8 @@ function MoreMenu({ actions }: Readonly<{ actions: ApplicationPageActions }>) {
           icon={<Ellipsis aria-hidden size={16} strokeWidth={1.9} />}
         />
       </MenuTrigger>
-      <MenuContent
-        onCloseAutoFocus={(event) => {
-          if (!editChosenRef.current) return;
-          editChosenRef.current = false;
-          event.preventDefault();
-          actions.onEdit('position');
-        }}
-      >
-        <MenuItem
-          onSelect={() => {
-            editChosenRef.current = true;
-          }}
-        >
+      <MenuContent onCloseAutoFocus={edit.onCloseAutoFocus}>
+        <MenuItem onSelect={edit.choose}>
           <Pencil aria-hidden size={16} strokeWidth={1.9} />
           {COPY.edit}
         </MenuItem>

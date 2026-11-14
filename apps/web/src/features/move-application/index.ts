@@ -1,5 +1,6 @@
 export type { BulkMoveResult } from './lib/bulk-move-toast';
 export { canDragFrom, isLegalDrop, type StagePair } from './lib/drop-rules';
+export { legalMovesFrom } from './lib/legal-moves';
 export { nextStageOf } from './lib/next-stage';
 export { invalidateAfterMove } from './model/invalidate-after-move';
 export { isMovePending, useRerenderOnMoveChange } from './model/move-pending';

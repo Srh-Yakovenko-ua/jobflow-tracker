@@ -1,13 +1,8 @@
 import { analytics } from './analytics';
 import { board } from './board';
-import { notifications } from './notifications';
 import { resumes } from './resumes';
 
 const { emptySearch, filters } = board;
-
-const EMPTY_REMINDERS = notifications.empty;
-
-const DRAWN_SILENCE_DAYS = 7;
 
 export const devUiStates = {
   firstRun: { index: '01', title: 'Перший вхід · дошка на нулі' },
@@ -16,10 +11,6 @@ export const devUiStates = {
     title: 'Порожні стани решти екранів',
     analytics: analytics.empty,
     resumes: resumes.empty,
-    reminders: {
-      content: { ...EMPTY_REMINDERS, hint: EMPTY_REMINDERS.hint(DRAWN_SILENCE_DAYS) },
-      silent: notifications.silentCards(0),
-    },
     search: {
       content: {
         eyebrow: emptySearch.eyebrow,
