@@ -1,8 +1,11 @@
 import json
+from typing import TYPE_CHECKING
 
 import pytest
+from loguru import logger
 
 from app.providers.fake import FIXTURES, FakeAiProvider
+from app.providers.openai import OpenAiProvider
 from tests.factories import (
     FOLLOWUP_FIXTURE,
     FOLLOWUP_PATH,
@@ -15,6 +18,7 @@ from tests.factories import (
     SCRUBBED_RESUME,
     UNNAMED_VACANCY,
     VACANCY_BODY,
+    ScriptedVendor,
     build_app,
     draft_of,
     failing_vacancy,
@@ -23,9 +27,14 @@ from tests.factories import (
     monthly_summary_request,
     post_as_worker,
     post_completion,
+    retry_soon,
     settings_for,
     summary_of,
+    vendor_settings,
 )
+
+if TYPE_CHECKING:
+    from loguru import Message
 
 pytestmark = pytest.mark.anyio
 
@@ -281,6 +290,21 @@ async def test_answers_504_when_the_model_does_not_answer_in_time() -> None:
             "requestId": "req-test",
         },
     )
+
+
+async def test_tags_the_vendor_error_line_with_the_request_id() -> None:
+    vendor = ScriptedVendor([retry_soon(500)])
+    provider = OpenAiProvider(vendor_settings(), http_client=vendor.client())
+    app = build_app(provider=provider)
+    lines: list[Message] = []
+    sink = logger.add(lines.append, level="WARNING")
+    await post_completion(app=app)
+    logger.remove(sink)
+
+    assert [
+        (line.record["message"], line.record["extra"].get("requestId"))
+        for line in lines
+    ] == [("vendor error", "req-test")]
 
 
 @pytest.mark.parametrize(

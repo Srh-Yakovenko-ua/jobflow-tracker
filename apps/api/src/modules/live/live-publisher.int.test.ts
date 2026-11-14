@@ -39,7 +39,7 @@ describe('LivePublisher', () => {
 
     expect(outcome).toBe('answered');
     expect(unpublished()).toEqual([
-      expect.objectContaining({ level: 40, userId: USER_ID, type: 'job.updated' }),
+      expect.objectContaining({ level: 40, userId: '52ed462c98ce6211', type: 'job.updated' }),
     ]);
     expect(log.lines.join('')).not.toContain(JOB_UPDATE.id);
   }

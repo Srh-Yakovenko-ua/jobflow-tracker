@@ -3,6 +3,7 @@ from collections.abc import Awaitable, Callable
 from uuid import uuid4
 
 from fastapi import Request, Response
+from loguru import logger
 
 REQUEST_ID_HEADER = "x-request-id"
 
@@ -25,6 +26,7 @@ async def assign_request_id(
 ) -> Response:
     request_id = pick_request_id(request.headers.get(REQUEST_ID_HEADER))
     request.state.request_id = request_id
-    response = await call_next(request)
+    with logger.contextualize(requestId=request_id):
+        response = await call_next(request)
     response.headers[REQUEST_ID_HEADER] = request_id
     return response

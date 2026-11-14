@@ -1,0 +1,53 @@
+discovery.docker "containers" {
+  host = "unix:///var/run/docker.sock"
+
+  filter {
+    name   = "label"
+    values = ["com.docker.compose.project=jobflow"]
+  }
+}
+
+discovery.relabel "containers" {
+  targets = discovery.docker.containers.targets
+
+  rule {
+    source_labels = ["__meta_docker_container_label_com_docker_compose_service"]
+    target_label  = "service"
+  }
+
+  rule {
+    source_labels = ["service"]
+    regex         = "loki|alloy|grafana"
+    action        = "drop"
+  }
+}
+
+loki.source.docker "containers" {
+  host          = "unix:///var/run/docker.sock"
+  targets       = discovery.relabel.containers.output
+  relabel_rules = discovery.relabel.containers.rules
+  forward_to    = [loki.process.levels.receiver]
+}
+
+loki.process "levels" {
+  forward_to = [loki.write.loki.receiver]
+
+  stage.json {
+    expressions = { level = "level || record.level.name" }
+  }
+
+  stage.template {
+    source   = "level"
+    template = `{{ with .Value }}{{ $names := dict "10" "trace" "20" "debug" "30" "info" "40" "warn" "50" "error" "60" "fatal" "WARNING" "warn" }}{{ if hasKey $names . }}{{ get $names . }}{{ else }}{{ ToLower . }}{{ end }}{{ end }}`
+  }
+
+  stage.labels {
+    values = { level = "" }
+  }
+}
+
+loki.write "loki" {
+  endpoint {
+    url = "http://loki:3100/loki/api/v1/push"
+  }
+}

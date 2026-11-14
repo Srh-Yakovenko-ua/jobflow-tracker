@@ -252,6 +252,71 @@ services:
     networks:
       - jobflow
 
+  loki:
+    image: grafana/loki:3.7.10
+    profiles: [observability]
+    command:
+      - -config.file=/etc/loki/local-config.yaml
+      - -reporting.enabled=false
+    volumes:
+      - lokidata:/loki
+    ports:
+      - '127.0.0.1:3100:3100'
+    healthcheck:
+      disable: true
+    mem_limit: 512m
+    networks:
+      - jobflow
+
+  alloy:
+    image: grafana/alloy:v1.21.3
+    profiles: [observability]
+    command:
+      - run
+      - --server.http.listen-addr=0.0.0.0:12345
+      - --storage.path=/var/lib/alloy/data
+      - --disable-reporting
+      - /etc/alloy/config.alloy
+    volumes:
+      - ./observability/alloy/config.alloy:/etc/alloy/config.alloy:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    ports:
+      - '127.0.0.1:12345:12345'
+    depends_on:
+      loki:
+        condition: service_started
+    healthcheck:
+      disable: true
+    mem_limit: 256m
+    networks:
+      - jobflow
+
+  grafana:
+    image: grafana/grafana:13.3.1
+    profiles: [observability]
+    environment:
+      GF_AUTH_ANONYMOUS_ENABLED: 'true'
+      GF_AUTH_ANONYMOUS_ORG_ROLE: Editor
+      GF_ANALYTICS_REPORTING_ENABLED: 'false'
+      GF_ANALYTICS_CHECK_FOR_UPDATES: 'false'
+    volumes:
+      - ./observability/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./observability/grafana/dashboards:/var/lib/grafana/dashboards:ro
+    ports:
+      - '127.0.0.1:3001:3000'
+    depends_on:
+      loki:
+        condition: service_started
+    healthcheck:
+      test: ['CMD', 'wget', '-q', '-O', '/dev/null', 'http://127.0.0.1:3000/api/health']
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 20s
+    mem_limit: 512m
+    networks:
+      - jobflow
+
 networks:
   jobflow:
     name: jobflow
@@ -260,3 +325,4 @@ volumes:
   pgdata:
   redisdata:
   miniodata:
+  lokidata:

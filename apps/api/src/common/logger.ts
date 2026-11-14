@@ -1,3 +1,5 @@
+import { createHash } from 'node:crypto';
+
 import type { Request, Response } from 'express';
 import type { Params } from 'nestjs-pino';
 import type { DestinationStream, SerializedRequest } from 'pino';
@@ -41,9 +43,19 @@ const withoutQueryString = (req: SerializedRequest): SerializedRequest => ({
   url: withoutQuery(req.url),
 });
 
+const userHashOf = (userId: string): string =>
+  createHash('sha256').update(userId).digest('hex').slice(0, 16);
+
+const withHashedUser = (line: Record<string, unknown>): Record<string, unknown> =>
+  typeof line.userId === 'string' ? { ...line, userId: userHashOf(line.userId) } : line;
+
 const HTTP_LOG_OPTIONS: Options<Request, Response> = {
   genReqId: (req) => readRequestId(req),
-  customProps: (req) => ({ requestId: readRequestId(req) }),
+  customProps: (req) => ({
+    requestId: readRequestId(req),
+    ...(req.user ? { userId: userHashOf(req.user.id) } : {}),
+  }),
+  formatters: { log: withHashedUser },
   serializers: { req: withoutQueryString },
   redact: REDACTED_PATHS,
   autoLogging: {

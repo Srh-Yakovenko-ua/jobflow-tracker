@@ -1,6 +1,7 @@
 from contextlib import suppress
 from uuid import UUID, uuid4
 
+from loguru import logger
 from starlette.datastructures import Headers, MutableHeaders
 from starlette.requests import Request
 from starlette.types import ASGIApp, Message, Receive, Scope, Send
@@ -35,4 +36,5 @@ class RequestIdMiddleware:
                 MutableHeaders(scope=message).append(REQUEST_ID_HEADER, request_id)
             await send(message)
 
-        await self.app(scope, receive, send_with_request_id)
+        with logger.contextualize(requestId=request_id):
+            await self.app(scope, receive, send_with_request_id)
