@@ -60,5 +60,5 @@ signedOutTest('reduced motion turns the duration token to zero', async ({ page }
   const duration = await page.evaluate(() =>
     getComputedStyle(document.documentElement).getPropertyValue('--duration-base').trim(),
   );
-  expect(duration).toBe('0ms');
+  expect(Number.parseFloat(duration)).toBe(0);
 });

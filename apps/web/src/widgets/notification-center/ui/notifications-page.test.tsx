@@ -61,6 +61,13 @@ describe('NotificationsPage', () => {
     expect(screen.queryByRole('heading', { name: 'Вчора' })).toBeNull();
   });
 
+  it('titles the page with its own h1, since the shell has no nav title for /notifications', async () => {
+    renderPage();
+    await screen.findByRole('heading', { name: 'Вчора' });
+
+    expect(screen.getByRole('heading', { level: 1, name: COPY.title })).toBeDefined();
+  });
+
   it('Показати ще asks for the page after the cursor and adds its rows', async () => {
     const cursor = notificationIdOf(3);
     const { user, sent } = renderPage({

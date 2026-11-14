@@ -22,7 +22,7 @@ test('the dashboard shows the funnel, the offer forecast and the insight headlin
   await expect(sankey.getByRole('table', { name: BLOCKS.sankey.table.caption })).toBeAttached();
 
   const forecast = page.getByRole('region', { name: BLOCKS.forecast.eyebrow });
-  await expect(forecast.getByText(BLOCKS.forecast.method.label)).toBeVisible();
+  await expect(forecast.getByRole('button', { name: BLOCKS.forecast.method.label })).toBeVisible();
   await expect(forecast.getByText(BLOCKS.forecast.tech)).toBeVisible();
   const notes = page.getByRole('group', { name: BLOCKS.sankey.notes.label });
   const funnelInsights = INSIGHTS.insights.filter(({ block }) => block === 'funnel');
