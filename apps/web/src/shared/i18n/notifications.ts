@@ -95,4 +95,9 @@ export const notifications = {
     text: (applications: number) => `У статистиці вже ${countedUk(applications, APPLICATIONS)}.`,
     action: shell.palette.actions.analytics,
   },
+  monthlySummaryReady: {
+    title: (month: string) => `Саммарі за ${month} готове`,
+    text: 'Що вийшло за місяць і які кроки зробити далі.',
+    action: shell.palette.actions.analytics,
+  },
 } as const;

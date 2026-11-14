@@ -2,6 +2,7 @@ import type { NotificationListQuery, NotificationType } from '@jobflow/shared';
 import { Injectable } from '@nestjs/common';
 
 import type { Prisma } from '../../generated/prisma/client.js';
+import { lockUser } from '../../prisma/lock-user.js';
 import { PrismaService } from '../../prisma/prisma.service.js';
 import { notificationCreatedEvent } from './notifications.events.js';
 
@@ -45,7 +46,7 @@ export class NotificationsRepository {
   }
 
   async lockUser(userId: string, { tx }: Transaction): Promise<void> {
-    await tx.$executeRaw`SELECT 1 FROM users WHERE id = ${userId}::uuid FOR UPDATE`;
+    await lockUser(tx, userId);
   }
 
   async exists(userId: string, { type, aiJobId, tx }: ExistingNotification): Promise<boolean> {

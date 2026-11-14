@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import {
   buildMatchCompletion,
+  buildMonthlySummaryOutput,
   buildResumeParseOutput,
   buildVacancyCompletion,
   VACANCY_SAMPLE_TEXT,
@@ -41,6 +42,7 @@ describe('AI_PROMPT_VERSIONS', () => {
       resume_parse: 'v1',
       match: 'v3',
       followup: 'v1',
+      monthly_summary: 'v1',
     });
   });
 });
@@ -60,6 +62,9 @@ describe('aiContractJsonSchemas', () => {
       'followup_request',
       'followup_output',
       'followup_response',
+      'monthly_summary_request',
+      'monthly_summary_output',
+      'monthly_summary_response',
       'embed_request',
       'embed_response',
     ]);
@@ -117,6 +122,25 @@ describe('aiContractJsonSchemas', () => {
     });
   });
 
+  it('requires every monthly_summary input block, the nullable ones included, and the summary with its actions in its output', () => {
+    expect(aiContractJsonSchemas()).toMatchObject({
+      monthly_summary_request: {
+        properties: { input: { required: AI_PAYLOAD_FIELDS.monthly_summary } },
+      },
+      monthly_summary_output: {
+        title: 'MonthlySummaryOutput',
+        required: ['summary', 'actions'],
+        properties: {
+          actions: {
+            minItems: 1,
+            maxItems: 4,
+            items: { required: ['title', 'why', 'expectedEffect', 'metric'] },
+          },
+        },
+      },
+    });
+  });
+
   it('requires only the input in a completion request', () => {
     expect(aiContractJsonSchemas()['vacancy_parse_request']).toMatchObject({
       title: 'VacancyParseRequest',
@@ -160,6 +184,11 @@ describe('aiCompletionSchemas', () => {
   it('parses a match completion carrying the requirement mapping', () => {
     const completion = buildMatchCompletion();
     expect(aiCompletionSchemas.match.parse(completion)).toEqual(completion);
+  });
+
+  it('parses a monthly_summary completion carrying the summary and its actions', () => {
+    const completion = { ...COMPLETION, promptVersion: 'v1', output: buildMonthlySummaryOutput() };
+    expect(aiCompletionSchemas.monthly_summary.parse(completion)).toEqual(completion);
   });
 
   it('refuses a numeric promptVersion', () => {

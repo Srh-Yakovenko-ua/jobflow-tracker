@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import date, datetime
 from uuid import UUID
 
 import pandas as pd
@@ -20,9 +20,14 @@ def search_period(search: pd.DataFrame) -> SearchPeriod:
 
 
 async def search_funnel(
-    engine: AsyncEngine, *, user_id: UUID, search_id: UUID, now: datetime
+    engine: AsyncEngine,
+    *,
+    user_id: UUID,
+    search_id: UUID,
+    now: datetime,
+    month: date | None = None,
 ) -> Funnel:
     search, events = await load_search_events(
         engine, user_id=user_id, search_id=search_id
     )
-    return funnel(events, period=search_period(search), now=now)
+    return funnel(events, period=search_period(search), now=now, month=month)

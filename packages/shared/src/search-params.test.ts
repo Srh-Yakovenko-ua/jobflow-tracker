@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { withSearchParams } from './search-params';
+import { withSearchParams } from './search-params.js';
 
 describe('withSearchParams', () => {
   it('joins a list with commas and writes booleans as words', () => {

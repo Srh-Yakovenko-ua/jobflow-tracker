@@ -7,6 +7,7 @@ import { boardRoute } from '@/test/board-fixtures';
 import {
   buildNotification,
   DESIGN_FEED,
+  MONTHLY_SUMMARY_NOTIFICATION,
   NOTIFICATION_NOW,
   notificationIdOf,
   notificationRoutes,
@@ -83,6 +84,15 @@ describe('NotificationsPage', () => {
     await waitFor(() => {
       expect(sent.reads).toEqual([{ all: true }]);
     });
+  });
+
+  it('a ready monthly summary names its month and leads to the analytics', async () => {
+    renderPage({ feed: { items: [MONTHLY_SUMMARY_NOTIFICATION], nextCursor: null } });
+
+    expect(await screen.findByText('Саммарі за жовтень готове')).toBeDefined();
+    expect(screen.getByText(COPY.monthlySummaryReady.text)).toBeDefined();
+    const open = screen.getByRole('link', { name: COPY.monthlySummaryReady.action });
+    expect(open.getAttribute('href')).toBe('/analytics');
   });
 
   it('shows the loading state while the first page is on its way', async () => {

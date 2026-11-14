@@ -40,7 +40,8 @@ export type AiJobTarget =
   | { resumeVersionId: string }
   | { applicationId: string; resumeVersionId: string };
 
-export type CreateAiJob = InTransaction & { kind: AiKind } & AiJobTarget;
+export type CreateAiJob = InTransaction &
+  (({ kind: Exclude<AiKind, 'monthly_summary'> } & AiJobTarget) | { kind: 'monthly_summary' });
 
 export type AiResultKey = { kind: AiKind; inputHash: string };
 

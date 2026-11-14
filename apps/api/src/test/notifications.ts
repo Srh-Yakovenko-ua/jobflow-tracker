@@ -1,9 +1,13 @@
 import type { SilenceItem, SilenceNotificationPayload } from '@jobflow/shared';
+import type { OnModuleInit, Type } from '@nestjs/common';
+import { Test } from '@nestjs/testing';
 
-import type {
-  NewNotification,
-  OnceNotification,
-  RecordNotification,
+import { AiJobRouter, type SettledAiJob } from '../modules/ai/index.js';
+import {
+  type NewNotification,
+  NotificationsService,
+  type OnceNotification,
+  type RecordNotification,
 } from '../modules/notifications/index.js';
 import type { PrismaService } from '../prisma/prisma.service.js';
 import type { ByUser } from './recorded-events.js';
@@ -60,4 +64,18 @@ export class RecordingNotifications {
       await this.record(userId, notification);
     }
   }
+}
+
+export async function settlingThrough(subscriber: Type<OnModuleInit>) {
+  const notifications = new RecordingNotifications();
+  const moduleRef = await Test.createTestingModule({
+    providers: [
+      subscriber,
+      AiJobRouter,
+      { provide: NotificationsService, useValue: notifications },
+    ],
+  }).compile();
+  await moduleRef.init();
+  const router = moduleRef.get(AiJobRouter);
+  return { notifications, settle: (settled: SettledAiJob) => router.route(settled) };
 }

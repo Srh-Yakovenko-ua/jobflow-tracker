@@ -1,10 +1,15 @@
 import { AI_JOB_FAILURES, errorResponseSchema } from '@jobflow/shared';
+import type { z } from 'zod';
 
 export type ServiceCallFailure = { status: number; type: string; cause?: unknown };
 
 type ServiceCallErrorClass = new (failure: ServiceCallFailure) => ServiceCallError;
 
 type FetchFailure = { timeoutType: string; ErrorClass: ServiceCallErrorClass };
+
+type ParsedBody<Body> = { schema: z.ZodType<Body>; ErrorClass: ServiceCallErrorClass };
+
+const BAD_GATEWAY = 502;
 
 export const SERVICE_CALL_ERRORS = {
   notReady: AI_JOB_FAILURES.notReady,
@@ -27,6 +32,22 @@ export class ServiceCallError extends Error {
 export async function refusalTypeOf(response: Response): Promise<string> {
   const body: unknown = await response.json().catch(() => undefined);
   return errorResponseSchema.safeParse(body).data?.type ?? SERVICE_CALL_ERRORS.unexpectedResponse;
+}
+
+export async function parsedBodyOf<Body>(
+  response: Response,
+  { schema, ErrorClass }: ParsedBody<Body>,
+): Promise<Body> {
+  if (!response.ok) {
+    throw new ErrorClass({ status: response.status, type: await refusalTypeOf(response) });
+  }
+  const body: unknown = await response.json().catch(() => undefined);
+  const parsed = schema.safeParse(body);
+  if (!parsed.success) {
+    const type = SERVICE_CALL_ERRORS.unexpectedResponse;
+    throw new ErrorClass({ status: BAD_GATEWAY, type, cause: parsed.error });
+  }
+  return parsed.data;
 }
 
 export function fetchFailureOf(error: unknown, { timeoutType, ErrorClass }: FetchFailure): unknown {

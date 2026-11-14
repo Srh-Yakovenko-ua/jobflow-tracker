@@ -1,6 +1,12 @@
 import { z } from 'zod';
 
-export const AI_KINDS = ['vacancy_parse', 'resume_parse', 'match', 'followup'] as const;
+export const AI_KINDS = [
+  'vacancy_parse',
+  'resume_parse',
+  'match',
+  'followup',
+  'monthly_summary',
+] as const;
 
 export const aiKindSchema = z.enum(AI_KINDS);
 
@@ -11,4 +17,5 @@ export const AI_PROMPT_VERSIONS = {
   resume_parse: 'v1',
   match: 'v3',
   followup: 'v1',
+  monthly_summary: 'v1',
 } satisfies Record<AiKind, string>;

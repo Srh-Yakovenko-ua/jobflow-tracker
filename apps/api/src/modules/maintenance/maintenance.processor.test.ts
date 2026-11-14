@@ -6,6 +6,7 @@ import { ScheduledJobsService } from '../../scheduled-jobs/scheduled-jobs.servic
 import { memoryLog } from '../../test/memory-log.js';
 import { processedJob } from '../../test/processed-job.js';
 import { compileProcessorModule } from '../../test/processor.js';
+import { SummaryRequestsService } from '../summaries/index.js';
 import { MaintenanceProcessor } from './maintenance.processor.js';
 
 const log = memoryLog();
@@ -35,8 +36,9 @@ class FakeScheduledJobs {
     return this.called('sweepStaleAiJobs');
   }
 
-  monthlySummaryUsers(): Promise<void> {
-    return this.called('monthlySummaryUsers');
+  async monthlySummaryUsers(): Promise<string[]> {
+    await this.called('monthlySummaryUsers');
+    return PICKED_USER_IDS;
   }
 
   silenceScan(): Promise<void> {
@@ -53,6 +55,17 @@ class FakeScheduledJobs {
   }
 }
 
+const PICKED_USER_IDS = ['user-kyiv', 'user-kolkata'];
+
+class RecordingSummaryRequests {
+  readonly requested: string[][] = [];
+
+  requestScheduledFor(userIds: string[]) {
+    this.requested.push(userIds);
+    return Promise.resolve({ picked: userIds.length, requested: userIds.length });
+  }
+}
+
 function pingJob(data: unknown) {
   return processedJob({ queueName: 'maintenance', name: 'ping', data, id: '42' });
 }
@@ -64,6 +77,7 @@ function tickJob(name: string) {
 describe('MaintenanceProcessor', () => {
   const outbox = new FakeOutboxRelay();
   const scheduledJobs = new FakeScheduledJobs();
+  const summaries = new RecordingSummaryRequests();
   let processor: MaintenanceProcessor;
   let close: () => Promise<void>;
 
@@ -72,6 +86,7 @@ describe('MaintenanceProcessor', () => {
       MaintenanceProcessor,
       { provide: OutboxRelayService, useValue: outbox },
       { provide: ScheduledJobsService, useValue: scheduledJobs },
+      { provide: SummaryRequestsService, useValue: summaries },
     ]);
     processor = moduleRef.get(MaintenanceProcessor);
     close = () => moduleRef.close();
@@ -81,6 +96,7 @@ describe('MaintenanceProcessor', () => {
     log.lines.length = 0;
     outbox.calls.length = 0;
     scheduledJobs.calls.length = 0;
+    summaries.requested.length = 0;
   });
 
   afterAll(async () => {
@@ -151,6 +167,12 @@ describe('MaintenanceProcessor', () => {
 
     expect(scheduledJobs.calls).toEqual([method]);
     expect(outbox.calls).toEqual([]);
+  });
+
+  it('requests the monthly summaries of the users picked for a monthly-summary.pick job', async () => {
+    await processor.process(tickJob('monthly-summary.pick'));
+
+    expect(summaries.requested).toEqual([['user-kyiv', 'user-kolkata']]);
   });
 
   it.each(['auto-ghost.scan', 'silence.scan', 'event-reminders.scan'])(

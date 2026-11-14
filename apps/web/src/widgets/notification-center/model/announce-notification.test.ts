@@ -9,6 +9,7 @@ import {
   AI_DONE_NOTIFICATION,
   buildNotification,
   INTERVIEW_NOTIFICATION,
+  MONTHLY_SUMMARY_NOTIFICATION,
   notificationRoutes,
   SILENCE_NOTIFICATION,
   unreadMeRoute,
@@ -34,6 +35,7 @@ const FEED = [
   SILENCE_NOTIFICATION,
   AI_DONE_NOTIFICATION,
   AI_FAILED_NOTIFICATION,
+  MONTHLY_SUMMARY_NOTIFICATION,
 ];
 
 function nextTask() {
@@ -82,6 +84,11 @@ describe('announceNotification', () => {
       name: 'a failed vacancy parse',
       notification: AI_FAILED_NOTIFICATION,
       title: 'Не вдалося розібрати вакансію',
+    },
+    {
+      name: 'a ready monthly summary',
+      notification: MONTHLY_SUMMARY_NOTIFICATION,
+      title: 'Саммарі за жовтень готове',
     },
   ])('$name toasts $title', async ({ notification, title }) => {
     await announced({ notification });

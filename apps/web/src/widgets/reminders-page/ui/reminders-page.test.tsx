@@ -1,3 +1,4 @@
+import { buildMonthlySummaryOutput } from '@jobflow/shared/testing';
 import { screen, waitFor, within } from '@testing-library/react';
 import { http } from 'msw/http';
 import { toast } from 'sonner';
@@ -8,6 +9,7 @@ import { apiUrl, errorReply, REFUSED_CONNECTION } from '@/test/api-handlers';
 import { boardRoute, moveRoute } from '@/test/board-fixtures';
 import { calendarRoute } from '@/test/calendar-fixtures';
 import { pinClockInEachTest } from '@/test/pinned-clock';
+import { DESIGN_PLAN, type PlanRouteOptions, planRoutes } from '@/test/plan-fixtures';
 import { findRetryAfterQueryRetries } from '@/test/query-status';
 import {
   ACME_SILENT,
@@ -34,6 +36,7 @@ const COPY = uk.reminders;
 type PageRoutes = RemindersRouteOptions & {
   cards?: typeof SILENT_CARDS;
   interviews?: (typeof NEXT_INTERVIEW)[];
+  plan?: PlanRouteOptions;
 };
 
 const unhandled: string[] = [];
@@ -48,9 +51,11 @@ afterEach(() => {
 function renderPage({
   cards = SILENT_CARDS,
   interviews = [NEXT_INTERVIEW],
+  plan = {},
   ...routes
 }: PageRoutes = {}) {
   const reminders = remindersRoutes(routes);
+  const plans = planRoutes(plan);
   const calendar = calendarRoute({ items: interviews });
   const moves = moveRoute();
   server.use(
@@ -65,13 +70,30 @@ function renderPage({
     calendar.handler,
     moves.handler,
     ...reminders.handlers,
+    ...plans.handlers,
   );
   const user = renderInApp(<RemindersPage />);
-  return { user, sent: { ...reminders.sent, calendar: calendar.sent, moves: moves.sent } };
+  return {
+    user,
+    sent: { ...reminders.sent, calendar: calendar.sent, moves: moves.sent, plans: plans.sent },
+  };
 }
 
 function rowOf(company: string) {
   return within(screen.getByRole('article', { name: company }));
+}
+
+const ACTION_TITLES = buildMonthlySummaryOutput().actions.map((action) => action.title);
+
+const LAST_ITEM = DESIGN_PLAN.items[3];
+
+function lastCheckbox() {
+  return screen.getByRole('checkbox', { name: LAST_ITEM?.title ?? '' });
+}
+
+async function planChecks() {
+  await screen.findByText(COPY.plan.progress({ items: 4, done: 3 }));
+  return screen.getAllByRole('checkbox').map((box) => box.getAttribute('aria-checked'));
 }
 
 async function silentCompanies() {
@@ -194,6 +216,68 @@ describe('RemindersPage', () => {
     renderPage({ interviews: [] });
 
     expect(await screen.findByText(COPY.interviews.empty)).toBeDefined();
+  });
+
+  it('План lists the saved plan in item order with its progress, why, effect and due date', async () => {
+    renderPage();
+
+    expect(await planChecks()).toEqual(['true', 'true', 'true', 'false']);
+    expect(screen.getByText('з 4 пунктів виконано 3')).toBeDefined();
+    expect(screen.getAllByRole('checkbox').map((box) => box.closest('label')?.textContent)).toEqual(
+      ACTION_TITLES,
+    );
+    const [first] = buildMonthlySummaryOutput().actions;
+    expect(screen.getByText(first?.why ?? '')).toBeDefined();
+    expect(screen.getByText(first?.expectedEffect ?? '')).toBeDefined();
+    expect(screen.getByText('до 20.11')).toBeDefined();
+  });
+
+  it('checking a plan item sends the PATCH and the item stays checked after the refetch', async () => {
+    const { user, sent } = renderPage();
+    await planChecks();
+
+    await user.click(lastCheckbox());
+
+    await waitFor(() => {
+      expect(sent.plans.latestReads).toBe(2);
+    });
+    expect(sent.plans.patches).toEqual([
+      { planId: DESIGN_PLAN.id, itemId: LAST_ITEM?.id, body: { done: true } },
+    ]);
+    expect(lastCheckbox().getAttribute('aria-checked')).toBe('true');
+    expect(screen.getByText('з 4 пунктів виконано 4')).toBeDefined();
+  });
+
+  it('a 500 on a plan item check rolls the box back and says the check failed', async () => {
+    const { user } = renderPage({
+      plan: { patchReply: () => errorReply({ status: 500, type: 'internal_error' }) },
+    });
+    await planChecks();
+
+    await user.click(lastCheckbox());
+
+    expect(await screen.findByText(COPY.plan.toggleFailed.title)).toBeDefined();
+    await waitFor(() => {
+      expect(lastCheckbox().getAttribute('aria-checked')).toBe('false');
+    });
+  });
+
+  it('with no saved plan says how a plan appears', async () => {
+    renderPage({ plan: { plan: null } });
+
+    expect(await screen.findByText(COPY.plan.empty)).toBeDefined();
+    expect(screen.getByRole('heading', { name: COPY.plan.title })).toBeDefined();
+  });
+
+  it('a failed plan request offers a retry in the plan section while the silence list still shows', async () => {
+    const { user } = renderPage({ plan: { latestReply: REFUSED_CONNECTION.reply } });
+    const retry = await findRetryAfterQueryRetries();
+    expect(await silentCompanies()).toEqual(['Zoria Tech', 'Acme', 'Kvit Software']);
+    server.use(...planRoutes().handlers);
+
+    await user.click(retry);
+
+    expect(await planChecks()).toEqual(['true', 'true', 'true', 'false']);
   });
 
   it('a failed reminders request offers a retry in the silence section while interviews still show', async () => {

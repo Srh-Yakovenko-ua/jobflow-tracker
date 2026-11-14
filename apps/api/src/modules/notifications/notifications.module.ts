@@ -10,6 +10,7 @@ import { NotificationsController } from './notifications.controller.js';
 import { NotificationsRepository } from './notifications.repository.js';
 import { NotificationsService } from './notifications.service.js';
 import { NotificationsSubscriber } from './notifications.subscriber.js';
+import { SummaryNotificationsSubscriber } from './summary-notifications.subscriber.js';
 
 @Module({
   controllers: [NotificationsController],
@@ -24,6 +25,7 @@ export class NotificationsModule {}
     NotificationsSubscriber,
     AiNotificationsSubscriber,
     InsightSubscriber,
+    SummaryNotificationsSubscriber,
     NotificationsRepository,
   ],
 })

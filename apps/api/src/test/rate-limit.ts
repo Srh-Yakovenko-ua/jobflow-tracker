@@ -37,3 +37,15 @@ export function expectRateLimited(response: Response, { windowSeconds }: RateLim
     requestId: response.get('x-request-id'),
   });
 }
+
+export type HourlyAiLimit<Caller> = {
+  caller: Caller;
+  send: (caller: Caller) => PromiseLike<Response>;
+};
+
+export async function expectHourlyAiLimit<Caller>({ caller, send }: HourlyAiLimit<Caller>) {
+  await send(caller);
+  await send(caller);
+
+  expectRateLimited(await send(caller), { windowSeconds: 3600 });
+}

@@ -1,6 +1,7 @@
 import { followupInputSchema } from './followup.js';
 import type { AiKind } from './kinds.js';
 import { matchInputSchema } from './match.js';
+import { monthlySummaryInputSchema } from './monthly-summary.js';
 import { resumeParseInputSchema } from './resume-parse.js';
 import { vacancyParseInputSchema } from './vacancy-parse.js';
 
@@ -9,6 +10,7 @@ export const AI_PAYLOAD_FIELDS = {
   resume_parse: resumeParseInputSchema.keyof().options,
   match: matchInputSchema.keyof().options,
   followup: followupInputSchema.keyof().options,
+  monthly_summary: monthlySummaryInputSchema.keyof().options,
 } satisfies Record<AiKind, readonly string[]>;
 
 export type AiPayloadField<Kind extends AiKind> = (typeof AI_PAYLOAD_FIELDS)[Kind][number];

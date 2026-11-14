@@ -1,6 +1,6 @@
 'use client';
 
-import type { CalendarQuery } from '@jobflow/shared';
+import type { CalendarQuery, Plan } from '@jobflow/shared';
 import { useQuery, type UseQueryResult } from '@tanstack/react-query';
 import { addDays } from 'date-fns';
 import { useState } from 'react';
@@ -10,6 +10,7 @@ import {
   boardQueryOptions,
   SILENT_ONLY,
 } from '@/entities/application';
+import { latestPlanQueryOptions } from '@/entities/plan';
 import { remindersQueryOptions } from '@/entities/reminder';
 import { calendarQueryOptions } from '@/entities/scheduled-event';
 import { useSettledTimeZone, useSilenceDays } from '@/entities/user';
@@ -34,6 +35,10 @@ export type InterviewsView = Readonly<{
 }>;
 
 export type InterviewsSection = Readonly<{ view: InterviewsView | undefined; load: SectionLoad }>;
+
+export type PlanView = Readonly<{ plan: Plan | null; timeZone: string }>;
+
+export type PlanSectionState = Readonly<{ view: PlanView | undefined; load: SectionLoad }>;
 
 function loadOf(queries: readonly UseQueryResult[]): SectionLoad {
   return {
@@ -73,11 +78,19 @@ function useInterviewsSection(now: Date): InterviewsSection {
   return { view, load: loadOf([calendar]) };
 }
 
+function usePlanSection(): PlanSectionState {
+  const latest = useQuery(latestPlanQueryOptions());
+  const timeZone = useSettledTimeZone();
+  const view = latest.data && timeZone !== null ? { plan: latest.data.plan, timeZone } : undefined;
+  return { view, load: loadOf([latest]) };
+}
+
 export function useRemindersPage() {
   const [now] = useState(() => new Date());
   return {
     silence: useSilenceSection(now),
     interviews: useInterviewsSection(now),
+    plan: usePlanSection(),
     reply: useReplyMove(),
   };
 }

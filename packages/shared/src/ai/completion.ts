@@ -4,6 +4,7 @@ import { aiCallMetaSchema } from './call-meta.js';
 import { followupInputSchema, followupOutputSchema } from './followup.js';
 import type { AiKind } from './kinds.js';
 import { matchInputSchema, matchOutputSchema } from './match.js';
+import { monthlySummaryInputSchema, monthlySummaryOutputSchema } from './monthly-summary.js';
 import { resumeParseInputSchema, resumeParseOutputSchema } from './resume-parse.js';
 import { vacancyParseInputSchema, vacancyParseOutputSchema } from './vacancy-parse.js';
 
@@ -17,6 +18,7 @@ export const AI_KIND_SCHEMAS = {
   resume_parse: { input: resumeParseInputSchema, output: resumeParseOutputSchema },
   match: { input: matchInputSchema, output: matchOutputSchema },
   followup: { input: followupInputSchema, output: followupOutputSchema },
+  monthly_summary: { input: monthlySummaryInputSchema, output: monthlySummaryOutputSchema },
 } satisfies Record<AiKind, { input: z.ZodType; output: z.ZodType }>;
 
 const completionMetaSchema = aiCallMetaSchema.extend({
@@ -29,6 +31,7 @@ export const aiCompleteRequestSchemas = {
   resume_parse: aiCompleteOptionsSchema.extend({ input: AI_KIND_SCHEMAS.resume_parse.input }),
   match: aiCompleteOptionsSchema.extend({ input: AI_KIND_SCHEMAS.match.input }),
   followup: aiCompleteOptionsSchema.extend({ input: AI_KIND_SCHEMAS.followup.input }),
+  monthly_summary: aiCompleteOptionsSchema.extend({ input: AI_KIND_SCHEMAS.monthly_summary.input }),
 } satisfies Record<AiKind, z.ZodType>;
 
 export const aiCompletionSchemas = {
@@ -36,6 +39,7 @@ export const aiCompletionSchemas = {
   resume_parse: completionMetaSchema.extend({ output: AI_KIND_SCHEMAS.resume_parse.output }),
   match: completionMetaSchema.extend({ output: AI_KIND_SCHEMAS.match.output }),
   followup: completionMetaSchema.extend({ output: AI_KIND_SCHEMAS.followup.output }),
+  monthly_summary: completionMetaSchema.extend({ output: AI_KIND_SCHEMAS.monthly_summary.output }),
 } satisfies Record<AiKind, z.ZodType>;
 
 type KindSchemas = typeof AI_KIND_SCHEMAS;

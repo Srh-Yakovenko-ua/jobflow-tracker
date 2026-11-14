@@ -13,6 +13,7 @@ export const OUTPUT_FAILURES: Record<AiKind, (output: unknown) => string | null>
   resume_parse: () => null,
   match: (output) => matchFailure(matchOutputSchema.parse(output)),
   followup: () => null,
+  monthly_summary: () => null,
 };
 
 export type AiRefusal = { error: AiServiceError; kind: AiKind };

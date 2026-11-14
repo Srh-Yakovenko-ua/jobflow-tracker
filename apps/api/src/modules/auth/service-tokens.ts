@@ -1,23 +1,33 @@
 import { randomUUID } from 'node:crypto';
 
-import type { TokenScope } from '@jobflow/shared';
-
 import { type JwtKeys, signWithKeys } from './jwt-keys.js';
 
 export const SERVICE_TOKEN_TTL_SECONDS = 60;
 
-const SERVICE_TOKEN_CLAIMS = { iss: 'jobflow-api', aud: 'jobflow-ai', sub: 'worker' } as const;
+export type ServiceTokenGrant =
+  { scope: 'ai:invoke' } | { scope: 'analytics:read'; userId: string };
 
-export type SignServiceTokenInput = { keys: JwtKeys; scope: TokenScope; issuedAt: Date };
+export type SignServiceTokenInput = ServiceTokenGrant & { keys: JwtKeys; issuedAt: Date };
 
-export function signServiceToken({
-  keys,
-  scope,
-  issuedAt,
-}: SignServiceTokenInput): Promise<string> {
+const SERVICE_AUDIENCES = {
+  'ai:invoke': 'jobflow-ai',
+  'analytics:read': 'jobflow-analytics',
+} as const satisfies Record<ServiceTokenGrant['scope'], string>;
+
+const subjectOf = (grant: ServiceTokenGrant) =>
+  grant.scope === 'analytics:read' ? grant.userId : 'worker';
+
+export function signServiceToken(input: SignServiceTokenInput): Promise<string> {
+  const { keys, issuedAt, scope } = input;
   return signWithKeys({
     keys,
-    claims: { ...SERVICE_TOKEN_CLAIMS, scope, jti: randomUUID() },
+    claims: {
+      iss: 'jobflow-api',
+      aud: SERVICE_AUDIENCES[scope],
+      sub: subjectOf(input),
+      scope,
+      jti: randomUUID(),
+    },
     ttlSeconds: SERVICE_TOKEN_TTL_SECONDS,
     issuedAt,
   });

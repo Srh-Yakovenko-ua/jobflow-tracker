@@ -9,7 +9,12 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { DEPENDENCY_LIMITS } from '../../common/probe.js';
 import type { PrismaService } from '../../prisma/prisma.service.js';
 import { appTestingModule, startTestApp, useTestApp } from '../../test/app.js';
-import { accessTokenFor, cacheControlOf, serviceTokenFor } from '../../test/auth.js';
+import {
+  accessTokenFor,
+  analyticsServiceTokenFor,
+  cacheControlOf,
+  serviceTokenFor,
+} from '../../test/auth.js';
 import { captureAuthorization, signedInWithCaptureToken } from '../../test/capture.js';
 import { configuredDatabaseUrl, prismaAt } from '../../test/database.js';
 import { statusAndDetail } from '../../test/http.js';
@@ -92,18 +97,24 @@ describe('the global access token guard', () => {
     expect(cacheControlOf(response)).toEqual(['no-store']);
   });
 
-  it('refuses the worker service token scoped ai:invoke on a route with no decorator with 401', async () => {
-    const token = await serviceTokenFor();
+  it.each([
+    { scope: 'ai:invoke', sign: () => serviceTokenFor() },
+    { scope: 'analytics:read', sign: () => analyticsServiceTokenFor(USER.id) },
+  ])(
+    'refuses the worker service token scoped $scope on a route with no decorator with 401',
+    async ({ sign }) => {
+      const token = await sign();
 
-    const response = await routes.default().set('authorization', `Bearer ${token}`);
+      const response = await routes.default().set('authorization', `Bearer ${token}`);
 
-    expect(response.status).toBe(401);
-    expect(errorResponseSchema.parse(response.body)).toMatchObject({
-      type: 'unauthorized',
-      detail: 'Invalid access token',
-    });
-    expect(response.get('www-authenticate')).toBe('Bearer error="invalid_token"');
-  });
+      expect(response.status).toBe(401);
+      expect(errorResponseSchema.parse(response.body)).toMatchObject({
+        type: 'unauthorized',
+        detail: 'Invalid access token',
+      });
+      expect(response.get('www-authenticate')).toBe('Bearer error="invalid_token"');
+    },
+  );
 
   it('answers a @Public() route without an access token with 200', async () => {
     const response = await http().get('/api/v1/guard-probe/open');

@@ -24,6 +24,7 @@ const ICONS: Record<Notification['type'], LucideIcon> = {
   ai_done: Sparkles,
   ai_failed: CircleAlert,
   insight_unlocked: TrendingUp,
+  monthly_summary_ready: Sparkles,
 };
 
 const FADE = 'transition-[background-color,color,opacity] duration-(--duration-base) ease-standard';

@@ -3,6 +3,8 @@ export * from './forecast.js';
 export * from './funnel.js';
 export * from './insights.js';
 export * from './jobs.js';
+export * from './monthly-summary.js';
+export * from './plans.js';
 export * from './reasons.js';
 export * from './resume-ab.js';
 export * from './sankey.js';
