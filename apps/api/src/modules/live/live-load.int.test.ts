@@ -4,14 +4,17 @@ import { LIVE_EVENTS } from '@jobflow/shared';
 import { buildJobUpdate } from '@jobflow/shared/testing';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
+import type { User } from '../../generated/prisma/client.js';
 import { RedisService } from '../../redis/redis.service.js';
 import { useTestApp } from '../../test/app.js';
 import { createUser } from '../../test/factories.js';
 import { liveEventsOf, liveHubSubscribed, openLiveStream } from '../../test/live.js';
 import type { SseStream } from '../../test/sse.js';
+import { LIVE_STREAM_LIMITS } from './live-hub.service.js';
 import { LivePublisher } from './live-publisher.js';
 
-const STREAMS = 50;
+const USERS = 10;
+const STREAMS = USERS * LIVE_STREAM_LIMITS.perUser;
 const IDLE_WINDOW_MS = 2000;
 const IDLE_WINDOWS = 3;
 const SETTLE_MS = 1000;
@@ -48,21 +51,23 @@ describe('fifty open live streams of one API instance', () => {
 
   afterAll(() => Promise.all(streams.map((stream) => stream.close())));
 
-  it('share one Redis subscriber connection, add no idle CPU and all receive one event within a second', async () => {
-    const user = await createUser(testApp.prisma);
+  it("share one Redis subscriber connection, add no idle CPU and all receive their user's one event within a second", async () => {
+    const users = await Promise.all(
+      Array.from({ length: USERS }, () => createUser(testApp.prisma)),
+    );
     const connectionsBefore = await subscriberConnections();
     const idleBefore = await lowestIdleCpuMs();
-    const opening = Array.from({ length: STREAMS }, () => openLiveStream(testApp.app, user));
+    const owners = users.flatMap((user) => Array<User>(LIVE_STREAM_LIMITS.perUser).fill(user));
+    const opening = owners.map((owner) => openLiveStream(testApp.app, owner));
     streams.push(...(await Promise.all(opening)));
 
     await delay(SETTLE_MS);
     const idleWithStreams = await lowestIdleCpuMs();
     const connectionsWithStreams = await subscriberConnections();
     const publishedAt = Date.now();
-    await testApp.app.get(LivePublisher).publish(user.id, {
-      type: LIVE_EVENTS.jobUpdated,
-      data: buildJobUpdate(),
-    });
+    const event = { type: LIVE_EVENTS.jobUpdated, data: buildJobUpdate() };
+    const publisher = testApp.app.get(LivePublisher);
+    await Promise.all(users.map((user) => publisher.publish(user.id, event)));
 
     await expect.poll(() => reached(streams)).toBe(STREAMS);
     const lastArrival = Math.max(...streams.map(({ frames }) => frames[0]?.receivedAt ?? Infinity));
@@ -73,6 +78,6 @@ describe('fifty open live streams of one API instance', () => {
     expect(lastArrival - publishedAt).toBeLessThan(DELIVERY_LIMIT_MS);
     expect(
       new Set(streams.flatMap(({ frames }) => liveEventsOf(frames)).map(({ id }) => id)).size,
-    ).toBe(1);
+    ).toBe(USERS);
   }, 30_000);
 });

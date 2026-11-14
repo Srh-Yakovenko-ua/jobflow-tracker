@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 
+import { RateLimitModule } from '../../rate-limit/rate-limit.module.js';
 import { RedisModule } from '../../redis/redis.module.js';
 import { LiveController } from './live.controller.js';
 import { LiveHub } from './live-hub.service.js';
@@ -15,7 +16,7 @@ import { LiveTicketsService } from './live-tickets.service.js';
 export class LiveModule {}
 
 @Module({
-  imports: [LiveModule],
+  imports: [LiveModule, RateLimitModule],
   controllers: [LiveController],
   providers: [LiveHub, LiveTicketsService, LiveTicketGuard],
 })

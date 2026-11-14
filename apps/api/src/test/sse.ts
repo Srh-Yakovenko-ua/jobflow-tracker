@@ -19,6 +19,8 @@ export type SseStream = {
   close(): Promise<void>;
 };
 
+export type HttpReply = { status: number; body: unknown; get(name: string): string | undefined };
+
 const FIELDS = ['id', 'event', 'data'] as const;
 
 const listening = new WeakMap<NestExpressApplication, Promise<string>>();
@@ -75,5 +77,13 @@ export async function openSse(
       abort.abort();
       await ended;
     },
+  };
+}
+
+export async function replyOf(stream: SseStream): Promise<HttpReply> {
+  return {
+    status: stream.status,
+    body: stream.status === 200 ? undefined : await stream.errorBody(),
+    get: (name) => stream.header(name) ?? undefined,
   };
 }

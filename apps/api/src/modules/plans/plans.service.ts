@@ -42,9 +42,11 @@ const toPlan = ({ month, createdAt, items, ...plan }: PlanRow): Plan => ({
   items: items.map(toPlanItem),
 });
 
-function itemChangeOf({ done, dueAt }: PlanItemPatch, now: Date) {
+type ItemChangeContext = { now: Date; doneAt: Date | null };
+
+function itemChangeOf({ done, dueAt }: PlanItemPatch, { now, doneAt }: ItemChangeContext) {
   return {
-    ...(done !== undefined && { doneAt: done ? now : null }),
+    ...(done !== undefined && { doneAt: done ? (doneAt ?? now) : null }),
     ...(dueAt !== undefined && { dueAt: dueAt === null ? null : new Date(dueAt) }),
   };
 }
@@ -86,9 +88,14 @@ export class PlansService {
     return planProgressOf(await this.repository.findItemsOfMonth(userId, firstDayOf(month)));
   }
 
-  async patchItem(userId: string, { planId, itemId, patch }: PlanItemUpdate): Promise<PlanItem> {
-    const data = itemChangeOf(patch, this.clock.now());
-    const item = await this.repository.updateItem(userId, { planId, itemId, data });
-    return toPlanItem(owned(item, PLAN_ITEM_NOT_FOUND));
+  patchItem(userId: string, { planId, itemId, patch }: PlanItemUpdate): Promise<PlanItem> {
+    const now = this.clock.now();
+    return this.prisma.$transaction(async (tx) => {
+      const key = { planId, itemId, tx };
+      const current = owned(await this.repository.findItem(userId, key), PLAN_ITEM_NOT_FOUND);
+      const data = itemChangeOf(patch, { now, doneAt: current.doneAt });
+      const item = await this.repository.updateItem(userId, { ...key, data });
+      return toPlanItem(owned(item, PLAN_ITEM_NOT_FOUND));
+    });
   }
 }

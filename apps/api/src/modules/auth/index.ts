@@ -1,4 +1,4 @@
-export { type AccessUser, signAccessToken } from './access-tokens.js';
+export { ACCESS_TOKEN_TTL_SECONDS, type AccessUser, signAccessToken } from './access-tokens.js';
 export { AuthModule } from './auth.module.js';
 export { AUTH_OPENAPI_PATHS } from './auth.openapi.js';
 export { AuthService } from './auth.service.js';

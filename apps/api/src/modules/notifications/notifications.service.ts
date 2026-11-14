@@ -8,7 +8,7 @@ import {
   silenceItemSchema,
   silenceNotificationPayloadSchema,
 } from '@jobflow/shared';
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { z } from 'zod';
 
 import { Clock } from '../../common/clock.js';
@@ -37,19 +37,21 @@ const storedSilencePayloadSchema = z.union([
 ]);
 
 const payloadOf = ({ type, payload }: Pick<NotificationRow, 'type' | 'payload'>) =>
-  type === 'silence' ? storedSilencePayloadSchema.parse(payload) : payload;
+  type === 'silence' ? storedSilencePayloadSchema.safeParse(payload).data : payload;
 
-function toNotification({ readAt, createdAt, ...row }: NotificationRow): Notification {
-  return notificationSchema.parse({
+function toNotification({ readAt, createdAt, ...row }: NotificationRow): Notification | undefined {
+  return notificationSchema.safeParse({
     ...row,
     payload: payloadOf(row),
     readAt: readAt?.toISOString() ?? null,
     createdAt: createdAt.toISOString(),
-  });
+  }).data;
 }
 
 @Injectable()
 export class NotificationsService {
+  private readonly logger = new Logger(NotificationsService.name);
+
   constructor(
     private readonly repository: NotificationsRepository,
     private readonly prisma: PrismaService,
@@ -61,7 +63,7 @@ export class NotificationsService {
     const page = rows.slice(0, query.limit);
     const last = page.at(-1);
     return {
-      items: page.map(toNotification),
+      items: page.flatMap((row) => this.storedNotificationOf(row)),
       nextCursor: rows.length > query.limit && last !== undefined ? last.id : null,
     };
   }
@@ -79,6 +81,15 @@ export class NotificationsService {
     const write = (client: Prisma.TransactionClient) =>
       this.repository.insert(userId, { ...notification, tx: client });
     await (tx === undefined ? this.prisma.$transaction(write) : write(tx));
+  }
+
+  private storedNotificationOf(row: NotificationRow): Notification[] {
+    const notification = toNotification(row);
+    if (notification === undefined) {
+      this.logger.warn({ notificationId: row.id, type: row.type }, 'stored notification skipped');
+      return [];
+    }
+    return [notification];
   }
 
   async recordOnce(userId: string, notification: OnceNotification): Promise<void> {

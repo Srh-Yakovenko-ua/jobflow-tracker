@@ -85,6 +85,18 @@ describe('FollowupsService.read', () => {
     });
   });
 
+  it.each(['', '   '])(
+    'answers the language of a Ukrainian position for the blank vacancy text %j',
+    async (rawText) => {
+      const { repository, service } = await serviceWithFake();
+      repository.source = { ...FOLLOWUP_SOURCE_ROW, rawText, position: 'Розробник інтерфейсів' };
+
+      await expect(service.read(OLENA_ID, APPLICATION_ID)).resolves.toMatchObject({
+        language: 'uk',
+      });
+    },
+  );
+
   it.each(MISSING_TARGETS)('answers 404 for $case', async ({ userId, id }) => {
     const { service } = await serviceWithFake();
 

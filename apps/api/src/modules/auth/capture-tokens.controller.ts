@@ -20,7 +20,7 @@ export class CaptureTokensController {
 
   @Post()
   create(@CurrentUser() user: AccessUser): Promise<CaptureTokenCreated> {
-    return this.tokens.create(user.id);
+    return this.tokens.create(user);
   }
 
   @Delete(':id')

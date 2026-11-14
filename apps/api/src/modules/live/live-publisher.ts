@@ -3,6 +3,7 @@ import { randomUUID } from 'node:crypto';
 import type { LiveEvent } from '@jobflow/shared';
 import { Injectable, Logger } from '@nestjs/common';
 
+import { errorMessageOf } from '../../common/error-message.js';
 import { DEPENDENCY_LIMITS, withinLimit } from '../../common/probe.js';
 import { RedisService } from '../../redis/redis.service.js';
 
@@ -24,7 +25,7 @@ export class LivePublisher {
       const published = this.redis.client.publish(`${LIVE_CHANNEL.prefix}${userId}`, message);
       await withinLimit(published, DEPENDENCY_LIMITS.pingTimeoutMs);
     } catch (error) {
-      const err = error instanceof Error ? error.message : String(error);
+      const err = errorMessageOf(error);
       this.logger.warn({ userId, type: event.type, err }, 'live event not published');
     }
   }

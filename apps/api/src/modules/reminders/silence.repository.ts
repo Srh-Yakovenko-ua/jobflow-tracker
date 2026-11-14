@@ -5,23 +5,29 @@ import type { Prisma } from '../../generated/prisma/client.js';
 import { PrismaService } from '../../prisma/prisma.service.js';
 import { silenceWindowWhere } from '../../prisma/silence-window-where.js';
 
-const SILENT_APPLICATION_SELECT = {
-  id: true,
-  company: true,
-  currentStage: true,
+export const SILENCE_MARK_SELECT = {
   lastEventAt: true,
-  reminders: {
-    where: { type: 'followup' },
-    orderBy: [{ dueAt: 'desc' }, { id: 'desc' }],
-    take: 1,
-    select: { dueAt: true },
-  },
   stageEvents: {
     orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
     take: 1,
     select: { createdAt: true },
   },
 } satisfies Prisma.ApplicationSelect;
+
+const SILENT_APPLICATION_SELECT = {
+  ...SILENCE_MARK_SELECT,
+  id: true,
+  company: true,
+  currentStage: true,
+  reminders: {
+    where: { type: 'followup' },
+    orderBy: [{ dueAt: 'desc' }, { id: 'desc' }],
+    take: 1,
+    select: { dueAt: true },
+  },
+} satisfies Prisma.ApplicationSelect;
+
+export type SilenceMarkRow = Prisma.ApplicationGetPayload<{ select: typeof SILENCE_MARK_SELECT }>;
 
 export type SilentApplicationRow = Prisma.ApplicationGetPayload<{
   select: typeof SILENT_APPLICATION_SELECT;

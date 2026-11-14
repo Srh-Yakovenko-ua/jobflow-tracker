@@ -59,6 +59,7 @@ const forgedTokens: [string, () => Promise<string>][] = [
       ),
   ],
   ['without an exp claim', () => signedByTestKey(new SignJWT(claims).setIssuedAt())],
+  ['without an iat claim', () => signedByTestKey(new SignJWT(claims).setExpirationTime('15m'))],
   ['with another issuer', () => signedWithClaims({ iss: 'jobflow-ai' })],
   ['with the ai audience', () => signedWithClaims({ aud: 'jobflow-ai' })],
 ];
@@ -85,12 +86,14 @@ describe('signAccessToken', () => {
 });
 
 describe('AccessTokens.verify', () => {
-  it('answers the user id and its scopes for a token it signed', async () => {
-    const token = await accessTokens.sign(USER_ID);
+  it('answers the user id, its scopes and when the token was issued and expires, to the second', async () => {
+    const issuedAt = new Date(Math.floor(Date.now() / 60_000) * 60_000);
+    const token = await signAccessToken({ keys: testJwtKeys, userId: USER_ID, issuedAt });
 
     expect(await accessTokens.verify(token)).toEqual({
       id: USER_ID,
       scope: ['user', 'analytics:read'],
+      token: { issuedAt, expiresAt: new Date(issuedAt.getTime() + 900_000) },
     });
   });
 

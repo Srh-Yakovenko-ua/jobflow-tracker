@@ -3,6 +3,7 @@ import { Injectable } from '@nestjs/common';
 import type { Prisma } from '../../generated/prisma/client.js';
 import type { InTransaction } from '../../prisma/in-transaction.js';
 import { LATEST_AI_JOB_SELECT, UNSETTLED_AI_JOB_WHERE } from '../../prisma/latest-ai-job.js';
+import { lockOwnedApplication } from '../../prisma/lock-owned-application.js';
 import { PrismaService } from '../../prisma/prisma.service.js';
 import { type FollowupRequested, followupRequestedEvent } from './followups.events.js';
 
@@ -75,11 +76,7 @@ export class FollowupsRepository {
     userId: string,
     { applicationId, tx = this.prisma }: FollowupLock,
   ): Promise<LockedFollowup | null> {
-    const locked = await tx.$queryRaw<{ id: string }[]>`
-      SELECT id FROM applications
-      WHERE id = ${applicationId}::uuid AND user_id = ${userId}::uuid AND deleted_at IS NULL
-      FOR UPDATE`;
-    if (locked.length === 0) {
+    if (!(await lockOwnedApplication(tx, { userId, applicationId }))) {
       return null;
     }
     const running = await tx.aiJob.findFirst({

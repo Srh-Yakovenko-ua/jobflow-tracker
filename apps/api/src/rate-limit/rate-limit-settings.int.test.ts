@@ -17,7 +17,7 @@ import {
   streamPathOf,
 } from '../test/live.js';
 import { expectRateLimited, postFrom, randomClientIp } from '../test/rate-limit.js';
-import { openSse } from '../test/sse.js';
+import { openSse, replyOf } from '../test/sse.js';
 
 vi.hoisted(() => {
   vi.stubEnv('RATE_LIMIT_LOGIN_PER_MINUTE', '2');
@@ -84,7 +84,8 @@ describe('rate limits taken from the environment', () => {
     const jobUpdate = buildJobUpdate({ status: 'failed', step: 2, errorType: 'ai_timeout' });
     await liveHubSubscribed(testApp.app);
     const first = await issueLiveTicket(testApp.app, user);
-    await issueLiveTicket(testApp.app, user);
+    const stream = await openSse(testApp.app, { path: streamPathOf(first.ticket) });
+    onTestFinished(() => stream.close());
     await issueLiveTicket(testApp.app, user);
 
     const overTheLimit = await callRoute(testApp.app, {
@@ -92,8 +93,6 @@ describe('rate limits taken from the environment', () => {
       path: LIVE_PATHS.ticket,
       accessToken: await accessTokenFor(user),
     });
-    const stream = await openSse(testApp.app, { path: streamPathOf(first.ticket) });
-    onTestFinished(() => stream.close());
     await testApp.app
       .get(LivePublisher)
       .publish(user.id, { type: LIVE_EVENTS.jobUpdated, data: jobUpdate });
@@ -103,5 +102,21 @@ describe('rate limits taken from the environment', () => {
     await expect
       .poll(() => liveEventsOf(stream.frames))
       .toMatchObject([{ type: 'job.updated', data: jobUpdate }]);
+  });
+
+  it("answers 429 with Retry-After to a stream opened over its user's api limit, and opens another user's stream", async () => {
+    const [olena, bohdan] = [await createUser(testApp.prisma), await createUser(testApp.prisma)];
+    const { ticket } = await issueLiveTicket(testApp.app, olena);
+    await readMe(olena, 2);
+    const other = await issueLiveTicket(testApp.app, bohdan);
+
+    const refused = await openSse(testApp.app, { path: streamPathOf(ticket) });
+    const opened = await openSse(testApp.app, { path: streamPathOf(other.ticket) });
+    onTestFinished(async () => {
+      await Promise.all([refused.close(), opened.close()]);
+    });
+
+    expectRateLimited(await replyOf(refused), { windowSeconds: 60 });
+    expect(opened.status).toBe(200);
   });
 });

@@ -9,7 +9,7 @@ import {
 import { z } from 'zod';
 
 import { errorResponses, jsonContent, PUBLIC } from '../../openapi/route.js';
-import { UNLIMITED_ROUTE } from '../../rate-limit/rate-limit.policies.js';
+import { LIVE_STREAM_LIMITS } from './live-hub.service.js';
 
 const TAGS = ['live'];
 
@@ -58,7 +58,7 @@ export const LIVE_OPENAPI_PATHS: RouteConfig[] = [
     path: '/events/stream',
     tags: TAGS,
     summary: 'Live updates of the signed-in user as Server-Sent Events',
-    description: `Takes the ticket that LiveTicketsService.issue wrote, not an access token. Pushes ${EVENT_NAMES} of the ticket's user, each with a uuid id, the event name and a JSON data line: job.updated carries the job status without queue and totalSteps, application.updated carries applicationId and the changed fields, notification.created carries notificationId. A comment line ": heartbeat" follows every ${String(LIVE_LIMITS.heartbeatSeconds)} s and carries no id. The server ends the stream after ${String(LIVE_LIMITS.streamMaxSeconds)} s, on shutdown and when Redis stops answering; the client asks for a new ticket, reconnects and refetches, because Last-Event-ID is not replayed. A missing, unknown, used or expired ticket answers 401, Redis out of reach answers 503. The route is outside RateLimitInterceptor: every open follows the rate limited POST /events/ticket.`,
+    description: `Takes the ticket that LiveTicketsService.issue wrote, not an access token. Pushes ${EVENT_NAMES} of the ticket's user, each with a uuid id, the event name and a JSON data line: job.updated carries the job status without queue and totalSteps, application.updated carries applicationId and the changed fields, notification.created carries notificationId. A comment line ": heartbeat" follows every ${String(LIVE_LIMITS.heartbeatSeconds)} s and carries no id. The server ends the stream after ${String(LIVE_LIMITS.streamMaxSeconds)} s or when the access token the ticket was issued with expires, whichever comes first, on shutdown and when Redis stops answering; the client asks for a new ticket, reconnects and refetches, because Last-Event-ID is not replayed. A missing, unknown, used or expired ticket answers 401, Redis out of reach answers 503. LiveTicketGuard counts every open against the api rate limit of the ticket's user (429 with Retry-After), and a user with ${String(LIVE_STREAM_LIMITS.perUser)} streams open in this process gets 429 without Retry-After for the next one.`,
     ...PUBLIC,
     request: { query: streamQuery },
     responses: {
@@ -66,7 +66,7 @@ export const LIVE_OPENAPI_PATHS: RouteConfig[] = [
         description: 'The open event stream',
         content: { 'text/event-stream': { schema: z.string(), example: STREAM_EXAMPLE } },
       },
-      ...errorResponses([401, 503], UNLIMITED_ROUTE),
+      ...errorResponses([401, 503]),
     },
   },
 ];

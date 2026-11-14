@@ -27,6 +27,8 @@ import {
 } from '../../test/live.js';
 import { openSse, type SseStream } from '../../test/sse.js';
 import { startTcpProxy, type TcpProxy } from '../../test/tcp-proxy.js';
+import { ACCESS_TOKEN_TTL_SECONDS } from '../auth/index.js';
+import { LIVE_STREAM_LIMITS } from './live-hub.service.js';
 import { LivePublisher } from './live-publisher.js';
 
 const APPLICATION_ID = '0199f0c4-6e3f-7c42-9d50-7b8c9d0e1f2a';
@@ -34,6 +36,12 @@ const NOTIFICATION_ID = '0199f4b1-2c3d-7e4f-8a51-6b7c8d9e0f1c';
 const USER_ID = '0199f4b1-2c3d-7e4f-8a51-6b7c8d9e0f1d';
 
 const UNAUTHORIZED = { status: 401, type: 'unauthorized', detail: 'Invalid live ticket' };
+
+const TOO_MANY_STREAMS = {
+  status: 429,
+  type: 'rate_limited',
+  detail: 'Too many open live streams',
+};
 
 const ticketKeyOf = (ticket: string) =>
   `events-ticket:${createHash('sha256').update(ticket).digest('hex')}`;
@@ -130,6 +138,34 @@ describe('the live stream and its one-time ticket', () => {
     });
 
     expect(errorResponseSchema.parse(response.body)).toMatchObject({ status: 403 });
+  });
+
+  it('ends the stream when the access token behind its ticket expires, about 2 s later', async () => {
+    const user = await createUser(testApp.prisma);
+    const issuedAt = new Date(Date.now() - (ACCESS_TOKEN_TTL_SECONDS - 2) * 1000);
+    const stream = await opened(openLiveStream(testApp.app, { id: user.id, issuedAt }));
+
+    const ended = await Promise.race([
+      stream.ended.then(() => 'ended'),
+      delay(3500, 'still open', { ref: false }),
+    ]);
+
+    expect([stream.status, ended]).toEqual([200, 'ended']);
+  });
+
+  it("answers 429 to a user's sixth open stream without Retry-After, and opens another user's", async () => {
+    const [olena, bohdan] = [await createUser(testApp.prisma), await createUser(testApp.prisma)];
+    const statuses: number[] = [];
+    while (statuses.length < LIVE_STREAM_LIMITS.perUser) {
+      statuses.push((await opened(openLiveStream(testApp.app, olena))).status);
+    }
+
+    const sixth = await opened(openLiveStream(testApp.app, olena));
+    const other = await opened(openLiveStream(testApp.app, bohdan));
+
+    expect(statuses).toEqual([200, 200, 200, 200, 200]);
+    expect(await refusal(sixth)).toMatchObject(TOO_MANY_STREAMS);
+    expect([sixth.header('retry-after'), other.status]).toEqual([null, 200]);
   });
 
   it("delivers a user's three event types with id, name and data, and none of them to another user", async () => {

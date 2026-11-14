@@ -1,5 +1,6 @@
 import {
   type CaptureRetryResponse,
+  followupInputSchema,
   followupOutputSchema,
   type FollowupRequest,
   type FollowupResponse,
@@ -11,6 +12,7 @@ import { Injectable } from '@nestjs/common';
 import { conflict } from '../../common/app-error.js';
 import { Clock } from '../../common/clock.js';
 import { owned } from '../../common/owned.js';
+import { toValidationError } from '../../common/validation.js';
 import { PrismaService } from '../../prisma/prisma.service.js';
 import { timeZoneOf } from '../../prisma/user-time-zone.js';
 import { AI_PAYLOAD_BUILDERS, AiService, type FollowupSource } from '../ai/index.js';
@@ -70,7 +72,7 @@ export class FollowupsService {
     return {
       draft: draft === null ? null : draftOf(draft),
       job,
-      language: vacancyLanguageOf(source.rawText ?? source.position),
+      language: vacancyLanguageOf((source.rawText ?? '').trim() || source.position),
       silenceDays: wholeDaysBetween(source.lastEventAt, now),
     };
   }
@@ -84,7 +86,13 @@ export class FollowupsService {
     if (row.isDraft || !isActiveStage(row.currentStage)) {
       throw conflict(NOT_ACTIVE);
     }
-    const input = AI_PAYLOAD_BUILDERS.followup(followupSourceOf(row, { request, now }));
+    const parsed = followupInputSchema.safeParse(
+      AI_PAYLOAD_BUILDERS.followup(followupSourceOf(row, { request, now })),
+    );
+    if (!parsed.success) {
+      throw toValidationError(parsed.error.issues);
+    }
+    const input = parsed.data;
     const fresh = request.variant ? { fresh: true as const } : {};
     return this.prisma.$transaction(async (tx) => {
       const locked = owned(await this.repository.lockApplication(userId, { applicationId, tx }));

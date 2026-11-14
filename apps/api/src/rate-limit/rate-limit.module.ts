@@ -6,5 +6,6 @@ import { RateLimitService } from './rate-limit.service.js';
 
 @Module({
   providers: [RateLimitService, { provide: APP_INTERCEPTOR, useClass: RateLimitInterceptor }],
+  exports: [RateLimitService],
 })
 export class RateLimitModule {}

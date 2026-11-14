@@ -7,13 +7,14 @@ import {
   type SummaryArchiveItem,
   type SummaryResponse,
   type YearMonth,
+  yearMonthSchema,
 } from '@jobflow/shared';
 import { Injectable } from '@nestjs/common';
 import { subMonths } from 'date-fns';
 
 import { notFound } from '../../common/app-error.js';
 import { Clock } from '../../common/clock.js';
-import { localMonthOf, shiftMonth } from '../../common/year-month.js';
+import { previousLocalMonthOf, shiftMonth } from '../../common/year-month.js';
 import { timeZoneOf } from '../../prisma/user-time-zone.js';
 import { planProgressOf, PlansService } from '../plans/index.js';
 import { SummariesRepository, type SummaryJobRow } from './summaries.repository.js';
@@ -22,15 +23,22 @@ type SummaryView = { summary: Summary; aiResultId: string; planMonth: YearMonth 
 
 const SUMMARY_NOT_FOUND = 'Summary not found';
 
-function viewOf({ id, createdAt, finishedAt, user, aiResult }: SummaryJobRow): SummaryView | null {
+const summarizedMonthOf = ({ periodMonth, createdAt, user }: SummaryJobRow): YearMonth =>
+  periodMonth === null
+    ? previousLocalMonthOf(timeZoneOf(user.settings), createdAt)
+    : yearMonthSchema.parse(periodMonth);
+
+function viewOf(row: SummaryJobRow): SummaryView | null {
+  const { id, finishedAt, aiResult } = row;
   if (finishedAt === null || aiResult === null) {
     return null;
   }
   const { summary: text, actions } = monthlySummaryOutputSchema.parse(aiResult.output);
-  const planMonth = localMonthOf(timeZoneOf(user.settings), createdAt);
+  const month = summarizedMonthOf(row);
+  const planMonth = shiftMonth(month, 1);
   const summary = {
     aiJobId: id,
-    month: shiftMonth(planMonth, -1),
+    month,
     text,
     actions,
     generatedAt: finishedAt.toISOString(),

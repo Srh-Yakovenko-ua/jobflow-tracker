@@ -1,10 +1,11 @@
 import { Injectable } from '@nestjs/common';
 
 import type { Prisma } from '../../generated/prisma/client.js';
+import { lockUser } from '../../prisma/lock-user.js';
 import { PrismaService } from '../../prisma/prisma.service.js';
 import type { UserAt } from './session.repository.js';
 
-export type NewCaptureToken = { userId: string; tokenHash: string; now: Date };
+export type NewCaptureToken = { userId: string; tokenHash: string; now: Date; issuedAt: Date };
 
 export type UsedCaptureToken = { tokenHash: string; now: Date };
 
@@ -15,6 +16,21 @@ export type CreatedCaptureToken = { id: string; createdAt: Date };
 export type ActiveCaptureToken = CreatedCaptureToken & { lastUsedAt: Date | null };
 
 export type CaptureTokenOwner = { id: string; userId: string };
+
+type SessionCheck = Pick<NewCaptureToken, 'userId' | 'issuedAt'>;
+
+async function sessionLive(
+  tx: Prisma.TransactionClient,
+  { userId, issuedAt }: SessionCheck,
+): Promise<boolean> {
+  await lockUser(tx, userId);
+  const user = await tx.user.findUnique({
+    where: { id: userId },
+    select: { sessionsRevokedAt: true },
+  });
+  const revokedAt = user?.sessionsRevokedAt;
+  return user !== null && (revokedAt == null || revokedAt < issuedAt);
+}
 
 @Injectable()
 export class CaptureTokensRepository {
@@ -28,8 +44,16 @@ export class CaptureTokensRepository {
     });
   }
 
-  replace({ userId, tokenHash, now }: NewCaptureToken): Promise<CreatedCaptureToken> {
+  replace({
+    userId,
+    tokenHash,
+    now,
+    issuedAt,
+  }: NewCaptureToken): Promise<CreatedCaptureToken | undefined> {
     return this.prisma.$transaction(async (tx) => {
+      if (!(await sessionLive(tx, { userId, issuedAt }))) {
+        return undefined;
+      }
       await this.revokeAll({ userId, now }, tx);
       return tx.captureToken.create({
         data: { userId, tokenHash },

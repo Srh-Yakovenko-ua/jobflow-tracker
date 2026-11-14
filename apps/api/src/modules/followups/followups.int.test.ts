@@ -150,6 +150,23 @@ describe('the follow-up API', () => {
     expect(response.body).toMatchObject({ errors: [expect.objectContaining({ path })] });
   });
 
+  it('answers 422 at company to a stored company the follow-up input refuses, and queues no job', async () => {
+    const olena = await owner();
+    await testApp.prisma.application.update({
+      where: { id: olena.applicationId },
+      data: { company: '' },
+    });
+
+    const response = await generate(olena);
+
+    expect(response.status).toBe(422);
+    expect(response.body).toMatchObject({ errors: [expect.objectContaining({ path: 'company' })] });
+    expect(await testApp.prisma.aiJob.count()).toBe(0);
+    expect(
+      await outboxRows(testApp.prisma, { eventType: 'application.followup_requested' }),
+    ).toEqual([]);
+  });
+
   it.each(FOLLOWUP_ROUTES)(
     "answers 404 to $method followup$suffix on another user's application and stores nothing",
     async ({ method, suffix }) => {

@@ -19,6 +19,7 @@ const DONE_SUMMARY_WHERE = {
 const summaryJobSelect = (userId: string) =>
   ({
     id: true,
+    periodMonth: true,
     createdAt: true,
     finishedAt: true,
     user: { select: { settings: { select: { timezone: true } } } },

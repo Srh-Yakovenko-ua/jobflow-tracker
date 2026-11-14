@@ -103,6 +103,25 @@ describe('the reminders API', () => {
     },
   );
 
+  it.each(['done', 'dismiss'])(
+    'clears the snooze of a snoozed reminder closed with %s',
+    async (action) => {
+      const olena = await owner();
+      const id = await reminderOf(olena, { dueAt: NOW });
+      await post(olena.accessToken, { path: reminderPath(id, 'snooze'), body: { days: 3 } });
+
+      const response = await post(olena.accessToken, { path: reminderPath(id, action) });
+
+      expect([response.status, reminderSchema.parse(response.body).snoozedUntil]).toEqual([
+        200,
+        null,
+      ]);
+      expect(await testApp.prisma.reminder.findMany({ select: { snoozedUntil: true } })).toEqual([
+        { snoozedUntil: null },
+      ]);
+    },
+  );
+
   it('snoozes a reminder until now plus the days, and again while snoozed', async () => {
     const olena = await owner();
     const id = await reminderOf(olena, { dueAt: NOW });

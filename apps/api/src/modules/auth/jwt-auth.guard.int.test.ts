@@ -89,11 +89,20 @@ describe('the global access token guard', () => {
     });
   });
 
-  it('hands a route with no decorator the token user as { id, scope }, marked no-store', async () => {
-    const response = await routes.default().set('authorization', await bearer(USER_TOKEN_SCOPES));
+  it('hands a route with no decorator the token user as { id, scope, token }, marked no-store', async () => {
+    const issuedAt = new Date(Math.floor(Date.now() / 60_000) * 60_000);
+    const accessToken = await accessTokenFor(USER, { issuedAt });
+    const response = await routes.default().set('authorization', `Bearer ${accessToken}`);
 
     expect(response.status).toBe(200);
-    expect(response.body).toEqual({ id: USER.id, scope: ['user', 'analytics:read'] });
+    expect(response.body).toEqual({
+      id: USER.id,
+      scope: ['user', 'analytics:read'],
+      token: {
+        issuedAt: issuedAt.toISOString(),
+        expiresAt: new Date(issuedAt.getTime() + 900_000).toISOString(),
+      },
+    });
     expect(cacheControlOf(response)).toEqual(['no-store']);
   });
 

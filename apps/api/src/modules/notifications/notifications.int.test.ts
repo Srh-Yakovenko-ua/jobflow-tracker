@@ -103,6 +103,19 @@ describe('the notification feed', () => {
     expect([idsOf(last), last.nextCursor]).toEqual([[first], null]);
   });
 
+  it('skips a stored notification whose payload fails its schema and answers the others', async () => {
+    const { userId, accessToken } = await signedIn();
+    const [first, second] = await createNotifications(testApp.prisma, {
+      userId,
+      readAt: [null, null],
+    });
+    await testApp.prisma.notification.create({
+      data: { userId, type: 'ai_done', payload: { kind: 'vacancy_parse' } },
+    });
+
+    expect(idsOf(await feedOf(accessToken))).toEqual([second, first]);
+  });
+
   it.each([
     { query: { cursor: 'x' }, path: 'cursor' },
     { query: { unread: 'maybe' }, path: 'unread' },

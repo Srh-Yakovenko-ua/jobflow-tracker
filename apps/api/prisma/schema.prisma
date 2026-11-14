@@ -164,6 +164,7 @@ model User {
   passwordHash      String?            @map("password_hash")
   displayName       String?            @map("display_name")
   locale            String             @default("uk")
+  sessionsRevokedAt DateTime?          @map("sessions_revoked_at") @db.Timestamptz
   createdAt         DateTime           @default(now()) @map("created_at") @db.Timestamptz
   updatedAt         DateTime           @default(now()) @updatedAt @map("updated_at") @db.Timestamptz
   settings          UserSettings?
@@ -496,6 +497,7 @@ model AiJob {
   aiResultId      String?        @map("ai_result_id") @db.Uuid
   applicationId   String?        @map("application_id") @db.Uuid
   resumeVersionId String?        @map("resume_version_id") @db.Uuid
+  periodMonth     String?        @map("period_month")
   startedAt       DateTime?      @map("started_at") @db.Timestamptz
   finishedAt      DateTime?      @map("finished_at") @db.Timestamptz
   createdAt       DateTime       @default(now()) @map("created_at") @db.Timestamptz

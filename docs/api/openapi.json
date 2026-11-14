@@ -20015,7 +20015,7 @@
           "live"
         ],
         "summary": "Live updates of the signed-in user as Server-Sent Events",
-        "description": "Takes the ticket that LiveTicketsService.issue wrote, not an access token. Pushes job.updated, application.updated, notification.created of the ticket's user, each with a uuid id, the event name and a JSON data line: job.updated carries the job status without queue and totalSteps, application.updated carries applicationId and the changed fields, notification.created carries notificationId. A comment line \": heartbeat\" follows every 25 s and carries no id. The server ends the stream after 900 s, on shutdown and when Redis stops answering; the client asks for a new ticket, reconnects and refetches, because Last-Event-ID is not replayed. A missing, unknown, used or expired ticket answers 401, Redis out of reach answers 503. The route is outside RateLimitInterceptor: every open follows the rate limited POST /events/ticket.",
+        "description": "Takes the ticket that LiveTicketsService.issue wrote, not an access token. Pushes job.updated, application.updated, notification.created of the ticket's user, each with a uuid id, the event name and a JSON data line: job.updated carries the job status without queue and totalSteps, application.updated carries applicationId and the changed fields, notification.created carries notificationId. A comment line \": heartbeat\" follows every 25 s and carries no id. The server ends the stream after 900 s or when the access token the ticket was issued with expires, whichever comes first, on shutdown and when Redis stops answering; the client asks for a new ticket, reconnects and refetches, because Last-Event-ID is not replayed. A missing, unknown, used or expired ticket answers 401, Redis out of reach answers 503. LiveTicketGuard counts every open against the api rate limit of the ticket's user (429 with Retry-After), and a user with 5 streams open in this process gets 429 without Retry-After for the next one.",
         "security": [],
         "parameters": [
           {
@@ -20052,6 +20052,33 @@
                   "type": "unauthorized",
                   "title": "Unauthorized",
                   "status": 401,
+                  "requestId": "0199f0c4-5d2e-7b31-8c4f-6a7b8c9d0e1f"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too many requests: 300 per 60 s by default (RATE_LIMIT_API_PER_MINUTE)",
+            "headers": {
+              "Retry-After": {
+                "schema": {
+                  "type": "integer",
+                  "exclusiveMinimum": 0,
+                  "description": "Seconds until the limit window resets"
+                },
+                "required": true,
+                "description": "Seconds until the limit window resets"
+              }
+            },
+            "content": {
+              "application/json": {
+                "example": {
+                  "type": "rate_limited",
+                  "title": "Too many requests",
+                  "status": 429,
                   "requestId": "0199f0c4-5d2e-7b31-8c4f-6a7b8c9d0e1f"
                 },
                 "schema": {

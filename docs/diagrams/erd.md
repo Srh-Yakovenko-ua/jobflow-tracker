@@ -147,6 +147,7 @@ failed failed
     String password_hash "❓"
     String display_name "❓"
     String locale 
+    DateTime sessions_revoked_at "❓"
     DateTime created_at 
     DateTime updated_at 
     }
@@ -377,6 +378,7 @@ failed failed
     String ai_result_id "❓"
     String application_id "❓"
     String resume_version_id "❓"
+    String period_month "❓"
     DateTime started_at "❓"
     DateTime finished_at "❓"
     DateTime created_at 

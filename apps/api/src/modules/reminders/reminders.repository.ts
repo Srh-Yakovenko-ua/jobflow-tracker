@@ -3,7 +3,9 @@ import { Injectable } from '@nestjs/common';
 
 import type { Prisma } from '../../generated/prisma/client.js';
 import type { InTransaction } from '../../prisma/in-transaction.js';
+import { lockOwnedApplication } from '../../prisma/lock-owned-application.js';
 import { PrismaService } from '../../prisma/prisma.service.js';
+import { SILENCE_MARK_SELECT, type SilenceMarkRow } from './silence.repository.js';
 
 const ACTIVE_STATUSES: ReminderStatus[] = ['pending', 'snoozed'];
 
@@ -43,6 +45,8 @@ export type CloseFollowups = InTransaction & {
 };
 
 export type InsertFollowup = InTransaction & { applicationId: string; dueAt: Date };
+
+export type SilenceMarkQuery = InTransaction & { applicationId: string };
 
 export type CloseReminder = {
   id: string;
@@ -104,6 +108,19 @@ export class RemindersRepository {
     });
   }
 
+  async findSilenceMark(
+    userId: string,
+    { applicationId, tx = this.prisma }: SilenceMarkQuery,
+  ): Promise<SilenceMarkRow | null> {
+    if (!(await lockOwnedApplication(tx, { userId, applicationId }))) {
+      return null;
+    }
+    return tx.application.findFirst({
+      where: { id: applicationId, userId, deletedAt: null },
+      select: SILENCE_MARK_SELECT,
+    });
+  }
+
   findFollowups(userId: string, { from, to }: DateRange): Promise<FollowupRow[]> {
     const within = { gte: from, lt: to };
     return this.prisma.reminder.findMany({
@@ -138,7 +155,7 @@ export class RemindersRepository {
   ): Promise<ReminderRow | undefined> {
     const [closed] = await this.prisma.reminder.updateManyAndReturn({
       where: { id, userId, status: { in: ACTIVE_STATUSES }, application: { deletedAt: null } },
-      data: { status, ...(snoozedUntil && { snoozedUntil }) },
+      data: { status, snoozedUntil: snoozedUntil ?? null },
       select: REMINDER_SELECT,
     });
     return closed;
@@ -157,7 +174,7 @@ export class RemindersRepository {
   ): Promise<number> {
     const { count } = await tx.reminder.updateMany({
       where: { ...where, userId, status: { in: ACTIVE_STATUSES } },
-      data: { status },
+      data: { status, snoozedUntil: null },
     });
     return count;
   }

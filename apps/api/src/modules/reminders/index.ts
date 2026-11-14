@@ -12,6 +12,7 @@ export type {
   InsertInterviewReminder,
   InterviewReminderOutcome,
   ReminderRow,
+  SilenceMarkQuery,
 } from './reminders.repository.js';
 export {
   type PlanInterview,
@@ -19,4 +20,5 @@ export {
   type ResolveFollowups,
 } from './reminders.service.js';
 export { RemindersSubscriber } from './reminders.subscriber.js';
+export { type SilenceMarkRow, SilenceRepository } from './silence.repository.js';
 export { type SilenceScanCounts, SilenceScanService } from './silence-scan.service.js';

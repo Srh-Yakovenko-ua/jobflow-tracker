@@ -1,7 +1,7 @@
 import type { CaptureTokenCreated, CaptureTokenListResponse } from '@jobflow/shared';
 import { Injectable } from '@nestjs/common';
 
-import { notFound, unauthorized } from '../../common/app-error.js';
+import { notFound, tokenExpired, unauthorized } from '../../common/app-error.js';
 import type { AccessUser } from './access-tokens.js';
 import { CaptureTokensRepository } from './capture-tokens.repository.js';
 import { hashRefreshToken as hashToken, newRefreshToken as newToken } from './refresh-tokens.js';
@@ -10,14 +10,21 @@ import { hashRefreshToken as hashToken, newRefreshToken as newToken } from './re
 export class CaptureTokensService {
   constructor(private readonly repository: CaptureTokensRepository) {}
 
-  async create(userId: string): Promise<CaptureTokenCreated> {
+  async create({ id: userId, token: accessToken }: AccessUser): Promise<CaptureTokenCreated> {
     const token = newToken();
-    const { id, createdAt } = await this.repository.replace({
-      userId,
-      tokenHash: hashToken(token),
-      now: new Date(),
-    });
-    return { id, token, createdAt: createdAt.toISOString() };
+    const created =
+      accessToken === undefined
+        ? undefined
+        : await this.repository.replace({
+            userId,
+            tokenHash: hashToken(token),
+            now: new Date(),
+            issuedAt: accessToken.issuedAt,
+          });
+    if (created === undefined) {
+      throw tokenExpired();
+    }
+    return { id: created.id, token, createdAt: created.createdAt.toISOString() };
   }
 
   async list(userId: string): Promise<CaptureTokenListResponse> {

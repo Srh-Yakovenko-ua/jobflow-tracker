@@ -2,7 +2,9 @@ import { LIVE_LIMITS, type LiveEvent, liveEventSchema } from '@jobflow/shared';
 import { Injectable, Logger, type MessageEvent, type OnModuleDestroy } from '@nestjs/common';
 import type { Redis } from 'ioredis';
 import {
+  defer,
   filter,
+  finalize,
   interval,
   map,
   merge,
@@ -14,19 +16,23 @@ import {
   timer,
 } from 'rxjs';
 
+import { errorFor } from '../../common/app-error.js';
+import { errorMessageOf } from '../../common/error-message.js';
+import { parsedJson } from '../../common/parsed-json.js';
 import { RedisService } from '../../redis/redis.service.js';
+import type { AccessUser } from '../auth/index.js';
 import { LIVE_CHANNEL } from './live-publisher.js';
+
+export const LIVE_STREAM_LIMITS = { perUser: 5 } as const;
 
 type ReceivedLiveEvent = { userId: string; event: LiveEvent };
 
 const HEARTBEAT: MessageEvent = { comment: 'heartbeat' };
 
-function parsedEvent(message: string) {
-  try {
-    return liveEventSchema.safeParse(JSON.parse(message));
-  } catch {
-    return undefined;
-  }
+const STREAM_MAX_MS = LIVE_LIMITS.streamMaxSeconds * 1000;
+
+function lifetimeMs(expiresAt: Date | undefined): number {
+  return Math.min(STREAM_MAX_MS, (expiresAt?.getTime() ?? 0) - Date.now());
 }
 
 @Injectable()
@@ -42,6 +48,8 @@ export class LiveHub implements OnModuleDestroy {
   private readonly resubscribed = new Subject<void>();
 
   private subscriptionLost = false;
+
+  private readonly openStreams = new Map<string, number>();
 
   private readonly heartbeat = interval(LIVE_LIMITS.heartbeatSeconds * 1000).pipe(
     tap(() => void this.endStreamsWhileRedisIsDown()),
@@ -64,17 +72,21 @@ export class LiveHub implements OnModuleDestroy {
     });
   }
 
-  stream(userId: string): Observable<MessageEvent> {
-    const events = this.received.pipe(
-      filter((received) => received.userId === userId),
-      map(({ event }): MessageEvent => ({ id: event.id, type: event.type, data: event.data })),
-    );
-    const ended = merge(
-      this.closed,
-      timer(LIVE_LIMITS.streamMaxSeconds * 1000),
-      ...(this.subscriptionLost ? [this.resubscribed] : []),
-    );
-    return merge(events, this.heartbeat).pipe(takeUntil(ended));
+  stream({ id: userId, token }: AccessUser): Observable<MessageEvent> {
+    return defer(() => {
+      this.claimStream(userId);
+      const ended = merge(
+        this.closed,
+        timer(lifetimeMs(token?.expiresAt)),
+        ...(this.subscriptionLost ? [this.resubscribed] : []),
+      );
+      return merge(this.eventsOf(userId), this.heartbeat).pipe(
+        takeUntil(ended),
+        finalize(() => {
+          this.releaseStream(userId);
+        }),
+      );
+    });
   }
 
   onModuleDestroy(): void {
@@ -82,13 +94,36 @@ export class LiveHub implements OnModuleDestroy {
     this.subscriber.disconnect();
   }
 
+  private eventsOf(userId: string): Observable<MessageEvent> {
+    return this.received.pipe(
+      filter((received) => received.userId === userId),
+      map(({ event }): MessageEvent => ({ id: event.id, type: event.type, data: event.data })),
+    );
+  }
+
+  private claimStream(userId: string): void {
+    const open = this.openStreams.get(userId) ?? 0;
+    if (open >= LIVE_STREAM_LIMITS.perUser) {
+      throw errorFor(429, 'Too many open live streams');
+    }
+    this.openStreams.set(userId, open + 1);
+  }
+
+  private releaseStream(userId: string): void {
+    const open = (this.openStreams.get(userId) ?? 1) - 1;
+    if (open === 0) {
+      this.openStreams.delete(userId);
+      return;
+    }
+    this.openStreams.set(userId, open);
+  }
+
   private async subscribe(): Promise<void> {
     try {
       await this.subscriber.psubscribe(LIVE_CHANNEL.pattern);
       this.endStreamsOpenedWithoutSubscription();
     } catch (error) {
-      const err = error instanceof Error ? error.message : String(error);
-      this.logger.warn({ err }, 'live subscription failed');
+      this.logger.warn({ err: errorMessageOf(error) }, 'live subscription failed');
     }
   }
 
@@ -100,12 +135,12 @@ export class LiveHub implements OnModuleDestroy {
   }
 
   private receive(userId: string, message: string): void {
-    const parsed = parsedEvent(message);
-    if (parsed?.success !== true) {
+    const event = parsedJson(liveEventSchema, message);
+    if (event === undefined) {
       this.logger.warn({ userId }, 'live event dropped');
       return;
     }
-    this.received.next({ userId, event: parsed.data });
+    this.received.next({ userId, event });
   }
 
   private async endStreamsWhileRedisIsDown(): Promise<void> {
