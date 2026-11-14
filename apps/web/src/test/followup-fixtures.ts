@@ -29,6 +29,11 @@ export const READY_FOLLOWUP: FollowupResponse = {
   job: { id: FOLLOWUP_JOB_ID, status: 'done', errorType: null },
 };
 
+export const FAILED_AFTER_DRAFT: FollowupResponse = {
+  ...READY_FOLLOWUP,
+  job: { id: FOLLOWUP_JOB_ID, status: 'failed', errorType: 'ai_timeout' },
+};
+
 export function followupJob(
   status: FollowupJob['status'],
   errorType: JobStatus['errorType'] = null,

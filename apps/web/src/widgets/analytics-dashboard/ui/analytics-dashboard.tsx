@@ -62,7 +62,10 @@ export function AnalyticsDashboard({ summary }: AnalyticsDashboardProps = {}) {
       <AnimatePresence mode="popLayout" initial={false}>
         <Fade key={view.lowData ? 'low' : 'full'}>
           {view.kpis !== undefined && view.lowData ? (
-            <LowDataDashboard kpis={view.kpis} />
+            <LowDataDashboard
+              kpis={view.kpis}
+              view={{ active: scope.searchId === scope.activeId }}
+            />
           ) : (
             <DashboardBlocks
               view={view}

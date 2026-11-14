@@ -10,6 +10,7 @@ import { axeViolations } from '@/test/axe';
 import { boardOf, type ColumnCounts } from '@/test/board-fixtures';
 import { route } from '@/test/navigation';
 import { QueryProbe, waitForQuery } from '@/test/query-status';
+import { remindersRoutes } from '@/test/reminder-fixtures';
 import { renderInApp } from '@/test/render-in-app';
 import { server } from '@/test/server';
 import { meRoute } from '@/test/session-fixtures';
@@ -35,6 +36,7 @@ function silentBoardRoute(counts: ColumnCounts) {
 }
 
 function renderShell() {
+  server.use(...remindersRoutes().handlers);
   const user = renderInApp(
     <AppShell initial={{ collapsed: false }}>
       <QueryProbe queryKey={SILENT_BOARD_KEY} />

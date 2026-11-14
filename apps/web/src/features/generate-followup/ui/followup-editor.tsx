@@ -1,6 +1,6 @@
 'use client';
 
-import type { ApplicationResponse, FollowupOutput } from '@jobflow/shared';
+import { type ApplicationResponse, FOLLOWUP_LIMITS, type FollowupOutput } from '@jobflow/shared';
 import { useState } from 'react';
 
 import { uk } from '@/shared/i18n';
@@ -67,6 +67,7 @@ export function FollowupEditor({ draft, methods, actions, status }: FollowupEdit
       </p>
       <Field label={COPY.subject}>
         <Input
+          maxLength={FOLLOWUP_LIMITS.subjectMaxLength}
           value={subject}
           onChange={(event) => {
             change({ subject: event.target.value });
@@ -76,6 +77,7 @@ export function FollowupEditor({ draft, methods, actions, status }: FollowupEdit
       <Field label={COPY.body}>
         <Textarea
           rows={9}
+          maxLength={FOLLOWUP_LIMITS.bodyMaxLength}
           value={body}
           onChange={(event) => {
             change({ body: event.target.value });

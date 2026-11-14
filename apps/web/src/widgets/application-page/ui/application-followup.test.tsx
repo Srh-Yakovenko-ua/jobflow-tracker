@@ -38,6 +38,17 @@ describe('ApplicationFollowup', () => {
     expect(section.compareDocumentPosition(history)).toBe(Node.DOCUMENT_POSITION_FOLLOWING);
   });
 
+  it('on the full page below the wide layout the follow-up sits before the notes in tab order', async () => {
+    renderApplicationPage({ followup: READY_FOLLOWUP });
+
+    const section = await screen.findByRole('region', { name: 'Фоллоу-ап' });
+    const notes = screen.getByRole('region', { name: 'Нотатки' });
+    const history = screen.getByRole('region', { name: 'Історія відгуку' });
+
+    expect(section.compareDocumentPosition(notes)).toBe(Node.DOCUMENT_POSITION_FOLLOWING);
+    expect(section.compareDocumentPosition(history)).toBe(Node.DOCUMENT_POSITION_FOLLOWING);
+  });
+
   it.each([
     { name: 'a draft', application: REVIEW_DRAFT },
     {

@@ -319,6 +319,22 @@ describe('SankeyBlock', () => {
     expect(screen.getByRole('link', { name: 'рівень англійської 2' })).toBeDefined();
   });
 
+  it.each(['інші 2', 'показати всі причини'])(
+    'pressing "%s" moves focus to the first revealed reason, not to the page',
+    async (name) => {
+      const { user } = renderDashboard();
+      await splitInto(user);
+
+      await user.click(screen.getByRole('button', { name }));
+
+      await waitFor(() => {
+        expect(document.activeElement).toBe(
+          screen.getAllByRole('link', { name: 'рівень англійської 2' })[0],
+        );
+      });
+    },
+  );
+
   it('a failed split request keeps the switch, and switching it off brings the whole funnel back', async () => {
     fakeTimeouts();
     const { user } = renderDashboard(({ request }) =>

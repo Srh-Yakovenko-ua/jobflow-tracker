@@ -76,7 +76,9 @@ describe('WhatToDoPanel', () => {
     const { insights } = designInsightsBody();
     renderDashboardBlocks({ insights: { insights, actions: [] } });
 
-    expect(await screen.findByRole('heading', { name: 'Схоже, CV v2 працює краще' })).toBeDefined();
+    expect(
+      await screen.findByRole('heading', { name: "LinkedIn з'їдає час, рефералки — ні" }),
+    ).toBeDefined();
     await waitFor(() => {
       expect(screen.queryByText(PANEL)).toBeNull();
     });

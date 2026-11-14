@@ -24,8 +24,7 @@ const BLOCKS = uk.analytics.blocks;
 
 export type DashboardFrame = Readonly<{ header: ChartFrameHeader; state: ChartFrameState }>;
 
-export type DashboardFrameId =
-  'sankey' | 'reasons' | 'sources' | 'resumeAb' | 'forecast' | 'timings';
+export type DashboardFrameId = 'sankey' | 'reasons' | 'sources' | 'forecast';
 
 export type SankeyFrame = DashboardFrame &
   Readonly<{
@@ -90,13 +89,11 @@ function framesOf({ queries, searches }: DashboardViewInput): DashboardFrames {
       state: chartFrameStateOf(queries.sources),
       data: queries.sources.data,
     },
-    resumeAb: { header: titled('resume_ab'), state: chartFrameStateOf(queries.resumeAb) },
     forecast: {
       header: { eyebrow: BLOCKS.forecast.eyebrow },
       state: chartFrameStateOf(queries.forecast),
       data: queries.forecast.data,
     },
-    timings: { header: BLOCKS.timings, state: chartFrameStateOf(queries.timings) },
   };
 }
 

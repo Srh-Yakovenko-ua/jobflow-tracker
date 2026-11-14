@@ -5,11 +5,10 @@ import Link from 'next/link';
 import { useId } from 'react';
 
 import { SilenceIndicator } from '@/entities/application';
-import { SnoozeMenu } from '@/features/snooze-reminder';
+import { type SilentRow, SnoozeMenu } from '@/features/snooze-reminder';
 import { uk } from '@/shared/i18n';
 import { buttonLinkClasses } from '@/shared/ui/button';
 
-import type { SilentRow } from '../lib/silent-rows';
 import { ReplyMenu, type ReplyMenuActions } from './reply-menu';
 
 const COPY = uk.reminders;

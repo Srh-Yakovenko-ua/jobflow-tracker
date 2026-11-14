@@ -16,6 +16,6 @@ export const AI_PROMPT_VERSIONS = {
   vacancy_parse: 'v3',
   resume_parse: 'v1',
   match: 'v3',
-  followup: 'v2',
+  followup: 'v3',
   monthly_summary: 'v1',
 } satisfies Record<AiKind, string>;

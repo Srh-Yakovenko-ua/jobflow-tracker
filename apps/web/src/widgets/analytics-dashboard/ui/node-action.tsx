@@ -19,11 +19,16 @@ export function NodeAction({ node, actions, view, children }: NodeActionProps) {
   const href = boardHrefOf(node);
   const target =
     href === null ? (
-      <button type="button" className={view.className} onClick={actions.onExpand}>
+      <button
+        type="button"
+        data-node-id={node.id}
+        className={view.className}
+        onClick={actions.onExpand}
+      >
         {children}
       </button>
     ) : (
-      <Link href={href} className={view.className}>
+      <Link href={href} data-node-id={node.id} className={view.className}>
         {children}
       </Link>
     );

@@ -7,7 +7,11 @@ export type SummaryParagraph = Readonly<{ id: string; parts: readonly SummaryPar
 
 type Piece = Readonly<{ text: string; block: AnalyticsBlock | null }>;
 
-const NUMBER = /(?<![\p{L}\d])\d+(?:[.,]\d+)?%?/gu;
+const NUMBER = /(?<![\p{L}\d])\d+(?:[.,]\d+)?(?:\.\d{4})?%?/gu;
+
+const YEAR_OR_DATE = /^(?:(?:19|20)\d{2}|\d{1,2}\.\d{2}(?:\.\d{4})?)$/u;
+
+const CHARTLESS: ReadonlySet<AnalyticsBlock> = new Set(['resumeAb']);
 
 const CLAUSE_SEPARATOR = /((?<!\d)[,;:.!?]|[,;:.!?](?!\d))/u;
 
@@ -41,10 +45,11 @@ function clausesOf(paragraph: string): Piece[] {
 }
 
 function numbersOf({ text, block }: Piece): Piece[] {
-  if (block === null) return [{ text, block }];
+  if (block === null || CHARTLESS.has(block)) return [{ text, block: null }];
   const pieces: Piece[] = [];
   let cursor = 0;
   for (const match of text.matchAll(NUMBER)) {
+    if (YEAR_OR_DATE.test(match[0])) continue;
     pieces.push({ text: text.slice(cursor, match.index), block: null }, { text: match[0], block });
     cursor = match.index + match[0].length;
   }

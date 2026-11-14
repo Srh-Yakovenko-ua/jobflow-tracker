@@ -45,11 +45,14 @@ function ActionList({ summary, labelId }: ActionListProps) {
     <ol aria-labelledby={labelId} className="flex flex-col gap-3.25">
       {summary.actions.map((action, index) => (
         <NumberedAction
-          key={action.title}
+          key={`${String(index)}:${action.title}`}
           action={{
             position: index + 1,
             title: action.title,
-            lines: [action.why, action.expectedEffect],
+            lines: [
+              { id: 'why', text: action.why },
+              { id: 'effect', text: action.expectedEffect },
+            ],
           }}
           view={{ tone: 'link' }}
         />

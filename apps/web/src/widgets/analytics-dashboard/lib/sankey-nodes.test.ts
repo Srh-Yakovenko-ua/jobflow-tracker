@@ -5,7 +5,14 @@ import { describe, expect, it } from 'vitest';
 import { uk } from '@/shared/i18n';
 import { DESIGN_ENDINGS, DESIGN_FUNNEL_ROWS } from '@/test/analytics-fixtures';
 
-import { boardHrefOf, endingsOf, type FunnelRow, funnelRowsOf, ghostTotalOf } from './sankey-nodes';
+import {
+  boardHrefOf,
+  endingsOf,
+  firstRevealedNode,
+  type FunnelRow,
+  funnelRowsOf,
+  ghostTotalOf,
+} from './sankey-nodes';
 
 const GHOST = uk.analytics.blocks.sankey.ghost;
 
@@ -108,6 +115,13 @@ describe('ghostTotalOf', () => {
     expect(GHOST.body(17)).toBe(
       '17 компаній не відповіли. Вони не входять у розрахунок конверсій.',
     );
+  });
+});
+
+describe('firstRevealedNode', () => {
+  it('finds english_level as the first reason folded into "інші" and none when nothing is folded', () => {
+    expect(firstRevealedNode(buildFoldedSankey())?.id).toBe('english_level');
+    expect(firstRevealedNode(buildDesignSankey())).toBeUndefined();
   });
 });
 

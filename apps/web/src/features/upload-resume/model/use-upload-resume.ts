@@ -62,6 +62,18 @@ function useStoredFile(onPercent: StoreFileOptions['onPercent']) {
   };
 }
 
+type Recovery = Readonly<{
+  failure: UploadFailure;
+  forget: () => void;
+  setError: UseFormSetError<VersionTitleForm>;
+}>;
+
+function recover({ failure, forget, setError }: Recovery) {
+  if (failure.kind === 'expired') forget();
+  if (failure.kind !== 'fields') return;
+  applyFieldErrors({ error: failure.error, fields: VERSION_TITLE_FIELDS, setError });
+}
+
 export function useUploadResume(setError: UseFormSetError<VersionTitleForm>): UploadResume {
   const queryClient = useQueryClient();
   const submitKey = useSubmitKey();
@@ -76,9 +88,7 @@ export function useUploadResume(setError: UseFormSetError<VersionTitleForm>): Up
     },
     onSuccess: stored.forget,
     onError: (error, { file }) => {
-      const failure = uploadFailureOf({ error, file });
-      if (failure.kind !== 'fields') return;
-      applyFieldErrors({ error: failure.error, fields: VERSION_TITLE_FIELDS, setError });
+      recover({ failure: uploadFailureOf({ error, file }), forget: stored.forget, setError });
     },
     onSettled: () => {
       setPercent(null);

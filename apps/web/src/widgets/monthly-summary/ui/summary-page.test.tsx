@@ -7,11 +7,12 @@ import { latestPlanQueryOptions } from '@/entities/plan';
 import { ANY_IDEMPOTENCY_KEY, errorReply } from '@/test/api-handlers';
 import { jobRoute, PROCESSING_JOB } from '@/test/job-fixtures';
 import { planRoutes } from '@/test/plan-fixtures';
-import { findRetryAfterQueryRetries } from '@/test/query-status';
+import { AFTER_QUERY_RETRIES, findRetryAfterQueryRetries } from '@/test/query-status';
 import { renderInApp } from '@/test/render-in-app';
 import { server } from '@/test/server';
 import { meRoute } from '@/test/session-fixtures';
 import {
+  DESIGN_ARCHIVE,
   DESIGN_SUMMARY,
   latestOf,
   NO_SUMMARY,
@@ -83,12 +84,38 @@ describe('SummaryPage', () => {
     await screen.findByRole('heading', { name: 'Як пройшов серпень' });
 
     expect(hrefOf('19, Дивитись на графіку: відгуки')).toBe('/analytics#kpis');
-    expect(hrefOf('24%, Дивитись на графіку: A/B резюме')).toBe('/analytics#resume-ab');
+    expect(screen.queryByRole('link', { name: /^24%/ })).toBeNull();
     expect(screen.getAllByRole('link', { name: /Дивитись на графіку: воронка$/ })).toHaveLength(2);
     expect(screen.queryByRole('link', { name: /^v2/ })).toBeNull();
 
     await user.hover(screen.getByRole('link', { name: '19, Дивитись на графіку: відгуки' }));
     expect((await screen.findByRole('tooltip')).textContent).toBe('Дивитись на графіку: відгуки');
+  });
+
+  it('a linked number with its tooltip open keeps one name and no description that repeats it', async () => {
+    const { user } = renderPage();
+    const link = await screen.findByRole('link', { name: '19, Дивитись на графіку: відгуки' });
+
+    await user.hover(link);
+    await screen.findByRole('tooltip');
+
+    expect(link.getAttribute('aria-describedby')).toBeNull();
+  });
+
+  it('equal action titles and a why equal to its effect render every action without a duplicate key', async () => {
+    const logged = vi.spyOn(console, 'error');
+    const twins = DESIGN_SUMMARY.actions.map((action) => ({
+      ...action,
+      title: 'Попросити рефералку',
+      why: action.expectedEffect,
+    }));
+    renderPage({ latest: latestOf({ ...DESIGN_SUMMARY, actions: twins }) });
+
+    const actions = await screen.findByRole('list', { name: 'що зробити у вересні' });
+
+    expect(within(actions).getAllByRole('listitem')).toHaveLength(twins.length);
+    expect(logged.mock.calls.flat().join(' ')).not.toContain('same key');
+    logged.mockRestore();
   });
 
   it('Зберегти як план posts once with an Idempotency-Key, shows the saved plan and reloads it for the reminders', async () => {
@@ -197,9 +224,23 @@ describe('SummaryPage', () => {
     expect(screen.queryByRole('link', { name: 'До останнього саммарі' })).toBeNull();
   });
 
-  it('a failed read shows the error, and its retry reads the summary again', async () => {
+  it('an archived month renders from the archive when the latest read fails', async () => {
+    renderPage({
+      month: '2026-07',
+      latestReply: () => errorReply({ status: 500, type: 'internal_error' }),
+    });
+
+    expect(
+      await screen.findByRole('heading', { name: 'Як пройшов липень' }, AFTER_QUERY_RETRIES),
+    ).toBeDefined();
+  });
+
+  it('a failed read of a month the archive lacks shows the error, and its retry reads the summary again', async () => {
     const down = { on: true };
     const { user } = renderPage({
+      archive: {
+        items: DESIGN_ARCHIVE.items.filter((item) => item.month !== DESIGN_SUMMARY.month),
+      },
       latestReply: () =>
         down.on
           ? errorReply({ status: 500, type: 'internal_error' })

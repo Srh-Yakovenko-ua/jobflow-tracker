@@ -135,14 +135,20 @@ describe('AsyncState', () => {
   });
 
   it.each<{ job: AiJob; line: string }>([
-    { job: { status: 'queued', ahead: 1, etaSeconds: 10 }, line: 'AI пише саммарі' },
+    {
+      job: { status: 'queued', ahead: 1, etaSeconds: 10 },
+      line: 'у черзі · 1 задача перед твоєю · ~10 с',
+    },
     { job: { status: 'processing', step: 1, steps: 3 }, line: 'AI пише саммарі' },
     { job: { status: 'failed' }, line: 'AI не впорався' },
-  ])('a caller label names the $job.status work, a failed line keeps its own', ({ job, line }) => {
-    render(<AsyncState job={job} view={{ label: uk.summary.generating }} />);
+  ])(
+    'a caller label names only the processing work, a $job.status line keeps its own',
+    ({ job, line }) => {
+      render(<AsyncState job={job} view={{ label: uk.summary.generating }} />);
 
-    expect(within(screen.getByRole('status')).getByText(line)).toBeDefined();
-  });
+      expect(within(screen.getByRole('status')).getByText(line)).toBeDefined();
+    },
+  );
 
   it('a caller can drop the surface box, its class winning over the kit one', () => {
     render(

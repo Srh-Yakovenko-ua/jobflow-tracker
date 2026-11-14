@@ -17,7 +17,8 @@ export type GenerateFollowupOptions = Readonly<{
 export type GenerateFollowup = Readonly<{
   isPending: boolean;
   refused: boolean;
-  generate: (body: FollowupRequest) => void;
+  generate: (body: FollowupRequest, onAccepted: () => void) => void;
+  reset: () => void;
 }>;
 
 const REQUEST_FIELDS = ['tone', 'language', 'hint'] as const;
@@ -46,8 +47,11 @@ export function useGenerateFollowup({
   return {
     isPending: mutation.isPending,
     refused: mutation.isError && !isInvalid(mutation.error),
-    generate: (body) => {
-      mutation.mutate(body);
+    generate: (body, onAccepted) => {
+      mutation.mutate(body, { onSuccess: onAccepted });
+    },
+    reset: () => {
+      mutation.reset();
     },
   };
 }

@@ -1,7 +1,7 @@
 'use client';
 
-import { useSilentCount } from '@/entities/application';
 import { useSilenceDays } from '@/entities/user';
+import { useSilentCount } from '@/features/snooze-reminder';
 import { uk } from '@/shared/i18n';
 import { cn } from '@/shared/lib/cn';
 import { Button } from '@/shared/ui/button';
@@ -44,6 +44,7 @@ export function FeedBody({ feed }: FeedBodyProps) {
     <div className="flex flex-col gap-4">
       <NotificationDays
         days={days}
+        headingLevel={2}
         context={{ timeZone }}
         className="rounded-lg bg-surface p-2 shadow-e1"
       />

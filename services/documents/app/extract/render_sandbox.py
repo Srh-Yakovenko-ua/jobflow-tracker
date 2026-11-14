@@ -95,13 +95,20 @@ def render_pages(job: RenderJob) -> list[Page]:
         document.close()
 
 
+def rendered(job: RenderJob) -> list[Page]:
+    try:
+        return render_pages(job)
+    except DocumentError:
+        raise
+    except Exception as error:
+        raise DocumentError("unreadable_file") from error
+
+
 def reply_of(job: RenderJob) -> Reply:
     try:
-        return ("pages", render_pages(job))
+        return ("pages", rendered(job))
     except DocumentError as error:
         return ("error", error.type, error.detail)
-    except pdfium.PdfiumError:
-        return ("error", "unreadable_file", None)
 
 
 def render_child(sender: Connection, job: RenderJob) -> None:
@@ -121,7 +128,7 @@ def receive(receiver: Connection, *, seconds: float) -> Reply:
         raise over_limits()
     try:
         return cast(Reply, receiver.recv())
-    except EOFError as error:
+    except (EOFError, OSError) as error:
         raise over_limits() from error
 
 
@@ -138,7 +145,12 @@ def render_scan(
     receiver, sender = context.Pipe(duplex=False)
     job = RenderJob(data=data, count=count, limits=limits)
     child = context.Process(target=render_child, args=(sender, job), daemon=True)
-    child.start()
+    try:
+        child.start()
+    except OSError as error:
+        receiver.close()
+        sender.close()
+        raise DocumentError("unreadable_file") from error
     sender.close()
     try:
         return pages_of(receive(receiver, seconds=limits.seconds))

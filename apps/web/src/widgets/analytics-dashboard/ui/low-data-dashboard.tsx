@@ -64,9 +64,12 @@ function NextStep({ missing }: Readonly<{ missing: number }>) {
   );
 }
 
-export type LowDataDashboardProps = Readonly<{ kpis: FunnelKpis }>;
+export type LowDataDashboardProps = Readonly<{
+  kpis: FunnelKpis;
+  view: Readonly<{ active: boolean }>;
+}>;
 
-export function LowDataDashboard({ kpis }: LowDataDashboardProps) {
+export function LowDataDashboard({ kpis, view }: LowDataDashboardProps) {
   const sent = kpis.sent.total;
   return (
     <div className="grid grid-cols-[repeat(auto-fit,minmax(min(232px,100%),1fr))] items-start gap-5 rounded-2xl bg-surface-2 p-6 inset-ring inset-ring-line-soft max-sm:p-4">
@@ -86,7 +89,7 @@ export function LowDataDashboard({ kpis }: LowDataDashboardProps) {
         </span>
         <span className={CAPTION}>{COPY.forecast.why}</span>
       </DashedCard>
-      <NextStep missing={THRESHOLDS.MIN_N_INSIGHT - sent} />
+      {view.active && <NextStep missing={THRESHOLDS.MIN_N_INSIGHT - sent} />}
     </div>
   );
 }

@@ -221,6 +221,31 @@ describe('ResumeUpload', () => {
     expect(routes.store).toHaveLength(1);
   });
 
+  it('a 422 at uploadId starts a fresh upload on retry with the file kept', async () => {
+    const { user, routes } = await renderUpload();
+    server.use(
+      http.post(
+        apiUrl('/resumes/versions'),
+        () => validationReply([{ path: 'uploadId', message: 'expired' }]),
+        { once: true },
+      ),
+    );
+
+    await pickAndSend({ user, file: RESUME });
+    expect(await screen.findByText('Файл треба надіслати знову')).toBeDefined();
+    await user.click(screen.getByRole('button', SUBMIT));
+
+    await waitFor(() => {
+      expect(screen.queryByLabelText(TITLE)).toBeNull();
+    });
+    expect(routes.sent.tickets).toHaveLength(2);
+    expect(routes.sent.stored).toEqual([RESUME.size, RESUME.size]);
+    expect(routes.sent.confirms).toEqual([UPLOAD_ID, UPLOAD_ID]);
+    expect(routes.sent.created).toEqual([
+      { body: CREATED_BODY, idempotencyKey: ANY_IDEMPOTENCY_KEY },
+    ]);
+  });
+
   it('the file picker is disabled while the file is being stored', async () => {
     const { storage, reply } = heldStorage();
     const { user } = await renderUpload({ storage: reply });

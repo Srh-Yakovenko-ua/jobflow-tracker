@@ -26,7 +26,7 @@ type LinkedNumberProps = Readonly<{ text: string; block: AnalyticsBlock }>;
 function LinkedNumber({ text, block }: LinkedNumberProps) {
   const label = COPY.chartLink(COPY.blocks[block]);
   return (
-    <Tooltip content={label}>
+    <Tooltip content={label} describes={false}>
       <Link href={analyticsHref(block)} className={NUMBER_LINK}>
         {text}
         <span className="sr-only">{`, ${label}`}</span>

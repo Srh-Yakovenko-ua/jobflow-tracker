@@ -22,13 +22,21 @@ function byLongestSilence(left: SilentRow, right: SilentRow): number {
   return days === 0 ? left.card.id.localeCompare(right.card.id) : days;
 }
 
-export function silentRowsOf({ board, reminders, now }: SilentRowsInput): SilentRow[] {
+function rowsOf({ board, reminders }: SilentRowsInput): SilentRow[] {
   const followups = new Map(
     reminders.filter(isActiveFollowup).map((reminder) => [reminder.applicationId, reminder]),
   );
   return Object.values(board.columns)
     .flatMap((column) => column.items ?? [])
-    .map((card) => ({ card, reminder: followups.get(card.id) ?? null }))
-    .filter((row) => !isSnoozedAt(row.reminder, now))
+    .map((card) => ({ card, reminder: followups.get(card.id) ?? null }));
+}
+
+export function silentRowsOf(input: SilentRowsInput): SilentRow[] {
+  return rowsOf(input)
+    .filter((row) => !isSnoozedAt(row.reminder, input.now))
     .sort(byLongestSilence);
+}
+
+export function snoozedCountOf(input: SilentRowsInput): number {
+  return rowsOf(input).filter((row) => isSnoozedAt(row.reminder, input.now)).length;
 }
