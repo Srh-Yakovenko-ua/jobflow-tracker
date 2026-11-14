@@ -71,6 +71,10 @@ export function shellTitleOf(pathname: string, items: readonly NavItem[]): strin
     .find((alias) => alias.href === pathname)?.title;
 }
 
+export function isNestedRoute(pathname: string, items: readonly NavItem[]): boolean {
+  return items.some((item) => pathname.startsWith(`${item.href}/`));
+}
+
 export function navStatusOf(nav: ShellNav, item: NavItem) {
   return {
     active: nav.activeHref === item.href,

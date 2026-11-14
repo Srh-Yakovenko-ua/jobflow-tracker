@@ -2,6 +2,7 @@ import {
   DEFAULT_SEARCH_TITLE,
   DEFAULT_SILENCE_DAYS,
   DEMO_USER,
+  monthlySummaryOutputSchema,
   silenceLevelOf,
   wholeDaysBetween,
 } from '@jobflow/shared';
@@ -291,6 +292,14 @@ describe('the demo story seed', () => {
     expect(countBy(matchJobs, ({ kind, status }) => `${kind} ${status}`)).toEqual({
       'match done': 54,
     });
+  });
+
+  it('writes a demo summary that names October and September with their sent counts', async () => {
+    await demo().run();
+
+    const [summaryJob] = (await demoDump(testApp.prisma)).aiJobs;
+    const { summary } = monthlySummaryOutputSchema.parse(summaryJob?.aiResult?.output);
+    expect(summary).toMatch(/^За жовтень ти надіслав 5 відгуків, на 15 менше, ніж за вересень\. /);
   });
 
   it('gives the same story and CV files on a second run and keeps the demo user', async () => {

@@ -1,9 +1,12 @@
+import type { Notification, NotificationListResponse } from '@jobflow/shared';
 import { screen, waitFor } from '@testing-library/react';
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { uk } from '@/shared/i18n';
 import { NEVER_ANSWERS, REFUSED_CONNECTION } from '@/test/api-handlers';
+import { headingProblems } from '@/test/axe';
 import { boardRoute } from '@/test/board-fixtures';
+import { route } from '@/test/navigation';
 import {
   buildNotification,
   DESIGN_FEED,
@@ -16,7 +19,9 @@ import {
 } from '@/test/notification-fixtures';
 import { pinClockInEachTest } from '@/test/pinned-clock';
 import { findRetryAfterQueryRetries } from '@/test/query-status';
+import { remindersRoutes } from '@/test/reminder-fixtures';
 import { renderInApp } from '@/test/render-in-app';
+import { renderInShell } from '@/test/render-in-shell';
 import { server } from '@/test/server';
 
 import { NotificationsPage } from './notifications-page';
@@ -40,13 +45,40 @@ const NO_TARGET = buildNotification({
   payload: { aiJobId: notificationIdOf(42), kind: 'vacancy_parse', errorType: 'ai_timeout' },
 });
 
+const NEXT_UNREAD = buildNotification({
+  serial: 43,
+  type: 'ai_failed',
+  payload: { aiJobId: notificationIdOf(44), kind: 'vacancy_parse', errorType: 'ai_timeout' },
+});
+
 pinClockInEachTest(NOTIFICATION_NOW);
+
+afterEach(() => {
+  route.pathname = '/board';
+});
 
 function renderPage(routes: NotificationRoutesOptions = {}) {
   const feed = notificationRoutes(routes);
   server.use(unreadMeRoute(2), boardRoute({ counts: {} }).handler, ...feed.handlers);
   const user = renderInApp(<NotificationsPage />);
   return { user, sent: feed.sent };
+}
+
+function feedOf(items: Notification[]): NotificationListResponse {
+  return { items, nextCursor: null };
+}
+
+function readOf(notification: Notification): Notification {
+  return { ...notification, readAt: NOTIFICATION_NOW.toISOString() };
+}
+
+async function renderUnread(items: Notification[]) {
+  const { user } = renderPage({ feed: feedOf(items) });
+  await user.click(await screen.findByRole('radio', { name: COPY.filters.options.unread }));
+  await waitFor(() => {
+    expect(screen.getAllByRole('button', { name: COPY.markRead })).toHaveLength(items.length);
+  });
+  return { user };
 }
 
 function listsSent(sent: { lists: URLSearchParams[] }) {
@@ -74,6 +106,15 @@ describe('NotificationsPage', () => {
     expect(screen.getByRole('heading', { level: 1, name: COPY.title })).toBeDefined();
   });
 
+  it('inside the shell the notifications page has one h1 and no skipped heading level', async () => {
+    route.pathname = '/notifications';
+    server.use(...notificationRoutes().handlers, ...remindersRoutes().handlers);
+    renderInShell(<NotificationsPage />);
+    await screen.findByRole('heading', { name: 'Вчора' });
+
+    expect(await headingProblems()).toEqual({ h1: 1, violations: [] });
+  });
+
   it('day headings sit one level below the page h1, at h2', async () => {
     renderPage();
 
@@ -84,8 +125,7 @@ describe('NotificationsPage', () => {
   it('an unread notification that leads nowhere can be marked read on its own', async () => {
     const { user } = renderPage({ feed: { items: [NO_TARGET], nextCursor: null } });
     const markRead = await screen.findByRole('button', { name: COPY.markRead });
-    const read = { ...NO_TARGET, readAt: NOTIFICATION_NOW.toISOString() };
-    const afterRead = notificationRoutes({ feed: { items: [read], nextCursor: null } });
+    const afterRead = notificationRoutes({ feed: feedOf([readOf(NO_TARGET)]) });
     server.use(...afterRead.handlers);
 
     await user.click(markRead);
@@ -95,6 +135,33 @@ describe('NotificationsPage', () => {
     });
     expect(afterRead.sent.reads).toEqual([{ ids: [NO_TARGET.id] }]);
     expect(document.activeElement).not.toBe(document.body);
+  });
+
+  it('under Непрочитані, marking a row read moves focus to the next unread row', async () => {
+    const { user } = await renderUnread([NO_TARGET, NEXT_UNREAD]);
+    const [first] = screen.getAllByRole('button', { name: COPY.markRead });
+    if (first === undefined) throw new Error('the first unread row has no mark-read button');
+    server.use(...notificationRoutes({ feed: feedOf([readOf(NO_TARGET), NEXT_UNREAD]) }).handlers);
+
+    await user.click(first);
+
+    await waitFor(() => {
+      expect(screen.getAllByRole('button', { name: COPY.markRead })).toHaveLength(1);
+    });
+    const next = screen.getByRole('button', { name: COPY.markRead });
+    expect(document.activeElement).toBe(next.closest('[tabindex="-1"]'));
+  });
+
+  it('under Непрочитані, marking the last unread row read moves focus to the page heading', async () => {
+    const { user } = await renderUnread([NO_TARGET]);
+    server.use(...notificationRoutes({ feed: feedOf([readOf(NO_TARGET)]) }).handlers);
+
+    await user.click(screen.getByRole('button', { name: COPY.markRead }));
+
+    expect(await screen.findByRole('heading', { name: COPY.empty.title })).toBeDefined();
+    expect(document.activeElement).toBe(
+      screen.getByRole('heading', { level: 1, name: COPY.title }),
+    );
   });
 
   it('Показати ще asks for the page after the cursor and adds its rows', async () => {

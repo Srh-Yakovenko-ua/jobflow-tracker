@@ -58,6 +58,14 @@ function draftFields() {
   };
 }
 
+async function writeOwnTextAndReopen(response: FollowupResponse) {
+  const { user, reopen } = renderPanel(response);
+  await user.click(screen.getByRole('button', { name: 'Написати самому' }));
+  await user.clear(draftFields().body);
+  await user.type(draftFields().body, 'Дякую');
+  reopen();
+}
+
 describe('FollowupPanel', () => {
   it('before any draft offers tone, the vacancy language and a hint, and asks for a first draft', async () => {
     const { user, sent } = renderPanel({ ...NO_FOLLOWUP, language: 'en' });
@@ -175,11 +183,7 @@ describe('FollowupPanel', () => {
   });
 
   it('an own draft is still open after leaving and coming back', async () => {
-    const { user, reopen } = renderPanel(followupJob('failed', 'ai_timeout'));
-    await user.click(screen.getByRole('button', { name: 'Написати самому' }));
-    await user.type(draftFields().body, 'Дякую');
-
-    reopen();
+    await writeOwnTextAndReopen(followupJob('failed', 'ai_timeout'));
 
     expect(screen.getByText('свій текст · пиши тут')).toBeDefined();
     expect(draftFields().body.value).toBe('Дякую');
@@ -258,6 +262,14 @@ describe('FollowupPanel', () => {
     expect(screen.getByRole('alert').textContent).toContain(TIMEOUT_COPY);
     expect(screen.getByRole('button', { name: 'Спробувати ще' })).toBeDefined();
     expect(screen.getByRole('button', { name: 'Написати самому' })).toBeDefined();
+  });
+
+  it('own text started from a draft is still own text after a reload', async () => {
+    await writeOwnTextAndReopen(FAILED_AFTER_DRAFT);
+
+    expect(screen.getByText('свій текст · пиши тут')).toBeDefined();
+    expect(draftFields().body.value).toBe('Дякую');
+    expect(screen.queryByText(TIMEOUT_COPY)).toBeNull();
   });
 
   it('the edited letter survives a 429 on «Ще варіант», on screen and after coming back', async () => {

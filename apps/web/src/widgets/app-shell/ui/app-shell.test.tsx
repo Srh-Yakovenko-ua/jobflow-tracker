@@ -120,6 +120,16 @@ describe('AppShell', () => {
     ).toEqual([]);
   });
 
+  it('a nested route under a nav item shows the nav title without making it a heading', async () => {
+    route.pathname = '/analytics/summary/2026-08';
+    server.use(meRoute(), silentBoardRoute({}));
+    renderShell();
+    await waitForQuery({ queryKey: userKeys.me(), status: 'success' });
+
+    expect(within(screen.getByRole('banner')).getByText(SHELL.nav.analytics)).toBeDefined();
+    expect(screen.queryByRole('heading', { name: SHELL.nav.analytics })).toBeNull();
+  });
+
   it('links Додати вакансію in the header to /add', async () => {
     server.use(meRoute(), silentBoardRoute({}));
     renderShell();

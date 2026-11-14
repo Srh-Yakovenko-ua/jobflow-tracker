@@ -1,10 +1,15 @@
 import {
   AI_PROMPT_VERSIONS,
   type AiKind,
+  countedUk,
   type MatchCoverage,
   type MatchOutput,
+  type MonthlySummaryInput,
   type MonthlySummaryOutput,
+  monthlySummaryOutputSchema,
+  type PluralForms,
   type ResumeParseOutput,
+  type YearMonth,
 } from '@jobflow/shared';
 import {
   buildMatchOutput,
@@ -12,6 +17,7 @@ import {
   buildResumeParseOutput,
 } from '@jobflow/shared/testing';
 
+import { monthNameOf, shiftMonth } from '../common/year-month.js';
 import { scoreMatch } from '../modules/match/index.js';
 
 export type DemoCompletion = {
@@ -27,12 +33,18 @@ export type DemoCompletion = {
 
 export type DemoMatch = { output: MatchOutput; score: number };
 
+export type DemoSummaryInput = {
+  month: YearMonth;
+  sent: Pick<MonthlySummaryInput['activity']['sent'], 'month' | 'previousMonth'>;
+};
+
 type MatchVariant = { coverage: Record<string, MatchCoverage>; explanation: string | null };
+
+type SummaryAction = MonthlySummaryOutput['actions'][number];
 
 const DEMO_CALL = { model: 'demo', tokensIn: 0, tokensOut: 0, latencyMs: 0 } as const;
 
 const RESUME_AB = {
-  designSentence: 'Конверсія у скринінг зросла з 24% до 41% після переходу на CV v2.',
   storySentence:
     'Конверсія у скринінг з CV v2 44%, з CV v1 56%, але відповідей поки замало для висновку.',
   designActionTitle: 'Відгукуватися лише з CV v2',
@@ -43,6 +55,23 @@ const RESUME_AB = {
     metric: 'Конверсія у скринінг за версією CV',
   },
 } as const;
+
+const SENT_FORMS: PluralForms = { one: 'відгук', few: 'відгуки', other: 'відгуків' };
+
+const DEMO_SUMMARY_SENTENCES = [
+  'До скринінгу дійшло 17 з 40 відгуків, це 43%.',
+  RESUME_AB.storySentence,
+  "Найдорожчий етап техінтерв'ю: з 9 ти пройшов 4, і в 3 з 4 відмов там причина одна: «не вистачає скілів».",
+  "Далі об'єм відгуків уже не допоможе: воронка звужується не на вході.",
+] as const;
+
+const STORY_ACTIONS: Record<string, Partial<SummaryAction>> = {
+  [RESUME_AB.designActionTitle]: RESUME_AB.storyAction,
+  "Два тижні алгоритмів перед техінтерв'ю": {
+    expectedEffect:
+      "Якщо конверсія техінтерв'ю дійде до 60%, прогноз офера на дашборді стане коротшим.",
+  },
+};
 
 const MATCH_VARIANTS: readonly MatchVariant[] = [
   { coverage: {}, explanation: null },
@@ -90,14 +119,27 @@ export function demoMatchOf(index: number): DemoMatch {
 export const demoResumeProfileOf = (number: number): ResumeParseOutput =>
   buildResumeParseOutput(PROFILE_OVERRIDES[number]);
 
-export function demoSummaryOutput(): MonthlySummaryOutput {
-  const { summary, actions } = buildMonthlySummaryOutput();
-  return {
-    summary: summary.replace(RESUME_AB.designSentence, RESUME_AB.storySentence),
-    actions: actions.map((action) =>
-      action.title === RESUME_AB.designActionTitle ? RESUME_AB.storyAction : action,
-    ),
-  };
+function changeOf(difference: number): string {
+  if (difference === 0) {
+    return 'стільки ж, скільки';
+  }
+  const direction = difference > 0 ? 'більше' : 'менше';
+  return `на ${String(Math.abs(difference))} ${direction}, ніж`;
+}
+
+function sentSentenceOf({ month, sent }: DemoSummaryInput): string {
+  const count = countedUk(sent.month, SENT_FORMS);
+  const change = changeOf(sent.month - sent.previousMonth);
+  const previousName = monthNameOf(shiftMonth(month, -1));
+  return `За ${monthNameOf(month)} ти надіслав ${count}, ${change} за ${previousName}.`;
+}
+
+export function demoSummaryOutput(input: DemoSummaryInput): MonthlySummaryOutput {
+  const { actions } = buildMonthlySummaryOutput();
+  return monthlySummaryOutputSchema.parse({
+    summary: [sentSentenceOf(input), ...DEMO_SUMMARY_SENTENCES].join(' '),
+    actions: actions.map((action) => ({ ...action, ...STORY_ACTIONS[action.title] })),
+  });
 }
 
 export function demoCompletionOf(

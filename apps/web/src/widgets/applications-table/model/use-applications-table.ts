@@ -17,6 +17,9 @@ import { applicationTableFeatures } from './table-features';
 
 export type TableLoad = Readonly<{ failed: boolean; onRetry: () => void }>;
 
+export type StageCounts = TableLoad &
+  Readonly<{ rows: readonly ApplicationListItem[] | undefined }>;
+
 export type ApplicationsTableInstance = ReturnType<typeof useApplicationsTable>['table'];
 
 type FiltersSelection = Readonly<{ filtersHash: string; rows: RowSelectionState }>;
@@ -35,6 +38,20 @@ function useSelectionPerFilters(sent: ApplicationFilters) {
   return { rows: selection.rows, onChange };
 }
 
+type StageCountsInput = Readonly<{ sent: ApplicationFilters; listFailed: boolean }>;
+
+function useStageCounts({ sent, listFailed }: StageCountsInput): StageCounts {
+  const everyStage = useQuery({
+    ...applicationTableQueryOptions({ ...sent, stage: undefined }),
+    placeholderData: keepPreviousData,
+  });
+  return {
+    rows: everyStage.data,
+    failed: everyStage.isError && !everyStage.isFetching && !listFailed,
+    onRetry: () => void everyStage.refetch(),
+  };
+}
+
 export function useApplicationsTable() {
   const sent = useSentFilters();
   const timeZone = useUserTimeZone();
@@ -42,10 +59,7 @@ export function useApplicationsTable() {
     ...applicationTableQueryOptions(sent),
     placeholderData: keepPreviousData,
   });
-  const everyStage = useQuery({
-    ...applicationTableQueryOptions({ ...sent, stage: undefined }),
-    placeholderData: keepPreviousData,
-  });
+  const stageCounts = useStageCounts({ sent, listFailed: query.isError });
   const selection = useSelectionPerFilters(sent);
   const table = useTable({
     features: applicationTableFeatures,
@@ -69,7 +83,7 @@ export function useApplicationsTable() {
     loaded: query.data !== undefined,
     load,
     search: { filtered, q: sent.q },
-    stageRows: everyStage.data,
+    stageCounts,
     timeZone,
   };
 }

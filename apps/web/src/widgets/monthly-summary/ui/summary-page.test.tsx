@@ -1,14 +1,18 @@
 import type { YearMonth } from '@jobflow/shared';
 import { useQuery } from '@tanstack/react-query';
 import { screen, waitFor, within } from '@testing-library/react';
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { latestPlanQueryOptions } from '@/entities/plan';
 import { ANY_IDEMPOTENCY_KEY, errorReply } from '@/test/api-handlers';
+import { headingProblems } from '@/test/axe';
 import { jobRoute, PROCESSING_JOB } from '@/test/job-fixtures';
+import { route } from '@/test/navigation';
 import { planRoutes } from '@/test/plan-fixtures';
 import { AFTER_QUERY_RETRIES, findRetryAfterQueryRetries } from '@/test/query-status';
+import { remindersRoutes } from '@/test/reminder-fixtures';
 import { renderInApp } from '@/test/render-in-app';
+import { renderInShell } from '@/test/render-in-shell';
 import { server } from '@/test/server';
 import { meRoute } from '@/test/session-fixtures';
 import {
@@ -27,6 +31,10 @@ import { SummaryPage } from './summary-page';
 vi.mock('next/navigation', () => import('@/test/navigation'));
 vi.mock('next/link', () => import('@/test/link'));
 
+afterEach(() => {
+  route.pathname = '/board';
+});
+
 type PageOptions = SummaryRoutesOptions & Readonly<{ month?: YearMonth }>;
 
 const SAVE = 'Зберегти як план';
@@ -38,11 +46,16 @@ function PlanReader() {
   return null;
 }
 
-function renderPage({ month = DESIGN_SUMMARY.month, ...options }: PageOptions = {}) {
+function serveSummary(options: SummaryRoutesOptions = {}) {
   const summaries = summaryRoutes({ latest: READY_SUMMARY, ...options });
   const plans = planRoutes({ plan: null });
   const jobs = jobRoute({ job: () => PROCESSING_JOB });
   server.use(meRoute(), ...summaries.handlers, ...plans.handlers, jobs.handler);
+  return { summaries, plans };
+}
+
+function renderPage({ month = DESIGN_SUMMARY.month, ...options }: PageOptions = {}) {
+  const { summaries, plans } = serveSummary(options);
   const user = renderInApp(
     <>
       <SummaryPage month={month} />
@@ -77,6 +90,16 @@ describe('SummaryPage', () => {
       within(actions).getByText('Більше скринінгів без нових холодних відгуків.'),
     ).toBeDefined();
     expect(hrefOf('До аналітики')).toBe('/analytics');
+  });
+
+  it('inside the shell the summary page has one h1 and no skipped heading level', async () => {
+    route.pathname = `/analytics/summary/${DESIGN_SUMMARY.month}`;
+    serveSummary();
+    server.use(...remindersRoutes().handlers);
+    renderInShell(<SummaryPage month={DESIGN_SUMMARY.month} />);
+    await screen.findByRole('heading', { name: 'Як пройшов серпень' });
+
+    expect(await headingProblems()).toEqual({ h1: 1, violations: [] });
   });
 
   it('a highlighted number links to its chart on the dashboard and its tooltip names the chart', async () => {

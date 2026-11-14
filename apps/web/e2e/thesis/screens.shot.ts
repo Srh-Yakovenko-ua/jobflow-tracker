@@ -30,7 +30,7 @@ type Shot = Readonly<{ page: Page; scheme: Scheme }>;
 const SHOTS = {
   dir: path.join(REPO_ROOT, 'docs/screenshots'),
   detailScheme: 'light',
-  capture: { animations: 'disabled' },
+  capture: { animations: 'disabled', style: '.tsqd-open-btn-container { display: none; }' },
   wait: { timeout: 30_000 },
 } as const;
 

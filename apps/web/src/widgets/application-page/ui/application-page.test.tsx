@@ -1,11 +1,14 @@
-import { fireEvent, screen, waitFor, within } from '@testing-library/react';
+import { act, fireEvent, screen, waitFor, within } from '@testing-library/react';
 import { http, HttpResponse } from 'msw/http';
 import { describe, expect, it, vi } from 'vitest';
 
 import { apiUrl, errorReply } from '@/test/api-handlers';
 import { ACME_APPLICATION, applicationRoute } from '@/test/application-fixtures';
+import { stubMediaQuery } from '@/test/media-query';
 import { findApplicationTitle, renderApplicationPage } from '@/test/render-application-page';
 import { server } from '@/test/server';
+
+import { WIDE_PAGE_QUERY } from './page-columns';
 
 vi.mock('next/navigation', () => import('@/test/navigation'));
 vi.mock('next/link', () => import('@/test/link'));
@@ -105,6 +108,21 @@ describe('ApplicationPage', () => {
 
     expect(await screen.findByRole('link', { name: 'На дошку' })).toBeDefined();
     expect(sent).toEqual([]);
+  });
+
+  it('a resize keeps the note draft', async () => {
+    const { user } = renderApplicationPage();
+    const section = await screen.findByRole('region', { name: 'Нотатки' });
+    await user.type(within(section).getByRole('textbox', { name: 'Нова нотатка' }), 'Чернетка');
+
+    act(() => {
+      stubMediaQuery({ query: WIDE_PAGE_QUERY, matches: true });
+    });
+
+    const editor = within(
+      screen.getByRole('region', { name: 'Нотатки' }),
+    ).getByRole<HTMLTextAreaElement>('textbox', { name: 'Нова нотатка' });
+    expect(editor.value).toBe('Чернетка');
   });
 
   it('offers a retry after a failed load, and the retry shows the application', async () => {

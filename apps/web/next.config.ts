@@ -5,6 +5,7 @@ import type { NextConfig } from 'next';
 
 const nextConfig: NextConfig = {
   agentRules: false,
+  devIndicators: false,
   reactCompiler: true,
   allowedDevOrigins: ['127.0.0.1'],
   output: 'standalone',

@@ -23,6 +23,7 @@ const SIGNED_IN_PAGES = [
   '/calendar',
   '/add',
   '/analytics',
+  '/analytics/summary/2026-10',
   '/reminders',
   '/notifications',
   '/resumes',

@@ -1,5 +1,7 @@
 'use client';
 
+import { useRef } from 'react';
+
 import type { NotificationFilter } from '@/entities/notification';
 import { uk } from '@/shared/i18n';
 import { Button } from '@/shared/ui/button';
@@ -21,9 +23,13 @@ const FILTERS = (['all', 'unread'] as const).map((value: NotificationFilter) => 
 export function NotificationsPage() {
   const feed = useNotificationFeed();
   const markAll = useMarkReadMutation();
+  const headingRef = useRef<HTMLHeadingElement>(null);
+  const rows = feed.filter.value === 'unread' ? { leaving: headingRef } : {};
   return (
     <section className="flex max-w-180 min-w-0 flex-col gap-6">
-      <h1 className={PAGE_TITLE}>{COPY.title}</h1>
+      <h1 ref={headingRef} tabIndex={-1} className={PAGE_TITLE}>
+        {COPY.title}
+      </h1>
       <div className="flex flex-wrap items-center justify-between gap-3">
         <SegmentedControl
           aria-label={COPY.filters.label}
@@ -43,7 +49,7 @@ export function NotificationsPage() {
           {COPY.readAll}
         </Button>
       </div>
-      <FeedBody feed={feed} />
+      <FeedBody feed={feed} context={rows} />
     </section>
   );
 }

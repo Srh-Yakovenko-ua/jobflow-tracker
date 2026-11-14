@@ -34,8 +34,13 @@ type Ask = Readonly<{ variant: boolean }>;
 
 type PanelControls = ReturnType<typeof usePanelControls>;
 
+function ownTextStored(applicationId: ApplicationResponse['id']): boolean {
+  const stored = readDraftEdit(applicationId);
+  return stored?.own === true || stored?.key === 'own';
+}
+
 function usePanelControls({ application, followup }: FollowupPanelProps) {
-  const [manual, setManual] = useState(() => readDraftEdit(application.id)?.key === 'own');
+  const [manual, setManual] = useState(() => ownTextStored(application.id));
   const methods = useForm<FollowupRequestInput, unknown, FollowupRequest>({
     defaultValues: { tone: 'neutral', language: followup.response.language, hint: '' },
     resolver: zodResolver(followupRequestSchema),

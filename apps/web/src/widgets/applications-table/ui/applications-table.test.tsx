@@ -1,14 +1,15 @@
 import type { ApplicationFilters, ApplicationListItem } from '@jobflow/shared';
 import { act, fireEvent, screen, waitFor, within } from '@testing-library/react';
 import type { RequestHandler } from 'msw';
-import { http } from 'msw/http';
+import { http, HttpResponse } from 'msw/http';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { FULL_CARD } from '@/entities/application';
 import { userKeys } from '@/entities/user';
 import { applicationFiltersOf } from '@/features/filter-applications';
 import { withSearchParams } from '@/shared/api';
-import { apiUrl, errorReply } from '@/test/api-handlers';
+import { uk } from '@/shared/i18n';
+import { apiUrl, errorReply, NEVER_ANSWERS } from '@/test/api-handlers';
 import { layOutColumns } from '@/test/board-drag';
 import { fixtureIdOf, moveRoute } from '@/test/board-fixtures';
 import { fakeTimeouts } from '@/test/fake-timeouts';
@@ -135,6 +136,18 @@ function sentQueryOf(query: string | undefined): Record<string, string> {
 
 function findRetry(): Promise<HTMLElement> {
   return screen.findByRole('button', { name: 'Спробувати ще раз' }, RETRY_WAIT);
+}
+
+function everyStageFailsRoute() {
+  const sent: (string | null)[] = [];
+  const handler = http.get(apiUrl('/applications'), ({ request }) => {
+    const stage = new URL(request.url).searchParams.get('stage');
+    sent.push(stage);
+    if (stage === null) return errorReply({ status: 500, type: 'internal_error' });
+    const items = SCORED.filter((item) => item.currentStage === stage);
+    return HttpResponse.json({ items, nextCursor: null });
+  });
+  return { handler, everyStageAsks: () => sent.filter((stage) => stage === null).length };
 }
 
 function classesOf(element: HTMLElement): string[] {
@@ -475,6 +488,31 @@ describe('ApplicationsTable filters', () => {
       'true',
     );
     expect(chips.getByRole('button', { name: /^відгук/ }).textContent).toBe('відгук1');
+  });
+
+  it('the stage chips hold their place while the table loads', async () => {
+    renderTableOver({ handlers: [http.get(apiUrl('/applications'), NEVER_ANSWERS.reply)] });
+
+    const chips = within(await screen.findByRole('group', { name: 'Етап' }));
+    expect(chips.getAllByRole('button')).toHaveLength(4);
+  });
+
+  it('failed stage counts keep the chips and say the counts did not load, with a retry', async () => {
+    const counts = everyStageFailsRoute();
+    const user = renderTableOver({ handlers: [counts.handler], filters: { stage: ['screening'] } });
+    await screen.findByRole('link', { name: 'Бета' });
+
+    const retry = await findRetry();
+    expect(within(screen.getByRole('group', { name: 'Етап' })).getAllByRole('button')).toHaveLength(
+      4,
+    );
+    expect(screen.getByRole('alert').textContent).toContain(uk.states.errors.loadFailed.title);
+    const asked = counts.everyStageAsks();
+    await user.click(retry);
+
+    await waitFor(() => {
+      expect(counts.everyStageAsks()).toBeGreaterThan(asked);
+    });
   });
 
   it('no cards at all shows the first run without the toolbar', async () => {
