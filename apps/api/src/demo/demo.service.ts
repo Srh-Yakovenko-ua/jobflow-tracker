@@ -1,8 +1,9 @@
+import { DEMO_USER } from '@jobflow/shared';
 import { Injectable, Logger } from '@nestjs/common';
 
 import { Clock } from '../common/clock.js';
 import { PlansService } from '../modules/plans/index.js';
-import { DEMO_USER, SeedService } from '../seed/seed.service.js';
+import { SeedService } from '../seed/seed.service.js';
 import type { PutObject } from '../storage/file-storage.js';
 import { loadDemoStory, openDemoJourneys, shiftStory } from './demo-story.js';
 import { DemoStoryWriter } from './demo-story-writer.service.js';

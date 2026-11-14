@@ -95,46 +95,66 @@ flowchart LR
 - pnpm 12.14.0: `npm install -g pnpm@12.14.0`. Node 26 постачається без corepack, тому pnpm ставиться окремо.
 - uv і Python 3.14 потрібні лише для `pnpm dev` і Python-тестів. У швидкому старті всі Python-сервіси працюють у контейнерах.
 
+Команди нижче написані для bash або zsh: macOS, Linux або WSL2 на Windows.
+
+Клон і залежності:
+
 ```bash
 git clone https://github.com/Srh-Yakovenko-ua/jobflow-tracker.git
 cd jobflow-tracker
 nvm use
 pnpm install --frozen-lockfile
+```
+
+`pnpm install --frozen-lockfile` ставить залежності точно за `pnpm-lock.yaml`.
+
+Стек з демо-даними:
+
+<!-- quick-start -->
+
+```bash
 cp .env.example .env
+echo 'COMPOSE_FILE=infra/docker/compose.yml:infra/docker/compose.ci.yml' >> .env
 pnpm gen:keys
+chmod -R a+rX .secrets
 pnpm infra:up
 pnpm db:migrate
 docker compose up -d --build --wait api worker analytics ai documents web
 pnpm demo:seed
 ```
 
-1. `pnpm install --frozen-lockfile` ставить залежності точно за `pnpm-lock.yaml`.
-2. `cp .env.example .env` створює кореневий `.env`. Значення з `.env.example` підходять для локального стеку, міняти їх не треба. Змінна `COMPOSE_FILE` у ньому вказує на `infra/docker/`, тому `docker compose` працює з кореня без `-f`.
-3. `pnpm gen:keys` створює ключі JWT у `.secrets/`, які монтують api і worker.
-4. `pnpm infra:up` піднімає Postgres, Redis, MinIO і Mailpit, чекає їхніх healthcheck-ів і створює бакет `resumes`.
-5. `pnpm db:migrate` застосовує міграції бази.
-6. `docker compose up -d --build --wait ...` збирає образи і повертає керування, коли всі застосунки стануть healthy. Перша збірка триває найдовше.
-7. `pnpm demo:seed` записує 12-тижневу історію пошуку: 54 відгуки, три версії резюме, AI-результати і місячний підсумок. Повторний запуск відновлює ту саму історію.
+<!-- /quick-start -->
 
-Відкрийте http://localhost:3000 і увійдіть як `demo@jobflow.local` з паролем `jobflow-demo`. Дашборд аналітики: http://localhost:3000/analytics.
+1. `cp .env.example .env` створює кореневий `.env`, значення з `.env.example` підходять для локального стеку.
+2. Рядок `COMPOSE_FILE` обирає продакшн-образи з `infra/docker/compose.ci.yml`, і оскільки в `.env` діє останнє значення ключа, `docker compose` з кореня працює з ними і в нових терміналах.
+3. `pnpm gen:keys` створює ключі JWT у `.secrets/`.
+4. `chmod -R a+rX .secrets` дає контейнерам api і worker прочитати ключі, які вони монтують з `.secrets/`, бо на Linux і WSL2 приватний ключ інакше читає лише ваш користувач.
+5. `pnpm infra:up` піднімає Postgres, Redis, MinIO і Mailpit, чекає їхніх healthcheck-ів і створює бакет `resumes`.
+6. `pnpm db:migrate` застосовує міграції бази.
+7. `docker compose up -d --build --wait ...` збирає продакшн-образи застосунків і повертає керування, коли всі вони стануть healthy, а перша збірка триває найдовше.
+8. `pnpm demo:seed` записує 12-тижневу історію пошуку (54 відгуки, три версії резюме, AI-результати і місячний підсумок), а повторний запуск відновлює ту саму історію.
+
+Відкрийте http://localhost:3000/login, увійдіть як `demo@jobflow.local` з паролем `jobflow-demo` і перейдіть на дашборд аналітики http://localhost:3000/analytics.
 
 Зупинити стек: `docker compose stop`. Дані залишаються в іменованих томах.
+
+CI проганяє саме цей блок: workflow [E2E](.github/workflows/e2e.yml) бере команди між маркерами `quick-start` з цього файлу, виконує їх і запускає тести Playwright, серед них вхід демо-акаунтом і перевірку `/analytics`.
 
 Розробка з hot reload (`pnpm dev`), повна таблиця портів і команд: [docs/getting-started.md](docs/getting-started.md).
 
 ## Адреси
 
-| Що                 | Адреса                                      |
-| ------------------ | ------------------------------------------- |
-| Web                | http://localhost:3000                       |
-| API, Swagger UI    | http://localhost:4000/api/docs              |
-| API, OpenAPI JSON  | http://localhost:4000/api/docs/openapi.json |
-| Bull Board (черги) | http://localhost:4000/admin/queues          |
-| Analytics, OpenAPI | http://localhost:8000/docs                  |
-| Mailpit            | http://localhost:8025                       |
-| MinIO, консоль     | http://localhost:9001                       |
+| Що                 | Адреса                                         |
+| ------------------ | ---------------------------------------------- |
+| Web                | http://localhost:3000                          |
+| API, контракт      | [docs/api/openapi.json](docs/api/openapi.json) |
+| Analytics, OpenAPI | http://localhost:8000/docs                     |
+| Mailpit            | http://localhost:8025                          |
+| MinIO, консоль     | http://localhost:9001                          |
 
-Swagger і Bull Board працюють у режимі розробки (`NODE_ENV=development`, як у `.env.example`). Вхід у консоль MinIO: `jobflow` / `jobflow-minio` (`MINIO_ROOT_USER` і `MINIO_ROOT_PASSWORD` з `.env.example`).
+Вхід у консоль MinIO: `jobflow` / `jobflow-minio` (`MINIO_ROOT_USER` і `MINIO_ROOT_PASSWORD` з `.env.example`).
+
+Api у швидкому старті працює з `NODE_ENV=production`, тому Swagger UI (http://localhost:4000/api/docs) і Bull Board є лише в режимі розробки `pnpm dev`, як описано в [docs/getting-started.md](docs/getting-started.md).
 
 ## AI-провайдер і вартість
 
@@ -146,7 +166,7 @@ Swagger і Bull Board працюють у режимі розробки (`NODE_E
 cp services/ai/.env.example services/ai/.env
 ```
 
-У `services/ai/.env` задайте `AI_PROVIDER` (`fake`, `anthropic`, `openai` або `nvidia`), `AI_MODEL` і ключ цього вендора: `ANTHROPIC_API_KEY`, `OPENAI_API_KEY` або `NVIDIA_API_KEY`. Потім перезапустіть сервіс:
+У `services/ai/.env` задайте `AI_PROVIDER` (`fake`, `anthropic`, `openai` або `nvidia`), `AI_MODEL` і ключ цього вендора: `ANTHROPIC_API_KEY`, `OPENAI_API_KEY` або `NVIDIA_API_KEY`. Потім перезапустіть сервіс, на стеку швидкого старту так само:
 
 ```bash
 docker compose up -d --force-recreate ai
@@ -170,7 +190,6 @@ docker compose up -d --force-recreate ai
 apps/
   web/            Next.js 16 (App Router)
   api/            NestJS 12: точка входу src/main.ts, AppModule у src/app.module.ts, worker у src/worker.ts
-  mobile/         Expo, необов'язковий етап
 services/
   analytics/      FastAPI (Python 3.14, uv)
   ai/             FastAPI, AI-провайдери, порт 8001
@@ -180,7 +199,7 @@ packages/
   config/         спільні пресети tsconfig, eslint, prettier
 bookmarklet/      код букмарклета і скрипт збірки
 infra/
-  docker/         Dockerfile-и, compose-файли, конфіги моніторингу
+  docker/         compose-файли, ініціалізація Postgres
 .github/
   workflows/      CI
 docs/             ADR, дизайн, діаграми до диплому
@@ -211,12 +230,12 @@ docs/             ADR, дизайн, діаграми до диплому
 | `pnpm ai:eval <вид>`                                                         | якість моделі на наборах кейсів з [evals](apps/api/src/modules/ai/evals) |
 | `pnpm ci:local`                                                              | ті самі перевірки, що й CI, у тому ж порядку                             |
 
-E2E-тести Playwright з `apps/web/e2e` проганяє workflow [E2E](.github/workflows/e2e.yml) у GitHub Actions на стеку, піднятому в тому ж порядку, що й швидкий старт. Кожен тест реєструє нового користувача, а `.env.example` дозволяє лише 3 реєстрації на годину, тому локально на запущеному стеку спершу підніміть ліміти і перезапустіть api і worker:
+E2E-тести Playwright з `apps/web/e2e` проганяє workflow [E2E](.github/workflows/e2e.yml) у GitHub Actions на стеку, який піднімає блок швидкого старту з цього README. Кожен тест реєструє нового користувача, а `.env.example` дозволяє лише 3 реєстрації на годину, тому локально на стеку швидкого старту спершу підніміть ліміти і перезапустіть api:
 
 ```bash
 echo 'RATE_LIMIT_REGISTER_PER_HOUR=100' >> .env
 echo 'RATE_LIMIT_LOGIN_PER_MINUTE=60' >> .env
-docker compose up -d --wait --force-recreate api worker
+docker compose up -d --wait --force-recreate api
 pnpm --filter @jobflow/web exec playwright install chromium firefox
 pnpm test:e2e
 ```
@@ -225,7 +244,11 @@ pnpm test:e2e
 
 **Порт уже зайнятий.** Порти зафіксовані в `infra/docker/compose.yml`, тому звільніть порт, а не міняйте його. `lsof -nP -iTCP:3000 -sTCP:LISTEN` покаже процес, що його тримає (підставте свій номер). Якщо це інший проєкт compose, `docker compose ls` покаже його назву, а `docker compose -p <назва> stop` зупинить.
 
-**Docker не вистачає пам'яті.** Стеку потрібно щонайменше 6 ГБ пам'яті для Docker. У Docker Desktop її задає Settings, Resources, Memory. Після зміни перезапустіть Docker і повторіть команду `docker compose up` зі швидкого старту. Який контейнер не піднявся, покаже `docker compose ps`.
+**Docker не вистачає пам'яті.** Стеку потрібно щонайменше 6 ГБ пам'яті для Docker, бо перша збірка виконує `next build` всередині Docker. У Docker Desktop її задає Settings, Resources, Memory. Після зміни перезапустіть Docker і повторіть команду `docker compose up` зі швидкого старту. Який контейнер не піднявся, покаже `docker compose ps`.
+
+**Застарілі образи після `git pull`.** Повторіть рядок `docker compose up -d --build --wait ...` зі швидкого старту: `--build` перезбирає образи зі зміненого коду. Якщо в pull прийшли нові міграції, спершу виконайте `pnpm db:migrate`.
+
+**Повернутися до dev-контейнерів.** Зупиніть стек (`docker compose stop`) і видаліть з `.env` дописаний рядок `COMPOSE_FILE=infra/docker/compose.yml:infra/docker/compose.ci.yml`. Тоді діє рядок `COMPOSE_FILE` з `.env.example`, який підключає `compose.override.yml`, і `docker compose` знову збирає цілі `dev` з hot reload, як описано в [docs/getting-started.md](docs/getting-started.md).
 
 Решта проблем і їхні рішення: [docs/getting-started.md](docs/getting-started.md#типові-проблеми).
 
@@ -239,3 +262,4 @@ pnpm test:e2e
 - [OpenAPI](docs/api/openapi.json): контракт API.
 - [Дизайн](docs/design/README.md): дизайн-хендоф.
 - [AI eval](apps/api/src/modules/ai/evals): набори кейсів для `pnpm ai:eval`.
+- [Доступність](apps/web/e2e/a11y.test.ts): перевірка axe в E2E-тестах.

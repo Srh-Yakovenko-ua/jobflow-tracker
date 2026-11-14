@@ -43,6 +43,6 @@ services:
   web:
     build:
       target: dev
-    mem_limit: 3g
+    mem_limit: 1536m
     volumes:
       - ../../apps/web/src:/app/apps/web/src

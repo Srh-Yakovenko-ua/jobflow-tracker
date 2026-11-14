@@ -95,46 +95,66 @@ You need:
 - pnpm 12.14.0: `npm install -g pnpm@12.14.0`. Node 26 ships without corepack, so pnpm is installed on its own.
 - uv and Python 3.14 only for `pnpm dev` and the Python tests. In the quick start every Python service runs in a container.
 
+The commands below are for bash or zsh: macOS, Linux or WSL2 on Windows.
+
+Clone and dependencies:
+
 ```bash
 git clone https://github.com/Srh-Yakovenko-ua/jobflow-tracker.git
 cd jobflow-tracker
 nvm use
 pnpm install --frozen-lockfile
+```
+
+`pnpm install --frozen-lockfile` installs the dependencies exactly as `pnpm-lock.yaml` pins them.
+
+The stack with demo data:
+
+<!-- quick-start -->
+
+```bash
 cp .env.example .env
+echo 'COMPOSE_FILE=infra/docker/compose.yml:infra/docker/compose.ci.yml' >> .env
 pnpm gen:keys
+chmod -R a+rX .secrets
 pnpm infra:up
 pnpm db:migrate
 docker compose up -d --build --wait api worker analytics ai documents web
 pnpm demo:seed
 ```
 
-1. `pnpm install --frozen-lockfile` installs the dependencies exactly as `pnpm-lock.yaml` pins them.
-2. `cp .env.example .env` creates the root `.env`. The values in `.env.example` fit the local stack, there is nothing to change. Its `COMPOSE_FILE` points at `infra/docker/`, so `docker compose` works from the root without `-f`.
-3. `pnpm gen:keys` creates the JWT keys in `.secrets/`, which api and worker mount.
-4. `pnpm infra:up` starts Postgres, Redis, MinIO and Mailpit, waits for their healthchecks and creates the `resumes` bucket.
-5. `pnpm db:migrate` applies the database migrations.
-6. `docker compose up -d --build --wait ...` builds the images and returns once every app is healthy. The first build takes the longest.
-7. `pnpm demo:seed` writes a 12 week job search story: 54 applications, three CV versions, AI results and a monthly summary. Running it again restores the same story.
+<!-- /quick-start -->
 
-Open http://localhost:3000 and sign in as `demo@jobflow.local` with the password `jobflow-demo`. The analytics dashboard is at http://localhost:3000/analytics.
+1. `cp .env.example .env` creates the root `.env`, and the values in `.env.example` fit the local stack.
+2. The `COMPOSE_FILE` line picks the production images from `infra/docker/compose.ci.yml`, and since the last value of a key wins in `.env`, `docker compose` keeps using them from the root in new terminals too.
+3. `pnpm gen:keys` creates the JWT keys in `.secrets/`.
+4. `chmod -R a+rX .secrets` lets the api and worker containers read the keys they mount from `.secrets/`, because on Linux and WSL2 only your own user can read the private key otherwise.
+5. `pnpm infra:up` starts Postgres, Redis, MinIO and Mailpit, waits for their healthchecks and creates the `resumes` bucket.
+6. `pnpm db:migrate` applies the database migrations.
+7. `docker compose up -d --build --wait ...` builds the production images of the apps and returns once all of them are healthy, and the first build takes the longest.
+8. `pnpm demo:seed` writes a 12 week job search story (54 applications, three CV versions, AI results and a monthly summary), and running it again restores the same story.
+
+Open http://localhost:3000/login, sign in as `demo@jobflow.local` with the password `jobflow-demo` and go to the analytics dashboard at http://localhost:3000/analytics.
 
 Stop the stack with `docker compose stop`. The data stays in named volumes.
+
+CI runs this very block: the [E2E](.github/workflows/e2e.yml) workflow takes the commands between the `quick-start` markers in README.md, runs them and then runs the Playwright tests, among them a sign-in as the demo account and a check of `/analytics`.
 
 Development with hot reload (`pnpm dev`), the full ports and commands tables: [docs/getting-started.md](docs/getting-started.md) (in Ukrainian).
 
 ## URLs
 
-| What                | URL                                         |
-| ------------------- | ------------------------------------------- |
-| Web                 | http://localhost:3000                       |
-| API, Swagger UI     | http://localhost:4000/api/docs              |
-| API, OpenAPI JSON   | http://localhost:4000/api/docs/openapi.json |
-| Bull Board (queues) | http://localhost:4000/admin/queues          |
-| Analytics, OpenAPI  | http://localhost:8000/docs                  |
-| Mailpit             | http://localhost:8025                       |
-| MinIO console       | http://localhost:9001                       |
+| What               | URL                                            |
+| ------------------ | ---------------------------------------------- |
+| Web                | http://localhost:3000                          |
+| API contract       | [docs/api/openapi.json](docs/api/openapi.json) |
+| Analytics, OpenAPI | http://localhost:8000/docs                     |
+| Mailpit            | http://localhost:8025                          |
+| MinIO console      | http://localhost:9001                          |
 
-Swagger and Bull Board run in development mode (`NODE_ENV=development`, as in `.env.example`). MinIO console login: `jobflow` / `jobflow-minio` (`MINIO_ROOT_USER` and `MINIO_ROOT_PASSWORD` from `.env.example`).
+MinIO console login: `jobflow` / `jobflow-minio` (`MINIO_ROOT_USER` and `MINIO_ROOT_PASSWORD` from `.env.example`).
+
+The quick-start api runs with `NODE_ENV=production`, so Swagger UI (http://localhost:4000/api/docs) and Bull Board exist only in the `pnpm dev` development mode, as [docs/getting-started.md](docs/getting-started.md) describes.
 
 ## AI provider and cost
 
@@ -146,7 +166,7 @@ Only the ai service picks the provider. Api knows just its address, `AI_SERVICE_
 cp services/ai/.env.example services/ai/.env
 ```
 
-In `services/ai/.env` set `AI_PROVIDER` (`fake`, `anthropic`, `openai` or `nvidia`), `AI_MODEL` and that vendor's key: `ANTHROPIC_API_KEY`, `OPENAI_API_KEY` or `NVIDIA_API_KEY`. Then restart the service:
+In `services/ai/.env` set `AI_PROVIDER` (`fake`, `anthropic`, `openai` or `nvidia`), `AI_MODEL` and that vendor's key: `ANTHROPIC_API_KEY`, `OPENAI_API_KEY` or `NVIDIA_API_KEY`. Then restart the service, the same way on the quick-start stack:
 
 ```bash
 docker compose up -d --force-recreate ai
@@ -170,7 +190,6 @@ Root `.env` variables cap the spending: `AI_DAILY_LIMIT=50` calls per user per d
 apps/
   web/            Next.js 16 (App Router)
   api/            NestJS 12: entry src/main.ts, AppModule in src/app.module.ts, worker in src/worker.ts
-  mobile/         Expo, optional stage
 services/
   analytics/      FastAPI (Python 3.14, uv)
   ai/             FastAPI, AI providers, port 8001
@@ -180,7 +199,7 @@ packages/
   config/         shared tsconfig, eslint, prettier presets
 bookmarklet/      bookmarklet source and build script
 infra/
-  docker/         Dockerfiles, compose files, monitoring configs
+  docker/         compose files, Postgres init
 .github/
   workflows/      CI
 docs/             ADRs, design, diagrams for the thesis
@@ -211,12 +230,12 @@ Every command: [docs/getting-started.md](docs/getting-started.md#команди)
 | `pnpm ai:eval <kind>`                                                           | model quality on the case sets in [evals](apps/api/src/modules/ai/evals) |
 | `pnpm ci:local`                                                                 | the same checks as CI, in the same order                                 |
 
-The Playwright E2E tests in `apps/web/e2e` run in the [E2E](.github/workflows/e2e.yml) workflow on GitHub Actions, on a stack started in the same order as the quick start. Every test registers a new user, and `.env.example` allows only 3 sign-ups an hour, so locally, on a running stack, raise the limits and recreate api and worker first:
+The Playwright E2E tests in `apps/web/e2e` run in the [E2E](.github/workflows/e2e.yml) workflow on GitHub Actions, on the stack that the quick-start block of this README starts. Every test registers a new user, and `.env.example` allows only 3 sign-ups an hour, so locally, on the quick-start stack, raise the limits and recreate api first:
 
 ```bash
 echo 'RATE_LIMIT_REGISTER_PER_HOUR=100' >> .env
 echo 'RATE_LIMIT_LOGIN_PER_MINUTE=60' >> .env
-docker compose up -d --wait --force-recreate api worker
+docker compose up -d --wait --force-recreate api
 pnpm --filter @jobflow/web exec playwright install chromium firefox
 pnpm test:e2e
 ```
@@ -225,7 +244,11 @@ pnpm test:e2e
 
 **A port is busy.** The ports are fixed in `infra/docker/compose.yml`, so free the port rather than change it. `lsof -nP -iTCP:3000 -sTCP:LISTEN` shows the process holding it (use your port number). If it is another compose project, `docker compose ls` shows its name and `docker compose -p <name> stop` stops it.
 
-**Docker runs out of memory.** The stack needs at least 6 GB of memory for Docker. In Docker Desktop that is Settings, Resources, Memory. After the change, restart Docker and run the `docker compose up` command from the quick start again. `docker compose ps` shows which container did not come up.
+**Docker runs out of memory.** The stack needs at least 6 GB of memory for Docker, because the first build runs `next build` inside Docker. In Docker Desktop that is Settings, Resources, Memory. After the change, restart Docker and run the `docker compose up` command from the quick start again. `docker compose ps` shows which container did not come up.
+
+**Images out of date after `git pull`.** Run the `docker compose up -d --build --wait ...` line from the quick start again: `--build` rebuilds the images from the changed code. If the pull brought new migrations, run `pnpm db:migrate` first.
+
+**Back to the dev containers.** Stop the stack (`docker compose stop`) and delete the appended `COMPOSE_FILE=infra/docker/compose.yml:infra/docker/compose.ci.yml` line from `.env`. The `COMPOSE_FILE` line from `.env.example`, which brings in `compose.override.yml`, then applies again, and `docker compose` builds the `dev` targets with hot reload once more, as [docs/getting-started.md](docs/getting-started.md) describes.
 
 The other problems and their fixes: [docs/getting-started.md](docs/getting-started.md#типові-проблеми).
 
@@ -239,3 +262,4 @@ The other problems and their fixes: [docs/getting-started.md](docs/getting-start
 - [OpenAPI](docs/api/openapi.json): the API contract.
 - [Design](docs/design/README.md): the design handoff.
 - [AI eval](apps/api/src/modules/ai/evals): the case sets for `pnpm ai:eval`.
+- [Accessibility](apps/web/e2e/a11y.test.ts): the axe check in the E2E tests.

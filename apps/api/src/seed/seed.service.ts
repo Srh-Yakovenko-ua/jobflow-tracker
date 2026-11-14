@@ -1,14 +1,8 @@
-import { type RegisterInput, REJECTION_REASONS } from '@jobflow/shared';
+import { DEMO_USER, REJECTION_REASONS } from '@jobflow/shared';
 import { Injectable, Logger } from '@nestjs/common';
 
 import { AuthService } from '../modules/auth/index.js';
 import { type RejectionReasonRow, SeedRepository } from './seed.repository.js';
-
-export const DEMO_USER = {
-  email: 'demo@jobflow.local',
-  password: 'jobflow-demo',
-  displayName: 'Демо',
-} satisfies RegisterInput;
 
 export function sharedRejectionReasons(): RejectionReasonRow[] {
   return Object.entries(REJECTION_REASONS).map(([code, reason]) => ({ code, ...reason }));
