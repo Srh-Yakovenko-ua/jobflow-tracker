@@ -1,4 +1,9 @@
-import { DEFAULT_SEARCH_TITLE } from '@jobflow/shared';
+import {
+  DEFAULT_SEARCH_TITLE,
+  DEFAULT_SILENCE_DAYS,
+  silenceLevelOf,
+  wholeDaysBetween,
+} from '@jobflow/shared';
 import { describe, expect, it } from 'vitest';
 
 import { Clock } from '../common/clock.js';
@@ -10,6 +15,8 @@ import { SearchesRepository } from '../modules/searches/index.js';
 import type { PrismaService } from '../prisma/prisma.service.js';
 import { SeedRepository } from '../seed/seed.repository.js';
 import { DEMO_USER, SeedService } from '../seed/seed.service.js';
+import { FileStorage } from '../storage/file-storage.js';
+import { StorageModule } from '../storage/storage.module.js';
 import { appTestingModule, useTestApp } from '../test/app.js';
 import {
   createActiveResumeVersion,
@@ -23,7 +30,8 @@ import { createNotifications } from '../test/notifications.js';
 import { fixedClock } from '../test/time.js';
 import { DemoRepository } from './demo.repository.js';
 import { DemoService } from './demo.service.js';
-import { loadDemoStory } from './demo-story.js';
+import { DemoCvFiles } from './demo-cv-files.service.js';
+import { loadDemoStory, openDemoJourneys } from './demo-story.js';
 import { DemoStoryWriter } from './demo-story-writer.service.js';
 
 const PINNED_NOW = new Date('2026-11-20T10:30:00.000Z');
@@ -37,7 +45,15 @@ const DEMO_DUMP_SELECT = {
   resumes: { select: { title: true, createdAt: true } },
   resumeVersions: {
     orderBy: { number: 'asc' },
-    select: { number: true, title: true, storageKey: true, uploadedAt: true, aiProfile: true },
+    select: {
+      number: true,
+      title: true,
+      storageKey: true,
+      sizeBytes: true,
+      mime: true,
+      uploadedAt: true,
+      aiProfile: true,
+    },
   },
   applications: {
     orderBy: { url: 'asc' },
@@ -79,7 +95,7 @@ const countBy = <Item>(items: Item[], keyOf: (item: Item) => string | null) =>
   }, {});
 
 async function expectedJourneys() {
-  const story = await loadDemoStory();
+  const story = openDemoJourneys(await loadDemoStory());
   return story.applications.map(({ url, source, events }) => ({
     url,
     source,
@@ -120,7 +136,7 @@ async function createForeignUser(prisma: PrismaService) {
 describe('the demo story seed', () => {
   const testApp = useTestApp(() =>
     appTestingModule({
-      imports: [AuthModule, PlansModule],
+      imports: [AuthModule, PlansModule, StorageModule],
       providers: [
         SeedRepository,
         SeedService,
@@ -129,6 +145,7 @@ describe('the demo story seed', () => {
         ResumeVersionsRepository,
         DemoStoryWriter,
         DemoService,
+        DemoCvFiles,
         Clock,
       ],
     })
@@ -138,7 +155,19 @@ describe('the demo story seed', () => {
 
   const demo = () => testApp.app.get(DemoService);
 
-  it('writes the 54 design journeys shifted to now, with their versions, summary, plan and offer call', async () => {
+  const seedDemo = async () => {
+    const cvFiles = await demo().run();
+    await testApp.app.get(DemoCvFiles).store(cvFiles);
+    return cvFiles;
+  };
+
+  const cvHeads = async () => {
+    const { resumeVersions } = await demoDump(testApp.prisma);
+    const storage = testApp.app.get(FileStorage);
+    return Promise.all(resumeVersions.map(({ storageKey }) => storage.head(storageKey)));
+  };
+
+  it('writes the 54 design journeys shifted to now with the withdrawn ones open, with their versions, summary, plan and offer call', async () => {
     await demo().run();
 
     const dump = await demoDump(testApp.prisma);
@@ -153,9 +182,20 @@ describe('the demo story seed', () => {
     expect(countBy(dump.applications, ({ currentStage }) => currentStage)).toEqual({
       rejected: 32,
       ghosted: 17,
-      withdrawn: 4,
+      applied: 2,
+      screening: 1,
+      final: 1,
       offer: 1,
     });
+    expect(
+      countBy(dump.applications, ({ currentStage, lastEventAt }) =>
+        silenceLevelOf({
+          stage: currentStage,
+          silenceDays: DEFAULT_SILENCE_DAYS,
+          daysSinceLastEvent: wholeDaysBetween(lastEventAt, PINNED_NOW),
+        }),
+      ),
+    ).toMatchObject({ silent: 3 });
     expect(countBy(dump.applications, ({ source }) => source)).toEqual({
       djinni: 24,
       linkedin: 16,
@@ -186,7 +226,7 @@ describe('the demo story seed', () => {
       silence_timeout: 2,
       unspecified: 2,
     });
-    expect(reasons).toHaveLength(138);
+    expect(reasons).toHaveLength(134);
   });
 
   it('starts the first journey 84 days minus 90 minutes after the story date', async () => {
@@ -212,9 +252,15 @@ describe('the demo story seed', () => {
   });
 
   it('adds three profiled resume versions with v2 active, one done summary with its plan and the planned offer call', async () => {
-    await demo().run();
+    const cvFiles = await seedDemo();
 
     const dump = await demoDump(testApp.prisma);
+    expect(cvFiles.map(({ key, mime }) => ({ storageKey: key, mime }))).toEqual(
+      dump.resumeVersions.map(({ storageKey, mime }) => ({ storageKey, mime })),
+    );
+    expect(
+      (await cvHeads()).map((head) => ({ sizeBytes: head?.sizeBytes, mime: head?.mime })),
+    ).toEqual(dump.resumeVersions.map(({ sizeBytes }) => ({ sizeBytes, mime: 'application/pdf' })));
     expect(dump.resumeVersions.map(({ number, title }) => `${String(number)} ${title}`)).toEqual([
       '1 хронологічне',
       '2 акцент на продукті',
@@ -246,16 +292,19 @@ describe('the demo story seed', () => {
     });
   });
 
-  it('gives the same story on a second run and keeps the demo user', async () => {
-    await demo().run();
+  it('gives the same story and CV files on a second run and keeps the demo user', async () => {
+    await seedDemo();
     const first = await demoDump(testApp.prisma);
+    const firstHeads = await cvHeads();
     const { id } = await testApp.prisma.user.findUniqueOrThrow({
       where: { email: DEMO_USER.email },
     });
 
-    await demo().run();
+    await seedDemo();
 
     expect(await demoDump(testApp.prisma)).toEqual(first);
+    expect(await cvHeads()).toEqual(firstHeads);
+    expect(firstHeads.every((head) => head !== null)).toBe(true);
     const users = await testApp.prisma.user.findMany({ where: { email: DEMO_USER.email } });
     expect(users.map((user) => user.id)).toEqual([id]);
   });

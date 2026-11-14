@@ -95,7 +95,7 @@ jobs:
         with:
           fetch-depth: 0
       - uses: ./.github/actions/setup
-      - run: pnpm turbo run test ${{ env.AFFECTED }}
+      - run: pnpm turbo run test ${{ env.AFFECTED }} --filter=!@jobflow/web
       - name: Coverage table
         if: ${{ !cancelled() }}
         run: |
@@ -119,6 +119,36 @@ jobs:
             apps/*/coverage
             packages/*/coverage
             bookmarklet/coverage
+          if-no-files-found: ignore
+
+  web-unit:
+    needs: changes
+    if: needs.changes.outputs.code == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7.0.1
+        with:
+          fetch-depth: 0
+      - uses: ./.github/actions/setup
+      - run: pnpm turbo run test ${{ github.event_name == 'pull_request' && '--filter=@jobflow/web...[origin/main]' || '--filter=@jobflow/web' }}
+      - name: Coverage table
+        if: ${{ !cancelled() }}
+        run: |
+          summary=apps/web/coverage/coverage-summary.json
+          [[ -f $summary ]] || exit 0
+          {
+            echo '### Web coverage'
+            echo ''
+            echo '| package | lines | branches | functions | statements |'
+            echo '| --- | --- | --- | --- | --- |'
+            jq -r '"| web | \(.total.lines.pct)% | \(.total.branches.pct)% | \(.total.functions.pct)% | \(.total.statements.pct)% |"' "$summary"
+          } >> "$GITHUB_STEP_SUMMARY"
+      - uses: actions/upload-artifact@v7.0.2
+        if: ${{ !cancelled() }}
+        with:
+          name: coverage-web
+          path: apps/web/coverage
           if-no-files-found: ignore
 
   integration:

@@ -2,7 +2,9 @@ import base64
 import json
 import threading
 import time
+from collections.abc import Callable
 from concurrent.futures import ThreadPoolExecutor
+from typing import Any
 
 import pytest
 from fastapi.testclient import TestClient
@@ -14,6 +16,7 @@ from app.extract.detect import FileType
 from tests.factories import (
     MAX_JPEG_BYTES,
     RENAMED_DOCUMENT,
+    RENDER_REFUSAL,
     UPPER_CASE_DEFAULT,
     UPPER_CASE_OVERRIDE,
     bloated_xml_docx,
@@ -24,7 +27,9 @@ from tests.factories import (
     pixel_bomb_png,
     resume_docx,
     scan_pdf,
+    smask_pdf,
     text_pdf,
+    tiled_pattern_pdf,
     two_page_pdf,
     unsupported_method_docx,
     wrong_root_docx,
@@ -189,19 +194,49 @@ def test_answers_422_with_the_path_when_the_file_is_missing(client: TestClient) 
     ) == (422, "validation_error", ["file"], REQUEST_ID)
 
 
-def test_logs_the_shape_of_the_document_but_not_its_text(client: TestClient) -> None:
+@pytest.mark.parametrize(
+    "data", [smask_pdf(), tiled_pattern_pdf()], ids=["soft-mask", "tiled-pattern"]
+)
+def test_answers_422_for_a_page_over_the_render_limits_and_serves_the_next(
+    client: TestClient, data: bytes
+) -> None:
+    refused = post_file(client, data)
+    served = [
+        post_file(client, pdf).status_code for pdf in (two_page_pdf(), scan_pdf(1))
+    ]
+
+    body = refused.json()
+    assert (refused.status_code, body["type"], body["detail"], served) == (
+        422,
+        "unreadable_file",
+        RENDER_REFUSAL,
+        [200, 200],
+    )
+
+
+def logged_lines(action: Callable[[], object]) -> list[str]:
     lines: list[str] = []
     sink = logger.add(lines.append, serialize=True)
     try:
-        post_file(client, two_page_pdf())
+        action()
     finally:
         logger.remove(sink)
+    return lines
 
+
+def extraction_extras(lines: list[str]) -> list[dict[str, Any]]:
     records = [json.loads(line)["record"] for line in lines]
-    extracted = [
-        record for record in records if record["message"] == "document extracted"
+    return [
+        record["extra"]
+        for record in records
+        if record["message"] == "document extracted"
     ]
-    extra = extracted[0]["extra"]
+
+
+def test_logs_the_shape_of_the_document_but_not_its_text(client: TestClient) -> None:
+    lines = logged_lines(lambda: post_file(client, two_page_pdf()))
+
+    extra = extraction_extras(lines)[0]
     assert (sorted(extra), extra["fileType"], extra["kind"], extra["pageCount"]) == (
         ["durationMs", "fileType", "kind", "pageCount", "requestId", "sizeBytes"],
         "pdf",
@@ -210,6 +245,16 @@ def test_logs_the_shape_of_the_document_but_not_its_text(client: TestClient) -> 
     )
     assert extra["sizeBytes"] == len(two_page_pdf())
     assert not [line for line in lines if "Senior Python developer" in line]
+
+
+EMPTY_TEXT = DocumentExtraction(kind=Kind.text, text="", pages=[], page_count=1)
+
+
+def post_two_at_once(client: TestClient) -> list[int]:
+    with ThreadPoolExecutor(max_workers=2) as pool:
+        return list(
+            pool.map(lambda _: post_file(client, b"%PDF").status_code, range(2))
+        )
 
 
 def test_runs_one_extraction_at_a_time(
@@ -225,14 +270,23 @@ def test_runs_one_extraction_at_a_time(
         time.sleep(0.2)
         with counter:
             running["now"] -= 1
-        return "pdf", DocumentExtraction(
-            kind=Kind.text, text="", pages=[], page_count=1
-        )
+        return "pdf", EMPTY_TEXT
 
     monkeypatch.setattr("app.api.routes.extract.extract_document", slow_extract)
-    with ThreadPoolExecutor(max_workers=2) as pool:
-        statuses = list(
-            pool.map(lambda _: post_file(client, b"%PDF").status_code, range(2))
-        )
+    statuses = post_two_at_once(client)
 
     assert (statuses, running["peak"]) == ([200, 200], 1)
+
+
+def test_leaves_the_wait_for_the_lock_out_of_the_duration(
+    client: TestClient, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    def slow_extract(data: bytes) -> tuple[FileType, DocumentExtraction]:
+        time.sleep(0.2)
+        return "pdf", EMPTY_TEXT
+
+    monkeypatch.setattr("app.api.routes.extract.extract_document", slow_extract)
+    lines = logged_lines(lambda: post_two_at_once(client))
+
+    durations = [extra["durationMs"] for extra in extraction_extras(lines)]
+    assert (len(durations), max(durations) < 300) == (2, True)

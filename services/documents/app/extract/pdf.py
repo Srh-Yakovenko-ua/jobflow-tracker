@@ -1,13 +1,11 @@
 import pypdfium2 as pdfium
 from pypdfium2 import raw
 
-from app.contracts.document_extraction import DocumentExtraction, Kind, Page
+from app.contracts.document_extraction import DocumentExtraction, Kind
 from app.core.errors import DocumentError
 from app.core.limits import LIMITS
-from app.extract.image import MAX_LONG_SIDE, MAX_PIXELS, to_jpeg_page
+from app.extract.render_sandbox import render_scan
 
-SCAN_DPI = 150
-POINTS_PER_INCH = 72
 MIN_CHARS_PER_PAGE = 50
 ENCRYPTED_CODES = {raw.FPDF_ERR_PASSWORD, raw.FPDF_ERR_SECURITY}
 
@@ -26,23 +24,7 @@ def page_text(page: pdfium.PdfPage) -> str:
     return page.get_textpage().get_text_bounded().replace("\r\n", "\n").strip()
 
 
-def check_image_pixels(page: pdfium.PdfPage) -> None:
-    images = page.get_objects(filter=[raw.FPDF_PAGEOBJ_IMAGE])
-    sizes = (image.get_px_size() for image in images)
-    if sum(width * height for width, height in sizes) > MAX_PIXELS:
-        raise DocumentError(
-            "unreadable_file", detail="The page images have too many pixels"
-        )
-
-
-def render_page(page: pdfium.PdfPage, index: int) -> Page:
-    check_image_pixels(page)
-    scale = min(SCAN_DPI / POINTS_PER_INCH, MAX_LONG_SIDE / max(page.get_size()))
-    bitmap = page.render(scale=scale, draw_annots=False, may_draw_forms=False)
-    return to_jpeg_page(bitmap.to_pil(), index)
-
-
-def read_pdf(document: pdfium.PdfDocument) -> DocumentExtraction:
+def read_pdf(document: pdfium.PdfDocument, *, data: bytes) -> DocumentExtraction:
     page_count = len(document)
     if page_count > LIMITS.max_pages:
         raise DocumentError(
@@ -57,10 +39,7 @@ def read_pdf(document: pdfium.PdfDocument) -> DocumentExtraction:
             pages=[],
             page_count=page_count,
         )
-    pages = [
-        render_page(document[index], index)
-        for index in range(min(LIMITS.scan_pages, page_count))
-    ]
+    pages = render_scan(data, count=min(LIMITS.scan_pages, page_count))
     return DocumentExtraction(
         kind=Kind.scan, text="", pages=pages, page_count=page_count
     )
@@ -69,7 +48,7 @@ def read_pdf(document: pdfium.PdfDocument) -> DocumentExtraction:
 def extract_pdf(data: bytes) -> DocumentExtraction:
     document = open_pdf(data)
     try:
-        return read_pdf(document)
+        return read_pdf(document, data=data)
     except pdfium.PdfiumError as error:
         raise DocumentError("unreadable_file") from error
     finally:

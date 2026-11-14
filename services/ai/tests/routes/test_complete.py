@@ -70,7 +70,7 @@ async def test_returns_the_fixture_output_with_model_and_prompt_version() -> Non
     assert body == {
         "output": PARSED_VACANCY,
         "model": "fake",
-        "promptVersion": "v2",
+        "promptVersion": "v3",
         "tokensIn": 100,
         "tokensOut": 50,
     }
@@ -112,7 +112,7 @@ async def test_returns_the_followup_draft_at_temperature_0_4() -> None:
         {
             "output": FOLLOWUP_FIXTURE,
             "model": "fake",
-            "promptVersion": "v1",
+            "promptVersion": "v2",
             "tokensIn": 100,
             "tokensOut": 50,
         },

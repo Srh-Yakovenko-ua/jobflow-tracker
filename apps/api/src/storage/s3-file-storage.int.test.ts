@@ -35,6 +35,10 @@ const STORAGE_CALLS = [
     call: (storage: S3FileStorage) =>
       storage.copy({ from: newKey(), to: newKey(), ifMatch: PDF_ETAG }),
   },
+  {
+    name: 'put',
+    call: (storage: S3FileStorage) => storage.put({ key: newKey(), bytes: PDF_BYTES, mime: PDF }),
+  },
 ];
 
 const pdfUpload = (key: string, signedAt = new Date()): UploadUrlRequest => ({
@@ -107,6 +111,16 @@ describe('S3FileStorage against MinIO', () => {
       mime: PDF,
       etag: PDF_ETAG,
     });
+  });
+
+  it('stores the bytes of a direct put with their type and size', async () => {
+    const key = newKey();
+
+    await storage.put({ key, bytes: PDF_BYTES, mime: PDF });
+
+    expect(await storage.head(key)).toMatchObject({ sizeBytes: PDF_BYTES.length, mime: PDF });
+    const start = await storage.readStart({ key, bytes: 5 });
+    expect(new TextDecoder().decode(start)).toBe('%PDF-');
   });
 
   it('copies an object whose ETag still matches the one read', async () => {

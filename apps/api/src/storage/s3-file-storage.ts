@@ -22,6 +22,7 @@ import type {
   DownloadUrlRequest,
   FileStorage,
   ObjectStart,
+  PutObject,
   SignedUrl,
   StoredObject,
   UploadUrlRequest,
@@ -174,6 +175,19 @@ export class S3FileStorage implements FileStorage, OnModuleDestroy {
       CopySourceIfMatch: ifMatch,
     });
     return (await orMissing(this.client.send(command, withinStorageLimit()))) !== null;
+  }
+
+  async put({ key, bytes, mime }: PutObject): Promise<void> {
+    const command = new PutObjectCommand({
+      Bucket: this.bucket,
+      Key: key,
+      Body: bytes,
+      ContentType: mime,
+      ContentLength: bytes.length,
+    });
+    await this.client.send(command, withinStorageLimit()).catch((error: unknown) => {
+      throw storageDown(error);
+    });
   }
 
   async readStart({ key, bytes, ifMatch }: ObjectStart): Promise<Uint8Array> {

@@ -73,6 +73,20 @@ def test_system_prompt_states_the_confidence_and_evidence_rules(rule: str) -> No
     assert rule in vacancy_parse.SYSTEM
 
 
+@pytest.mark.parametrize(
+    "rule",
+    [
+        "location: the city, region or country of the workplace as written, or missing.",
+        "Work mode words go only into workMode",
+        "'Remote', 'Fully remote', 'Удалённо', 'віддалено'",
+        "'Office in Lviv' gives location 'Lviv' and workMode office.",
+        "A vacancy that names only a work mode gives location missing.",
+    ],
+)
+def test_system_prompt_keeps_work_mode_out_of_location(rule: str) -> None:
+    assert rule in vacancy_parse.SYSTEM
+
+
 def test_fixture_output_passes_the_generated_output_model() -> None:
     output = VacancyParseOutput.model_validate_json(
         (FIXTURES / "vacancy_parse.json").read_text()

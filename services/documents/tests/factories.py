@@ -2,6 +2,7 @@ import random
 import struct
 import zipfile
 import zlib
+from functools import cache
 from io import BytesIO
 
 from docx import Document
@@ -14,6 +15,8 @@ MAX_BYTES = 10 * 1024 * 1024
 MAX_JPEG_BYTES = 180 * 1024
 DOCUMENT_XML = "word/document.xml"
 MAX_XML_BYTES = 4 * 1024 * 1024
+SMASK_SIDE = 30_000
+RENDER_REFUSAL = "The page could not be rendered within the memory and time limits"
 RENAMED_DOCUMENT = "word/main.dat"
 UPPER_CASE_OVERRIDE = (
     f'PartName="/{RENAMED_DOCUMENT}"'.encode(),
@@ -110,15 +113,52 @@ def single_page_pdf(*, page: bytes, content: bytes, objects: list[bytes]) -> byt
     )
 
 
-def image_pdf(*, width: int, height: int) -> bytes:
-    image = (
+def zeros_deflated(size: int) -> bytes:
+    compressor = zlib.compressobj()
+    block = bytes(1 << 20)
+    whole, rest = divmod(size, len(block))
+    body = b"".join(compressor.compress(block) for _ in range(whole))
+    return body + compressor.compress(bytes(rest)) + compressor.flush()
+
+
+def gray_image(*, width: int, height: int, mask: bytes = b"") -> bytes:
+    entries = (
         b"/Type /XObject /Subtype /Image /Width %d /Height %d /ColorSpace /DeviceGray "
-        b"/BitsPerComponent 8 /Filter /FlateDecode " % (width, height)
+        b"/BitsPerComponent 8 /Filter /FlateDecode %s" % (width, height, mask)
     )
+    return stream_object(zeros_deflated(width * height), entries)
+
+
+def image_pdf(*, width: int, height: int) -> bytes:
     return single_page_pdf(
         page=im0_at(5),
         content=DRAW_IM0,
-        objects=[stream_object(zlib.compress(bytes(width * height)), image)],
+        objects=[gray_image(width=width, height=height)],
+    )
+
+
+@cache
+def smask_pdf() -> bytes:
+    return single_page_pdf(
+        page=im0_at(5),
+        content=DRAW_IM0,
+        objects=[
+            gray_image(width=1, height=1, mask=b"/SMask 6 0 R "),
+            gray_image(width=SMASK_SIDE, height=SMASK_SIDE),
+        ],
+    )
+
+
+def tiled_pattern_pdf() -> bytes:
+    cell = stream_object(
+        DRAW_IM0,
+        b"/Type /Pattern /PatternType 1 /PaintType 1 /TilingType 1 "
+        b"/BBox [0 0 2000 2000] /XStep 4 /YStep 4 %s" % im0_at(6),
+    )
+    return single_page_pdf(
+        page=b"/Resources << /Pattern << /P0 5 0 R >> >> ",
+        content=b"/Pattern cs /P0 scn 0 0 612 792 re f",
+        objects=[cell, gray_image(width=100, height=100)],
     )
 
 

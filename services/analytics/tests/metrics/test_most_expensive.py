@@ -1,6 +1,8 @@
+import pandas as pd
 import pytest
 
 from app.metrics.data_rules import clean_events
+from app.metrics.funnel import funnel_stages
 from app.metrics.journeys import journeys
 from app.metrics.most_expensive import MostExpensiveStage, most_expensive
 from app.metrics.rate import Insufficient
@@ -32,8 +34,12 @@ def ten_applications(*, final_entry: float) -> list[list[TimedMove]]:
     ]
 
 
+def rows_of(paths: list[list[TimedMove]]) -> pd.DataFrame:
+    return journeys(clean_events(timed_frame(paths)))
+
+
 def leader(paths: list[list[TimedMove]]) -> MostExpensiveStage | Insufficient | None:
-    return most_expensive(journeys(clean_events(timed_frame(paths))))
+    return most_expensive(rows_of(paths))
 
 
 def test_nine_applications_need_one_more_for_the_insight() -> None:
@@ -86,11 +92,16 @@ def test_ten_applications_name_the_stage_whose_losses_cost_the_most_days(
     assert leader(ten_applications(final_entry=final_entry)) == cost_leader
 
 
-def test_a_skip_past_the_stage_neither_reaches_nor_passes_it() -> None:
+def test_a_skip_past_the_stage_reaches_and_passes_it_as_in_the_funnel() -> None:
     paths = ten_applications(final_entry=15)
     paths[4] = on_days(["applied", "screening", "offer"], [0, 3, 12])
+    paths[5] = on_days(["applied", "screening", "final"], [0, 3, 12])
+    tech_interview, final = funnel_stages(rows_of(paths))[2:4]
 
-    assert leader(paths) == TECH_INTERVIEW_COST
+    assert leader(paths) == TECH_INTERVIEW_COST.model_copy(
+        update={"reached": 5, "passed": 3}
+    )
+    assert (tech_interview.reached, final.reached) == (5, 3)
 
 
 def test_dumps_to_the_camel_case_keys_of_the_shared_contract() -> None:

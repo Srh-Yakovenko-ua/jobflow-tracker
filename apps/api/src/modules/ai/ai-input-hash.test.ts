@@ -49,7 +49,7 @@ describe('aiInputHash', () => {
   it('gives another key for the same text once the prompt version of the kind is bumped', () => {
     const before = aiInputHash(VACANCY);
 
-    AI_PROMPT_VERSIONS.vacancy_parse = 'v3';
+    AI_PROMPT_VERSIONS.vacancy_parse = 'v4';
 
     expect(aiInputHash(VACANCY)).not.toBe(before);
   });

@@ -31,6 +31,19 @@ type MatchVariant = { coverage: Record<string, MatchCoverage>; explanation: stri
 
 const DEMO_CALL = { model: 'demo', tokensIn: 0, tokensOut: 0, latencyMs: 0 } as const;
 
+const RESUME_AB = {
+  designSentence: 'Конверсія у скринінг зросла з 24% до 41% після переходу на CV v2.',
+  storySentence:
+    'Конверсія у скринінг з CV v2 44%, з CV v1 56%, але відповідей поки замало для висновку.',
+  designActionTitle: 'Відгукуватися лише з CV v2',
+  storyAction: {
+    title: 'Ще кілька відгуків з CV v2 перед вибором версії',
+    why: 'З CV v2 конверсія у скринінг 44%, з CV v1 56%, але відповідей поки замало для висновку.',
+    expectedEffect: 'Ще 1 відгук, і порівняння версій CV дасть перший висновок.',
+    metric: 'Конверсія у скринінг за версією CV',
+  },
+} as const;
+
 const MATCH_VARIANTS: readonly MatchVariant[] = [
   { coverage: {}, explanation: null },
   {
@@ -77,7 +90,15 @@ export function demoMatchOf(index: number): DemoMatch {
 export const demoResumeProfileOf = (number: number): ResumeParseOutput =>
   buildResumeParseOutput(PROFILE_OVERRIDES[number]);
 
-export const demoSummaryOutput = (): MonthlySummaryOutput => buildMonthlySummaryOutput();
+export function demoSummaryOutput(): MonthlySummaryOutput {
+  const { summary, actions } = buildMonthlySummaryOutput();
+  return {
+    summary: summary.replace(RESUME_AB.designSentence, RESUME_AB.storySentence),
+    actions: actions.map((action) =>
+      action.title === RESUME_AB.designActionTitle ? RESUME_AB.storyAction : action,
+    ),
+  };
+}
 
 export function demoCompletionOf(
   kind: AiKind,
