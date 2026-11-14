@@ -1,6 +1,7 @@
 import { DEFAULT_SEARCH_TITLE, type SearchOutcome } from '@jobflow/shared';
 import { Injectable } from '@nestjs/common';
 
+import { withoutUndefined } from '../../common/without-undefined.js';
 import type { Prisma } from '../../generated/prisma/client.js';
 import type { InTransaction } from '../../prisma/in-transaction.js';
 import { PrismaService } from '../../prisma/prisma.service.js';
@@ -11,7 +12,7 @@ export type SearchById = InTransaction & { id: string };
 
 export type ArchiveSearch = SearchById & { outcome: SearchOutcome; finishedAt: Date };
 
-export type CreateActiveSearch = InTransaction & { startedAt: Date };
+export type CreateActiveSearch = InTransaction & { startedAt: Date; createdAt?: Date };
 
 export const SEARCH_SELECT = {
   id: true,
@@ -52,10 +53,10 @@ export class SearchesRepository {
 
   createActive(
     userId: string,
-    { startedAt, tx = this.prisma }: CreateActiveSearch,
+    { startedAt, createdAt, tx = this.prisma }: CreateActiveSearch,
   ): Promise<SearchRow> {
     return tx.search.create({
-      data: { userId, title: DEFAULT_SEARCH_TITLE, startedAt },
+      data: withoutUndefined({ userId, title: DEFAULT_SEARCH_TITLE, startedAt, createdAt }),
       select: SEARCH_SELECT,
     });
   }

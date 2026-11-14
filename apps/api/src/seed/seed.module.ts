@@ -11,5 +11,6 @@ import { SeedService } from './seed.service.js';
 @Module({
   imports: [configModule, LoggerModule.forRoot(loggerParams()), PrismaModule, AuthModule],
   providers: [SeedRepository, SeedService],
+  exports: [SeedService],
 })
 export class SeedModule {}

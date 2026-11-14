@@ -58,8 +58,10 @@ export type VersionsOfResume = InTransaction & { resumeId: string };
 
 export type NewResumeVersion = Omit<
   Prisma.ResumeVersionUncheckedCreateInput,
-  'userId' | 'id' | 'createdAt' | 'updatedAt'
+  'userId' | 'id' | 'updatedAt'
 >;
+
+export type FindOrCreateResume = InTransaction & { createdAt?: Date };
 
 export type InsertResumeVersion = InTransaction & { data: NewResumeVersion };
 
@@ -94,7 +96,7 @@ export class ResumeVersionsRepository {
 
   async findOrCreateResume(
     userId: string,
-    { tx = this.prisma }: InTransaction = {},
+    { createdAt, tx = this.prisma }: FindOrCreateResume = {},
   ): Promise<string> {
     const resume =
       (await tx.resume.findFirst({
@@ -103,7 +105,7 @@ export class ResumeVersionsRepository {
         select: { id: true },
       })) ??
       (await tx.resume.create({
-        data: { userId, title: DEFAULT_RESUME_TITLE },
+        data: withoutUndefined({ userId, title: DEFAULT_RESUME_TITLE, createdAt }),
         select: { id: true },
       }));
     return resume.id;

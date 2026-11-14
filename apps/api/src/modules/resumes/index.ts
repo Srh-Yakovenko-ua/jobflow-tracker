@@ -10,6 +10,7 @@ export type {
   ResumeVersionRow,
   SetActiveVersion,
 } from './resume-versions.repository.js';
+export { ResumeVersionsRepository } from './resume-versions.repository.js';
 export {
   RESUME_EVENTS,
   type ResumeAttachedPayload,

@@ -1,5 +1,7 @@
 import json
+from dataclasses import replace
 from typing import Any
+from uuid import UUID
 
 import pytest
 
@@ -75,6 +77,17 @@ def test_the_metric_on_the_design_story_matches_its_snapshot(
     story: Story, name: str
 ) -> None:
     assert metric_body(story, name=name) == committed("snapshots")[name]
+
+
+def test_the_forecast_ignores_which_ids_simultaneous_events_carry(story: Story) -> None:
+    inserted = story.events.assign(
+        id=[UUID(int=order) for order in range(len(story.events))]
+    )
+
+    assert (
+        metric_body(replace(story, events=inserted), name="forecast")
+        == committed("snapshots")["forecast"]
+    )
 
 
 def test_the_committed_story_export_matches_the_builder(story: Story) -> None:
