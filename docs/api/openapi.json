@@ -10177,6 +10177,365 @@
         }
       }
     },
+    "/summaries": {
+      "get": {
+        "tags": [
+          "summaries"
+        ],
+        "summary": "Read the archive of monthly summaries",
+        "description": "The summarized months of the signed-in user, newest first, at most 12: for each month the newest done monthly summary made in the last 13 months, with the progress of the plan saved from it (items and done items), or null before that plan is saved. A capped list without a cursor. Read only.",
+        "responses": {
+          "200": {
+            "description": "The summarized months, newest first",
+            "content": {
+              "application/json": {
+                "example": {
+                  "items": [
+                    {
+                      "aiJobId": "0199f1a2-7c3b-7d4e-8f50-6a7b8c9d0f02",
+                      "month": "2026-08",
+                      "text": "У серпні ти надіслав 23 відгуки, на 5 більше, ніж у липні. Найдорожчий етап: техінтерв'ю, пройдено 4 з 9.",
+                      "actions": [
+                        {
+                          "title": "Два тижні алгоритмів перед техінтерв'ю",
+                          "why": "3 з 4 відмов на техінтерв'ю: «не вистачає скілів», а пройшов ти 4 з 9.",
+                          "expectedEffect": "Якщо конверсія техінтерв'ю дійде до 60%, прогноз офера: від 4 до 12 тижнів.",
+                          "metric": "Конверсія техінтерв'ю: зараз 44%, ціль 60%"
+                        }
+                      ],
+                      "generatedAt": "2026-09-01T05:10:00.000Z",
+                      "planId": "0199f1a2-7c3b-7d4e-8f50-6a7b8c9d0f00",
+                      "plan": {
+                        "items": 4,
+                        "done": 3
+                      }
+                    }
+                  ]
+                },
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "aiJobId": {
+                            "type": "string",
+                            "format": "uuid"
+                          },
+                          "month": {
+                            "type": "string",
+                            "pattern": "^\\d{4}-(0[1-9]|1[0-2])$"
+                          },
+                          "text": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 1000
+                          },
+                          "actions": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "title": {
+                                  "type": "string",
+                                  "minLength": 1,
+                                  "maxLength": 120
+                                },
+                                "why": {
+                                  "type": "string",
+                                  "minLength": 1,
+                                  "maxLength": 300
+                                },
+                                "expectedEffect": {
+                                  "type": "string",
+                                  "minLength": 1,
+                                  "maxLength": 200
+                                },
+                                "metric": {
+                                  "type": "string",
+                                  "minLength": 1,
+                                  "maxLength": 120
+                                }
+                              },
+                              "required": [
+                                "title",
+                                "why",
+                                "expectedEffect",
+                                "metric"
+                              ]
+                            },
+                            "minItems": 1,
+                            "maxItems": 4
+                          },
+                          "generatedAt": {
+                            "type": "string",
+                            "format": "date-time"
+                          },
+                          "planId": {
+                            "type": [
+                              "string",
+                              "null"
+                            ],
+                            "format": "uuid"
+                          },
+                          "plan": {
+                            "type": [
+                              "object",
+                              "null"
+                            ],
+                            "properties": {
+                              "items": {
+                                "type": "integer",
+                                "minimum": 0
+                              },
+                              "done": {
+                                "type": "integer",
+                                "minimum": 0
+                              }
+                            },
+                            "required": [
+                              "items",
+                              "done"
+                            ]
+                          }
+                        },
+                        "required": [
+                          "aiJobId",
+                          "month",
+                          "text",
+                          "actions",
+                          "generatedAt",
+                          "planId",
+                          "plan"
+                        ]
+                      },
+                      "maxItems": 12
+                    }
+                  },
+                  "required": [
+                    "items"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "example": {
+                  "type": "unauthorized",
+                  "title": "Unauthorized",
+                  "status": 401,
+                  "requestId": "0199f0c4-5d2e-7b31-8c4f-6a7b8c9d0e1f"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "example": {
+                  "type": "forbidden",
+                  "title": "Forbidden",
+                  "status": 403,
+                  "requestId": "0199f0c4-5d2e-7b31-8c4f-6a7b8c9d0e1f"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too many requests: 300 per 60 s by default (RATE_LIMIT_API_PER_MINUTE)",
+            "headers": {
+              "Retry-After": {
+                "schema": {
+                  "type": "integer",
+                  "exclusiveMinimum": 0,
+                  "description": "Seconds until the limit window resets"
+                },
+                "required": true,
+                "description": "Seconds until the limit window resets"
+              }
+            },
+            "content": {
+              "application/json": {
+                "example": {
+                  "type": "rate_limited",
+                  "title": "Too many requests",
+                  "status": 429,
+                  "requestId": "0199f0c4-5d2e-7b31-8c4f-6a7b8c9d0e1f"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal error",
+            "content": {
+              "application/json": {
+                "example": {
+                  "type": "internal_error",
+                  "title": "Internal error",
+                  "status": 500,
+                  "requestId": "0199f0c4-5d2e-7b31-8c4f-6a7b8c9d0e1f"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "summaries"
+        ],
+        "summary": "Generate the monthly summary now",
+        "description": "In one transaction under the user lock stores a queued monthly_summary AI job for the month that ended in the user time zone and the summary.requested event; the worker reads the analytics of the active search and calls the model later, skipping the AI result cache. While a monthly_summary job is queued or processing it answers that job and stores nothing. Answers 409 without an active search. Counts against the hourly AI limit.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 255,
+              "description": "One key per submit, kept on its retries, 1 to 255 characters. The same key with the same request within 24 hours answers the first reply again and creates nothing; with another request, or while the first one still runs, it answers 409 with type idempotency_conflict. A request that fails keeps nothing, so its retry runs again.",
+              "example": "0199f3a0-1b2c-7d3e-8f40-5a6b7c8d9e0f"
+            },
+            "required": false,
+            "description": "One key per submit, kept on its retries, 1 to 255 characters. The same key with the same request within 24 hours answers the first reply again and creates nothing; with another request, or while the first one still runs, it answers 409 with type idempotency_conflict. A request that fails keeps nothing, so its retry runs again.",
+            "name": "Idempotency-Key",
+            "in": "header"
+          }
+        ],
+        "responses": {
+          "202": {
+            "description": "The AI job to follow: the new one, or the one that is still running",
+            "content": {
+              "application/json": {
+                "example": {
+                  "jobId": "0199f1a2-7c3b-7d4e-8f50-6a7b8c9d0f02"
+                },
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "jobId": {
+                      "type": "string",
+                      "format": "uuid"
+                    }
+                  },
+                  "required": [
+                    "jobId"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "example": {
+                  "type": "unauthorized",
+                  "title": "Unauthorized",
+                  "status": 401,
+                  "requestId": "0199f0c4-5d2e-7b31-8c4f-6a7b8c9d0e1f"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "example": {
+                  "type": "forbidden",
+                  "title": "Forbidden",
+                  "status": 403,
+                  "requestId": "0199f0c4-5d2e-7b31-8c4f-6a7b8c9d0e1f"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "example": {
+                  "type": "conflict",
+                  "title": "Conflict",
+                  "status": 409,
+                  "requestId": "0199f0c4-5d2e-7b31-8c4f-6a7b8c9d0e1f"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too many requests: 30 per 3600 s by default (RATE_LIMIT_AI_PER_HOUR)",
+            "headers": {
+              "Retry-After": {
+                "schema": {
+                  "type": "integer",
+                  "exclusiveMinimum": 0,
+                  "description": "Seconds until the limit window resets"
+                },
+                "required": true,
+                "description": "Seconds until the limit window resets"
+              }
+            },
+            "content": {
+              "application/json": {
+                "example": {
+                  "type": "rate_limited",
+                  "title": "Too many requests",
+                  "status": 429,
+                  "requestId": "0199f0c4-5d2e-7b31-8c4f-6a7b8c9d0e1f"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal error",
+            "content": {
+              "application/json": {
+                "example": {
+                  "type": "internal_error",
+                  "title": "Internal error",
+                  "status": 500,
+                  "requestId": "0199f0c4-5d2e-7b31-8c4f-6a7b8c9d0e1f"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/summaries/latest": {
       "get": {
         "tags": [
@@ -10357,145 +10716,6 @@
           },
           "429": {
             "description": "Too many requests: 300 per 60 s by default (RATE_LIMIT_API_PER_MINUTE)",
-            "headers": {
-              "Retry-After": {
-                "schema": {
-                  "type": "integer",
-                  "exclusiveMinimum": 0,
-                  "description": "Seconds until the limit window resets"
-                },
-                "required": true,
-                "description": "Seconds until the limit window resets"
-              }
-            },
-            "content": {
-              "application/json": {
-                "example": {
-                  "type": "rate_limited",
-                  "title": "Too many requests",
-                  "status": 429,
-                  "requestId": "0199f0c4-5d2e-7b31-8c4f-6a7b8c9d0e1f"
-                },
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "Internal error",
-            "content": {
-              "application/json": {
-                "example": {
-                  "type": "internal_error",
-                  "title": "Internal error",
-                  "status": 500,
-                  "requestId": "0199f0c4-5d2e-7b31-8c4f-6a7b8c9d0e1f"
-                },
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/summaries": {
-      "post": {
-        "tags": [
-          "summaries"
-        ],
-        "summary": "Generate the monthly summary now",
-        "description": "In one transaction under the user lock stores a queued monthly_summary AI job for the month that ended in the user time zone and the summary.requested event; the worker reads the analytics of the active search and calls the model later, skipping the AI result cache. While a monthly_summary job is queued or processing it answers that job and stores nothing. Answers 409 without an active search. Counts against the hourly AI limit.",
-        "parameters": [
-          {
-            "schema": {
-              "type": "string",
-              "minLength": 1,
-              "maxLength": 255,
-              "description": "One key per submit, kept on its retries, 1 to 255 characters. The same key with the same request within 24 hours answers the first reply again and creates nothing; with another request, or while the first one still runs, it answers 409 with type idempotency_conflict. A request that fails keeps nothing, so its retry runs again.",
-              "example": "0199f3a0-1b2c-7d3e-8f40-5a6b7c8d9e0f"
-            },
-            "required": false,
-            "description": "One key per submit, kept on its retries, 1 to 255 characters. The same key with the same request within 24 hours answers the first reply again and creates nothing; with another request, or while the first one still runs, it answers 409 with type idempotency_conflict. A request that fails keeps nothing, so its retry runs again.",
-            "name": "Idempotency-Key",
-            "in": "header"
-          }
-        ],
-        "responses": {
-          "202": {
-            "description": "The AI job to follow: the new one, or the one that is still running",
-            "content": {
-              "application/json": {
-                "example": {
-                  "jobId": "0199f1a2-7c3b-7d4e-8f50-6a7b8c9d0f02"
-                },
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "jobId": {
-                      "type": "string",
-                      "format": "uuid"
-                    }
-                  },
-                  "required": [
-                    "jobId"
-                  ]
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized",
-            "content": {
-              "application/json": {
-                "example": {
-                  "type": "unauthorized",
-                  "title": "Unauthorized",
-                  "status": 401,
-                  "requestId": "0199f0c4-5d2e-7b31-8c4f-6a7b8c9d0e1f"
-                },
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "Forbidden",
-            "content": {
-              "application/json": {
-                "example": {
-                  "type": "forbidden",
-                  "title": "Forbidden",
-                  "status": 403,
-                  "requestId": "0199f0c4-5d2e-7b31-8c4f-6a7b8c9d0e1f"
-                },
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          },
-          "409": {
-            "description": "Conflict",
-            "content": {
-              "application/json": {
-                "example": {
-                  "type": "conflict",
-                  "title": "Conflict",
-                  "status": 409,
-                  "requestId": "0199f0c4-5d2e-7b31-8c4f-6a7b8c9d0e1f"
-                },
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          },
-          "429": {
-            "description": "Too many requests: 30 per 3600 s by default (RATE_LIMIT_AI_PER_HOUR)",
             "headers": {
               "Retry-After": {
                 "schema": {
