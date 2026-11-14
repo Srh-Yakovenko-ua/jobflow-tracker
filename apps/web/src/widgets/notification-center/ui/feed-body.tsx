@@ -12,6 +12,7 @@ import { TOUCH_HEIGHT } from '@/shared/ui/touch-height';
 
 import type { NotificationFeed } from '../model/use-notification-feed';
 import { NotificationDays } from './notification-days';
+import type { NotificationRowContext } from './notification-row';
 
 const COPY = uk.notifications;
 
@@ -30,9 +31,12 @@ function EverybodyAnswered() {
   );
 }
 
-export type FeedBodyProps = Readonly<{ feed: NotificationFeed }>;
+export type FeedBodyProps = Readonly<{
+  feed: NotificationFeed;
+  context: Omit<NotificationRowContext, 'timeZone'>;
+}>;
 
-export function FeedBody({ feed }: FeedBodyProps) {
+export function FeedBody({ feed, context }: FeedBodyProps) {
   const { query, days, timeZone } = feed;
   if (days === undefined) {
     if (!query.isError) return <PageSkeleton />;
@@ -45,7 +49,7 @@ export function FeedBody({ feed }: FeedBodyProps) {
       <NotificationDays
         days={days}
         headingLevel={2}
-        context={{ timeZone }}
+        context={{ ...context, timeZone }}
         className="rounded-lg bg-surface p-2 shadow-e1"
       />
       {query.hasNextPage && (

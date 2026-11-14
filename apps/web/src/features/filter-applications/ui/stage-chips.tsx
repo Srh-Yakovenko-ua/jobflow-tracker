@@ -19,7 +19,15 @@ const CHIP = {
     'bg-accent text-surface shadow-accent hover:bg-accent-press active:bg-accent-press dark:hover:text-paper dark:active:text-paper',
 } as const;
 
-export type StageChipsProps = Readonly<{ applications: readonly ApplicationListItem[] }>;
+export type StageChipsProps = Readonly<{
+  applications: readonly ApplicationListItem[] | undefined;
+}>;
+
+const UNKNOWN_COUNT = (
+  <span aria-hidden className="invisible tabular-nums">
+    0
+  </span>
+);
 
 export function StageChips({ applications }: StageChipsProps) {
   const picked = useApplicationFilters((store) => store.filters.stage);
@@ -43,9 +51,13 @@ export function StageChips({ applications }: StageChipsProps) {
               className={cn('size-1.75 flex-none rounded-[3px]', STAGE_COLOR_CLASS[stage])}
             />
             {STAGE_LABELS[stage].labelUk}
-            <span className={cn('tabular-nums', !on && 'text-ink-3')}>
-              {applications.filter((application) => application.currentStage === stage).length}
-            </span>
+            {applications === undefined ? (
+              UNKNOWN_COUNT
+            ) : (
+              <span className={cn('animate-fade-in tabular-nums', !on && 'text-ink-3')}>
+                {applications.filter((application) => application.currentStage === stage).length}
+              </span>
+            )}
           </button>
         );
       })}

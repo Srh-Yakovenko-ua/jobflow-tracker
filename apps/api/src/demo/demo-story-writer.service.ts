@@ -1,6 +1,7 @@
+import type { YearMonth } from '@jobflow/shared';
 import { Injectable } from '@nestjs/common';
 
-import { localMonthOf } from '../common/year-month.js';
+import { localMonthOf, shiftMonth } from '../common/year-month.js';
 import type { Prisma } from '../generated/prisma/client.js';
 import type { PlanFromSummary } from '../modules/plans/index.js';
 import { ResumeVersionsRepository } from '../modules/resumes/index.js';
@@ -12,6 +13,7 @@ import {
   demoCompletionOf,
   demoMatchOf,
   demoResumeProfileOf,
+  type DemoSummaryInput,
   demoSummaryOutput,
 } from './demo-ai.js';
 import { demoCvPdf } from './demo-cv.js';
@@ -33,6 +35,8 @@ type VersionIds = Map<number, string>;
 
 type ResumeWritten = { versionIds: VersionIds; cvFiles: PutObject[] };
 
+type SentWindow = { runs: DemoAiRun[]; month: YearMonth; timezone: string };
+
 const DEMO_STORY = {
   activeVersion: 2,
   cvMime: 'application/pdf',
@@ -43,6 +47,12 @@ const DEMO_STORY = {
 const cvFilenameOf = (number: number) => `cv-v${String(number)}.pdf`;
 
 const cvKeyOf = (userId: string, number: number) => `demo/${userId}/${cvFilenameOf(number)}`;
+
+function sentIn({ runs, month, timezone }: SentWindow): DemoSummaryInput['sent'] {
+  const countIn = (target: YearMonth) =>
+    runs.filter(({ at }) => localMonthOf(timezone, at) === target).length;
+  return { month: countIn(month), previousMonth: countIn(shiftMonth(month, -1)) };
+}
 
 @Injectable()
 export class DemoStoryWriter {
@@ -132,7 +142,11 @@ export class DemoStoryWriter {
   ): Promise<PlanFromSummary> {
     const at = summaryInstantOf(story);
     const month = localMonthOf(story.timezone, at);
-    const output = demoSummaryOutput();
+    const summaryMonth = shiftMonth(month, -1);
+    const output = demoSummaryOutput({
+      month: summaryMonth,
+      sent: sentIn({ runs: matchRuns, month: summaryMonth, timezone: story.timezone }),
+    });
     const completion = demoCompletionOf('monthly_summary', { inputHash: `demo:${month}`, output });
     const summaryRun = { completion, at, applicationId: null, resumeVersionId: null };
     const resultIds = await this.repository.createAiRuns(userId, {

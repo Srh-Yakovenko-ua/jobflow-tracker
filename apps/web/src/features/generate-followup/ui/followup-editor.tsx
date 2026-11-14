@@ -47,7 +47,7 @@ function initialEdit({ ready, applicationId }: FollowupEditorDraft): DraftEdit {
 function useEditedDraft(draft: FollowupEditorDraft) {
   const [edit, setEdit] = useState(() => initialEdit(draft));
   const change = (part: Partial<FollowupOutput>) => {
-    const next = { ...edit, ...part };
+    const next = { ...edit, ...part, own: draft.ready.own };
     setEdit(next);
     rememberDraftEdit(draft.applicationId, next);
   };

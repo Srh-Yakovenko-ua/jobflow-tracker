@@ -32,7 +32,11 @@ const ICONS: Record<Notification['type'], LucideIcon> = {
 
 const FADE = 'transition-[background-color,color,opacity] duration-(--duration-base) ease-standard';
 
-export type NotificationRowContext = Readonly<{ timeZone: string; onFollow?: () => void }>;
+export type NotificationRowContext = Readonly<{
+  timeZone: string;
+  onFollow?: () => void;
+  leaving?: RefObject<HTMLElement | null>;
+}>;
 
 export type NotificationRowProps = Readonly<{
   notification: Notification;
@@ -45,11 +49,28 @@ const ACTION =
 type RowActionProps = NotificationRowProps &
   Readonly<{ label: string; rowRef: RefObject<HTMLDivElement | null> }>;
 
+const ROW_SELECTOR = '[data-notification-row]';
+
+type FocusAfterRead = Readonly<{
+  row: HTMLElement | null;
+  leaving: NotificationRowContext['leaving'];
+}>;
+
+function focusTargetAfterRead({ row, leaving }: FocusAfterRead): HTMLElement | null {
+  if (leaving === undefined) return row;
+  const heading = leaving.current;
+  const scope = heading?.parentElement ?? document;
+  const rows = [...scope.querySelectorAll<HTMLElement>(ROW_SELECTOR)];
+  const at = row === null ? -1 : rows.indexOf(row);
+  return rows[at + 1] ?? rows[at - 1] ?? heading;
+}
+
 function useRowActions({ notification, context, rowRef }: Omit<RowActionProps, 'label'>) {
   const markRead = useMarkReadMutation();
   const ids = [notification.id];
   const read = () => {
-    markRead.mutate({ ids }, { onSuccess: () => rowRef.current?.focus() });
+    const target = focusTargetAfterRead({ row: rowRef.current, leaving: context.leaving });
+    markRead.mutate({ ids }, { onSuccess: () => target?.focus() });
   };
   const follow = () => {
     if (notification.readAt === null) markRead.mutate({ ids });
@@ -96,6 +117,7 @@ export function NotificationRow({ notification, context }: NotificationRowProps)
     <div
       ref={rowRef}
       tabIndex={-1}
+      data-notification-row
       className={cn(
         'flex items-start gap-2.5 rounded-[9px] p-2.25 hover:bg-surface-3 active:bg-surface-3',
         FADE,

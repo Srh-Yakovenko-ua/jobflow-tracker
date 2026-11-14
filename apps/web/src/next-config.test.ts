@@ -7,6 +7,10 @@ describe('next config', () => {
     expect(nextConfig.experimental?.validateRSCRequestHeaders).toBe(false);
   });
 
+  it('the dev server shows no indicator badge, so the thesis screenshots carry none', () => {
+    expect(nextConfig.devIndicators).toBe(false);
+  });
+
   it('sends the isolation, framing, sniffing and referrer headers on every route', async () => {
     const rules = (await nextConfig.headers?.()) ?? [];
     const everyRoute = rules.find((rule) => rule.source === '/:path*')?.headers ?? [];

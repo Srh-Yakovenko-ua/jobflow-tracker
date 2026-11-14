@@ -9,6 +9,7 @@ const draftEditSchema = followupOutputSchema.extend({
   key: z.string(),
   subject: subject.or(z.literal('')),
   body: body.or(z.literal('')),
+  own: z.boolean().optional(),
 });
 
 export type DraftEdit = z.infer<typeof draftEditSchema>;

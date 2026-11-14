@@ -39,7 +39,7 @@ function TableLoading({ failed, onRetry }: Readonly<{ failed: boolean; onRetry: 
 }
 
 function TableContent() {
-  const { table, loaded, load, search, stageRows, timeZone } = useApplicationsTable();
+  const { table, loaded, load, search, stageCounts, timeZone } = useApplicationsTable();
   if (!loaded) {
     return (
       <TableFrame>
@@ -47,7 +47,7 @@ function TableContent() {
           table={table}
           timeZone={timeZone}
           view={{ rows: false }}
-          stageRows={stageRows}
+          stageCounts={stageCounts}
         />
         <TableLoading failed={load.failed} onRetry={load.onRetry} />
       </TableFrame>
@@ -68,7 +68,7 @@ function TableContent() {
         table={table}
         timeZone={timeZone}
         view={{ rows: rows.length > 0 }}
-        stageRows={stageRows}
+        stageCounts={stageCounts}
       />
       {load.failed && <LoadFailedAlert className="px-4 py-2" onRetry={load.onRetry} />}
       {picked.length > 0 && (
