@@ -40,9 +40,18 @@ def stage_stays(clean: pd.DataFrame) -> pd.DataFrame:
         & next_stage.notna()
         & (next_stage != GHOSTED_STAGE)
     )
-    return pd.DataFrame(
-        {"stage": clean.loc[kept, "to_stage"], "days": lasted[kept]}
-    ).reset_index(drop=True)
+    stays = pd.DataFrame(
+        {
+            "stage": clean.loc[kept, "to_stage"],
+            "entered_at": moments[kept],
+            "days": lasted[kept],
+        }
+    )
+    return (
+        stays.sort_values(["entered_at", "days"], kind="stable")
+        .drop(columns="entered_at")
+        .reset_index(drop=True)
+    )
 
 
 def stage_timing(days: pd.Series[float], *, stage: str) -> StageTimingResult:
