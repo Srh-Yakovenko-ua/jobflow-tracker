@@ -1,49 +1,25 @@
 import { describe, expect, it } from 'vitest';
 
 import {
-  type AiDoneNotificationPayload,
   aiDoneNotificationPayloadSchema,
-  type InterviewSoonNotificationPayload,
   interviewSoonNotificationPayloadSchema,
   markNotificationsReadInputSchema,
   markNotificationsReadResponseSchema,
-  type MonthlySummaryReadyNotificationPayload,
   type Notification,
   notificationListQuerySchema,
   notificationSchema,
-  type SilenceItem,
-  type SilenceNotificationPayload,
   silenceNotificationPayloadSchema,
 } from './notifications.js';
+import {
+  AI_DONE,
+  INTERVIEW_SOON,
+  MONTHLY_SUMMARY_READY,
+  NOTIFICATION_ID,
+  NOTIFICATION_ROW as ROW,
+  SILENCE,
+  SILENCE_ITEM,
+} from './test/notification-fixtures.js';
 import { issuePathsOf } from './test/zod-issues.js';
-
-const APPLICATION_ID = '0199f1a2-7c3b-7d4e-8f50-6a7b8c9d0e1f';
-const NOTIFICATION_ID = '0199f1a2-7c3b-7d4e-8f50-6a7b8c9d0e21';
-
-const SILENCE_ITEM: SilenceItem = { applicationId: APPLICATION_ID, company: 'Acme', days: 4 };
-
-const SILENCE: SilenceNotificationPayload = { items: [SILENCE_ITEM] };
-
-const INTERVIEW_SOON: InterviewSoonNotificationPayload = {
-  applicationId: APPLICATION_ID,
-  scheduledEventId: '0199f1a2-7c3b-7d4e-8f50-6a7b8c9d0e20',
-  company: 'Acme',
-  startsAt: '2026-11-03T14:00:00.000Z',
-  minutesBefore: 120,
-};
-
-const AI_DONE: AiDoneNotificationPayload = {
-  aiJobId: '0199f1a2-7c3b-7d4e-8f50-6a7b8c9d0e22',
-  kind: 'vacancy_parse',
-  applicationId: APPLICATION_ID,
-};
-
-const MONTHLY_SUMMARY_READY: MonthlySummaryReadyNotificationPayload = {
-  aiJobId: '0199f1a2-7c3b-7d4e-8f50-6a7b8c9d0e23',
-  month: '2026-08',
-};
-
-const ROW = { id: NOTIFICATION_ID, readAt: null, createdAt: '2026-11-13T09:00:00.000Z' };
 
 describe('notification payloads', () => {
   it('keeps a silence payload as sent', () => {

@@ -1,4 +1,4 @@
-import type { SilenceItem, SilenceNotificationPayload } from '@jobflow/shared';
+import type { Notification, SilenceItem, SilenceNotificationPayload } from '@jobflow/shared';
 import type { OnModuleInit, Type } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
 
@@ -10,8 +10,10 @@ import {
   type RecordNotification,
 } from '../modules/notifications/index.js';
 import type { PrismaService } from '../prisma/prisma.service.js';
+import { AI_JOB_ID } from './ai.js';
 import type { ByUser } from './recorded-events.js';
-import { APPLICATION_ID } from './service-fixtures.js';
+import { APPLICATION_ID, SCHEDULED_EVENT_ID } from './service-fixtures.js';
+import { NOW } from './time.js';
 
 export type RecordedNotification = ByUser<RecordNotification>;
 
@@ -28,6 +30,34 @@ export const SILENCE_ITEM: SilenceItem = {
 };
 
 export const SILENCE_PAYLOAD: SilenceNotificationPayload = { items: [SILENCE_ITEM] };
+
+export const NOTIFICATION_ID = '0199f0a0-0000-7000-8000-000000000301';
+
+export const notificationOf = (content: NewNotification): Notification => ({
+  id: NOTIFICATION_ID,
+  readAt: null,
+  createdAt: NOW.toISOString(),
+  ...content,
+});
+
+export const SILENCE_NOTIFICATION = notificationOf({ type: 'silence', payload: SILENCE_PAYLOAD });
+
+export const interviewSoonAt = (startsAt: Date): Notification =>
+  notificationOf({
+    type: 'interview_soon',
+    payload: {
+      applicationId: APPLICATION_ID,
+      scheduledEventId: SCHEDULED_EVENT_ID,
+      company: 'Ромашка',
+      startsAt: startsAt.toISOString(),
+      minutesBefore: 60,
+    },
+  });
+
+export const MONTHLY_SUMMARY_NOTIFICATION = notificationOf({
+  type: 'monthly_summary_ready',
+  payload: { aiJobId: AI_JOB_ID, month: '2026-09' },
+});
 
 export async function createNotifications(
   prisma: PrismaService,

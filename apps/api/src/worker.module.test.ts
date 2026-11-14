@@ -23,6 +23,7 @@ import {
   InsightSubscriber,
   NotificationsSubscriber,
 } from './modules/notifications/index.js';
+import { PushProcessor, PushSubscriber } from './modules/push/index.js';
 import { RemindersSubscriber } from './modules/reminders/index.js';
 import { ResumeProfileSubscriber } from './modules/resumes/index.js';
 import { DomainEventsProcessor } from './outbox/domain-events.processor.js';
@@ -62,6 +63,8 @@ describe('WorkerModule', () => {
       NotificationsSubscriber,
       AiNotificationsSubscriber,
       InsightSubscriber,
+      PushSubscriber,
+      PushProcessor,
       AnalyticsCacheSubscriber,
     ]) {
       expect(moduleRef.get(provider, { strict: false })).toBeInstanceOf(provider);

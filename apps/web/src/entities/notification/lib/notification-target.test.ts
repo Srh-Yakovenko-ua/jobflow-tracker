@@ -1,3 +1,4 @@
+import { notificationTargetOf } from '@jobflow/shared';
 import { describe, expect, it } from 'vitest';
 
 import { fixtureIdOf } from '@/test/board-fixtures';
@@ -10,8 +11,6 @@ import {
   type NotificationSeed,
   SILENCE_NOTIFICATION,
 } from '@/test/notification-fixtures';
-
-import { notificationTargetOf } from './notification-target';
 
 const APPLICATION_ID = fixtureIdOf(32);
 

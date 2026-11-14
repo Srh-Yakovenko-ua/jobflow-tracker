@@ -82,6 +82,13 @@ export class NotificationsRepository {
     return count;
   }
 
+  findOne(userId: string, id: string): Promise<NotificationRow | null> {
+    return this.prisma.notification.findFirst({
+      where: { id, userId },
+      select: NOTIFICATION_SELECT,
+    });
+  }
+
   countUnread(userId: string): Promise<number> {
     return this.prisma.notification.count({ where: { userId, readAt: null } });
   }

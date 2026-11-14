@@ -49,6 +49,10 @@
       "description": "The in-app notification feed of the signed-in user"
     },
     {
+      "name": "push",
+      "description": "Web Push subscriptions of the signed-in user and the VAPID key"
+    },
+    {
       "name": "resumes",
       "description": "Resume files of the signed-in user, uploaded straight to storage"
     },
@@ -16735,6 +16739,451 @@
                   "type": "forbidden",
                   "title": "Forbidden",
                   "status": 403,
+                  "requestId": "0199f0c4-5d2e-7b31-8c4f-6a7b8c9d0e1f"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Invalid request",
+            "content": {
+              "application/json": {
+                "example": {
+                  "type": "validation_error",
+                  "title": "Invalid request",
+                  "status": 422,
+                  "errors": [
+                    {
+                      "path": "email",
+                      "message": "Invalid input: expected string, received undefined"
+                    }
+                  ],
+                  "requestId": "0199f0c4-5d2e-7b31-8c4f-6a7b8c9d0e1f"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too many requests: 300 per 60 s by default (RATE_LIMIT_API_PER_MINUTE)",
+            "headers": {
+              "Retry-After": {
+                "schema": {
+                  "type": "integer",
+                  "exclusiveMinimum": 0,
+                  "description": "Seconds until the limit window resets"
+                },
+                "required": true,
+                "description": "Seconds until the limit window resets"
+              }
+            },
+            "content": {
+              "application/json": {
+                "example": {
+                  "type": "rate_limited",
+                  "title": "Too many requests",
+                  "status": 429,
+                  "requestId": "0199f0c4-5d2e-7b31-8c4f-6a7b8c9d0e1f"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal error",
+            "content": {
+              "application/json": {
+                "example": {
+                  "type": "internal_error",
+                  "title": "Internal error",
+                  "status": 500,
+                  "requestId": "0199f0c4-5d2e-7b31-8c4f-6a7b8c9d0e1f"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/push/public-key": {
+      "get": {
+        "tags": [
+          "push"
+        ],
+        "summary": "Read the VAPID public key for PushManager.subscribe",
+        "description": "publicKey is null while push is off, that is while the API has no VAPID keys.",
+        "responses": {
+          "200": {
+            "description": "The VAPID public key, base64url",
+            "content": {
+              "application/json": {
+                "example": {
+                  "publicKey": "BEl62iUYgUivxIkv69yViEuiBIa-Ib9-SkvMeAtA3LFgDzkrxZJjSgSnfckjBJuBkr3qBUYIHBQFLXYp5Nksh8U"
+                },
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "publicKey": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "minLength": 1
+                    }
+                  },
+                  "required": [
+                    "publicKey"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "example": {
+                  "type": "unauthorized",
+                  "title": "Unauthorized",
+                  "status": 401,
+                  "requestId": "0199f0c4-5d2e-7b31-8c4f-6a7b8c9d0e1f"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "example": {
+                  "type": "forbidden",
+                  "title": "Forbidden",
+                  "status": 403,
+                  "requestId": "0199f0c4-5d2e-7b31-8c4f-6a7b8c9d0e1f"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too many requests: 300 per 60 s by default (RATE_LIMIT_API_PER_MINUTE)",
+            "headers": {
+              "Retry-After": {
+                "schema": {
+                  "type": "integer",
+                  "exclusiveMinimum": 0,
+                  "description": "Seconds until the limit window resets"
+                },
+                "required": true,
+                "description": "Seconds until the limit window resets"
+              }
+            },
+            "content": {
+              "application/json": {
+                "example": {
+                  "type": "rate_limited",
+                  "title": "Too many requests",
+                  "status": 429,
+                  "requestId": "0199f0c4-5d2e-7b31-8c4f-6a7b8c9d0e1f"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal error",
+            "content": {
+              "application/json": {
+                "example": {
+                  "type": "internal_error",
+                  "title": "Internal error",
+                  "status": 500,
+                  "requestId": "0199f0c4-5d2e-7b31-8c4f-6a7b8c9d0e1f"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/push/subscriptions": {
+      "post": {
+        "tags": [
+          "push"
+        ],
+        "summary": "Save the push subscription of this browser",
+        "description": "Keyed by endpoint: a known endpoint gets the new keys, the signed-in user and a reset failure count. The endpoint is https on a browser push service (FCM, Mozilla, Apple, Windows). The User-Agent header is kept, cut to 256 characters.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "example": {
+                "endpoint": "https://fcm.googleapis.com/fcm/send/dQw4w9WgXcQ:APA91bH",
+                "keys": {
+                  "p256dh": "BNcRdreALRFXTkOOUHK1EtK2wtaz5Ry4YfYCA_0QTpQtUbVlUls0VJXg7A8u-Ts1XbjhazAkj7I99e8QcYP7DkM",
+                  "auth": "tBHItJI5svbpez7KI4CCXg"
+                }
+              },
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "endpoint": {
+                    "type": "string",
+                    "maxLength": 2048,
+                    "format": "uri"
+                  },
+                  "keys": {
+                    "type": "object",
+                    "properties": {
+                      "p256dh": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 128,
+                        "format": "base64url"
+                      },
+                      "auth": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 32,
+                        "format": "base64url"
+                      }
+                    },
+                    "required": [
+                      "p256dh",
+                      "auth"
+                    ]
+                  }
+                },
+                "required": [
+                  "endpoint",
+                  "keys"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "The id of the saved subscription",
+            "content": {
+              "application/json": {
+                "example": {
+                  "id": "0199f6c2-4d5e-7f60-8a71-8b9c0d1e2f3a"
+                },
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "format": "uuid"
+                    }
+                  },
+                  "required": [
+                    "id"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "example": {
+                  "type": "bad_request",
+                  "title": "Bad request",
+                  "status": 400,
+                  "detail": "Unexpected end of JSON input",
+                  "requestId": "0199f0c4-5d2e-7b31-8c4f-6a7b8c9d0e1f"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "example": {
+                  "type": "unauthorized",
+                  "title": "Unauthorized",
+                  "status": 401,
+                  "requestId": "0199f0c4-5d2e-7b31-8c4f-6a7b8c9d0e1f"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "example": {
+                  "type": "forbidden",
+                  "title": "Forbidden",
+                  "status": 403,
+                  "requestId": "0199f0c4-5d2e-7b31-8c4f-6a7b8c9d0e1f"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Invalid request",
+            "content": {
+              "application/json": {
+                "example": {
+                  "type": "validation_error",
+                  "title": "Invalid request",
+                  "status": 422,
+                  "errors": [
+                    {
+                      "path": "email",
+                      "message": "Invalid input: expected string, received undefined"
+                    }
+                  ],
+                  "requestId": "0199f0c4-5d2e-7b31-8c4f-6a7b8c9d0e1f"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too many requests: 300 per 60 s by default (RATE_LIMIT_API_PER_MINUTE)",
+            "headers": {
+              "Retry-After": {
+                "schema": {
+                  "type": "integer",
+                  "exclusiveMinimum": 0,
+                  "description": "Seconds until the limit window resets"
+                },
+                "required": true,
+                "description": "Seconds until the limit window resets"
+              }
+            },
+            "content": {
+              "application/json": {
+                "example": {
+                  "type": "rate_limited",
+                  "title": "Too many requests",
+                  "status": 429,
+                  "requestId": "0199f0c4-5d2e-7b31-8c4f-6a7b8c9d0e1f"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal error",
+            "content": {
+              "application/json": {
+                "example": {
+                  "type": "internal_error",
+                  "title": "Internal error",
+                  "status": 500,
+                  "requestId": "0199f0c4-5d2e-7b31-8c4f-6a7b8c9d0e1f"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/push/subscriptions/{id}": {
+      "delete": {
+        "tags": [
+          "push"
+        ],
+        "summary": "Delete a push subscription",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "example": "0199f6c2-4d5e-7f60-8a71-8b9c0d1e2f3a"
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "The subscription is deleted"
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "example": {
+                  "type": "unauthorized",
+                  "title": "Unauthorized",
+                  "status": 401,
+                  "requestId": "0199f0c4-5d2e-7b31-8c4f-6a7b8c9d0e1f"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "example": {
+                  "type": "forbidden",
+                  "title": "Forbidden",
+                  "status": 403,
+                  "requestId": "0199f0c4-5d2e-7b31-8c4f-6a7b8c9d0e1f"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "example": {
+                  "type": "not_found",
+                  "title": "Not found",
+                  "status": 404,
                   "requestId": "0199f0c4-5d2e-7b31-8c4f-6a7b8c9d0e1f"
                 },
                 "schema": {

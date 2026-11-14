@@ -100,6 +100,10 @@ class FakeNotificationsRepository {
     return Promise.resolve(this.ownedBy(userId).filter(({ readAt }) => readAt === null).length);
   }
 
+  findOne(userId: string, id: string): Promise<NotificationRow | null> {
+    return Promise.resolve(this.ownedBy(userId).find((row) => row.id === id) ?? null);
+  }
+
   private ownedBy(userId: string): StoredNotification[] {
     return this.rows.filter((row) => row.userId === userId);
   }
@@ -204,6 +208,22 @@ describe('NotificationsService.markRead', () => {
     await expect(service.markRead(OLENA_ID, { all: true })).resolves.toEqual({ unread: 0 });
 
     expect(readStates(repository.rows)).toEqual([NOW, minutesAfter(1), null]);
+  });
+});
+
+describe('NotificationsService.find', () => {
+  it("answers the user's notification by id and nothing for another user's id or an unknown one", async () => {
+    const { service } = await serviceWith([storedRow(1), storedRow(2, { userId: BOHDAN_ID })]);
+
+    await expect(service.find(OLENA_ID, idOf(1))).resolves.toEqual({
+      id: idOf(1),
+      type: 'silence',
+      payload: SILENCE,
+      readAt: null,
+      createdAt: '2026-10-22T09:01:00.000Z',
+    });
+    await expect(service.find(OLENA_ID, idOf(2))).resolves.toBeUndefined();
+    await expect(service.find(OLENA_ID, idOf(3))).resolves.toBeUndefined();
   });
 });
 

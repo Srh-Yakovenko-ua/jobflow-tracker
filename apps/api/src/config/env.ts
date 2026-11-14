@@ -14,12 +14,22 @@ export const OAUTH_CREDENTIAL_KEYS = {
 type OAuthCredentialKey = (typeof OAUTH_CREDENTIAL_KEYS)[OAuthProvider][
   'clientId' | 'clientSecret'];
 
-type OAuthCredentials = Partial<Record<OAuthCredentialKey, string | undefined>>;
+const VAPID_KEYS = { publicKey: 'VAPID_PUBLIC_KEY', privateKey: 'VAPID_PRIVATE_KEY' } as const;
 
-function requireWholeCredentialPairs(env: OAuthCredentials, context: z.RefinementCtx): void {
-  for (const { clientId, clientSecret } of Object.values(OAUTH_CREDENTIAL_KEYS)) {
-    const [given, missing] =
-      env[clientId] === undefined ? [clientSecret, clientId] : [clientId, clientSecret];
+type PairedKey = OAuthCredentialKey | (typeof VAPID_KEYS)[keyof typeof VAPID_KEYS];
+
+type PairedCredentials = Partial<Record<PairedKey, string | undefined>>;
+
+const WHOLE_PAIRS: readonly (readonly [PairedKey, PairedKey])[] = [
+  ...Object.values(OAUTH_CREDENTIAL_KEYS).map(
+    ({ clientId, clientSecret }) => [clientId, clientSecret] as const,
+  ),
+  [VAPID_KEYS.publicKey, VAPID_KEYS.privateKey],
+];
+
+function requireWholeCredentialPairs(env: PairedCredentials, context: z.RefinementCtx): void {
+  for (const [first, second] of WHOLE_PAIRS) {
+    const [given, missing] = env[first] === undefined ? [second, first] : [first, second];
     if (env[given] !== undefined && env[missing] === undefined) {
       context.addIssue({
         code: 'custom',
@@ -58,8 +68,8 @@ const envFields = z.object({
   RATE_LIMIT_AI_PER_HOUR: positiveCount.default(30),
   RATE_LIMIT_CAPTURE_PER_HOUR: positiveCount.default(60),
   RATE_LIMIT_API_PER_MINUTE: positiveCount.default(300),
-  VAPID_PUBLIC_KEY: z.string().optional(),
-  VAPID_PRIVATE_KEY: z.string().optional(),
+  VAPID_PUBLIC_KEY: z.base64url().length(87).optional(),
+  VAPID_PRIVATE_KEY: z.base64url().length(43).optional(),
   SMTP_URL: z.url({ protocol: /^smtps?$/ }),
   SENTRY_DSN: z.url().optional(),
   MIXPANEL_TOKEN: z.string().optional(),

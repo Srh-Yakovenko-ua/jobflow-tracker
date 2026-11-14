@@ -15,10 +15,13 @@ export class StubQueue {
 
   readonly bulks: StubBulkJob[][] = [];
 
+  readonly addOptions: JobsOptions[] = [];
+
   constructor(readonly name: string) {}
 
-  add(...[name, data, opts]: StubAdd): Promise<StubJob> {
-    return Promise.resolve(this.record({ id: opts?.jobId ?? this.nextId(), name, data }));
+  add(...[name, data, opts = {}]: StubAdd): Promise<StubJob> {
+    this.addOptions.push(opts);
+    return Promise.resolve(this.record({ id: opts.jobId ?? this.nextId(), name, data }));
   }
 
   addBulk(jobs: StubBulkJob[]): Promise<StubJob[]> {

@@ -16,6 +16,7 @@ import { MATCH_OPENAPI_PATHS } from '../modules/match/index.js';
 import { NOTES_OPENAPI_PATHS } from '../modules/notes/index.js';
 import { NOTIFICATIONS_OPENAPI_PATHS } from '../modules/notifications/index.js';
 import { PLANS_OPENAPI_PATHS } from '../modules/plans/index.js';
+import { PUSH_OPENAPI_PATHS } from '../modules/push/index.js';
 import { REMINDERS_OPENAPI_PATHS } from '../modules/reminders/index.js';
 import { RESUMES_OPENAPI_PATHS } from '../modules/resumes/index.js';
 import { SCHEDULE_OPENAPI_PATHS } from '../modules/schedule/index.js';
@@ -41,6 +42,7 @@ export const API_OPENAPI_PATHS = [
   ...SCHEDULE_OPENAPI_PATHS,
   ...REMINDERS_OPENAPI_PATHS,
   ...NOTIFICATIONS_OPENAPI_PATHS,
+  ...PUSH_OPENAPI_PATHS,
   ...RESUMES_OPENAPI_PATHS,
   ...AI_OPENAPI_PATHS,
   ...CAPTURE_OPENAPI_PATHS,
@@ -58,6 +60,7 @@ const TAGS = [
   { name: 'calendar', description: 'Scheduled events and follow-ups across Applications' },
   { name: 'reminders', description: 'Follow-up and interview reminders of the signed-in user' },
   { name: 'notifications', description: 'The in-app notification feed of the signed-in user' },
+  { name: 'push', description: 'Web Push subscriptions of the signed-in user and the VAPID key' },
   {
     name: 'resumes',
     description: 'Resume files of the signed-in user, uploaded straight to storage',
