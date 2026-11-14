@@ -22,7 +22,13 @@ import { ShellHeader } from './shell-header';
 import { ShortcutsDialog } from './shortcuts-dialog';
 import { Sidebar } from './sidebar';
 
-export type AppShellProps = Readonly<{ initial: SidebarState; children: ReactNode }>;
+export type AppShellSlots = Readonly<{ headerActions?: ReactNode }>;
+
+export type AppShellProps = Readonly<{
+  initial: SidebarState;
+  children: ReactNode;
+  slots?: AppShellSlots;
+}>;
 
 const ITEMS = visibleNavItems(FEATURE_FLAGS);
 
@@ -48,7 +54,7 @@ function ShellSurfacesLayer({ surfaces }: Readonly<{ surfaces: ShellSurfaces }>)
   );
 }
 
-export function AppShell({ initial, children }: AppShellProps) {
+export function AppShell({ initial, children, slots = {} }: AppShellProps) {
   const surfaces = useShellSurfaces();
   const pathname = usePathname();
   const nav: ShellNav = {
@@ -65,7 +71,7 @@ export function AppShell({ initial, children }: AppShellProps) {
           </a>
           <Sidebar nav={nav} />
           <div className="flex min-w-0 flex-1 flex-col">
-            <ShellHeader title={shellTitleOf(pathname, ITEMS)} />
+            <ShellHeader title={shellTitleOf(pathname, ITEMS)} actions={slots.headerActions} />
             <main
               id="main"
               tabIndex={-1}

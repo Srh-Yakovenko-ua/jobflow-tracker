@@ -13,6 +13,7 @@ import { calendarPage } from './calendar-page';
 import { contact } from './contact';
 import { devUi } from './dev-ui';
 import { followup } from './followup';
+import { notifications } from './notifications';
 import { resumes } from './resumes';
 import { settings } from './settings';
 import { shell } from './shell';
@@ -63,6 +64,7 @@ export const uk = {
   timeline,
   states,
   shell,
+  notifications,
   errors: {
     saveFailed: {
       title: 'Не вдалося зберегти',

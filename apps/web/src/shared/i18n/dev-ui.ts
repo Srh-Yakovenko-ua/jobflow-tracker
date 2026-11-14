@@ -1,6 +1,7 @@
 import { devUiCharts } from './dev-ui-charts';
 import { devUiDomain } from './dev-ui-domain';
 import { devUiStates } from './dev-ui-states';
+import { notifications } from './notifications';
 
 export const devUi = {
   pageTitle: 'Кіт інтерфейсу',
@@ -151,8 +152,8 @@ export const devUi = {
     tooltipNote: "наведи на плашку, і тултіп з'явиться",
     popoverEyebrow: 'поповер',
     popoverTrigger: 'Нагадування',
-    popoverTitle: 'нагадування · 0',
-    popoverText: 'Усі відповіли. Найкращий вигляд цього списку.',
+    popoverTitle: notifications.popoverTitle(0),
+    popoverText: notifications.popoverEmpty,
     toastsEyebrow: 'тости · 4 типи',
     toasts: {
       success: {

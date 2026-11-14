@@ -1,3 +1,5 @@
+import type { ReactNode } from 'react';
+
 import { GlobalSearch } from '@/features/search-applications';
 import { FEATURE_FLAGS } from '@/shared/config';
 import { cn } from '@/shared/lib/cn';
@@ -6,9 +8,9 @@ import { AddApplicationLink } from './add-application-link';
 import { SHELL_FRAME } from './shell-frame';
 import { UserMenu } from './user-menu';
 
-export type ShellHeaderProps = Readonly<{ title: string | undefined }>;
+export type ShellHeaderProps = Readonly<{ title: string | undefined; actions?: ReactNode }>;
 
-export function ShellHeader({ title }: ShellHeaderProps) {
+export function ShellHeader({ title, actions }: ShellHeaderProps) {
   return (
     <header className={cn(SHELL_FRAME.header, 'z-30 md:sticky md:top-0')}>
       {title !== undefined && (
@@ -21,6 +23,7 @@ export function ShellHeader({ title }: ShellHeaderProps) {
       </div>
       <div className="flex flex-none items-center gap-3 max-md:ms-auto">
         {FEATURE_FLAGS.addApplication && <AddApplicationLink />}
+        {actions}
         <UserMenu />
       </div>
     </header>
