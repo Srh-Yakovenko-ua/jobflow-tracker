@@ -11,6 +11,7 @@ import {
 import type { Locator, Page, Route } from '@playwright/test';
 
 import { uk } from '@/shared/i18n';
+import { ANALYTICS_ANCHORS, type AnalyticsBlock } from '@/shared/lib/analytics-anchors';
 
 import { ANALYTICS_ORIGIN } from './stack';
 
@@ -39,6 +40,14 @@ async function replyWithDesign(route: Route): Promise<void> {
 
 export async function routeDesignAnalytics(page: Page): Promise<void> {
   await page.route(`${ANALYTICS_ORIGIN}/analytics/**`, replyWithDesign);
+}
+
+export function analyticsBlock(page: Page, block: AnalyticsBlock): Locator {
+  return page.locator(`#${ANALYTICS_ANCHORS[block]}`);
+}
+
+export function resumeAbTable(page: Page): Locator {
+  return page.getByRole('table', { name: uk.resumes.title, exact: true });
 }
 
 export function designSankey(page: Page): Locator {

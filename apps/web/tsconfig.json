@@ -20,6 +20,7 @@
     "next-env.d.ts",
     "next.config.ts",
     "playwright.config.ts",
+    "playwright.thesis.config.ts",
     "src",
     "e2e",
     ".next/types/**/*.ts"

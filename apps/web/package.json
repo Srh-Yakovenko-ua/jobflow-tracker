@@ -11,6 +11,7 @@
     "test": "vitest run --coverage",
     "test:watch": "vitest watch",
     "test:e2e": "playwright test",
+    "thesis:screens": "playwright test -c playwright.thesis.config.ts",
     "typecheck": "next typegen && tsgo -p . --noEmit"
   },
   "dependencies": {

@@ -8,6 +8,7 @@ coverage/
 .coverage
 coverage.xml
 *.tsbuildinfo
+docs/thesis/build/
 
 .env
 .env.*

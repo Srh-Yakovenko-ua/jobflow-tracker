@@ -1,0 +1,52 @@
+sequenceDiagram
+  autonumber
+  participant module as Модуль api
+  participant postgres as postgres
+  participant relay as OutboxRelayService
+  participant redis as redis (BullMQ)
+  participant subscriber as Підписник події
+  participant worker as AiProcessor
+  participant service as AiService
+  participant client as AiClient
+  participant ai as services/ai
+  participant vendor as AI-провайдер
+
+  rect rgb(235, 242, 255)
+    Note over module,postgres: Одна транзакція
+    module->>postgres: ai.createJob: ai_jobs, крок queued
+    module->>postgres: INSERT outbox, наприклад application.capture_requested
+  end
+  relay->>postgres: claimUnpublished, FOR UPDATE SKIP LOCKED
+  relay->>redis: addBulk у domain-events, jobId = outbox.id
+  redis->>subscriber: доменна подія
+  subscriber->>redis: queueAiCompletion у чергу ai
+  redis->>worker: задача ai.complete
+  worker->>service: complete(job, finalAttempt, settled, progressed)
+  service->>postgres: startJob: guarded UPDATE ai_jobs
+  alt Задачу вже взято або завершено
+    service-->>worker: skip
+  end
+  service->>postgres: findCachedResult(userId, kind, inputHash)
+  alt Є в кеші ai_results
+    service->>service: finish з кешованим output
+  else Немає в кеші
+    service->>postgres: budgetUsage за добу і місяць UTC
+    alt Понад AI_DAILY_LIMIT або AI_MONTHLY_TOKEN_CAP
+      service->>postgres: failJob budget_exceeded
+      service-->>worker: UnrecoverableError
+    end
+    service->>service: guardPayload: лише дозволені поля
+    service->>client: complete(kind, input, requestId)
+    client->>client: signServiceToken: RS256, scope ai:invoke, 60 с
+    client->>ai: POST /v1/complete/kind, x-request-id<br/>тайм-аут DEPENDENCY_LIMITS.aiServiceTimeoutMs
+    ai->>vendor: промпт і JSON Schema виду
+    vendor-->>ai: структурована відповідь
+    ai-->>client: output, model, promptVersion, tokensIn, tokensOut, latencyMs
+    client->>client: розбір aiCompletionSchemas з @jobflow/shared
+    client-->>service: AiCompletion
+    service->>postgres: saveResult: ai_results з model і токенами
+  end
+  service->>subscriber: settled через AiJobRouter: запис результату виду
+  service->>postgres: finishJob: ai_jobs done, ai_result_id
+  service-->>worker: AiOutcome
+  worker->>redis: LivePublisher: job.updated для SSE

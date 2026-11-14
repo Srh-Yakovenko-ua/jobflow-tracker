@@ -207,16 +207,18 @@ docs/             ADRs, design, diagrams for the thesis
 
 ## Scripts
 
-| Command                                       | What it does                                                        |
-| --------------------------------------------- | ------------------------------------------------------------------- |
-| `pnpm infra:up`                               | infrastructure containers and the `resumes` bucket                  |
-| `pnpm db:migrate`                             | database migrations                                                 |
-| `pnpm demo:seed`                              | the demo story for `demo@jobflow.local`                             |
-| `pnpm dev`                                    | infrastructure, migrations and the apps on the host with hot reload |
-| `pnpm test`, `pnpm test:int`, `pnpm test:e2e` | unit, integration and E2E tests                                     |
-| `pnpm lint`, `pnpm typecheck`, `pnpm build`   | ESLint, type check, build                                           |
-| `pnpm ai:usage`, `pnpm ai:eval`               | AI tokens and cost, model quality check                             |
-| `pnpm ci:local`                               | the same checks as CI                                               |
+| Command                                       | What it does                                                                                                                                                                                                    |
+| --------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `pnpm infra:up`                               | infrastructure containers and the `resumes` bucket                                                                                                                                                              |
+| `pnpm db:migrate`                             | database migrations                                                                                                                                                                                             |
+| `pnpm demo:seed`                              | the demo story for `demo@jobflow.local`                                                                                                                                                                         |
+| `pnpm dev`                                    | infrastructure, migrations and the apps on the host with hot reload                                                                                                                                             |
+| `pnpm test`, `pnpm test:int`, `pnpm test:e2e` | unit, integration and E2E tests                                                                                                                                                                                 |
+| `pnpm lint`, `pnpm typecheck`, `pnpm build`   | ESLint, type check, build                                                                                                                                                                                       |
+| `pnpm ai:usage`, `pnpm ai:eval`               | AI tokens and cost, model quality check                                                                                                                                                                         |
+| `pnpm ci:local`                               | the same checks as CI                                                                                                                                                                                           |
+| `pnpm docs:build`                             | diagrams, the ERD, OpenAPI as HTML and PDF, tables and the figure index in `docs/thesis/build`, offline                                                                                                         |
+| `pnpm docs:data`                              | refreshes the snapshots in `docs/thesis/data` and the screenshots; needs the running stack, `pnpm demo:seed` and a real AI provider in `services/ai/.env`; a web app off port 3000 is set with `THESIS_WEB_URL` |
 
 Every command: [docs/getting-started.md](docs/getting-started.md#команди).
 

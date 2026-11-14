@@ -10,13 +10,17 @@ import {
   vacancyParseOutputSchema,
 } from '@jobflow/shared';
 import { Injectable } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 
+import { pricePerMillionOf, type TokenCounts } from '../ai-usage/ai-cost.js';
 import { Clock } from '../common/clock.js';
 import { ServiceCallError } from '../common/service-call-error.js';
-import { AI_PAYLOAD_BUILDERS, AiClient } from '../modules/ai/index.js';
+import type { Env } from '../config/env.js';
+import { AI_PAYLOAD_BUILDERS, AiClient, type AiCompleteCall } from '../modules/ai/index.js';
 import { scoreMatch } from '../modules/match/index.js';
 import { detectResumeFormat, DocumentsClient } from '../modules/resumes/index.js';
 import type { EvalReport } from './eval-cases.js';
+import { type EvalCall, evalUsageLines } from './eval-usage.js';
 import { type FollowupEvalCase, loadFollowupCases } from './followup-cases.js';
 import { type FollowupCaseAnswer, followupReport } from './followup-report.js';
 import { loadMatchCases, type MatchEvalCase } from './match-cases.js';
@@ -47,11 +51,22 @@ function refusalOf(error: unknown): Refusal {
 
 @Injectable()
 export class AiEvalService {
+  private readonly calls: EvalCall[] = [];
+
+  private readonly pricePerMillion: TokenCounts;
+
   constructor(
     private readonly ai: AiClient,
     private readonly documents: DocumentsClient,
     private readonly clock: Clock,
-  ) {}
+    config: ConfigService<Env, true>,
+  ) {
+    this.pricePerMillion = pricePerMillionOf(config);
+  }
+
+  usageLines(): string[] {
+    return evalUsageLines(this.calls, this.pricePerMillion);
+  }
 
   async vacancy(casesDir: string): Promise<EvalReport> {
     const cases = await loadVacancyCases(casesDir);
@@ -79,6 +94,13 @@ export class AiEvalService {
     return Array.isArray(answers) ? resumeReport(answers) : answers;
   }
 
+  private async complete(call: AiCompleteCall) {
+    const completion = await this.ai.complete(call);
+    const { model, tokensIn, tokensOut, latencyMs } = completion;
+    this.calls.push({ kind: call.kind, model, tokensIn, tokensOut, latencyMs });
+    return completion;
+  }
+
   private async answerAll<C extends { file: string }, A extends object>(
     cases: C[],
     answer: (evalCase: C) => Promise<A | Stopped>,
@@ -104,7 +126,7 @@ export class AiEvalService {
   }: VacancyEvalCase): Promise<VacancyCaseAnswer | Stopped> {
     try {
       const input = AI_PAYLOAD_BUILDERS.vacancy_parse({ rawText: text });
-      const { output } = await this.ai.complete({ kind: 'vacancy_parse', input });
+      const { output } = await this.complete({ kind: 'vacancy_parse', input });
       return { file, expected, output: vacancyParseOutputSchema.parse(output) };
     } catch (error) {
       return { file, expected, ...refusalOf(error) };
@@ -117,7 +139,7 @@ export class AiEvalService {
     input,
   }: MatchEvalCase): Promise<MatchCaseAnswer | Stopped> {
     try {
-      const { output } = await this.ai.complete({ kind: 'match', input });
+      const { output } = await this.complete({ kind: 'match', input });
       const breakdown = scoreMatch(matchOutputSchema.parse(output));
       return { file, manualRank: rank, score: breakdown?.score ?? null };
     } catch (error) {
@@ -130,7 +152,7 @@ export class AiEvalService {
     ...input
   }: FollowupEvalCase): Promise<FollowupCaseAnswer | Stopped> {
     try {
-      const { output } = await this.ai.complete({ kind: 'followup', input });
+      const { output } = await this.complete({ kind: 'followup', input });
       return { file, input, output: followupOutputSchema.parse(output) };
     } catch (error) {
       return { file, input, ...refusalOf(error) };
@@ -156,7 +178,7 @@ export class AiEvalService {
     const mime = detectResumeFormat(bytes) ?? 'application/octet-stream';
     const extraction = await this.documents.extract({ bytes, filename: document, mime });
     const input = AI_PAYLOAD_BUILDERS.resume_parse(extraction);
-    const { output } = await this.ai.complete({ kind: 'resume_parse', input });
+    const { output } = await this.complete({ kind: 'resume_parse', input });
     return resumeParseOutputSchema.parse(output);
   }
 }

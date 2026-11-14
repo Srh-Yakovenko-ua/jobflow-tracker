@@ -207,16 +207,18 @@ docs/             ADR, дизайн, діаграми до диплому
 
 ## Скрипти
 
-| Команда                                       | Що робить                                                   |
-| --------------------------------------------- | ----------------------------------------------------------- |
-| `pnpm infra:up`                               | контейнери інфраструктури і бакет `resumes`                 |
-| `pnpm db:migrate`                             | міграції бази                                               |
-| `pnpm demo:seed`                              | демо-історія для `demo@jobflow.local`                       |
-| `pnpm dev`                                    | інфраструктура, міграції і застосунки на хості з hot reload |
-| `pnpm test`, `pnpm test:int`, `pnpm test:e2e` | unit, інтеграційні і E2E-тести                              |
-| `pnpm lint`, `pnpm typecheck`, `pnpm build`   | ESLint, перевірка типів, збірка                             |
-| `pnpm ai:usage`, `pnpm ai:eval`               | токени і вартість AI, перевірка якості моделі               |
-| `pnpm ci:local`                               | ті самі перевірки, що й CI                                  |
+| Команда                                       | Що робить                                                                                                                                                                                 |
+| --------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `pnpm infra:up`                               | контейнери інфраструктури і бакет `resumes`                                                                                                                                               |
+| `pnpm db:migrate`                             | міграції бази                                                                                                                                                                             |
+| `pnpm demo:seed`                              | демо-історія для `demo@jobflow.local`                                                                                                                                                     |
+| `pnpm dev`                                    | інфраструктура, міграції і застосунки на хості з hot reload                                                                                                                               |
+| `pnpm test`, `pnpm test:int`, `pnpm test:e2e` | unit, інтеграційні і E2E-тести                                                                                                                                                            |
+| `pnpm lint`, `pnpm typecheck`, `pnpm build`   | ESLint, перевірка типів, збірка                                                                                                                                                           |
+| `pnpm ai:usage`, `pnpm ai:eval`               | токени і вартість AI, перевірка якості моделі                                                                                                                                             |
+| `pnpm ci:local`                               | ті самі перевірки, що й CI                                                                                                                                                                |
+| `pnpm docs:build`                             | діаграми, ER-діаграма, OpenAPI у HTML і PDF, таблиці й перелік рисунків у `docs/thesis/build`, без мережі                                                                                 |
+| `pnpm docs:data`                              | оновлює знімки в `docs/thesis/data` і скриншоти; потрібні запущений стек, `pnpm demo:seed` і справжній AI-провайдер у `services/ai/.env`; web не на 3000 задається через `THESIS_WEB_URL` |
 
 Усі команди: [docs/getting-started.md](docs/getting-started.md#команди).
 

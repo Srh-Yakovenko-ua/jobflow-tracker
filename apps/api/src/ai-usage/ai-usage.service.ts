@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 
 import type { Env } from '../config/env.js';
+import { costUsd, pricePerMillionOf, type TokenCounts } from './ai-cost.js';
 import { AiUsageRepository, type AiUsageRow } from './ai-usage.repository.js';
 
 type UsageTotals = Pick<AiUsageRow, 'calls' | 'tokensIn' | 'tokensOut'>;
@@ -10,7 +11,6 @@ const AI_USAGE_REPORT = {
   usageColumns: ['day', 'kind', 'status', 'model', 'calls', 'tokens_in', 'tokens_out'],
   totalColumns: ['calls', 'tokens_in', 'tokens_out', 'cost_usd'],
   noUsage: { calls: 0, tokensIn: 0, tokensOut: 0 },
-  tokensPerPrice: 1_000_000,
 } as const;
 
 const tsv = (cells: readonly (string | number)[]) => cells.join('\t');
@@ -30,16 +30,13 @@ function addUp(rows: AiUsageRow[], keyOf: (row: AiUsageRow) => string): Map<stri
 
 @Injectable()
 export class AiUsageService {
-  private readonly pricePerMillion: { tokensIn: number; tokensOut: number };
+  private readonly pricePerMillion: TokenCounts;
 
   constructor(
     private readonly repository: AiUsageRepository,
     config: ConfigService<Env, true>,
   ) {
-    this.pricePerMillion = {
-      tokensIn: config.get('AI_USD_PER_MILLION_TOKENS_IN', { infer: true }),
-      tokensOut: config.get('AI_USD_PER_MILLION_TOKENS_OUT', { infer: true }),
-    };
+    this.pricePerMillion = pricePerMillionOf(config);
   }
 
   async report(): Promise<string[]> {
@@ -82,10 +79,7 @@ export class AiUsageService {
     ];
   }
 
-  private cost({ tokensIn, tokensOut }: UsageTotals): string {
-    const usd =
-      (tokensIn * this.pricePerMillion.tokensIn + tokensOut * this.pricePerMillion.tokensOut) /
-      AI_USAGE_REPORT.tokensPerPrice;
-    return usd.toFixed(4);
+  private cost(usage: UsageTotals): string {
+    return costUsd(usage, this.pricePerMillion).toFixed(4);
   }
 }

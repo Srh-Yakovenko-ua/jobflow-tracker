@@ -1,0 +1,21 @@
+{
+  "name": "@jobflow/docs",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "render": "node src/render.js",
+    "data": "node src/data.js",
+    "lint": "eslint . --max-warnings 0",
+    "test": "node --test test/*.test.js"
+  },
+  "dependencies": {
+    "@redocly/cli": "2.78.0",
+    "mermaid": "12.3.0",
+    "playwright": "1.65.1"
+  },
+  "devDependencies": {
+    "@jobflow/config": "workspace:*",
+    "eslint": "^10.13.0"
+  }
+}

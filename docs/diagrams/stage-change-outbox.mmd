@@ -1,0 +1,42 @@
+sequenceDiagram
+  autonumber
+  actor user as Користувач
+  participant web as web
+  participant controller as ApplicationsController
+  participant service as StageTransitionService
+  participant rules as stage-transition-rules
+  participant postgres as postgres
+  participant relay as OutboxRelayService
+  participant redis as redis (BullMQ)
+  participant events as DomainEventsProcessor
+  participant reminders as RemindersSubscriber
+
+  user->>web: Перетягує картку на дошці
+  web->>controller: POST /api/v1/applications/:id/events<br/>fromStage, toStage, reasonCode
+  controller->>service: move(userId, id, input)
+  rect rgb(235, 242, 255)
+    Note over service,postgres: Одна транзакція prisma.$transaction
+    service->>postgres: lockOwned: SELECT ... WHERE id і user_id FOR UPDATE
+    service->>postgres: findStageState(userId, id)
+    alt Заявки немає або вона чужа
+      service-->>controller: NotFoundError
+      controller-->>web: 404
+    end
+    service->>rules: plannedMove(state, input, now)
+    rules->>rules: fromStage = currentStage, canTransition(from, to)
+    alt Застарілий fromStage або заборонений перехід
+      rules-->>controller: ConflictError
+      controller-->>web: 409
+    end
+    service->>postgres: applyStageEvent: INSERT stage_events,<br/>UPDATE current_stage і last_event_at
+    service->>postgres: recordEvent: INSERT outbox application.stage_changed
+  end
+  controller-->>web: 201 ApplicationResponse
+  loop Кожні 500 мс, задача outbox.relay у черзі maintenance
+    relay->>postgres: claimUnpublished, FOR UPDATE SKIP LOCKED
+    relay->>redis: addBulk у domain-events, jobId = outbox.id
+    relay->>postgres: markPublished
+  end
+  redis->>events: application.stage_changed
+  events->>reminders: DomainEventRouter.route
+  reminders->>postgres: resolveFollowups(userId, applicationId)

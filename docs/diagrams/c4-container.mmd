@@ -1,0 +1,44 @@
+C4Container
+  title Контейнери JobFlow Tracker
+
+  Person(user, "Користувач", "Браузер і букмарклет")
+  System_Ext(aiVendor, "AI-провайдер", "NVIDIA, Anthropic або OpenAI")
+
+  Container_Boundary(jobflow, "JobFlow Tracker, Docker Compose") {
+    Container(web, "web", "Next.js 16, React 19, :3000", "Дошка, картки заявок, аналітика, налаштування")
+    Container(api, "api", "NestJS 12, Prisma 7, :4000", "Автентифікація, CRUD, машина етапів, stage_events, outbox, JWKS")
+    Container(analytics, "analytics", "FastAPI, pandas, :8000", "Воронка, Sankey, прогноз, A/B резюме, лише читання")
+    ContainerDb(postgres, "postgres", "PostgreSQL 18, :5432", "Єдине джерело правди")
+    ContainerQueue(redis, "redis", "Redis 8, :6379", "Черги BullMQ, кеш аналітики, ліміти")
+    ContainerDb(minio, "minio", "S3, :9000, консоль :9001", "Файли резюме")
+    Container(ai, "ai", "FastAPI, pydantic 2, :8001", "AiProvider, промпти, структурований вивід")
+    Container(worker, "worker", "Образ api, @nestjs/bullmq", "Outbox relay, AI-задачі, кеш ai_results, бюджет, планувальники")
+    Container(documents, "documents", "FastAPI, pypdfium2, :8002", "Текст резюме, сторінки скану в JPEG")
+    Container(mailpit, "mailpit", "SMTP :1025, UI :8025", "Пошта в розробці")
+  }
+
+  Rel(user, web, "Сторінки")
+  Rel(user, api, "REST, SSE", "JWT, Capture-токен")
+  Rel(user, analytics, "Метрики", "JWT")
+  Rel(api, postgres, "Дані, outbox, Idempotency-Key", "Prisma")
+  Rel(api, redis, "Ліміти")
+  Rel(api, minio, "Presigned URL")
+  Rel(worker, postgres, "outbox, ai_results")
+  Rel(worker, redis, "BullMQ")
+  Rel(worker, ai, "/v1/complete/kind", "ai:invoke")
+  Rel(worker, documents, "Резюме")
+  Rel(worker, minio, "S3")
+  Rel(analytics, postgres, "stage_events", "лише читання")
+  Rel(analytics, redis, "Кеш")
+  Rel(analytics, api, "JWKS")
+  Rel(ai, api, "JWKS")
+  Rel(ai, aiVendor, "Модель", "HTTPS")
+
+  UpdateRelStyle(user, api, $offsetX="-40", $offsetY="-70")
+  UpdateRelStyle(user, analytics, $offsetX="40", $offsetY="-50")
+  UpdateRelStyle(analytics, postgres, $offsetX="40", $offsetY="-60")
+  UpdateRelStyle(analytics, redis, $offsetX="-30", $offsetY="40")
+  UpdateRelStyle(api, minio, $offsetX="60", $offsetY="20")
+  UpdateRelStyle(worker, ai, $offsetX="-40", $offsetY="-40")
+
+  UpdateLayoutConfig($c4ShapeInRow="3", $c4BoundaryInRow="1")

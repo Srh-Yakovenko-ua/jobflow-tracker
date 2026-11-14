@@ -12,10 +12,12 @@ type ArrowWalk = Readonly<{ page: Page; live: Locator; target: string; stepsLeft
 
 const A11Y = uk.board.move.a11y;
 
+export function boardCards(page: Page): Locator {
+  return page.locator(`a[aria-roledescription="${A11Y.roleDescription}"]`);
+}
+
 export function boardCard(page: Page, card: HandCard): Locator {
-  return page.locator(`a[aria-roledescription="${A11Y.roleDescription}"]`).filter({
-    hasText: card.company,
-  });
+  return boardCards(page).filter({ hasText: card.company });
 }
 
 export function stageColumn(page: Page, stage: Stage): Locator {

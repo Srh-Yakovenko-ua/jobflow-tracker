@@ -1,3 +1,4 @@
+import { writeFile } from 'node:fs/promises';
 import path from 'node:path';
 
 import { NestFactory } from '@nestjs/core';
@@ -10,15 +11,22 @@ import { boot, BOOT_OPTIONS } from './boot.js';
 
 const evalKindSchema = z.enum(['vacancy', 'resume', 'match', 'followup']);
 
-const kind = evalKindSchema.safeParse(process.argv[2]);
+const [kindArgument, outFile] = process.argv.slice(2);
+
+const kind = evalKindSchema.safeParse(kindArgument);
 
 if (kind.success) {
   await boot(async () => {
     const app = await NestFactory.createApplicationContext(AiEvalModule, BOOT_OPTIONS);
     app.useLogger(app.get(Logger));
     const casesDir = path.resolve('src/modules/ai/evals', kind.data);
-    const { lines, passed } = await app.get(AiEvalService)[kind.data](casesDir);
-    process.stdout.write(`${lines.join('\n')}\n`);
+    const evals = app.get(AiEvalService);
+    const { lines, passed } = await evals[kind.data](casesDir);
+    const snapshot = `${[...lines, '', ...evals.usageLines()].join('\n')}\n`;
+    process.stdout.write(snapshot);
+    if (outFile !== undefined) {
+      await writeFile(path.resolve(outFile), snapshot);
+    }
     process.exitCode = passed ? 0 : 1;
     await app.close();
   });

@@ -1,0 +1,56 @@
+case	words	invented_numbers	result
+01-uk-warm-tech-interview.json	70	-	ok
+02-uk-neutral-no-recruiter.json	80	-	ok
+03-uk-short-screening.json	76	-	ok
+04-uk-warm-final-hint.json	84	-	ok
+05-uk-neutral-no-sender.json	72	-	ok
+06-en-warm-tech-interview.json	115	-	ok
+07-en-neutral-no-recruiter-no-interview.json	99	-	ok
+08-en-short-hint.json	77	-	ok
+09-en-warm-final.json	88	-	ok
+10-en-neutral-no-sender-hint.json	100	-	ok
+
+## 01-uk-warm-tech-interview.json
+Відповідь на технічне інтерв'ю, Андрій
+Доброго дня, Оксано! Дякую за технічне інтерв'ю 3 вересня на посаду Senior React developer у компанії Зоряна Лабораторія. Я розв'язав задачу з динамічним програмуванням. Це показує, як я підходжу до складних алгоритмічних завдань. Я готовий принести команду своїй досвід і допомогти їй у розробці. Я ще цікажуся цю посаду і готовий до наступного кроку. Чи можете ви розповісти про наступні кроки? Я з радістю відповім на будь-які ваші питання. Андрій
+
+## 02-uk-neutral-no-recruiter.json
+Питання щодо вакансії Frontend розробник у Поліція
+Доброго дня! Дякую за розгляд моєї заявки на посаду Frontend розробник у компанії Поліця. Ця посада привертає мене можливістю працювати над інтерфейсами, які використовують багато людей. Я хочу приєднатися до команди Поліця, щоб брати участь у створенні корисних продуктів. Мої навички розробки інтерфейсів допоможуть команді швидше реалізувати плановані функції. Я все ще зацікавлений у цій посаді і готовий до наступного кроку. Чи можете ви повідомити про поточний статус розгляду моєї кандидатури? Я з радістю відповім на будь-які додаткові питання. Марія
+
+## 03-uk-short-screening.json
+Повідомлення щодо вакансії Node.js developer у Квадрат Софт
+Ірино, дякую за останнє скрінінговое співбесіду 28 серпня на посаду Node.js developer у Квадрат Софт. Ця посада привертає мене можливістю працювати з серверними технологіями. Квадрат Софт приваблює своєю командою розробників. Я можу принести команду навички розробки бекенду, що допоможе їм у створенні надійних сервісів. Я все ще зацікавлений у цій посаді і готовий до наступного кроку. Чи можете ви повідомити про статус моєї кандидатури та наступні дії? Я з радістю відповім на будь-які додаткові питання. Тарас
+
+## 04-uk-warm-final-hint.json
+Повідомлення щодо фінального інтерв'ю — Олена, Full Stack Engineer
+Богдане, дякую за останнє фінальне інтерв'ю на посаду Full Stack Engineer у компанії Вітрило, яке відбулося 1 вересня 2026 року. Я подякую за знайомство з командою, яке відбулося під час інтерв'ю. Мій досвід з Next.js дозволить швидко створювати продуктивні веб-додатки для ваших проєктів. Я готовий принести команду навички у розробці, які допоможуть їм реалізувати їхні завдання. Я все ще зацікавлений у цій посаді і готовий до наступного кроку. Чи можете ви повідомити про план далі? Я з радістю відповім на будь-які додаткові питання. Олена
+
+## 05-uk-neutral-no-sender.json
+Повідомлення щодо вакансії QA Automation Engineer у Хмарка
+Світлано, дякую за технічне інтерв'ю 5 вересня на посаду QA Automation Engineer у Хмарка. Ця посада привертає мене можливістю працювати над якістю програмного забезпечення. Я хочу приєднатися до команди Хмарка та брати участь у її проєктах. Мої навички автоматизації тестування допоможуть команді перевіряти продукти ефективніше. Я все ще зацікавлений у цій посаді і готовий до наступного кроку. Чи можете ви повідомити про план далі? Я з радістю відповім на будь-які додаткові питання.
+
+## 06-en-warm-tech-interview.json
+Follow-up: Senior TypeScript Engineer at Northwind Labs
+Dear Emily, thank you for the tech interview on September 4, 2026 for the Senior TypeScript Engineer position at Northwind Labs. The Senior TypeScript Engineer role draws me because it combines complex technical challenges with meaningful product impact. Northwind Labs is why I want to join its team, as I value working alongside skilled engineers who build reliable systems. I would bring strong TypeScript expertise and a focus on maintainable code that helps your team ship features faster. I am still interested in the position and ready for the next step. Could you please let me know what the next step in the process will be? I will gladly answer anything you still need. Andrii
+
+## 07-en-neutral-no-recruiter-no-interview.json
+Follow-up: Backend Developer application at Bluefin Systems
+Dear Hiring Team, I am writing about my application for the Backend Developer position at Bluefin Systems. I am drawn to this position because I want to build reliable backend systems. I want to join Bluefin Systems because I respect its team and its work. I would bring strong coding skills and a focus on clean architecture to help your team deliver stable software. I am still interested in the Backend Developer position and ready for the next step. Could you please let me know the status of my application? I will gladly answer anything you still need. Maria
+
+## 08-en-short-hint.json
+Follow-up: Data Engineer at Kestrel Data
+Dear Daniel, Thank you for the screening call on September 2, 2026 for the Data Engineer position at Kestrel Data. I can start in October. This timing lets me join the team quickly and begin contributing. I would bring strong data engineering skills to support your work. I am still interested in the position and ready for the next step. Could you let me know what comes next? I will gladly answer anything you still need. Taras
+
+## 09-en-warm-final.json
+Follow-up on Platform Engineer final interview
+Dear Sophie, thank you for the final interview for the Platform Engineer position at Harbor Cloud on 2026-08-27. I appreciated our system design discussion and enjoyed sharing my thoughts on architecture. That conversation showed me how my design experience can support your platform work. I would bring reliable engineering skills to help your team deliver stable services. I am still interested in the position and ready for the next step. Could you please let me know what comes next? I will gladly answer anything you still need. Olena
+
+## 10-en-neutral-no-sender-hint.json
+Follow-up: Mobile Developer at Granite Apps
+Dear Lucas, thank you for the other interview on September 6, 2026 for the Mobile Developer position at Granite Apps. I am writing to ask whether a take-home task is the next step in the process. Knowing this will help me prepare properly for the Mobile Developer role. I can bring strong mobile development skills that would support your team's work on app delivery. I remain interested in the Mobile Developer position and am ready for the next step. Could you please let me know what comes next in the hiring process? I will gladly answer anything you still need.
+
+PASS
+
+kind	model	calls	tokens_in	tokens_out	avg_tokens_in	avg_tokens_out	avg_latency_ms	cost_usd_per_call	usd_per_million_tokens_in	usd_per_million_tokens_out
+followup	private/nvidia/nemotron-3.5-super-120b-a12b	10	6923	1657	692	166	2320	0.000000	0	0

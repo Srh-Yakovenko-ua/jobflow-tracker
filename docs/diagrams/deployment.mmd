@@ -1,0 +1,43 @@
+flowchart LR
+  browser["Браузер<br/>localhost"]
+
+  subgraph compose["Docker Compose, мережа jobflow, порти на 127.0.0.1"]
+    web["web<br/>Next.js, :3000"]
+    api["api<br/>NestJS, :4000"]
+    worker["worker<br/>образ api, BullMQ"]
+    analytics["analytics<br/>FastAPI, :8000"]
+    ai["ai<br/>FastAPI, :8001"]
+    documents["documents<br/>FastAPI, :8002"]
+    postgres[("postgres<br/>PostgreSQL 18, :5432")]
+    redis[("redis<br/>Redis 8, :6379")]
+    minio[("minio<br/>S3, :9000 і :9001")]
+    minio_init["minio-init<br/>створює бакет"]
+    mailpit["mailpit<br/>SMTP :1025, UI :8025"]
+  end
+
+  subgraph volumes["Іменовані томи"]
+    pgdata[("pgdata")]
+    redisdata[("redisdata")]
+    miniodata[("miniodata")]
+  end
+
+  browser --> web
+  browser -->|REST, SSE| api
+  browser -->|REST| analytics
+  browser -->|presigned URL| minio
+  api --> postgres
+  api --> redis
+  api --> minio
+  worker --> postgres
+  worker --> redis
+  worker --> minio
+  worker --> ai
+  worker --> documents
+  analytics -->|роль jobflow_analytics, лише читання| postgres
+  analytics --> redis
+  analytics -->|JWKS| api
+  ai -->|JWKS| api
+  minio_init --> minio
+  postgres --- pgdata
+  redis --- redisdata
+  minio --- miniodata

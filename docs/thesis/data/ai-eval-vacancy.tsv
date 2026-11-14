@@ -1,0 +1,33 @@
+field	cases	correct	accuracy	wrong_exact
+company	15	15	1.000	0
+position	15	15	1.000	0
+seniority	15	14	0.933	0
+salaryMin	15	15	1.000	0
+salaryMax	15	15	1.000	0
+salary	15	15	1.000	0
+currency	15	15	1.000	0
+salaryTax	15	15	1.000	0
+location	15	15	1.000	0
+workMode	15	15	1.000	0
+englishLevel	15	13	0.867	0
+sourceGuess	15	14	0.933	0
+failure	15	15	1.000	0
+
+field	cases	precision	recall	f1	wrong_exact
+stack	15	1.000	1.000	1.000	0
+
+case	field	expected	got	confidence
+05-dou-uk-dotnet-hybrid-dnipro.json	sourceGuess	dou	null	missing
+08-djinni-ru-node-team-lead.json	seniority	lead	null	missing
+10-djinni-en-devops-gross-usd.json	englishLevel	upper_intermediate	advanced	check
+15-djinni-en-ml-engineer.json	englishLevel	upper_intermediate	advanced	check
+
+threshold	minimum	actual	result
+company	0.9	1.000	PASS
+position	0.9	1.000	PASS
+salary	0.9	1.000	PASS
+stackF1	0.85	1.000	PASS
+PASS
+
+kind	model	calls	tokens_in	tokens_out	avg_tokens_in	avg_tokens_out	avg_latency_ms	cost_usd_per_call	usd_per_million_tokens_in	usd_per_million_tokens_out
+vacancy_parse	private/nvidia/nemotron-3.5-super-120b-a12b	15	11021	7870	735	525	4408	0.000000	0	0

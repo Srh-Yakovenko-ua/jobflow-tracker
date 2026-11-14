@@ -9,10 +9,12 @@ import {
   buildMatchCompletion,
   buildMatchOutput,
 } from '@jobflow/shared/testing';
+import { ConfigService } from '@nestjs/config';
 import { Test } from '@nestjs/testing';
 import { describe, expect, it } from 'vitest';
 
 import { Clock } from '../common/clock.js';
+import { validateEnv } from '../config/env.js';
 import { AiClient, AiServiceError } from '../modules/ai/index.js';
 import { DocumentsClient, DocumentsError } from '../modules/resumes/index.js';
 import {
@@ -25,6 +27,7 @@ import {
   VACANCY_TEXT,
 } from '../test/ai.js';
 import { FakeDocumentsClient, RESUME_TEXT } from '../test/documents.js';
+import { exampleEnv } from '../test/example-env.js';
 import { PDF, PDF_BYTES } from '../test/resumes.js';
 import { NOW, settableClock } from '../test/time.js';
 import { AiEvalService } from './ai-eval.service.js';
@@ -48,11 +51,19 @@ async function casesDir(cases: Record<string, unknown>): Promise<string> {
   return dir;
 }
 
-type EvalFakes = { documents?: FakeDocumentsClient; clock?: ReturnType<typeof settableClock> };
+type EvalFakes = {
+  documents?: FakeDocumentsClient;
+  clock?: ReturnType<typeof settableClock>;
+  prices?: Record<string, string>;
+};
 
 async function evalService(
   ai: FakeAiClient,
-  { documents = new FakeDocumentsClient(), clock = settableClock(NOW) }: EvalFakes = {},
+  {
+    documents = new FakeDocumentsClient(),
+    clock = settableClock(NOW),
+    prices = {},
+  }: EvalFakes = {},
 ): Promise<AiEvalService> {
   const moduleRef = await Test.createTestingModule({
     providers: [
@@ -60,6 +71,10 @@ async function evalService(
       { provide: AiClient, useValue: ai },
       { provide: DocumentsClient, useValue: documents },
       { provide: Clock, useValue: clock },
+      {
+        provide: ConfigService,
+        useValue: new ConfigService(validateEnv({ ...exampleEnv, ...prices })),
+      },
     ],
   }).compile();
   return moduleRef.get(AiEvalService);
@@ -142,6 +157,20 @@ describe('AiEvalService.vacancy', () => {
     await expect((await evalService(new FakeAiClient())).vacancy(dir)).rejects.toThrow(
       `No eval cases in ${dir}`,
     );
+  });
+});
+
+describe('AiEvalService.usageLines', () => {
+  it('adds up the model, tokens and latency of every completion of the run and prices one call', async () => {
+    const service = await evalService(new FakeAiClient(), {
+      prices: { AI_USD_PER_MILLION_TOKENS_IN: '3', AI_USD_PER_MILLION_TOKENS_OUT: '15' },
+    });
+
+    await service.vacancy(await casesDir(TWO_CASES));
+
+    expect(service.usageLines().slice(1)).toEqual([
+      'vacancy_parse\tfake\t2\t240\t80\t120\t40\t15\t0.000960\t3\t15',
+    ]);
   });
 });
 

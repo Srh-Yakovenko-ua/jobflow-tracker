@@ -1,0 +1,46 @@
+sequenceDiagram
+  autonumber
+  actor user as Користувач
+  participant bookmarklet as bookmarklet
+  participant controller as CaptureController
+  participant capture as CaptureService
+  participant postgres as postgres
+  participant relay as OutboxRelayService
+  participant redis as redis (BullMQ)
+  participant events as DomainEventsProcessor
+  participant queue as CaptureQueueService
+  participant worker as AiProcessor
+  participant ai as services/ai
+  participant parse as CaptureParseService
+
+  user->>bookmarklet: Клік на сторінці вакансії
+  bookmarklet->>controller: POST /api/v1/capture/bookmarklet<br/>Authorization: Capture, Idempotency-Key
+  Note over controller: JwtAuthGuard дає лише scope capture<br/>@RequireScope('capture'), @RateLimit('capture'), @Idempotent()
+  controller->>capture: bookmarklet(userId, input, requestId)
+  capture->>postgres: drafts.possibleDuplicates(userId, input)
+  rect rgb(235, 242, 255)
+    Note over capture,postgres: Одна транзакція prisma.$transaction
+    capture->>postgres: drafts.open: заявка-чернетка з raw_text
+    capture->>postgres: ai.createJob: ai_jobs, kind vacancy_parse
+    capture->>postgres: timeline.record: подія captured
+    capture->>postgres: drafts.announce: outbox application.capture_requested
+  end
+  controller-->>bookmarklet: 202 applicationId, jobId, possibleDuplicates
+  loop Кожні 500 мс, задача outbox.relay у черзі maintenance
+    relay->>postgres: claimUnpublished, FOR UPDATE SKIP LOCKED
+    relay->>redis: addBulk у domain-events, jobId = outbox.id
+    relay->>postgres: markPublished
+  end
+  redis->>events: application.capture_requested
+  events->>queue: DomainEventRouter, CaptureSubscriber.enqueue
+  queue->>postgres: drafts.findRawText(userId, applicationId)
+  queue->>redis: queueAiCompletion у чергу ai
+  redis->>worker: задача vacancy_parse
+  worker->>ai: AiService.complete, AiClient: POST /v1/complete/vacancy_parse
+  ai-->>worker: output, model, tokensIn, tokensOut
+  worker->>parse: AiJobRouter: settle(done, output)
+  rect rgb(235, 242, 255)
+    Note over parse,postgres: Одна транзакція
+    parse->>postgres: drafts.fill: поля вакансії в чернетку
+    parse->>postgres: timeline.record: подія ai_parsed
+  end
