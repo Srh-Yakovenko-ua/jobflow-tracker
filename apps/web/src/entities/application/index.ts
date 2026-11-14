@@ -18,7 +18,7 @@ export {
 export { jobFinished } from './lib/job-finished';
 export { formatAmount, formatSalaryRange } from './lib/salary';
 export { isSearchable, SEARCH_LIMITS } from './lib/search-limits';
-export { silentCountOf } from './lib/silent-count';
+export { SILENT_ONLY, silentCountOf } from './lib/silent-count';
 export { formatTimelineDate, type TimelineDateInput } from './lib/timeline-date';
 export type { ApplicationMove, MovingApplication } from './model/application-move';
 export type { ApplicationCardContext } from './model/card-context';

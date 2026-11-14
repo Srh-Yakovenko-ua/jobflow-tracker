@@ -3,6 +3,7 @@
 import type { NotificationFilter } from '@/entities/notification';
 import { uk } from '@/shared/i18n';
 import { Button } from '@/shared/ui/button';
+import { PAGE_TITLE } from '@/shared/ui/page-title';
 import { SegmentedControl } from '@/shared/ui/segmented-control';
 import { TOUCH_HEIGHT } from '@/shared/ui/touch-height';
 
@@ -22,9 +23,7 @@ export function NotificationsPage() {
   const markAll = useMarkReadMutation();
   return (
     <section className="flex max-w-180 min-w-0 flex-col gap-6">
-      <h1 className="font-display text-[clamp(26px,3.5vw,36px)] leading-[1.03] font-medium tracking-[-0.036em] text-ink">
-        {COPY.title}
-      </h1>
+      <h2 className={PAGE_TITLE}>{COPY.title}</h2>
       <div className="flex flex-wrap items-center justify-between gap-3">
         <SegmentedControl
           aria-label={COPY.filters.label}

@@ -4,13 +4,7 @@ import { FEATURE_FLAGS } from '@/shared/config';
 import { ACME_APPLICATION } from '@/test/application-fixtures';
 import { EVERY_FLAG_ON } from '@/test/feature-flags';
 
-import {
-  legalMovesFrom,
-  paletteActionsOf,
-  palettePagesOf,
-  type Shortcut,
-  shortcutsOf,
-} from './palette-commands';
+import { paletteActionsOf, palettePagesOf, type Shortcut, shortcutsOf } from './palette-commands';
 
 const REJECTED = { ...ACME_APPLICATION, currentStage: 'rejected' as const };
 
@@ -24,10 +18,21 @@ function actionsAt(...args: Parameters<typeof paletteActionsOf>) {
 
 describe('shortcutsOf', () => {
   it('keeps N, G B, G A and ? while reminders are behind their flag', () => {
+    const remindersOff = { ...FEATURE_FLAGS, reminders: false };
+    expect(shortcutsOf(remindersOff).map((shortcut) => shortcut.id)).toEqual([
+      'add',
+      'board',
+      'analytics',
+      'shortcuts',
+    ]);
+  });
+
+  it('ships G R with the reminders page', () => {
     expect(shortcutsOf(FEATURE_FLAGS).map((shortcut) => shortcut.id)).toEqual([
       'add',
       'board',
       'analytics',
+      'reminders',
       'shortcuts',
     ]);
   });
@@ -50,6 +55,7 @@ describe('palettePagesOf', () => {
       ['Аналітика', '/analytics'],
       ['Календар', '/calendar'],
       ['Резюме', '/resumes'],
+      ['Нагадування', '/reminders'],
       ['Налаштування', '/settings'],
       ['Таблиця', '/applications'],
     ]);
@@ -102,16 +108,5 @@ describe('paletteActionsOf', () => {
       'theme',
       'shortcuts',
     ]);
-  });
-});
-
-describe('legalMovesFrom', () => {
-  it.each([
-    { from: 'applied', to: ['screening', 'tech_interview', 'rejected', 'ghosted', 'withdrawn'] },
-    { from: 'tech_interview', to: ['final', 'offer', 'rejected', 'ghosted', 'withdrawn'] },
-    { from: 'offer', to: ['withdrawn'] },
-    { from: 'withdrawn', to: [] },
-  ] as const)('from $from offers $to', ({ from, to }) => {
-    expect(legalMovesFrom(from)).toEqual(to);
   });
 });

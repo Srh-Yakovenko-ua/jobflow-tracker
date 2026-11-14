@@ -3,9 +3,9 @@
 import { type Stage, STAGE_LABELS } from '@jobflow/shared';
 
 import { type MovingApplication, StageMarker } from '@/entities/application';
+import { legalMovesFrom } from '@/features/move-application';
 import { uk } from '@/shared/i18n';
 
-import { legalMovesFrom } from '../model/palette-commands';
 import { PaletteGroup, PaletteRow } from './palette-row';
 
 export type PaletteMovePageProps = Readonly<{

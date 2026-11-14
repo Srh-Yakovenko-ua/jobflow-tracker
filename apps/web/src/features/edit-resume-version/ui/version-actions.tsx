@@ -6,6 +6,7 @@ import { useRef, useState } from 'react';
 
 import { uk } from '@/shared/i18n';
 import { cn } from '@/shared/lib/cn';
+import { useMenuChoice } from '@/shared/lib/use-menu-choice';
 import { Button } from '@/shared/ui/button';
 import { Menu, MenuContent, MenuItem, MenuTrigger } from '@/shared/ui/menu';
 
@@ -32,17 +33,10 @@ type VersionMenuProps = VersionActionsProps & Readonly<{ onRename: () => void }>
 function VersionMenu({ version, view, onRename }: VersionMenuProps) {
   const activate = useActivateVersionMutation();
   const archive = useArchiveVersionMutation();
-  const renameChosenRef = useRef(false);
+  const rename = useMenuChoice(onRename);
   const { isArchived } = version;
   return (
-    <MenuContent
-      onCloseAutoFocus={(event) => {
-        if (!renameChosenRef.current) return;
-        renameChosenRef.current = false;
-        event.preventDefault();
-        onRename();
-      }}
-    >
+    <MenuContent onCloseAutoFocus={rename.onCloseAutoFocus}>
       {!view.active && !isArchived && (
         <MenuItem
           onSelect={() => {
@@ -53,11 +47,7 @@ function VersionMenu({ version, view, onRename }: VersionMenuProps) {
           {COPY.menu.activate}
         </MenuItem>
       )}
-      <MenuItem
-        onSelect={() => {
-          renameChosenRef.current = true;
-        }}
-      >
+      <MenuItem onSelect={rename.choose}>
         <Pencil {...ICON} />
         {COPY.menu.rename}
       </MenuItem>

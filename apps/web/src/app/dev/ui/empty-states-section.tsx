@@ -1,6 +1,6 @@
 'use client';
 
-import { RESUME_MIMES } from '@jobflow/shared';
+import { DEFAULT_SILENCE_DAYS, RESUME_MIMES } from '@jobflow/shared';
 import { useState } from 'react';
 
 import { FirstRunState } from '@/entities/application';
@@ -11,6 +11,7 @@ import { ChipList } from '@/shared/ui/chip-list';
 import { DropZone } from '@/shared/ui/drop-zone';
 import { EmptyState } from '@/shared/ui/empty-state';
 import { TOUCH_HEIGHT } from '@/shared/ui/touch-height';
+import { RemindersEmpty } from '@/widgets/reminders-page';
 
 import { GallerySection, STATE_GRID, StateRule } from './gallery';
 import { ANALYTICS_PROGRESS, specimenNoop } from './state-specimens';
@@ -54,21 +55,12 @@ function ResumeDropZone() {
   );
 }
 
-function QuietReminders() {
-  return (
-    <p className="flex items-center gap-2.25 text-[13px] text-offer tabular-nums">
-      <span aria-hidden className="size-2.25 flex-none rounded-pill bg-offer" />
-      {SCREENS.reminders.silent}
-    </p>
-  );
-}
-
 function ScreenEmptyStates() {
   return (
     <div className={STATE_GRID}>
       <EmptyState content={SCREENS.analytics.content} progress={ANALYTICS_PROGRESS} />
       <EmptyState content={SCREENS.resumes.content} slots={{ figure: <ResumeDropZone /> }} />
-      <EmptyState content={SCREENS.reminders.content} slots={{ figure: <QuietReminders /> }} />
+      <RemindersEmpty silenceDays={DEFAULT_SILENCE_DAYS} />
       <EmptyState content={SCREENS.search.content} slots={{ figure: <SearchFilters /> }} />
       <EmptyState
         content={SCREENS.ghosted.content}

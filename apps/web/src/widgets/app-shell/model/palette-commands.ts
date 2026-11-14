@@ -1,8 +1,8 @@
-import { isActiveStage, type Stage, STAGES } from '@jobflow/shared';
+import { isActiveStage } from '@jobflow/shared';
 import { type LucideIcon, Table2 } from 'lucide-react';
 
 import type { MovingApplication } from '@/entities/application';
-import { isLegalDrop } from '@/features/move-application';
+import { legalMovesFrom } from '@/features/move-application';
 import type { FeatureFlag, FeatureFlags } from '@/shared/config';
 import { uk } from '@/shared/i18n';
 
@@ -70,10 +70,6 @@ export const SHORTCUTS: readonly Shortcut[] = [
     target: { kind: 'shortcuts' },
   },
 ];
-
-export function legalMovesFrom(stage: Stage): readonly Stage[] {
-  return STAGES.filter((to) => isLegalDrop({ from: stage, to }));
-}
 
 const ACTION_ROWS: readonly ActionRow[] = [
   { id: 'add', flag: 'addApplication', runFor: () => navigate('/add') },

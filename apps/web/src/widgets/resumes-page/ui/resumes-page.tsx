@@ -12,6 +12,7 @@ import { type FilePicker, useFilePicker } from '@/shared/ui/drop-zone';
 import { EmptyState } from '@/shared/ui/empty-state';
 import { LoadFailedPanel } from '@/shared/ui/error-panel';
 import { LoadingRegion } from '@/shared/ui/loading-region';
+import { PAGE_TITLE } from '@/shared/ui/page-title';
 import { TableSkeleton } from '@/shared/ui/skeleton';
 import { TOUCH_HEIGHT } from '@/shared/ui/touch-height';
 
@@ -33,9 +34,7 @@ function PageHeading({ picker }: Readonly<{ picker: FilePicker | null }>) {
   return (
     <div className="flex flex-wrap items-end justify-between gap-5">
       <div className="flex flex-col gap-2">
-        <h2 className="font-display text-[clamp(26px,3.5vw,36px)] leading-[1.03] font-medium tracking-[-0.036em] text-ink">
-          {COPY.title}
-        </h2>
+        <h2 className={PAGE_TITLE}>{COPY.title}</h2>
         <p className="max-w-[56ch] text-[15.5px] leading-[1.55] text-ink-2">{COPY.lead}</p>
       </div>
       {picker !== null && (

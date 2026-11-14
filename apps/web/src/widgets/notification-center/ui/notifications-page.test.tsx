@@ -14,6 +14,7 @@ import {
   unreadMeRoute,
 } from '@/test/notification-fixtures';
 import { pinClockInEachTest } from '@/test/pinned-clock';
+import { findRetryAfterQueryRetries } from '@/test/query-status';
 import { renderInApp } from '@/test/render-in-app';
 import { server } from '@/test/server';
 
@@ -23,8 +24,6 @@ vi.mock('next/navigation', () => import('@/test/navigation'));
 vi.mock('next/link', () => import('@/test/link'));
 
 const COPY = uk.notifications;
-
-const RETRIED_ERROR_MS = 2500;
 
 const OLDER = buildNotification({
   serial: 40,
@@ -94,11 +93,7 @@ describe('NotificationsPage', () => {
 
   it('a failed first page offers a retry that loads it', async () => {
     const { user } = renderPage({ listReply: REFUSED_CONNECTION.reply });
-    const retry = await screen.findByRole(
-      'button',
-      { name: uk.states.errors.loadFailed.action },
-      { timeout: RETRIED_ERROR_MS },
-    );
+    const retry = await findRetryAfterQueryRetries();
     server.use(...notificationRoutes().handlers);
 
     await user.click(retry);

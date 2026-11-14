@@ -87,7 +87,7 @@ describe.each([
 
 describe('global shortcuts', () => {
   it('G R does nothing while reminders are behind the flag, N, G A and G B still work', () => {
-    const actions = listen({ flags: FEATURE_FLAGS });
+    const actions = listen({ flags: { ...FEATURE_FLAGS, reminders: false } });
 
     press([LATIN.n, LATIN.g, LATIN.a, LATIN.g, LATIN.r, LATIN.g, LATIN.b]);
 

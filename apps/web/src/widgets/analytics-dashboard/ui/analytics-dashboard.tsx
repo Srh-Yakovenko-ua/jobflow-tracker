@@ -7,6 +7,7 @@ import { useState } from 'react';
 import { useSilenceDays } from '@/entities/user';
 import { uk } from '@/shared/i18n';
 import { Fade } from '@/shared/ui/fade';
+import { PAGE_TITLE } from '@/shared/ui/page-title';
 
 import { searchWeeks } from '../lib/kpi-values';
 import { dashboardViewOf } from '../model/dashboard-view';
@@ -28,9 +29,7 @@ function DashboardHeader({ kpis, scope }: DashboardHeaderProps) {
         <span className="eyebrow text-ink-3">
           {kpis === undefined ? COPY.eyebrow : COPY.eyebrowWeeks(searchWeeks(kpis.daysInSearch))}
         </span>
-        <h2 className="font-display text-[clamp(26px,3.5vw,36px)] leading-[1.03] font-medium tracking-[-0.036em] text-ink">
-          {COPY.heading}
-        </h2>
+        <h2 className={PAGE_TITLE}>{COPY.heading}</h2>
       </div>
       <SearchSelect scope={scope} />
     </div>

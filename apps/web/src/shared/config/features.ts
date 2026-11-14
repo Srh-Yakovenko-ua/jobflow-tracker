@@ -21,7 +21,7 @@ export const FEATURE_FLAGS: FeatureFlags = {
   analytics: true,
   calendar: true,
   resumes: true,
-  reminders: false,
+  reminders: true,
   settings: true,
   addApplication: true,
   followUp: true,
