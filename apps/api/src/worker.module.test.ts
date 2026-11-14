@@ -5,6 +5,7 @@ import { describe, expect, it } from 'vitest';
 
 import type { AppConfig } from './config/app-config.js';
 import { AiProcessor } from './modules/ai/index.js';
+import { AnalyticsCacheSubscriber } from './modules/analytics-cache/index.js';
 import { ApplicationLiveSubscriber } from './modules/applications/index.js';
 import { JwtKeys } from './modules/auth/index.js';
 import { CaptureSubscriber } from './modules/capture/index.js';
@@ -61,6 +62,7 @@ describe('WorkerModule', () => {
       NotificationsSubscriber,
       AiNotificationsSubscriber,
       InsightSubscriber,
+      AnalyticsCacheSubscriber,
     ]) {
       expect(moduleRef.get(provider, { strict: false })).toBeInstanceOf(provider);
     }

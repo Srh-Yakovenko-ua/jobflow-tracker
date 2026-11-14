@@ -1,6 +1,7 @@
 from datetime import datetime
 from uuid import UUID
 
+from pydantic import TypeAdapter
 from redis.asyncio import Redis
 from sqlalchemy.ext.asyncio import AsyncEngine
 
@@ -9,6 +10,8 @@ from app.repositories.applications import load_latest_change
 from app.repositories.events import load_user_events
 from app.services.cache import cache_aside, stamp_part
 from app.services.search_events import postgres_reads
+
+NORMS = TypeAdapter(Norms)
 
 
 def norms_key(*, user_id: UUID, stamp: datetime | None) -> str:
@@ -24,4 +27,4 @@ async def cached_norms(engine: AsyncEngine, redis: Redis, *, user_id: UUID) -> N
     async with postgres_reads():
         stamp = await load_latest_change(engine, user_id=user_id)
     key = norms_key(user_id=user_id, stamp=stamp)
-    return await cache_aside(redis, key=key, model=Norms, compute=computed)
+    return await cache_aside(redis, key=key, adapter=NORMS, compute=computed)

@@ -1,7 +1,7 @@
 import type { Provider } from '@nestjs/common';
 import { beforeAll, beforeEach } from 'vitest';
 
-import { DomainEventRouter } from '../outbox/domain-event-router.js';
+import { type DomainEvent, DomainEventRouter } from '../outbox/domain-event-router.js';
 import { memoryLog } from './memory-log.js';
 import { compileProcessorModule } from './processor.js';
 import { MOVE_EVENT_ID } from './service-fixtures.js';
@@ -9,6 +9,7 @@ import { MOVE_EVENT_ID } from './service-fixtures.js';
 export type SubscribedRouter = {
   readonly log: ReturnType<typeof memoryLog>;
   route: (type: string, payload: unknown) => Promise<number>;
+  routeFinal: (type: string, payload: unknown) => Promise<number>;
 };
 
 export function useSubscribedRouter(providers: Provider[]): SubscribedRouter {
@@ -25,13 +26,16 @@ export function useSubscribedRouter(providers: Provider[]): SubscribedRouter {
     log.lines.length = 0;
   });
 
+  const routeAttempt = (event: Omit<DomainEvent, 'id'>) => {
+    if (events === undefined) {
+      throw new Error('useSubscribedRouter is routed before its beforeAll ran');
+    }
+    return events.route({ id: MOVE_EVENT_ID, ...event });
+  };
+
   return {
     log,
-    route: (type, payload) => {
-      if (events === undefined) {
-        throw new Error('useSubscribedRouter is routed before its beforeAll ran');
-      }
-      return events.route({ id: MOVE_EVENT_ID, type, payload });
-    },
+    route: (type, payload) => routeAttempt({ type, payload }),
+    routeFinal: (type, payload) => routeAttempt({ type, payload, finalAttempt: true }),
   };
 }

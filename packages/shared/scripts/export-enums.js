@@ -3,6 +3,7 @@ import { writeFileSync } from 'node:fs';
 import {
   ACTIVE_STAGES,
   ALLOWED_TRANSITIONS,
+  ANALYTICS_CACHE,
   INTERVIEW_STAGES,
   isReplyStage,
   REJECTION_REASONS,
@@ -34,6 +35,7 @@ const enums = {
   rejectionReasons,
   thresholds: THRESHOLDS,
   tokenScopes: TOKEN_SCOPES,
+  analyticsCache: ANALYTICS_CACHE,
 };
 
 writeFileSync(

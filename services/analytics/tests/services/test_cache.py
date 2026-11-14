@@ -3,6 +3,7 @@ from datetime import UTC, datetime
 from typing import Any
 
 import pytest
+from pydantic import TypeAdapter
 from redis.exceptions import ConnectionError as RedisConnectionError
 
 from app.metrics.norms import Norms
@@ -46,7 +47,9 @@ class Computation:
 
 
 async def cached(redis: FakeRedis, compute: Computation) -> Any:
-    return await cache_aside(redis, key=KEY, model=Norms, compute=compute)
+    return await cache_aside(
+        redis, key=KEY, adapter=TypeAdapter(Norms), compute=compute
+    )
 
 
 async def test_answers_the_stored_body_without_computing() -> None:

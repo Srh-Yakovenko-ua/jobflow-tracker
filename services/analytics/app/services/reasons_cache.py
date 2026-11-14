@@ -1,6 +1,7 @@
 from datetime import datetime
 from uuid import UUID
 
+from pydantic import TypeAdapter
 from redis.asyncio import Redis
 from sqlalchemy.ext.asyncio import AsyncEngine
 
@@ -9,6 +10,8 @@ from app.repositories.applications import load_latest_change
 from app.repositories.searches import load_active_search_id
 from app.services.cache import cache_aside, stamp_part
 from app.services.search_events import load_scoped_events, postgres_reads
+
+REASONS_SUMMARY = TypeAdapter(ReasonsSummary)
 
 
 def reasons_summary_key(
@@ -36,4 +39,4 @@ async def cached_reasons_summary(
     key = reasons_summary_key(
         user_id=user_id, stage=stage, search_id=scope, stamp=stamp
     )
-    return await cache_aside(redis, key=key, model=ReasonsSummary, compute=computed)
+    return await cache_aside(redis, key=key, adapter=REASONS_SUMMARY, compute=computed)

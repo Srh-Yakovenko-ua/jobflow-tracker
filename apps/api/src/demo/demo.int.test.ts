@@ -1,4 +1,5 @@
 import {
+  analyticsVersionKey,
   DEFAULT_SEARCH_TITLE,
   DEFAULT_SILENCE_DAYS,
   DEMO_USER,
@@ -10,11 +11,13 @@ import { describe, expect, it } from 'vitest';
 
 import { Clock } from '../common/clock.js';
 import type { Prisma } from '../generated/prisma/client.js';
+import { AnalyticsCacheService } from '../modules/analytics-cache/index.js';
 import { AuthModule } from '../modules/auth/index.js';
 import { PlansModule } from '../modules/plans/index.js';
 import { ResumeVersionsRepository } from '../modules/resumes/index.js';
 import { SearchesRepository } from '../modules/searches/index.js';
 import type { PrismaService } from '../prisma/prisma.service.js';
+import { RedisService } from '../redis/redis.service.js';
 import { SeedRepository } from '../seed/seed.repository.js';
 import { SeedService } from '../seed/seed.service.js';
 import { FileStorage } from '../storage/file-storage.js';
@@ -33,6 +36,7 @@ import { fixedClock } from '../test/time.js';
 import { DemoRepository } from './demo.repository.js';
 import { DemoService } from './demo.service.js';
 import { DemoCvFiles } from './demo-cv-files.service.js';
+import { DemoReseed } from './demo-reseed.service.js';
 import { loadDemoStory, openDemoJourneys } from './demo-story.js';
 import { DemoStoryWriter } from './demo-story-writer.service.js';
 
@@ -148,7 +152,9 @@ describe('the demo story seed', () => {
         DemoStoryWriter,
         DemoService,
         DemoCvFiles,
+        DemoReseed,
         Clock,
+        AnalyticsCacheService,
       ],
     })
       .overrideProvider(Clock)
@@ -157,11 +163,7 @@ describe('the demo story seed', () => {
 
   const demo = () => testApp.app.get(DemoService);
 
-  const seedDemo = async () => {
-    const cvFiles = await demo().run();
-    await testApp.app.get(DemoCvFiles).store(cvFiles);
-    return cvFiles;
-  };
+  const seedDemo = () => testApp.app.get(DemoReseed).run();
 
   const cvHeads = async () => {
     const { resumeVersions } = await demoDump(testApp.prisma);
@@ -341,12 +343,17 @@ describe('the demo story seed', () => {
     });
   });
 
-  it("forgets the demo user's idempotency keys, so the same page captured again that day makes a new draft, and keeps another user's", async () => {
+  const seededDemoBesideOtherUser = async () => {
     await demo().run();
     const { id: demoId } = await testApp.prisma.user.findUniqueOrThrow({
       where: { email: DEMO_USER.email },
     });
     const { id: otherId } = await createUser(testApp.prisma);
+    return { demoId, otherId };
+  };
+
+  it("forgets the demo user's idempotency keys, so the same page captured again that day makes a new draft, and keeps another user's", async () => {
+    const { demoId, otherId } = await seededDemoBesideOtherUser();
     const key = { key: 'bm-2026-11-20-141303d0', requestHash: 'hash' };
     await testApp.prisma.idempotencyKey.createMany({
       data: [demoId, otherId].map((userId) => ({ ...key, userId })),
@@ -356,6 +363,19 @@ describe('the demo story seed', () => {
 
     const left = await testApp.prisma.idempotencyKey.findMany({ select: { userId: true } });
     expect(left).toEqual([{ userId: otherId }]);
+  });
+
+  it("raises the demo user's analytics version on each run, since the reseed writes no outbox rows, and leaves another user's alone", async () => {
+    const { demoId, otherId } = await seededDemoBesideOtherUser();
+    const redis = testApp.app.get(RedisService).client;
+    const versionOf = async (userId: string) =>
+      Number(await redis.get(analyticsVersionKey(userId)));
+    const before = await versionOf(demoId);
+
+    await seedDemo();
+
+    expect(await versionOf(demoId)).toBe(before + 1);
+    expect(await versionOf(otherId)).toBe(0);
   });
 
   it('keeps a demo user that existed before the run instead of registering it again', async () => {

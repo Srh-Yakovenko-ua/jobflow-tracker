@@ -1,7 +1,9 @@
 from datetime import UTC, datetime
 
-from fastapi import APIRouter, Request
+from fastapi import APIRouter, Request, Response
+from pydantic import TypeAdapter
 
+from app.api.revalidation import cached_response
 from app.api.routes.queries import (
     ApplicationsPerWeekQuery,
     ImproveQuery,
@@ -15,6 +17,8 @@ from app.services.forecast import search_forecast
 
 router = APIRouter(prefix="/analytics")
 
+FORECAST = TypeAdapter[Forecast | Insufficient](ForecastResult)
+
 
 @router.get("/forecast", response_model=ForecastResult)
 async def get_forecast(
@@ -24,15 +28,20 @@ async def get_forecast(
     search_id: SearchIdQuery = None,
     applications_per_week: ApplicationsPerWeekQuery = None,
     improve: ImproveQuery = None,
-) -> Forecast | Insufficient:
+) -> Response:
     what_if = WhatIf(
         applications_per_week=applications_per_week,
         improve=None if improve is None else improvement_of(improve),
     )
-    return await search_forecast(
-        request.app.state.engine,
+    return await cached_response(
+        request,
         user_id=user_id,
-        search_id=search_id,
-        what_if=what_if,
-        now=datetime.now(UTC),
+        adapter=FORECAST,
+        compute=lambda: search_forecast(
+            request.app.state.engine,
+            user_id=user_id,
+            search_id=search_id,
+            what_if=what_if,
+            now=datetime.now(UTC),
+        ),
     )

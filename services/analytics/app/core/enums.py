@@ -52,6 +52,12 @@ class Thresholds(EnumsModel):
     what_if_conversion: float = Field(alias="WHAT_IF_CONVERSION")
 
 
+class AnalyticsCache(EnumsModel):
+    version_key: str
+    entry_key: str
+    ttl_seconds: int
+
+
 class DomainEnums(EnumsModel):
     stages: tuple[str, ...]
     terminal_stages: tuple[str, ...]
@@ -66,6 +72,7 @@ class DomainEnums(EnumsModel):
     rejection_reasons: tuple[RejectionReason, ...]
     thresholds: Thresholds
     token_scopes: tuple[str, ...]
+    analytics_cache: AnalyticsCache
 
 
 class UnhandledStageError(ValueError):

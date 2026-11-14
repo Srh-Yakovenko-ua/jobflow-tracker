@@ -1,9 +1,10 @@
 from datetime import UTC, datetime
 from typing import Annotated
 
-from fastapi import APIRouter, Query, Request
-from pydantic import AfterValidator
+from fastapi import APIRouter, Query, Request, Response
+from pydantic import AfterValidator, TypeAdapter
 
+from app.api.revalidation import cached_response
 from app.api.routes.queries import SearchIdQuery
 from app.core.auth import CurrentUserId
 from app.core.enums import load_domain_enums
@@ -13,6 +14,8 @@ from app.services.reasons import search_reasons
 from app.services.reasons_cache import cached_reasons_summary
 
 router = APIRouter(prefix="/analytics")
+
+REASONS = TypeAdapter(Reasons)
 
 
 def known_stage(stage: str) -> str:
@@ -31,13 +34,18 @@ async def get_reasons(
     user_id: CurrentUserId,
     search_id: SearchIdQuery = None,
     stage: Annotated[KnownStage | None, Query()] = None,
-) -> Reasons:
-    return await search_reasons(
-        request.app.state.engine,
+) -> Response:
+    return await cached_response(
+        request,
         user_id=user_id,
-        search_id=search_id,
-        stage=stage,
-        now=datetime.now(UTC),
+        adapter=REASONS,
+        compute=lambda: search_reasons(
+            request.app.state.engine,
+            user_id=user_id,
+            search_id=search_id,
+            stage=stage,
+            now=datetime.now(UTC),
+        ),
     )
 
 
