@@ -31,16 +31,17 @@ def entry_leak(stage: FunnelStage) -> Insight:
     )
 
 
-def later_narrowing(stage: str, *, conversion: Rate) -> Insight:
+def later_narrowing(stage: FunnelStage, *, conversion: Rate) -> Insight:
     verb = plural_uk(conversion.successes, PASSED_FORMS)
-    passed = f"{verb} {conversion.successes} із {conversion.trials}"
+    passed = f"{verb} {conversion.successes} із {stage.reached}"
+    at = STAGE_PHRASES[stage.stage].at
     return Insight(
         block="funnel",
         title="Далі об'єм відгуків уже не допоможе",
-        body=f"Воронка звужується не на вході, а {STAGE_PHRASES[stage].at}: {passed}.",
+        body=f"Воронка звужується не на вході, а {at}: {passed}.",
         severity="warning",
         evidence={
-            "stage": stage,
+            "stage": stage.stage,
             "passed": conversion.successes,
             "trials": conversion.trials,
         },
@@ -59,4 +60,4 @@ def narrowest_step(metrics: InsightMetrics) -> Insight | None:
     index, conversion = min(rated, key=lambda step: (step[1].value, step[0]))
     if index == 0:
         return entry_leak(metrics.stages[0])
-    return later_narrowing(metrics.stages[index].stage, conversion=conversion)
+    return later_narrowing(metrics.stages[index], conversion=conversion)

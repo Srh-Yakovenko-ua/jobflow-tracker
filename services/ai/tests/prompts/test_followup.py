@@ -120,6 +120,25 @@ def test_accepts_the_fixture_draft_and_wires_the_check_into_the_prompt() -> None
     assert followup.problems_of(request, FIXTURE_OUTPUT) == []
 
 
+def test_the_fake_draft_invents_no_number_for_an_input_without_a_date_or_hint() -> None:
+    request = request_of(followup_body(lastInterview=None, hint=None))
+
+    assert followup.problems_of(request, FIXTURE_OUTPUT) == []
+
+
+@pytest.mark.parametrize(
+    "rule",
+    [
+        "aim for about 90 (about 70 when tone is short)",
+        "a body under 60 words is rejected",
+        "Write five to seven full sentences",
+        "short is plain and direct, still at least 60 words",
+    ],
+)
+def test_system_prompt_plans_a_body_inside_the_word_range(rule: str) -> None:
+    assert rule in followup.SYSTEM
+
+
 @pytest.mark.parametrize(
     "rule",
     [
@@ -144,4 +163,4 @@ def test_checked_returns_the_model_output_unchanged() -> None:
 
 
 def test_prompt_version_equals_the_shared_ai_prompt_version() -> None:
-    assert (followup.PROMPT_VERSION, load_prompt_versions()["followup"]) == ("v1", "v1")
+    assert (followup.PROMPT_VERSION, load_prompt_versions()["followup"]) == ("v2", "v2")

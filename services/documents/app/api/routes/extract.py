@@ -47,11 +47,11 @@ router = APIRouter(route_class=SizeCappedRoute)
 
 @router.post("/documents/extract", response_model=DocumentExtraction)
 def extract(file: UploadFile, request: Request) -> DocumentExtraction:
-    started = time.perf_counter()
     data = file.file.read(LIMITS.max_bytes + 1)
     if len(data) > LIMITS.max_bytes:
         raise too_large()
     with EXTRACTION_LOCK:
+        started = time.perf_counter()
         file_type, extraction = extract_document(data)
     logger.info(
         "document extracted",

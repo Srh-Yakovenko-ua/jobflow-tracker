@@ -163,6 +163,43 @@ def test_names_a_later_stage_when_the_funnel_narrows_after_the_entry(
     )
 
 
+def test_a_ghosted_drop_off_leaves_the_funnel_row_count_in_the_narrowing(
+    metrics: InsightMetrics,
+) -> None:
+    ghosted = step("tech_interview", reached=9, passed=3).model_copy(
+        update={
+            "conversion": rate(3, 8),
+            "drop_off": {"rejected": 5, "ghosted": 1, "withdrawn": 0},
+        }
+    )
+    stages = [
+        step("applied", reached=20, passed=12),
+        step("screening", reached=12, passed=9),
+        ghosted,
+    ]
+
+    said = narrowest_step(replace(metrics, stages=stages))
+
+    assert said is not None
+    assert (said.body, said.evidence) == (
+        "Воронка звужується не на вході, а на техінтерв'ю: пройшли 3 із 9.",
+        {"stage": "tech_interview", "passed": 3, "trials": 8},
+    )
+
+
+def test_a_loss_under_half_a_day_leaves_out_the_cost_clause(
+    metrics: InsightMetrics,
+) -> None:
+    costliest = metrics.most_expensive
+    assert isinstance(costliest, MostExpensiveStage)
+    cheap = costliest.model_copy(update={"invested_days_median": 0.3})
+
+    said = most_expensive_stage(replace(metrics, most_expensive=cheap))
+
+    assert said is not None
+    assert said.body == "Дійшло 9, пройшли 4."
+
+
 @pytest.mark.parametrize(
     ("count", "reached", "passed"),
     [
@@ -182,7 +219,9 @@ def test_the_verbs_agree_with_the_count_they_stand_by(
     assert isinstance(conversion, Rate)
 
     expensive = most_expensive_stage(replace(metrics, most_expensive=counted))
-    narrowing = later_narrowing("screening", conversion=conversion)
+    narrowing = later_narrowing(
+        step("screening", reached=40, passed=count), conversion=conversion
+    )
 
     assert expensive is not None
     assert (expensive.body.split(". ")[0], narrowing.body) == (

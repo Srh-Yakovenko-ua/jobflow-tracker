@@ -83,6 +83,19 @@ export async function loadDemoStory(): Promise<DemoStory> {
   return parseDemoStory(JSON.parse(await readFile(STORY_URL, 'utf8')));
 }
 
+const withoutWithdrawal = (events: DemoStoryEvent[]) =>
+  events.at(-1)?.toStage === 'withdrawn' ? events.slice(0, -1) : events;
+
+export function openDemoJourneys(story: DemoStory): DemoStory {
+  return {
+    ...story,
+    applications: story.applications.map((application) => ({
+      ...application,
+      events: withoutWithdrawal(application.events),
+    })),
+  };
+}
+
 export function shiftStory(story: DemoStory, { now }: ShiftStoryInput): DemoStory {
   const delta = now.getTime() - story.now.getTime();
   const moved = (instant: Date) => new Date(instant.getTime() + delta);

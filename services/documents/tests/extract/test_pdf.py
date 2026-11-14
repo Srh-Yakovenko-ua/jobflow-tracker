@@ -1,16 +1,23 @@
 import base64
+import time
+from collections.abc import Callable
+from dataclasses import replace
 
 import pytest
 
 from app.core.errors import DocumentError
 from app.extract.pdf import extract_pdf
+from app.extract.render_sandbox import RENDER_LIMITS, render_scan
 from tests.factories import (
     MAX_JPEG_BYTES,
+    RENDER_REFUSAL,
     annotated_pdf,
     encrypted_pdf,
     image_pdf,
     scan_pdf,
+    smask_pdf,
     text_pdf,
+    tiled_pattern_pdf,
     two_page_pdf,
 )
 from tests.jpeg import jpeg_darkest, jpeg_size
@@ -88,6 +95,37 @@ def test_refuses_a_pdf_it_cannot_read(data: bytes, expected: tuple[int, str]) ->
         extract_pdf(data)
 
     assert (raised.value.status, raised.value.type) == expected
+
+
+@pytest.mark.parametrize(
+    "render",
+    [
+        lambda: extract_pdf(smask_pdf()),
+        lambda: render_scan(
+            tiled_pattern_pdf(), count=1, limits=replace(RENDER_LIMITS, seconds=1.0)
+        ),
+        lambda: render_scan(
+            scan_pdf(1), count=1, limits=replace(RENDER_LIMITS, seconds=0.001)
+        ),
+    ],
+    ids=[
+        "soft-mask-over-the-memory-limit",
+        "tiled-pattern-over-a-lowered-time-limit",
+        "plain-scan-over-a-time-limit-of-a-millisecond",
+    ],
+)
+def test_refuses_a_page_over_the_render_limits_within_seconds(
+    render: Callable[[], object],
+) -> None:
+    started = time.perf_counter()
+    with pytest.raises(DocumentError) as raised:
+        render()
+
+    assert (raised.value.type, raised.value.detail) == (
+        "unreadable_file",
+        RENDER_REFUSAL,
+    )
+    assert time.perf_counter() - started < 3
 
 
 def test_does_not_draw_annotation_appearance_streams() -> None:

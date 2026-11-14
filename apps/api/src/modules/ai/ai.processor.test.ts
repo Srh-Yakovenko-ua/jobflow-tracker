@@ -89,7 +89,7 @@ describe('AiProcessor', () => {
         jobId: '71',
         kind: 'vacancy_parse',
         model: 'fake',
-        promptVersion: 'v2',
+        promptVersion: VACANCY_COMPLETION.promptVersion,
         tokensIn: 120,
         tokensOut: 40,
         latencyMs: 15,

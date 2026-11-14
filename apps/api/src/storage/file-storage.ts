@@ -12,11 +12,14 @@ export type ObjectStart = { key: string; bytes: number; ifMatch?: string | undef
 
 export type CopyRequest = { from: string; to: string; ifMatch: string };
 
+export type PutObject = { key: string; bytes: Uint8Array; mime: string };
+
 export abstract class FileStorage {
   abstract createUploadUrl(request: UploadUrlRequest): Promise<SignedUrl>;
   abstract createDownloadUrl(request: DownloadUrlRequest): Promise<SignedUrl>;
   abstract head(key: string): Promise<StoredObject | null>;
   abstract readStart(start: ObjectStart): Promise<Uint8Array>;
   abstract copy(request: CopyRequest): Promise<boolean>;
+  abstract put(object: PutObject): Promise<void>;
   abstract delete(key: string): Promise<void>;
 }

@@ -23,18 +23,25 @@ from app.metrics.plurals import (
 )
 
 
+def loss_cost(days: float) -> str:
+    if round(days) == 0:
+        return ""
+    return f" Кожна втрата тут — це {spent_time(days)} вже витраченого часу."
+
+
 @insight_rule
 def most_expensive_stage(metrics: InsightMetrics) -> Insight | None:
     stage = metrics.most_expensive
     if not isinstance(stage, MostExpensiveStage):
         return None
-    spent = spent_time(stage.invested_days_median)
+    counts = (
+        f"{sentence(plural_uk(stage.reached, REACHED_FORMS))} {stage.reached}, "
+        f"{plural_uk(stage.passed, PASSED_FORMS)} {stage.passed}."
+    )
     return Insight(
         block="funnel",
         title=f"{sentence(STAGE_PHRASES[stage.stage].name)} — найдорожчий етап",
-        body=f"{sentence(plural_uk(stage.reached, REACHED_FORMS))} {stage.reached}, "
-        f"{plural_uk(stage.passed, PASSED_FORMS)} {stage.passed}. "
-        f"Кожна втрата тут — це {spent} вже витраченого часу.",
+        body=f"{counts}{loss_cost(stage.invested_days_median)}",
         severity="warning",
         evidence={
             "stage": stage.stage,

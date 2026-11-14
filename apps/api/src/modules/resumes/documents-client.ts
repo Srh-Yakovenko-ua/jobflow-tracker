@@ -24,12 +24,19 @@ function formOf({ bytes, filename, mime }: DocumentsExtract): FormData {
 @Injectable()
 export class DocumentsClient {
   private readonly baseUrl: string;
+  private queue: Promise<unknown> = Promise.resolve();
 
   constructor(config: ConfigService<Env, true>) {
     this.baseUrl = config.get('DOCUMENTS_SERVICE_URL', { infer: true });
   }
 
-  async extract(request: DocumentsExtract): Promise<DocumentExtraction> {
+  extract(request: DocumentsExtract): Promise<DocumentExtraction> {
+    const turn = this.queue.then(() => this.post(request));
+    this.queue = turn.catch(() => undefined);
+    return turn;
+  }
+
+  private async post(request: DocumentsExtract): Promise<DocumentExtraction> {
     try {
       const response = await fetch(`${this.baseUrl}/documents/extract`, {
         method: 'POST',

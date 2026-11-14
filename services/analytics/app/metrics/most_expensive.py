@@ -44,11 +44,10 @@ def most_expensive(rows: pd.DataFrame) -> MostExpensiveStage | Insufficient | No
     index = max(losses, key=lambda index: (losses[index].sum(), index))
     if losses[index].sum() == 0:
         return None
-    went_in = rows[rows[stages[index]].notna()]
     return MostExpensiveStage(
         stage=stages[index],
-        reached=len(went_in),
-        passed=reached(went_in, index=index + 1),
+        reached=reached(rows, index=index),
+        passed=reached(rows, index=index + 1),
         lost=len(losses[index]),
         invested_days_median=float(losses[index].median()),
     )

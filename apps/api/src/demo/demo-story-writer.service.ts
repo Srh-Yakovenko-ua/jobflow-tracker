@@ -6,6 +6,7 @@ import type { PlanFromSummary } from '../modules/plans/index.js';
 import { ResumeVersionsRepository } from '../modules/resumes/index.js';
 import { SearchesRepository } from '../modules/searches/index.js';
 import { PrismaService } from '../prisma/prisma.service.js';
+import type { PutObject } from '../storage/file-storage.js';
 import { type DemoAiRun, DemoRepository } from './demo.repository.js';
 import {
   demoCompletionOf,
@@ -13,25 +14,35 @@ import {
   demoResumeProfileOf,
   demoSummaryOutput,
 } from './demo-ai.js';
+import { demoCvPdf } from './demo-cv.js';
 import { applicationPlansOf, summaryInstantOf, versionRowsOf } from './demo-rows.js';
 import type { DemoStory } from './demo-story.js';
 
 export type DemoStoryTarget = { email: string; story: DemoStory };
 
-export type DemoStoryWritten = { userId: string; summary: PlanFromSummary; matches: number };
+export type DemoStoryWritten = {
+  userId: string;
+  summary: PlanFromSummary;
+  matches: number;
+  cvFiles: PutObject[];
+};
 
 type StoryOwner = { userId: string; story: DemoStory; tx: Prisma.TransactionClient };
 
 type VersionIds = Map<number, string>;
 
+type ResumeWritten = { versionIds: VersionIds; cvFiles: PutObject[] };
+
 const DEMO_STORY = {
   activeVersion: 2,
   cvMime: 'application/pdf',
-  cvSizeBytes: 182_000,
+  cvRole: 'Frontend Developer',
   transactionTimeoutMs: 30_000,
 } as const;
 
 const cvFilenameOf = (number: number) => `cv-v${String(number)}.pdf`;
+
+const cvKeyOf = (userId: string, number: number) => `demo/${userId}/${cvFilenameOf(number)}`;
 
 @Injectable()
 export class DemoStoryWriter {
@@ -51,7 +62,7 @@ export class DemoStoryWriter {
         }
         await this.repository.wipe(userId, { tx });
         const owner = { userId, story, tx };
-        const versionIds = await this.writeResume(owner);
+        const { versionIds, cvFiles } = await this.writeResume(owner);
         const matchRuns = await this.writeApplications(owner, versionIds);
         const summary = await this.writeAiRuns(owner, matchRuns);
         const activeResumeVersionId = versionIds.get(DEMO_STORY.activeVersion) ?? null;
@@ -60,33 +71,40 @@ export class DemoStoryWriter {
           timezone: story.timezone,
           tx,
         });
-        return { userId, summary, matches: matchRuns.length };
+        return { userId, summary, matches: matchRuns.length, cvFiles };
       },
       { timeout: DEMO_STORY.transactionTimeoutMs },
     );
   }
 
-  private async writeResume({ userId, story, tx }: StoryOwner): Promise<VersionIds> {
+  private async writeResume({ userId, story, tx }: StoryOwner): Promise<ResumeWritten> {
     const createdAt = story.searchStartedAt;
     const resumeId = await this.resumes.findOrCreateResume(userId, { createdAt, tx });
     const versionIds: VersionIds = new Map();
+    const cvFiles: PutObject[] = [];
     for (const { number, title, uploadedAt } of versionRowsOf(story)) {
-      const filename = cvFilenameOf(number);
-      const file = { filename, mime: DEMO_STORY.cvMime, sizeBytes: DEMO_STORY.cvSizeBytes };
+      const cvFile = {
+        key: cvKeyOf(userId, number),
+        bytes: demoCvPdf({ number, title: DEMO_STORY.cvRole }),
+        mime: DEMO_STORY.cvMime,
+      };
       const data = {
-        ...file,
+        filename: cvFilenameOf(number),
+        mime: cvFile.mime,
+        sizeBytes: cvFile.bytes.length,
+        storageKey: cvFile.key,
         resumeId,
         number,
         title,
         uploadedAt,
         createdAt: uploadedAt,
-        storageKey: `demo/${userId}/${filename}`,
         aiProfile: demoResumeProfileOf(number),
       };
       const { id } = await this.resumes.insert(userId, { data, tx });
       versionIds.set(number, id);
+      cvFiles.push(cvFile);
     }
-    return versionIds;
+    return { versionIds, cvFiles };
   }
 
   private async writeApplications(

@@ -1,9 +1,12 @@
+import { isDeepStrictEqual } from 'node:util';
+
 import { describe, expect, it } from 'vitest';
 
 import {
   type DemoStory,
   type DemoStoryApplication,
   loadDemoStory,
+  openDemoJourneys,
   parseDemoStory,
   shiftStory,
 } from './demo-story.js';
@@ -47,6 +50,23 @@ describe('the demo story', () => {
       withdrawn: outcomeCount('withdrawn'),
       offer: outcomeCount('offer'),
     }).toEqual({ rejected: 32, ghosted: 17, withdrawn: 4, offer: 1 });
+  });
+
+  it('opens the four withdrawn journeys at their last stage and leaves every other journey as it was', async () => {
+    const story = await loadDemoStory();
+    const opened = openDemoJourneys(story);
+    const changed = opened.applications.filter(
+      (journey, index) => !isDeepStrictEqual(journey, story.applications[index]),
+    );
+
+    expect(opened.applications).toHaveLength(54);
+    expect(changed.map((journey) => `${journey.key} ${String(lastStageOf(journey))}`)).toEqual([
+      'application-17 screening',
+      'application-18 applied',
+      'application-19 applied',
+      'application-34 final',
+    ]);
+    expect(changed.map(({ events }) => events.length)).toEqual([2, 1, 1, 4]);
   });
 
   it.each([

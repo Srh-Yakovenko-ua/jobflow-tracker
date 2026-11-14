@@ -51,6 +51,10 @@ FIXTURES: dict[str, tuple[list[StageEvent], list[tuple[int, int | None]]]] = {
         SKIPPED_SCREENING,
         [(1, 1), (1, 1), (1, 0), (0, 0), (0, None)],
     ),
+    "screening skipped to offer": (
+        moves(application(0), ["applied", "screening", "offer"]),
+        [(1, 1), (1, 1), (1, 1), (1, 1), (1, None)],
+    ),
     "undone screening": (UNDONE_SCREENING, [(1, 0), (0, 0), (0, 0), (0, 0), (0, None)]),
     "revived ghosted": (REVIVED_GHOSTED, [(1, 1), (1, 0), (0, 0), (0, 0), (0, None)]),
     "ghosted at tech interview": (

@@ -6,6 +6,7 @@ import type {
   DownloadUrlRequest,
   FileStorage,
   ObjectStart,
+  PutObject,
   SignedUrl,
   StoredObject,
   UploadUrlRequest,
@@ -70,6 +71,11 @@ export class FakeFileStorage implements FileStorage {
     }
     this.objects.set(request.to, source);
     return Promise.resolve(true);
+  }
+
+  put({ key, bytes, mime }: PutObject): Promise<void> {
+    this.objects.set(key, { bytes, mime });
+    return Promise.resolve();
   }
 
   delete(key: string): Promise<void> {

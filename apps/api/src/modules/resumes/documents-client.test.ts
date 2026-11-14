@@ -28,6 +28,9 @@ const fileOf = (body: RequestInit['body']) =>
 
 const replyWith = (reply: FetchReply) => recordFetch({ replies: reply, decodeBody: fileOf });
 
+const replyInTurn = (replies: FetchReply[]) =>
+  replyWith((init) => (replies.shift() ?? stalled)(init));
+
 const docError = (status: number, type: string): ErrorResponse => ({
   type,
   title: 'Refused',
@@ -110,6 +113,43 @@ describe('DocumentsClient.extract', () => {
     replyWith(reply);
 
     await expect(documentsClient.extract(EXTRACT)).rejects.toMatchObject(error);
+  });
+
+  it('starts the 10 s limit of an extract queued behind another only once that one has answered', async () => {
+    const timeout = vi.spyOn(AbortSignal, 'timeout');
+    let answerFirst: (response: Response) => void = () => undefined;
+    const held = new Promise<Response>((resolve) => {
+      answerFirst = resolve;
+    });
+    const calls = replyInTurn([() => held, () => Response.json(SCAN_EXTRACTION)]);
+
+    const extractions = Promise.all([
+      documentsClient.extract(EXTRACT),
+      documentsClient.extract(EXTRACT),
+    ]);
+    await vi.waitFor(() => {
+      expect(calls).toHaveLength(1);
+    });
+    expect(timeout).toHaveBeenCalledTimes(1);
+    answerFirst(Response.json(TEXT_EXTRACTION));
+
+    expect(await extractions).toEqual([TEXT_EXTRACTION, SCAN_EXTRACTION]);
+    expect(timeout.mock.calls).toEqual([[10_000], [10_000]]);
+  });
+
+  it('answers an extract queued behind one whose connection was refused', async () => {
+    replyInTurn([() => Promise.reject(refusedConnection), () => Response.json(TEXT_EXTRACTION)]);
+
+    const [refused, answered] = await Promise.allSettled([
+      documentsClient.extract(EXTRACT),
+      documentsClient.extract(EXTRACT),
+    ]);
+
+    expect(refused).toMatchObject({
+      status: 'rejected',
+      reason: documentsError(503, 'not_ready'),
+    });
+    expect(answered).toEqual({ status: 'fulfilled', value: TEXT_EXTRACTION });
   });
 
   it('gives up on a document service that never answers at the 10 s limit with 504 documents_timeout', async () => {
