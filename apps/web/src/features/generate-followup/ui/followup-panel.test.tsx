@@ -14,7 +14,7 @@ import {
   NO_FOLLOWUP,
   READY_FOLLOWUP,
 } from '@/test/followup-fixtures';
-import { renderInApp } from '@/test/render-in-app';
+import { renderViewInApp } from '@/test/render-in-app';
 import { server } from '@/test/server';
 
 import { FollowupPanel } from './followup-panel';
@@ -23,6 +23,8 @@ type PanelSetup = Readonly<{ job?: AiJob; generateReply?: HttpResponseResolver }
 
 const PROCESSING: AiJob = { status: 'processing', step: 2, steps: 3 };
 
+const QUEUED: AiJob = { status: 'queued', ahead: 2, etaSeconds: 30 };
+
 const TIMEOUT_COPY =
   'Генерація не вдалася: модель не відповіла за 30 секунд. Твої дані нікуди не зникли.';
 
@@ -30,6 +32,7 @@ const OTHER_COPY = 'Генерація не вдалася. Твої дані н
 
 afterEach(() => {
   toast.dismiss();
+  sessionStorage.clear();
 });
 
 function renderPanel(
@@ -38,10 +41,13 @@ function renderPanel(
 ) {
   const routes = followupRoutes({ response, generateReply });
   server.use(...routes.handlers);
-  const user = renderInApp(
-    <FollowupPanel application={ACME_APPLICATION} followup={{ response, job }} />,
-  );
-  return { user, sent: routes.sent };
+  const ui = <FollowupPanel application={ACME_APPLICATION} followup={{ response, job }} />;
+  const { user, view } = renderViewInApp(ui);
+  const reopen = () => {
+    view.rerender(null);
+    view.rerender(ui);
+  };
+  return { user, sent: routes.sent, reopen, view };
 }
 
 function draftFields() {
@@ -82,7 +88,7 @@ describe('FollowupPanel', () => {
   });
 
   it('while the draft is queued shows the queue line and that the card can be closed', () => {
-    renderPanel(followupJob('queued'), { job: { status: 'queued', ahead: 2, etaSeconds: 30 } });
+    renderPanel(followupJob('queued'), { job: QUEUED });
 
     expect(screen.getByText(/у черзі · 2 задачі перед твоєю/)).toBeDefined();
     expect(
@@ -119,10 +125,63 @@ describe('FollowupPanel', () => {
   it('marking the draft sent records it once and says so', async () => {
     const { user, sent } = renderPanel(READY_FOLLOWUP);
 
-    await user.click(screen.getByRole('button', { name: 'Позначити надісланим' }));
+    await user.click(screen.getByRole('button', { name: 'Позначити як надіслано' }));
 
     expect(await screen.findByText('Фоллоу-ап позначено надісланим')).toBeDefined();
     expect(sent.marked).toEqual([ACME_APPLICATION.id]);
+  });
+
+  it('while queued sweeps a track inside the section without a box of its own, and a running step has no sweep', () => {
+    const { view } = renderPanel(followupJob('queued'), { job: QUEUED });
+
+    expect(view.container.querySelector('.motion-safe\\:animate-sweep')).not.toBeNull();
+    expect(screen.getByRole('status').classList).not.toContain('shadow-e1');
+
+    view.rerender(
+      <FollowupPanel
+        application={ACME_APPLICATION}
+        followup={{ response: followupJob('processing'), job: PROCESSING }}
+      />,
+    );
+    expect(screen.getByText('крок 2 з 3 · обробляється')).toBeDefined();
+    expect(view.container.querySelector('.motion-safe\\:animate-sweep')).toBeNull();
+  });
+
+  it('a ready draft can switch tone and language, and «Ще варіант» sends the new choice', async () => {
+    const { user, sent } = renderPanel(READY_FOLLOWUP);
+
+    await user.click(screen.getByRole('radio', { name: 'теплий' }));
+    await user.click(screen.getByRole('radio', { name: 'англійська' }));
+    await user.click(screen.getByRole('button', { name: 'Ще варіант' }));
+
+    await expect
+      .poll(() => sent.requested)
+      .toEqual([{ tone: 'warm', language: 'en', variant: true }]);
+  });
+
+  it('an edited draft is still there after leaving and coming back, and gone once marked sent', async () => {
+    const { user, reopen } = renderPanel(READY_FOLLOWUP);
+    await user.clear(draftFields().body);
+    await user.type(draftFields().body, 'Дякую!');
+
+    reopen();
+    expect(draftFields().body.value).toBe('Дякую!');
+
+    await user.click(screen.getByRole('button', { name: 'Позначити як надіслано' }));
+    await screen.findByText('Фоллоу-ап позначено надісланим');
+    reopen();
+    expect(draftFields().body.value).toBe(DESIGN_FOLLOWUP.body);
+  });
+
+  it('an own draft is still open after leaving and coming back', async () => {
+    const { user, reopen } = renderPanel(followupJob('failed', 'ai_timeout'));
+    await user.click(screen.getByRole('button', { name: 'Написати самому' }));
+    await user.type(draftFields().body, 'Дякую');
+
+    reopen();
+
+    expect(screen.getByText('свій текст · пиши тут')).toBeDefined();
+    expect(draftFields().body.value).toBe('Дякую');
   });
 
   it('a timed out draft shows the designed error, and «Написати самому» opens an empty editor', async () => {
@@ -143,7 +202,7 @@ describe('FollowupPanel', () => {
     await user.click(screen.getByRole('button', { name: 'Написати самому' }));
     const copy = screen.getByRole<HTMLButtonElement>('button', { name: 'Скопіювати' });
     const markSent = screen.getByRole<HTMLButtonElement>('button', {
-      name: 'Позначити надісланим',
+      name: 'Позначити як надіслано',
     });
 
     await user.type(draftFields().subject, 'Тема');

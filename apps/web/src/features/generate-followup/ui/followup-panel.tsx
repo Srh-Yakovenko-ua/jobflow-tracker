@@ -11,15 +11,16 @@ import {
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 
-import { uk } from '@/shared/i18n';
 import { type AiJob, AsyncState } from '@/shared/ui/async-state';
 import { Reveal } from '@/shared/ui/reveal';
 
+import { forgetDraftEdit, readDraftEdit } from '../lib/draft-edits';
 import { type FollowupView, followupViewOf } from '../lib/followup-view';
 import { useGenerateFollowup } from '../model/use-generate-followup';
 import { useMarkFollowupSent } from '../model/use-mark-followup-sent';
 import { FollowupEditor } from './followup-editor';
 import { FollowupFailure } from './followup-failure';
+import { FollowupQueued } from './followup-queued';
 import { FollowupRequestForm } from './followup-request-form';
 
 export type FollowupPanelProps = Readonly<{
@@ -32,7 +33,7 @@ type Ask = Readonly<{ variant: boolean }>;
 type PanelControls = ReturnType<typeof usePanelControls>;
 
 function usePanelControls({ application, followup }: FollowupPanelProps) {
-  const [manual, setManual] = useState(false);
+  const [manual, setManual] = useState(() => readDraftEdit(application.id)?.key === 'own');
   const methods = useForm<FollowupRequestInput, unknown, FollowupRequest>({
     defaultValues: { tone: 'neutral', language: followup.response.language, hint: '' },
     resolver: zodResolver(followupRequestSchema),
@@ -45,6 +46,7 @@ function usePanelControls({ application, followup }: FollowupPanelProps) {
   const ask = ({ variant }: Ask) => {
     void methods.handleSubmit((request) => {
       setManual(false);
+      forgetDraftEdit(application.id);
       marking.reset();
       generation.generate({ ...request, variant });
     })();
@@ -61,15 +63,17 @@ function usePanelControls({ application, followup }: FollowupPanelProps) {
       setManual(true);
     },
   };
-  return { methods, generation, marking, view, actions };
+  return { applicationId: application.id, methods, generation, marking, view, actions };
 }
+
+const IN_SECTION = { className: 'bg-transparent p-0 shadow-none' };
 
 function PanelState({ controls, job }: Readonly<{ controls: PanelControls; job: AiJob }>) {
   const { view, generation, marking, actions } = controls;
   if (view.kind === 'waiting') {
     return (
-      <AsyncState job={job}>
-        <p className="text-[13px] leading-normal text-ink-3">{uk.followup.waiting}</p>
+      <AsyncState job={job} view={IN_SECTION}>
+        <FollowupQueued job={job} />
       </AsyncState>
     );
   }
@@ -93,7 +97,8 @@ function PanelState({ controls, job }: Readonly<{ controls: PanelControls; job: 
   return (
     <FollowupEditor
       key={view.key}
-      ready={view}
+      draft={{ ready: view, applicationId: controls.applicationId }}
+      methods={controls.methods}
       actions={{ onVariant: actions.onVariant, onSent: marking.mark }}
       status={{
         generating: generation.isPending,

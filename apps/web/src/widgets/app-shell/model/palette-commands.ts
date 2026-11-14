@@ -1,4 +1,4 @@
-import { type Stage, STAGES } from '@jobflow/shared';
+import { isActiveStage, type Stage, STAGES } from '@jobflow/shared';
 import { type LucideIcon, Table2 } from 'lucide-react';
 
 import type { MovingApplication } from '@/entities/application';
@@ -86,7 +86,10 @@ const ACTION_ROWS: readonly ActionRow[] = [
   {
     id: 'followUp',
     flag: 'followUp',
-    runFor: (target) => target && navigate(`/applications/${target.id}#follow-up`),
+    runFor: (target) =>
+      target && isActiveStage(target.currentStage)
+        ? navigate(`/applications/${target.id}#follow-up`)
+        : undefined,
   },
   { id: 'analytics', flag: 'analytics', runFor: () => navigate('/analytics') },
   { id: 'theme', runFor: () => ({ kind: 'theme' }) },

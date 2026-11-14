@@ -24,7 +24,7 @@ export const FEATURE_FLAGS: FeatureFlags = {
   reminders: false,
   settings: true,
   addApplication: true,
-  followUp: false,
+  followUp: true,
   browserPush: false,
   emailNotifications: false,
   captureToken: true,

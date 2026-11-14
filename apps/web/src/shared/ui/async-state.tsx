@@ -36,6 +36,7 @@ export type AsyncStateActions = {
 export type AsyncStateView = {
   retrying?: boolean | undefined;
   manualFocused?: boolean | undefined;
+  className?: string | undefined;
 };
 
 type FailedFooterProps = Readonly<{
@@ -161,7 +162,10 @@ export type AsyncStateProps = Readonly<{
 
 export function AsyncState({ job, actions, view, children }: AsyncStateProps) {
   return (
-    <div role="status" className="flex min-w-0 flex-col gap-3.5 bg-surface p-5 shadow-e1">
+    <div
+      role="status"
+      className={cn('flex min-w-0 flex-col gap-3.5 bg-surface p-5 shadow-e1', view?.className)}
+    >
       <StatusLine job={job} />
       {children}
       {job.status === 'processing' && <ProcessingTrack job={job} />}

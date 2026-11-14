@@ -7,6 +7,7 @@ import { type RefObject, useRef } from 'react';
 import { DeleteApplicationDialog } from '@/features/delete-application';
 import { ApplicationEditForm } from '@/features/edit-application';
 import { ScheduleEventDialog, type SchedulePlan } from '@/features/schedule-event';
+import { cn } from '@/shared/lib/cn';
 import { AUTH_ROUTES } from '@/shared/lib/return-to';
 import { LoadFailedPanel } from '@/shared/ui/error-panel';
 import { NotFoundState } from '@/shared/ui/not-found-state';
@@ -41,7 +42,11 @@ export type ApplicationPageProps = Readonly<{
 }>;
 
 const COLUMNS =
-  'grid grid-cols-1 items-start gap-10 pt-8 @4xl:grid-cols-[minmax(0,1.55fr)_minmax(280px,1fr)]';
+  'grid grid-cols-1 items-start gap-10 pt-8 [reading-flow:grid-order] @4xl:grid-cols-[minmax(0,1.55fr)_minmax(280px,1fr)]';
+
+const COLUMN = 'contents @4xl:flex @4xl:min-w-0 @4xl:flex-col';
+
+const AFTER_FOLLOWUP = 'order-1 flex min-w-0 flex-col @4xl:order-none';
 
 function useLeaveAfterDelete(): () => void {
   const router = useRouter();
@@ -109,7 +114,7 @@ function LoadedPage({ application, page, view }: LoadedPageProps) {
     <div className="animate-fade-in">
       <PageTopBar application={application} view={{ mode: view.mode, timeZone: page.timeZone }} />
       <div className={COLUMNS}>
-        <div className="flex min-w-0 flex-col gap-10">
+        <div className={cn(COLUMN, '@4xl:gap-10')}>
           <ApplicationHeader
             application={application}
             titleRef={titleRef}
@@ -131,15 +136,19 @@ function LoadedPage({ application, page, view }: LoadedPageProps) {
             </div>
           </ApplicationHeader>
           {singleColumn && followup}
-          <ApplicationMatch match={match} />
-          <ApplicationTimeline application={application} />
-          <ApplicationNotes key={application.id} application={application} />
+          <div className={cn(AFTER_FOLLOWUP, 'gap-10')}>
+            <ApplicationMatch match={match} />
+            <ApplicationTimeline application={application} />
+            <ApplicationNotes key={application.id} application={application} />
+          </div>
         </div>
-        <div className="flex min-w-0 flex-col gap-6">
+        <div className={cn(COLUMN, '@4xl:gap-6')}>
           {!singleColumn && followup}
-          <ApplicationRecruiter key={application.id} application={application} />
-          <AttachedResume application={application} actions={{ onRelinked: match.onRelinked }} />
-          <ApplicationContext application={application} />
+          <div className={cn(AFTER_FOLLOWUP, 'gap-6')}>
+            <ApplicationRecruiter key={application.id} application={application} />
+            <AttachedResume application={application} actions={{ onRelinked: match.onRelinked }} />
+            <ApplicationContext application={application} />
+          </div>
         </div>
       </div>
       <DeleteApplicationDialog

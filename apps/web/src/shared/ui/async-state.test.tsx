@@ -127,6 +127,20 @@ describe('AsyncState', () => {
     expect(document.activeElement).toBe(screen.getByRole('button', { name: 'Заповнити вручну' }));
   });
 
+  it('a caller can drop the surface box, its class winning over the kit one', () => {
+    render(
+      <AsyncState
+        job={{ status: 'queued', ahead: 1, etaSeconds: 10 }}
+        view={{ className: 'bg-transparent p-0 shadow-none' }}
+      />,
+    );
+
+    const root = [...screen.getByRole('status').classList];
+    expect(root).toEqual(expect.arrayContaining(['bg-transparent', 'p-0', 'shadow-none']));
+    expect(root).not.toContain('bg-surface');
+    expect(root).not.toContain('shadow-e1');
+  });
+
   it('shows the operation content the caller passes in', () => {
     render(
       <AsyncState job={{ status: 'done', tookSeconds: 6 }}>
