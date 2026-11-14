@@ -14,3 +14,26 @@ export function buildForecast(): Extract<ForecastResponse, { status: 'ok' }> {
     horizonWeeks: 52,
   };
 }
+
+export function buildInsufficientForecast(): Extract<
+  ForecastResponse,
+  { status: 'insufficient_data' }
+> {
+  return {
+    status: 'insufficient_data',
+    have: 9,
+    need: 15,
+    message: 'Ще 6 відгуків до прогнозу',
+  };
+}
+
+export function buildDesignWhatIfForecast(): Extract<ForecastResponse, { status: 'ok' }> {
+  return {
+    ...buildForecast(),
+    medianWeeks: 6.4,
+    likely: { low: 3.9, high: 11.8 },
+    interval: { low: 2.6, high: 16.1 },
+    withinFourWeeks: 0.26,
+    withinEightWeeks: 0.61,
+  };
+}

@@ -13,6 +13,7 @@ import {
 } from '../../queues/processed-job.js';
 import { QUEUES } from '../../queues/queues.js';
 import { ScheduledJobsService } from '../../scheduled-jobs/scheduled-jobs.service.js';
+import { SummaryRequestsService } from '../summaries/index.js';
 import {
   MAINTENANCE_JOBS,
   type MaintenanceJobName,
@@ -36,7 +37,8 @@ export class MaintenanceProcessor extends WorkerHost {
     [MAINTENANCE_JOBS.outboxRelay]: () => this.outbox.relay(),
     [MAINTENANCE_JOBS.cleanup]: () => this.cleanup(),
     [MAINTENANCE_JOBS.aiJobsSweep]: () => this.scheduledJobs.sweepStaleAiJobs(),
-    [MAINTENANCE_JOBS.monthlySummaryPick]: () => this.scheduledJobs.monthlySummaryUsers(),
+    [MAINTENANCE_JOBS.monthlySummaryPick]: async () =>
+      this.summaries.requestScheduledFor(await this.scheduledJobs.monthlySummaryUsers()),
     [MAINTENANCE_JOBS.silenceScan]: (job) => this.ran(job, () => this.scheduledJobs.silenceScan()),
     [MAINTENANCE_JOBS.autoGhostScan]: (job) => this.ran(job),
     [MAINTENANCE_JOBS.eventRemindersScan]: (job) =>
@@ -46,6 +48,7 @@ export class MaintenanceProcessor extends WorkerHost {
   constructor(
     private readonly outbox: OutboxRelayService,
     private readonly scheduledJobs: ScheduledJobsService,
+    private readonly summaries: SummaryRequestsService,
   ) {
     super();
   }

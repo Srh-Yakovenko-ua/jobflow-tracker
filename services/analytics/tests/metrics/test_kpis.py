@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import date, datetime
 
 import pytest
 
@@ -14,9 +14,14 @@ MID_AUGUST = at("2026-08-15T12:00Z")
 
 
 def kpis_of(
-    paths: list[list[TimedMove]], *, period: SearchPeriod, now: datetime
+    paths: list[list[TimedMove]],
+    *,
+    period: SearchPeriod,
+    now: datetime,
+    month: date | None = None,
 ) -> FunnelKpis:
-    return kpis(journeys(clean_events(timed_frame(paths))), period=period, now=now)
+    rows = journeys(clean_events(timed_frame(paths)))
+    return kpis(rows, period=period, now=now, month=month)
 
 
 def counted(counts: tuple[int, int, int]) -> MonthlyCount:
@@ -114,6 +119,29 @@ def test_a_january_month_compares_with_december_of_the_year_before() -> None:
     ]
 
     result = kpis_of(paths, period=KYIV_SEARCH, now=at("2026-01-10T12:00Z"))
+
+    assert result.sent == counted((4, 2, 1))
+
+
+SENT_AROUND_AUGUST: list[list[TimedMove]] = [
+    [("applied", at(moment))]
+    for moment in (
+        "2026-07-10T10:00Z",
+        "2026-07-31T22:30Z",
+        "2026-08-12T10:00Z",
+        "2026-09-01T06:00Z",
+    )
+]
+AUGUST = date(2026, 8, 1)
+
+
+def test_a_month_anchor_counts_august_as_this_month_and_july_as_the_previous() -> None:
+    result = kpis_of(
+        SENT_AROUND_AUGUST,
+        period=KYIV_SEARCH,
+        now=at("2026-09-01T07:00Z"),
+        month=AUGUST,
+    )
 
     assert result.sent == counted((4, 2, 1))
 

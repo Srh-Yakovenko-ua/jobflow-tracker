@@ -1,8 +1,10 @@
+import re
+from datetime import date
 from typing import Annotated
 from uuid import UUID
 
 from fastapi import Query
-from pydantic import AfterValidator
+from pydantic import AfterValidator, BeforeValidator
 
 from app.core.enums import load_domain_enums
 from app.metrics.offer_simulation import Improvement
@@ -35,3 +37,20 @@ def parse_improvement(raw: str) -> str:
 ImproveQuery = Annotated[
     Annotated[str, AfterValidator(parse_improvement)] | None, Query()
 ]
+
+
+MONTH_REFUSAL = "must be a calendar month written as YYYY-MM"
+MONTH_FORMAT = re.compile(r"([0-9]{4})-([0-9]{2})")
+
+
+def month_of(raw: str) -> date:
+    matched = MONTH_FORMAT.fullmatch(raw)
+    if matched is None:
+        raise ValueError(MONTH_REFUSAL)
+    try:
+        return date(int(matched[1]), int(matched[2]), 1)
+    except ValueError:
+        raise ValueError(MONTH_REFUSAL) from None
+
+
+MonthQuery = Annotated[Annotated[date, BeforeValidator(month_of)] | None, Query()]

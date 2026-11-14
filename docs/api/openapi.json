@@ -57,6 +57,14 @@
       "description": "The AI results of the signed-in user"
     },
     {
+      "name": "summaries",
+      "description": "The monthly AI summary of the signed-in user"
+    },
+    {
+      "name": "plans",
+      "description": "The action plans saved from monthly summaries"
+    },
+    {
       "name": "capture",
       "description": "Draft Applications captured from a vacancy and parsed by AI"
     },
@@ -10169,6 +10177,1130 @@
         }
       }
     },
+    "/summaries/latest": {
+      "get": {
+        "tags": [
+          "summaries"
+        ],
+        "summary": "Read the latest monthly summary",
+        "description": "The latest done monthly summary of the signed-in user (the month it covers is the calendar month before the local month it was made in, its text, its actions and the id of the plan saved from it), and the latest monthly_summary ai_jobs row whatever its status. summary is null before the first done one, job before the first request. Read only.",
+        "responses": {
+          "200": {
+            "description": "The latest summary and job, or null",
+            "content": {
+              "application/json": {
+                "example": {
+                  "summary": {
+                    "aiJobId": "0199f1a2-7c3b-7d4e-8f50-6a7b8c9d0f02",
+                    "month": "2026-08",
+                    "text": "У серпні ти надіслав 23 відгуки, на 5 більше, ніж у липні. Найдорожчий етап: техінтерв'ю, пройдено 4 з 9.",
+                    "actions": [
+                      {
+                        "title": "Два тижні алгоритмів перед техінтерв'ю",
+                        "why": "3 з 4 відмов на техінтерв'ю: «не вистачає скілів», а пройшов ти 4 з 9.",
+                        "expectedEffect": "Якщо конверсія техінтерв'ю дійде до 60%, прогноз офера: від 4 до 12 тижнів.",
+                        "metric": "Конверсія техінтерв'ю: зараз 44%, ціль 60%"
+                      }
+                    ],
+                    "generatedAt": "2026-09-01T05:10:00.000Z",
+                    "planId": null
+                  },
+                  "job": {
+                    "id": "0199f1a2-7c3b-7d4e-8f50-6a7b8c9d0f02",
+                    "status": "done"
+                  }
+                },
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "summary": {
+                      "type": [
+                        "object",
+                        "null"
+                      ],
+                      "properties": {
+                        "aiJobId": {
+                          "type": "string",
+                          "format": "uuid"
+                        },
+                        "month": {
+                          "type": "string",
+                          "pattern": "^\\d{4}-(0[1-9]|1[0-2])$"
+                        },
+                        "text": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 1000
+                        },
+                        "actions": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "title": {
+                                "type": "string",
+                                "minLength": 1,
+                                "maxLength": 120
+                              },
+                              "why": {
+                                "type": "string",
+                                "minLength": 1,
+                                "maxLength": 300
+                              },
+                              "expectedEffect": {
+                                "type": "string",
+                                "minLength": 1,
+                                "maxLength": 200
+                              },
+                              "metric": {
+                                "type": "string",
+                                "minLength": 1,
+                                "maxLength": 120
+                              }
+                            },
+                            "required": [
+                              "title",
+                              "why",
+                              "expectedEffect",
+                              "metric"
+                            ]
+                          },
+                          "minItems": 1,
+                          "maxItems": 4
+                        },
+                        "generatedAt": {
+                          "type": "string",
+                          "format": "date-time"
+                        },
+                        "planId": {
+                          "type": [
+                            "string",
+                            "null"
+                          ],
+                          "format": "uuid"
+                        }
+                      },
+                      "required": [
+                        "aiJobId",
+                        "month",
+                        "text",
+                        "actions",
+                        "generatedAt",
+                        "planId"
+                      ]
+                    },
+                    "job": {
+                      "type": [
+                        "object",
+                        "null"
+                      ],
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "format": "uuid"
+                        },
+                        "status": {
+                          "type": "string",
+                          "enum": [
+                            "queued",
+                            "processing",
+                            "done",
+                            "failed"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "status"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "summary",
+                    "job"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "example": {
+                  "type": "unauthorized",
+                  "title": "Unauthorized",
+                  "status": 401,
+                  "requestId": "0199f0c4-5d2e-7b31-8c4f-6a7b8c9d0e1f"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "example": {
+                  "type": "forbidden",
+                  "title": "Forbidden",
+                  "status": 403,
+                  "requestId": "0199f0c4-5d2e-7b31-8c4f-6a7b8c9d0e1f"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too many requests: 300 per 60 s by default (RATE_LIMIT_API_PER_MINUTE)",
+            "headers": {
+              "Retry-After": {
+                "schema": {
+                  "type": "integer",
+                  "exclusiveMinimum": 0,
+                  "description": "Seconds until the limit window resets"
+                },
+                "required": true,
+                "description": "Seconds until the limit window resets"
+              }
+            },
+            "content": {
+              "application/json": {
+                "example": {
+                  "type": "rate_limited",
+                  "title": "Too many requests",
+                  "status": 429,
+                  "requestId": "0199f0c4-5d2e-7b31-8c4f-6a7b8c9d0e1f"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal error",
+            "content": {
+              "application/json": {
+                "example": {
+                  "type": "internal_error",
+                  "title": "Internal error",
+                  "status": 500,
+                  "requestId": "0199f0c4-5d2e-7b31-8c4f-6a7b8c9d0e1f"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/summaries": {
+      "post": {
+        "tags": [
+          "summaries"
+        ],
+        "summary": "Generate the monthly summary now",
+        "description": "In one transaction under the user lock stores a queued monthly_summary AI job for the month that ended in the user time zone and the summary.requested event; the worker reads the analytics of the active search and calls the model later, skipping the AI result cache. While a monthly_summary job is queued or processing it answers that job and stores nothing. Answers 409 without an active search. Counts against the hourly AI limit.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 255,
+              "description": "One key per submit, kept on its retries, 1 to 255 characters. The same key with the same request within 24 hours answers the first reply again and creates nothing; with another request, or while the first one still runs, it answers 409 with type idempotency_conflict. A request that fails keeps nothing, so its retry runs again.",
+              "example": "0199f3a0-1b2c-7d3e-8f40-5a6b7c8d9e0f"
+            },
+            "required": false,
+            "description": "One key per submit, kept on its retries, 1 to 255 characters. The same key with the same request within 24 hours answers the first reply again and creates nothing; with another request, or while the first one still runs, it answers 409 with type idempotency_conflict. A request that fails keeps nothing, so its retry runs again.",
+            "name": "Idempotency-Key",
+            "in": "header"
+          }
+        ],
+        "responses": {
+          "202": {
+            "description": "The AI job to follow: the new one, or the one that is still running",
+            "content": {
+              "application/json": {
+                "example": {
+                  "jobId": "0199f1a2-7c3b-7d4e-8f50-6a7b8c9d0f02"
+                },
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "jobId": {
+                      "type": "string",
+                      "format": "uuid"
+                    }
+                  },
+                  "required": [
+                    "jobId"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "example": {
+                  "type": "unauthorized",
+                  "title": "Unauthorized",
+                  "status": 401,
+                  "requestId": "0199f0c4-5d2e-7b31-8c4f-6a7b8c9d0e1f"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "example": {
+                  "type": "forbidden",
+                  "title": "Forbidden",
+                  "status": 403,
+                  "requestId": "0199f0c4-5d2e-7b31-8c4f-6a7b8c9d0e1f"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "example": {
+                  "type": "conflict",
+                  "title": "Conflict",
+                  "status": 409,
+                  "requestId": "0199f0c4-5d2e-7b31-8c4f-6a7b8c9d0e1f"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too many requests: 30 per 3600 s by default (RATE_LIMIT_AI_PER_HOUR)",
+            "headers": {
+              "Retry-After": {
+                "schema": {
+                  "type": "integer",
+                  "exclusiveMinimum": 0,
+                  "description": "Seconds until the limit window resets"
+                },
+                "required": true,
+                "description": "Seconds until the limit window resets"
+              }
+            },
+            "content": {
+              "application/json": {
+                "example": {
+                  "type": "rate_limited",
+                  "title": "Too many requests",
+                  "status": 429,
+                  "requestId": "0199f0c4-5d2e-7b31-8c4f-6a7b8c9d0e1f"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal error",
+            "content": {
+              "application/json": {
+                "example": {
+                  "type": "internal_error",
+                  "title": "Internal error",
+                  "status": 500,
+                  "requestId": "0199f0c4-5d2e-7b31-8c4f-6a7b8c9d0e1f"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/summaries/{aiJobId}/plan": {
+      "post": {
+        "tags": [
+          "summaries"
+        ],
+        "summary": "Save the summary actions as a plan",
+        "description": "Saves the actions of a done monthly summary as the plan of the month the summary was made in, titled «План на <місяць>», one item per action in order. A second request for the same summary answers the plan already saved. A job of another user, an unknown one or one that is not done answers 404.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "example": "0199f1a2-7c3b-7d4e-8f50-6a7b8c9d0f02"
+            },
+            "required": true,
+            "name": "aiJobId",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 255,
+              "description": "One key per submit, kept on its retries, 1 to 255 characters. The same key with the same request within 24 hours answers the first reply again and creates nothing; with another request, or while the first one still runs, it answers 409 with type idempotency_conflict. A request that fails keeps nothing, so its retry runs again.",
+              "example": "0199f3a0-1b2c-7d3e-8f40-5a6b7c8d9e0f"
+            },
+            "required": false,
+            "description": "One key per submit, kept on its retries, 1 to 255 characters. The same key with the same request within 24 hours answers the first reply again and creates nothing; with another request, or while the first one still runs, it answers 409 with type idempotency_conflict. A request that fails keeps nothing, so its retry runs again.",
+            "name": "Idempotency-Key",
+            "in": "header"
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "The saved plan",
+            "content": {
+              "application/json": {
+                "example": {
+                  "id": "0199f1a2-7c3b-7d4e-8f50-6a7b8c9d0f00",
+                  "title": "План на вересень",
+                  "month": "2026-09-01",
+                  "aiResultId": "0199f1a2-7c3b-7d4e-8f50-6a7b8c9d0f01",
+                  "createdAt": "2026-09-01T05:10:00.000Z",
+                  "items": [
+                    {
+                      "id": "0199f1a2-7c3b-7d4e-8f50-6a7b8c9d0f10",
+                      "position": 0,
+                      "title": "Два тижні алгоритмів перед техінтерв'ю",
+                      "why": "3 з 4 відмов на техінтерв'ю: «не вистачає скілів», а пройшов ти 4 з 9.",
+                      "expectedEffect": "Якщо конверсія техінтерв'ю дійде до 60%, прогноз офера: від 4 до 12 тижнів.",
+                      "metric": "Конверсія техінтерв'ю: зараз 50%, ціль 60%",
+                      "dueAt": "2026-09-14T09:00:00.000Z",
+                      "doneAt": "2026-09-12T18:30:00.000Z"
+                    }
+                  ]
+                },
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "format": "uuid"
+                    },
+                    "title": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "month": {
+                      "type": "string",
+                      "format": "date"
+                    },
+                    "aiResultId": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "format": "uuid"
+                    },
+                    "createdAt": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string",
+                            "format": "uuid"
+                          },
+                          "position": {
+                            "type": "integer",
+                            "minimum": 0
+                          },
+                          "title": {
+                            "type": "string",
+                            "minLength": 1
+                          },
+                          "why": {
+                            "type": [
+                              "string",
+                              "null"
+                            ]
+                          },
+                          "expectedEffect": {
+                            "type": [
+                              "string",
+                              "null"
+                            ]
+                          },
+                          "metric": {
+                            "type": [
+                              "string",
+                              "null"
+                            ]
+                          },
+                          "dueAt": {
+                            "type": [
+                              "string",
+                              "null"
+                            ],
+                            "format": "date-time"
+                          },
+                          "doneAt": {
+                            "type": [
+                              "string",
+                              "null"
+                            ],
+                            "format": "date-time"
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "position",
+                          "title",
+                          "why",
+                          "expectedEffect",
+                          "metric",
+                          "dueAt",
+                          "doneAt"
+                        ]
+                      }
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "title",
+                    "month",
+                    "aiResultId",
+                    "createdAt",
+                    "items"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "example": {
+                  "type": "unauthorized",
+                  "title": "Unauthorized",
+                  "status": 401,
+                  "requestId": "0199f0c4-5d2e-7b31-8c4f-6a7b8c9d0e1f"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "example": {
+                  "type": "forbidden",
+                  "title": "Forbidden",
+                  "status": 403,
+                  "requestId": "0199f0c4-5d2e-7b31-8c4f-6a7b8c9d0e1f"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "example": {
+                  "type": "not_found",
+                  "title": "Not found",
+                  "status": 404,
+                  "requestId": "0199f0c4-5d2e-7b31-8c4f-6a7b8c9d0e1f"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Invalid request",
+            "content": {
+              "application/json": {
+                "example": {
+                  "type": "validation_error",
+                  "title": "Invalid request",
+                  "status": 422,
+                  "errors": [
+                    {
+                      "path": "email",
+                      "message": "Invalid input: expected string, received undefined"
+                    }
+                  ],
+                  "requestId": "0199f0c4-5d2e-7b31-8c4f-6a7b8c9d0e1f"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too many requests: 300 per 60 s by default (RATE_LIMIT_API_PER_MINUTE)",
+            "headers": {
+              "Retry-After": {
+                "schema": {
+                  "type": "integer",
+                  "exclusiveMinimum": 0,
+                  "description": "Seconds until the limit window resets"
+                },
+                "required": true,
+                "description": "Seconds until the limit window resets"
+              }
+            },
+            "content": {
+              "application/json": {
+                "example": {
+                  "type": "rate_limited",
+                  "title": "Too many requests",
+                  "status": 429,
+                  "requestId": "0199f0c4-5d2e-7b31-8c4f-6a7b8c9d0e1f"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal error",
+            "content": {
+              "application/json": {
+                "example": {
+                  "type": "internal_error",
+                  "title": "Internal error",
+                  "status": 500,
+                  "requestId": "0199f0c4-5d2e-7b31-8c4f-6a7b8c9d0e1f"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/plans/latest": {
+      "get": {
+        "tags": [
+          "plans"
+        ],
+        "summary": "Read the latest action plan",
+        "description": "The plan of the latest month the signed-in user saved from a monthly summary, with its items in action order, or plan null before the first one. Read only.",
+        "responses": {
+          "200": {
+            "description": "The latest plan or null",
+            "content": {
+              "application/json": {
+                "example": {
+                  "plan": {
+                    "id": "0199f1a2-7c3b-7d4e-8f50-6a7b8c9d0f00",
+                    "title": "План на вересень",
+                    "month": "2026-09-01",
+                    "aiResultId": "0199f1a2-7c3b-7d4e-8f50-6a7b8c9d0f01",
+                    "createdAt": "2026-09-01T05:10:00.000Z",
+                    "items": [
+                      {
+                        "id": "0199f1a2-7c3b-7d4e-8f50-6a7b8c9d0f10",
+                        "position": 0,
+                        "title": "Два тижні алгоритмів перед техінтерв'ю",
+                        "why": "3 з 4 відмов на техінтерв'ю: «не вистачає скілів», а пройшов ти 4 з 9.",
+                        "expectedEffect": "Якщо конверсія техінтерв'ю дійде до 60%, прогноз офера: від 4 до 12 тижнів.",
+                        "metric": "Конверсія техінтерв'ю: зараз 50%, ціль 60%",
+                        "dueAt": "2026-09-14T09:00:00.000Z",
+                        "doneAt": "2026-09-12T18:30:00.000Z"
+                      }
+                    ]
+                  }
+                },
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "plan": {
+                      "type": [
+                        "object",
+                        "null"
+                      ],
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "format": "uuid"
+                        },
+                        "title": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "month": {
+                          "type": "string",
+                          "format": "date"
+                        },
+                        "aiResultId": {
+                          "type": [
+                            "string",
+                            "null"
+                          ],
+                          "format": "uuid"
+                        },
+                        "createdAt": {
+                          "type": "string",
+                          "format": "date-time"
+                        },
+                        "items": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string",
+                                "format": "uuid"
+                              },
+                              "position": {
+                                "type": "integer",
+                                "minimum": 0
+                              },
+                              "title": {
+                                "type": "string",
+                                "minLength": 1
+                              },
+                              "why": {
+                                "type": [
+                                  "string",
+                                  "null"
+                                ]
+                              },
+                              "expectedEffect": {
+                                "type": [
+                                  "string",
+                                  "null"
+                                ]
+                              },
+                              "metric": {
+                                "type": [
+                                  "string",
+                                  "null"
+                                ]
+                              },
+                              "dueAt": {
+                                "type": [
+                                  "string",
+                                  "null"
+                                ],
+                                "format": "date-time"
+                              },
+                              "doneAt": {
+                                "type": [
+                                  "string",
+                                  "null"
+                                ],
+                                "format": "date-time"
+                              }
+                            },
+                            "required": [
+                              "id",
+                              "position",
+                              "title",
+                              "why",
+                              "expectedEffect",
+                              "metric",
+                              "dueAt",
+                              "doneAt"
+                            ]
+                          }
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "title",
+                        "month",
+                        "aiResultId",
+                        "createdAt",
+                        "items"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "plan"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "example": {
+                  "type": "unauthorized",
+                  "title": "Unauthorized",
+                  "status": 401,
+                  "requestId": "0199f0c4-5d2e-7b31-8c4f-6a7b8c9d0e1f"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "example": {
+                  "type": "forbidden",
+                  "title": "Forbidden",
+                  "status": 403,
+                  "requestId": "0199f0c4-5d2e-7b31-8c4f-6a7b8c9d0e1f"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too many requests: 300 per 60 s by default (RATE_LIMIT_API_PER_MINUTE)",
+            "headers": {
+              "Retry-After": {
+                "schema": {
+                  "type": "integer",
+                  "exclusiveMinimum": 0,
+                  "description": "Seconds until the limit window resets"
+                },
+                "required": true,
+                "description": "Seconds until the limit window resets"
+              }
+            },
+            "content": {
+              "application/json": {
+                "example": {
+                  "type": "rate_limited",
+                  "title": "Too many requests",
+                  "status": 429,
+                  "requestId": "0199f0c4-5d2e-7b31-8c4f-6a7b8c9d0e1f"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal error",
+            "content": {
+              "application/json": {
+                "example": {
+                  "type": "internal_error",
+                  "title": "Internal error",
+                  "status": 500,
+                  "requestId": "0199f0c4-5d2e-7b31-8c4f-6a7b8c9d0e1f"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/plans/{planId}/items/{itemId}": {
+      "patch": {
+        "tags": [
+          "plans"
+        ],
+        "summary": "Check, uncheck or date a plan item",
+        "description": "done true stores the server time as doneAt, done false clears it; dueAt sets or (null) clears the due date. At least one of the two. An item of another user’s plan, or an item outside the plan, answers 404.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "example": "0199f1a2-7c3b-7d4e-8f50-6a7b8c9d0f00"
+            },
+            "required": true,
+            "name": "planId",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "example": "0199f1a2-7c3b-7d4e-8f50-6a7b8c9d0f10"
+            },
+            "required": true,
+            "name": "itemId",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "example": {
+                "done": true,
+                "dueAt": "2026-09-14T09:00:00.000Z"
+              },
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "done": {
+                    "type": "boolean"
+                  },
+                  "dueAt": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "format": "date-time"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The changed item",
+            "content": {
+              "application/json": {
+                "example": {
+                  "id": "0199f1a2-7c3b-7d4e-8f50-6a7b8c9d0f10",
+                  "position": 0,
+                  "title": "Два тижні алгоритмів перед техінтерв'ю",
+                  "why": "3 з 4 відмов на техінтерв'ю: «не вистачає скілів», а пройшов ти 4 з 9.",
+                  "expectedEffect": "Якщо конверсія техінтерв'ю дійде до 60%, прогноз офера: від 4 до 12 тижнів.",
+                  "metric": "Конверсія техінтерв'ю: зараз 50%, ціль 60%",
+                  "dueAt": "2026-09-14T09:00:00.000Z",
+                  "doneAt": "2026-09-12T18:30:00.000Z"
+                },
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "format": "uuid"
+                    },
+                    "position": {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    "title": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "why": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "expectedEffect": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "metric": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "dueAt": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "format": "date-time"
+                    },
+                    "doneAt": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "format": "date-time"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "position",
+                    "title",
+                    "why",
+                    "expectedEffect",
+                    "metric",
+                    "dueAt",
+                    "doneAt"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "example": {
+                  "type": "bad_request",
+                  "title": "Bad request",
+                  "status": 400,
+                  "detail": "Unexpected end of JSON input",
+                  "requestId": "0199f0c4-5d2e-7b31-8c4f-6a7b8c9d0e1f"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "example": {
+                  "type": "unauthorized",
+                  "title": "Unauthorized",
+                  "status": 401,
+                  "requestId": "0199f0c4-5d2e-7b31-8c4f-6a7b8c9d0e1f"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "example": {
+                  "type": "forbidden",
+                  "title": "Forbidden",
+                  "status": 403,
+                  "requestId": "0199f0c4-5d2e-7b31-8c4f-6a7b8c9d0e1f"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "example": {
+                  "type": "not_found",
+                  "title": "Not found",
+                  "status": 404,
+                  "requestId": "0199f0c4-5d2e-7b31-8c4f-6a7b8c9d0e1f"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Invalid request",
+            "content": {
+              "application/json": {
+                "example": {
+                  "type": "validation_error",
+                  "title": "Invalid request",
+                  "status": 422,
+                  "errors": [
+                    {
+                      "path": "email",
+                      "message": "Invalid input: expected string, received undefined"
+                    }
+                  ],
+                  "requestId": "0199f0c4-5d2e-7b31-8c4f-6a7b8c9d0e1f"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too many requests: 300 per 60 s by default (RATE_LIMIT_API_PER_MINUTE)",
+            "headers": {
+              "Retry-After": {
+                "schema": {
+                  "type": "integer",
+                  "exclusiveMinimum": 0,
+                  "description": "Seconds until the limit window resets"
+                },
+                "required": true,
+                "description": "Seconds until the limit window resets"
+              }
+            },
+            "content": {
+              "application/json": {
+                "example": {
+                  "type": "rate_limited",
+                  "title": "Too many requests",
+                  "status": 429,
+                  "requestId": "0199f0c4-5d2e-7b31-8c4f-6a7b8c9d0e1f"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal error",
+            "content": {
+              "application/json": {
+                "example": {
+                  "type": "internal_error",
+                  "title": "Internal error",
+                  "status": 500,
+                  "requestId": "0199f0c4-5d2e-7b31-8c4f-6a7b8c9d0e1f"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/applications/{id}/notes": {
       "post": {
         "tags": [
@@ -15014,6 +16146,56 @@
                                 },
                                 "required": [
                                   "applications"
+                                ]
+                              }
+                            },
+                            "required": [
+                              "id",
+                              "readAt",
+                              "createdAt",
+                              "type",
+                              "payload"
+                            ]
+                          },
+                          {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string",
+                                "format": "uuid"
+                              },
+                              "readAt": {
+                                "type": [
+                                  "string",
+                                  "null"
+                                ],
+                                "format": "date-time"
+                              },
+                              "createdAt": {
+                                "type": "string",
+                                "format": "date-time"
+                              },
+                              "type": {
+                                "type": "string",
+                                "enum": [
+                                  "monthly_summary_ready"
+                                ]
+                              },
+                              "payload": {
+                                "type": "object",
+                                "properties": {
+                                  "aiJobId": {
+                                    "type": "string",
+                                    "format": "uuid"
+                                  },
+                                  "month": {
+                                    "type": "string",
+                                    "pattern": "^\\d{4}-(0[1-9]|1[0-2])$"
+                                  }
+                                },
+                                "required": [
+                                  "aiJobId",
+                                  "month"
                                 ]
                               }
                             },

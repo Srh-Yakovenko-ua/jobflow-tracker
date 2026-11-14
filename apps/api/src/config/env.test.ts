@@ -82,6 +82,15 @@ describe('validateEnv', () => {
     );
   });
 
+  it('defaults ANALYTICS_URL to http://localhost:8000 when it is empty and refuses another scheme', () => {
+    expect(validateEnv({ ...exampleEnv, ANALYTICS_URL: '' }).ANALYTICS_URL).toBe(
+      'http://localhost:8000',
+    );
+    expect(failedPaths({ ...exampleEnv, ANALYTICS_URL: 'ftp://analytics:8000' })).toEqual([
+      'ANALYTICS_URL',
+    ]);
+  });
+
   it('reads PORT as a number', () => {
     expect(validateEnv({ ...exampleEnv, PORT: '4100' }).PORT).toBe(4100);
   });

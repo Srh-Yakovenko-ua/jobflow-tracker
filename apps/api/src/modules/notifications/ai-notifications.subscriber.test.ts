@@ -1,13 +1,11 @@
-import { Test } from '@nestjs/testing';
 import { describe, expect, it } from 'vitest';
 
 import { AI_JOB_ID, VACANCY_JOB } from '../../test/ai.js';
 import { MATCH_JOB } from '../../test/match.js';
-import { RecordingNotifications } from '../../test/notifications.js';
+import { settlingThrough } from '../../test/notifications.js';
 import { APPLICATION_ID, OLENA_ID, RESUME_VERSION_ID } from '../../test/service-fixtures.js';
-import { AiJobRouter, type SettledAiJob } from '../ai/index.js';
+import type { SettledAiJob } from '../ai/index.js';
 import { AiNotificationsSubscriber } from './ai-notifications.subscriber.js';
-import { NotificationsService } from './notifications.service.js';
 
 const DRAFT_JOB = { ...VACANCY_JOB, applicationId: APPLICATION_ID };
 
@@ -19,19 +17,7 @@ const RESUME_JOB = {
 
 const FAILED: SettledAiJob = { job: DRAFT_JOB, status: 'failed', errorType: 'ai_unavailable' };
 
-async function settling() {
-  const notifications = new RecordingNotifications();
-  const moduleRef = await Test.createTestingModule({
-    providers: [
-      AiNotificationsSubscriber,
-      AiJobRouter,
-      { provide: NotificationsService, useValue: notifications },
-    ],
-  }).compile();
-  await moduleRef.init();
-  const router = moduleRef.get(AiJobRouter);
-  return { notifications, settle: (settled: SettledAiJob) => router.route(settled) };
-}
+const settling = () => settlingThrough(AiNotificationsSubscriber);
 
 describe('AiNotificationsSubscriber', () => {
   it.each([

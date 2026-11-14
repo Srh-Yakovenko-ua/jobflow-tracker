@@ -25,7 +25,7 @@ export type RecordNotification = NewNotification & InTransaction;
 
 export type OnceNotification = Extract<
   NewNotification,
-  { type: 'ai_done' | 'ai_failed' | 'insight_unlocked' }
+  { type: 'ai_done' | 'ai_failed' | 'insight_unlocked' | 'monthly_summary_ready' }
 >;
 
 const aiJobIdOf = ({ payload }: OnceNotification) =>

@@ -2,6 +2,7 @@ import { z } from 'zod';
 
 import { DOCUMENT_LIMITS, documentPageSchema } from '../schemas/document-extraction.js';
 import { withoutNul } from '../schemas/text.js';
+import { yearMonthSchema } from '../schemas/year-month.js';
 import { englishLevelSchema, senioritySchema } from './vacancy-parse.js';
 
 export const RESUME_PARSE_LIMITS = {
@@ -20,7 +21,6 @@ export const resumeParseInputSchema = z.object({
   pages: z.array(documentPageSchema.shape.jpegBase64).max(DOCUMENT_LIMITS.scanPages),
 });
 
-const yearMonthSchema = z.string().regex(/^\d{4}-(0[1-9]|1[0-2])$/);
 const nameSchema = z.string().min(1).max(RESUME_PARSE_LIMITS.nameMaxLength);
 const evidenceSchema = z.string().min(1).max(RESUME_PARSE_LIMITS.evidenceMaxLength).nullable();
 const yearsSchema = z.number().min(0).max(RESUME_PARSE_LIMITS.yearsMax);

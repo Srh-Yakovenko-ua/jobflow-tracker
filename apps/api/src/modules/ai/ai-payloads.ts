@@ -9,6 +9,7 @@ import {
 } from '@jobflow/shared';
 
 import { followupPayload } from './followup-payload.js';
+import { monthlySummaryPayload } from './monthly-summary-payload.js';
 
 export type VacancySource = { rawText: string };
 
@@ -38,4 +39,5 @@ export const AI_PAYLOAD_BUILDERS = {
     profile: matchProfileSchema.parse(profile),
   }),
   followup: followupPayload,
+  monthly_summary: monthlySummaryPayload,
 } satisfies AiPayloadBuilders;

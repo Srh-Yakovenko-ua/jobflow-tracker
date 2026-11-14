@@ -2,11 +2,10 @@ import pytest
 
 from tests.factories import (
     REFUSED,
-    SIGNER,
     UNAUTHORIZED_BODY,
     auth_app,
-    bearer,
     refusal,
+    refusal_messages,
     serving,
 )
 
@@ -44,14 +43,8 @@ def test_refuses_a_what_if_outside_the_active_stages_or_a_rate_that_is_not_finit
 
 
 def test_explains_every_malformed_improve_with_the_same_readable_message() -> None:
-    with serving(auth_app()) as client:
-        messages = [
-            client.get(
-                FORECAST_PATH,
-                params={"improve": improve},
-                headers=bearer(SIGNER.user_token()),
-            ).json()["errors"][0]["message"]
-            for improve in MALFORMED_IMPROVES
-        ]
+    queries = [{"improve": improve} for improve in MALFORMED_IMPROVES]
 
-    assert messages == [IMPROVE_MESSAGE] * len(MALFORMED_IMPROVES)
+    assert refusal_messages(FORECAST_PATH, queries) == [
+        (422, "query.improve", IMPROVE_MESSAGE)
+    ] * len(MALFORMED_IMPROVES)

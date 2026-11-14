@@ -2,6 +2,7 @@ import { z } from 'zod';
 
 import type { AiKind } from './ai/kinds.js';
 import { paginatedSchema, paginationQuerySchema } from './schemas/pagination.js';
+import { yearMonthSchema } from './schemas/year-month.js';
 
 export const NOTIFICATION_TYPES = [
   'silence',
@@ -58,6 +59,11 @@ export const insightUnlockedNotificationPayloadSchema = z.object({
   applications: z.int().positive(),
 });
 
+export const monthlySummaryReadyNotificationPayloadSchema = z.object({
+  aiJobId: z.uuid(),
+  month: yearMonthSchema,
+});
+
 const notificationBaseSchema = z.object({
   id: z.uuid(),
   readAt: z.iso.datetime().nullable(),
@@ -77,6 +83,7 @@ export const notificationSchema = z.discriminatedUnion('type', [
   notificationOf('ai_done', aiDoneNotificationPayloadSchema),
   notificationOf('ai_failed', aiFailedNotificationPayloadSchema),
   notificationOf('insight_unlocked', insightUnlockedNotificationPayloadSchema),
+  notificationOf('monthly_summary_ready', monthlySummaryReadyNotificationPayloadSchema),
 ]);
 
 export const notificationListQuerySchema = paginationQuerySchema.extend({
@@ -105,6 +112,9 @@ export type AiDoneNotificationPayload = z.infer<typeof aiDoneNotificationPayload
 export type AiFailedNotificationPayload = z.infer<typeof aiFailedNotificationPayloadSchema>;
 export type InsightUnlockedNotificationPayload = z.infer<
   typeof insightUnlockedNotificationPayloadSchema
+>;
+export type MonthlySummaryReadyNotificationPayload = z.infer<
+  typeof monthlySummaryReadyNotificationPayloadSchema
 >;
 export type Notification = z.infer<typeof notificationSchema>;
 export type NotificationListQuery = z.infer<typeof notificationListQuerySchema>;

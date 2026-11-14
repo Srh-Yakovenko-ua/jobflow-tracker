@@ -291,6 +291,21 @@ def refusal(path: str, query: dict[str, str]) -> tuple[tuple[int, str], list[str
     return (response.status_code, body.get("type")), fields
 
 
+def refusal_messages(
+    path: str, queries: list[dict[str, str]]
+) -> list[tuple[int, str, str]]:
+    with serving(auth_app()) as client:
+        bodies = [
+            client.get(path, params=query, headers=bearer(SIGNER.user_token()))
+            for query in queries
+        ]
+    return [
+        (response.status_code, error["path"], error["message"])
+        for response in bodies
+        for error in response.json()["errors"]
+    ]
+
+
 SERVER_START_SECONDS = 5.0
 SERVER_POLL_SECONDS = 0.01
 

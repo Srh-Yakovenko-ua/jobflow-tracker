@@ -5,6 +5,7 @@ import {
   AI_DONE_NOTIFICATION,
   buildNotification,
   INTERVIEW_NOTIFICATION,
+  MONTHLY_SUMMARY_NOTIFICATION,
   type NotificationSeed,
   SILENCE_NOTIFICATION,
 } from '@/test/notification-fixtures';
@@ -92,6 +93,11 @@ describe('notificationTargetOf', () => {
         type: 'insight_unlocked',
         payload: { applications: 10 },
       }),
+      target: '/analytics',
+    },
+    {
+      name: 'monthly_summary_ready opens the analytics until the summary page exists',
+      notification: MONTHLY_SUMMARY_NOTIFICATION,
       target: '/analytics',
     },
   ])('$name', ({ notification, target }) => {

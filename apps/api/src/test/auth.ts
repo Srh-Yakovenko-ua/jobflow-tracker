@@ -60,6 +60,15 @@ export function serviceTokenFor(issuedAt = new Date()): Promise<string> {
   return signServiceToken({ keys: testJwtKeys, scope: 'ai:invoke', issuedAt });
 }
 
+export function analyticsServiceTokenFor(userId: string): Promise<string> {
+  return signServiceToken({
+    keys: testJwtKeys,
+    scope: 'analytics:read',
+    userId,
+    issuedAt: new Date(),
+  });
+}
+
 export const TEST_KEY_HEADER = { alg: 'RS256', kid: testJwtKeys.jwk.kid };
 
 export async function verifyWithTestKey(token: string, currentDate: Date) {

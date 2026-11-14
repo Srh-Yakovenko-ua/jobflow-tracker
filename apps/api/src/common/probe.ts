@@ -10,6 +10,7 @@ export const DEPENDENCY_LIMITS = {
   providerTimeoutMs: 5000,
   aiServiceTimeoutMs: 65_000,
   documentsTimeoutMs: 10_000,
+  analyticsTimeoutMs: 10_000,
 } as const;
 
 export async function isAnswered(check: Promise<unknown>): Promise<boolean> {

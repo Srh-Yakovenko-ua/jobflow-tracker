@@ -46,7 +46,8 @@ def test_reads_the_data_rule_thresholds_from_their_upper_case_keys() -> None:
         thresholds.min_n_percent,
         thresholds.min_n_insight,
         thresholds.min_n_forecast,
-    ) == (5, 10, 15)
+        thresholds.what_if_conversion,
+    ) == (5, 10, 15, 0.6)
 
 
 def test_the_funnel_stages_are_the_progress_stages_in_enums_json_order() -> None:

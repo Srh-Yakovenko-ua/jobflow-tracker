@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import date, datetime
 from functools import partial
 from zoneinfo import ZoneInfo
 
@@ -27,14 +27,14 @@ class FunnelKpis(MetricModel):
     days_in_search: int
 
 
-def month_number(moment: datetime) -> int:
+def month_number(moment: date) -> int:
     return moment.year * 12 + moment.month
 
 
-def monthly(moments: pd.Series, *, zone: ZoneInfo, now: datetime) -> MonthlyCount:
+def monthly(moments: pd.Series, *, zone: ZoneInfo, month: date) -> MonthlyCount:
     local = pd.to_datetime(moments.dropna(), utc=True).dt.tz_convert(zone)
     months = local.dt.year * 12 + local.dt.month
-    current = month_number(now.astimezone(zone))
+    current = month_number(month)
     return MonthlyCount(
         total=len(months),
         this_month=int((months == current).sum()),
@@ -42,9 +42,16 @@ def monthly(moments: pd.Series, *, zone: ZoneInfo, now: datetime) -> MonthlyCoun
     )
 
 
-def kpis(rows: pd.DataFrame, *, period: SearchPeriod, now: datetime) -> FunnelKpis:
+def kpis(
+    rows: pd.DataFrame,
+    *,
+    period: SearchPeriod,
+    now: datetime,
+    month: date | None = None,
+) -> FunnelKpis:
     stages = progress_stages()
-    count = partial(monthly, zone=ZoneInfo(period.timezone), now=now)
+    zone = ZoneInfo(period.timezone)
+    count = partial(monthly, zone=zone, month=month or now.astimezone(zone))
     searching = (period.finished_at or now) - period.started_at
     return FunnelKpis(
         sent=count(rows["started_at"]),

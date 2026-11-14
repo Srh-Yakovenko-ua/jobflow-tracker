@@ -117,6 +117,143 @@ def followup_body(**overrides: Any) -> Any:
     return {"input": {**FOLLOWUP_INPUT, **overrides}}
 
 
+MONTHLY_SUMMARY_PATH = "/v1/complete/monthly_summary"
+MONTHLY_SUMMARY_FIXTURE: dict[str, Any] = json.loads(fixture_of("monthly_summary"))
+MONTHLY_SUMMARY_INPUT = {
+    "period": {"month": "2026-08", "name": "серпень", "previousName": "липень"},
+    "activity": {
+        "sent": {"month": 19, "previousMonth": 15, "change": 4},
+        "interviews": {"month": 5, "previousMonth": 3, "change": 2},
+        "offers": {"month": 1, "previousMonth": 0, "change": 1},
+        "daysInSearch": 84,
+    },
+    "funnel": [
+        {"stage": "applied", "reached": 54, "passed": 17, "conversionPercent": 43},
+        {"stage": "screening", "reached": 17, "passed": 9, "conversionPercent": 60},
+        {
+            "stage": "tech_interview",
+            "reached": 9,
+            "passed": 4,
+            "conversionPercent": 50,
+        },
+        {"stage": "final", "reached": 4, "passed": 1, "conversionPercent": None},
+        {"stage": "offer", "reached": 1, "passed": None, "conversionPercent": None},
+    ],
+    "reasons": [{"stage": "tech_interview", "code": "skills_gap", "count": 3, "of": 4}],
+    "sources": [
+        {
+            "source": "djinni",
+            "applications": 24,
+            "screenings": 9,
+            "conversionPercent": 45,
+        },
+        {"source": "dou", "applications": 6, "screenings": 2, "conversionPercent": 40},
+        {
+            "source": "linkedin",
+            "applications": 16,
+            "screenings": 2,
+            "conversionPercent": 22,
+        },
+        {
+            "source": "referral",
+            "applications": 3,
+            "screenings": 3,
+            "conversionPercent": None,
+        },
+        {
+            "source": "company_site",
+            "applications": 2,
+            "screenings": 1,
+            "conversionPercent": None,
+        },
+        {
+            "source": "robota",
+            "applications": 3,
+            "screenings": 0,
+            "conversionPercent": None,
+        },
+    ],
+    "resumeAb": {
+        "versions": [
+            {"number": 3, "applications": 3, "conversionPercent": None},
+            {"number": 2, "applications": 27, "conversionPercent": 41},
+            {"number": 1, "applications": 21, "conversionPercent": 24},
+        ],
+        "switch": {"number": 2, "beforePercent": 24, "afterPercent": 41},
+    },
+    "forecast": {
+        "status": "ok",
+        "medianWeeks": 4,
+        "likelyLow": 2,
+        "likelyHigh": 9,
+        "applicationsPerWeek": 2,
+        "applications": 28,
+        "offers": 2,
+    },
+    "whatIf": {
+        "stage": "tech_interview",
+        "conversionPercent": 60,
+        "medianWeeks": 6,
+        "likelyLow": 4,
+        "likelyHigh": 12,
+    },
+    "insights": [
+        {
+            "title": "Найширша втеча — на першому кроці",
+            "text": "21 відмова і 14 тиш із 54 — воронка закінчується там, де ти ще ні з ким не говорив.",
+        },
+        {
+            "title": "Техінтерв'ю — найдорожчий етап",
+            "text": "Дійшло 9, пройшли 4. Кожна втрата тут — це 2–3 тижні вже витраченого часу.",
+        },
+        {
+            "title": "На техінтерв'ю тебе найчастіше валять: «не вистачає скілів»",
+            "text": "3 із 4 відмов на цьому етапі — «не вистачає скілів».",
+        },
+        {
+            "title": "LinkedIn з'їдає час, рефералки — ні",
+            "text": "16 відгуків через LinkedIn дали 2 скринінги. Djinni при 24 — 9.",
+        },
+        {
+            "title": "Схоже, CV v2 працює краще",
+            "text": "Після переходу на CV v2 конверсія виросла з 24% до 41%.",
+        },
+        {
+            "title": "17 компаній не відповіли",
+            "text": "Це 31% твоїх відгуків — на 9 п.п. більше за ринок.",
+        },
+    ],
+    "ruleActions": [
+        {
+            "title": "Підготуватися до наступного техінтерв'ю",
+            "expectedEffect": "Прогноз офера звузиться до діапазону від 4 до 12 тижнів, якщо конверсія дійде до 60%.",
+        },
+        {
+            "title": "Прибрати LinkedIn з рутини",
+            "expectedEffect": "Ті самі 16 відгуків через Djinni дали б 6 скринінгів замість 2.",
+        },
+        {
+            "title": "Попросити ще кілька рефералок",
+            "expectedEffect": "3 скринінги на 3 відгуки через рефералки. Вибірка мала, але напрям однозначний.",
+        },
+        {
+            "title": "Відгукуватися з CV v2",
+            "expectedEffect": "Конверсія у скринінг 41% проти 24% до переходу на CV v2.",
+        },
+    ],
+    "previousPlan": {"items": 4, "done": 3},
+}
+
+
+def monthly_summary_request(**overrides: Any) -> Any:
+    return {"input": {**MONTHLY_SUMMARY_INPUT, **overrides}}
+
+
+def summary_of(*, words: int = 1, ending: str = "") -> str:
+    summary = " ".join(["слово"] * words)
+    return json.dumps({**MONTHLY_SUMMARY_FIXTURE, "summary": f"{summary}{ending}"})
+
+
 def draft_of(words: int, *, ending: str = "") -> str:
     body = " ".join(["слово"] * words)
     return json.dumps({"subject": "Наступний крок", "body": f"{body}{ending}"})

@@ -79,6 +79,12 @@ export const AI_DONE_NOTIFICATION = buildNotification({
   payload: { aiJobId: fixtureIdOf(31), kind: 'vacancy_parse', applicationId: fixtureIdOf(32) },
 });
 
+export const MONTHLY_SUMMARY_NOTIFICATION = buildNotification({
+  serial: 5,
+  type: 'monthly_summary_ready',
+  payload: { aiJobId: fixtureIdOf(51), month: '2026-10' },
+});
+
 export const DESIGN_FEED: NotificationListResponse = {
   items: [INTERVIEW_NOTIFICATION, SILENCE_NOTIFICATION, AI_DONE_NOTIFICATION],
   nextCursor: null,

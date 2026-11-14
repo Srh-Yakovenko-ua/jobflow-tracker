@@ -1,6 +1,7 @@
 import { z } from 'zod';
 
 import { outcomeStageSchema, stageSchema } from '../stages.js';
+import { yearMonthSchema } from './year-month.js';
 
 export const countSchema = z.int().nonnegative();
 
@@ -13,7 +14,10 @@ export const insufficientDataSchema = z.object({
   message: z.string(),
 });
 
-export const funnelQuerySchema = z.object({ searchId: z.uuid() });
+export const funnelQuerySchema = z.object({
+  searchId: z.uuid(),
+  month: yearMonthSchema.optional(),
+});
 
 export const rateResultSchema = z.discriminatedUnion('status', [
   z.object({

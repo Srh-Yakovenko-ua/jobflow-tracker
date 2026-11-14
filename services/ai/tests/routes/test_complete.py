@@ -8,6 +8,8 @@ from tests.factories import (
     FOLLOWUP_PATH,
     MATCH_FIXTURE,
     MATCH_PATH,
+    MONTHLY_SUMMARY_FIXTURE,
+    MONTHLY_SUMMARY_PATH,
     PARSED_VACANCY,
     PII_RESUME,
     SCRUBBED_RESUME,
@@ -18,15 +20,19 @@ from tests.factories import (
     failing_vacancy,
     followup_body,
     match_body,
+    monthly_summary_request,
     post_as_worker,
     post_completion,
     settings_for,
+    summary_of,
 )
 
 pytestmark = pytest.mark.anyio
 
 FIXTURE_REPLY = (FIXTURES / "vacancy_parse.json").read_text()
 FIXTURE_FOLLOWUP = (FIXTURES / "followup.json").read_text()
+FIXTURE_SUMMARY = (FIXTURES / "monthly_summary.json").read_text()
+INVENTED_SUMMARY = summary_of(ending=" 37 відгуків")
 
 REPAIR_REQUEST = (
     "Your answer did not match the JSON schema: answer: Invalid JSON: expected value at line 1 column 1. "
@@ -47,6 +53,10 @@ def invalid_output(*, detail: str, errors: list[dict[str, str]]) -> dict[str, ob
 
 RULES_REPAIR = (
     "Your answer broke these rules: body has 5 words, it needs 60 to 120. "
+    "Answer again with JSON that matches the schema and keeps every rule."
+)
+NUMBER_REPAIR = (
+    "Your answer broke these rules: the number 37 is not in the input. "
     "Answer again with JSON that matches the schema and keeps every rule."
 )
 
@@ -123,17 +133,55 @@ async def test_repairs_a_short_followup_draft_once_with_its_problems() -> None:
     ] == [("assistant", draft_of(5)), ("user", RULES_REPAIR)]
 
 
-async def test_answers_invalid_output_when_the_repaired_draft_is_still_short() -> None:
-    fake = FakeAiProvider(replies=[draft_of(5), draft_of(50)])
+async def test_regenerates_a_monthly_summary_with_an_invented_number_once() -> None:
+    fake = FakeAiProvider(replies=[INVENTED_SUMMARY, FIXTURE_SUMMARY])
 
     response = await post_as_worker(
-        FOLLOWUP_PATH, followup_body(), app=build_app(provider=fake)
+        MONTHLY_SUMMARY_PATH, monthly_summary_request(), app=build_app(provider=fake)
     )
+
+    body = response.json()
+    assert (response.status_code, body["output"], body["promptVersion"]) == (
+        200,
+        MONTHLY_SUMMARY_FIXTURE,
+        "v1",
+    )
+    assert [
+        (message.role, message.content) for message in fake.requests[1].messages[1:]
+    ] == [("assistant", INVENTED_SUMMARY), ("user", NUMBER_REPAIR)]
+    assert (len(fake.requests), fake.requests[0].temperature) == (2, 0.3)
+
+
+@pytest.mark.parametrize(
+    ("path", "body", "replies", "problem"),
+    [
+        pytest.param(
+            FOLLOWUP_PATH,
+            followup_body(),
+            [draft_of(5), draft_of(50)],
+            "body has 50 words, it needs 60 to 120",
+            id="followup_still_short",
+        ),
+        pytest.param(
+            MONTHLY_SUMMARY_PATH,
+            monthly_summary_request(),
+            [INVENTED_SUMMARY, INVENTED_SUMMARY],
+            "the number 37 is not in the input",
+            id="monthly_summary_keeps_the_number",
+        ),
+    ],
+)
+async def test_answers_invalid_output_when_the_repaired_answer_still_breaks_a_rule(
+    *, path: str, body: object, replies: list[str], problem: str
+) -> None:
+    fake = FakeAiProvider(replies=replies)
+
+    response = await post_as_worker(path, body, app=build_app(provider=fake))
 
     assert (response.status_code, len(fake.requests)) == (422, 2)
     assert response.json() == invalid_output(
         detail="The model output broke the kind's rules after one repair",
-        errors=[{"path": "output", "message": "body has 50 words, it needs 60 to 120"}],
+        errors=[{"path": "output", "message": problem}],
     )
 
 

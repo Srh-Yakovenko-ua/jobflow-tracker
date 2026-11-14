@@ -6,6 +6,8 @@ import { funnelQuerySchema, funnelResponseSchema } from './analytics-funnel.js';
 
 const DESIGN_FUNNEL = buildDesignFunnel();
 
+const SEARCH_ID = '0199f1a2-7c3b-7d4e-8f50-6a7b8c9d0e30';
+
 const [APPLIED] = DESIGN_FUNNEL.stages;
 
 describe('funnelQuerySchema', () => {
@@ -14,6 +16,19 @@ describe('funnelQuerySchema', () => {
     { label: 'a search id that is not a uuid', query: { searchId: '42' } },
   ])('refuses $label at searchId', ({ query }) => {
     expect(issuePathsOf(funnelQuerySchema.safeParse(query))).toEqual(['searchId']);
+  });
+
+  it('anchors the KPI counts on a summarized month', () => {
+    expect(funnelQuerySchema.parse({ searchId: SEARCH_ID, month: '2026-08' })).toEqual({
+      searchId: SEARCH_ID,
+      month: '2026-08',
+    });
+  });
+
+  it.for(['2026-13', '2026-8', 'abc', ''])('refuses the month %j', (month) => {
+    expect(issuePathsOf(funnelQuerySchema.safeParse({ searchId: SEARCH_ID, month }))).toEqual([
+      'month',
+    ]);
   });
 });
 

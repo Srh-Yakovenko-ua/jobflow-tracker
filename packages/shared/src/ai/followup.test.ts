@@ -1,10 +1,9 @@
 import { describe, expect, it } from 'vitest';
 
 import { buildFollowupInput, buildFollowupOutput } from '../../testing/index.js';
+import { PRIVATE_PAYLOAD_KEYS } from '../test/private-payload-keys.js';
 import { issuePathsOf } from '../test/zod-issues.js';
 import { FOLLOWUP_LIMITS, followupInputSchema, followupOutputSchema } from './followup.js';
-
-const PRIVATE_KEYS = ['body', 'note', 'notes', 'contacts', 'email', 'phone', 'telegram'];
 
 describe('followupInputSchema', () => {
   it('keeps the designed limits: a 300-character hint, 60 to 120 words, 0.9 for another variant', () => {
@@ -21,7 +20,7 @@ describe('followupInputSchema', () => {
 
   it('names no input field the AI-04 guard refuses', () => {
     const keys: readonly string[] = followupInputSchema.keyof().options;
-    expect(keys.filter((key) => PRIVATE_KEYS.includes(key))).toEqual([]);
+    expect(keys.filter((key) => PRIVATE_PAYLOAD_KEYS.includes(key))).toEqual([]);
   });
 
   it.for([

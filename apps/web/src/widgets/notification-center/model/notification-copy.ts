@@ -1,4 +1,4 @@
-import type { Notification } from '@jobflow/shared';
+import type { Notification, YearMonth } from '@jobflow/shared';
 
 import { uk } from '@/shared/i18n';
 import { formatClock } from '@/shared/lib/state-format';
@@ -6,6 +6,8 @@ import { formatClock } from '@/shared/lib/state-format';
 export type NotificationCopy = Readonly<{ title: string; text: string; action: string }>;
 
 const COPY = uk.notifications;
+
+const MONTH_DIGITS_FROM = 'YYYY-'.length;
 
 function silenceCopy({ items }: Extract<Notification, { type: 'silence' }>['payload']) {
   const companies = items.map((item) => item.company).join(', ');
@@ -15,6 +17,10 @@ function silenceCopy({ items }: Extract<Notification, { type: 'silence' }>['payl
     text: COPY.silence.text(companies, longest),
     action: COPY.silence.action,
   };
+}
+
+function monthNameOf(month: YearMonth): string {
+  return uk.calendar.months[Number(month.slice(MONTH_DIGITS_FROM)) - 1] ?? month;
 }
 
 export function notificationCopyOf(notification: Notification, timeZone: string): NotificationCopy {
@@ -38,6 +44,10 @@ export function notificationCopyOf(notification: Notification, timeZone: string)
       const { insightUnlocked } = COPY;
       const text = insightUnlocked.text(notification.payload.applications);
       return { title: insightUnlocked.title, text, action: insightUnlocked.action };
+    }
+    case 'monthly_summary_ready': {
+      const { title, text, action } = COPY.monthlySummaryReady;
+      return { title: title(monthNameOf(notification.payload.month)), text, action };
     }
     default: {
       const unhandled: never = notification;

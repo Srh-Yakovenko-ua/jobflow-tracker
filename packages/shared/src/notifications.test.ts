@@ -7,6 +7,7 @@ import {
   interviewSoonNotificationPayloadSchema,
   markNotificationsReadInputSchema,
   markNotificationsReadResponseSchema,
+  type MonthlySummaryReadyNotificationPayload,
   type Notification,
   notificationListQuerySchema,
   notificationSchema,
@@ -35,6 +36,11 @@ const AI_DONE: AiDoneNotificationPayload = {
   aiJobId: '0199f1a2-7c3b-7d4e-8f50-6a7b8c9d0e22',
   kind: 'vacancy_parse',
   applicationId: APPLICATION_ID,
+};
+
+const MONTHLY_SUMMARY_READY: MonthlySummaryReadyNotificationPayload = {
+  aiJobId: '0199f1a2-7c3b-7d4e-8f50-6a7b8c9d0e23',
+  month: '2026-08',
 };
 
 const ROW = { id: NOTIFICATION_ID, readAt: null, createdAt: '2026-11-13T09:00:00.000Z' };
@@ -109,6 +115,10 @@ describe('notificationSchema', () => {
         payload: { applications: 10 },
       },
     ],
+    [
+      'a monthly summary ready',
+      { ...ROW, type: 'monthly_summary_ready', payload: MONTHLY_SUMMARY_READY },
+    ],
   ])('keeps %s notification as sent', (_label, notification) => {
     expect(notificationSchema.parse(notification)).toStrictEqual(notification);
   });
@@ -123,6 +133,19 @@ describe('notificationSchema', () => {
       label: 'an insight unlocked at zero applications',
       notification: { type: 'insight_unlocked', payload: { applications: 0 } },
       path: 'payload.applications',
+    },
+    {
+      label: 'a monthly summary ready for a month with a day',
+      notification: {
+        type: 'monthly_summary_ready',
+        payload: { ...MONTHLY_SUMMARY_READY, month: '2026-08-01' },
+      },
+      path: 'payload.month',
+    },
+    {
+      label: 'a plan item due, which has no payload yet',
+      notification: { type: 'plan_item_due', payload: MONTHLY_SUMMARY_READY },
+      path: 'type',
     },
     {
       label: 'a silence carrying an AI payload',

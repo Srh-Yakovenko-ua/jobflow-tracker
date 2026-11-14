@@ -21,11 +21,13 @@ import { MaintenanceModule } from './modules/maintenance/index.js';
 import { MatchModule } from './modules/match/index.js';
 import { NotesModule } from './modules/notes/index.js';
 import { NotificationsModule } from './modules/notifications/index.js';
+import { PlansModule } from './modules/plans/index.js';
 import { RemindersModule } from './modules/reminders/index.js';
 import { ResumesModule } from './modules/resumes/index.js';
 import { ScheduleModule } from './modules/schedule/index.js';
 import { SearchesModule } from './modules/searches/index.js';
 import { SettingsModule } from './modules/settings/index.js';
+import { SummariesModule } from './modules/summaries/index.js';
 import { PrismaModule } from './prisma/prisma.module.js';
 import { QueuesModule } from './queues/queues.module.js';
 import { RateLimitModule } from './rate-limit/rate-limit.module.js';
@@ -57,6 +59,8 @@ import { RedisModule } from './redis/redis.module.js';
     ResumesModule,
     MatchModule,
     FollowupsModule,
+    PlansModule,
+    SummariesModule,
     JobsModule,
     LiveStreamModule,
   ],

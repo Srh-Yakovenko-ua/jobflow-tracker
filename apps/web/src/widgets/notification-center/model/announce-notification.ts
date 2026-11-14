@@ -21,6 +21,7 @@ const TOASTED: Partial<Record<Notification['type'], ToastTone>> = {
   interview_soon: 'info',
   ai_done: 'info',
   ai_failed: 'error',
+  monthly_summary_ready: 'info',
 };
 
 type Announced = Readonly<{ notification: Notification; timeZone: string }>;

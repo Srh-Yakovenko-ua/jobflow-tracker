@@ -7,8 +7,6 @@ export type { LiveStreamHandlers } from './live-stream';
 export { LIVE_CLIENT_LIMITS, openLiveStream, useLiveConnected, useLivePollMs } from './live-stream';
 export type { FileUploadErrorReason, PutFileOptions, UploadProgress } from './put-file';
 export { FILE_UPLOAD_LIMITS, FileUploadError, putFile } from './put-file';
-export type { SearchParams, SearchParamValue } from './search-params';
-export { withSearchParams } from './search-params';
 export {
   clearAccessToken,
   ensureAccessToken,
@@ -19,4 +17,8 @@ export {
 export { API_CLIENT_LIMITS } from './transport';
 export type { GuardedSave } from './use-guarded-save';
 export { useGuardedSave } from './use-guarded-save';
+export type { OptimisticMutationOptions } from './use-optimistic-mutation';
+export { useOptimisticMutation } from './use-optimistic-mutation';
 export { useSubmitKey } from './use-submit-key';
+export type { SearchParams, SearchParamValue } from '@jobflow/shared';
+export { withSearchParams } from '@jobflow/shared';

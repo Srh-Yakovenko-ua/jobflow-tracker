@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import date, datetime
 
 import pandas as pd
 
@@ -50,10 +50,16 @@ def funnel_stages(rows: pd.DataFrame) -> list[FunnelStage]:
     return [funnel_stage(rows, index=index) for index in range(len(progress_stages()))]
 
 
-def funnel(events: pd.DataFrame, *, period: SearchPeriod, now: datetime) -> Funnel:
+def funnel(
+    events: pd.DataFrame,
+    *,
+    period: SearchPeriod,
+    now: datetime,
+    month: date | None = None,
+) -> Funnel:
     rows = journeys(clean_events(events))
     return Funnel(
         stages=funnel_stages(rows),
-        kpis=kpis(rows, period=period, now=now),
+        kpis=kpis(rows, period=period, now=now, month=month),
         most_expensive=most_expensive(rows),
     )

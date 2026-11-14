@@ -49,6 +49,7 @@ class Thresholds(EnumsModel):
     min_n_percent: int = Field(alias="MIN_N_PERCENT")
     min_n_insight: int = Field(alias="MIN_N_INSIGHT")
     min_n_forecast: int = Field(alias="MIN_N_FORECAST")
+    what_if_conversion: float = Field(alias="WHAT_IF_CONVERSION")
 
 
 class DomainEnums(EnumsModel):

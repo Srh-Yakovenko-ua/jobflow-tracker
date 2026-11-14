@@ -16,7 +16,7 @@ type InsightBlock = Literal["funnel", "reasons", "sources", "resume_ab", "ghoste
 type InsightSeverity = Literal["positive", "neutral", "warning"]
 
 MAX_ACTIONS: Final = 4
-WHAT_IF_CONVERSION: Final = 0.6
+WHAT_IF_CONVERSION: Final = load_domain_enums().thresholds.what_if_conversion
 
 
 class Insight(MetricModel):

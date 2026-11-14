@@ -4,6 +4,7 @@ from uuid import UUID
 
 from fastapi import APIRouter, Query, Request
 
+from app.api.routes.queries import MonthQuery
 from app.core.auth import CurrentUserId
 from app.metrics.funnel import Funnel
 from app.services.funnel import search_funnel
@@ -17,10 +18,12 @@ async def get_funnel(
     *,
     user_id: CurrentUserId,
     search_id: Annotated[UUID, Query(alias="searchId")],
+    month: MonthQuery = None,
 ) -> Funnel:
     return await search_funnel(
         request.app.state.engine,
         user_id=user_id,
         search_id=search_id,
         now=datetime.now(UTC),
+        month=month,
     )

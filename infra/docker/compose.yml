@@ -9,6 +9,7 @@ x-api-environment: &api-environment
   JWT_PRIVATE_KEY_PATH: /app/.secrets/jwt-private.pem
   JWT_PUBLIC_KEY_PATH: /app/.secrets/jwt-public.pem
   AI_SERVICE_URL: http://ai:8001
+  ANALYTICS_URL: http://analytics:8000
   DOCUMENTS_SERVICE_URL: http://documents:8002
 
 services:

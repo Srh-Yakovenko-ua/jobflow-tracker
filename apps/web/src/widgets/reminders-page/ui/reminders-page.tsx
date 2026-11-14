@@ -1,55 +1,27 @@
 'use client';
 
 import { AnimatePresence } from 'motion/react';
-import { type ReactNode, type RefObject, useRef } from 'react';
+import { useRef } from 'react';
 
 import { RejectionReasonDialog } from '@/features/reject-with-reason';
 import { uk } from '@/shared/i18n';
-import { LoadFailedPanel } from '@/shared/ui/error-panel';
 import { Fade } from '@/shared/ui/fade';
 import { PAGE_TITLE } from '@/shared/ui/page-title';
-import { PageSkeleton } from '@/shared/ui/skeleton';
 
 import {
   type InterviewsSection,
-  type SectionLoad,
   type SilenceSection,
   useRemindersPage,
 } from '../model/use-reminders-page';
 import { InterviewRow } from './interview-row';
+import { PlanSection } from './plan-section';
 import { RemindersEmpty } from './reminders-empty';
+import { SectionBody, SectionFrame } from './section-frame';
 import { SilentCardRow, type SilentRowActions } from './silent-row';
 
 const COPY = uk.reminders;
 
-const SECTION_TITLE = 'font-display text-[20px] leading-[1.2] text-ink';
-
 const ROW = { motion: { layout: 'position' } } as const;
-
-type SectionFrameProps = Readonly<{
-  title: string;
-  titleRef?: RefObject<HTMLHeadingElement | null>;
-  children: ReactNode;
-}>;
-
-type SectionBodyProps = Readonly<{ load: SectionLoad; ready: boolean; children: ReactNode }>;
-
-function SectionFrame({ title, titleRef, children }: SectionFrameProps) {
-  return (
-    <section className="flex min-w-0 flex-col gap-3.5">
-      <h2 ref={titleRef} tabIndex={-1} className={SECTION_TITLE}>
-        {title}
-      </h2>
-      {children}
-    </section>
-  );
-}
-
-function SectionBody({ load, ready, children }: SectionBodyProps) {
-  if (ready) return children;
-  if (!load.failed) return <PageSkeleton />;
-  return <LoadFailedPanel onRetry={load.onRetry} retrying={load.retrying} />;
-}
 
 type SilenceListProps = Readonly<{ silence: SilenceSection; actions: SilentRowActions }>;
 
@@ -94,7 +66,7 @@ export function RemindersPage() {
   const focusSilence = () => {
     silenceTitleRef.current?.focus();
   };
-  const { silence, interviews, reply } = page;
+  const { silence, interviews, plan, reply } = page;
   return (
     <div className="flex max-w-180 min-w-0 flex-col gap-8">
       <h2 className={PAGE_TITLE}>{COPY.title}</h2>
@@ -111,6 +83,7 @@ export function RemindersPage() {
           <InterviewList interviews={interviews} />
         </SectionBody>
       </SectionFrame>
+      <PlanSection plan={plan} />
       <RejectionReasonDialog
         prompt={reply.rejection.prompt}
         actions={reply.rejection.actions}

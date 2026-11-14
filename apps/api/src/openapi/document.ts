@@ -15,11 +15,13 @@ import { MAINTENANCE_OPENAPI_PATHS } from '../modules/maintenance/index.js';
 import { MATCH_OPENAPI_PATHS } from '../modules/match/index.js';
 import { NOTES_OPENAPI_PATHS } from '../modules/notes/index.js';
 import { NOTIFICATIONS_OPENAPI_PATHS } from '../modules/notifications/index.js';
+import { PLANS_OPENAPI_PATHS } from '../modules/plans/index.js';
 import { REMINDERS_OPENAPI_PATHS } from '../modules/reminders/index.js';
 import { RESUMES_OPENAPI_PATHS } from '../modules/resumes/index.js';
 import { SCHEDULE_OPENAPI_PATHS } from '../modules/schedule/index.js';
 import { SEARCHES_OPENAPI_PATHS } from '../modules/searches/index.js';
 import { SETTINGS_OPENAPI_PATHS } from '../modules/settings/index.js';
+import { SUMMARIES_OPENAPI_PATHS } from '../modules/summaries/index.js';
 
 export type OpenApiDocument = ReturnType<OpenApiGeneratorV31['generateDocument']>;
 
@@ -32,6 +34,8 @@ export const API_OPENAPI_PATHS = [
   ...TIMELINE_OPENAPI_PATHS,
   ...MATCH_OPENAPI_PATHS,
   ...FOLLOWUPS_OPENAPI_PATHS,
+  ...SUMMARIES_OPENAPI_PATHS,
+  ...PLANS_OPENAPI_PATHS,
   ...NOTES_OPENAPI_PATHS,
   ...CONTACTS_OPENAPI_PATHS,
   ...SCHEDULE_OPENAPI_PATHS,
@@ -59,6 +63,8 @@ const TAGS = [
     description: 'Resume files of the signed-in user, uploaded straight to storage',
   },
   { name: 'ai', description: 'The AI results of the signed-in user' },
+  { name: 'summaries', description: 'The monthly AI summary of the signed-in user' },
+  { name: 'plans', description: 'The action plans saved from monthly summaries' },
   { name: 'capture', description: 'Draft Applications captured from a vacancy and parsed by AI' },
   { name: 'jobs', description: 'The status of background jobs of the signed-in user' },
   { name: 'live', description: 'Live updates over Server-Sent Events and their one-time ticket' },

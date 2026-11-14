@@ -39,6 +39,7 @@ export function notificationTargetOf(notification: Notification): string | null 
     case 'ai_failed':
       return AI_TARGETS[notification.payload.kind](notification.payload);
     case 'insight_unlocked':
+    case 'monthly_summary_ready':
       return '/analytics';
     default: {
       const unhandled: never = notification;

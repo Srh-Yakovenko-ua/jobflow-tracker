@@ -15,7 +15,7 @@ import { type FollowupApplication, followupOwner, followupPath } from '../../tes
 import { callRoute, statusAndType } from '../../test/http.js';
 import { keyHeaders } from '../../test/idempotency.js';
 import { outboxRows } from '../../test/outbox.js';
-import { expectRateLimited } from '../../test/rate-limit.js';
+import { expectHourlyAiLimit } from '../../test/rate-limit.js';
 import type { StageApplicationOwner } from '../../test/reminders.js';
 import { daysAfter, daysBefore, NOW, settableClock } from '../../test/time.js';
 
@@ -175,10 +175,8 @@ describe('the follow-up API', () => {
   it('answers 429 to the third request of one user in an hour, and not to another user', async () => {
     const olena = await owner();
     const bohdan = await owner();
-    await generate(olena);
-    await generate(olena);
 
-    expectRateLimited(await generate(olena), { windowSeconds: 3600 });
+    await expectHourlyAiLimit({ caller: olena, send: generate });
     expect((await generate(bohdan)).status).toBe(202);
   });
 
