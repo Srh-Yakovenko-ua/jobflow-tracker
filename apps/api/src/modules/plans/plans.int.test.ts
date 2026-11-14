@@ -1,6 +1,6 @@
 import { latestPlanResponseSchema, type Plan, planItemSchema, planSchema } from '@jobflow/shared';
 import { buildMonthlySummaryOutput } from '@jobflow/shared/testing';
-import { describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it } from 'vitest';
 
 import { Clock } from '../../common/clock.js';
 import { appTestingModule, useTestApp } from '../../test/app.js';
@@ -43,10 +43,24 @@ describe('the plans API', () => {
       body,
     });
 
+  beforeEach(() => {
+    clock.at(NOW);
+  });
+
   const latest = (accessToken: string) =>
     callRoute(testApp.app, { method: 'get', path: `${PLANS_PATH}/latest`, accessToken });
 
   const firstItemOf = (plan: Plan) => ({ planId: plan.id, itemId: plan.items[0]?.id ?? '' });
+
+  const savedItemPatcher = async () => {
+    const olena = await summaryOwner(testApp.prisma);
+    const item = firstItemOf(await save(olena));
+    return async (body: object) => {
+      const response = await patchItem(olena.accessToken, { ...item, body });
+      expect(response.status).toBe(200);
+      return planItemSchema.parse(response.body);
+    };
+  };
 
   it('saves the summary actions as the plan of the month in order, and a second save answers the same plan', async () => {
     const olena = await summaryOwner(testApp.prisma);
@@ -63,18 +77,23 @@ describe('the plans API', () => {
   });
 
   it('checks an item at the server time, unchecks it, and sets and clears its due date', async () => {
-    const olena = await summaryOwner(testApp.prisma);
-    const item = firstItemOf(await save(olena));
-    const patch = async (body: object) => {
-      const response = await patchItem(olena.accessToken, { ...item, body });
-      expect(response.status).toBe(200);
-      return planItemSchema.parse(response.body);
-    };
+    const patch = await savedItemPatcher();
 
     expect(await patch({ done: true })).toMatchObject({ doneAt: NOW.toISOString() });
     expect(await patch({ done: false })).toMatchObject({ doneAt: null });
     expect(await patch({ dueAt: DUE_AT })).toMatchObject({ dueAt: DUE_AT, doneAt: null });
     expect(await patch({ dueAt: null })).toMatchObject({ dueAt: null });
+  });
+
+  it('keeps the first check time when an item is checked again later, and unchecking still clears it', async () => {
+    const patch = await savedItemPatcher();
+
+    await patch({ done: true });
+    clock.at(new Date('2026-10-23T09:00:00.000Z'));
+    const again = await patch({ done: true });
+    const unchecked = await patch({ done: false });
+
+    expect([again.doneAt, unchecked.doneAt]).toEqual([NOW.toISOString(), null]);
   });
 
   it('shows the checked item in the latest plan, and no plan before the first one', async () => {

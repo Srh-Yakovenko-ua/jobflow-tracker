@@ -4,7 +4,8 @@ import { startOfMonth } from 'date-fns';
 
 import { conflict } from '../../common/app-error.js';
 import { Clock } from '../../common/clock.js';
-import { localMonthOf, shiftMonth } from '../../common/year-month.js';
+import { errorMessageOf } from '../../common/error-message.js';
+import { previousLocalMonthOf } from '../../common/year-month.js';
 import type { Prisma } from '../../generated/prisma/client.js';
 import { PrismaService } from '../../prisma/prisma.service.js';
 import { AiService } from '../ai/index.js';
@@ -16,9 +17,6 @@ type SummaryJobStart = Omit<SummaryRequested, 'aiJobId'> & { tx: Prisma.Transact
 export type MonthlySummaryTotals = { picked: number; requested: number };
 
 const NO_ACTIVE_SEARCH = 'No active search';
-
-const summarizedMonthOf = (timezone: string, now: Date) =>
-  shiftMonth(localMonthOf(timezone, now), -1);
 
 @Injectable()
 export class SummaryRequestsService {
@@ -42,7 +40,7 @@ export class SummaryRequestsService {
       if (searchId === null) {
         throw conflict(NO_ACTIVE_SEARCH);
       }
-      const month = summarizedMonthOf(timezone, now);
+      const month = previousLocalMonthOf(timezone, now);
       const jobId = await this.start(userId, { searchId, month, requestId, fresh: true, tx });
       return { jobId };
     });
@@ -51,7 +49,11 @@ export class SummaryRequestsService {
   async requestScheduledFor(userIds: string[]): Promise<MonthlySummaryTotals> {
     const totals = { picked: userIds.length, requested: 0 };
     for (const userId of userIds) {
-      totals.requested += Number(await this.requestScheduled(userId));
+      try {
+        totals.requested += Number(await this.requestScheduled(userId));
+      } catch (error) {
+        this.logger.warn({ userId, err: errorMessageOf(error) }, 'scheduled summary failed');
+      }
     }
     this.logger.log(totals, 'monthly summaries requested');
     return totals;
@@ -66,13 +68,17 @@ export class SummaryRequestsService {
       if (searchId === null || (await this.repository.hasJobSince(userId, { since, tx }))) {
         return false;
       }
-      await this.start(userId, { searchId, month: summarizedMonthOf(timezone, now), tx });
+      await this.start(userId, { searchId, month: previousLocalMonthOf(timezone, now), tx });
       return true;
     });
   }
 
   private async start(userId: string, { tx, ...requested }: SummaryJobStart): Promise<string> {
-    const aiJobId = await this.ai.createJob(userId, { kind: 'monthly_summary', tx });
+    const aiJobId = await this.ai.createJob(userId, {
+      kind: 'monthly_summary',
+      periodMonth: requested.month,
+      tx,
+    });
     await this.repository.recordRequested(userId, { requested: { aiJobId, ...requested }, tx });
     return aiJobId;
   }

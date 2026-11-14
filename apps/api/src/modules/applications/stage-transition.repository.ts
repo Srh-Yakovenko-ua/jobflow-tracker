@@ -3,6 +3,7 @@ import { Injectable } from '@nestjs/common';
 
 import type { Prisma } from '../../generated/prisma/client.js';
 import { EFFECTIVE_STAGE_EVENTS } from '../../prisma/effective-stage-events.js';
+import { lockOwnedApplication } from '../../prisma/lock-owned-application.js';
 import { PrismaService } from '../../prisma/prisma.service.js';
 import {
   APPLICATION_SELECT,
@@ -42,12 +43,8 @@ export type ApplyStageEvent = ApplicationById & StageEventPlan;
 export class StageTransitionRepository {
   constructor(private readonly prisma: PrismaService) {}
 
-  async lockOwned(userId: string, { id, tx = this.prisma }: ApplicationById): Promise<boolean> {
-    const locked = await tx.$queryRaw<{ id: string }[]>`
-      SELECT id FROM applications
-      WHERE id = ${id}::uuid AND user_id = ${userId}::uuid AND deleted_at IS NULL
-      FOR UPDATE`;
-    return locked.length > 0;
+  lockOwned(userId: string, { id, tx = this.prisma }: ApplicationById): Promise<boolean> {
+    return lockOwnedApplication(tx, { userId, applicationId: id });
   }
 
   findStageState(

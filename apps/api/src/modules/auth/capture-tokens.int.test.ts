@@ -6,7 +6,7 @@ import { describe, expect, it } from 'vitest';
 import { buildOpenApiDocument } from '../../openapi/document.js';
 import { useTestApp } from '../../test/app.js';
 import { signedInWithSearch } from '../../test/applications.js';
-import { cacheControlOf } from '../../test/auth.js';
+import { accessTokenFor, cacheControlOf } from '../../test/auth.js';
 import {
   BOOKMARKLET,
   CAPTURE_TOKENS_PATH,
@@ -15,7 +15,8 @@ import {
   postBookmarklet,
   signedInWithCaptureToken,
 } from '../../test/capture.js';
-import { callRoute, statusAndDetail } from '../../test/http.js';
+import { createUser } from '../../test/factories.js';
+import { callRoute, statusAndDetail, statusAndType } from '../../test/http.js';
 import { bearerCalls } from '../../test/openapi.js';
 
 type TokenTarget = { accessToken?: string; id: string };
@@ -171,6 +172,28 @@ describe('capture tokens', () => {
     expect((await captureWith(olena.captureToken)).status).toBe(202);
     expect((await captureWith(bohdan.captureToken)).status).toBe(202);
     expect((await storedTokens()).map(({ revokedAt }) => revokedAt)).toEqual([null, null]);
+  });
+
+  it('answers 401 token_expired to a mint with an access token from before sign out everywhere, stores nothing, and mints with a newer one and for another user', async () => {
+    const [olena, bohdan] = [await createUser(testApp.prisma), await createUser(testApp.prisma)];
+    const minuteAgo = new Date(Date.now() - 60_000);
+    const olenaBefore = await accessTokenFor(olena, { issuedAt: minuteAgo });
+    const bohdanBefore = await accessTokenFor(bohdan, { issuedAt: minuteAgo });
+
+    const signedOut = await callRoute(testApp.app, {
+      method: 'post',
+      path: '/api/v1/auth/logout-all',
+      accessToken: olenaBefore,
+    });
+    const refused = await createToken(olenaBefore);
+    const storedAfterRefusal = await storedTokens();
+    const olenaAfter = await accessTokenFor(olena, { issuedAt: new Date(Date.now() + 1000) });
+
+    expect(signedOut.status).toBe(204);
+    expect(statusAndType(refused)).toEqual([401, 'token_expired']);
+    expect(storedAfterRefusal).toEqual([]);
+    expect((await createToken(olenaAfter)).status).toBe(201);
+    expect((await createToken(bohdanBefore)).status).toBe(201);
   });
 
   it('answers 401 to a capture token that was never issued and stores nothing', async () => {

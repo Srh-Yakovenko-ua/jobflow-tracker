@@ -30,6 +30,7 @@ const KYIV = { settings: { timezone: 'Europe/Kyiv' } };
 
 const SUMMARY_ROW: SummaryJobRow = {
   id: AI_JOB_ID,
+  periodMonth: null,
   createdAt: new Date('2026-09-30T21:30:00.000Z'),
   finishedAt: new Date('2026-09-30T21:31:00.000Z'),
   user: KYIV,
@@ -55,6 +56,13 @@ const AUGUST_ROW: SummaryJobRow = {
   finishedAt: new Date('2026-09-01T04:00:12.000Z'),
 };
 
+const SEPTEMBER_READ_IN_LOS_ANGELES_ROW: SummaryJobRow = {
+  ...SUMMARY_ROW,
+  periodMonth: '2026-09',
+  createdAt: new Date('2026-10-01T03:00:00.000Z'),
+  user: { settings: { timezone: 'America/Los_Angeles' } },
+};
+
 type StoredSummary = SummaryJobRow & { userId: string };
 
 class FakeSummariesRepository {
@@ -63,6 +71,8 @@ class FakeSummariesRepository {
   start: SummaryStart = { timezone: 'Europe/Kyiv', searchId: SEARCH_ID, runningJobId: null };
 
   jobsCreatedAt: Date[] = [];
+
+  failingUserIds: string[] = [];
 
   summaries: StoredSummary[] = [];
 
@@ -75,6 +85,9 @@ class FakeSummariesRepository {
 
   findStart(userId: string, { tx }: { tx: unknown }): Promise<SummaryStart> {
     this.steps.push(['findStart', userId, tx]);
+    if (this.failingUserIds.includes(userId)) {
+      return Promise.reject(new Error('connection reset'));
+    }
     return Promise.resolve(this.start);
   }
 
@@ -247,6 +260,18 @@ describe('SummaryRequestsService.requestScheduledFor', () => {
     const requested = repository.steps.filter(([step]) => step === 'recordRequested');
     expect(requested.map(([, userId]) => userId)).toEqual([OLENA_ID, BOHDAN_ID]);
   });
+
+  it('goes on to the next user when one user fails, and counts only the requested ones', async () => {
+    const { repository, ai, requests } = await summariesWithFakes();
+    repository.failingUserIds = [OLENA_ID];
+
+    await expect(requests.requestScheduledFor([OLENA_ID, BOHDAN_ID])).resolves.toEqual({
+      picked: 2,
+      requested: 1,
+    });
+
+    expect([...ai.jobs.values()]).toEqual([expect.objectContaining({ userId: BOHDAN_ID })]);
+  });
 });
 
 describe('SummariesService.latest', () => {
@@ -353,6 +378,20 @@ describe('SummariesService.saveAsPlan', () => {
     const { repository, plans, service } = await summariesWithFakes();
     repository.summaries = [{ ...SUMMARY_ROW, userId: OLENA_ID }];
 
+    await service.saveAsPlan(OLENA_ID, AI_JOB_ID);
+
+    expect(plans.saved).toEqual([
+      { aiResultId: AI_RESULT_ID, month: '2026-10', actions: OUTPUT.actions },
+    ]);
+  });
+
+  it('keeps the requested month after a time zone change and saves the plan for the month after it', async () => {
+    const { repository, plans, service } = await summariesWithFakes();
+    repository.summaries = [{ ...SEPTEMBER_READ_IN_LOS_ANGELES_ROW, userId: OLENA_ID }];
+
+    await expect(service.latest(OLENA_ID)).resolves.toMatchObject({
+      summary: { month: '2026-09' },
+    });
     await service.saveAsPlan(OLENA_ID, AI_JOB_ID);
 
     expect(plans.saved).toEqual([

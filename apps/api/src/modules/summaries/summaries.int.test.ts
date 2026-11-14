@@ -52,8 +52,10 @@ describe('the monthly summary API', () => {
     expect(response.status).toBe(202);
     const { jobId } = captureRetryResponseSchema.parse(response.body);
     expect(
-      await testApp.prisma.aiJob.findMany({ select: { id: true, kind: true, status: true } }),
-    ).toEqual([{ id: jobId, kind: 'monthly_summary', status: 'queued' }]);
+      await testApp.prisma.aiJob.findMany({
+        select: { id: true, kind: true, status: true, periodMonth: true },
+      }),
+    ).toEqual([{ id: jobId, kind: 'monthly_summary', status: 'queued', periodMonth: '2026-09' }]);
     expect(await outboxRows(testApp.prisma, { eventType: 'summary.requested' })).toEqual([
       {
         aggregate: 'user',

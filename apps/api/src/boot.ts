@@ -1,6 +1,8 @@
 import type { NestApplicationOptions } from '@nestjs/common';
 import { pino } from 'pino';
 
+import { errorMessageOf } from './common/error-message.js';
+
 export const BOOT_OPTIONS = {
   bufferLogs: true,
   logger: false,
@@ -9,15 +11,11 @@ export const BOOT_OPTIONS = {
 
 export const bootLogger = pino();
 
-function describeFailure(error: unknown): string {
-  return error instanceof Error ? error.message : String(error);
-}
-
 export async function boot(start: () => Promise<unknown>): Promise<void> {
   try {
     await start();
   } catch (error) {
-    bootLogger.fatal(describeFailure(error));
+    bootLogger.fatal(errorMessageOf(error));
     process.exit(1);
   }
 }

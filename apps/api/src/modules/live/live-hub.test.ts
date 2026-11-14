@@ -3,13 +3,16 @@ import { EventEmitter } from 'node:events';
 import { LIVE_EVENTS, type LiveEvent } from '@jobflow/shared';
 import { buildJobUpdate } from '@jobflow/shared/testing';
 import type { MessageEvent } from '@nestjs/common';
+import { addSeconds } from 'date-fns';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { RedisService } from '../../redis/redis.service.js';
 import { FakeDependency } from '../../test/fake-dependency.js';
+import { liveUserOf } from '../../test/live.js';
 import { memoryLog } from '../../test/memory-log.js';
 import { compileProcessorModule } from '../../test/processor.js';
 import { BOHDAN_ID, MOVE_EVENT_ID, OLENA_ID } from '../../test/service-fixtures.js';
+import type { AccessUser } from '../auth/index.js';
 import { LiveHub } from './live-hub.service.js';
 
 const HEARTBEAT_MS = 25_000;
@@ -56,16 +59,24 @@ class FakeRedis extends FakeDependency {
 
 const log = memoryLog();
 
-function opened(hub: LiveHub, userId: string) {
-  const stream = { messages: [] as MessageEvent[], ended: false };
-  hub.stream(userId).subscribe({
+function openedAs(hub: LiveHub, user: AccessUser) {
+  const stream = { messages: [] as MessageEvent[], ended: false, error: undefined as unknown };
+  hub.stream(user).subscribe({
     next: (message) => stream.messages.push(message),
     complete: () => {
       stream.ended = true;
     },
+    error: (error: unknown) => {
+      stream.error = error;
+    },
   });
   return stream;
 }
+
+const opened = (hub: LiveHub, userId: string) => openedAs(hub, liveUserOf(userId));
+
+const expiringIn = (userId: string, seconds: number) =>
+  liveUserOf(userId, addSeconds(new Date(), seconds));
 
 describe('LiveHub', () => {
   let redis: FakeRedis;
@@ -240,6 +251,34 @@ describe('LiveHub', () => {
     await vi.advanceTimersByTimeAsync(1);
 
     expect([justBefore, older.ended, younger.ended]).toEqual([false, true, false]);
+  });
+
+  it('ends a stream when the access token behind its ticket expires, before its 900 s', async () => {
+    const olena = openedAs(hub, expiringIn(OLENA_ID, 60));
+
+    await vi.advanceTimersByTimeAsync(59_999);
+    const justBefore = olena.ended;
+    await vi.advanceTimersByTimeAsync(1);
+
+    expect([justBefore, olena.ended]).toEqual([false, true]);
+  });
+
+  it("refuses a user's sixth open stream with 429, opens another user's, and opens one again once a stream ended", async () => {
+    const expiring = openedAs(hub, expiringIn(OLENA_ID, 60));
+    const open = [1, 2, 3, 4].map(() => opened(hub, OLENA_ID));
+    const sixth = opened(hub, OLENA_ID);
+    const bohdan = opened(hub, BOHDAN_ID);
+
+    await vi.advanceTimersByTimeAsync(60_000);
+    const afterOneEnded = opened(hub, OLENA_ID);
+
+    expect(sixth.error).toMatchObject({
+      body: { status: 429, type: 'rate_limited', detail: 'Too many open live streams' },
+    });
+    expect([...open, bohdan, afterOneEnded].map(({ error }) => error)).toEqual(
+      Array.from({ length: 6 }, () => undefined),
+    );
+    expect([expiring.ended, afterOneEnded.ended]).toEqual([true, false]);
   });
 
   it('ends the open streams and closes its connection when the module is destroyed', () => {

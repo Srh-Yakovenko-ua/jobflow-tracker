@@ -35,7 +35,10 @@ export const jwksResponseSchema = z.object({
   keys: z.tuple([publicJwkSchema.extend({ e: z.literal('AQAB') })]),
 });
 
-export type AccessTokenOptions = { issuedAt?: Date; scope?: readonly TokenScope[] };
+export type AccessTokenOptions = {
+  issuedAt?: Date | undefined;
+  scope?: readonly TokenScope[] | undefined;
+};
 
 export type ClientChoice = { mobile?: boolean };
 

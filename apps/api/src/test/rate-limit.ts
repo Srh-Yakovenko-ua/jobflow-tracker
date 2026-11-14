@@ -7,6 +7,7 @@ import { expect } from 'vitest';
 
 import { ERROR_TYPES } from '../common/app-error.js';
 import type { RateLimitService } from '../rate-limit/rate-limit.service.js';
+import type { HttpReply } from './sse.js';
 
 export type PostFromInput = { ip?: string | undefined; path: string; body: object };
 
@@ -25,7 +26,7 @@ export function postFrom(app: NestExpressApplication, { ip, path, body }: PostFr
   return (ip === undefined ? call : call.set('x-forwarded-for', ip)).send(body);
 }
 
-export function expectRateLimited(response: Response, { windowSeconds }: RateLimitWindow): void {
+export function expectRateLimited(response: HttpReply, { windowSeconds }: RateLimitWindow): void {
   const retryAfter = Number(response.get('retry-after'));
   expect(response.status).toBe(429);
   expect(Number.isInteger(retryAfter)).toBe(true);

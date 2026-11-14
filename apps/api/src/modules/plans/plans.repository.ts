@@ -37,13 +37,13 @@ export type PlanOfSummary = Required<InTransaction> & { aiResultId: string };
 
 export type CreatePlan = Required<InTransaction> & { plan: NewPlan };
 
-export type PlanItemChange = {
-  planId: string;
-  itemId: string;
+export type PlanItemKey = Required<InTransaction> & { planId: string; itemId: string };
+
+export type PlanItemChange = PlanItemKey & {
   data: Partial<Pick<PlanItemRow, 'dueAt' | 'doneAt'>>;
 };
 
-const ownedItemWhere = (userId: string, { planId, itemId }: PlanItemChange) =>
+const ownedItemWhere = (userId: string, { planId, itemId }: PlanItemKey) =>
   ({ id: itemId, planId, plan: { userId } }) satisfies Prisma.PlanItemWhereInput;
 
 @Injectable()
@@ -87,12 +87,19 @@ export class PlansRepository {
     return plan?.items ?? [];
   }
 
+  findItem(userId: string, key: PlanItemKey): Promise<PlanItemRow | null> {
+    return key.tx.planItem.findFirst({
+      where: ownedItemWhere(userId, key),
+      select: PLAN_ITEM_SELECT,
+    });
+  }
+
   async updateItem(userId: string, change: PlanItemChange): Promise<PlanItemRow | null> {
-    const where = ownedItemWhere(userId, change);
-    const { count } = await this.prisma.planItem.updateMany({ where, data: change.data });
+    const { tx, data } = change;
+    const { count } = await tx.planItem.updateMany({ where: ownedItemWhere(userId, change), data });
     if (count === 0) {
       return null;
     }
-    return this.prisma.planItem.findFirst({ where, select: PLAN_ITEM_SELECT });
+    return this.findItem(userId, change);
   }
 }

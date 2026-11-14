@@ -7,6 +7,8 @@ import type {
   InsertFollowup,
   InsertInterviewReminder,
   ReminderRow,
+  SilenceMarkQuery,
+  SilenceMarkRow,
 } from '../modules/reminders/index.js';
 import type { PrismaService } from '../prisma/prisma.service.js';
 import { signedInWithSearch } from './applications.js';
@@ -16,6 +18,8 @@ import { APPLICATION_ID, OLENA_ID, REMINDER_ID } from './service-fixtures.js';
 import { NOW, type SettableClock } from './time.js';
 
 export type StoredReminder = ByUser<ReminderRow>;
+
+export type StoredSilenceMark = ByUser<SilenceMarkRow> & { applicationId: string };
 
 export type StageApplication = {
   stage: Stage;
@@ -59,6 +63,17 @@ export class FakeRemindersRepository {
   readonly rows: StoredReminder[] = [];
 
   readonly followupTransactions: InsertFollowup['tx'][] = [];
+
+  readonly silenceMarks: StoredSilenceMark[] = [];
+
+  findSilenceMark(userId: string, { applicationId }: SilenceMarkQuery) {
+    const stored = this.silenceMarks.find(
+      (mark) => mark.userId === userId && mark.applicationId === applicationId,
+    );
+    return Promise.resolve(
+      stored ? { lastEventAt: stored.lastEventAt, stageEvents: stored.stageEvents } : null,
+    );
+  }
 
   closeActiveInterview(
     userId: string,
@@ -109,7 +124,7 @@ export class FakeRemindersRepository {
         candidate.userId === userId && candidate.id === id && ACTIVE.includes(candidate.status),
     );
     if (row !== undefined) {
-      Object.assign(row, change);
+      Object.assign(row, { snoozedUntil: null, ...change });
     }
     return Promise.resolve(row && withoutOwner(row));
   }
@@ -122,7 +137,7 @@ export class FakeRemindersRepository {
   private closeWhere(matches: (row: StoredReminder) => boolean, status: ReminderStatus) {
     const active = this.rows.filter((row) => matches(row) && ACTIVE.includes(row.status));
     active.forEach((row) => {
-      row.status = status;
+      Object.assign(row, { status, snoozedUntil: null });
     });
     return Promise.resolve(active.length);
   }

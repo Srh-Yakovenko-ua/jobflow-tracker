@@ -19,6 +19,7 @@ import { daysBefore, minutesAfter, NOW } from '../../test/time.js';
 import { TimelineService } from '../events/index.js';
 import { RemindersRepository } from './reminders.repository.js';
 import { RemindersService } from './reminders.service.js';
+import type { SilenceMark } from './silence-mark.js';
 
 const INTERVIEW = { applicationId: APPLICATION_ID, scheduledEventId: SCHEDULED_EVENT_ID };
 
@@ -190,11 +191,33 @@ describe('RemindersService.resolveFollowups', () => {
 });
 
 describe('RemindersService.startFollowup', () => {
-  it('writes a follow-up due now and silence_started in one transaction', async () => {
+  const SEEN: SilenceMark = { lastEventAt: daysBefore(7), latestEventAt: daysBefore(9) };
+
+  async function startedOver(seen: SilenceMark) {
     const { repository, timeline, service } = await serviceWithFake();
+    repository.silenceMarks.push({
+      userId: OLENA_ID,
+      applicationId: APPLICATION_ID,
+      lastEventAt: daysBefore(7),
+      stageEvents: [{ createdAt: daysBefore(9) }],
+    });
+    const start = { applicationId: APPLICATION_ID, days: 7, now: NOW, seen };
+    return { repository, timeline, started: await service.startFollowup(OLENA_ID, start) };
+  }
 
-    await service.startFollowup(OLENA_ID, { applicationId: APPLICATION_ID, days: 7, now: NOW });
+  it.each([
+    { case: 'last event', seen: { ...SEEN, lastEventAt: daysBefore(8) } },
+    { case: 'latest stage event', seen: { ...SEEN, latestEventAt: null } },
+  ])('writes nothing when the $case changed after the scan read it', async ({ seen }) => {
+    const { repository, timeline, started } = await startedOver(seen);
 
+    expect([started, repository.rows, timeline.events]).toEqual([false, [], []]);
+  });
+
+  it('writes a follow-up due now and silence_started in one transaction', async () => {
+    const { repository, timeline, started } = await startedOver(SEEN);
+
+    expect(started).toBe(true);
     expect(repository.rows).toEqual([storedReminder({ dueAt: NOW })]);
     expect(repository.followupTransactions).toEqual([FAKE_TRANSACTION]);
     expect(timeline.events).toEqual([

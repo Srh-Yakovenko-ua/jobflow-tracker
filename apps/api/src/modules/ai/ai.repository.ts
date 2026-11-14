@@ -1,4 +1,4 @@
-import { AI_JOB_STEPS, type AiKind, type AiResultStatus } from '@jobflow/shared';
+import { AI_JOB_STEPS, type AiKind, type AiResultStatus, type YearMonth } from '@jobflow/shared';
 import { Injectable } from '@nestjs/common';
 
 import { Prisma } from '../../generated/prisma/client.js';
@@ -41,7 +41,10 @@ export type AiJobTarget =
   | { applicationId: string; resumeVersionId: string };
 
 export type CreateAiJob = InTransaction &
-  (({ kind: Exclude<AiKind, 'monthly_summary'> } & AiJobTarget) | { kind: 'monthly_summary' });
+  (
+    | ({ kind: Exclude<AiKind, 'monthly_summary'> } & AiJobTarget)
+    | { kind: 'monthly_summary'; periodMonth: YearMonth }
+  );
 
 export type AiResultKey = { kind: AiKind; inputHash: string };
 

@@ -1,7 +1,9 @@
 import { Injectable } from '@nestjs/common';
+import { subMilliseconds } from 'date-fns';
 
 import type { Prisma } from '../../generated/prisma/client.js';
 import { PrismaService } from '../../prisma/prisma.service.js';
+import { REFRESH_REUSE_GRACE_MS } from './refresh-tokens.js';
 
 export type NewRefreshToken = {
   userId: string;
@@ -35,11 +37,38 @@ const PRESENTED_SELECT = { id: true, userId: true, familyId: true, expiresAt: tr
 
 type Revocation = { where: Prisma.RefreshTokenWhereInput; now: Date };
 
+type RevokedPresented = Omit<RotateInput, 'tokenHash'> & { id: string } & TokenFamily;
+
 function revoke(client: Prisma.TransactionClient, { where, now }: Revocation) {
   return client.refreshToken.updateMany({
     where: { ...where, revokedAt: null },
     data: { revokedAt: now },
   });
+}
+
+async function insertNext(
+  tx: Prisma.TransactionClient,
+  { userId, familyId, next }: Omit<RevokedPresented, 'id' | 'now'>,
+): Promise<RotateOutcome> {
+  await tx.refreshToken.create({ data: { userId, familyId, ...next }, select: { id: true } });
+  return { status: 'rotated', userId };
+}
+
+async function rotateRevoked(
+  tx: Prisma.TransactionClient,
+  presented: RevokedPresented,
+): Promise<RotateOutcome> {
+  const { id, userId, familyId, now } = presented;
+  const reread = await tx.refreshToken.findUnique({ where: { id }, select: { revokedAt: true } });
+  const graceStart = subMilliseconds(now, REFRESH_REUSE_GRACE_MS);
+  if (reread?.revokedAt == null || reread.revokedAt <= graceStart) {
+    await revoke(tx, { where: { userId, familyId }, now });
+    return { status: 'reused', userId, familyId };
+  }
+  const live = await tx.refreshToken.count({
+    where: { userId, familyId, revokedAt: null, expiresAt: { gt: now } },
+  });
+  return live === 0 ? INVALID : insertNext(tx, presented);
 }
 
 @Injectable()
@@ -59,14 +88,10 @@ export class SessionRepository {
       if (presented === null || presented.expiresAt <= now) {
         return INVALID;
       }
-      const { userId, familyId } = presented;
-      const { count } = await revoke(tx, { where: { id: presented.id }, now });
-      if (count === 0) {
-        await revoke(tx, { where: { userId, familyId }, now });
-        return { status: 'reused', userId, familyId };
-      }
-      await tx.refreshToken.create({ data: { userId, familyId, ...next }, select: { id: true } });
-      return { status: 'rotated', userId };
+      const { id, userId, familyId } = presented;
+      const { count } = await revoke(tx, { where: { id }, now });
+      const rotation = { id, userId, familyId, next, now };
+      return count === 0 ? rotateRevoked(tx, rotation) : insertNext(tx, rotation);
     });
   }
 
@@ -84,6 +109,7 @@ export class SessionRepository {
     { userId, now, keepFamilyId }: RevokeAllInput,
     client: Prisma.TransactionClient,
   ): Promise<void> {
+    await client.user.updateMany({ where: { id: userId }, data: { sessionsRevokedAt: now } });
     const otherFamilies = keepFamilyId === undefined ? {} : { familyId: { not: keepFamilyId } };
     await revoke(client, { where: { userId, ...otherFamilies }, now });
   }

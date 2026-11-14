@@ -12,6 +12,9 @@ export const localMonthOf = (timezone: string, instant: Date): YearMonth =>
 export const shiftMonth = (month: YearMonth, months: number): YearMonth =>
   yearMonthOf(addMonths(firstLocalDayOf(month), months));
 
+export const previousLocalMonthOf = (timezone: string, instant: Date): YearMonth =>
+  shiftMonth(localMonthOf(timezone, instant), -1);
+
 export const monthNameOf = (month: YearMonth): string =>
   format(firstLocalDayOf(month), 'LLLL', { locale: uk });
 

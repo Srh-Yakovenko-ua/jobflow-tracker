@@ -24,7 +24,7 @@ import {
 import { bookmarkletStatus, signedInWithCaptureToken } from '../../test/capture.js';
 import { callRoute } from '../../test/http.js';
 import { memoryLog, withLogSink } from '../../test/memory-log.js';
-import { hashRefreshToken } from './refresh-tokens.js';
+import { hashRefreshToken, REFRESH_REUSE_GRACE_MS } from './refresh-tokens.js';
 
 const log = memoryLog();
 
@@ -40,6 +40,17 @@ describe('refresh token rotation and revocation', () => {
 
   const familyRows = (familyId: string) =>
     testApp.prisma.refreshToken.findMany({ where: { familyId }, orderBy: { createdAt: 'asc' } });
+
+  const revokedPastTheGrace = (token: string) =>
+    testApp.prisma.refreshToken.update({
+      where: { tokenHash: hashRefreshToken(token) },
+      data: { revokedAt: new Date(Date.now() - REFRESH_REUSE_GRACE_MS - 1000) },
+    });
+
+  const refreshedFrom = async (refreshToken: string) => {
+    const response = await refreshWith(testApp.app, { refreshToken });
+    return { status: response.status, token: refreshTokenFromCookie(response) };
+  };
 
   it('rotates the token: the old row is revoked and the new one joins the same family', async () => {
     const { refreshToken: first } = await signUp(testApp.app, OLENA);
@@ -62,6 +73,7 @@ describe('refresh token rotation and revocation', () => {
     const { user, refreshToken: first } = await signUp(testApp.app, OLENA);
     const otherSession = await signIn(testApp.app, OLENA);
     const second = refreshTokenFromCookie(await refreshWith(testApp.app, { refreshToken: first }));
+    await revokedPastTheGrace(first);
     log.lines.length = 0;
 
     const reuse = await refreshWith(testApp.app, { refreshToken: first });
@@ -80,6 +92,39 @@ describe('refresh token rotation and revocation', () => {
     expect(family.map((row) => row.revokedAt instanceof Date)).toEqual([true, true]);
     expect((await refreshWith(testApp.app, { refreshToken: second })).status).toBe(401);
     expect((await refreshWith(testApp.app, otherSession)).status).toBe(200);
+  });
+
+  it('answers a rotated token presented again within 30 s with a new token of its family, and revokes the family once the grace is over', async () => {
+    const { refreshToken: first } = await signUp(testApp.app, OLENA);
+    const rotated = await refreshedFrom(first);
+    const again = await refreshedFrom(first);
+    const { familyId } = await storedToken(first);
+    const fromRotated = await refreshedFrom(rotated.token);
+    const fromAgain = await refreshedFrom(again.token);
+    await revokedPastTheGrace(first);
+    log.lines.length = 0;
+
+    const late = await refreshWith(testApp.app, { refreshToken: first });
+
+    expect([rotated.status, again.status, fromRotated.status, fromAgain.status]).toEqual([
+      200, 200, 200, 200,
+    ]);
+    expect(await storedToken(again.token)).toMatchObject({ familyId });
+    expect(late.status).toBe(401);
+    expect((await familyRows(familyId)).every((row) => row.revokedAt instanceof Date)).toBe(true);
+    expect((await refreshWith(testApp.app, { refreshToken: fromAgain.token })).status).toBe(401);
+    expect(log.parsed().map(({ msg }) => msg)).toContain('refresh token reuse, family revoked');
+  });
+
+  it('answers a token revoked by logout within 30 s with 401 and no reuse warning', async () => {
+    const { refreshToken } = await signUp(testApp.app, OLENA);
+    await http().post('/api/v1/auth/logout').set('cookie', refreshCookie(refreshToken));
+    log.lines.length = 0;
+
+    const response = await refreshWith(testApp.app, { refreshToken });
+
+    expect(response.status).toBe(401);
+    expect(log.parsed().map(({ msg }) => msg)).not.toContain('refresh token reuse, family revoked');
   });
 
   it('refuses an expired refresh token with 401 and leaves its family untouched', async () => {

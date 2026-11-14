@@ -18,8 +18,6 @@ import {
   DEFAULT_RATE_LIMIT_POLICY,
   RATE_LIMIT_POLICIES,
   type RateLimitPolicy,
-  type RouteRateLimit,
-  UNLIMITED_ROUTE,
 } from '../rate-limit/rate-limit.policies.js';
 
 export type RouteResponses = RouteConfig['responses'];
@@ -132,11 +130,11 @@ export const idempotencyConflictReply: RouteResponses = {
 
 export function errorResponses(
   statuses: ErrorStatus[],
-  policy: RouteRateLimit = DEFAULT_RATE_LIMIT_POLICY,
+  policy: RateLimitPolicy = DEFAULT_RATE_LIMIT_POLICY,
 ): RouteResponses {
   return {
     ...Object.fromEntries(statuses.map((status) => [status, errorReply(status)])),
-    ...(policy === UNLIMITED_ROUTE ? {} : rateLimitReply(policy)),
+    ...rateLimitReply(policy),
     500: errorReply(500),
   };
 }

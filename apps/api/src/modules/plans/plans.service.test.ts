@@ -4,7 +4,13 @@ import { describe, expect, it } from 'vitest';
 import { FAKE_TRANSACTION, fakeTransactionModule } from '../../test/fake-prisma.js';
 import { BOHDAN_ID, OLENA_ID } from '../../test/service-fixtures.js';
 import { NOW } from '../../test/time.js';
-import type { CreatePlan, PlanItemChange, PlanOfSummary, PlanRow } from './plans.repository.js';
+import type {
+  CreatePlan,
+  PlanItemChange,
+  PlanItemKey,
+  PlanOfSummary,
+  PlanRow,
+} from './plans.repository.js';
 import { PlansRepository } from './plans.repository.js';
 import { PlansService } from './plans.service.js';
 
@@ -59,16 +65,25 @@ class FakePlansRepository {
     return Promise.resolve(plan?.items ?? []);
   }
 
-  updateItem(userId: string, { planId, itemId, data }: PlanItemChange) {
-    const plan = this.plans.find(
-      (candidate) => candidate.userId === userId && candidate.id === planId,
-    );
-    const item = plan?.items.find((candidate) => candidate.id === itemId);
+  findItem(userId: string, key: PlanItemKey) {
+    const item = this.ownedItem(userId, key);
+    return Promise.resolve(item === undefined ? null : { ...item });
+  }
+
+  updateItem(userId: string, change: PlanItemChange) {
+    const item = this.ownedItem(userId, change);
     if (item === undefined) {
       return Promise.resolve(null);
     }
-    Object.assign(item, data);
+    Object.assign(item, change.data);
     return Promise.resolve({ ...item });
+  }
+
+  private ownedItem(userId: string, { planId, itemId }: PlanItemKey) {
+    const plan = this.plans.find(
+      (candidate) => candidate.userId === userId && candidate.id === planId,
+    );
+    return plan?.items.find((candidate) => candidate.id === itemId);
   }
 }
 

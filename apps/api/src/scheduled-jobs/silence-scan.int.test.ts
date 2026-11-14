@@ -1,7 +1,7 @@
 import { silenceNotificationPayloadSchema, type Stage } from '@jobflow/shared';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
-import { RemindersService } from '../modules/reminders/index.js';
+import { RemindersService, SilenceRepository } from '../modules/reminders/index.js';
 import { postStageMove, signedInWithSearch, useStageMoveTestApp } from '../test/applications.js';
 import { createApplicationRows } from '../test/factories.js';
 import { outboxRows } from '../test/outbox.js';
@@ -176,5 +176,43 @@ describe('the silence scan on the database', () => {
       { type: 'followup', status: 'pending', dueAt: daysAfter(13) },
     ]);
     expect(await silenceStartsOf(owner.applicationId)).toHaveLength(2);
+  });
+
+  it("starts no follow-up for another user's application", async () => {
+    const olena = await silentApplication('applied');
+    const bohdan = await silentApplication('applied');
+    const seen = { lastEventAt: NOW, latestEventAt: null };
+    const start = { applicationId: olena.applicationId, days: 7, now: daysAfter(7), seen };
+
+    const started = testApp.app.get(RemindersService).startFollowup(bohdan.userId, start);
+
+    await expect(started).resolves.toBe(false);
+    expect(await remindersOf(testApp.prisma, olena.applicationId)).toEqual([]);
+  });
+
+  it('starts no follow-up when a move commits between the scan read and the insert, and the next silence starts', async () => {
+    const owner = await silentApplication('applied');
+    const silence = testApp.app.get(SilenceRepository);
+    const read = silence.findSilentApplications.bind(silence);
+    vi.spyOn(silence, 'findSilentApplications').mockImplementationOnce(async (...call) => {
+      const rows = await read(...call);
+      await movedToScreening(owner);
+      return rows;
+    });
+
+    await scanAt(daysAfter(7));
+    expect(await remindersOf(testApp.prisma, owner.applicationId)).toEqual([]);
+
+    await scanAt(daysAfter(13));
+
+    expect(await remindersOf(testApp.prisma, owner.applicationId)).toEqual([
+      { type: 'followup', status: 'pending', dueAt: daysAfter(13) },
+    ]);
+    expect(await notificationsOf(testApp.prisma, owner.userId)).toEqual([
+      {
+        type: 'silence',
+        payload: { items: [{ applicationId: owner.applicationId, company: 'Acme', days: 7 }] },
+      },
+    ]);
   });
 });

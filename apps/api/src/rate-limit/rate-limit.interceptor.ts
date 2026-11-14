@@ -4,18 +4,13 @@ import {
   Injectable,
   type NestInterceptor,
 } from '@nestjs/common';
+import { SSE_METADATA } from '@nestjs/common/constants.js';
 import { Reflector } from '@nestjs/core';
-import type { Request, Response } from 'express';
 import type { Observable } from 'rxjs';
 
-import { errorFor } from '../common/app-error.js';
+import { enforceRateLimit } from './enforce-rate-limit.js';
 import { RATE_LIMIT_POLICY } from './rate-limit.decorator.js';
-import {
-  DEFAULT_RATE_LIMIT_POLICY,
-  RATE_LIMIT_POLICIES,
-  type RouteRateLimit,
-  UNLIMITED_ROUTE,
-} from './rate-limit.policies.js';
+import { DEFAULT_RATE_LIMIT_POLICY, type RateLimitPolicy } from './rate-limit.policies.js';
 import { RateLimitService } from './rate-limit.service.js';
 
 @Injectable()
@@ -26,24 +21,20 @@ export class RateLimitInterceptor implements NestInterceptor {
   ) {}
 
   async intercept(context: ExecutionContext, next: CallHandler): Promise<Observable<unknown>> {
-    const policy = this.policyOf(context);
-    if (policy === UNLIMITED_ROUTE) {
-      return next.handle();
-    }
-    const http = context.switchToHttp();
-    const key = RATE_LIMIT_POLICIES[policy].keyOf(http.getRequest<Request>());
-    const outcome = await this.limits.consume(policy, key);
-    if (outcome.limited) {
-      http.getResponse<Response>().set('Retry-After', String(outcome.retryAfterSeconds));
-      throw errorFor(429);
+    if (!this.isEventStream(context)) {
+      await enforceRateLimit(this.limits, { policy: this.policyOf(context), context });
     }
     return next.handle();
   }
 
-  private policyOf(context: ExecutionContext): RouteRateLimit {
+  private isEventStream(context: ExecutionContext): boolean {
+    return this.reflector.get<boolean | undefined>(SSE_METADATA, context.getHandler()) === true;
+  }
+
+  private policyOf(context: ExecutionContext): RateLimitPolicy {
     const targets = [context.getHandler(), context.getClass()];
     return (
-      this.reflector.getAllAndOverride<RouteRateLimit | undefined>(RATE_LIMIT_POLICY, targets) ??
+      this.reflector.getAllAndOverride<RateLimitPolicy | undefined>(RATE_LIMIT_POLICY, targets) ??
       DEFAULT_RATE_LIMIT_POLICY
     );
   }

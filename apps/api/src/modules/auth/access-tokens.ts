@@ -2,6 +2,7 @@ import { randomUUID } from 'node:crypto';
 
 import { type TokenScope, USER_TOKEN_SCOPES } from '@jobflow/shared';
 import { Injectable } from '@nestjs/common';
+import { fromUnixTime } from 'date-fns';
 import { errors, type JWTPayload, type JWTVerifyOptions } from 'jose';
 import { z } from 'zod';
 
@@ -10,7 +11,14 @@ import { JwtKeys, signWithKeys, verifyWithKeys } from './jwt-keys.js';
 
 export const ACCESS_TOKEN_TTL_SECONDS = 15 * 60;
 
-export type AccessUser = { id: string; scope: string[]; captureTokenId?: string };
+export type AccessTokenLifetime = { issuedAt: Date; expiresAt: Date };
+
+export type AccessUser = {
+  id: string;
+  scope: string[];
+  captureTokenId?: string;
+  token?: AccessTokenLifetime;
+};
 
 export type SignAccessTokenInput = {
   keys: JwtKeys;
@@ -28,10 +36,15 @@ const VERIFY_OPTIONS: JWTVerifyOptions = {
   algorithms: ['RS256'],
   issuer: 'jobflow-api',
   audience: 'jobflow-api',
-  requiredClaims: ['sub', 'jti', 'scope', 'exp'],
+  requiredClaims: ['sub', 'jti', 'scope', 'iat', 'exp'],
 };
 
-const accessClaimsSchema = z.object({ sub: z.uuid(), scope: z.string() });
+const accessClaimsSchema = z.object({
+  sub: z.uuid(),
+  scope: z.string(),
+  iat: z.int(),
+  exp: z.int(),
+});
 
 function toAccessTokenError(error: unknown): AppError {
   return error instanceof errors.JWTExpired ? tokenExpired() : unauthorized('Invalid access token');
@@ -65,13 +78,14 @@ export class AccessTokens {
   }
 
   async verify(token: string): Promise<AccessUser> {
-    const { sub, scope } = await verifyWithKeys({
+    const { sub, scope, iat, exp } = await verifyWithKeys({
       keys: this.keys,
       token,
       options: VERIFY_OPTIONS,
       schema: accessClaimsSchema,
       refusal: toAccessTokenError,
     });
-    return { id: sub, scope: scope.split(' ') };
+    const lifetime = { issuedAt: fromUnixTime(iat), expiresAt: fromUnixTime(exp) };
+    return { id: sub, scope: scope.split(' '), token: lifetime };
   }
 }

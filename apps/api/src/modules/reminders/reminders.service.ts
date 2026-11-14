@@ -9,6 +9,7 @@ import { addMilliseconds, milliseconds } from 'date-fns';
 
 import { conflict, notFound } from '../../common/app-error.js';
 import { Clock } from '../../common/clock.js';
+import type { Prisma } from '../../generated/prisma/client.js';
 import { PrismaService } from '../../prisma/prisma.service.js';
 import { TimelineService } from '../events/index.js';
 import { nextInterviewReminderAt } from './interview-reminders.js';
@@ -22,6 +23,7 @@ import {
   type ReminderRow,
   RemindersRepository,
 } from './reminders.repository.js';
+import { sameSilenceMark, type SilenceMark, silenceMarkOf } from './silence-mark.js';
 
 const REMINDER_NOT_FOUND = 'Reminder not found';
 
@@ -41,7 +43,9 @@ export type SnoozeReminder = SnoozeReminderInput & { id: string };
 
 export type ResolveFollowups = Omit<CloseFollowups, 'status'>;
 
-export type StartFollowup = Omit<SilenceItem, 'company'> & { now: Date };
+type SilenceStart = Omit<SilenceItem, 'company'> & { now: Date };
+
+export type StartFollowup = SilenceStart & { seen: SilenceMark };
 
 @Injectable()
 export class RemindersService {
@@ -74,16 +78,15 @@ export class RemindersService {
     return this.repository.closeActiveFollowups(userId, { ...followups, status: 'done' });
   }
 
-  async startFollowup(userId: string, { applicationId, days, now }: StartFollowup): Promise<void> {
-    await this.prisma.$transaction(async (tx) => {
-      await this.repository.insertFollowup(userId, { applicationId, dueAt: now, tx });
-      await this.timeline.record(userId, {
-        applicationId,
-        kind: 'silence_started',
-        payload: { silenceDays: days },
-        occurredAt: now,
-        tx,
-      });
+  startFollowup(userId: string, { seen, ...silence }: StartFollowup): Promise<boolean> {
+    return this.prisma.$transaction(async (tx) => {
+      const { applicationId } = silence;
+      const current = await this.repository.findSilenceMark(userId, { applicationId, tx });
+      if (current === null || !sameSilenceMark(seen, silenceMarkOf(current))) {
+        return false;
+      }
+      await this.recordSilenceStart(userId, { ...silence, tx });
+      return true;
     });
   }
 
@@ -101,6 +104,20 @@ export class RemindersService {
 
   followupsBetween(userId: string, range: DateRange): Promise<FollowupRow[]> {
     return this.repository.findFollowups(userId, range);
+  }
+
+  private async recordSilenceStart(
+    userId: string,
+    { applicationId, days, now, tx }: SilenceStart & { tx: Prisma.TransactionClient },
+  ): Promise<void> {
+    await this.repository.insertFollowup(userId, { applicationId, dueAt: now, tx });
+    await this.timeline.record(userId, {
+      applicationId,
+      kind: 'silence_started',
+      payload: { silenceDays: days },
+      occurredAt: now,
+      tx,
+    });
   }
 
   private async close(userId: string, change: CloseReminder): Promise<Reminder> {

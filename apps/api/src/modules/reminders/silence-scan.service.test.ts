@@ -54,13 +54,13 @@ class RecordingFollowups {
 
   readonly failures = new Map<string, Error>();
 
-  startFollowup(userId: string, start: StartFollowup): Promise<void> {
+  startFollowup(userId: string, start: StartFollowup): Promise<boolean> {
     const failure = this.failures.get(start.applicationId);
     if (failure !== undefined) {
       return Promise.reject(failure);
     }
     this.started.push({ userId, ...start });
-    return Promise.resolve();
+    return Promise.resolve(true);
   }
 }
 
@@ -134,7 +134,13 @@ describe('SilenceScanService.startSilence', () => {
 
     expect(repository.readFor).toEqual([OLENA_ID]);
     expect(followups.started).toEqual([
-      { userId: OLENA_ID, applicationId: APPLICATION_ID, days: 3, now: NOW },
+      {
+        userId: OLENA_ID,
+        applicationId: APPLICATION_ID,
+        days: 3,
+        now: NOW,
+        seen: { lastEventAt: daysBefore(3), latestEventAt: null },
+      },
     ]);
   });
 
@@ -249,6 +255,17 @@ describe('SilenceScanService grouping the silence notification', () => {
     await service.startSilence(OLENA_ID, NOW);
 
     expect(notifications.notifications).toEqual([]);
+  });
+
+  it('writes the notification for the follow-ups started before another failure, then rethrows it', async () => {
+    const { followups, notifications, service } = await scanOf(THREE_SILENT);
+    followups.failures.set(MISSING_ID, new Error('connection lost'));
+
+    await expect(service.startSilence(OLENA_ID, NOW)).rejects.toThrow('connection lost');
+
+    expect(notifications.notifications.map(({ payload }) => payload)).toEqual([
+      { items: [{ applicationId: APPLICATION_ID, company: 'Ромашка', days: 7 }] },
+    ]);
   });
 
   it('leaves an application the unique index refuses out of the items', async () => {
