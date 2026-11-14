@@ -96,9 +96,9 @@ describe('notificationTargetOf', () => {
       target: '/analytics',
     },
     {
-      name: 'monthly_summary_ready opens the analytics until the summary page exists',
+      name: 'monthly_summary_ready opens the summary page of its month',
       notification: MONTHLY_SUMMARY_NOTIFICATION,
-      target: '/analytics',
+      target: '/analytics/summary/2026-10',
     },
   ])('$name', ({ notification, target }) => {
     expect(notificationTargetOf(notification)).toBe(target);

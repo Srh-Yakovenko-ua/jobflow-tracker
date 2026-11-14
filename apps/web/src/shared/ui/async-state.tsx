@@ -28,7 +28,7 @@ export type AiJobOf<Status extends AiJobStatus> = Readonly<
 export type AiJob = { [Status in AiJobStatus]: AiJobOf<Status> }[AiJobStatus];
 
 export type AsyncStateActions = {
-  onManual: () => void;
+  onManual?: (() => void) | undefined;
   onRetry?: (() => void) | undefined;
   onDelete?: (() => void) | undefined;
 };
@@ -37,6 +37,7 @@ export type AsyncStateView = {
   retrying?: boolean | undefined;
   manualFocused?: boolean | undefined;
   className?: string | undefined;
+  label?: string | undefined;
 };
 
 type FailedFooterProps = Readonly<{
@@ -89,12 +90,22 @@ const LOOKS: { [Status in AiJobStatus]: JobLook<Status> } = {
   },
 };
 
-function StatusLine<Status extends AiJobStatus>({ job }: Readonly<{ job: AiJobOf<Status> }>) {
+type StatusLineProps<Status extends AiJobStatus> = Readonly<{
+  job: AiJobOf<Status>;
+  label: string | undefined;
+}>;
+
+function isWaiting(status: AiJobStatus): boolean {
+  return status === 'queued' || status === 'processing';
+}
+
+function StatusLine<Status extends AiJobStatus>({ job, label }: StatusLineProps<Status>) {
   const look: JobLook<Status> = LOOKS[job.status];
+  const line = label !== undefined && isWaiting(job.status) ? label : look.line(job);
   return (
     <p className={cn('flex items-center gap-2.25 tabular-nums', look.tone)}>
       {look.marker}
-      <span className="min-w-0">{look.line(job)}</span>
+      <span className="min-w-0">{line}</span>
     </p>
   );
 }
@@ -121,13 +132,15 @@ function FailedFooter({ actions, view }: FailedFooterProps) {
       <p className="body text-ink-2">{COPY.safe}</p>
       {actions && (
         <div className="flex flex-wrap gap-2.5">
-          <Button
-            autoFocus={view?.manualFocused === true}
-            className={TOUCH_HEIGHT}
-            onClick={actions.onManual}
-          >
-            {COPY.manual}
-          </Button>
+          {actions.onManual && (
+            <Button
+              autoFocus={view?.manualFocused === true}
+              className={TOUCH_HEIGHT}
+              onClick={actions.onManual}
+            >
+              {COPY.manual}
+            </Button>
+          )}
           {actions.onRetry && (
             <Button
               variant="secondary"
@@ -166,7 +179,7 @@ export function AsyncState({ job, actions, view, children }: AsyncStateProps) {
       role="status"
       className={cn('flex min-w-0 flex-col gap-3.5 bg-surface p-5 shadow-e1', view?.className)}
     >
-      <StatusLine job={job} />
+      <StatusLine job={job} label={view?.label} />
       {children}
       {job.status === 'processing' && <ProcessingTrack job={job} />}
       {job.status === 'failed' && <FailedFooter actions={actions} view={view} />}

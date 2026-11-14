@@ -30,7 +30,7 @@ const summaryJobSelect = (userId: string) =>
           where: { userId },
           orderBy: [{ createdAt: 'asc' }, { id: 'asc' }],
           take: 1,
-          select: { id: true },
+          select: { id: true, items: { select: { doneAt: true } } },
         },
       },
     },
@@ -101,6 +101,14 @@ export class SummariesRepository {
   findLatestSummary(userId: string): Promise<SummaryJobRow | null> {
     return this.prisma.aiJob.findFirst({
       where: { userId, ...DONE_SUMMARY_WHERE },
+      orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
+      select: summaryJobSelect(userId),
+    });
+  }
+
+  findDoneSummariesSince(userId: string, since: Date): Promise<SummaryJobRow[]> {
+    return this.prisma.aiJob.findMany({
+      where: { userId, ...DONE_SUMMARY_WHERE, createdAt: { gte: since } },
       orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
       select: summaryJobSelect(userId),
     });

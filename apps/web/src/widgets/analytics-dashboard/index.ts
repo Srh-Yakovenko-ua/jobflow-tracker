@@ -1,1 +1,1 @@
-export { AnalyticsDashboard } from './ui/analytics-dashboard';
+export { AnalyticsDashboard, type AnalyticsDashboardProps } from './ui/analytics-dashboard';

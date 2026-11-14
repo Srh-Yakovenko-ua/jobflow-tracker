@@ -4,6 +4,7 @@ import {
   type MonthlySummaryOutput,
   monthlySummaryOutputSchema,
 } from '../src/ai/monthly-summary.js';
+import type { Summary } from '../src/schemas/summary.js';
 
 const DESIGN_INPUT: MonthlySummaryInput = {
   period: { month: '2026-08', name: 'серпень', previousName: 'липень' },
@@ -139,4 +140,17 @@ export function buildMonthlySummaryInput(): MonthlySummaryInput {
 
 export function buildMonthlySummaryOutput(): MonthlySummaryOutput {
   return monthlySummaryOutputSchema.parse(DESIGN_OUTPUT);
+}
+
+export function buildSummary(overrides: Partial<Summary> = {}): Summary {
+  const { summary: text, actions } = buildMonthlySummaryOutput();
+  return {
+    aiJobId: '0199f1a2-7c3b-7d4e-8f50-6a7b8c9d0e40',
+    month: '2026-08',
+    text,
+    actions,
+    generatedAt: '2026-09-01T04:00:12.000Z',
+    planId: null,
+    ...overrides,
+  };
 }

@@ -1,21 +1,17 @@
 import { describe, expect, it } from 'vitest';
 
-import { buildMonthlySummaryOutput } from '../../testing/index.js';
+import { buildSummary } from '../../testing/index.js';
 import { issuePathsOf } from '../test/zod-issues.js';
-import { type SummaryResponse, summaryResponseSchema } from './summary.js';
+import {
+  SUMMARY_LIMITS,
+  type SummaryArchive,
+  summaryArchiveSchema,
+  type SummaryResponse,
+  summaryResponseSchema,
+} from './summary.js';
 
-const AI_JOB_ID = '0199f1a2-7c3b-7d4e-8f50-6a7b8c9d0e40';
-
-const { summary: text, actions } = buildMonthlySummaryOutput();
-
-const SUMMARY = {
-  aiJobId: AI_JOB_ID,
-  month: '2026-08',
-  text,
-  actions,
-  generatedAt: '2026-09-01T04:00:12.000Z',
-  planId: null,
-};
+const SUMMARY = buildSummary();
+const AI_JOB_ID = SUMMARY.aiJobId;
 
 describe('summaryResponseSchema', () => {
   it.each<[string, SummaryResponse]>([
@@ -36,5 +32,30 @@ describe('summaryResponseSchema', () => {
   ])('refuses $label at $path', ({ patch, path }) => {
     const body = { summary: { ...SUMMARY, ...patch }, job: null };
     expect(issuePathsOf(summaryResponseSchema.safeParse(body))).toEqual([path]);
+  });
+});
+
+describe('summaryArchiveSchema', () => {
+  it.each<[string, SummaryArchive]>([
+    ['a month whose plan is 3 of 4 done', { items: [{ ...SUMMARY, plan: { items: 4, done: 3 } }] }],
+    ['a month with no plan saved', { items: [{ ...SUMMARY, plan: null }] }],
+    ['no summarized month yet', { items: [] }],
+  ])('accepts %s', (_label, body) => {
+    expect(summaryArchiveSchema.parse(body)).toStrictEqual(body);
+  });
+
+  it('refuses a list longer than 12 months', () => {
+    const items = Array.from({ length: SUMMARY_LIMITS.archiveMonths + 1 }, () => ({
+      ...SUMMARY,
+      plan: null,
+    }));
+    expect(SUMMARY_LIMITS.archiveMonths).toBe(12);
+    expect(issuePathsOf(summaryArchiveSchema.safeParse({ items }))).toEqual(['items']);
+  });
+
+  it('refuses an archive month without its plan field', () => {
+    expect(issuePathsOf(summaryArchiveSchema.safeParse({ items: [SUMMARY] }))).toEqual([
+      'items.0.plan',
+    ]);
   });
 });

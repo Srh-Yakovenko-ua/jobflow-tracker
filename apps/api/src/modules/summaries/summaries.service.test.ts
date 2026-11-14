@@ -33,7 +33,26 @@ const SUMMARY_ROW: SummaryJobRow = {
   createdAt: new Date('2026-09-30T21:30:00.000Z'),
   finishedAt: new Date('2026-09-30T21:31:00.000Z'),
   user: KYIV,
-  aiResult: { id: AI_RESULT_ID, output: OUTPUT, plans: [{ id: PLAN_ID }] },
+  aiResult: {
+    id: AI_RESULT_ID,
+    output: OUTPUT,
+    plans: [{ id: PLAN_ID, items: [NOW, NOW, null, NOW].map((doneAt) => ({ doneAt })) }],
+  },
+};
+
+const NEWER_SEPTEMBER_ROW: SummaryJobRow = {
+  ...SUMMARY_ROW,
+  id: RUNNING_JOB_ID,
+  createdAt: new Date('2026-10-05T08:00:00.000Z'),
+  finishedAt: new Date('2026-10-05T08:00:20.000Z'),
+  aiResult: { id: AI_RESULT_ID, output: OUTPUT, plans: [] },
+};
+
+const AUGUST_ROW: SummaryJobRow = {
+  ...SUMMARY_ROW,
+  id: '0199f0a0-0000-7000-8000-0000000000f8',
+  createdAt: new Date('2026-09-01T04:00:00.000Z'),
+  finishedAt: new Date('2026-09-01T04:00:12.000Z'),
 };
 
 type StoredSummary = SummaryJobRow & { userId: string };
@@ -70,7 +89,14 @@ class FakeSummariesRepository {
   }
 
   findLatestSummary(userId: string): Promise<SummaryJobRow | null> {
-    return Promise.resolve(this.summaries.filter((row) => row.userId === userId).at(-1) ?? null);
+    return Promise.resolve(this.summaries.find((row) => row.userId === userId) ?? null);
+  }
+
+  findDoneSummariesSince(userId: string, since: Date): Promise<SummaryJobRow[]> {
+    this.steps.push(['findDoneSummariesSince', userId, since]);
+    return Promise.resolve(
+      this.summaries.filter((row) => row.userId === userId && row.createdAt >= since),
+    );
   }
 
   findSummary(userId: string, aiJobId: string): Promise<SummaryJobRow | null> {
@@ -246,6 +272,79 @@ describe('SummariesService.latest', () => {
       },
       job: { id: RUNNING_JOB_ID, status: 'processing' },
     });
+  });
+});
+
+describe('SummariesService.archive', () => {
+  const ofOlena = (rows: SummaryJobRow[]) => rows.map((row) => ({ ...row, userId: OLENA_ID }));
+
+  it('keeps only the newest summary of each local month and lists the months newest first', async () => {
+    const { repository, service } = await summariesWithFakes();
+    repository.summaries = ofOlena([NEWER_SEPTEMBER_ROW, SUMMARY_ROW, AUGUST_ROW]);
+
+    const { items } = await service.archive(OLENA_ID);
+
+    expect(items.map(({ aiJobId, month }) => [aiJobId, month])).toEqual([
+      [RUNNING_JOB_ID, '2026-09'],
+      [AUGUST_ROW.id, '2026-08'],
+    ]);
+  });
+
+  it('counts the done items of the plan saved from each summary, and answers no plan without one', async () => {
+    const { repository, service } = await summariesWithFakes();
+    repository.summaries = ofOlena([NEWER_SEPTEMBER_ROW, AUGUST_ROW]);
+
+    await expect(service.archive(OLENA_ID)).resolves.toEqual({
+      items: [
+        {
+          aiJobId: RUNNING_JOB_ID,
+          month: '2026-09',
+          text: OUTPUT.summary,
+          actions: OUTPUT.actions,
+          generatedAt: '2026-10-05T08:00:20.000Z',
+          planId: null,
+          plan: null,
+        },
+        {
+          aiJobId: AUGUST_ROW.id,
+          month: '2026-08',
+          text: OUTPUT.summary,
+          actions: OUTPUT.actions,
+          generatedAt: '2026-09-01T04:00:12.000Z',
+          planId: PLAN_ID,
+          plan: { items: 4, done: 3 },
+        },
+      ],
+    });
+  });
+
+  it('reads the summaries made since 13 months before now and answers at most 12 months', async () => {
+    const { repository, service } = await summariesWithFakes();
+    const monthly = Array.from({ length: 14 }, (_, monthsBack) => ({
+      ...SUMMARY_ROW,
+      createdAt: new Date(Date.UTC(2026, 9 - monthsBack, 15)),
+    }));
+    repository.summaries = ofOlena(monthly);
+
+    const { items } = await service.archive(OLENA_ID);
+
+    expect(repository.steps).toEqual([
+      ['findDoneSummariesSince', OLENA_ID, new Date('2025-09-22T09:00:00.000Z')],
+    ]);
+    expect(items.map(({ month }) => month)).toEqual([
+      '2026-09',
+      '2026-08',
+      '2026-07',
+      '2026-06',
+      '2026-05',
+      '2026-04',
+      '2026-03',
+      '2026-02',
+      '2026-01',
+      '2025-12',
+      '2025-11',
+      '2025-10',
+    ]);
   });
 });
 

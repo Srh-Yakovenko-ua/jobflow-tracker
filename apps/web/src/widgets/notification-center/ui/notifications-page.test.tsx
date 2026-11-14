@@ -92,7 +92,7 @@ describe('NotificationsPage', () => {
     expect(await screen.findByText('Саммарі за жовтень готове')).toBeDefined();
     expect(screen.getByText(COPY.monthlySummaryReady.text)).toBeDefined();
     const open = screen.getByRole('link', { name: COPY.monthlySummaryReady.action });
-    expect(open.getAttribute('href')).toBe('/analytics');
+    expect(open.getAttribute('href')).toBe('/analytics/summary/2026-10');
   });
 
   it('shows the loading state while the first page is on its way', async () => {
