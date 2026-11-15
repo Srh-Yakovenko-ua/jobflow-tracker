@@ -32,6 +32,8 @@ PROBLEMS: dict[ErrorType, tuple[int, str]] = {
     "internal_error": (500, "Internal error"),
 }
 
+INTERNAL_STATUS = PROBLEMS["internal_error"][0]
+
 HTTP_STATUS_TYPES: dict[int, ErrorType] = {
     400: "bad_request",
     404: "not_found",
@@ -66,14 +68,14 @@ def from_validation(error: RequestValidationError) -> DocumentError:
     return DocumentError("validation_error", errors=errors)
 
 
-def as_document_error(error: Exception) -> DocumentError:
+def as_document_error(error: Exception, *, request_id: str) -> DocumentError:
     if isinstance(error, DocumentError):
         return error
     if isinstance(error, RequestValidationError):
         return from_validation(error)
     if isinstance(error, HTTPException):
         return DocumentError(HTTP_STATUS_TYPES.get(error.status_code, "internal_error"))
-    logger.error("unhandled error", error=type(error).__name__)
+    logger.error("unhandled error", error=type(error).__name__, requestId=request_id)
     return DocumentError("internal_error")
 
 
@@ -89,10 +91,15 @@ def problem_body(error: DocumentError, request_id: str) -> dict[str, object]:
 
 
 async def document_error_handler(request: Request, error: Exception) -> JSONResponse:
-    problem = as_document_error(error)
     request_id = request_id_of(request)
-    logger.info(
-        "request failed", status=problem.status, type=problem.type, requestId=request_id
+    problem = as_document_error(error, request_id=request_id)
+    level = "ERROR" if problem.status >= INTERNAL_STATUS else "INFO"
+    logger.log(
+        level,
+        "request failed",
+        status=problem.status,
+        type=problem.type,
+        requestId=request_id,
     )
     return JSONResponse(problem_body(problem, request_id), status_code=problem.status)
 

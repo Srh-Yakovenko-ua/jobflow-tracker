@@ -1,13 +1,13 @@
 import {
   AI_PROMPT_VERSIONS,
   type AiKind,
+  APPLICATION_FORMS_UK,
   countedUk,
   type MatchCoverage,
   type MatchOutput,
   type MonthlySummaryInput,
   type MonthlySummaryOutput,
   monthlySummaryOutputSchema,
-  type PluralForms,
   type ResumeParseOutput,
   type YearMonth,
 } from '@jobflow/shared';
@@ -55,8 +55,6 @@ const RESUME_AB = {
     metric: 'Конверсія у скринінг за версією CV',
   },
 } as const;
-
-const SENT_FORMS: PluralForms = { one: 'відгук', few: 'відгуки', other: 'відгуків' };
 
 const DEMO_SUMMARY_SENTENCES = [
   'До скринінгу дійшло 17 з 40 відгуків, це 43%.',
@@ -128,7 +126,7 @@ function changeOf(difference: number): string {
 }
 
 function sentSentenceOf({ month, sent }: DemoSummaryInput): string {
-  const count = countedUk(sent.month, SENT_FORMS);
+  const count = countedUk(sent.month, APPLICATION_FORMS_UK);
   const change = changeOf(sent.month - sent.previousMonth);
   const previousName = monthNameOf(shiftMonth(month, -1));
   return `За ${monthNameOf(month)} ти надіслав ${count}, ${change} за ${previousName}.`;

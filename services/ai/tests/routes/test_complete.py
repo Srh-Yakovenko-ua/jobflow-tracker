@@ -304,7 +304,7 @@ async def test_tags_the_vendor_error_line_with_the_request_id() -> None:
     assert [
         (line.record["message"], line.record["extra"].get("requestId"))
         for line in lines
-    ] == [("vendor error", "req-test")]
+    ] == [("vendor error", "req-test"), ("request failed", "req-test")]
 
 
 @pytest.mark.parametrize(

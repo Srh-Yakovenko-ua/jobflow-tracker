@@ -25,6 +25,10 @@ class FakePushRepository {
     return Promise.resolve(SUBSCRIPTION_ID);
   }
 
+  keepLatest(): Promise<void> {
+    return Promise.resolve();
+  }
+
   remove(userId: string, id: string): Promise<number> {
     if (this.owners.get(id) !== userId) return Promise.resolve(0);
     this.owners.delete(id);

@@ -1,6 +1,7 @@
 import { sessionTokensSchema } from '@jobflow/shared';
 
 import { config } from '@/shared/config';
+import { dropPushSubscription } from '@/shared/lib/push-subscription';
 import { clearSessionCookie, writeSessionCookie } from '@/shared/lib/session-cookie';
 
 import { ApiError } from './api-error';
@@ -25,6 +26,7 @@ export function setAccessToken(token: string): void {
 export function clearAccessToken(): void {
   accessToken = undefined;
   clearSessionCookie();
+  void dropPushSubscription();
 }
 
 export function getAccessToken(): string | undefined {

@@ -53,7 +53,7 @@ def field_errors(error: RequestValidationError) -> FieldErrors:
     ]
 
 
-def to_service_error(error: Exception) -> ServiceError:
+def to_service_error(error: Exception, *, request_id: str) -> ServiceError:
     match error:
         case ServiceError():
             return error
@@ -61,7 +61,7 @@ def to_service_error(error: Exception) -> ServiceError:
             return ServiceError(422, errors=field_errors(error))
         case HTTPException():
             return ServiceError(error.status_code)
-    logger.error("unhandled error", error=type(error).__name__)
+    logger.error("unhandled error", error=type(error).__name__, requestId=request_id)
     return ServiceError(INTERNAL_STATUS)
 
 
@@ -78,9 +78,12 @@ def problem(error: ServiceError, request_id: str) -> dict[str, object]:
 
 
 async def respond_with_problem(request: Request, error: Exception) -> JSONResponse:
-    service_error = to_service_error(error)
     request_id = request_id_from(request)
-    logger.info("request failed", status=service_error.status, requestId=request_id)
+    service_error = to_service_error(error, request_id=request_id)
+    level = "ERROR" if service_error.status >= INTERNAL_STATUS else "INFO"
+    logger.log(
+        level, "request failed", status=service_error.status, requestId=request_id
+    )
     challenged = service_error.status == UNAUTHORIZED_STATUS
     return JSONResponse(
         problem(service_error, request_id),

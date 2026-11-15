@@ -1,8 +1,12 @@
 import { describe, expect, it } from 'vitest';
 
-import { countedUk, DAY_FORMS_UK, pluralUk } from './plurals.js';
+import { APPLICATION_FORMS_UK, countedUk, DAY_FORMS_UK, pluralUk } from './plurals.js';
 
 describe('countedUk', () => {
+  it('writes 5 applications as 5 відгуків', () => {
+    expect(countedUk(5, APPLICATION_FORMS_UK)).toBe('5 відгуків');
+  });
+
   it.for([
     [0, '0 днів'],
     [1, '1 день'],
@@ -27,5 +31,9 @@ describe('pluralUk', () => {
     [14, 'днів'],
   ] as const)('gives %i days the word "%s" alone', ([count, expected]) => {
     expect(pluralUk(count, DAY_FORMS_UK)).toBe(expected);
+  });
+
+  it('a fractional 5.5 days reads дня', () => {
+    expect(pluralUk(5.5, DAY_FORMS_UK)).toBe('дня');
   });
 });

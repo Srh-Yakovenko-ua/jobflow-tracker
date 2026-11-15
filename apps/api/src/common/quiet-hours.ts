@@ -21,7 +21,7 @@ const minuteOfDay = (clock: string) => Number(clock.slice(0, 2)) * 60 + Number(c
 function isUrgent(notification: Notification, now: Date): boolean {
   if (notification.type !== 'interview_soon') return false;
   const startsIn = Date.parse(notification.payload.startsAt) - now.getTime();
-  return startsIn < QUIET_HOURS_LIMITS.urgentInterviewMinutes * MINUTE_MS;
+  return startsIn <= QUIET_HOURS_LIMITS.urgentInterviewMinutes * MINUTE_MS;
 }
 
 function isQuiet(settings: QuietHoursSettings, minute: number): boolean {

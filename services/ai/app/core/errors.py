@@ -24,6 +24,7 @@ ERRORS: dict[int, tuple[str, str]] = {
     504: ("ai_timeout", "AI timeout"),
 }
 
+INTERNAL_STATUS = 500
 INVALID_OUTPUT = ("ai_invalid_output", "Invalid AI output")
 NEEDS_TEXT = ("needs_text", "Text needed")
 
@@ -82,7 +83,8 @@ def problem(request: Request, error: AppError) -> JSONResponse:
     if error.errors is not None:
         body["errors"] = [asdict(field) for field in error.errors]
     body["requestId"] = request_id_of(request)
-    logger.info(
+    log = logger.error if error.status >= INTERNAL_STATUS else logger.info
+    log(
         "request failed",
         status=error.status,
         type=error_type,
@@ -92,19 +94,19 @@ def problem(request: Request, error: AppError) -> JSONResponse:
     return JSONResponse(body, status_code=error.status, headers=headers)
 
 
-def as_app_error(error: Exception) -> AppError:
+def as_app_error(error: Exception, *, request_id: str) -> AppError:
     if isinstance(error, AppError):
         return error
     if isinstance(error, RequestValidationError):
         return AppError(422, errors=field_errors(error.errors()))
     if isinstance(error, HTTPException):
         return AppError(error.status_code)
-    logger.error("unhandled error", error=type(error).__name__)
-    return AppError(500)
+    logger.error("unhandled error", error=type(error).__name__, requestId=request_id)
+    return AppError(INTERNAL_STATUS)
 
 
 async def app_error_handler(request: Request, error: Exception) -> JSONResponse:
-    return problem(request, as_app_error(error))
+    return problem(request, as_app_error(error, request_id=request_id_of(request)))
 
 
 def install_error_handlers(app: FastAPI) -> None:

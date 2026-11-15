@@ -1,3 +1,4 @@
+import { context, trace, TraceFlags } from '@opentelemetry/api';
 import { describe, expect, it } from 'vitest';
 
 import { insideSpan, recordSpans, REMOTE_PARENT, traceparentOf } from '../test/tracing.js';
@@ -32,6 +33,18 @@ describe('traceFields', () => {
 
   it('adds no field without an active span', () => {
     expect(traceFields()).toEqual({});
+  });
+
+  it('a line under an unsampled span carries no trace_id', () => {
+    const unsampled = trace.wrapSpanContext({
+      traceId: REMOTE_PARENT.traceId,
+      spanId: REMOTE_PARENT.spanId,
+      traceFlags: TraceFlags.NONE,
+    });
+
+    const fields = context.with(trace.setSpan(context.active(), unsampled), traceFields);
+
+    expect(fields).toEqual({});
   });
 });
 

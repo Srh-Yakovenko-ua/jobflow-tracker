@@ -37,7 +37,7 @@ describe('resumeAbViewOf', () => {
 
   it('under the bars reads the probability that the challenger is better and the conversion around the switch date', () => {
     expect(textsOf(plottedOf(viewOf(buildDesignResumeAb())).notes)).toEqual([
-      'Імовірність, що CV v2 краща за v1: 88%',
+      'Імовірність, що CV v2 краще за v1: 88%',
       'Після переходу на CV v2 02.12: конверсія 24% → 41%',
     ]);
   });

@@ -6,6 +6,7 @@ import {
   ROOT_CONTEXT,
   type Span,
   trace,
+  TraceFlags,
 } from '@opentelemetry/api';
 import { z } from 'zod';
 
@@ -29,6 +30,9 @@ export function traceCarrier(): TraceCarrier {
 export function traceFields(): TraceFields {
   const spanContext = trace.getActiveSpan()?.spanContext();
   if (spanContext === undefined || !isSpanContextValid(spanContext)) {
+    return {};
+  }
+  if ((spanContext.traceFlags & TraceFlags.SAMPLED) === 0) {
     return {};
   }
   return { trace_id: spanContext.traceId, span_id: spanContext.spanId };

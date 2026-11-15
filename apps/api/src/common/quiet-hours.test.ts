@@ -55,7 +55,7 @@ describe('quietHoursDeliveryAt', () => {
   it.each([
     { startsIn: 60, at: '2026-11-14T21:00:00.000Z' },
     { startsIn: 119, at: '2026-11-14T21:00:00.000Z' },
-    { startsIn: 120, at: '2026-11-15T06:00:00.000Z' },
+    { startsIn: 121, at: '2026-11-15T06:00:00.000Z' },
   ])(
     'delivers an interview reminder of 23:00 Kyiv starting in $startsIn min at $at',
     ({ startsIn, at }) => {
@@ -67,4 +67,13 @@ describe('quietHoursDeliveryAt', () => {
       expect(deliverAt.toISOString()).toBe(at);
     },
   );
+
+  it('a 2 h reminder for an interview at 01:00 goes out at once during quiet hours', () => {
+    const now = new Date('2026-11-14T21:00:00.000Z');
+    const notification = interviewSoonAt(new Date('2026-11-14T23:00:00.000Z'));
+
+    const deliverAt = quietHoursDeliveryAt({ settings: NIGHT, notification, now });
+
+    expect(deliverAt.toISOString()).toBe('2026-11-14T21:00:00.000Z');
+  });
 });

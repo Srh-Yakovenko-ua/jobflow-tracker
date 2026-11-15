@@ -6,7 +6,9 @@ import type { NestExpressApplication } from '@nestjs/platform-express';
 import { EMPTY } from 'rxjs';
 import request from 'supertest';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
+import { z } from 'zod';
 
+import { Prisma } from './generated/prisma/client.js';
 import { Public } from './modules/auth/index.js';
 import { LiveHub } from './modules/live/index.js';
 import { buildOpenApiDocument } from './openapi/document.js';
@@ -25,6 +27,10 @@ const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
 
 const BEARER_CALLS = bearerCalls(buildOpenApiDocument());
 
+const NOTE_TEXT = 'Recruiter Iryna said the salary cap is 4000';
+
+const loggedErrorSchema = z.strictObject({ type: z.string(), stack: z.string().regex(/^at /) });
+
 @Controller('probe')
 @Public()
 class ProbeController {
@@ -36,6 +42,14 @@ class ProbeController {
   @Get('crash')
   crash(): never {
     throw new Error('password authentication failed for user jobflow_app');
+  }
+
+  @Get('prisma-crash')
+  prismaCrash(): never {
+    throw new Prisma.PrismaClientValidationError(
+      `Invalid \`prisma.note.create()\` invocation:\n{\n  data: {\n    bdy: "${NOTE_TEXT}"\n  }\n}\nUnknown argument \`bdy\`.`,
+      { clientVersion: Prisma.prismaVersion.client },
+    );
   }
 
   @Post('echo')
@@ -258,6 +272,19 @@ describe('the API over HTTP', () => {
       requestId: response.headers['x-request-id'],
     });
     expect(response.text).not.toContain('password');
+  });
+
+  it('a 500 from a Prisma validation error logs no note text', async () => {
+    const response = await request(app.getHttpServer())
+      .get('/api/v1/probe/prisma-crash')
+      .set('x-request-id', 'prisma-crash');
+
+    const lines = linesFor('prisma-crash');
+    expect(response.status).toBe(500);
+    expect(lines.map((line) => line.msg)).toEqual(['request failed', 'request errored']);
+    expect(lines.filter((line) => JSON.stringify(line).includes('salary cap'))).toEqual([]);
+    const errors = lines.map((line) => loggedErrorSchema.parse(line.err));
+    expect(errors.map(({ type }) => type)).toEqual(['PrismaClientValidationError', 'Error']);
   });
 
   it.each(['/api/v1/health', '/health'])(

@@ -1,6 +1,12 @@
 export type PluralForms = Partial<Record<Intl.LDMLPluralRule, string>> & { other: string };
 
-export const DAY_FORMS_UK: PluralForms = { one: 'день', few: 'дні', other: 'днів' };
+export const DAY_FORMS_UK: PluralForms = { one: 'день', few: 'дні', many: 'днів', other: 'дня' };
+
+export const APPLICATION_FORMS_UK = {
+  one: 'відгук',
+  few: 'відгуки',
+  other: 'відгуків',
+} as const satisfies PluralForms;
 
 const UKRAINIAN_PLURALS = new Intl.PluralRules('uk');
 

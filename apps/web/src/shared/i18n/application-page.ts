@@ -1,10 +1,4 @@
-import { countedUk, type PluralForms } from '@jobflow/shared';
-
-const APPLICATION_FORMS = {
-  one: 'відгук',
-  few: 'відгуки',
-  other: 'відгуків',
-} as const satisfies PluralForms;
+import { APPLICATION_FORMS_UK, countedUk } from '@jobflow/shared';
 
 export const applicationPage = {
   title: 'Картка вакансії',
@@ -71,7 +65,7 @@ export const applicationPage = {
   resume: {
     kicker: "Прив'язане резюме",
     uploaded: (date: string, count: number) =>
-      `завантажено ${date} · ${countedUk(count, APPLICATION_FORMS)}`,
+      `завантажено ${date} · ${countedUk(count, APPLICATION_FORMS_UK)}`,
     preview: (format: string) => `Переглянути ${format}`,
     change: 'Змінити версію',
     versions: 'Версії резюме',

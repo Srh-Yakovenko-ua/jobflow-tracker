@@ -42,6 +42,15 @@ export class PushRepository {
     return count;
   }
 
+  async keepLatest(userId: string, { keep }: { keep: number }): Promise<void> {
+    await this.prisma.$executeRaw`
+      DELETE FROM push_subscriptions
+      WHERE user_id = ${userId}::uuid AND id NOT IN (
+        SELECT id FROM push_subscriptions WHERE user_id = ${userId}::uuid
+        ORDER BY created_at DESC, id DESC LIMIT ${keep}
+      )`;
+  }
+
   listForUser(userId: string): Promise<PushTargetRow[]> {
     return this.prisma.pushSubscription.findMany({
       where: { userId },
