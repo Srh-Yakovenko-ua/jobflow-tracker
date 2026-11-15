@@ -1,12 +1,8 @@
 import type { RouteConfig } from '@asteasolutions/zod-to-openapi';
-import {
-  captureRetryResponseSchema,
-  CV_HINTS_LIMITS,
-  type CvHintsResponse,
-  cvHintsResponseSchema,
-} from '@jobflow/shared';
+import { CV_HINTS_LIMITS, type CvHintsResponse, cvHintsResponseSchema } from '@jobflow/shared';
 
 import {
+  aiJobAcceptedResponses,
   applicationIdParams,
   errorResponses,
   idempotencyHeaders,
@@ -56,12 +52,6 @@ export const CV_HINTS_OPENAPI_PATHS: RouteConfig[] = [
     summary: 'Generate CV tailoring hints',
     description: `Builds the input from the position, the Match Score with every weighed requirement, its coverage and lost points, and the skills profile of the linked CV version (skills with evidence, position titles and dates without employers, domains, leadership), then in one transaction stores a queued cv_hints AI job and the application.cv_hints_requested event; the worker calls the model later. The model may suggest at most ${String(CV_HINTS_LIMITS.hintsMax)} hints; a hint whose evidence is not a line of the CV profile is dropped. While a cv_hints job of the Application is queued or processing it answers that job and stores nothing. The same input again is served from the AI result cache. Answers 409 when the Application has no Match Score or its CV version has no skills profile. Counts against the hourly AI limit.`,
     request: { params: applicationIdParams, headers: idempotencyHeaders },
-    responses: {
-      202: {
-        description: 'The AI job to follow: the new one, or the one that is still running',
-        content: jsonContent(captureRetryResponseSchema, { jobId: JOB_ID }),
-      },
-      ...errorResponses([401, 403, 404, 409, 422], 'ai'),
-    },
+    responses: aiJobAcceptedResponses(JOB_ID),
   },
 ];

@@ -15,5 +15,11 @@ export const jobStatusSchema = z.object({
 
 export const jobUpdatedSchema = jobStatusSchema.omit({ queue: true, totalSteps: true });
 
+export const generatedAtShape = { generatedAt: z.iso.datetime() };
+
+export const aiResultJobSchema = jobStatusSchema
+  .pick({ id: true, status: true, errorType: true })
+  .nullable();
+
 export type JobStatus = z.infer<typeof jobStatusSchema>;
 export type JobUpdated = z.infer<typeof jobUpdatedSchema>;

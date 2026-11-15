@@ -28,6 +28,8 @@ const UNREAD = {
 
 const AI_RETRY = 'Дані на місці, можна спробувати ще раз.';
 
+const OPEN_CARD = 'Відкрити картку';
+
 type AiCopy = { title: string; text: string; action: string };
 
 export const notifications = {
@@ -66,8 +68,9 @@ export const notifications = {
   },
   interviewSoon: {
     title: (clock: string) => `Співбесіда о ${clock}`,
-    action: 'Відкрити картку',
+    action: OPEN_CARD,
   },
+  interviewPrepReady: { text: 'Підготовка готова', action: OPEN_CARD },
   aiDone: {
     vacancy_parse: {
       title: 'Вакансію розібрано',

@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { aiCallMetaSchema } from './call-meta.js';
 import { cvHintsInputSchema, cvHintsOutputSchema } from './cv-hints.js';
 import { followupInputSchema, followupOutputSchema } from './followup.js';
+import { interviewPrepInputSchema, interviewPrepOutputSchema } from './interview-prep.js';
 import type { AiKind } from './kinds.js';
 import { matchInputSchema, matchOutputSchema } from './match.js';
 import { monthlySummaryInputSchema, monthlySummaryOutputSchema } from './monthly-summary.js';
@@ -21,6 +22,7 @@ export const AI_KIND_SCHEMAS = {
   followup: { input: followupInputSchema, output: followupOutputSchema },
   monthly_summary: { input: monthlySummaryInputSchema, output: monthlySummaryOutputSchema },
   cv_hints: { input: cvHintsInputSchema, output: cvHintsOutputSchema },
+  interview_prep: { input: interviewPrepInputSchema, output: interviewPrepOutputSchema },
 } satisfies Record<AiKind, { input: z.ZodType; output: z.ZodType }>;
 
 const completionMetaSchema = aiCallMetaSchema.extend({
@@ -35,6 +37,7 @@ export const aiCompleteRequestSchemas = {
   followup: aiCompleteOptionsSchema.extend({ input: AI_KIND_SCHEMAS.followup.input }),
   monthly_summary: aiCompleteOptionsSchema.extend({ input: AI_KIND_SCHEMAS.monthly_summary.input }),
   cv_hints: aiCompleteOptionsSchema.extend({ input: AI_KIND_SCHEMAS.cv_hints.input }),
+  interview_prep: aiCompleteOptionsSchema.extend({ input: AI_KIND_SCHEMAS.interview_prep.input }),
 } satisfies Record<AiKind, z.ZodType>;
 
 export const aiCompletionSchemas = {
@@ -44,6 +47,7 @@ export const aiCompletionSchemas = {
   followup: completionMetaSchema.extend({ output: AI_KIND_SCHEMAS.followup.output }),
   monthly_summary: completionMetaSchema.extend({ output: AI_KIND_SCHEMAS.monthly_summary.output }),
   cv_hints: completionMetaSchema.extend({ output: AI_KIND_SCHEMAS.cv_hints.output }),
+  interview_prep: completionMetaSchema.extend({ output: AI_KIND_SCHEMAS.interview_prep.output }),
 } satisfies Record<AiKind, z.ZodType>;
 
 type KindSchemas = typeof AI_KIND_SCHEMAS;

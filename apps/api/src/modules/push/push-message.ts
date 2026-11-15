@@ -1,6 +1,7 @@
 import {
   countedUk,
   DAY_FORMS_UK,
+  interviewPrepTitleOf,
   longestSilentItemOf,
   type Notification,
   notificationTargetOf,
@@ -20,6 +21,7 @@ export const PUSHED_TYPES = [
   'interview_soon',
   'auto_ghosted',
   'monthly_summary_ready',
+  'interview_prep_ready',
 ] as const satisfies readonly NotificationType[];
 
 export type PushedType = (typeof PUSHED_TYPES)[number];
@@ -47,19 +49,22 @@ function longestOf(payload: SilenceNotificationPayload): SilenceItem {
   return longest;
 }
 
+function silenceText(payload: SilenceNotificationPayload): PushText {
+  const { company, days, applicationId } = longestOf(payload);
+  return {
+    title: `${company}: ${silentDays(days)}`,
+    body: 'Час нагадати про себе: відкрий картку і напиши фоллоу-ап.',
+    tag: applicationTag(applicationId),
+  };
+}
+
 function textOf(
   notification: PushedNotification,
   settings: Pick<UserSettings, 'timezone'>,
 ): PushText {
   switch (notification.type) {
-    case 'silence': {
-      const { company, days, applicationId } = longestOf(notification.payload);
-      return {
-        title: `${company}: ${silentDays(days)}`,
-        body: 'Час нагадати про себе: відкрий картку і напиши фоллоу-ап.',
-        tag: applicationTag(applicationId),
-      };
-    }
+    case 'silence':
+      return silenceText(notification.payload);
     case 'interview_soon': {
       const { startsAt, company, applicationId } = notification.payload;
       const clock = format(userNow(settings, new Date(startsAt)), 'HH:mm');
@@ -78,6 +83,11 @@ function textOf(
         body: 'Що вийшло за місяць і які кроки зробити далі.',
         tag: `summary:${month}`,
       };
+    }
+    case 'interview_prep_ready': {
+      const title = interviewPrepTitleOf(notification, settings);
+      const tag = `interview-prep:${notification.payload.applicationId}`;
+      return { title, body: 'Підготовка готова', tag };
     }
     default: {
       const unhandled: never = notification;

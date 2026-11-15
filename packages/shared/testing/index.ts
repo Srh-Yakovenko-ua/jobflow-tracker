@@ -3,6 +3,7 @@ export * from './cv-hints.js';
 export * from './forecast.js';
 export * from './funnel.js';
 export * from './insights.js';
+export * from './interview-prep.js';
 export * from './jobs.js';
 export * from './match-validation.js';
 export * from './monthly-summary.js';

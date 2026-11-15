@@ -1,5 +1,10 @@
 import { AI_KINDS, type AiKind } from '@jobflow/shared';
-import { buildFollowupOutput, buildMatchOutput, CV_HINTS_OUTPUT } from '@jobflow/shared/testing';
+import {
+  buildFollowupOutput,
+  buildMatchOutput,
+  CV_HINTS_OUTPUT,
+  INTERVIEW_PREP_OUTPUT,
+} from '@jobflow/shared/testing';
 import { describe, expect, it } from 'vitest';
 
 import { MATCH_OUTPUT } from '../../test/ai.js';
@@ -32,7 +37,13 @@ describe('OUTPUT_FAILURES.cv_hints', () => {
   });
 });
 
-const ON_DEMAND_KINDS: AiKind[] = ['followup', 'cv_hints'];
+describe('OUTPUT_FAILURES.interview_prep', () => {
+  it('accepts every prep pack services/ai returned', () => {
+    expect(OUTPUT_FAILURES.interview_prep(INTERVIEW_PREP_OUTPUT)).toBeNull();
+  });
+});
+
+const ON_DEMAND_KINDS: AiKind[] = ['followup', 'cv_hints', 'interview_prep'];
 
 describe('isFinal', () => {
   const refusal = (status: number, type: string) => new AiServiceError({ status, type });

@@ -75,7 +75,7 @@ const EVENT_ROUTES: RouteConfig[] = [
     tags: TAGS,
     summary: 'Plan an interview or a call on an Application',
     description:
-      'startsAt carries Z or an offset and is stored in UTC; durationMin defaults to 60. The event starts planned, interview_scheduled goes to the timeline, and an interview_soon reminder is armed 2 hours or 15 minutes ahead.',
+      'startsAt carries Z or an offset and is stored in UTC; durationMin defaults to 60. The event starts planned, interview_scheduled goes to the timeline, and an interview_soon reminder is armed a day, 2 hours or 15 minutes ahead; the day mark requests the interview prep pack instead of an alert.',
     request: {
       headers: idempotencyHeaders,
       params: applicationIdParams,

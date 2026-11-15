@@ -9,7 +9,14 @@ import { AiEvalModule } from './ai-eval/ai-eval.module.js';
 import { AiEvalService } from './ai-eval/ai-eval.service.js';
 import { boot, BOOT_OPTIONS } from './boot.js';
 
-const evalKindSchema = z.enum(['vacancy', 'resume', 'match', 'followup', 'cv-hints']);
+const evalKindSchema = z.enum([
+  'vacancy',
+  'resume',
+  'match',
+  'followup',
+  'cv-hints',
+  'interview-prep',
+]);
 
 const EVAL_METHODS = {
   vacancy: 'vacancy',
@@ -17,6 +24,7 @@ const EVAL_METHODS = {
   match: 'match',
   followup: 'followup',
   'cv-hints': 'cvHints',
+  'interview-prep': 'interviewPrep',
 } as const satisfies Record<z.infer<typeof evalKindSchema>, keyof AiEvalService>;
 
 const [kindArgument, outFile] = process.argv.slice(2);

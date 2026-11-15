@@ -1,0 +1,8 @@
+{
+  "position": "Full Stack Engineer",
+  "interviewKind": "other",
+  "requirements": ["TypeScript", "React", "Node.js", "Redis", "CI/CD"],
+  "gaps": [],
+  "weakSpots": { "reasons": [], "topics": [] },
+  "absent": ["Kafka", "Rust", "Terraform"]
+}

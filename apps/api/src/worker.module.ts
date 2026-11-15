@@ -15,6 +15,7 @@ import { ApplicationsWorkerModule } from './modules/applications/index.js';
 import { CaptureWorkerModule } from './modules/capture/index.js';
 import { CvHintsWorkerModule } from './modules/cv-hints/index.js';
 import { FollowupsWorkerModule } from './modules/followups/index.js';
+import { InterviewPrepWorkerModule } from './modules/interview-prep/index.js';
 import { MaintenanceWorkerModule } from './modules/maintenance/index.js';
 import { MatchWorkerModule } from './modules/match/index.js';
 import { NotificationsWorkerModule } from './modules/notifications/index.js';
@@ -43,6 +44,7 @@ import { QueuesModule } from './queues/queues.module.js';
     MatchWorkerModule,
     FollowupsWorkerModule,
     CvHintsWorkerModule,
+    InterviewPrepWorkerModule,
     SummariesWorkerModule,
     AccountWorkerModule,
     RemindersWorkerModule,

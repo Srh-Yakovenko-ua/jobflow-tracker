@@ -12,10 +12,10 @@ import { owned } from '../../common/owned.js';
 import { toValidationError } from '../../common/validation.js';
 import type { InTransaction } from '../../prisma/in-transaction.js';
 import { PrismaService } from '../../prisma/prisma.service.js';
-import { AI_PAYLOAD_BUILDERS, AiService } from '../ai/index.js';
+import { AI_PAYLOAD_BUILDERS, aiResultResponse, AiService } from '../ai/index.js';
 import { MatchService } from '../match/index.js';
 import type { CvHintsRequested } from './cv-hints.events.js';
-import { CvHintsRepository, type LatestCvHintsJob } from './cv-hints.repository.js';
+import { CvHintsRepository } from './cv-hints.repository.js';
 
 export type CvHintsGeneration = { applicationId: string; requestId: string };
 
@@ -28,13 +28,6 @@ type PendingRequest = Required<InTransaction> & { requested: Omit<CvHintsRequest
 const NO_SCORE = 'CV hints need a Match Score of the application';
 
 const NO_PROFILE = 'CV hints need the skills profile of the linked CV version';
-
-function resultOf({ status, finishedAt, aiResult }: LatestCvHintsJob): CvHintsResponse['result'] {
-  if (status !== 'done' || finishedAt === null || aiResult === null) {
-    return null;
-  }
-  return { ...cvHintsOutputSchema.parse(aiResult.output), generatedAt: finishedAt.toISOString() };
-}
 
 @Injectable()
 export class CvHintsService {
@@ -55,11 +48,7 @@ export class CvHintsService {
       resumeVersionId: match.resumeVersion.id,
       since: new Date(match.computedAt),
     });
-    if (latest === null) {
-      return { result: null, job: null };
-    }
-    const { id, status, errorType } = latest;
-    return { result: resultOf(latest), job: { id, status, errorType } };
+    return aiResultResponse(latest ?? undefined, cvHintsOutputSchema);
   }
 
   async request(

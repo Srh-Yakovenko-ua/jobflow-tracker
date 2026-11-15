@@ -2,9 +2,10 @@ import { Injectable } from '@nestjs/common';
 
 import type { Prisma } from '../../generated/prisma/client.js';
 import type { InTransaction } from '../../prisma/in-transaction.js';
-import { LATEST_AI_JOB_SELECT } from '../../prisma/latest-ai-job.js';
+import { AI_RESULT_JOB_SELECT, LATEST_AI_JOB_SELECT } from '../../prisma/latest-ai-job.js';
 import { lockWithRunningAiJob } from '../../prisma/lock-owned-application.js';
 import { PrismaService } from '../../prisma/prisma.service.js';
+import type { StoredAiResultJob } from '../ai/index.js';
 import { type CvHintsRequested, cvHintsRequestedEvent } from './cv-hints.events.js';
 
 const CV_HINTS_SOURCE_SELECT = {
@@ -13,19 +14,9 @@ const CV_HINTS_SOURCE_SELECT = {
   resumeVersion: { select: { aiProfile: true } },
 } satisfies Prisma.ApplicationSelect;
 
-const LATEST_CV_HINTS_SELECT = {
-  id: true,
-  status: true,
-  errorType: true,
-  finishedAt: true,
-  aiResult: { select: { output: true } },
-} satisfies Prisma.AiJobSelect;
-
 export type CvHintsSourceRow = Prisma.ApplicationGetPayload<{
   select: typeof CV_HINTS_SOURCE_SELECT;
 }>;
-
-export type LatestCvHintsJob = Prisma.AiJobGetPayload<{ select: typeof LATEST_CV_HINTS_SELECT }>;
 
 export type CvHintsQuery = { applicationId: string; resumeVersionId: string; since: Date };
 
@@ -61,7 +52,7 @@ export class CvHintsRepository {
   findLatest(
     userId: string,
     { applicationId, resumeVersionId, since }: CvHintsQuery,
-  ): Promise<LatestCvHintsJob | null> {
+  ): Promise<StoredAiResultJob | null> {
     return this.prisma.aiJob.findFirst({
       where: {
         userId,
@@ -71,7 +62,7 @@ export class CvHintsRepository {
         createdAt: { gte: since },
       },
       orderBy: LATEST_AI_JOB_SELECT.orderBy,
-      select: LATEST_CV_HINTS_SELECT,
+      select: AI_RESULT_JOB_SELECT,
     });
   }
 }

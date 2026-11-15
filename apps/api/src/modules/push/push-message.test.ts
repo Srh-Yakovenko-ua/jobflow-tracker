@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
+import { AI_JOB_ID } from '../../test/ai.js';
 import {
   interviewSoonAt,
   MONTHLY_SUMMARY_NOTIFICATION,
@@ -7,7 +8,7 @@ import {
   SILENCE_ITEM,
   SILENCE_NOTIFICATION,
 } from '../../test/notifications.js';
-import { MISSING_ID } from '../../test/service-fixtures.js';
+import { APPLICATION_ID, MISSING_ID } from '../../test/service-fixtures.js';
 import { isPushed, pushMessageOf } from './push-message.js';
 
 const KYIV = { timezone: 'Europe/Kyiv' };
@@ -62,6 +63,26 @@ describe('pushMessageOf', () => {
       body: 'Ромашка, Globex · понад 30 днів без відповіді',
       url: '/board',
       tag: 'auto-ghosted',
+    });
+  });
+
+  it('names the day, the interview kind and the company of a ready prep pack and opens its card', () => {
+    const ready = notificationOf({
+      type: 'interview_prep_ready',
+      payload: {
+        aiJobId: AI_JOB_ID,
+        applicationId: APPLICATION_ID,
+        company: 'Acme',
+        eventKind: 'tech_interview',
+        startsAt: '2026-10-23T08:00:00.000Z',
+      },
+    });
+
+    expect(message(ready)).toEqual({
+      title: "Завтра техінтерв'ю в Acme",
+      body: 'Підготовка готова',
+      url: `/applications/${APPLICATION_ID}`,
+      tag: `interview-prep:${APPLICATION_ID}`,
     });
   });
 

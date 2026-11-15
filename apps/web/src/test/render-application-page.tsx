@@ -4,6 +4,7 @@ import type {
   ApplicationTimelineResponse,
   CvHintsResponse,
   FollowupResponse,
+  InterviewPrepResponse,
 } from '@jobflow/shared';
 import { screen } from '@testing-library/react';
 import type { ReactNode } from 'react';
@@ -34,6 +35,7 @@ import {
 import { contactRoutes, type ContactRoutesOptions } from './contact-fixtures';
 import { cvHintsRoutes } from './cv-hints-fixtures';
 import { followupRoutes } from './followup-fixtures';
+import { interviewPrepRoutes } from './interview-prep-fixtures';
 import { LiveUpdates } from './live-stream';
 import { matchRoute } from './match-fixtures';
 import {
@@ -68,6 +70,7 @@ export type ApplicationPageSetup = Partial<Pick<ApplicationRouteOptions, 'reply'
   match?: ApplicationMatchResponse;
   followup?: FollowupResponse;
   cvHints?: CvHintsResponse;
+  interviewPrep?: InterviewPrepResponse;
   resumes?: ResumeRoutesOptions;
   inShell?: boolean;
   live?: boolean;
@@ -139,6 +142,7 @@ export function renderApplicationPage({
   match: matchResponse,
   followup: followupResponse,
   cvHints: cvHintsResponse,
+  interviewPrep: interviewPrepResponse,
   resumes,
   inShell = false,
   live,
@@ -156,6 +160,7 @@ export function renderApplicationPage({
   const versions = resumeRoutes(resumes);
   const followup = followupRoutes({ response: followupResponse });
   const cvHints = cvHintsRoutes(cvHintsResponse);
+  const interviewPrep = interviewPrepRoutes(interviewPrepResponse);
   server.use(
     meRoute(),
     page.handler,
@@ -173,6 +178,7 @@ export function renderApplicationPage({
     ...versions.handlers,
     ...followup.handlers,
     ...cvHints.handlers,
+    ...interviewPrep.handlers,
   );
   const ui = shownPage({ id, mode, inShell, live, wrap: beside.wrap });
   const { user, view } = renderViewInApp(ui);
@@ -194,6 +200,7 @@ export function renderApplicationPage({
     match,
     followup,
     cvHints,
+    interviewPrep,
     resumes: versions.sent,
   };
 }

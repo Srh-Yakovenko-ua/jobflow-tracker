@@ -1,0 +1,17 @@
+{
+  "position": "Frontend Team Lead",
+  "interviewKind": "final_interview",
+  "requirements": ["React", "Менторство команди", "Архітектура фронтенду", "Code review"],
+  "gaps": [
+    { "name": "Досвід ліда команди 3+", "coverage": "missing" },
+    { "name": "Архітектура фронтенду", "coverage": "partial" }
+  ],
+  "weakSpots": {
+    "reasons": [
+      { "stage": "final", "code": "chose_other", "count": 2 },
+      { "stage": "tech_interview", "code": "skills_gap", "count": 1 }
+    ],
+    "topics": ["system_design", "leadership"]
+  },
+  "absent": ["Kafka", "Python", "Go"]
+}

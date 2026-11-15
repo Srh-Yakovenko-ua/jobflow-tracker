@@ -6,6 +6,7 @@ import {
   buildResumeParseOutput,
   buildVacancyCompletion,
   CV_HINTS_OUTPUT,
+  INTERVIEW_PREP_OUTPUT,
   VACANCY_SAMPLE_TEXT,
 } from '../../testing/index.js';
 import { issuePathsOf } from '../test/zod-issues.js';
@@ -45,6 +46,7 @@ describe('AI_PROMPT_VERSIONS', () => {
       followup: 'v3',
       monthly_summary: 'v1',
       cv_hints: 'v1',
+      interview_prep: 'v1',
     });
   });
 });
@@ -70,6 +72,9 @@ describe('aiContractJsonSchemas', () => {
       'cv_hints_request',
       'cv_hints_output',
       'cv_hints_response',
+      'interview_prep_request',
+      'interview_prep_output',
+      'interview_prep_response',
       'embed_request',
       'embed_response',
     ]);
@@ -165,6 +170,29 @@ describe('aiContractJsonSchemas', () => {
     });
   });
 
+  it('requires every interview_prep input block with its weak spot codes, and 5 to 8 topics with a basis, 10 questions, 3 questions to the company and both plans in its output', () => {
+    expect(aiContractJsonSchemas()).toMatchObject({
+      interview_prep_request: {
+        properties: {
+          input: {
+            required: AI_PAYLOAD_FIELDS.interview_prep,
+            properties: { weakSpots: { required: ['reasons', 'topics'] } },
+          },
+        },
+      },
+      interview_prep_output: {
+        title: 'InterviewPrepOutput',
+        required: ['topics', 'questions', 'askCompany', 'plan30', 'plan120'],
+        properties: {
+          topics: { minItems: 5, maxItems: 8, items: { required: ['name', 'why', 'basis'] } },
+          questions: { minItems: 10, maxItems: 10, items: { required: ['question', 'hint'] } },
+          askCompany: { minItems: 3, maxItems: 3 },
+          plan30: { minItems: 1, maxItems: 6, items: { required: ['minutes', 'task'] } },
+        },
+      },
+    });
+  });
+
   it('requires only the input in a completion request', () => {
     expect(aiContractJsonSchemas()['vacancy_parse_request']).toMatchObject({
       title: 'VacancyParseRequest',
@@ -218,6 +246,11 @@ describe('aiCompletionSchemas', () => {
   it('parses a cv_hints completion carrying the hints and the gaps', () => {
     const completion = { ...COMPLETION, promptVersion: 'v1', output: CV_HINTS_OUTPUT };
     expect(aiCompletionSchemas.cv_hints.parse(completion)).toEqual(completion);
+  });
+
+  it('parses an interview_prep completion carrying the topics, the questions and both plans', () => {
+    const completion = { ...COMPLETION, promptVersion: 'v1', output: INTERVIEW_PREP_OUTPUT };
+    expect(aiCompletionSchemas.interview_prep.parse(completion)).toEqual(completion);
   });
 
   it('refuses a numeric promptVersion', () => {

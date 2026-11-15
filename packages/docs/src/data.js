@@ -18,7 +18,7 @@ import { auditCounts, e2eTests, evalProblem } from './snapshots.js';
 const WEB_URL = process.env.THESIS_WEB_URL ?? 'http://localhost:3000';
 
 const DATA_RULES = {
-  evalKinds: ['vacancy', 'resume', 'match', 'followup', 'cv-hints'],
+  evalKinds: ['vacancy', 'resume', 'match', 'followup', 'cv-hints', 'interview-prep'],
   probeTimeoutMs: 3000,
   services: [
     { name: 'ai', url: 'http://127.0.0.1:8001/health' },

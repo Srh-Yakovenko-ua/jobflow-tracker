@@ -7,6 +7,7 @@ from app import contracts
 from app.prompts import (
     cv_hints,
     followup,
+    interview_prep,
     match,
     monthly_summary,
     resume_parse,
@@ -21,6 +22,7 @@ PROMPTS: dict[str, PromptModule] = {
     "followup": followup,
     "monthly_summary": monthly_summary,
     "cv_hints": cv_hints,
+    "interview_prep": interview_prep,
 }
 
 PROMPT_VERSIONS_FILE = Path(contracts.__file__).with_name("prompt_versions.json")

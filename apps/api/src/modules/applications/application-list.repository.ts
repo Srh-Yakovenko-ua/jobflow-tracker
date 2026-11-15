@@ -11,6 +11,7 @@ import { Injectable } from '@nestjs/common';
 import type { Prisma } from '../../generated/prisma/client.js';
 import { EFFECTIVE_STAGE_EVENTS } from '../../prisma/effective-stage-events.js';
 import { LATEST_AI_JOB_SELECT } from '../../prisma/latest-ai-job.js';
+import { nextPlannedEventSelect } from '../../prisma/next-planned-event.js';
 import { PrismaService } from '../../prisma/prisma.service.js';
 import { silenceWindowWhere } from '../../prisma/silence-window-where.js';
 import type { DateCursor } from './application-cursor.js';
@@ -64,12 +65,7 @@ function cardSelectAt(now: Date) {
     lastEventAt: true,
     createdAt: true,
     stageEvents: LATEST_STAGE_EVENT_SELECT,
-    scheduledEvents: {
-      where: { status: 'planned', startsAt: { gte: now } },
-      orderBy: [{ startsAt: 'asc' }, { id: 'asc' }],
-      take: 1,
-      select: { kind: true, startsAt: true },
-    },
+    scheduledEvents: nextPlannedEventSelect(now),
     aiJobs: { where: { kind: 'vacancy_parse' }, ...LATEST_AI_JOB_SELECT },
   } satisfies Prisma.ApplicationSelect;
 }

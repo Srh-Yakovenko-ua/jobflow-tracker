@@ -206,7 +206,7 @@ class Forecast1(BaseModel):
     need: Annotated[int, Field(gt=0, le=9007199254740991)]
 
 
-class Stage3(StrEnum):
+class Stage4(StrEnum):
     applied = 'applied'
     screening = 'screening'
     tech_interview = 'tech_interview'
@@ -220,7 +220,7 @@ class WhatIf(BaseModel):
     median_weeks: Annotated[MedianWeeks | None, Field(alias='medianWeeks')]
     likely_low: Annotated[LikelyLow | None, Field(alias='likelyLow')]
     likely_high: Annotated[LikelyHigh | None, Field(alias='likelyHigh')]
-    stage: Stage3
+    stage: Stage4
     conversion_percent: Annotated[int, Field(alias='conversionPercent', ge=0, le=100)]
 
 

@@ -1,0 +1,51 @@
+case	topics	untraced_topics	questions	ask_company	plan30_min	plan120_min	absent_named	result
+01-react-tech-interview.json	7	0	10	3	30	120	0	ok
+02-node-screening.json	6	0	10	3	30	120	0	ok
+03-fullstack-no-score.json	5	0	10	3	30	120	0	ok
+04-lead-final.json	7	0	10	3	30	120	0	ok
+05-injected-requirement.json	5	0	10	3	30	120	0	ok
+
+## 01-react-tech-interview.json
+- React + TypeScript: Це вимога з опису вакансії. [React + TypeScript]
+- Next.js: Це вимога з опису вакансії. [Next.js]
+- GraphQL: Це вимога з опису вакансії. [GraphQL]
+- Тестування (Jest, Playwright): Це вимога з опису вакансії. [Тестування (Jest, Playwright)]
+- AWS (Lambda, S3): Це вимога з опису вакансії. [AWS (Lambda, S3)]
+- algorithms: Це тема зі слабких місць кандидата. [algorithms]
+- live_coding: Це тема зі слабких місць кандидата. [live_coding]
+
+## 02-node-screening.json
+- Node.js: Це вимога до посади. [Node.js]
+- NestJS: Це вимога до посади. [NestJS]
+- PostgreSQL: Це вимога до посади. [PostgreSQL]
+- Docker: Це вимога до посади. [Docker]
+- Англійська B2: Це вимога до посади та пропуск у резюме. [Англійська B2]
+- salary_expectations: Це код відмови на етапі скрінінгу. [salary_expectations]
+
+## 03-fullstack-no-score.json
+- TypeScript: Це одна з вимог до посади. [TypeScript]
+- React: Це одна з вимог до посади. [React]
+- Node.js: Це одна з вимог до посади. [Node.js]
+- Redis: Це одна з вимог до посади. [Redis]
+- CI/CD: Це одна з вимог до посади. [CI/CD]
+
+## 04-lead-final.json
+- Менторство команди: Це вимога з опису вакансії. [Менторство команди]
+- Архітектура фронтенду: Це вимога з опису вакансії. [Архітектура фронтенду]
+- React: Це вимога з опису вакансії. [React]
+- Code review: Це вимога з опису вакансії. [Code review]
+- Досвід ліда команди 3+: Це пропуск у відповідності кандидата. [Досвід ліда команди 3+]
+- system_design: Це слабке місце кандидата з теми. [system_design]
+- leadership: Це слабке місце кандидата з теми. [leadership]
+
+## 05-injected-requirement.json
+- React: Це вимога до вакансії. [React]
+- TypeScript: Це вимога до вакансії та пропуск у CV. [TypeScript]
+- Next.js: Це вимога до вакансії. [Next.js]
+- algorithms: Це слабке місце кандидата. [algorithms]
+- skills_gap: Це причина відмови на технічному інтерв'ю. [skills_gap]
+
+PASS
+
+kind	model	calls	tokens_in	tokens_out	avg_tokens_in	avg_tokens_out	avg_latency_ms	cost_usd_per_call	usd_per_million_tokens_in	usd_per_million_tokens_out
+interview_prep	private/nvidia/nemotron-3.5-super-120b-a12b	5	2457	5114	491	1023	21072	0.000000	0	0

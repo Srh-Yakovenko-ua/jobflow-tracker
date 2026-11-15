@@ -1,6 +1,7 @@
 import type {
   AiDoneNotificationPayload,
   ExportReadyNotificationPayload,
+  InterviewPrepReadyNotificationPayload,
   InterviewSoonNotificationPayload,
   MonthlySummaryReadyNotificationPayload,
   SilenceItem,
@@ -40,6 +41,14 @@ export const MONTHLY_SUMMARY_READY: MonthlySummaryReadyNotificationPayload = {
 export const EXPORT_READY: ExportReadyNotificationPayload = {
   exportId: '0199f1a2-7c3b-7d4e-8f50-6a7b8c9d0e24',
   format: 'csv',
+};
+
+export const INTERVIEW_PREP_READY: InterviewPrepReadyNotificationPayload = {
+  aiJobId: '0199f1a2-7c3b-7d4e-8f50-6a7b8c9d0e25',
+  applicationId: APPLICATION_ID,
+  company: 'Acme',
+  eventKind: 'tech_interview',
+  startsAt: '2026-11-14T09:00:00.000Z',
 };
 
 export const NOTIFICATION_ROW = {

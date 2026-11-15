@@ -159,14 +159,14 @@ describe('the scheduled events routes', () => {
     expect(await journalRowsOf(application.id)).toEqual([SCHEDULED_ROW]);
   });
 
-  it('POST arms one interview_soon reminder two hours before the start', async () => {
+  it('POST arms one interview_soon reminder a day before the start', async () => {
     const { id, eventId } = await olenaWithEvent();
 
     expect(await remindersOf(id)).toEqual([
       {
         type: 'interview_soon',
         status: 'pending',
-        dueAt: new Date('2026-10-23T11:00:00.000Z'),
+        dueAt: new Date('2026-10-22T13:00:00.000Z'),
         scheduledEventId: eventId,
       },
     ]);
@@ -310,8 +310,8 @@ describe('the scheduled events routes', () => {
 
     expect(scheduledEventSchema.parse(response.body).startsAt).toBe('2026-10-24T07:00:00.000Z');
     expect(await remindersOf(event.id)).toMatchObject([
-      { status: 'dismissed', dueAt: new Date('2026-10-23T11:00:00.000Z') },
-      { status: 'pending', dueAt: new Date('2026-10-24T05:00:00.000Z') },
+      { status: 'dismissed', dueAt: new Date('2026-10-22T13:00:00.000Z') },
+      { status: 'pending', dueAt: new Date('2026-10-23T07:00:00.000Z') },
     ]);
   });
 

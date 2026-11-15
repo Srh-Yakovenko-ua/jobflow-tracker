@@ -41,4 +41,21 @@ describe('SegmentedControl', () => {
     expect(onValueChange).toHaveBeenCalledExactlyOnceWith('system');
     expect(screen.getByRole('radio', { checked: true }).textContent).toBe(uk.theme.light);
   });
+
+  it('every segment carries the 44 px touch target and grows to the 44 px touch height below md', () => {
+    renderThemes('light');
+
+    const segments = screen.getAllByRole('radio');
+
+    expect(
+      segments.map(({ classList }) => [
+        classList.contains('touch-target'),
+        classList.contains('max-md:min-h-11'),
+      ]),
+    ).toEqual([
+      [true, true],
+      [true, true],
+      [true, true],
+    ]);
+  });
 });

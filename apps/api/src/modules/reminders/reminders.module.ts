@@ -3,6 +3,7 @@ import { Module } from '@nestjs/common';
 import { Clock } from '../../common/clock.js';
 import { OutboxWorkerModule } from '../../outbox/outbox.module.js';
 import { EventsModule } from '../events/index.js';
+import { InterviewPrepModule } from '../interview-prep/index.js';
 import { NotificationsModule } from '../notifications/index.js';
 import { SettingsModule } from '../settings/index.js';
 import { InterviewAlertsRepository } from './interview-alerts.repository.js';
@@ -15,7 +16,7 @@ import { SilenceRepository } from './silence.repository.js';
 import { SilenceScanService } from './silence-scan.service.js';
 
 @Module({
-  imports: [EventsModule, SettingsModule, NotificationsModule],
+  imports: [EventsModule, SettingsModule, NotificationsModule, InterviewPrepModule],
   controllers: [RemindersController],
   providers: [
     RemindersService,

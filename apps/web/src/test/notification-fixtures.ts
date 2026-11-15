@@ -105,6 +105,20 @@ export const EXPORT_READY_NOTIFICATION = buildNotification({
   payload: { exportId: EXPORT_ID, format: 'csv' },
 });
 
+export const INTERVIEW_PREP_APPLICATION_ID = fixtureIdOf(92);
+
+export const INTERVIEW_PREP_READY_NOTIFICATION = buildNotification({
+  serial: 9,
+  type: 'interview_prep_ready',
+  payload: {
+    aiJobId: fixtureIdOf(91),
+    applicationId: INTERVIEW_PREP_APPLICATION_ID,
+    company: 'Acme',
+    eventKind: 'tech_interview',
+    startsAt: '2026-11-15T09:00:00.000Z',
+  },
+});
+
 export const DESIGN_FEED: NotificationListResponse = {
   items: [INTERVIEW_NOTIFICATION, SILENCE_NOTIFICATION, AI_DONE_NOTIFICATION],
   nextCursor: null,

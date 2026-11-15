@@ -2,8 +2,10 @@ import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 
 import {
+  type AiKind,
   cvHintsOutputSchema,
   followupOutputSchema,
+  interviewPrepOutputSchema,
   matchOutputSchema,
   type ResumeParseOutput,
   resumeParseOutputSchema,
@@ -11,6 +13,7 @@ import {
 } from '@jobflow/shared';
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import type { z } from 'zod';
 
 import { pricePerMillionOf, type TokenCounts } from '../ai-usage/ai-cost.js';
 import { Clock } from '../common/clock.js';
@@ -18,19 +21,25 @@ import type { Env } from '../config/env.js';
 import { AI_PAYLOAD_BUILDERS, AiClient, type AiCompleteCall } from '../modules/ai/index.js';
 import { scoreMatch } from '../modules/match/index.js';
 import { detectResumeFormat, DocumentsClient } from '../modules/resumes/index.js';
-import { type CvHintsEvalCase, loadCvHintsCases } from './cv-hints-cases.js';
-import { type CvHintsCaseAnswer, cvHintsReport } from './cv-hints-report.js';
+import { loadCvHintsCases } from './cv-hints-cases.js';
+import { cvHintsReport } from './cv-hints-report.js';
 import type { EvalReport } from './eval-cases.js';
 import { isStopped, refusalOf, type Stopped } from './eval-refusal.js';
 import { type EvalCall, evalUsageLines } from './eval-usage.js';
-import { type FollowupEvalCase, loadFollowupCases } from './followup-cases.js';
-import { type FollowupCaseAnswer, followupReport } from './followup-report.js';
+import { loadFollowupCases } from './followup-cases.js';
+import { followupReport } from './followup-report.js';
+import { loadInterviewPrepCases } from './interview-prep-cases.js';
+import { interviewPrepReport } from './interview-prep-report.js';
 import { loadMatchCases, type MatchEvalCase } from './match-cases.js';
 import { type MatchCaseAnswer, matchReport } from './match-report.js';
 import { loadResumeCases, type ResumeEvalCase } from './resume-cases.js';
 import { type ResumeCaseAnswer, resumeReport } from './resume-score.js';
 import { loadVacancyCases, type VacancyEvalCase } from './vacancy-cases.js';
 import { type VacancyCaseAnswer, vacancyReport } from './vacancy-score.js';
+
+type CheckedKind<O> = { kind: AiKind; schema: z.ZodType<O> };
+
+type Checked<C, O> = (C & { output: O }) | (C & { error: string });
 
 @Injectable()
 export class AiEvalService {
@@ -64,15 +73,28 @@ export class AiEvalService {
   }
 
   async followup(casesDir: string): Promise<EvalReport> {
-    const cases = await loadFollowupCases(casesDir);
-    const answers = await this.answerAll(cases, (evalCase) => this.followupAnswer(evalCase));
+    const drafts = await loadFollowupCases(casesDir);
+    const cases = drafts.map(({ file, ...input }) => ({ file, input }));
+    const answers = await this.answerAll(cases, (evalCase) =>
+      this.checkedAnswer(evalCase, { kind: 'followup', schema: followupOutputSchema }),
+    );
     return Array.isArray(answers) ? followupReport(answers) : answers;
   }
 
   async cvHints(casesDir: string): Promise<EvalReport> {
     const cases = await loadCvHintsCases(casesDir);
-    const answers = await this.answerAll(cases, (evalCase) => this.cvHintsAnswer(evalCase));
+    const answers = await this.answerAll(cases, (evalCase) =>
+      this.checkedAnswer(evalCase, { kind: 'cv_hints', schema: cvHintsOutputSchema }),
+    );
     return Array.isArray(answers) ? cvHintsReport(answers) : answers;
+  }
+
+  async interviewPrep(casesDir: string): Promise<EvalReport> {
+    const cases = await loadInterviewPrepCases(casesDir);
+    const answers = await this.answerAll(cases, (evalCase) =>
+      this.checkedAnswer(evalCase, { kind: 'interview_prep', schema: interviewPrepOutputSchema }),
+    );
+    return Array.isArray(answers) ? interviewPrepReport(answers) : answers;
   }
 
   async resume(casesDir: string): Promise<EvalReport> {
@@ -136,22 +158,13 @@ export class AiEvalService {
     }
   }
 
-  private async followupAnswer({
-    file,
-    ...input
-  }: FollowupEvalCase): Promise<FollowupCaseAnswer | Stopped> {
+  private async checkedAnswer<C extends { input: unknown }, O>(
+    evalCase: C,
+    { kind, schema }: CheckedKind<O>,
+  ): Promise<Checked<C, O> | Stopped> {
     try {
-      const { output } = await this.complete({ kind: 'followup', input });
-      return { file, input, output: followupOutputSchema.parse(output) };
-    } catch (error) {
-      return { file, input, ...refusalOf(error) };
-    }
-  }
-
-  private async cvHintsAnswer(evalCase: CvHintsEvalCase): Promise<CvHintsCaseAnswer | Stopped> {
-    try {
-      const { output } = await this.complete({ kind: 'cv_hints', input: evalCase.input });
-      return { ...evalCase, output: cvHintsOutputSchema.parse(output) };
+      const { output } = await this.complete({ kind, input: evalCase.input });
+      return { ...evalCase, output: schema.parse(output) };
     } catch (error) {
       return { ...evalCase, ...refusalOf(error) };
     }

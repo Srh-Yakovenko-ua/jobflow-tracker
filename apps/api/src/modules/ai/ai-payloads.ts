@@ -10,6 +10,7 @@ import {
 
 import { cvHintsPayload } from './cv-hints-payload.js';
 import { followupPayload } from './followup-payload.js';
+import { interviewPrepPayload } from './interview-prep-payload.js';
 import { monthlySummaryPayload } from './monthly-summary-payload.js';
 
 export type VacancySource = { rawText: string };
@@ -42,4 +43,5 @@ export const AI_PAYLOAD_BUILDERS = {
   followup: followupPayload,
   monthly_summary: monthlySummaryPayload,
   cv_hints: cvHintsPayload,
+  interview_prep: interviewPrepPayload,
 } satisfies AiPayloadBuilders;

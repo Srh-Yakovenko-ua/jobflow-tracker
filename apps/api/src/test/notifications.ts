@@ -1,5 +1,5 @@
 import type { Notification, SilenceItem, SilenceNotificationPayload } from '@jobflow/shared';
-import type { OnModuleInit, Type } from '@nestjs/common';
+import type { OnModuleInit, Provider, Type } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
 
 import { AiJobRouter, type SettledAiJob } from '../modules/ai/index.js';
@@ -94,13 +94,14 @@ export class RecordingNotifications {
   }
 }
 
-export async function settlingThrough(subscriber: Type<OnModuleInit>) {
+export async function settlingThrough(subscriber: Type<OnModuleInit>, providers: Provider[] = []) {
   const notifications = new RecordingNotifications();
   const moduleRef = await Test.createTestingModule({
     providers: [
       subscriber,
       AiJobRouter,
       { provide: NotificationsService, useValue: notifications },
+      ...providers,
     ],
   }).compile();
   await moduleRef.init();
