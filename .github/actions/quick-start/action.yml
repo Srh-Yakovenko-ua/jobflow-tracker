@@ -1,0 +1,14 @@
+name: Quick start
+description: Run the README quick start verbatim (both languages must match) and bring the compose.ci.yml stack up with the demo seed
+runs:
+  using: composite
+  steps:
+    - name: README quick start
+      shell: bash
+      run: |
+        quick_start() { sed -n '/^<!-- quick-start -->$/,/^<!-- \/quick-start -->$/p' "$1" | sed '/^<!--/d;/^```/d'; }
+        diff <(quick_start README.md) <(quick_start README.en.md)
+        quick_start README.md > "$RUNNER_TEMP/quick-start.sh"
+        grep -qx 'pnpm demo:seed' "$RUNNER_TEMP/quick-start.sh"
+        bash -euo pipefail "$RUNNER_TEMP/quick-start.sh"
+        docker compose config --images | grep -qx jobflow-web:ci

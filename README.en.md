@@ -260,6 +260,7 @@ The other problems and their fixes: [docs/getting-started.md](docs/getting-start
 - [ADRs](docs/adr/README.md): architecture decisions.
 - [ERD](docs/diagrams/erd.md): the database schema.
 - [Security](docs/security.md).
+- [Testing](docs/testing.md): contract checks and Schemathesis fuzzing.
 - [Offer forecast](docs/analytics/offer-forecast.md): how it is computed.
 - [OpenAPI](docs/api/openapi.json): the API contract.
 - [Design](docs/design/README.md): the design handoff.

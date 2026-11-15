@@ -35,6 +35,7 @@
     "prebuild": "node scripts/build-tokens.js",
     "build": "tsup && node scripts/export-enums.js",
     "gen:contracts": "node scripts/export-contracts.js",
+    "gen:analytics": "openapi-typescript ../../docs/thesis/build/api/analytics-openapi.json -o src/generated/analytics-client.d.ts",
     "lint": "eslint . --max-warnings 0",
     "typecheck": "tsgo -p . --noEmit",
     "test": "vitest run --coverage",
@@ -64,6 +65,7 @@
     "@jobflow/config": "workspace:*",
     "@vitest/coverage-v8": "^4.1.12",
     "eslint": "^10.13.0",
+    "openapi-typescript": "7.13.0",
     "tsup": "^9.0.0",
     "typescript": "~6.0.3",
     "vitest": "^4.1.12"
