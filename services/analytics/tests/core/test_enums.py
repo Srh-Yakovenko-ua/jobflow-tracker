@@ -47,7 +47,8 @@ def test_reads_the_data_rule_thresholds_from_their_upper_case_keys() -> None:
         thresholds.min_n_insight,
         thresholds.min_n_forecast,
         thresholds.what_if_conversion,
-    ) == (5, 10, 15, 0.6)
+        thresholds.min_n_note_topic,
+    ) == (5, 10, 15, 0.6, 3)
 
 
 def test_reads_the_analytics_cache_key_templates_shared_with_the_worker() -> None:

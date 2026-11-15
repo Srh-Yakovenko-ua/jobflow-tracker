@@ -6,15 +6,17 @@ from app.metrics.data_rules import clean_events
 from app.metrics.funnel import funnel_stages
 from app.metrics.ghost_market import ghost_rate_vs_market
 from app.metrics.insights.engine import InsightMetrics
-from app.metrics.insights.inputs import insight_metrics, stage_what_if
+from app.metrics.insights.inputs import InsightFrames, insight_metrics, stage_what_if
 from app.metrics.journeys import journeys
 from app.metrics.most_expensive import most_expensive
+from app.metrics.note_topics import note_topics
 from app.metrics.reasons import reasons
 from app.metrics.resume_ab import resume_ab
 from app.metrics.sources import sources
 from tests.factories import (
     ApplicationSource,
     application_sources_frame,
+    notes_frame,
     salaries_frame,
 )
 from tests.metrics import (
@@ -57,14 +59,18 @@ DESIGN_INSIGHTS_BODY: Final[dict[str, list[dict[str, Any]]]] = {
         },
         {
             "block": "reasons",
-            "title": "На техінтерв'ю тебе найчастіше валять: «не вистачає скілів»",
-            "body": "3 із 4 відмов на цьому етапі — «не вистачає скілів».",
+            "title": "На техінтерв'ю тебе валять алгоритми",
+            "body": "3 із 4 відмов на цьому етапі — «не вистачає скілів», "
+            "і в нотатках усі три згадують live-coding.",
             "severity": "warning",
             "evidence": {
                 "stage": "tech_interview",
                 "code": "skills_gap",
                 "count": 3,
                 "of": 4,
+                "topic": "algorithms",
+                "topicMentions": 3,
+                "notes": 3,
             },
         },
         {
@@ -149,10 +155,13 @@ def one_source_metrics(
         ]
     )
     return insight_metrics(
-        events,
-        origins=origins,
-        links=links,
-        salaries=salaries_frame([]),
+        InsightFrames(
+            events,
+            origins=origins,
+            links=links,
+            salaries=salaries_frame([]),
+            notes=notes_frame([]),
+        ),
         now=reasons_design.DESIGN_NOW,
     )
 
@@ -177,5 +186,8 @@ def design_metrics() -> InsightMetrics:
         ghosts=ghost_rate_vs_market(funnel_events),
         stage_what_if=stage_what_if(
             funnel_events, costliest=costliest, now=funnel_design.DESIGN_NOW
+        ),
+        note_topics=note_topics(
+            reasons_design.design_frame(), notes=reasons_design.design_notes()
         ),
     )

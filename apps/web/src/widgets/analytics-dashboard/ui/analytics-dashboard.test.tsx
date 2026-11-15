@@ -176,7 +176,7 @@ describe('AnalyticsDashboard', () => {
 
     expect(
       await screen.findByRole('heading', {
-        name: "На техінтерв'ю тебе найчастіше валять: «не вистачає скілів»",
+        name: "На техінтерв'ю тебе валять алгоритми",
       }),
     ).toBeDefined();
     expect(

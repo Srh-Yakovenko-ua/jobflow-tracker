@@ -14,6 +14,7 @@ from app.repositories.applications import (
     salaries_statement,
 )
 from app.repositories.events import events_statement, user_events_statement
+from app.repositories.notes import rejection_notes_statement
 from app.repositories.resume_versions import version_links_statement
 from app.repositories.searches import active_search_statement, search_statement
 from app.repositories.timeline import followups_statement
@@ -37,6 +38,7 @@ STATEMENTS = {
     "application sources": (application_sources_statement, OWNERSHIP_PREDICATES),
     "salaries": (salaries_statement, OWNERSHIP_PREDICATES),
     "follow-ups": (followups_statement, OWNERSHIP_PREDICATES),
+    "rejection notes": (rejection_notes_statement, OWNERSHIP_PREDICATES),
     "search": (search_statement, SEARCH_PREDICATES),
 }
 
@@ -130,6 +132,18 @@ def test_the_salaries_read_seniority_and_tax_as_text_from_the_vacancy_parse() ->
 
     assert "applications.ai_parsed #>> '{seniority, value}' AS seniority" in sql
     assert "applications.ai_parsed #>> '{salaryTax, value}' AS salary_tax" in sql
+
+
+def test_the_rejection_notes_read_only_the_note_text_of_rejected_applications() -> None:
+    statement = rejection_notes_statement(user_id=USER_ID, search_id=SEARCH_ID)
+    bound, sql = user_wide(statement)
+
+    assert [str(column) for column in statement.selected_columns] == [
+        "notes.application_id",
+        "notes.body",
+    ]
+    assert bound == {USER_ID, SEARCH_ID, "rejected"}
+    assert "CAST(applications.current_stage AS TEXT) =" in sql
 
 
 def test_the_follow_ups_read_only_the_sent_follow_ups_of_the_active_search() -> None:

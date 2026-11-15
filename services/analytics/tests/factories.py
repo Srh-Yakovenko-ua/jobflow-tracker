@@ -158,6 +158,16 @@ def followups_frame(rows: list[Followup]) -> pd.DataFrame:
     return records_frame(rows, record=Followup)
 
 
+@dataclass(frozen=True)
+class NoteRow:
+    application_id: UUID
+    body: str
+
+
+def notes_frame(rows: list[NoteRow]) -> pd.DataFrame:
+    return records_frame(rows, record=NoteRow)
+
+
 def stage_events_frame(
     rows: list[StageEvent], *, occurred_at: list[datetime] | None = None
 ) -> pd.DataFrame:

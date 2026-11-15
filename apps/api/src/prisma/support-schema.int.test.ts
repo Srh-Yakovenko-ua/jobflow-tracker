@@ -271,6 +271,20 @@ describe('the supporting tables in Postgres', () => {
     expect(rows).toEqual([{ owner: true, number: true, extracted_text: false }]);
   });
 
+  it('lets the analytics role read the application and body of a note but not its id or search vector', async () => {
+    const rows = await database.prisma.$queryRaw<
+      { application: boolean; body: boolean; id: boolean; search_vector: boolean }[]
+    >`
+      SELECT
+        has_column_privilege('jobflow_analytics', 'notes', 'application_id', 'SELECT') AS application,
+        has_column_privilege('jobflow_analytics', 'notes', 'body', 'SELECT') AS body,
+        has_column_privilege('jobflow_analytics', 'notes', 'id', 'SELECT') AS id,
+        has_column_privilege('jobflow_analytics', 'notes', 'search_vector', 'SELECT')
+          AS search_vector`;
+
+    expect(rows).toEqual([{ application: true, body: true, id: false, search_vector: false }]);
+  });
+
   it('lets the analytics role into the public schema and read exactly the analytics tables', async () => {
     const { prisma } = database;
     const usage = await prisma.$queryRaw<{ usage: boolean }[]>`

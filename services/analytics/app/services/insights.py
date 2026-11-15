@@ -4,8 +4,9 @@ from uuid import UUID
 from sqlalchemy.ext.asyncio import AsyncEngine
 
 from app.metrics.insights.engine import Insights, insights
-from app.metrics.insights.inputs import insight_metrics
+from app.metrics.insights.inputs import InsightFrames, insight_metrics
 from app.repositories.applications import load_salaries
+from app.repositories.notes import load_rejection_notes
 from app.repositories.resume_versions import load_version_links
 from app.services.search_events import postgres_reads, scoped_events_with_origins
 
@@ -19,8 +20,8 @@ async def search_insights(
     async with postgres_reads():
         links = await load_version_links(engine, user_id=user_id)
         salaries = await load_salaries(engine, user_id=user_id, search_id=search_id)
-    return insights(
-        insight_metrics(
-            events, origins=origins, links=links, salaries=salaries, now=now
-        )
+        notes = await load_rejection_notes(engine, user_id=user_id, search_id=search_id)
+    frames = InsightFrames(
+        events, origins=origins, links=links, salaries=salaries, notes=notes
     )
+    return insights(insight_metrics(frames, now=now))

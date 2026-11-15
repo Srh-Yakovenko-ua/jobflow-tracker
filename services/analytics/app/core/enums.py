@@ -51,6 +51,7 @@ class Thresholds(EnumsModel):
     min_n_insight: int = Field(alias="MIN_N_INSIGHT")
     min_n_forecast: int = Field(alias="MIN_N_FORECAST")
     what_if_conversion: float = Field(alias="WHAT_IF_CONVERSION")
+    min_n_note_topic: int = Field(alias="MIN_N_NOTE_TOPIC")
 
 
 class SalaryRules(EnumsModel):

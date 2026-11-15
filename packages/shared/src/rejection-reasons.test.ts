@@ -30,12 +30,13 @@ describe('REJECTION_REASONS', () => {
 });
 
 describe('THRESHOLDS', () => {
-  it('keeps the DOC-09 minimum sample sizes and the 60% what-if conversion', () => {
+  it('keeps the DOC-09 minimum sample sizes, the 60% what-if conversion and the 3-note topic floor', () => {
     expect(THRESHOLDS).toEqual({
       MIN_N_PERCENT: 5,
       MIN_N_INSIGHT: 10,
       MIN_N_FORECAST: 15,
       WHAT_IF_CONVERSION: 0.6,
+      MIN_N_NOTE_TOPIC: 3,
     });
   });
 });
