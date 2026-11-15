@@ -43,7 +43,7 @@ function ErrorPanels() {
       <div className="min-w-0 md:col-span-2">
         <CrashPanel
           incident={CRASH_INCIDENT}
-          view={{ scope: 'page', timeZone: STATE_TIME_ZONE }}
+          view={{ scope: 'page', reported: true, timeZone: STATE_TIME_ZONE }}
           onRetry={specimenNoop}
         />
       </div>

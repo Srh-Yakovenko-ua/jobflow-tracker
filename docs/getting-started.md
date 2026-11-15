@@ -59,7 +59,7 @@ docker compose up -d
 docker compose up -d --build --wait api worker
 ```
 
-Команда збирає образ api (ціль `dev`, `apps/api/src` змонтовано в контейнер) і повертає керування, коли healthcheck api стане `healthy`, а worker запуститься. Worker використовує той самий образ з іншою командою, порту не має і healthcheck-а теж, тому в `docker compose ps` у колонці `STATUS` у нього лише `Up`, без `(healthy)`. `--build` потрібен, щоб після pull образ підхопив нові залежності. Health відповідає на http://localhost:4000/api/v1/health. Контейнер api займає той самий порт 4000, що й `pnpm dev`, тому одночасно працює щось одне. Контейнер ai описано в розділі [AI](#ai), analytics і documents нижче. Моніторинг (Loki, Alloy, Jaeger, Prometheus, node-exporter, cAdvisor і Grafana) вмикається профілем: `docker compose --profile observability up -d`.
+Команда збирає образ api (ціль `dev`, `apps/api/src` змонтовано в контейнер) і повертає керування, коли healthcheck api стане `healthy`, а worker запуститься. Worker використовує той самий образ з іншою командою, порту не має і healthcheck-а теж, тому в `docker compose ps` у колонці `STATUS` у нього лише `Up`, без `(healthy)`. `--build` потрібен, щоб після pull образ підхопив нові залежності. Health відповідає на http://localhost:4000/api/v1/health. Контейнер api займає той самий порт 4000, що й `pnpm dev`, тому одночасно працює щось одне. Контейнер ai описано в розділі [AI](#ai), analytics і documents нижче. Моніторинг (Loki, Alloy, Jaeger, Prometheus, node-exporter, cAdvisor, Grafana і GlitchTip) вмикається профілем: `docker compose --profile observability up -d`.
 
 Лише web:
 
@@ -106,27 +106,27 @@ docker compose down
 
 Усі порти слухають лише 127.0.0.1.
 
-| Сервіс        | Порт                           | Стан                                |
-| ------------- | ------------------------------ | ----------------------------------- |
-| Postgres      | 5432                           | працює                              |
-| Redis         | 6379                           | працює                              |
-| MinIO         | 9000 (API), 9001 (консоль)     | працює                              |
-| Mailpit       | 1025 (SMTP), 8025 (UI)         | працює                              |
-| api           | 4000                           | працює                              |
-| worker        | без порту                      | працює                              |
-| web (Next.js) | 3000                           | працює                              |
-| analytics     | 8000                           | працює                              |
-| ai            | 8001                           | працює                              |
-| documents     | 8002                           | працює                              |
-| Prometheus    | 9090                           | профіль `observability`             |
-| Grafana       | 3001                           | профіль `observability`, без логіну |
-| Loki          | 3100                           | профіль `observability`             |
-| Alloy         | 4317 і 4318 (OTLP), 12345 (UI) | профіль `observability`             |
-| Jaeger        | 16686                          | профіль `observability`             |
-| GlitchTip     | 8003                           | з'явиться в OBS-04                  |
-| Uptime Kuma   | 3002                           | з'явиться в OBS-05                  |
+| Сервіс        | Порт                           | Стан                                                 |
+| ------------- | ------------------------------ | ---------------------------------------------------- |
+| Postgres      | 5432                           | працює                                               |
+| Redis         | 6379                           | працює                                               |
+| MinIO         | 9000 (API), 9001 (консоль)     | працює                                               |
+| Mailpit       | 1025 (SMTP), 8025 (UI)         | працює                                               |
+| api           | 4000                           | працює                                               |
+| worker        | без порту                      | працює                                               |
+| web (Next.js) | 3000                           | працює                                               |
+| analytics     | 8000                           | працює                                               |
+| ai            | 8001                           | працює                                               |
+| documents     | 8002                           | працює                                               |
+| Prometheus    | 9090                           | профіль `observability`                              |
+| Grafana       | 3001                           | профіль `observability`, без логіну                  |
+| Loki          | 3100                           | профіль `observability`                              |
+| Alloy         | 4317 і 4318 (OTLP), 12345 (UI) | профіль `observability`                              |
+| Jaeger        | 16686                          | профіль `observability`                              |
+| GlitchTip     | 8003                           | профіль `observability`, логін з `GLITCHTIP_ADMIN_*` |
+| Uptime Kuma   | 3002                           | з'явиться в OBS-05                                   |
 
-Сервіси моніторингу запускаються лише з профілем `observability`, як описано в розділах [Логи](#логи) і [Метрики](#метрики).
+Сервіси моніторингу запускаються лише з профілем `observability`, як описано в розділах [Логи](#логи), [Метрики](#метрики) і [Помилки](#помилки).
 
 ## Логи
 
@@ -178,6 +178,28 @@ docker compose --profile observability up -d
 Кожен рядок логу всередині спану має поля `trace_id` і `span_id`. У Grafana Explore біля такого рядка Loki стоїть посилання TraceID, яке відкриває трейс у Jaeger, а в трейсі, відкритому в Grafana через джерело Jaeger, кнопка логів спану показує рядки Loki з тим самим `trace_id` і сервісом.
 
 Застосунки на хості (`pnpm dev`) теж можуть надсилати трейси на http://localhost:4318, якщо Alloy запущено. Сервіс ai на хості читає змінну зі свого `services/ai/.env`.
+
+## Помилки
+
+Збої api, worker, analytics і web збирає GlitchTip (сумісний із Sentry) у профілі `observability`:
+
+```bash
+docker compose --profile observability up -d --wait glitchtip
+docker compose --profile observability run --rm glitchtip-bootstrap
+```
+
+GlitchTip зберігає дані в окремій базі `glitchtip` того самого Postgres, її створює одноразовий сервіс `glitchtip-db`. Сервіс `glitchtip-bootstrap` створює адміністратора, організацію і проєкт `jobflow`, ключ DSN і токен для source maps зі значень `.env.example`, тож у UI нічого клацати не треба. Наприкінці він друкує рядок `SENTRY_DSN=http://<GLITCHTIP_DSN_KEY>@localhost:8003/1`. Повторний запуск нічого не дублює. GlitchTip відкривається на http://localhost:8003, логін і пароль задають `GLITCHTIP_ADMIN_EMAIL` і `GLITCHTIP_ADMIN_PASSWORD` з `.env.example`: `admin@jobflow.local` і `jobflow-glitchtip`.
+
+Поки `SENTRY_DSN` і `NEXT_PUBLIC_SENTRY_DSN` порожні, як у `.env.example`, звіти вимкнено. Для api, worker і analytics вставте надрукований DSN у `SENTRY_DSN` у `.env`, а в `SENTRY_RELEASE` запишіть вивід `git rev-parse HEAD`. У compose адреса стає `glitchtip:8000`. Web кореневого `.env` не читає і бере `NEXT_PUBLIC_SENTRY_DSN` і `NEXT_PUBLIC_SENTRY_RELEASE` із середовища під час продакшн-збірки. Після збірки `sourcemaps:upload` завантажує source maps у GlitchTip з токеном `SENTRY_AUTH_TOKEN` з `.env.example`:
+
+```bash
+export NEXT_PUBLIC_SENTRY_DSN=http://<GLITCHTIP_DSN_KEY>@localhost:8003/1
+export NEXT_PUBLIC_SENTRY_RELEASE=$(git rev-parse HEAD)
+pnpm --filter @jobflow/web build
+SENTRY_AUTH_TOKEN=<SENTRY_AUTH_TOKEN> pnpm --filter @jobflow/web sourcemaps:upload
+```
+
+Тоді панель «Щось зламалось у нас, не в тебе» показує рядок «Ми вже отримали звіт.», а `код` на ній збігається з першими 8 символами id події в GlitchTip. Подію можна знайти пошуком `code:<код>`, а її стек для web показує рядки TypeScript. Email, тексти нотаток і вакансій у події не потрапляють: перед відправкою з події прибираються текст помилки, тіло, заголовки і параметри запиту, дані користувача і breadcrumbs.
 
 ## Команди
 

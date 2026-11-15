@@ -13,7 +13,8 @@ from tests.factories import REQUIRED_ENV, serving, settings_for
 
 @pytest.fixture(autouse=True)
 def isolated_env(monkeypatch: pytest.MonkeyPatch) -> None:
-    for name in (*REQUIRED_ENV, "LOG_LEVEL", "OTEL_EXPORTER_OTLP_ENDPOINT"):
+    unset = ("LOG_LEVEL", "OTEL_EXPORTER_OTLP_ENDPOINT", "SENTRY_DSN", "SENTRY_RELEASE")
+    for name in (*REQUIRED_ENV, *unset):
         monkeypatch.delenv(name, raising=False)
 
 

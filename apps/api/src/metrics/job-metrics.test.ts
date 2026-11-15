@@ -1,36 +1,17 @@
-import { EventEmitter } from 'node:events';
-
-import { WorkerHost } from '@nestjs/bullmq';
 import { DiscoveryModule } from '@nestjs/core';
 import { Test } from '@nestjs/testing';
 import { beforeAll, describe, expect, it } from 'vitest';
 
 import { metricLinesOf } from '../test/metrics.js';
+import { FakeHost, FakeWorker, hostOf } from '../test/worker-hosts.js';
 import { JobMetrics } from './job-metrics.js';
 import { MetricsRegistry } from './metrics-registry.js';
-
-class FakeWorker extends EventEmitter {
-  constructor(readonly name: string) {
-    super();
-  }
-}
-
-class FakeHost extends WorkerHost {
-  process(): Promise<void> {
-    return Promise.resolve();
-  }
-}
 
 class AiHost extends FakeHost {}
 
 class PushHost extends FakeHost {}
 
 const workers = { ai: new FakeWorker('ai'), push: new FakeWorker('push') };
-
-function hostOf(worker: FakeWorker, host: FakeHost): FakeHost {
-  Object.defineProperty(host, '_worker', { value: worker });
-  return host;
-}
 
 const timedJob = (seconds: number) => ({ processedOn: 1_000, finishedOn: 1_000 + seconds * 1000 });
 

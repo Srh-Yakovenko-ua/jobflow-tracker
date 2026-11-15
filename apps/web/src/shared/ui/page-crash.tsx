@@ -2,7 +2,9 @@
 
 import { useEffect, useState } from 'react';
 
-import { type IncidentError, logIncident, newIncident } from '@/shared/lib/incident';
+import { config } from '@/shared/config';
+import { type IncidentError, newIncident } from '@/shared/lib/incident';
+import { reportIncident } from '@/shared/lib/report-incident';
 
 import { CrashPanel } from './crash-panel';
 
@@ -14,9 +16,15 @@ export type ErrorPageProps = Readonly<{
 export type PageCrashProps = Readonly<{ error: IncidentError; onRetry: () => void }>;
 
 export function PageCrash({ error, onRetry }: PageCrashProps) {
-  const [incident] = useState(() => newIncident({ error, now: new Date() }));
+  const [incident] = useState(() => newIncident({ now: new Date() }));
   useEffect(() => {
-    logIncident({ error, incident });
+    reportIncident({ error, incident });
   }, [error, incident]);
-  return <CrashPanel incident={incident} view={{ scope: 'page' }} onRetry={onRetry} />;
+  return (
+    <CrashPanel
+      incident={incident}
+      view={{ scope: 'page', reported: config.errorTracking !== undefined }}
+      onRetry={onRetry}
+    />
+  );
 }

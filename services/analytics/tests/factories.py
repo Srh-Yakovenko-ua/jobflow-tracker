@@ -384,11 +384,26 @@ class JwksServer:
         return json.dumps({"keys": [signer.jwk() for signer in self.signers]}).encode()
 
 
+class QuietHandler(BaseHTTPRequestHandler):
+    def log_message(self, *_: Any) -> None:
+        return
+
+
+@contextmanager
+def local_http_server(handler: type[BaseHTTPRequestHandler]) -> Iterator[int]:
+    with ThreadingHTTPServer(("127.0.0.1", 0), handler) as server:
+        threading.Thread(target=server.serve_forever, daemon=True).start()
+        try:
+            yield server.server_address[1]
+        finally:
+            server.shutdown()
+
+
 @contextmanager
 def jwks_server(signers: list[TokenSigner]) -> Iterator[JwksServer]:
     state = JwksServer(signers)
 
-    class KeySetHandler(BaseHTTPRequestHandler):
+    class KeySetHandler(QuietHandler):
         def do_GET(self) -> None:
             body = state.key_set()
             self.send_response(200)
@@ -396,13 +411,6 @@ def jwks_server(signers: list[TokenSigner]) -> Iterator[JwksServer]:
             self.end_headers()
             self.wfile.write(body)
 
-        def log_message(self, *_: Any) -> None:
-            return
-
-    with ThreadingHTTPServer(("127.0.0.1", 0), KeySetHandler) as server:
-        state.port = server.server_address[1]
-        threading.Thread(target=server.serve_forever, daemon=True).start()
-        try:
-            yield state
-        finally:
-            server.shutdown()
+    with local_http_server(KeySetHandler) as port:
+        state.port = port
+        yield state

@@ -12,6 +12,7 @@ export * from './ai/vacancy-parse.js';
 export * from './ai-statuses.js';
 export * from './analytics-cache.js';
 export * from './demo-user.js';
+export * from './error-event-scrub.js';
 export * from './labels.js';
 export * from './notification-target.js';
 export * from './notifications.js';

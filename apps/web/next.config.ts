@@ -7,10 +7,15 @@ const nextConfig: NextConfig = {
   agentRules: false,
   devIndicators: false,
   reactCompiler: true,
+  productionBrowserSourceMaps: true,
   allowedDevOrigins: ['127.0.0.1'],
   output: 'standalone',
   outputFileTracingRoot: path.join(import.meta.dirname, '../..'),
-  experimental: { validateRSCRequestHeaders: false },
+  experimental: {
+    validateRSCRequestHeaders: false,
+    turbopackScopeHoisting: false,
+    turbopackFileSystemCacheForBuild: false,
+  },
   headers: () =>
     Promise.resolve([
       {

@@ -1,4 +1,4 @@
-import { config } from './web-config';
+import { config, type WebConfig } from './web-config';
 
 export type ContentSecurityPolicyInput = {
   nonce: string;
@@ -34,10 +34,15 @@ export function buildContentSecurityPolicy({
     .join('; ');
 }
 
+export function connectOrigins(web: WebConfig): string[] {
+  const reportOrigins = web.errorTracking ? [web.errorTracking.dsn] : [];
+  return [web.apiUrl, web.analyticsBaseUrl, web.filesUrl, ...reportOrigins];
+}
+
 export function contentSecurityPolicy(nonce: string): string {
   return buildContentSecurityPolicy({
     nonce,
     dev: process.env.NODE_ENV === 'development',
-    origins: [config.apiUrl, config.analyticsBaseUrl, config.filesUrl],
+    origins: connectOrigins(config),
   });
 }

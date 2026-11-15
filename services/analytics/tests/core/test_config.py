@@ -44,6 +44,28 @@ def test_swaps_in_the_asyncpg_driver_and_keeps_the_rest_of_the_url(
     )
 
 
+def test_leaves_error_reporting_off_until_a_dsn_is_set(
+    required_env: pytest.MonkeyPatch,
+) -> None:
+    settings = Settings(_env_file=None)
+
+    assert (settings.sentry_dsn, settings.sentry_release) == ("", "")
+
+
+def test_reads_the_error_reporting_dsn_and_release_from_the_env(
+    required_env: pytest.MonkeyPatch,
+) -> None:
+    required_env.setenv("SENTRY_DSN", "http://5f3a9c0e@glitchtip:8000/1")
+    required_env.setenv("SENTRY_RELEASE", "59dbb20")
+
+    settings = Settings(_env_file=None)
+
+    assert (settings.sentry_dsn, settings.sentry_release) == (
+        "http://5f3a9c0e@glitchtip:8000/1",
+        "59dbb20",
+    )
+
+
 def test_derives_the_jwks_url_from_the_api_url_without_its_trailing_slash(
     required_env: pytest.MonkeyPatch,
 ) -> None:

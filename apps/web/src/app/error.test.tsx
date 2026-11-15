@@ -1,7 +1,7 @@
 import { screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { CRASH_SECRET, renderCrashedPage } from '@/test/crashed-page';
+import { CRASH_SECRET, renderCrashedPage, shownCrashCode } from '@/test/crashed-page';
 import { quietLogs } from '@/test/quiet-logs';
 
 import ErrorPage from './error';
@@ -11,7 +11,7 @@ describe('the page error boundary', () => {
     vi.restoreAllMocks();
   });
 
-  it('shows the crash panel with the Next digest as the code and never the error message', () => {
+  it('shows the crash panel with the event id code, not the Next digest, and never the error message', () => {
     quietLogs();
     renderCrashedPage(ErrorPage);
 
@@ -20,7 +20,7 @@ describe('the page error boundary', () => {
       screen.getByRole('heading', { level: 2, name: 'Щось зламалось у нас, не в тебе' }),
     ).toBeDefined();
     expect(screen.getByText('Сторінка впала')).toBeDefined();
-    expect(screen.getByText(/^код 3f9a1c27 · \d{2}\.\d{2}, \d{2}:\d{2}$/)).toBeDefined();
+    expect(screen.getByText(/^код [0-9a-f]{8} · \d{2}\.\d{2}, \d{2}:\d{2}$/)).toBeDefined();
     expect(document.body.textContent).not.toContain(CRASH_SECRET);
   });
 
@@ -38,6 +38,6 @@ describe('the page error boundary', () => {
     renderCrashedPage(ErrorPage);
 
     expect(logged).toHaveBeenCalledTimes(1);
-    expect(logged.mock.calls[0]?.[0]).toMatchObject({ code: '3f9a1c27' });
+    expect(logged.mock.calls[0]?.[0]).toMatchObject({ code: shownCrashCode() });
   });
 });

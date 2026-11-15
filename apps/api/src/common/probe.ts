@@ -12,6 +12,7 @@ export const DEPENDENCY_LIMITS = {
   documentsTimeoutMs: 10_000,
   analyticsTimeoutMs: 10_000,
   traceExportTimeoutMs: 2000,
+  errorReportTimeoutMs: 2000,
 } as const;
 
 export async function isAnswered(check: Promise<unknown>): Promise<boolean> {

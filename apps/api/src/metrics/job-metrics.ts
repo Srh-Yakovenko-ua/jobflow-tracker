@@ -1,9 +1,9 @@
-import { WorkerHost } from '@nestjs/bullmq';
 import { Injectable, type OnApplicationBootstrap } from '@nestjs/common';
 import { DiscoveryService } from '@nestjs/core';
 import type { Job } from 'bullmq';
 import { Histogram } from 'prom-client';
 
+import { workerHostsOf } from '../queues/worker-hosts.js';
 import { MetricsRegistry } from './metrics-registry.js';
 
 type JobOutcome = { queue: string; status: 'completed' | 'failed' };
@@ -11,8 +11,6 @@ type JobOutcome = { queue: string; status: 'completed' | 'failed' };
 type TimedJob = Pick<Job, 'processedOn' | 'finishedOn'>;
 
 const MS_PER_SECOND = 1000;
-
-const isWorkerHost = (provided: unknown): provided is WorkerHost => provided instanceof WorkerHost;
 
 @Injectable()
 export class JobMetrics implements OnApplicationBootstrap {
@@ -31,7 +29,7 @@ export class JobMetrics implements OnApplicationBootstrap {
   }
 
   onApplicationBootstrap(): void {
-    for (const { worker } of this.workerHosts()) {
+    for (const { worker } of workerHostsOf(this.discovery)) {
       worker.on('completed', (job) => {
         this.observe(job, { queue: worker.name, status: 'completed' });
       });
@@ -39,13 +37,6 @@ export class JobMetrics implements OnApplicationBootstrap {
         this.observe(job, { queue: worker.name, status: 'failed' });
       });
     }
-  }
-
-  private workerHosts(): WorkerHost[] {
-    return this.discovery
-      .getProviders()
-      .map(({ instance }): unknown => instance)
-      .filter(isWorkerHost);
   }
 
   private observe(job: TimedJob | undefined, outcome: JobOutcome): void {
