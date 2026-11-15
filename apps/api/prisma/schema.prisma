@@ -577,6 +577,7 @@ model OutboxEvent {
   payload     Json
   publishedAt DateTime? @map("published_at") @db.Timestamptz
   attempts    Int       @default(0)
+  traceparent String?
   createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz
   updatedAt   DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz
 

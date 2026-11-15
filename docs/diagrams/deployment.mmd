@@ -17,7 +17,8 @@ flowchart LR
 
   subgraph observability["Профіль observability"]
     loki[("loki<br/>логи, :3100")]
-    alloy["alloy<br/>збирає логи контейнерів, UI :12345"]
+    alloy["alloy<br/>логи контейнерів і трейси OTLP, :4317 і :4318, UI :12345"]
+    jaeger[("jaeger<br/>трейси в пам'яті, UI :16686")]
     prometheus[("prometheus<br/>метрики, :9090")]
     node_exporter["node-exporter<br/>метрики машини"]
     cadvisor["cadvisor<br/>метрики контейнерів"]
@@ -53,6 +54,13 @@ flowchart LR
   redis --- redisdata
   minio --- miniodata
   alloy --> loki
+  api -->|OTLP| alloy
+  worker -->|OTLP| alloy
+  analytics -->|OTLP| alloy
+  ai -->|OTLP| alloy
+  alloy --> jaeger
+  grafana --> jaeger
+  browser -->|"UI :16686"| jaeger
   prometheus -->|"метрики, схема в metrics.mmd"| compose
   prometheus --> node_exporter
   prometheus --> cadvisor

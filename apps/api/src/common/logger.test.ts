@@ -1,15 +1,18 @@
 import { Controller, Get, Logger, Req } from '@nestjs/common';
 import type { NestExpressApplication } from '@nestjs/platform-express';
 import { Test } from '@nestjs/testing';
+import type { SpanContext } from '@opentelemetry/api';
 import type { Request } from 'express';
 import { LoggerModule } from 'nestjs-pino';
 import request from 'supertest';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
+import { z } from 'zod';
 
 import { configModule } from '../config/app-config.js';
 import { APP_OPTIONS, configureApp } from '../configure-app.js';
 import { MetricsModule } from '../metrics/metrics.module.js';
 import { memoryLog } from '../test/memory-log.js';
+import { insideSpan, recordSpans } from '../test/tracing.js';
 import { loggerParams } from './logger.js';
 
 const MARKER_USER_ID = 'marker-user';
@@ -49,9 +52,32 @@ class ProbeController {
     req.user = { id: MARKER_USER_ID, scope: ['user'] };
     return { handled: true };
   }
+
+  @Get('traced')
+  traced(): Promise<SpanContext> {
+    return insideSpan((span) => {
+      this.logger.log('traced line');
+      return span.spanContext();
+    });
+  }
 }
 
+const activeSpanSchema = z.object({ traceId: z.string(), spanId: z.string() });
+
+const UNTRACED_LINE_KEYS = [
+  'level',
+  'time',
+  'pid',
+  'hostname',
+  'req',
+  'requestId',
+  'context',
+  'msg',
+];
+
 const log = memoryLog();
+
+recordSpans();
 
 describe('request logs', () => {
   let app: NestExpressApplication;
@@ -147,6 +173,21 @@ describe('request logs', () => {
     const completed = log.parsed().find((line) => line.msg === 'request completed');
     expect(completed).toMatchObject({ userId: MARKER_USER_HASH });
     expect(log.lines.join('\n')).not.toContain(MARKER_USER_ID);
+  });
+
+  it('puts the trace_id and span_id of the active span on a line written inside it', async () => {
+    const response = await request(app.getHttpServer()).get('/api/v1/probe/traced');
+    const { traceId, spanId } = activeSpanSchema.parse(response.body);
+
+    const tracedLine = log.parsed().find((line) => line.msg === 'traced line');
+    expect(tracedLine).toMatchObject({ trace_id: traceId, span_id: spanId });
+  });
+
+  it('writes a line outside any span with no trace field, as before tracing', async () => {
+    await request(app.getHttpServer()).get('/api/v1/probe');
+
+    const [handledLine] = log.parsed();
+    expect(Object.keys(handledLine ?? {})).toEqual(UNTRACED_LINE_KEYS);
   });
 
   it('writes no request line for the health check', async () => {

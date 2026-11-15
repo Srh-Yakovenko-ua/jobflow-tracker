@@ -1,6 +1,6 @@
 import { getQueueToken } from '@nestjs/bullmq';
 import type { TestingModuleBuilder } from '@nestjs/testing';
-import type { JobsOptions } from 'bullmq';
+import type { JobsOptions, QueueOptions } from 'bullmq';
 
 import { QUEUE_NAMES, type QueueName } from '../queues/queues.js';
 
@@ -16,6 +16,8 @@ export class StubQueue {
   readonly bulks: StubBulkJob[][] = [];
 
   readonly addOptions: JobsOptions[] = [];
+
+  readonly opts: Partial<QueueOptions> = {};
 
   constructor(readonly name: string) {}
 

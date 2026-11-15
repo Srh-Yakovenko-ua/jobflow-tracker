@@ -9,6 +9,7 @@ from app.core.logging import configure_logging
 from app.core.metrics import install_metrics
 from app.core.request_id import assign_request_id
 from app.core.structured import Runtime
+from app.core.tracing import install_tracing
 from app.prompts import check_prompt_versions, load_prompt_versions
 from app.providers import provider_for
 
@@ -29,4 +30,5 @@ def create_app(settings: Settings) -> FastAPI:
     for router in (health.router, complete.router, embed.router):
         app.include_router(router)
     install_metrics(app)
+    install_tracing(app, settings)
     return app

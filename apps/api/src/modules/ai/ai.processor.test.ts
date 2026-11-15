@@ -77,7 +77,6 @@ describe('AiProcessor', () => {
   it('completes an ai.complete job through the service and logs its kind, model, prompt version, tokens and latency', async () => {
     await expect(processor.process(aiJob(VACANCY_JOB))).resolves.toEqual({
       aiResultId: 'ai-result-1',
-      output: VACANCY_COMPLETION.output,
       cached: false,
     });
 

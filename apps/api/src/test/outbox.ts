@@ -15,6 +15,7 @@ export type NewOutboxRows = {
   eventType: ApplicationEventType;
   publishedAt?: Date;
   createdAt?: Date;
+  traceparent?: string;
 };
 
 type SampleApplicationEvents = {
@@ -86,13 +87,13 @@ export async function unpublishedOutboxIds(prisma: PrismaService): Promise<strin
 
 export async function createOutboxRows(
   prisma: PrismaService,
-  { count, eventType, ...dates }: NewOutboxRows,
+  { count, eventType, ...columns }: NewOutboxRows,
 ): Promise<void> {
   const userId = randomUUID();
   await prisma.outboxEvent.createMany({
     data: Array.from({ length: count }, () => ({
       ...applicationEventRow({ ...SAMPLE_APPLICATION_EVENTS[eventType](randomUUID()), userId }),
-      ...dates,
+      ...columns,
     })),
   });
 }

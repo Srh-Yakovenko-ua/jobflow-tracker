@@ -1,11 +1,5 @@
-import { NestFactory } from '@nestjs/core';
-import { Logger } from 'nestjs-pino';
+import { startTracing } from './tracing/tracing.js';
 
-import { boot, BOOT_OPTIONS } from './boot.js';
-import { WorkerModule } from './worker.module.js';
+startTracing({ service: 'worker' });
 
-await boot(async () => {
-  const worker = await NestFactory.createApplicationContext(WorkerModule, BOOT_OPTIONS);
-  worker.useLogger(worker.get(Logger));
-  worker.enableShutdownHooks();
-});
+await import('./serve-worker.js');

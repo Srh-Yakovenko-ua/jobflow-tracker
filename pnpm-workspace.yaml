@@ -12,6 +12,7 @@ allowBuilds:
   esbuild: false
   msgpackr-extract: false
   prisma: false
+  protobufjs: false
   unrs-resolver: false
 
 overrides:

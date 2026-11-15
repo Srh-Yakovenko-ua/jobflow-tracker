@@ -1,15 +1,26 @@
 import time
+from dataclasses import dataclass
 from typing import Any
 
 import pytest
+from opentelemetry.sdk.trace.export.in_memory_span_exporter import InMemorySpanExporter
 from pydantic import TypeAdapter
 
 from app.core.config import DEPENDENCY_LIMITS
 from app.core.metrics import metrics_registry
 from app.core.resources import create_redis
+from app.core.tracing import count_rows
 from app.metrics.norms import Norms
 from app.services.metric_cache import CacheScope, cached_body
-from tests.factories import OUTAGES, USER_ID, Outage, settings_for
+from tests.factories import (
+    OUTAGES,
+    USER_ID,
+    Outage,
+    application,
+    moves,
+    settings_for,
+    stage_events_frame,
+)
 from tests.services.test_cache import Computation, FakeRedis
 
 pytestmark = pytest.mark.anyio
@@ -73,6 +84,48 @@ async def test_counts_each_lookup_by_result_and_times_only_the_computation(
     bodies: dict[str, bytes], expected: tuple[bytes, dict[str, float]]
 ) -> None:
     assert await counted(FakeRedis(dict(bodies)), Computation()) == expected
+
+
+READ_FRAMES = [
+    stage_events_frame(moves(application(0), ["applied", "screening", "offer"])),
+    stage_events_frame(moves(application(1), ["applied", "rejected"])),
+]
+
+
+@dataclass
+class FrameReads(Computation):
+    async def __call__(self) -> Norms:
+        for frame in READ_FRAMES:
+            count_rows(len(frame))
+        return await super().__call__()
+
+
+METRIC_SPANS = {
+    "miss": [
+        (
+            "analytics.metric",
+            {"analytics.metric.name": "funnel", "analytics.metric.rows": 5},
+        )
+    ],
+    "hit": [],
+}
+
+
+@pytest.mark.parametrize(
+    ("bodies", "expected"),
+    [(LOOKUPS[lookup][0], recorded) for lookup, recorded in METRIC_SPANS.items()],
+    ids=list(METRIC_SPANS),
+)
+async def test_records_a_metric_span_with_the_rows_read_only_when_it_computes(
+    *,
+    spans: InMemorySpanExporter,
+    bodies: dict[str, bytes],
+    expected: list[tuple[str, dict[str, Any]]],
+) -> None:
+    await body_of(FakeRedis(dict(bodies)), FrameReads())
+
+    recorded = spans.get_finished_spans()
+    assert [(span.name, dict(span.attributes or {})) for span in recorded] == expected
 
 
 async def test_answers_the_stored_body_of_the_current_version_without_computing() -> (

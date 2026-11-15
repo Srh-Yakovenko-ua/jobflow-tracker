@@ -33,6 +33,7 @@ class Settings(BaseSettings):
     api_url: str
     web_origin: str
     log_level: str = "INFO"
+    otel_exporter_otlp_endpoint: str = ""
 
     @field_validator("database_url_analytics")
     @classmethod

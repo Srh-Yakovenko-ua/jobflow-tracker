@@ -10,6 +10,7 @@ import { configuredRedisUrl, redisAt } from '../../test/live.js';
 import { memoryLog } from '../../test/memory-log.js';
 import { compileProcessorModule } from '../../test/processor.js';
 import { outcomeWithin, startTcpProxy } from '../../test/tcp-proxy.js';
+import { insideSpan, recordSpans, traceparentOf } from '../../test/tracing.js';
 import { LivePublisher } from './live-publisher.js';
 
 const USER_ID = '0199f4b1-2c3d-7e4f-8a51-6b7c8d9e0f1d';
@@ -17,7 +18,10 @@ const JOB_UPDATE = buildJobUpdate({ status: 'done', step: 3 });
 const EVENT = { type: LIVE_EVENTS.jobUpdated, data: JOB_UPDATE };
 const ANSWER_LIMIT_MS = DEPENDENCY_LIMITS.pingTimeoutMs * 2;
 
+type SubscribedPublisher = { publisher: LivePublisher; messages: string[] };
+
 describe('LivePublisher', () => {
+  recordSpans();
   const cleanups: (() => unknown)[] = [];
 
   const log = memoryLog();
@@ -50,7 +54,7 @@ describe('LivePublisher', () => {
     }
   });
 
-  it("publishes the event with a uuid id to the user's channel", async () => {
+  async function subscribedPublisher(): Promise<SubscribedPublisher> {
     const redis = redisAt(await configuredRedisUrl());
     const subscriber = redis.client.duplicate();
     cleanups.push(
@@ -63,14 +67,38 @@ describe('LivePublisher', () => {
     subscriber.on('message', (_channel: string, message: string) => messages.push(message));
     await Promise.all([once(redis.client, 'ready'), once(subscriber, 'ready')]);
     await subscriber.subscribe(`user:${USER_ID}`);
-    const publisher = await publisherOn(redis);
+    return { publisher: await publisherOn(redis), messages };
+  }
+
+  async function onlyMessage(messages: string[]): Promise<unknown> {
+    await expect.poll(() => messages.length).toBe(1);
+    return JSON.parse(messages[0] ?? 'null');
+  }
+
+  it("publishes the event with a uuid id to the user's channel", async () => {
+    const { publisher, messages } = await subscribedPublisher();
 
     await publisher.publish(USER_ID, EVENT);
 
-    await expect.poll(() => messages.length).toBe(1);
-    const { id, ...event } = liveEventSchema.parse(JSON.parse(messages[0] ?? 'null'));
+    const message = await onlyMessage(messages);
+    const { id, ...event } = liveEventSchema.parse(message);
     expect(event).toEqual({ type: 'job.updated', data: JOB_UPDATE });
     expect(id).toMatch(/^[0-9a-f-]{36}$/);
+    expect(message).not.toHaveProperty('traceparent');
+  });
+
+  it('carries the traceparent of the span it publishes under beside the event', async () => {
+    const { publisher, messages } = await subscribedPublisher();
+
+    const spanContext = await insideSpan(async (span) => {
+      await publisher.publish(USER_ID, EVENT);
+      return span.spanContext();
+    });
+
+    expect(await onlyMessage(messages)).toMatchObject({
+      type: 'job.updated',
+      traceparent: traceparentOf(spanContext),
+    });
   });
 
   it('resolves with one warning and no payload in the log while Redis refuses the connection', async () => {

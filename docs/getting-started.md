@@ -59,7 +59,7 @@ docker compose up -d
 docker compose up -d --build --wait api worker
 ```
 
-Команда збирає образ api (ціль `dev`, `apps/api/src` змонтовано в контейнер) і повертає керування, коли healthcheck api стане `healthy`, а worker запуститься. Worker використовує той самий образ з іншою командою, порту не має і healthcheck-а теж, тому в `docker compose ps` у колонці `STATUS` у нього лише `Up`, без `(healthy)`. `--build` потрібен, щоб після pull образ підхопив нові залежності. Health відповідає на http://localhost:4000/api/v1/health. Контейнер api займає той самий порт 4000, що й `pnpm dev`, тому одночасно працює щось одне. Контейнер ai описано в розділі [AI](#ai), analytics і documents нижче. Моніторинг (Loki, Alloy, Prometheus, node-exporter, cAdvisor і Grafana) вмикається профілем: `docker compose --profile observability up -d`.
+Команда збирає образ api (ціль `dev`, `apps/api/src` змонтовано в контейнер) і повертає керування, коли healthcheck api стане `healthy`, а worker запуститься. Worker використовує той самий образ з іншою командою, порту не має і healthcheck-а теж, тому в `docker compose ps` у колонці `STATUS` у нього лише `Up`, без `(healthy)`. `--build` потрібен, щоб після pull образ підхопив нові залежності. Health відповідає на http://localhost:4000/api/v1/health. Контейнер api займає той самий порт 4000, що й `pnpm dev`, тому одночасно працює щось одне. Контейнер ai описано в розділі [AI](#ai), analytics і documents нижче. Моніторинг (Loki, Alloy, Jaeger, Prometheus, node-exporter, cAdvisor і Grafana) вмикається профілем: `docker compose --profile observability up -d`.
 
 Лише web:
 
@@ -106,25 +106,25 @@ docker compose down
 
 Усі порти слухають лише 127.0.0.1.
 
-| Сервіс        | Порт                       | Стан                                |
-| ------------- | -------------------------- | ----------------------------------- |
-| Postgres      | 5432                       | працює                              |
-| Redis         | 6379                       | працює                              |
-| MinIO         | 9000 (API), 9001 (консоль) | працює                              |
-| Mailpit       | 1025 (SMTP), 8025 (UI)     | працює                              |
-| api           | 4000                       | працює                              |
-| worker        | без порту                  | працює                              |
-| web (Next.js) | 3000                       | працює                              |
-| analytics     | 8000                       | працює                              |
-| ai            | 8001                       | працює                              |
-| documents     | 8002                       | працює                              |
-| Prometheus    | 9090                       | профіль `observability`             |
-| Grafana       | 3001                       | профіль `observability`, без логіну |
-| Loki          | 3100                       | профіль `observability`             |
-| Alloy         | 12345 (UI)                 | профіль `observability`             |
-| Jaeger        | 16686                      | з'явиться в OBS-03                  |
-| GlitchTip     | 8003                       | з'явиться в OBS-04                  |
-| Uptime Kuma   | 3002                       | з'явиться в OBS-05                  |
+| Сервіс        | Порт                           | Стан                                |
+| ------------- | ------------------------------ | ----------------------------------- |
+| Postgres      | 5432                           | працює                              |
+| Redis         | 6379                           | працює                              |
+| MinIO         | 9000 (API), 9001 (консоль)     | працює                              |
+| Mailpit       | 1025 (SMTP), 8025 (UI)         | працює                              |
+| api           | 4000                           | працює                              |
+| worker        | без порту                      | працює                              |
+| web (Next.js) | 3000                           | працює                              |
+| analytics     | 8000                           | працює                              |
+| ai            | 8001                           | працює                              |
+| documents     | 8002                           | працює                              |
+| Prometheus    | 9090                           | профіль `observability`             |
+| Grafana       | 3001                           | профіль `observability`, без логіну |
+| Loki          | 3100                           | профіль `observability`             |
+| Alloy         | 4317 і 4318 (OTLP), 12345 (UI) | профіль `observability`             |
+| Jaeger        | 16686                          | профіль `observability`             |
+| GlitchTip     | 8003                           | з'явиться в OBS-04                  |
+| Uptime Kuma   | 3002                           | з'явиться в OBS-05                  |
 
 Сервіси моніторингу запускаються лише з профілем `observability`, як описано в розділах [Логи](#логи) і [Метрики](#метрики).
 
@@ -164,6 +164,20 @@ Alloy читає лише контейнери compose-проєкту `jobflow`.
 Метрики є лише в контейнерів compose: застосунки, запущені на хості через `pnpm dev`, Prometheus не бачить.
 
 Prometheus завантажує два приклади правил тривоги: `JobflowHighErrorRate` (понад 5% відповідей api з кодом 5xx протягом 5 хвилин) і `JobflowOutboxLag` (затримка outbox понад 30 секунд протягом хвилини). Їхній стан видно на http://127.0.0.1:9090/alerts. Сповіщення нікуди не надсилаються: Alertmanager у стеку немає.
+
+## Трейси
+
+Трейс показує одну дію користувача через усю систему: api, outbox, черги BullMQ, worker, ai і подію SSE. Схема: [tracing.mmd](diagrams/tracing.mmd). Поки `OTEL_EXPORTER_OTLP_ENDPOINT` порожній, як у `.env.example`, трейси вимкнено і застосунки нічого не надсилають. Щоб увімкнути, задайте в `.env` `OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4318` і підніміть стек з профілем `observability`:
+
+```bash
+docker compose --profile observability up -d
+```
+
+У compose будь-яке непорожнє значення стає `http://alloy:4318` для api, worker, analytics і ai. Alloy приймає OTLP на 4317 (gRPC) і 4318 (HTTP) і передає трейси в Jaeger, який тримає до 20 000 трейсів у пам'яті. Jaeger відкривається на http://127.0.0.1:16686: оберіть сервіс `api`, `worker`, `analytics` або `ai` і натисніть «Find Traces». Вибірка в розробці 100%: зберігається кожен запит і кожна задача, яку він запустив, а запити health і metrics та фонові опитування черг трейсів не створюють. Якщо Alloy не працює, запити не сповільнюються, спани просто губляться.
+
+Кожен рядок логу всередині спану має поля `trace_id` і `span_id`. У Grafana Explore біля такого рядка Loki стоїть посилання TraceID, яке відкриває трейс у Jaeger, а в трейсі, відкритому в Grafana через джерело Jaeger, кнопка логів спану показує рядки Loki з тим самим `trace_id` і сервісом.
+
+Застосунки на хості (`pnpm dev`) теж можуть надсилати трейси на http://localhost:4318, якщо Alloy запущено. Сервіс ai на хості читає змінну зі свого `services/ai/.env`.
 
 ## Команди
 

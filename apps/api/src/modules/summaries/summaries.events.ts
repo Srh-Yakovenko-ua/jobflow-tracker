@@ -2,6 +2,7 @@ import { yearMonthSchema } from '@jobflow/shared';
 import { z } from 'zod';
 
 import type { Prisma } from '../../generated/prisma/client.js';
+import { traceCarrier } from '../../tracing/trace-context.js';
 
 export const SUMMARY_EVENTS = { requested: 'summary.requested' } as const;
 
@@ -27,5 +28,6 @@ export function summaryRequestedEvent(
     aggregateId: userId,
     eventType: SUMMARY_EVENTS.requested,
     payload: { userId, ...requested },
+    ...traceCarrier(),
   };
 }

@@ -26,6 +26,44 @@ function listeningPort(server: Server): number {
   return address.port;
 }
 
+export async function listenLocally(server: Server): Promise<number> {
+  server.listen(0, '127.0.0.1');
+  await once(server, 'listening');
+  return listeningPort(server);
+}
+
+async function closeServer(server: Server, sockets: ReadonlySet<Socket>): Promise<void> {
+  sockets.forEach((socket) => socket.destroy());
+  server.close();
+  await once(server, 'close');
+}
+
+export async function closedPortUrl(): Promise<string> {
+  const server = createServer();
+  const port = await listenLocally(server);
+  await closeServer(server, new Set());
+  return `http://127.0.0.1:${String(port)}`;
+}
+
+export type SilentServer = {
+  readonly url: string;
+  readonly port: number;
+  readonly close: () => Promise<void>;
+};
+
+export async function startSilentServer(): Promise<SilentServer> {
+  const sockets = new Set<Socket>();
+  const server = createServer((socket) => {
+    sockets.add(socket.on('error', () => socket.destroy()));
+  });
+  const port = await listenLocally(server);
+  return {
+    url: `http://127.0.0.1:${String(port)}`,
+    port,
+    close: () => closeServer(server, sockets),
+  };
+}
+
 function upstreamPort(upstream: URL): number {
   const port = upstream.port === '' ? DEFAULT_PORTS[upstream.protocol] : Number(upstream.port);
   if (port === undefined) {
@@ -50,20 +88,14 @@ export async function startTcpProxy(target: string): Promise<TcpProxy> {
     });
     service.on('close', () => client.destroy());
   });
-  server.listen(0, '127.0.0.1');
-  await once(server, 'listening');
   const url = new URL(target);
   url.hostname = '127.0.0.1';
-  url.port = String(listeningPort(server));
+  url.port = String(await listenLocally(server));
   return {
     url: url.href,
     silence: () => {
       silent = true;
     },
-    close: async () => {
-      sockets.forEach((socket) => socket.destroy());
-      server.close();
-      await once(server, 'close');
-    },
+    close: () => closeServer(server, sockets),
   };
 }

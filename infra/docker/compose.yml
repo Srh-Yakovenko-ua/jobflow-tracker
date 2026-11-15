@@ -11,6 +11,7 @@ x-api-environment: &api-environment
   AI_SERVICE_URL: http://ai:8001
   ANALYTICS_URL: http://analytics:8000
   DOCUMENTS_SERVICE_URL: http://documents:8002
+  OTEL_EXPORTER_OTLP_ENDPOINT: ${OTEL_EXPORTER_OTLP_ENDPOINT:+http://alloy:4318}
 
 services:
   postgres:
@@ -166,6 +167,7 @@ services:
       REDIS_URL: redis://redis:6379
       API_URL: http://api:4000
       WEB_ORIGIN: ${WEB_ORIGIN:-http://localhost:3000}
+      OTEL_EXPORTER_OTLP_ENDPOINT: ${OTEL_EXPORTER_OTLP_ENDPOINT:+http://alloy:4318}
     ports:
       - '127.0.0.1:8000:8000'
     depends_on:
@@ -197,6 +199,7 @@ services:
     environment:
       API_JWKS_URL: http://api:4000/.well-known/jwks.json
       AI_FAKE_DELAY_SECONDS: ${AI_FAKE_DELAY_SECONDS:-0}
+      OTEL_EXPORTER_OTLP_ENDPOINT: ${OTEL_EXPORTER_OTLP_ENDPOINT:+http://alloy:4318}
     ports:
       - '127.0.0.1:8001:8001'
     healthcheck:
@@ -284,12 +287,30 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock:ro
     ports:
       - '127.0.0.1:12345:12345'
+      - '127.0.0.1:4317:4317'
+      - '127.0.0.1:4318:4318'
     depends_on:
       loki:
+        condition: service_started
+      jaeger:
         condition: service_started
     healthcheck:
       disable: true
     mem_limit: 256m
+    networks:
+      - jobflow
+
+  jaeger:
+    image: jaegertracing/jaeger:2.23.0
+    profiles: [observability]
+    command: ['--config=/etc/jaeger/config.yaml']
+    volumes:
+      - ./observability/jaeger/config.yaml:/etc/jaeger/config.yaml:ro
+    ports:
+      - '127.0.0.1:16686:16686'
+    healthcheck:
+      disable: true
+    mem_limit: 512m
     networks:
       - jobflow
 
@@ -308,6 +329,8 @@ services:
       - '127.0.0.1:3001:3000'
     depends_on:
       loki:
+        condition: service_started
+      jaeger:
         condition: service_started
       prometheus:
         condition: service_healthy

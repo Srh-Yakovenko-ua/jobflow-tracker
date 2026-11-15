@@ -22,10 +22,13 @@ import { errorMessageOf } from '../../common/error-message.js';
 import { parsedJson } from '../../common/parsed-json.js';
 import { MetricsRegistry } from '../../metrics/metrics-registry.js';
 import { RedisService } from '../../redis/redis.service.js';
+import { inChildSpan, tracedMessageSchema } from '../../tracing/trace-context.js';
 import type { AccessUser } from '../auth/index.js';
 import { LIVE_CHANNEL } from './live-publisher.js';
 
 export const LIVE_STREAM_LIMITS = { perUser: 5 } as const;
+
+const LIVE_PUSH_SPAN = 'live.push';
 
 type ReceivedLiveEvent = { userId: string; event: LiveEvent };
 
@@ -158,7 +161,16 @@ export class LiveHub implements OnModuleDestroy {
       this.logger.warn({ userId }, 'live event dropped');
       return;
     }
-    this.received.next({ userId, event });
+    const push = () => {
+      this.received.next({ userId, event });
+    };
+    const traced = parsedJson(tracedMessageSchema, message);
+    if (traced === undefined) {
+      push();
+      return;
+    }
+    const attributes = { 'live.event.type': event.type };
+    inChildSpan({ name: LIVE_PUSH_SPAN, traceparent: traced.traceparent, attributes }, push);
   }
 
   private async endStreamsWhileRedisIsDown(): Promise<void> {

@@ -1,5 +1,11 @@
+import { existsSync, readFileSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
+import { parseEnv as parseEnvFile } from 'node:util';
+
 import type { OAuthProvider } from '@jobflow/shared';
 import { z } from 'zod';
+
+export const ENV_FILE_PATH = fileURLToPath(new URL('../../../../.env', import.meta.url));
 
 const httpUrl = z.url({ protocol: /^https?$/ });
 const requiredText = z.string().min(1);
@@ -79,6 +85,7 @@ const envFields = z.object({
   OAUTH_GITHUB_CLIENT_SECRET: z.string().optional(),
   OAUTH_GOOGLE_CLIENT_ID: z.string().optional(),
   OAUTH_GOOGLE_CLIENT_SECRET: z.string().optional(),
+  OTEL_EXPORTER_OTLP_ENDPOINT: httpUrl.optional(),
 });
 
 export const envSchema = envFields.superRefine(requireWholeCredentialPairs);
@@ -109,4 +116,11 @@ export function loadEnv(source: NodeJS.ProcessEnv): Readonly<Env> {
   }
   process.stderr.write(`${describeEnvError(result.error)}\n`);
   return process.exit(1);
+}
+
+export function loadProcessEnv(): Readonly<Env> {
+  const fromFile = existsSync(ENV_FILE_PATH)
+    ? parseEnvFile(readFileSync(ENV_FILE_PATH, 'utf8'))
+    : {};
+  return loadEnv({ ...fromFile, ...process.env });
 }

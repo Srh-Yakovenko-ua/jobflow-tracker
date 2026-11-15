@@ -2,6 +2,7 @@ import { userSettingsPatchSchema } from '@jobflow/shared';
 import { z } from 'zod';
 
 import type { Prisma } from '../../generated/prisma/client.js';
+import { traceCarrier } from '../../tracing/trace-context.js';
 
 export const SETTINGS_EVENTS = { changed: 'settings.changed' } as const;
 
@@ -30,5 +31,6 @@ export function settingsChangedEvent(
     aggregateId: userId,
     eventType: SETTINGS_EVENTS.changed,
     payload: { userId, fields },
+    ...traceCarrier(),
   };
 }

@@ -1,6 +1,7 @@
 import { z } from 'zod';
 
 import type { Prisma } from '../../generated/prisma/client.js';
+import { traceCarrier } from '../../tracing/trace-context.js';
 
 export const AUTH_EVENTS = { userRegistered: 'user.registered' } as const;
 
@@ -14,5 +15,6 @@ export function userRegisteredEvent(payload: UserRegisteredPayload): Prisma.Outb
     aggregateId: payload.userId,
     eventType: AUTH_EVENTS.userRegistered,
     payload,
+    ...traceCarrier(),
   };
 }

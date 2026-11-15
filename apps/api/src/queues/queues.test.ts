@@ -1,4 +1,5 @@
 import { ConfigService } from '@nestjs/config';
+import { BullMQOtel } from 'bullmq-otel';
 import { describe, expect, it } from 'vitest';
 
 import type { AppConfig } from '../config/app-config.js';
@@ -44,12 +45,15 @@ describe('DEFAULT_JOB_OPTIONS', () => {
 });
 
 describe('queueOptions', () => {
-  it('connects through REDIS_URL and applies the default job options to every queue', () => {
+  it('connects through REDIS_URL and applies the default job options and traces every queue', () => {
     const config: AppConfig = new ConfigService({ REDIS_URL: 'rediss://:p%40ss@cache:6380/2' });
 
-    expect(queueOptions(config)).toEqual({
+    const { telemetry, ...options } = queueOptions(config);
+
+    expect(options).toEqual({
       connection: { url: 'rediss://:p%40ss@cache:6380/2' },
       defaultJobOptions: DEFAULT_JOB_OPTIONS,
     });
+    expect(telemetry).toBeInstanceOf(BullMQOtel);
   });
 });
