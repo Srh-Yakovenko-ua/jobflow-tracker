@@ -15,7 +15,9 @@ type PracticeQuestion = InterviewPrepResult['questions'][number];
 
 const COPY = uk.interviewPrep;
 
-function QuestionRow({ question, hint }: PracticeQuestion) {
+type QuestionRowProps = Readonly<{ practice: PracticeQuestion }>;
+
+function QuestionRow({ practice }: QuestionRowProps) {
   const disclosure = useDisclosure();
   return (
     <li className="flex flex-col shadow-[inset_0_-1px_0_var(--line-soft)] last:shadow-none">
@@ -24,7 +26,7 @@ function QuestionRow({ question, hint }: PracticeQuestion) {
         {...disclosure.toggle}
         className="flex min-h-11 items-center justify-between gap-3 rounded-sm text-left text-[14px] leading-[1.45] font-semibold wrap-anywhere transition-colors duration-(--duration-instant) ease-standard hover:text-link active:text-link"
       >
-        {question}
+        {practice.question}
         <ChevronDown
           aria-hidden
           size={16}
@@ -38,7 +40,7 @@ function QuestionRow({ question, hint }: PracticeQuestion) {
       <div id={disclosure.regionId}>
         <Reveal shown={disclosure.shown}>
           <p className="pb-3 text-[13px] leading-[1.55] wrap-anywhere text-ink-2">
-            {COPY.hint(hint)}
+            {COPY.hint(practice.hint)}
           </p>
         </Reveal>
       </div>
@@ -55,7 +57,7 @@ export function PracticeQuestions({ questions }: PracticeQuestionsProps) {
         <Reveal shown={disclosure.shown}>
           <ul aria-label={COPY.questionsTitle} className="flex flex-col">
             {questions.map((practice) => (
-              <QuestionRow key={practice.question} {...practice} />
+              <QuestionRow key={practice.question} practice={practice} />
             ))}
           </ul>
         </Reveal>

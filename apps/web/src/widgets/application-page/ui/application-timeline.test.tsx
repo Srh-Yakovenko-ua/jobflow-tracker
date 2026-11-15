@@ -80,7 +80,7 @@ afterEach(() => {
 });
 
 describe('ApplicationTimeline after an interview', () => {
-  it('asks «Що питали?» under the latest interview only, and the saved answer lands as a note', async () => {
+  it('asks «Що питали?» under the latest interview only, lands the answer saved by keyboard as a note and hands focus to the journal heading', async () => {
     const notes = noteRoute();
     server.use(notes.handler);
     const { user, section } = renderTimeline({
@@ -94,8 +94,12 @@ describe('ApplicationTimeline after an interview', () => {
     expect(within(section).getAllByRole('group', QUESTION)).toHaveLength(1);
     expect(question.closest('li')?.querySelector('time')?.textContent).toBe('позавчора');
     await user.click(within(question).getByRole('button', { name: 'Алгоритми' }));
-    await user.click(within(section).getByRole('button', { name: 'Зберегти' }));
+    within(section).getByRole('button', { name: 'Зберегти' }).focus();
+    await user.keyboard('{Enter}');
     await expect.poll(() => sentNoteBodiesOf(notes.sent)).toEqual(['Що питали: Алгоритми']);
+    await expect
+      .poll(() => document.activeElement)
+      .toBe(within(section).getByRole('heading', { name: HEADING }));
   });
 
   it('«Пропустити» by keyboard hands focus to the journal heading, so the place is kept', async () => {

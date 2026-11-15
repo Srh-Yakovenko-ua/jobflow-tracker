@@ -1,8 +1,9 @@
 import { screen, waitFor, within } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
+import { errorReply } from '@/test/api-handlers';
 import { ACME_APPLICATION } from '@/test/application-fixtures';
-import { fixtureIdOf } from '@/test/board-fixtures';
+import { fixtureIdOf, type MoveRouteOptions } from '@/test/board-fixtures';
 import { noteRoute, sentNoteBodiesOf } from '@/test/note-fixtures';
 import { renderViewInApp } from '@/test/render-in-app';
 import { server } from '@/test/server';
@@ -22,8 +23,10 @@ afterEach(() => {
   localStorage.clear();
 });
 
-function renderQuestions(itemIds: readonly string[] = [INTERVIEW_ID]) {
-  const route = noteRoute();
+const SAVE_FAILED = () => errorReply({ status: 500, type: 'internal_error' });
+
+function renderQuestions(itemIds: readonly string[] = [INTERVIEW_ID], control?: MoveRouteOptions) {
+  const route = noteRoute(control);
   server.use(meRoute(), route.handler);
   const { user, view } = renderViewInApp(
     <>
@@ -59,6 +62,28 @@ describe('AskedTopicsQuestion', () => {
       expect(screen.queryByRole('group', QUESTION)).toBeNull();
     });
     expect(JSON.parse(localStorage.getItem(ASKED_KEY) ?? '')).toEqual([INTERVIEW_ID]);
+  });
+
+  it('a failed save shows the error toast, keeps the question open and retries with the same key', async () => {
+    const { user, sent } = renderQuestions([INTERVIEW_ID], { reply: SAVE_FAILED });
+    const question = await screen.findByRole('group', QUESTION);
+    await user.click(within(question).getByRole('button', { name: 'SQL' }));
+    const save = screen.getByRole('button', { name: 'Зберегти' });
+
+    await user.click(save);
+
+    expect(await screen.findByText('Не вдалося зберегти')).toBeDefined();
+    expect(screen.getByRole('group', QUESTION)).toBeDefined();
+    expect(localStorage.getItem(ASKED_KEY)).toBeNull();
+    const retry = noteRoute();
+    server.use(retry.handler);
+    await user.click(save);
+    await waitFor(() => {
+      expect(screen.queryByRole('group', QUESTION)).toBeNull();
+    });
+    expect(sentNoteBodiesOf(retry.sent)).toEqual(['Що питали: SQL']);
+    expect(retry.sent[0]?.idempotencyKey).toMatch(/^[\da-f-]{36}$/);
+    expect(retry.sent[0]?.idempotencyKey).toBe(sent[0]?.idempotencyKey);
   });
 
   it('offers the 8 note topics analytics reads, none picked yet', async () => {
