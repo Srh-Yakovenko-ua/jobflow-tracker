@@ -4,13 +4,8 @@ import { describe, expect, it, vi } from 'vitest';
 import { installPushBrowser, OLD_PUSH_KEY } from '@/test/push-browser';
 
 import { logger } from './logger';
-import {
-  applicationServerKeyOf,
-  dropPushSubscription,
-  pushRegistration,
-  pushSupported,
-  usePushPermission,
-} from './web-push';
+import { dropPushSubscription, pushSupported } from './push-subscription';
+import { applicationServerKeyOf, pushRegistration, usePushPermission } from './web-push';
 
 describe('web push in the browser', () => {
   it('a base64url VAPID key becomes the bytes it encodes, padding restored', () => {

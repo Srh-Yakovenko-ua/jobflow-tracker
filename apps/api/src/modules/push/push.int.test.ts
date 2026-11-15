@@ -1,4 +1,4 @@
-import { pushPublicKeySchema, pushSubscriptionCreatedSchema } from '@jobflow/shared';
+import { PUSH_LIMITS, pushPublicKeySchema, pushSubscriptionCreatedSchema } from '@jobflow/shared';
 import { getQueueToken } from '@nestjs/bullmq';
 import type { TestingModule } from '@nestjs/testing';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
@@ -126,6 +126,28 @@ describe('push subscriptions', () => {
 
     const owners = await testApp.prisma.pushSubscription.findMany({ select: { userId: true } });
     expect(owners).toEqual([{ userId: bohdan.userId }]);
+  });
+
+  it('an eleventh subscription replaces the oldest', async () => {
+    const [olena, bohdan] = [await signedIn(), await signedIn()];
+    await subscribe(bohdan.accessToken, BOHDAN_SUBSCRIPTION);
+    const endpoints = Array.from(
+      { length: PUSH_LIMITS.subscriptionsPerUser + 1 },
+      (_, index) => `${CHROME_SUBSCRIPTION.endpoint}-${String(index + 1)}`,
+    );
+    for (const endpoint of endpoints) {
+      await subscribe(olena.accessToken, { ...CHROME_SUBSCRIPTION, endpoint });
+    }
+
+    const kept = await testApp.prisma.pushSubscription.findMany({
+      where: { userId: olena.userId },
+      select: { endpoint: true },
+      orderBy: { createdAt: 'asc' },
+    });
+    expect(kept.map(({ endpoint }) => endpoint)).toEqual(endpoints.slice(1));
+    expect(await testApp.prisma.pushSubscription.count({ where: { userId: bohdan.userId } })).toBe(
+      1,
+    );
   });
 
   it.each([

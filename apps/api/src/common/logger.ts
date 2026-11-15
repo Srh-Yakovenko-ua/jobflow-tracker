@@ -50,6 +50,33 @@ const userHashOf = (userId: string): string =>
 const withHashedUser = (line: Record<string, unknown>): Record<string, unknown> =>
   typeof line.userId === 'string' ? { ...line, userId: userHashOf(line.userId) } : line;
 
+type LoggedError = { type: string; code?: string; stack: string };
+
+const errorOf = (value: unknown): Error | undefined => {
+  if (value instanceof Error) return value;
+  const raw: unknown =
+    typeof value === 'object' && value !== null ? Reflect.get(value, 'raw') : undefined;
+  return raw instanceof Error ? raw : undefined;
+};
+
+const stackFramesOf = (stack = ''): string =>
+  stack
+    .split('\n')
+    .map((line) => line.trim())
+    .filter((line) => line.startsWith('at '))
+    .join('\n');
+
+function loggedErrorOf(value: unknown): unknown {
+  const error = errorOf(value);
+  if (error === undefined) return value;
+  const code: unknown = Reflect.get(error, 'code');
+  return {
+    type: error.name,
+    ...(typeof code === 'string' ? { code } : {}),
+    stack: stackFramesOf(error.stack),
+  } satisfies LoggedError;
+}
+
 const HTTP_LOG_OPTIONS: Options<Request, Response> = {
   genReqId: (req) => readRequestId(req),
   customProps: (req) => ({
@@ -58,7 +85,7 @@ const HTTP_LOG_OPTIONS: Options<Request, Response> = {
   }),
   formatters: { log: withHashedUser },
   mixin: traceFields,
-  serializers: { req: withoutQueryString },
+  serializers: { req: withoutQueryString, err: loggedErrorOf },
   redact: REDACTED_PATHS,
   autoLogging: {
     ignore: (req) => QUIET_METHODS.has(req.method) && QUIET_PATHS.has(req.originalUrl),

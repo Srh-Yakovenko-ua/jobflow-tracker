@@ -5,6 +5,7 @@ export const PUSH_LIMITS = {
   userAgentMax: 256,
   p256dhMax: 128,
   authMax: 32,
+  subscriptionsPerUser: 10,
 } as const;
 
 const PUSH_SERVICE_HOST =

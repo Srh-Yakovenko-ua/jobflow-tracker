@@ -1,6 +1,7 @@
 import numpy as np
 import pytest
 
+from app.metrics import score_statistics
 from app.metrics.score_statistics import (
     Correlation,
     logistic_slope,
@@ -36,6 +37,24 @@ def test_gives_no_regression_when_scores_separate_the_outcomes_perfectly() -> No
 
     assert logistic_slope(SCORES, separated) is None
     assert point_biserial(SCORES, separated).p_value < 0.01
+
+
+def test_a_near_singular_hessian_with_a_negative_variance_gives_no_regression(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(
+        score_statistics.np.linalg, "inv", lambda _: np.array([[1, 0], [0, -1e-18]])
+    )
+
+    assert logistic_slope(SCORES, REACHED) is None
+
+
+def test_a_nan_variance_gives_no_regression(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(
+        score_statistics.np.linalg, "inv", lambda _: np.array([[1, 0], [0, np.nan]])
+    )
+
+    assert logistic_slope(SCORES, REACHED) is None
 
 
 def test_flags_about_5_percent_of_random_outcomes_as_significant() -> None:

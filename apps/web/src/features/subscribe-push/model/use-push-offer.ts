@@ -39,7 +39,7 @@ function showDeniedSteps(): void {
     {
       tone: 'info',
       ...COPY.denied,
-      action: { label: uk.app.close, onAction: () => undefined },
+      action: { label: uk.app.close, onAction: focusMain },
     },
     { id: DENIED_TOAST_ID, ...STAYS_OPEN },
   );

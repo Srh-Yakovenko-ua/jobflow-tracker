@@ -5,9 +5,9 @@ import { describe, expect, it } from 'vitest';
 import { callRoute } from '../test/http.js';
 import { recordSpans } from '../test/tracing.js';
 import { Nest12Instrumentation } from './nest-instrumentation.js';
-import { registerInstrumentationHook, URL_WITHOUT_QUERY } from './tracing.js';
+import { registerInstrumentationHook, URL_REDACTION } from './tracing.js';
 
-const spans = recordSpans({ processors: [URL_WITHOUT_QUERY] });
+const spans = recordSpans({ processors: [URL_REDACTION] });
 
 @Controller('probe')
 class ProbeController {

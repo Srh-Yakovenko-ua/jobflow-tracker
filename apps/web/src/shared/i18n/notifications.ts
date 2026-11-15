@@ -1,4 +1,10 @@
-import { countedUk, DAY_FORMS_UK, type NotifiedAiKind, type PluralForms } from '@jobflow/shared';
+import {
+  APPLICATION_FORMS_UK,
+  countedUk,
+  DAY_FORMS_UK,
+  type NotifiedAiKind,
+  type PluralForms,
+} from '@jobflow/shared';
 
 import { shell } from './shell';
 
@@ -12,12 +18,6 @@ const SILENT_COMPANIES = {
   one: 'компанія мовчить',
   few: 'компанії мовчать',
   other: 'компаній мовчать',
-} as const satisfies PluralForms;
-
-const APPLICATIONS = {
-  one: 'відгук',
-  few: 'відгуки',
-  other: 'відгуків',
 } as const satisfies PluralForms;
 
 const UNREAD = {
@@ -104,7 +104,8 @@ export const notifications = {
   } satisfies Record<NotifiedAiKind, AiCopy>,
   insightUnlocked: {
     title: 'Перші висновки готові',
-    text: (applications: number) => `У статистиці вже ${countedUk(applications, APPLICATIONS)}.`,
+    text: (applications: number) =>
+      `У статистиці вже ${countedUk(applications, APPLICATION_FORMS_UK)}.`,
     action: shell.palette.actions.analytics,
   },
   monthlySummaryReady: {

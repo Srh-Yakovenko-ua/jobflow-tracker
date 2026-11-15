@@ -247,6 +247,36 @@ def test_logs_the_shape_of_the_document_but_not_its_text(client: TestClient) -> 
     assert not [line for line in lines if "Senior Python developer" in line]
 
 
+def broken_extract(data: bytes) -> tuple[FileType, DocumentExtraction]:
+    raise RuntimeError
+
+
+def test_a_500_logs_request_failed_at_error_with_the_unhandled_error_line_tagged_by_its_request_id(
+    client: TestClient, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setattr("app.api.routes.extract.extract_document", broken_extract)
+    responses: list[Response] = []
+    lines = logged_lines(lambda: responses.append(post_file(client, b"%PDF")))
+
+    records = [json.loads(line)["record"] for line in lines]
+    failures = [
+        (
+            record["level"]["name"],
+            record["message"],
+            record["extra"].get("requestId"),
+        )
+        for record in records
+        if record["message"] in {"unhandled error", "request failed"}
+    ]
+    assert (responses[0].status_code, failures) == (
+        500,
+        [
+            ("ERROR", "unhandled error", REQUEST_ID),
+            ("ERROR", "request failed", REQUEST_ID),
+        ],
+    )
+
+
 EMPTY_TEXT = DocumentExtraction(kind=Kind.text, text="", pages=[], page_count=1)
 
 

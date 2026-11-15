@@ -132,6 +132,16 @@ describe('usePushOffer', () => {
     expect(actions.onEnabled).not.toHaveBeenCalled();
   });
 
+  it('closing the denied steps returns focus to main', async () => {
+    const { user } = renderOffer({ silent: true, browser: { answer: 'denied' } });
+    await user.click(await screen.findByRole('button', { name: 'Увімкнути' }));
+    await screen.findByText('Сповіщення заблоковані');
+
+    await user.click(screen.getByRole('button', { name: 'Закрити' }));
+
+    expect(document.activeElement).toBe(document.getElementById('main'));
+  });
+
   it('«Не зараз» closes the offer, focuses main and keeps it away after a remount', async () => {
     const first = renderOffer({ silent: true });
 

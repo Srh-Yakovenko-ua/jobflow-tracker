@@ -31,7 +31,7 @@ describe('ResumeAbBlock', () => {
       [11, 45],
     ]);
     expect(frame.querySelector('.h-42')).not.toBeNull();
-    expect(within(frame).getByText('Імовірність, що CV v2 краща за v1: 88%')).toBeDefined();
+    expect(within(frame).getByText('Імовірність, що CV v2 краще за v1: 88%')).toBeDefined();
     expect(
       within(frame).getByText('Після переходу на CV v2 02.12: конверсія 24% → 41%'),
     ).toBeDefined();

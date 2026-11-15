@@ -5,12 +5,12 @@ import { useQuery } from '@tanstack/react-query';
 
 import { uk } from '@/shared/i18n';
 import { logger } from '@/shared/lib/logger';
+import { pushSupported } from '@/shared/lib/push-subscription';
 import { settingsHref } from '@/shared/lib/settings-anchors';
 import {
   PUSH_ICON_PATH,
   type PushPermission,
   pushRegistration,
-  pushSupported,
   usePushPermission,
 } from '@/shared/lib/web-push';
 import { showErrorToast } from '@/shared/ui/error-toast';

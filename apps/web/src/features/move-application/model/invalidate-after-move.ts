@@ -2,6 +2,7 @@ import type { QueryClient } from '@tanstack/react-query';
 
 import { analyticsKeys } from '@/entities/analytics';
 import { applicationKeys, timelineKeys } from '@/entities/application';
+import { resumeKeys } from '@/entities/resume';
 import { scheduledEventKeys } from '@/entities/scheduled-event';
 
 export async function invalidateAfterMove(queryClient: QueryClient): Promise<void> {
@@ -11,6 +12,7 @@ export async function invalidateAfterMove(queryClient: QueryClient): Promise<voi
     queryClient.invalidateQueries({ queryKey: applicationKeys.details() }),
     queryClient.invalidateQueries({ queryKey: applicationKeys.reasonsSummaries() }),
     queryClient.invalidateQueries({ queryKey: timelineKeys.all }),
+    queryClient.invalidateQueries({ queryKey: resumeKeys.ab() }),
     queryClient.invalidateQueries({ queryKey: analyticsKeys.summary() }),
     queryClient.invalidateQueries({ queryKey: scheduledEventKeys.calendars() }),
   ]);

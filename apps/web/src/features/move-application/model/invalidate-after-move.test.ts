@@ -24,6 +24,7 @@ function clientWithOneQueryPerKey() {
     applicationKeys.reasonsSummary('tech_interview'),
     timelineKeys.detail(APPLICATION_ID),
     resumeKeys.list(),
+    resumeKeys.ab(),
     analyticsKeys.summary(),
     notificationKeys.list(),
     scheduledEventKeys.calendar(KYIV_WEEK),
@@ -42,7 +43,7 @@ function invalidatedKeysOf(queryClient: QueryClient) {
 }
 
 describe('invalidateAfterMove', () => {
-  it('invalidates every board, every list and table, every application detail, the reasons summaries, every timeline, the analytics summary and every calendar range and nothing else', async () => {
+  it('a move refreshes the CV A/B block too', async () => {
     const queryClient = clientWithOneQueryPerKey();
 
     await invalidateAfterMove(queryClient);
@@ -55,6 +56,7 @@ describe('invalidateAfterMove', () => {
       ['applications', 'detail', APPLICATION_ID],
       ['applications', 'reasons-summary', 'tech_interview'],
       ['timeline', APPLICATION_ID],
+      ['resumes', 'list', 'ab'],
       ['analytics', 'summary'],
       ['scheduled-events', 'calendar', KYIV_WEEK],
     ]);

@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from math import atanh, sqrt
+from math import atanh, isfinite, sqrt
 from statistics import NormalDist
 from typing import Final, NamedTuple
 
@@ -85,8 +85,11 @@ def logistic_slope(scores: Values, outcomes: Values) -> ScoreRegression | None:
         if weights is None:
             return None
         hessian = information(design, outcomes, weights=weights).hessian
-        error = sqrt(float(np.linalg.inv(hessian)[1, 1]))
+        variance = float(np.linalg.inv(hessian)[1, 1])
     except np.linalg.LinAlgError:
         return None
+    if not (isfinite(variance) and variance >= 0):
+        return None
+    error = sqrt(variance)
     slope = float(weights[1])
     return ScoreRegression(slope=slope, low=slope - Z * error, high=slope + Z * error)

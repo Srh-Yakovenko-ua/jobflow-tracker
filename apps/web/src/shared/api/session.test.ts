@@ -1,5 +1,6 @@
+import { waitFor } from '@testing-library/react';
 import { http } from 'msw/http';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, onTestFinished, vi } from 'vitest';
 
 import {
   freshSuggestionsRoute,
@@ -13,6 +14,7 @@ import {
   suggestionsSession,
 } from '@/test/api-handlers';
 import { latch } from '@/test/latch';
+import { installPushBrowser, OLD_PUSH_KEY } from '@/test/push-browser';
 import { server } from '@/test/server';
 
 import {
@@ -94,6 +96,18 @@ describe('refreshAccessToken', () => {
     expect(onSessionEnded).toHaveBeenCalledTimes(1);
   });
 
+  it('a session ended by a failed refresh drops the push subscription', async () => {
+    const fake = installPushBrowser({ registered: true, subscribedWith: OLD_PUSH_KEY });
+    server.use(freshSuggestionsRoute());
+    setAccessToken(SESSION_TOKENS.expired);
+
+    await expect(apiClient.request(SUGGESTIONS_REQUEST)).rejects.toMatchObject({ status: 401 });
+
+    await waitFor(() => {
+      expect(fake.registration.state.subscription?.unsubscribe).toHaveBeenCalledTimes(1);
+    });
+  });
+
   it('a refresh that never answers rejects the waiting requests and frees the lock for the next refresh', async () => {
     vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
     const refreshStarted = latch();
@@ -119,6 +133,20 @@ describe('refreshAccessToken', () => {
     await refreshAccessToken();
 
     expect(document.cookie).toContain(SESSION_MARKER);
+  });
+});
+
+describe('session module graph', () => {
+  it('loads without React, so a Server Component page can reach it through shared/api', async () => {
+    vi.resetModules();
+    vi.doMock('react', () => {
+      throw new Error('React reached the session module');
+    });
+    onTestFinished(() => {
+      vi.doUnmock('react');
+    });
+
+    await expect(import('./session')).resolves.toHaveProperty('clearAccessToken');
   });
 });
 

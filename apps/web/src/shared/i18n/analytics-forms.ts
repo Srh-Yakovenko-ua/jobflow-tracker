@@ -1,7 +1,7 @@
-import { countedUk, type PluralForms } from '@jobflow/shared';
+import { APPLICATION_FORMS_UK, countedUk, type PluralForms } from '@jobflow/shared';
 
 export const FORMS = {
-  application: { one: 'відгук', few: 'відгуки', other: 'відгуків' },
+  application: APPLICATION_FORMS_UK,
   screening: { one: 'скринінг', few: 'скринінги', other: 'скринінгів' },
   week: { one: 'тиждень', few: 'тижні', other: 'тижнів' },
   weekFraction: { other: 'тижня' },

@@ -64,6 +64,15 @@ describe('the demo monthly summary', () => {
     expect(summary).not.toMatch(/серпень|липн/);
   });
 
+  it('a month with as many applications as the last reads стільки ж, скільки за', () => {
+    const { summary } = demoSummaryOutput({
+      month: '2026-10',
+      sent: { month: 1, previousMonth: 1 },
+    });
+
+    expect(summary).toMatch(/^За жовтень ти надіслав 1 відгук, стільки ж, скільки за вересень\. /);
+  });
+
   it('gives the screening conversion and the most expensive stage the dashboard shows', async () => {
     const { screening, mostExpensive } = await dashboardFigures();
     const { summary } = demoSummaryOutput(DEMO_SUMMARY_INPUT);

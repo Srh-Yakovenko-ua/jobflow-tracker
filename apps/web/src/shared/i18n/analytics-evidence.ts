@@ -25,7 +25,7 @@ export const evidence = {
     tip: ({ value, successes, trials }: RateCounts) =>
       `${String(value)}% · ${String(successes)} із ${String(trials)}`,
     probability: ({ challenger, baseline, percent }: VersionPair) =>
-      `Імовірність, що CV v${String(challenger)} краща за v${String(baseline)}: ${String(percent)}%`,
+      `Імовірність, що CV v${String(challenger)} краще за v${String(baseline)}: ${String(percent)}%`,
     switched: ({ number, date, before, after }: VersionSwitch) =>
       `Після переходу на CV v${String(number)} ${date}: конверсія ${before} → ${after}`,
     small: ({ number, ...counts }: SourceCounts & Pick<ResumeAbVersion, 'number'>) =>

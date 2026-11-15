@@ -31,7 +31,9 @@ export class PushService {
     { input, userAgent }: NewPushSubscription,
   ): Promise<PushSubscriptionCreated> {
     const cut = userAgent?.slice(0, PUSH_LIMITS.userAgentMax) ?? null;
-    return { id: await this.repository.upsert(userId, { ...input, userAgent: cut }) };
+    const id = await this.repository.upsert(userId, { ...input, userAgent: cut });
+    await this.repository.keepLatest(userId, { keep: PUSH_LIMITS.subscriptionsPerUser });
+    return { id };
   }
 
   async remove(userId: string, id: string): Promise<void> {

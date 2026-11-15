@@ -7,7 +7,7 @@ import {
 import { queryOptions } from '@tanstack/react-query';
 
 import { apiClient } from '@/shared/api';
-import { hasPushSubscription } from '@/shared/lib/web-push';
+import { hasPushSubscription } from '@/shared/lib/push-subscription';
 
 import { pushKeys } from '../model/keys';
 
