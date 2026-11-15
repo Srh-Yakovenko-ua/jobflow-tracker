@@ -45,6 +45,8 @@ APPLICATION_COLUMNS = [
     "salary_max",
     "match_score",
     "is_draft",
+    "stack",
+    "ai_parsed",
     "applied_at",
     "last_event_at",
     "deleted_at",
