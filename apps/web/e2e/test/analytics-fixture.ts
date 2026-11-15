@@ -1,3 +1,4 @@
+import type { InsightsResponse } from '@jobflow/shared';
 import {
   buildDesignFunnel,
   buildDesignMatchValidation,
@@ -34,9 +35,11 @@ const DESIGN_REPLIES: Readonly<Record<string, DesignReply>> = {
   '/analytics/match-validation': () => buildDesignMatchValidation(),
 };
 
-async function replyWithDesign(route: Route): Promise<void> {
+export type DesignOverrides = Readonly<{ insights?: InsightsResponse }>;
+
+async function replyFrom(route: Route, replies: Readonly<Record<string, DesignReply>>) {
   const url = new URL(route.request().url());
-  const reply = DESIGN_REPLIES[url.pathname];
+  const reply = replies[url.pathname];
   if (reply === undefined) {
     await route.fallback();
     return;
@@ -44,8 +47,18 @@ async function replyWithDesign(route: Route): Promise<void> {
   await route.fulfill({ json: reply(url) });
 }
 
-export async function routeDesignAnalytics(page: Page): Promise<void> {
-  await page.route(`${ANALYTICS_ORIGIN}/analytics/**`, replyWithDesign);
+function repliesWith({ insights }: DesignOverrides): Readonly<Record<string, DesignReply>> {
+  return insights === undefined
+    ? DESIGN_REPLIES
+    : { ...DESIGN_REPLIES, '/analytics/insights': () => insights };
+}
+
+export async function routeDesignAnalytics(
+  page: Page,
+  overrides: DesignOverrides = {},
+): Promise<void> {
+  const replies = repliesWith(overrides);
+  await page.route(`${ANALYTICS_ORIGIN}/analytics/**`, (route) => replyFrom(route, replies));
 }
 
 export function analyticsBlock(page: Page, block: AnalyticsBlock): Locator {

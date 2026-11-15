@@ -23,7 +23,7 @@ export function ForecastControlsPanel({ controls, observedRate }: ForecastContro
   const { value, actions } = controls;
   const rate = value.applicationsPerWeek ?? rateOnStep(observedRate);
   return (
-    <div className="flex flex-col gap-3.5">
+    <div className="flex flex-col gap-3.5 print:hidden">
       <div className="flex flex-col gap-1.75">
         <div className="flex justify-between gap-3 text-[12.5px] text-ink">
           <label htmlFor={id}>{COPY.rate.label}</label>

@@ -2,6 +2,8 @@ import './register';
 
 export type { ChartPalette, ChartThemeInput, ChartThemeOptions } from './chart-options';
 export { chartThemeOptions } from './chart-options';
+export type { PrintChartsProps } from './print-charts';
+export { CHART_PRINT, PrintCharts } from './print-charts';
 export { reasonColours } from './reason-colours';
 export type { PatternFillInput, ReasonPattern } from './reason-patterns';
 export { patternFill, REASON_PATTERNS } from './reason-patterns';

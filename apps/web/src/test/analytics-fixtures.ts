@@ -2,8 +2,6 @@ import {
   ACTIVE_STAGES,
   DEFAULT_SEARCH_TITLE,
   type FunnelResponse,
-  type Insight,
-  type InsightsResponse,
   type MatchValidationResponse,
   type ResumeAbResponse,
   type SearchListResponse,
@@ -49,6 +47,10 @@ export const DASHBOARD_ROUTES = [
 export type DashboardRoute = (typeof DASHBOARD_ROUTES)[number];
 
 export type SentRequest = Readonly<{ route: DashboardRoute; url: URL }>;
+
+export function queriesOf(sent: readonly SentRequest[]) {
+  return Object.fromEntries(sent.map(({ route, url }) => [route, url.search]));
+}
 
 export type DashboardRoutesOptions = Partial<
   Record<DashboardRoute, JsonBodyType | HttpResponseResolver>
@@ -148,19 +150,6 @@ export function lowDataMatchValidation(): MatchValidationResponse {
     buckets: buckets.map((bucket) => ({ ...bucket, screening: TWO_SHORT, interview: TWO_SHORT })),
     statistics: SIX_SHORT,
   };
-}
-
-const SALARY_INSIGHT: Insight = {
-  block: 'salary',
-  title: 'Відмови через зарплату: усі на вилках нижче $4 500',
-  body: '2 відмови через зарплатні очікування, усі по вакансіях із вилкою нижче $4 500. Нижню межу фільтра варто підняти.',
-  severity: 'warning',
-  evidence: { floor: 4500, rejections: 2, below: 7 },
-};
-
-export function salaryInsightsBody(): InsightsResponse {
-  const body = designInsightsBody();
-  return { ...body, insights: [...body.insights, SALARY_INSIGHT] };
 }
 
 const URLS: Record<DashboardRoute, string> = {

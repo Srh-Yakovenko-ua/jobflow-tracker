@@ -1,11 +1,10 @@
 import type { Insight } from '@jobflow/shared';
+import { salaryFloorInsightsBody } from '@jobflow/shared/testing';
 import { describe, expect, it } from 'vitest';
-
-import { salaryInsightsBody } from '@/test/analytics-fixtures';
 
 import { blockHeaderOf, funnelNotesOf, type TitledBlock } from './block-titles';
 
-const { insights } = salaryInsightsBody();
+const { insights } = salaryFloorInsightsBody();
 
 const FUNNEL_NOTES = [
   {

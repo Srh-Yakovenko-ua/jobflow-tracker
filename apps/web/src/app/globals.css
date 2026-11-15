@@ -211,6 +211,17 @@
   @apply focus-ring rounded-2xl;
 }
 
+@media print {
+  @page {
+    size: A4;
+    margin: 12mm;
+  }
+
+  [data-sonner-toaster] {
+    display: none;
+  }
+}
+
 @utility num {
   @apply font-display text-num tabular-nums;
 }

@@ -129,7 +129,7 @@ export function ChartFrame({ header, state, children, view = {} }: ChartFramePro
       ) : (
         <div className="flex flex-wrap items-end justify-between gap-4.5">
           <FrameHeading header={header} labelId={labelId} />
-          {view.actions}
+          <div className="print:hidden">{view.actions}</div>
         </div>
       )}
       <AnimatePresence mode="popLayout" initial={false}>

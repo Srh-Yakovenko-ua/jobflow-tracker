@@ -2,6 +2,7 @@ import { countedUk, pluralUk } from '@jobflow/shared';
 
 import { evidence } from './analytics-evidence';
 import { applications, FORMS, type SourceCounts, sourceCounts } from './analytics-forms';
+import { report } from './analytics-report';
 
 const EYEBROW = 'аналітика воронки';
 
@@ -171,6 +172,7 @@ export const analytics = {
     },
   },
   whatToDo: { eyebrow: 'що зробити', list: 'Що зробити далі' },
+  report,
   lowDataState: {
     firstWeek: 'перший тиждень',
     week: (week: number) => `тиждень ${String(week)} пошуку`,

@@ -140,6 +140,20 @@ describe('web theme', () => {
     expect(blockAfter(css, "[data-theme='dark']")).toContain('--link: oklch(72% 0.12 252);');
   });
 
+  it('gives a data-theme light island the light scheme under a dark root', () => {
+    const css = renderTokensCss(tokens);
+    const island = blockAfter(css, "[data-theme='light']");
+
+    expect(island).toContain('color-scheme: light;');
+    expect(island).toContain('--paper: oklch(97.4% 0.007 78);');
+    expect(island).toContain('--data-1: oklch(38% 0.07 258);');
+    expect(island).toContain('--elevation-e1: ');
+    expect(island).not.toContain('--duration-');
+    expect(css.indexOf("[data-theme='light'] {")).toBeLessThan(
+      css.indexOf("[data-theme='dark'] {"),
+    );
+  });
+
   it('follows the system dark theme unless the user picked light', () => {
     const css = renderTokensCss(tokens);
 

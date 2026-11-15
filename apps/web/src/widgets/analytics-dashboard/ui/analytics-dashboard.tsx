@@ -1,24 +1,30 @@
 'use client';
 
 import { AnimatePresence } from 'motion/react';
-import { type ReactNode, useState } from 'react';
+import Link from 'next/link';
+import type { ReactNode } from 'react';
 
-import { useSilenceDays } from '@/entities/user';
 import { ShareFunnelButton } from '@/features/share-funnel';
 import { uk } from '@/shared/i18n';
 import { searchWeeks } from '@/shared/lib/search-weeks';
+import { buttonLinkClasses } from '@/shared/ui/button';
 import { Fade } from '@/shared/ui/fade';
 import { PAGE_TITLE } from '@/shared/ui/page-title';
 
-import { type DashboardView, dashboardViewOf } from '../model/dashboard-view';
-import { useDashboardQueries } from '../model/use-dashboard-queries';
-import { useForecastWhatIf } from '../model/use-forecast-what-if';
-import { type SearchScope, useSearchScope } from '../model/use-search-scope';
+import type { DashboardView } from '../model/dashboard-view';
+import { useDashboardModel } from '../model/use-dashboard-model';
+import type { SearchScope } from '../model/use-search-scope';
 import { DashboardBlocks } from './dashboard-blocks';
 import { LowDataDashboard } from './low-data-dashboard';
 import { SearchSelect } from './search-select';
 
 const COPY = uk.analytics;
+
+const REPORT_PATH = '/analytics/report';
+
+function reportHrefOf({ selectedId }: SearchScope): string {
+  return selectedId === undefined ? REPORT_PATH : `${REPORT_PATH}?period=${selectedId}`;
+}
 
 type DashboardHeaderProps = Readonly<{ view: DashboardView; scope: SearchScope }>;
 
@@ -32,6 +38,12 @@ function DashboardHeader({ view: { kpis, story }, scope }: DashboardHeaderProps)
         <h2 className={PAGE_TITLE}>{COPY.heading}</h2>
       </div>
       <div className="flex flex-wrap items-center gap-3">
+        <Link
+          href={reportHrefOf(scope)}
+          className={buttonLinkClasses({ variant: 'secondary', size: 'md' })}
+        >
+          {COPY.report.link}
+        </Link>
         {story && <ShareFunnelButton story={story} />}
         <SearchSelect scope={scope} />
       </div>
@@ -42,23 +54,8 @@ function DashboardHeader({ view: { kpis, story }, scope }: DashboardHeaderProps)
 export type AnalyticsDashboardProps = Readonly<{ summary?: ReactNode }>;
 
 export function AnalyticsDashboard({ summary }: AnalyticsDashboardProps = {}) {
-  const scope = useSearchScope();
-  const [byReason, setByReason] = useState(false);
-  const { whatIf, sent, actions } = useForecastWhatIf(scope.selectedId);
-  const queries = useDashboardQueries({
-    ...scope,
-    split: byReason ? 'reason' : undefined,
-    whatIf: sent,
-  });
-  const view = dashboardViewOf({ queries, searches: scope.searches });
-  const silenceDays = useSilenceDays();
-  const sankey = {
-    searchId: scope.searchId,
-    byReason,
-    toggle: () => {
-      setByReason((shown) => !shown);
-    },
-  };
+  const model = useDashboardModel();
+  const { scope, view } = model;
   return (
     <div className="flex min-w-0 flex-col gap-10">
       <DashboardHeader view={view} scope={scope} />
@@ -70,12 +67,7 @@ export function AnalyticsDashboard({ summary }: AnalyticsDashboardProps = {}) {
               view={{ active: scope.searchId === scope.activeId }}
             />
           ) : (
-            <DashboardBlocks
-              view={view}
-              silenceDays={silenceDays}
-              sankey={sankey}
-              forecast={{ value: whatIf, actions }}
-            />
+            <DashboardBlocks model={model} layout="dashboard" />
           )}
         </Fade>
       </AnimatePresence>

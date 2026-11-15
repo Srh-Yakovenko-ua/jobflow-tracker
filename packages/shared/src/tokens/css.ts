@@ -50,7 +50,7 @@ function durationVars(tokens: Tokens): Declaration[] {
   ]);
 }
 
-function lightDeclarations(tokens: Tokens): Declaration[] {
+function lightSchemeDeclarations(tokens: Tokens): Declaration[] {
   return [
     ['color-scheme', 'light'],
     ...colorVars(webColors(tokens)),
@@ -58,6 +58,12 @@ function lightDeclarations(tokens: Tokens): Declaration[] {
       `--elevation-${name}`,
       elevation.web,
     ]),
+  ];
+}
+
+function lightDeclarations(tokens: Tokens): Declaration[] {
+  return [
+    ...lightSchemeDeclarations(tokens),
     ...durationVars(tokens),
     ['--easing', tokens.motion.easing],
     ['--easing-spring', tokens.motion.spring.easing],
@@ -77,6 +83,7 @@ export function renderTokensCss(tokens: Tokens): string {
   const reducedMotion = durationVars(tokens).map(([name]): Declaration => [name, '0ms']);
   return [
     cssBlock(':root', lightDeclarations(tokens)),
+    cssBlock("[data-theme='light']", lightSchemeDeclarations(tokens)),
     cssBlock("[data-theme='dark']", dark),
     nestedBlock(
       '@media (prefers-color-scheme: dark)',

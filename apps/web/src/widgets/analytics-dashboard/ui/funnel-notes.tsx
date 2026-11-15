@@ -40,7 +40,7 @@ export function FunnelNotes(props: FunnelNotesProps) {
   return (
     <AnimatePresence initial={false} propagate>
       {texts.length > 0 && (
-        <Fade key="notes">
+        <Fade key="notes" className="print:hidden">
           <div
             role="group"
             aria-label={COPY.notes.label}
