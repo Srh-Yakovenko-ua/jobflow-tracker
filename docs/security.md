@@ -20,7 +20,7 @@ open, and why, is listed under [Known limits](#known-limits).
 | A03 Injection                       | Prisma sends parameterised queries. Raw SQL appears only as `$queryRaw` and `$executeRaw` tagged templates, which bind every value; `$queryRawUnsafe` is not used anywhere. Every request is parsed with the shared zod schemas in Node and pydantic in Python. Note markdown goes through `rehype-sanitize`, and `dangerouslySetInnerHTML` is a lint error.                                                                                                                                                                            | `apps/web/src/entities/note/ui/note-markdown.test.tsx`, `packages/config/test/presets.test.js`                                                                  |
 | A04 Insecure design                 | The threat model of capture and AI below: untrusted vacancy text, the capture token, the AI service boundary, and the known limits with their impact.                                                                                                                                                                                                                                                                                                                                                                                   | [Threat model](#threat-model), `services/ai/tests/prompts/test_vacancy_parse.py`                                                                                |
 | A05 Security misconfiguration       | helmet on the API. CORS allows only `WEB_ORIGIN` with credentials; the bookmarklet route alone allows any origin, without credentials and only for POST. The refresh cookie is `httpOnly`, `Secure`, `SameSite=Strict` and scoped to the auth routes. The web app sends a strict nonce-based Content Security Policy and four security headers ([below](#content-security-policy-and-headers)).                                                                                                                                         | `apps/api/src/app.http.test.ts`, `apps/web/src/proxy.test.ts`, `apps/web/src/next-config.test.ts`, `apps/web/src/shared/config/content-security-policy.test.ts` |
-| A06 Vulnerable components           | The `audit` job in CI runs `pnpm audit --prod --audit-level high` on every pull request. Dependency updates, the Python audit and the licence check belong to SEC-02.                                                                                                                                                                                                                                                                                                                                                                   | `.github/workflows/ci.yml`                                                                                                                                      |
+| A06 Vulnerable components           | The `audit` job in CI runs `pnpm audit --prod --audit-level high` on every pull request. The `trivy` job of the security workflow scans `pnpm-lock.yaml`, the three `uv.lock` files and the five prod images, and fails on a HIGH or CRITICAL finding that has a fix (`trivy.yaml`); a canary lockfile with lodash 4.17.20 proves on every run that such a finding fails it. Dependabot proposes npm, uv and GitHub Actions updates every week.                                                                                         | `.github/workflows/security.yml`, `.github/dependabot.yml`                                                                                                      |
 | A07 Identification and auth failure | Every route is rate limited, with tighter limits on login, register, capture and AI, and answers 429 with `Retry-After`. Login answers the same 401 for an unknown email and a wrong password. Every refresh rotates the token. A token rotated less than 30 s ago still refreshes while its family has a live token, so a reload or a second tab keeps the session; presented later, it revokes its whole family and is logged as a theft signal. A user holds at most 5 open live streams per API process, and the next one gets 429. | `apps/api/src/rate-limit/rate-limit.int.test.ts`, `apps/api/src/modules/auth/session.int.test.ts`, `apps/api/src/modules/live/live.int.test.ts`                 |
 | A08 Software and data integrity     | Resume files move through presigned MinIO URLs (10 minutes to upload, 5 to download), so the API never streams a file and a URL works for one object only. `eval` is a lint error in every TypeScript package. A domain event is written to the `outbox` in the same transaction as its data, so no event exists without its change.                                                                                                                                                                                                    | `apps/api/src/storage/s3-file-storage.int.test.ts`, `packages/config/test/presets.test.js`                                                                      |
 | A09 Logging and monitoring failure  | Every request gets a request id that appears in its log lines and in every error body. pino redacts the `Authorization` and `Cookie` headers, `Set-Cookie`, passwords and every token field. Logged URLs drop their query string, so an OAuth `code` or `state` or a stream ticket never reaches a log. `services/ai` never logs prompt text, input or model output.                                                                                                                                                                    | `apps/api/src/common/logger.test.ts`, `apps/api/src/app.http.test.ts`                                                                                           |
@@ -81,6 +81,75 @@ frame-ancestors 'none'
 `apps/web/src/shared/config/content-security-policy.test.ts` pins the policy
 and the nonce. The API's headers come from helmet's defaults and are checked in
 `apps/api/src/app.http.test.ts`.
+
+## Security scans
+
+`.github/workflows/security.yml` runs on every pull request, on every push to
+`main`, every Monday at 03:00 UTC and by hand. Trivy, OWASP ZAP and gitleaks run
+from their official images, pinned by tag and digest. `.husky/pre-commit` and
+`packages/docs/src/security-scans.js` use the same pins, and
+`packages/docs/test/security-scans.test.js` fails when they drift apart.
+
+| Job        | What it scans                                                                                                                                                        | Fails on                                                 |
+| ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------- |
+| `gitleaks` | The full git history, on every run                                                                                                                                   | Any finding that no allowlist in `.gitleaks.toml` covers |
+| `trivy`    | The checkout (`pnpm-lock.yaml`, the three `uv.lock` files, secrets, Dockerfile and compose misconfig), then the prod images of api, web, analytics, ai and documents | A HIGH or CRITICAL finding that has a fix                |
+| `zap`      | A ZAP baseline of http://localhost:3000 and http://localhost:4000/api/v1/health, on the prod images started the way the README quick start starts them               | A FAIL rule in `.zap/rules.tsv`, or ZAP failing to scan  |
+
+`trivy` and `zap` skip a change that touches only docs.
+
+**Policy.** `trivy.yaml` keeps HIGH and CRITICAL, leaves out findings that have
+no fixed version, and exits 1 on anything left. A fixable finding is fixed, by
+a base image bump, a dependency bump or override, or a lockfile update. An
+ignore entry is only for a finding with no fix route, and it carries its
+reason. There is no `.trivyignore` today.
+
+**Canary.** The `trivy` job writes a one-package `package-lock.json` with
+lodash 4.17.20 (CVE-2021-23337, HIGH, fixed in 4.17.21) into the runner's temp
+folder and scans it under `trivy.yaml`. The step passes only when Trivy exits
+non-zero and names CVE-2021-23337, so every run proves that a vulnerable
+dependency fails the job. No vulnerable lockfile is committed.
+
+**Rules files.**
+
+- `.zap/rules.tsv`. The baseline runs with `-I`, so a WARN alert lands in the
+  report without failing the job. Three rules are FAIL: 10020 (anti-clickjacking
+  header), 10021 (`X-Content-Type-Options`) and 10038 (CSP header not set), so a
+  lost SEC-01 header turns the run red. An IGNORE rule never warns or fails the
+  run. 10055 (CSP) is ignored because `style-src` keeps `'unsafe-inline'` on
+  purpose, as described under Styles above.
+- `.gitleaks.toml`. The default gitleaks rules plus six allowlists, each with
+  its description: the local GlitchTip placeholders in `.env.example`, UUID ids,
+  example JWTs, the example refresh token of the OpenAPI document, an example
+  web push auth value, and the marker password of the auth integration test.
+  They match exact values, not paths, because the pre-commit scan has no path.
+- `trivy.yaml` also skips `**/Dockerfile.dockerignore`, which the misconfig
+  scanner cannot parse.
+
+**Artifacts.** `trivy-sarif` holds `trivy-fs.sarif` and one
+`trivy-<service>.sarif` per image. `zap-report` holds the web and API reports
+as HTML and JSON. Both upload even when a scan fails, and the INF-10 release
+workflow is to attach the latest ones by these names. Nothing is sent to GitHub
+code scanning.
+
+**Before a commit.** `.husky/pre-commit` pipes the lines a commit adds into the
+same gitleaks image in `stdin` mode, before lint-staged, so a commit that adds a
+secret is refused. It needs Docker running. A commit that only removes a secret
+passes.
+
+**Updates.** `.github/dependabot.yml` asks Dependabot every week for npm updates
+of the pnpm workspace, uv updates of the three services and GitHub Actions
+updates of the workflows and the two composite actions. Minor and patch updates
+come grouped, one pull request per ecosystem.
+
+**Thesis numbers.** `pnpm docs:data security` runs the same images on this
+machine: Trivy on a `git archive HEAD` export and on the five `jobflow-*:ci`
+images, gitleaks on the git history and ZAP on the running stack, with every
+severity and unfixed findings included. It needs the five images that the
+README quick start builds and stops before any step when one is missing. It
+writes
+`docs/thesis/data/security-scans.json` and renders the ZAP web report to
+`docs/screenshots/zap-report.png`.
 
 ## Threat model
 
@@ -197,6 +266,18 @@ are listed under the card that fixed them.
 - The exception filter logged the URL with its query string when a request had
   no request logger, so an OAuth `code` or `state` could reach a log line. It
   now logs the path only, checked in `apps/api/src/app.http.test.ts`.
+
+### Fixed by SEC-02
+
+The first Trivy scan of the prod images failed on fixable findings in their
+base layers.
+
+- api and web: the base image moved from `node:26.12.0-alpine3.24` to
+  `node:26.13.1-alpine3.24`, and the prod stage drops npm, npx and corepack.
+  The apps run with `node` only, so the bundled npm and its dependencies left
+  the image.
+- ai, analytics and documents: the prod stage runs `apt-get upgrade` for the
+  Debian patches and uninstalls pip, which the app does not use at run time.
 
 ### Fixed by FIX-05
 

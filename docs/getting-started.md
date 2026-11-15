@@ -25,7 +25,7 @@ pnpm dev
 ```
 
 1. `git clone` і `cd`: робоча копія репозиторію.
-2. `pnpm install --frozen-lockfile` ставить залежності точно за `pnpm-lock.yaml` і вмикає git-хуки husky.
+2. `pnpm install --frozen-lockfile` ставить залежності точно за `pnpm-lock.yaml` і вмикає git-хуки husky. Хук pre-commit перед lint-staged шукає секрети в доданих рядках через gitleaks у Docker, тому для коміту Docker має працювати.
 3. `cp .env.example .env` створює єдиний кореневий `.env`. Значення з `.env.example` підходять для локального стеку, міняти їх не треба. Змінна `COMPOSE_FILE` у ньому вказує compose на `infra/docker/`, тому `docker compose` працює з кореня без `-f`.
 4. `pnpm gen:keys` створює пару ключів RS256 для JWT і друкує `JWT keys written to .secrets/jwt-private.pem and .secrets/jwt-public.pem.` Повторний запуск ключі не перезаписує, а друкує `JWT keys already exist in .secrets/, nothing to do.`
 5. `pnpm dev` піднімає Postgres, Redis, MinIO і Mailpit, чекає до 120 секунд, поки їхні healthcheck-и стануть healthy, і створює бакет `resumes`. Далі йдуть міграції, а за ними api на порту 4000, web на порту 3000, analytics на порту 8000, ai на порту 8001 і documents на порту 8002, усі з hot reload через `turbo dev`. Ctrl+C зупиняє застосунки, контейнери інфраструктури працюють далі.

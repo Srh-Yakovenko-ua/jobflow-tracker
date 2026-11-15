@@ -73,3 +73,56 @@ export function auditCounts(report) {
   }
   return counts;
 }
+
+const TRIVY_SEVERITIES = {
+  CRITICAL: 'critical',
+  HIGH: 'high',
+  MEDIUM: 'medium',
+  LOW: 'low',
+  UNKNOWN: 'info',
+};
+
+const ZAP_RISKS = { 3: 'high', 2: 'medium', 1: 'low', 0: 'info' };
+
+function tally(levels, start) {
+  const counts = { findings: levels.length, ...start };
+  for (const level of levels) {
+    counts[level] = (counts[level] ?? 0) + 1;
+  }
+  return counts;
+}
+
+export function trivyCounts(report) {
+  if (report.SchemaVersion !== 2) {
+    throw new Error('The report is not a Trivy JSON report (SchemaVersion 2)');
+  }
+  const findings = (report.Results ?? []).flatMap((result) => [
+    ...(result.Vulnerabilities ?? []),
+    ...(result.Misconfigurations ?? []),
+    ...(result.Secrets ?? []),
+  ]);
+  const start = { critical: 0, high: 0, medium: 0, low: 0, info: 0 };
+  return tally(
+    findings.map(({ Severity }) => TRIVY_SEVERITIES[Severity] ?? 'info'),
+    start,
+  );
+}
+
+export function zapCounts(report) {
+  if (!Array.isArray(report.site)) {
+    throw new Error('The report is not a ZAP JSON report (no site list)');
+  }
+  const alerts = report.site.flatMap((site) => site.alerts ?? []);
+  const start = { critical: null, high: 0, medium: 0, low: 0, info: 0 };
+  return tally(
+    alerts.map(({ riskcode }) => ZAP_RISKS[riskcode] ?? 'info'),
+    start,
+  );
+}
+
+export function gitleaksCount(findings) {
+  if (!Array.isArray(findings)) {
+    throw new Error('The report is not a gitleaks JSON report (no finding list)');
+  }
+  return findings.length;
+}

@@ -12,6 +12,7 @@ import path from 'node:path';
 import { measureCoverage } from './coverage.js';
 import { DOCS_PATHS, inRepo } from './paths.js';
 import { run } from './run.js';
+import { measureSecurityScans, requireImages } from './security-scans.js';
 import { auditCounts, e2eTests, evalProblem } from './snapshots.js';
 
 const WEB_URL = process.env.THESIS_WEB_URL ?? 'http://localhost:3000';
@@ -112,15 +113,42 @@ function stamp(written, measuredAt) {
   writeJson(DOCS_PATHS.stamps, { ...stamps, ...fresh });
 }
 
+const STEPS = {
+  evals: writeEvals,
+  coverage: (scratch) => [
+    writeJson(dataFile('coverage.json'), { packages: measureCoverage(scratch) }),
+  ],
+  e2e: (scratch) => [listE2e(scratch)],
+  audit: () => [auditProd()],
+  screenshots: () => {
+    takeScreenshots();
+    return [];
+  },
+  security: async (scratch) => [
+    writeJson(dataFile('security-scans.json'), { scans: await measureSecurityScans(scratch) }),
+  ],
+};
+
+function chosenSteps(names) {
+  const unknown = names.filter((name) => !Object.hasOwn(STEPS, name));
+  if (unknown.length > 0) {
+    throw new Error(
+      `Unknown docs:data step ${unknown.join(', ')}; the steps are ${Object.keys(STEPS).join(', ')}`,
+    );
+  }
+  return names.length > 0 ? names : Object.keys(STEPS);
+}
+
+const steps = chosenSteps(process.argv.slice(2));
+if (steps.includes('security')) {
+  requireImages();
+}
 await requireServices();
 const measuredAt = new Date().toISOString();
 const scratch = mkdtempSync(path.join(os.tmpdir(), 'jobflow-docs-data-'));
 mkdirSync(inRepo(DOCS_PATHS.data), { recursive: true });
-const written = [
-  ...writeEvals(scratch),
-  writeJson(dataFile('coverage.json'), { packages: measureCoverage(scratch) }),
-  listE2e(scratch),
-  auditProd(),
-];
-takeScreenshots();
+const written = [];
+for (const name of steps) {
+  written.push(...(await STEPS[name](scratch)));
+}
 stamp(written, measuredAt);

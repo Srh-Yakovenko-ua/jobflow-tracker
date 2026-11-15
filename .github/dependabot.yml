@@ -1,0 +1,38 @@
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+    commit-message:
+      prefix: build
+    groups:
+      minor-and-patch:
+        update-types: [minor, patch]
+
+  - package-ecosystem: uv
+    directories:
+      - /services/analytics
+      - /services/ai
+      - /services/documents
+    schedule:
+      interval: weekly
+    commit-message:
+      prefix: build
+    groups:
+      minor-and-patch:
+        update-types: [minor, patch]
+
+  - package-ecosystem: github-actions
+    directories:
+      - /
+      - /.github/actions/setup
+      - /.github/actions/images
+      - /.github/actions/changes
+    schedule:
+      interval: weekly
+    commit-message:
+      prefix: ci
+    groups:
+      minor-and-patch:
+        update-types: [minor, patch]

@@ -148,6 +148,42 @@ describe('thesis tables', () => {
     ]);
   });
 
+  it('lists every security scan by scanner and target with a dash where a scanner has no level', () => {
+    const lines = TABLE_BUILDERS.securityScans([
+      jsonSource('security-scans.json', {
+        scans: [
+          {
+            scanner: 'Trivy fs',
+            target: 'repository',
+            findings: 3,
+            critical: 0,
+            high: 1,
+            medium: 2,
+            low: 0,
+            info: 0,
+          },
+          {
+            scanner: 'gitleaks',
+            target: 'git history',
+            findings: 0,
+            critical: null,
+            high: null,
+            medium: null,
+            low: null,
+            info: null,
+          },
+        ],
+      }),
+    ]);
+
+    assert.deepEqual(lines, [
+      '| Сканер | Ціль | Знахідок | Критичних | Високих | Середніх | Низьких | Інформаційних |',
+      '| --- | --- | --- | --- | --- | --- | --- | --- |',
+      '| Trivy fs | repository | 3 | 0 | 1 | 2 | 0 | 0 |',
+      '| gitleaks | git history | 0 | - | - | - | - | - |',
+    ]);
+  });
+
   it('lists the CSP directives and the security headers of the security document', () => {
     const securityMd = [
       '## Content Security Policy and headers',

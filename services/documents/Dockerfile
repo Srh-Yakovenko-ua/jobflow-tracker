@@ -21,7 +21,11 @@ CMD ["uvicorn", "app.main:app", "--reload", "--host", "0.0.0.0", "--port", "8002
 
 FROM base AS prod
 ENV PYTHONDONTWRITEBYTECODE=1
-RUN useradd --system --no-create-home --uid 10001 documents
+RUN apt-get update \
+    && DEBIAN_FRONTEND=noninteractive apt-get upgrade -y \
+    && rm -rf /var/lib/apt/lists/* \
+    && python -m pip uninstall --yes --root-user-action=ignore pip \
+    && useradd --system --no-create-home --uid 10001 documents
 COPY --from=deps /opt/venv /opt/venv
 COPY services/documents/app app
 USER documents

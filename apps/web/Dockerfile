@@ -1,4 +1,4 @@
-FROM node:26.12.0-alpine3.24 AS base
+FROM node:26.13.1-alpine3.24 AS base
 RUN npm i -g pnpm@12.14.0
 WORKDIR /app
 
@@ -25,7 +25,8 @@ CMD ["pnpm", "--filter", "@jobflow/web", "exec", "next", "dev", "--hostname", "0
 FROM source AS build
 RUN --network=none pnpm turbo run build --filter @jobflow/web...
 
-FROM node:26.12.0-alpine3.24 AS prod
+FROM node:26.13.1-alpine3.24 AS prod
+RUN rm -rf /usr/local/lib/node_modules/npm /usr/local/lib/node_modules/corepack /usr/local/bin/npm /usr/local/bin/npx /usr/local/bin/corepack
 ENV NODE_ENV=production
 ENV PORT=3000
 ENV HOSTNAME=0.0.0.0

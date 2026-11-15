@@ -1,7 +1,16 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 
-import { auditCounts, e2eTests, evalProblem, pytestRow, vitestRow } from '../src/snapshots.js';
+import {
+  auditCounts,
+  e2eTests,
+  evalProblem,
+  gitleaksCount,
+  pytestRow,
+  trivyCounts,
+  vitestRow,
+  zapCounts,
+} from '../src/snapshots.js';
 
 const evalTsv = (model) =>
   [
@@ -92,5 +101,49 @@ describe('docs:data snapshots', () => {
 
     assert.deepEqual(auditCounts({ metadata: { vulnerabilities } }), vulnerabilities);
     assert.throws(() => auditCounts({ error: 'offline' }), /no vulnerability counts/);
+  });
+
+  it('counts the Trivy findings of every result kind by severity and refuses another shape', () => {
+    const counts = trivyCounts({
+      SchemaVersion: 2,
+      Results: [
+        {
+          Target: 'pnpm-lock.yaml',
+          Vulnerabilities: [{ Severity: 'HIGH' }, { Severity: 'LOW' }, { Severity: 'UNKNOWN' }],
+        },
+        { Target: 'apps/api/Dockerfile', Misconfigurations: [{ Severity: 'MEDIUM' }] },
+        { Target: 'services/ai/uv.lock' },
+        { Target: '.env.example', Secrets: [{ Severity: 'CRITICAL' }] },
+      ],
+    });
+
+    assert.deepEqual(counts, { findings: 5, critical: 1, high: 1, medium: 1, low: 1, info: 1 });
+    assert.deepEqual(trivyCounts({ SchemaVersion: 2 }), {
+      findings: 0,
+      critical: 0,
+      high: 0,
+      medium: 0,
+      low: 0,
+      info: 0,
+    });
+    assert.throws(() => trivyCounts({ metadata: {} }), /not a Trivy JSON report/);
+  });
+
+  it('counts the ZAP alerts of every site by risk and refuses another shape', () => {
+    const counts = zapCounts({
+      site: [
+        { alerts: [{ riskcode: '2' }, { riskcode: '1' }, { riskcode: '0' }] },
+        { alerts: [{ riskcode: '3' }, { riskcode: '1' }] },
+      ],
+    });
+
+    assert.deepEqual(counts, { findings: 5, critical: null, high: 1, medium: 1, low: 2, info: 1 });
+    assert.throws(() => zapCounts({ alerts: [] }), /not a ZAP JSON report/);
+  });
+
+  it('counts the gitleaks findings and refuses another shape', () => {
+    assert.equal(gitleaksCount([{ RuleID: 'github-pat' }, { RuleID: 'generic-api-key' }]), 2);
+    assert.equal(gitleaksCount([]), 0);
+    assert.throws(() => gitleaksCount({ findings: [] }), /not a gitleaks JSON report/);
   });
 });
