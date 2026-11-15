@@ -1,0 +1,60 @@
+case	hints	evidence_not_in_cv	foreign_requirement	absent_named	result
+01-fullstack-graphql-aws-kafka.json	1	0	0	0	ok
+02-nextjs-frontend-team-lead.json	1	0	0	0	ok
+03-nestjs-docker-kubernetes.json	2	0	0	0	ok
+04-node-python.json	1	0	0	0	ok
+05-docker-terraform-aws.json	1	0	0	0	ok
+06-graphql-kafka.json	1	0	0	0	ok
+07-nextjs-graphql-aws.json	2	0	0	0	ok
+08-nestjs-graphql-leadership-python.json	2	0	0	0	ok
+
+## 01-fullstack-graphql-aws-kafka.json
+- GraphQL API (до +12): Перенесіть рядок про GraphQL gateway вище в розділі навичок, щоб рекрутер відразу побачив відповідність вакансії.
+  CV: Added a GraphQL gateway for the mobile client
+gaps: AWS (Lambda, S3); Kafka
+
+## 02-nextjs-frontend-team-lead.json
+- Next.js SSR (до +13): Перенесіть навичку Next.js вище в список навичок і додайте до неї приклад SSR-проекту, якщо такий є в досвіді.
+  CV: Next.js
+gaps: Досвід тімліда 2+ роки
+
+## 03-nestjs-docker-kubernetes.json
+- Docker (до +10): Перенесіть навички Docker вище у розділі навичок, щоб рекрутер відразу побачив досвід з контейнеризації.
+  CV: Docker
+- NestJS (до +10): Переформулюйте цей рядок, акцентуючи увагу на побудові бекенд-сервісів на Node.js, що наближає його до NestJS.
+  CV: Node.js services in production for 2 million monthly users
+gaps: Kubernetes
+
+## 04-node-python.json
+- GraphQL (до +6): Перенесіть рядок про GraphQL gateway вище в розділі навичок, щоб рекрутер відразу побачив досвід.
+  CV: Added a GraphQL gateway for the mobile client
+gaps: Python (Django)
+
+## 05-docker-terraform-aws.json
+- Docker (до +12): Перенесіть навички Docker вище в список навичок, щоб рекрутер відразу побачив досвід з контейнеризації.
+  CV: Docker
+gaps: AWS; Terraform
+
+## 06-graphql-kafka.json
+- GraphQL federation (до +13): Перенесіть виклад про GraphQL-шлюз вище в розділі навичок, щоб рекрутер відразу побачив досвід із GraphQL для цієї вакансії.
+  CV: Added a GraphQL gateway for the mobile client
+gaps: Kafka / event streaming
+
+## 07-nextjs-graphql-aws.json
+- Next.js (до +19): Перенесіть навичку Next.js вище у списку навичок і додайте до неї конкретний проєкт із профілю.
+  CV: Next.js
+- GraphQL (до +6): Винесіть цей рядок про GraphQL гейтвей у верхню частину розділу про досвід.
+  CV: Added a GraphQL gateway for the mobile client
+gaps: AWS
+
+## 08-nestjs-graphql-leadership-python.json
+- GraphQL (до +12): Перенесіть рядок про GraphQL gateway вище в розділі навичок, щоб рекрутер відразу побачив досвід.
+  CV: Added a GraphQL gateway for the mobile client
+- NestJS (до +12): Переформулюйте опис Node.js сервісів, акцентуючи на архітектурі, схожій до NestJS модульності.
+  CV: Node.js services in production for 2 million monthly users
+gaps: Лідерство команди 4+; Python
+
+PASS
+
+kind	model	calls	tokens_in	tokens_out	avg_tokens_in	avg_tokens_out	avg_latency_ms	cost_usd_per_call	usd_per_million_tokens_in	usd_per_million_tokens_out
+cv_hints	private/nvidia/nemotron-3.5-super-120b-a12b	8	6803	977	850	122	1899	0.000000	0	0

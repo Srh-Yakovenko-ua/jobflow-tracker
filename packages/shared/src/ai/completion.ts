@@ -1,6 +1,7 @@
 import { z } from 'zod';
 
 import { aiCallMetaSchema } from './call-meta.js';
+import { cvHintsInputSchema, cvHintsOutputSchema } from './cv-hints.js';
 import { followupInputSchema, followupOutputSchema } from './followup.js';
 import type { AiKind } from './kinds.js';
 import { matchInputSchema, matchOutputSchema } from './match.js';
@@ -19,6 +20,7 @@ export const AI_KIND_SCHEMAS = {
   match: { input: matchInputSchema, output: matchOutputSchema },
   followup: { input: followupInputSchema, output: followupOutputSchema },
   monthly_summary: { input: monthlySummaryInputSchema, output: monthlySummaryOutputSchema },
+  cv_hints: { input: cvHintsInputSchema, output: cvHintsOutputSchema },
 } satisfies Record<AiKind, { input: z.ZodType; output: z.ZodType }>;
 
 const completionMetaSchema = aiCallMetaSchema.extend({
@@ -32,6 +34,7 @@ export const aiCompleteRequestSchemas = {
   match: aiCompleteOptionsSchema.extend({ input: AI_KIND_SCHEMAS.match.input }),
   followup: aiCompleteOptionsSchema.extend({ input: AI_KIND_SCHEMAS.followup.input }),
   monthly_summary: aiCompleteOptionsSchema.extend({ input: AI_KIND_SCHEMAS.monthly_summary.input }),
+  cv_hints: aiCompleteOptionsSchema.extend({ input: AI_KIND_SCHEMAS.cv_hints.input }),
 } satisfies Record<AiKind, z.ZodType>;
 
 export const aiCompletionSchemas = {
@@ -40,6 +43,7 @@ export const aiCompletionSchemas = {
   match: completionMetaSchema.extend({ output: AI_KIND_SCHEMAS.match.output }),
   followup: completionMetaSchema.extend({ output: AI_KIND_SCHEMAS.followup.output }),
   monthly_summary: completionMetaSchema.extend({ output: AI_KIND_SCHEMAS.monthly_summary.output }),
+  cv_hints: completionMetaSchema.extend({ output: AI_KIND_SCHEMAS.cv_hints.output }),
 } satisfies Record<AiKind, z.ZodType>;
 
 type KindSchemas = typeof AI_KIND_SCHEMAS;

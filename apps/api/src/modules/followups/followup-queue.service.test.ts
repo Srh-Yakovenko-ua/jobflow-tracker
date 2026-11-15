@@ -6,7 +6,7 @@ import { AI_JOB_ID, FakeAiRepository } from '../../test/ai.js';
 import { memoryLog } from '../../test/memory-log.js';
 import { compileProcessorModule } from '../../test/processor.js';
 import { APPLICATION_ID, OLENA_ID } from '../../test/service-fixtures.js';
-import { RefusingQueue, SilentQueue, StubQueue } from '../../test/stub-queues.js';
+import { StubQueue, unreachableQueues } from '../../test/stub-queues.js';
 import { AiService } from '../ai/index.js';
 import { FollowupQueueService } from './followup-queue.service.js';
 import type { FollowupRequestedPayload } from './followups.events.js';
@@ -69,16 +69,16 @@ describe('FollowupQueueService.enqueue', () => {
     );
   });
 
-  it.each([
-    { case: 'refuses it', queue: new RefusingQueue('ai'), error: 'Connection is closed.' },
-    { case: 'never answers', queue: new SilentQueue('ai'), error: 'timed out after 2000 ms' },
-  ])('fails the job as not_ready and rethrows when the queue $case', async ({ queue, error }) => {
-    const { ai, enqueue } = await serviceWith(queue);
+  it.each(unreachableQueues('ai'))(
+    'fails the job as not_ready and rethrows when the queue $case',
+    async ({ queue, error }) => {
+      const { ai, enqueue } = await serviceWith(queue);
 
-    await expect(enqueue()).rejects.toThrow(error);
+      await expect(enqueue()).rejects.toThrow(error);
 
-    expect(ai.jobs.get(AI_JOB_ID)).toEqual(
-      expect.objectContaining({ status: 'failed', errorType: 'not_ready' }),
-    );
-  });
+      expect(ai.jobs.get(AI_JOB_ID)).toEqual(
+        expect.objectContaining({ status: 'failed', errorType: 'not_ready' }),
+      );
+    },
+  );
 });

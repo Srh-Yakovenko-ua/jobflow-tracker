@@ -1,5 +1,5 @@
-import { AI_KINDS } from '@jobflow/shared';
-import { buildFollowupOutput, buildMatchOutput } from '@jobflow/shared/testing';
+import { AI_KINDS, type AiKind } from '@jobflow/shared';
+import { buildFollowupOutput, buildMatchOutput, CV_HINTS_OUTPUT } from '@jobflow/shared/testing';
 import { describe, expect, it } from 'vitest';
 
 import { MATCH_OUTPUT } from '../../test/ai.js';
@@ -26,18 +26,28 @@ describe('OUTPUT_FAILURES.followup', () => {
   });
 });
 
+describe('OUTPUT_FAILURES.cv_hints', () => {
+  it('accepts every guarded hint list services/ai returned', () => {
+    expect(OUTPUT_FAILURES.cv_hints(CV_HINTS_OUTPUT)).toBeNull();
+  });
+});
+
+const ON_DEMAND_KINDS: AiKind[] = ['followup', 'cv_hints'];
+
 describe('isFinal', () => {
   const refusal = (status: number, type: string) => new AiServiceError({ status, type });
 
-  it.each([
-    { status: 504, type: 'ai_timeout' },
-    { status: 503, type: 'not_ready' },
-    { status: 429, type: 'rate_limited' },
-  ])('gives up on a $status $type of a followup at once', ({ status, type }) => {
-    expect(isFinal({ error: refusal(status, type), kind: 'followup' })).toBe(true);
+  it.each(
+    ON_DEMAND_KINDS.flatMap((kind) => [
+      { kind, status: 504, type: 'ai_timeout' },
+      { kind, status: 503, type: 'not_ready' },
+      { kind, status: 429, type: 'rate_limited' },
+    ]),
+  )('gives up on a $status $type of a $kind at once', ({ kind, status, type }) => {
+    expect(isFinal({ error: refusal(status, type), kind })).toBe(true);
   });
 
-  it.each(AI_KINDS.filter((kind) => kind !== 'followup'))(
+  it.each(AI_KINDS.filter((kind) => !ON_DEMAND_KINDS.includes(kind)))(
     'retries a 504 and a 429 of %s and gives up on its 422',
     (kind) => {
       expect([

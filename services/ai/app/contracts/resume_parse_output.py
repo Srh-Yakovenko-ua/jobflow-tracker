@@ -29,7 +29,7 @@ class Evidence(RootModel[str]):
     root: Annotated[str, Field(max_length=120, min_length=1)]
 
 
-class Position1(RootModel[int]):
+class Position2(RootModel[int]):
     root: Annotated[int, Field(ge=0, le=9)]
 
 
@@ -40,7 +40,7 @@ class Skill(BaseModel):
     name: Annotated[str, Field(max_length=120, min_length=1)]
     years: Annotated[float, Field(ge=0.0, le=60.0)]
     evidence: Evidence | None
-    positions: Annotated[list[Position1], Field(max_length=10)]
+    positions: Annotated[list[Position2], Field(max_length=10)]
 
 
 class Seniority(StrEnum):

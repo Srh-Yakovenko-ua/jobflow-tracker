@@ -11,6 +11,7 @@ import { bookmarklet } from './bookmarklet';
 import { calendar } from './calendar';
 import { calendarPage } from './calendar-page';
 import { contact } from './contact';
+import { cvHints } from './cv-hints';
 import { dataImport } from './data-import';
 import { devUi } from './dev-ui';
 import { followup } from './followup';
@@ -66,6 +67,7 @@ export const uk = {
   application,
   applicationPage,
   followup,
+  cvHints,
   contact,
   timeline,
   states,

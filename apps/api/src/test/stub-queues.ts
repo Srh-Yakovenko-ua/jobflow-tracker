@@ -69,6 +69,11 @@ export class RefusingQueue extends StubQueue {
   }
 }
 
+export const unreachableQueues = (name: string) => [
+  { case: 'refuses it', queue: new RefusingQueue(name), error: 'Connection is closed.' },
+  { case: 'never answers', queue: new SilentQueue(name), error: 'timed out after 2000 ms' },
+];
+
 export class HeldStubQueue extends StubQueue {
   private openGate: () => void = () => undefined;
 

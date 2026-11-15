@@ -12,7 +12,7 @@ import type { Request } from 'express';
 
 import { Idempotent } from '../../common/idempotency/idempotent.decorator.js';
 import { readRequestId } from '../../common/request-id.middleware.js';
-import { RateLimit } from '../../rate-limit/rate-limit.decorator.js';
+import { AcceptsAiJob, RateLimit } from '../../rate-limit/rate-limit.decorator.js';
 import { type AccessUser, CurrentUser, RequireScope } from '../auth/index.js';
 import { CaptureService } from './capture.service.js';
 
@@ -21,9 +21,7 @@ export class CaptureController {
   constructor(private readonly capture: CaptureService) {}
 
   @Post('paste')
-  @HttpCode(202)
-  @RateLimit('ai')
-  @Idempotent()
+  @AcceptsAiJob()
   paste(
     @CurrentUser() user: AccessUser,
     @Body({ schema: capturePasteInputSchema }) input: CapturePasteInput,

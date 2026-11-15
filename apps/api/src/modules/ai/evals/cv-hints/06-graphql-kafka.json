@@ -1,0 +1,11 @@
+{
+  "position": "Senior Backend Engineer, payments",
+  "requirements": [
+    { "name": "Node.js у проді", "weight": "must", "coverage": "full" },
+    { "name": "GraphQL federation", "weight": "must", "coverage": "partial" },
+    { "name": "Kafka / event streaming", "weight": "must", "coverage": "missing" },
+    { "name": "PostgreSQL", "weight": "must", "coverage": "full" }
+  ],
+  "explanation": "Node.js і PostgreSQL сильні; GraphQL неглибокий, Kafka немає.",
+  "absent": ["Kafka", "event streaming"]
+}

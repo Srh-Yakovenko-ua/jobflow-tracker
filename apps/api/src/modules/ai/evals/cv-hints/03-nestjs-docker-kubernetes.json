@@ -1,0 +1,12 @@
+{
+  "position": "Backend Node.js Developer",
+  "requirements": [
+    { "name": "Node.js", "weight": "must", "coverage": "full" },
+    { "name": "NestJS", "weight": "must", "coverage": "partial" },
+    { "name": "Docker", "weight": "must", "coverage": "partial" },
+    { "name": "Kubernetes", "weight": "must", "coverage": "missing" },
+    { "name": "PostgreSQL", "weight": "must", "coverage": "full" }
+  ],
+  "explanation": "Node.js і PostgreSQL збігаються; NestJS і Docker частково, Kubernetes немає.",
+  "absent": ["Kubernetes", "k8s", "Helm"]
+}

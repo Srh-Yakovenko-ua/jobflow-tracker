@@ -2,8 +2,8 @@ import { Injectable } from '@nestjs/common';
 
 import type { Prisma } from '../../generated/prisma/client.js';
 import type { InTransaction } from '../../prisma/in-transaction.js';
-import { LATEST_AI_JOB_SELECT, UNSETTLED_AI_JOB_WHERE } from '../../prisma/latest-ai-job.js';
-import { lockOwnedApplication } from '../../prisma/lock-owned-application.js';
+import { LATEST_AI_JOB_SELECT } from '../../prisma/latest-ai-job.js';
+import { type LockedAiJob, lockWithRunningAiJob } from '../../prisma/lock-owned-application.js';
 import { PrismaService } from '../../prisma/prisma.service.js';
 import { type FollowupRequested, followupRequestedEvent } from './followups.events.js';
 
@@ -35,11 +35,6 @@ const FOLLOWUP_JOB_SELECT = {
   select: { ...LATEST_AI_JOB_SELECT.select, errorType: true },
 } satisfies Prisma.AiJobFindManyArgs;
 
-const RUNNING_FOLLOWUP = {
-  kind: 'followup',
-  ...UNSETTLED_AI_JOB_WHERE,
-} satisfies Prisma.AiJobWhereInput;
-
 export type FollowupSourceRow = Prisma.ApplicationGetPayload<{
   select: ReturnType<typeof followupSourceSelect>;
 }>;
@@ -53,8 +48,6 @@ export type LatestFollowupJob = Prisma.AiJobGetPayload<{
 export type FollowupSourceQuery = { applicationId: string; now: Date };
 
 export type FollowupLock = InTransaction & { applicationId: string };
-
-export type LockedFollowup = { runningJobId: string | null };
 
 export type RecordFollowupRequested = InTransaction & { requested: FollowupRequested };
 
@@ -72,18 +65,11 @@ export class FollowupsRepository {
     });
   }
 
-  async lockApplication(
+  lockApplication(
     userId: string,
     { applicationId, tx = this.prisma }: FollowupLock,
-  ): Promise<LockedFollowup | null> {
-    if (!(await lockOwnedApplication(tx, { userId, applicationId }))) {
-      return null;
-    }
-    const running = await tx.aiJob.findFirst({
-      where: { userId, applicationId, ...RUNNING_FOLLOWUP },
-      ...LATEST_AI_JOB_SELECT,
-    });
-    return { runningJobId: running?.id ?? null };
+  ): Promise<LockedAiJob | null> {
+    return lockWithRunningAiJob(tx, { userId, applicationId, kind: 'followup' });
   }
 
   async recordRequested(

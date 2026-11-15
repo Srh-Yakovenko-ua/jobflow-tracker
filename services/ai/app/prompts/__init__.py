@@ -4,7 +4,14 @@ from pathlib import Path
 from pydantic import TypeAdapter
 
 from app import contracts
-from app.prompts import followup, match, monthly_summary, resume_parse, vacancy_parse
+from app.prompts import (
+    cv_hints,
+    followup,
+    match,
+    monthly_summary,
+    resume_parse,
+    vacancy_parse,
+)
 from app.prompts.base import PromptModule
 
 PROMPTS: dict[str, PromptModule] = {
@@ -13,6 +20,7 @@ PROMPTS: dict[str, PromptModule] = {
     "match": match,
     "followup": followup,
     "monthly_summary": monthly_summary,
+    "cv_hints": cv_hints,
 }
 
 PROMPT_VERSIONS_FILE = Path(contracts.__file__).with_name("prompt_versions.json")

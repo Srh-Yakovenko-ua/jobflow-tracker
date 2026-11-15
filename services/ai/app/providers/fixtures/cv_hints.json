@@ -1,0 +1,11 @@
+{
+  "hints": [
+    {
+      "requirement": "GraphQL",
+      "evidenceInCv": "Built the Acme dashboard in React",
+      "suggestion": "Підніми рядок про дашборд Acme вище і назви в ньому API, з якими працював дашборд, якщо серед них був GraphQL.",
+      "expectedScoreImpact": 5
+    }
+  ],
+  "gaps": ["AWS / інфраструктура", "Досвід ліда команди 3+"]
+}

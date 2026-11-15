@@ -1,0 +1,12 @@
+{
+  "position": "Senior React Developer",
+  "requirements": [
+    { "name": "React", "weight": "must", "coverage": "full" },
+    { "name": "Next.js", "weight": "must", "coverage": "partial" },
+    { "name": "GraphQL", "weight": "nice", "coverage": "partial" },
+    { "name": "AWS", "weight": "nice", "coverage": "missing" },
+    { "name": "Kubernetes", "weight": "mentioned", "coverage": "missing" }
+  ],
+  "explanation": "React збігається; Next.js і GraphQL частково, AWS немає, Kubernetes лише згадано.",
+  "absent": ["AWS", "Kubernetes"]
+}

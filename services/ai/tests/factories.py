@@ -245,6 +245,73 @@ MONTHLY_SUMMARY_INPUT = {
 }
 
 
+CV_HINTS_PATH = "/v1/complete/cv_hints"
+CV_HINTS_FIXTURE: dict[str, Any] = json.loads(fixture_of("cv_hints"))
+CV_HINTS_INPUT = {
+    "position": "Senior React developer",
+    "score": 59,
+    "requirements": [
+        {
+            "name": "AWS / інфраструктура",
+            "weight": "must",
+            "pointsLost": 27,
+            "coverage": "missing",
+        },
+        {
+            "name": "Досвід ліда команди 3+",
+            "weight": "nice",
+            "pointsLost": 9,
+            "coverage": "missing",
+        },
+        {"name": "GraphQL", "weight": "nice", "pointsLost": 5, "coverage": "partial"},
+        {
+            "name": "Node.js у проді",
+            "weight": "must",
+            "pointsLost": 0,
+            "coverage": "full",
+        },
+        {
+            "name": "React + TypeScript",
+            "weight": "must",
+            "pointsLost": 0,
+            "coverage": "full",
+        },
+    ],
+    "profile": {
+        "totalYears": 0.0,
+        "seniority": "middle",
+        "englishLevel": "upper_intermediate",
+        "domains": ["fintech"],
+        "leadership": {"hasExperience": False, "evidence": None},
+        "skills": [
+            {
+                "name": "React",
+                "years": 0.0,
+                "evidence": "Built the Acme dashboard in React",
+            },
+            {"name": "TypeScript", "years": 0.0, "evidence": None},
+        ],
+        "positions": [
+            {"title": "Frontend developer", "start": "2021-03", "end": None},
+            {"title": "Junior developer", "start": "2019-09", "end": "2021-02"},
+        ],
+    },
+}
+
+
+def cv_hints_body(**overrides: Any) -> Any:
+    return {"input": {**CV_HINTS_INPUT, **overrides}}
+
+
+def cv_hint(requirement: str, evidence: str, *, impact: int = 5) -> dict[str, Any]:
+    return {
+        "requirement": requirement,
+        "evidenceInCv": evidence,
+        "suggestion": "Підніми цей рядок вище.",
+        "expectedScoreImpact": impact,
+    }
+
+
 def monthly_summary_request(**overrides: Any) -> Any:
     return {"input": {**MONTHLY_SUMMARY_INPUT, **overrides}}
 

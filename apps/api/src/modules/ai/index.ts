@@ -27,5 +27,6 @@ export { AI_PAYLOAD_BUILDERS, type MatchInputSource, type VacancySource } from '
 export { type GuardedCompletion, queueOrFailAiJob } from './ai-queue.js';
 export type { AiQueuePosition } from './ai-queue-estimate.js';
 export { AiServiceError } from './ai-service-error.js';
+export type { CvHintsSource } from './cv-hints-payload.js';
 export type { FollowupSource } from './followup-payload.js';
 export type { MonthlySummarySource, WhatIfSource } from './monthly-summary-payload.js';

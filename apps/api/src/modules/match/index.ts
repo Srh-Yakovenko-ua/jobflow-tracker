@@ -7,6 +7,7 @@ export type {
   MatchScoreWrite,
   MatchSource,
 } from './match.repository.js';
+export { MatchService } from './match.service.js';
 export { MatchSubscriber } from './match.subscriber.js';
 export { MatchQueueService, type MatchRequest } from './match-queue.service.js';
 export { scoreMatch } from './match-score.js';

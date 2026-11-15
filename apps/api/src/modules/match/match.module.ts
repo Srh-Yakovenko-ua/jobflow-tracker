@@ -18,6 +18,7 @@ import { MatchTriggerSubscriber } from './match-trigger.subscriber.js';
 @Module({
   controllers: [MatchController],
   providers: [MatchService, MatchRepository],
+  exports: [MatchService],
 })
 export class MatchModule {}
 

@@ -1,0 +1,11 @@
+{
+  "position": "Lead Frontend Developer",
+  "requirements": [
+    { "name": "React", "weight": "must", "coverage": "full" },
+    { "name": "Next.js SSR", "weight": "must", "coverage": "partial" },
+    { "name": "Досвід тімліда 2+ роки", "weight": "must", "coverage": "missing" },
+    { "name": "TypeScript", "weight": "must", "coverage": "full" }
+  ],
+  "explanation": "Frontend сильний, Next.js два роки; досвіду керування командою в CV немає.",
+  "absent": ["тімлід", "team lead", "менторинг"]
+}

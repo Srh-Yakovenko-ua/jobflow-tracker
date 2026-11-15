@@ -6,6 +6,7 @@ export const AI_KINDS = [
   'match',
   'followup',
   'monthly_summary',
+  'cv_hints',
 ] as const;
 
 export const aiKindSchema = z.enum(AI_KINDS);
@@ -18,4 +19,5 @@ export const AI_PROMPT_VERSIONS = {
   match: 'v3',
   followup: 'v3',
   monthly_summary: 'v1',
+  cv_hints: 'v1',
 } satisfies Record<AiKind, string>;

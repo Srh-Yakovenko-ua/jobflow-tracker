@@ -5,6 +5,7 @@ import {
   buildMonthlySummaryOutput,
   buildResumeParseOutput,
   buildVacancyCompletion,
+  CV_HINTS_OUTPUT,
   VACANCY_SAMPLE_TEXT,
 } from '../../testing/index.js';
 import { issuePathsOf } from '../test/zod-issues.js';
@@ -43,6 +44,7 @@ describe('AI_PROMPT_VERSIONS', () => {
       match: 'v3',
       followup: 'v3',
       monthly_summary: 'v1',
+      cv_hints: 'v1',
     });
   });
 });
@@ -65,6 +67,9 @@ describe('aiContractJsonSchemas', () => {
       'monthly_summary_request',
       'monthly_summary_output',
       'monthly_summary_response',
+      'cv_hints_request',
+      'cv_hints_output',
+      'cv_hints_response',
       'embed_request',
       'embed_response',
     ]);
@@ -141,6 +146,25 @@ describe('aiContractJsonSchemas', () => {
     });
   });
 
+  it('requires every cv_hints input block, and at most 5 hints with every field plus the gaps in its output', () => {
+    expect(aiContractJsonSchemas()).toMatchObject({
+      cv_hints_request: { properties: { input: { required: AI_PAYLOAD_FIELDS.cv_hints } } },
+      cv_hints_output: {
+        title: 'CvHintsOutput',
+        required: ['hints', 'gaps'],
+        properties: {
+          hints: {
+            maxItems: 5,
+            items: {
+              required: ['requirement', 'evidenceInCv', 'suggestion', 'expectedScoreImpact'],
+            },
+          },
+          gaps: { maxItems: 15 },
+        },
+      },
+    });
+  });
+
   it('requires only the input in a completion request', () => {
     expect(aiContractJsonSchemas()['vacancy_parse_request']).toMatchObject({
       title: 'VacancyParseRequest',
@@ -189,6 +213,11 @@ describe('aiCompletionSchemas', () => {
   it('parses a monthly_summary completion carrying the summary and its actions', () => {
     const completion = { ...COMPLETION, promptVersion: 'v1', output: buildMonthlySummaryOutput() };
     expect(aiCompletionSchemas.monthly_summary.parse(completion)).toEqual(completion);
+  });
+
+  it('parses a cv_hints completion carrying the hints and the gaps', () => {
+    const completion = { ...COMPLETION, promptVersion: 'v1', output: CV_HINTS_OUTPUT };
+    expect(aiCompletionSchemas.cv_hints.parse(completion)).toEqual(completion);
   });
 
   it('refuses a numeric promptVersion', () => {

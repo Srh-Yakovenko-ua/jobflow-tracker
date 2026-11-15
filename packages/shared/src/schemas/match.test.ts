@@ -1,7 +1,11 @@
 import { describe, expect, it } from 'vitest';
 
 import { issuePathsOf } from '../test/zod-issues.js';
-import { applicationMatchResponseSchema, matchBreakdownSchema } from './match.js';
+import {
+  applicationMatchResponseSchema,
+  byPointsLostThenName,
+  matchBreakdownSchema,
+} from './match.js';
 
 const BREAKDOWN = {
   score: 68,
@@ -85,5 +89,18 @@ describe('applicationMatchResponseSchema', () => {
     { label: 'a body without the job field', body: { match: null }, path: 'job' },
   ])('refuses $label at $path', ({ body, path }) => {
     expect(issuePathsOf(applicationMatchResponseSchema.safeParse(body))).toEqual([path]);
+  });
+});
+
+describe('byPointsLostThenName', () => {
+  it('ranks the requirement that loses most points first and breaks a tie by name', () => {
+    const ranked = [
+      { name: 'Docker', pointsLost: 9 },
+      { name: 'React', pointsLost: 0 },
+      { name: 'AWS', pointsLost: 9 },
+      { name: 'Kafka', pointsLost: 27 },
+    ].sort(byPointsLostThenName);
+
+    expect(ranked.map(({ name }) => name)).toEqual(['Kafka', 'AWS', 'Docker', 'React']);
   });
 });

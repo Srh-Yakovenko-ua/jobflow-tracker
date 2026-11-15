@@ -29,5 +29,10 @@ export const applicationMatchResponseSchema = z.object({
   job: jobStatusSchema.pick({ id: true, status: true }).nullable(),
 });
 
+type RankedRequirement = Pick<z.infer<typeof scoredRequirementSchema>, 'name' | 'pointsLost'>;
+
+export const byPointsLostThenName = (left: RankedRequirement, right: RankedRequirement) =>
+  right.pointsLost - left.pointsLost || left.name.localeCompare(right.name, 'en');
+
 export type MatchBreakdown = z.infer<typeof matchBreakdownSchema>;
 export type ApplicationMatchResponse = z.infer<typeof applicationMatchResponseSchema>;

@@ -9,7 +9,7 @@ import { Controller, Get, HttpCode, Param, Post } from '@nestjs/common';
 
 import { Idempotent } from '../../common/idempotency/idempotent.decorator.js';
 import { RequestId } from '../../common/request-id.decorator.js';
-import { RateLimit } from '../../rate-limit/rate-limit.decorator.js';
+import { AcceptsAiJob } from '../../rate-limit/rate-limit.decorator.js';
 import { type AccessUser, CurrentUser } from '../auth/index.js';
 import { SummariesService } from './summaries.service.js';
 import { SummaryRequestsService } from './summary-requests.service.js';
@@ -32,9 +32,7 @@ export class SummariesController {
   }
 
   @Post()
-  @HttpCode(202)
-  @RateLimit('ai')
-  @Idempotent()
+  @AcceptsAiJob()
   request(
     @CurrentUser() user: AccessUser,
     @RequestId() requestId: string,

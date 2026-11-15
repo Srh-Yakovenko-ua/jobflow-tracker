@@ -1,5 +1,7 @@
 import { AI_JOB_FAILURES, type FollowupOutput, type FollowupResponse } from '@jobflow/shared';
 
+import { jobWaiting } from '@/entities/application';
+
 export type FollowupFailed = Readonly<{ timeout: boolean }>;
 
 export type FollowupReady = Readonly<{
@@ -24,8 +26,8 @@ export type FollowupViewInput = Readonly<{
 
 const REFUSED: FollowupFailed = { timeout: false };
 
-export function followupWaiting({ job }: Pick<FollowupResponse, 'job'>): boolean {
-  return job?.status === 'queued' || job?.status === 'processing';
+function followupWaiting({ job }: Pick<FollowupResponse, 'job'>): boolean {
+  return jobWaiting(job);
 }
 
 function ownDraftOf({ response, refused }: FollowupViewInput): FollowupReady {

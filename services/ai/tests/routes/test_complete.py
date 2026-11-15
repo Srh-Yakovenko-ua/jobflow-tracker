@@ -7,6 +7,8 @@ from loguru import logger
 from app.providers.fake import FIXTURES, FakeAiProvider
 from app.providers.openai import OpenAiProvider
 from tests.factories import (
+    CV_HINTS_FIXTURE,
+    CV_HINTS_PATH,
     FOLLOWUP_FIXTURE,
     FOLLOWUP_PATH,
     MATCH_FIXTURE,
@@ -20,6 +22,8 @@ from tests.factories import (
     VACANCY_BODY,
     ScriptedVendor,
     build_app,
+    cv_hint,
+    cv_hints_body,
     draft_of,
     failing_vacancy,
     followup_body,
@@ -127,6 +131,30 @@ async def test_returns_the_followup_draft_at_temperature_0_4() -> None:
         },
     )
     assert (len(fake.requests), fake.requests[0].temperature) == (1, 0.4)
+
+
+async def test_returns_cv_hints_without_a_hint_on_evidence_the_profile_lacks() -> None:
+    foreign = cv_hint("GraphQL", "Ran GraphQL at Globex for 4 years")
+    reply = {**CV_HINTS_FIXTURE, "hints": [foreign, *CV_HINTS_FIXTURE["hints"]]}
+    fake = FakeAiProvider(replies=[json.dumps(reply)])
+
+    response = await post_as_worker(
+        CV_HINTS_PATH, cv_hints_body(), app=build_app(provider=fake)
+    )
+
+    body = response.json()
+    assert isinstance(body.pop("latencyMs"), int)
+    assert (response.status_code, body) == (
+        200,
+        {
+            "output": CV_HINTS_FIXTURE,
+            "model": "fake",
+            "promptVersion": "v1",
+            "tokensIn": 100,
+            "tokensOut": 50,
+        },
+    )
+    assert (len(fake.requests), fake.requests[0].temperature) == (1, 0.0)
 
 
 async def test_repairs_a_short_followup_draft_once_with_its_problems() -> None:

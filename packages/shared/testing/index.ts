@@ -1,4 +1,5 @@
 export * from './ai.js';
+export * from './cv-hints.js';
 export * from './forecast.js';
 export * from './funnel.js';
 export * from './insights.js';

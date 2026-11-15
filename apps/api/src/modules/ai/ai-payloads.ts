@@ -8,6 +8,7 @@ import {
   VACANCY_PARSE_LIMITS,
 } from '@jobflow/shared';
 
+import { cvHintsPayload } from './cv-hints-payload.js';
 import { followupPayload } from './followup-payload.js';
 import { monthlySummaryPayload } from './monthly-summary-payload.js';
 
@@ -40,4 +41,5 @@ export const AI_PAYLOAD_BUILDERS = {
   }),
   followup: followupPayload,
   monthly_summary: monthlySummaryPayload,
+  cv_hints: cvHintsPayload,
 } satisfies AiPayloadBuilders;

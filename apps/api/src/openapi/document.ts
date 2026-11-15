@@ -7,6 +7,7 @@ import { APPLICATIONS_OPENAPI_PATHS } from '../modules/applications/index.js';
 import { AUTH_OPENAPI_PATHS, REFRESH_COOKIE } from '../modules/auth/index.js';
 import { CAPTURE_OPENAPI_PATHS } from '../modules/capture/index.js';
 import { CONTACTS_OPENAPI_PATHS } from '../modules/contacts/index.js';
+import { CV_HINTS_OPENAPI_PATHS } from '../modules/cv-hints/index.js';
 import { TIMELINE_OPENAPI_PATHS } from '../modules/events/index.js';
 import { FOLLOWUPS_OPENAPI_PATHS } from '../modules/followups/index.js';
 import { HEALTH_OPENAPI_PATHS } from '../modules/health/index.js';
@@ -37,6 +38,7 @@ export const API_OPENAPI_PATHS = [
   ...TIMELINE_OPENAPI_PATHS,
   ...MATCH_OPENAPI_PATHS,
   ...FOLLOWUPS_OPENAPI_PATHS,
+  ...CV_HINTS_OPENAPI_PATHS,
   ...SUMMARIES_OPENAPI_PATHS,
   ...PLANS_OPENAPI_PATHS,
   ...NOTES_OPENAPI_PATHS,
