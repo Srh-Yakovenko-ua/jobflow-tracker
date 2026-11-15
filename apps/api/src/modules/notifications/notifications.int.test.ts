@@ -22,9 +22,13 @@ import {
 } from '../../test/notifications.js';
 import { outboxRows } from '../../test/outbox.js';
 import { NOW } from '../../test/time.js';
-import { NotificationsService } from './notifications.service.js';
+import { NotificationsService, type OnceNotification } from './notifications.service.js';
 
 const AI_DONE = { aiJobId: randomUUID(), kind: 'vacancy_parse' } as const;
+
+const EXPORT_READY = { exportId: randomUUID(), format: 'csv' } as const;
+
+type OnceWrites = { case: string; first: OnceNotification; other: OnceNotification };
 
 const UNLOCKED = { type: 'insight_unlocked', payload: { applications: 10 } } as const;
 
@@ -222,19 +226,32 @@ describe('the notification feed', () => {
     expect(owners.map(({ userId }) => userId).sort()).toEqual([olena.userId, bohdan.userId].sort());
   });
 
-  it('writes ai_done once per AI job and once more for another job', async () => {
-    const { userId } = await signedIn();
-    const other = { ...AI_DONE, aiJobId: randomUUID() };
+  it.each([
+    {
+      case: 'ai_done once per AI job',
+      first: { type: 'ai_done', payload: AI_DONE },
+      other: { type: 'ai_done', payload: { ...AI_DONE, aiJobId: randomUUID() } },
+    },
+    {
+      case: 'export_ready once per export',
+      first: { type: 'export_ready', payload: EXPORT_READY },
+      other: { type: 'export_ready', payload: { ...EXPORT_READY, exportId: randomUUID() } },
+    },
+  ] satisfies OnceWrites[])(
+    'writes $case and once more for another one',
+    async ({ first, other }) => {
+      const { userId } = await signedIn();
 
-    await service().recordOnce(userId, { type: 'ai_done', payload: AI_DONE });
-    await service().recordOnce(userId, { type: 'ai_done', payload: AI_DONE });
-    await service().recordOnce(userId, { type: 'ai_done', payload: other });
+      await service().recordOnce(userId, first);
+      await service().recordOnce(userId, first);
+      await service().recordOnce(userId, other);
 
-    const rows = await testApp.prisma.notification.findMany({
-      where: { userId },
-      orderBy: { id: 'asc' },
-      select: { payload: true },
-    });
-    expect(rows).toEqual([{ payload: AI_DONE }, { payload: other }]);
-  });
+      const rows = await testApp.prisma.notification.findMany({
+        where: { userId },
+        orderBy: { id: 'asc' },
+        select: { payload: true },
+      });
+      expect(rows).toEqual([{ payload: first.payload }, { payload: other.payload }]);
+    },
+  );
 });

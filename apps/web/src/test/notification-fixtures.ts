@@ -97,6 +97,14 @@ export const AUTO_GHOSTED_NOTIFICATION = buildNotification({
   },
 });
 
+export const EXPORT_ID = fixtureIdOf(81);
+
+export const EXPORT_READY_NOTIFICATION = buildNotification({
+  serial: 8,
+  type: 'export_ready',
+  payload: { exportId: EXPORT_ID, format: 'csv' },
+});
+
 export const DESIGN_FEED: NotificationListResponse = {
   items: [INTERVIEW_NOTIFICATION, SILENCE_NOTIFICATION, AI_DONE_NOTIFICATION],
   nextCursor: null,

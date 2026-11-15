@@ -13,7 +13,9 @@ export type InsertNotification = Transaction & {
   payload: Prisma.InputJsonValue;
 };
 
-export type ExistingNotification = Transaction & { type: NotificationType; aiJobId?: string };
+export type OnceKey = { field: 'aiJobId' | 'exportId'; id: string };
+
+export type ExistingNotification = Transaction & { type: NotificationType; once?: OnceKey };
 
 export type NotificationPage = Pick<NotificationListQuery, 'unread' | 'cursor' | 'limit'>;
 
@@ -49,12 +51,12 @@ export class NotificationsRepository {
     await lockUser(tx, userId);
   }
 
-  async exists(userId: string, { type, aiJobId, tx }: ExistingNotification): Promise<boolean> {
+  async exists(userId: string, { type, once, tx }: ExistingNotification): Promise<boolean> {
     const found = await tx.notification.findFirst({
       where: {
         userId,
         type,
-        ...(aiJobId !== undefined && { payload: { path: ['aiJobId'], equals: aiJobId } }),
+        ...(once !== undefined && { payload: { path: [once.field], equals: once.id } }),
       },
       select: { id: true },
     });

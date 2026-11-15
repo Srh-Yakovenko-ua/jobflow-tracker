@@ -1,7 +1,11 @@
 import { describe, expect, it } from 'vitest';
 
 import { fixtureIdOf } from '@/test/board-fixtures';
-import { AUTO_GHOSTED_NOTIFICATION, buildNotification } from '@/test/notification-fixtures';
+import {
+  AUTO_GHOSTED_NOTIFICATION,
+  buildNotification,
+  EXPORT_READY_NOTIFICATION,
+} from '@/test/notification-fixtures';
 
 import { notificationCopyOf } from './notification-copy';
 
@@ -13,6 +17,14 @@ describe('notificationCopyOf', () => {
       title: '2 компанії мовчать понад 30 днів, перенесено в ghosted',
       text: 'Acme, Kvit Software · 34 дні без відповіді',
       action: 'Відкрити дошку',
+    });
+  });
+
+  it('export_ready names the archive format and leads to its download', () => {
+    expect(notificationCopyOf(EXPORT_READY_NOTIFICATION, TIME_ZONE)).toEqual({
+      title: 'Архів з даними готовий',
+      text: 'Архів CSV чекає в налаштуваннях акаунта.',
+      action: 'Завантажити архів',
     });
   });
 

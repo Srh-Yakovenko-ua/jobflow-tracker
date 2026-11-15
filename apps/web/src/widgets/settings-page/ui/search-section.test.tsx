@@ -8,6 +8,7 @@ import { waitForQuery } from '@/test/query-status';
 import { regionOf, renderLoadedSettings, SUGGESTIONS_KEY } from '@/test/render-settings-page';
 
 vi.mock('next/navigation', () => import('@/test/navigation'));
+vi.mock('next/link', () => import('@/test/link'));
 
 const FINAL_STAGE =
   'На етапі «фінал» поріг автоматично подвоюється: там 24 дні є нормою, і нагадування були б хибними.';

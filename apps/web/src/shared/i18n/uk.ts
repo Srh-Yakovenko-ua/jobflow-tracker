@@ -11,6 +11,7 @@ import { bookmarklet } from './bookmarklet';
 import { calendar } from './calendar';
 import { calendarPage } from './calendar-page';
 import { contact } from './contact';
+import { dataImport } from './data-import';
 import { devUi } from './dev-ui';
 import { followup } from './followup';
 import { notifications } from './notifications';
@@ -86,6 +87,7 @@ export const uk = {
   calendarPage,
   resumes,
   settings,
+  dataImport,
   analytics,
   summary,
   designSystem: {

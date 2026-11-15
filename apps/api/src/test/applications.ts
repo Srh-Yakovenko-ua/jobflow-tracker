@@ -28,6 +28,8 @@ export const APPLICATIONS_BOARD_PATH = `${APPLICATIONS_PATH}/board`;
 
 export const REASONS_SUMMARY_PATH = `${APPLICATIONS_PATH}/reasons-summary`;
 
+export const APPLICATIONS_IMPORT_PATH = `${APPLICATIONS_PATH}/import`;
+
 export type NewApplicationBody = z.input<typeof createApplicationInputSchema>;
 
 export type ApplicationRequest<Body> = { accessToken: string; input: Body };

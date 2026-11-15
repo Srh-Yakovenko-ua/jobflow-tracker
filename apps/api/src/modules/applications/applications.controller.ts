@@ -8,6 +8,9 @@ import {
   type CreateApplicationInput,
   createApplicationInputSchema,
   type CreateApplicationResponse,
+  type ImportApplicationsInput,
+  importApplicationsInputSchema,
+  type ImportApplicationsResponse,
   type MoveApplicationInput,
   moveApplicationInputSchema,
   type RejectionReasonsSummary,
@@ -21,6 +24,7 @@ import { Body, Controller, Delete, Get, HttpCode, Param, Patch, Post, Query } fr
 import { Idempotent } from '../../common/idempotency/idempotent.decorator.js';
 import { type AccessUser, CurrentUser } from '../auth/index.js';
 import { type ApplicationListRequest, applicationListRequestSchema } from './application-cursor.js';
+import { ApplicationImportService } from './application-import.service.js';
 import { ApplicationListService } from './application-list.service.js';
 import { ApplicationsService } from './applications.service.js';
 import { StageTransitionService } from './stage-transition.service.js';
@@ -31,6 +35,7 @@ export class ApplicationsController {
     private readonly applications: ApplicationsService,
     private readonly applicationList: ApplicationListService,
     private readonly stageTransitions: StageTransitionService,
+    private readonly imports: ApplicationImportService,
   ) {}
 
   @Post()
@@ -40,6 +45,16 @@ export class ApplicationsController {
     @Body({ schema: createApplicationInputSchema }) input: CreateApplicationInput,
   ): Promise<CreateApplicationResponse> {
     return this.applications.create(user.id, input);
+  }
+
+  @Post('import')
+  @HttpCode(200)
+  @Idempotent()
+  importRows(
+    @CurrentUser() user: AccessUser,
+    @Body({ schema: importApplicationsInputSchema }) input: ImportApplicationsInput,
+  ): Promise<ImportApplicationsResponse> {
+    return this.imports.importRows(user.id, input);
   }
 
   @Get()

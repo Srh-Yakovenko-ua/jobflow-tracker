@@ -32,6 +32,8 @@ const AI_DONE = { aiJobId: AI_JOB_ID, kind: 'vacancy_parse' as const };
 
 const OTHER_AI_JOB_ID = idOf(999);
 
+const PAYLOAD_FIELDS = z.record(z.string(), z.unknown());
+
 const byIdDesc = (left: StoredNotification, right: StoredNotification) =>
   right.id.localeCompare(left.id);
 
@@ -66,13 +68,11 @@ class FakeNotificationsRepository {
     return Promise.resolve();
   }
 
-  exists(userId: string, { type, aiJobId }: ExistingNotification): Promise<boolean> {
-    const jobOf = (payload: Prisma.JsonValue) =>
-      typeof payload === 'object' && payload !== null && 'aiJobId' in payload
-        ? payload.aiJobId
-        : undefined;
+  exists(userId: string, { type, once }: ExistingNotification): Promise<boolean> {
+    const keyOf = (payload: Prisma.JsonValue) =>
+      once === undefined ? undefined : PAYLOAD_FIELDS.safeParse(payload).data?.[once.field];
     const found = this.ownedBy(userId).some(
-      (row) => row.type === type && (aiJobId === undefined || jobOf(row.payload) === aiJobId),
+      (row) => row.type === type && (once === undefined || keyOf(row.payload) === once.id),
     );
     return Promise.resolve(found);
   }

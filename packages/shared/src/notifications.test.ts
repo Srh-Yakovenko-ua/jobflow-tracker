@@ -12,6 +12,7 @@ import {
 } from './notifications.js';
 import {
   AI_DONE,
+  EXPORT_READY,
   INTERVIEW_SOON,
   MONTHLY_SUMMARY_READY,
   NOTIFICATION_ID,
@@ -99,6 +100,7 @@ describe('notificationSchema', () => {
       'an auto ghosted',
       { ...ROW, type: 'auto_ghosted', payload: { ...SILENCE, autoGhostDays: 30 } },
     ],
+    ['an export ready', { ...ROW, type: 'export_ready', payload: EXPORT_READY }],
   ])('keeps %s notification as sent', (_label, notification) => {
     expect(notificationSchema.parse(notification)).toStrictEqual(notification);
   });
@@ -136,6 +138,16 @@ describe('notificationSchema', () => {
       label: 'an auto ghosted without the day setting',
       notification: { type: 'auto_ghosted', payload: SILENCE },
       path: 'payload.autoGhostDays',
+    },
+    {
+      label: 'an export ready in a format the export does not write',
+      notification: { type: 'export_ready', payload: { ...EXPORT_READY, format: 'xlsx' } },
+      path: 'payload.format',
+    },
+    {
+      label: 'an export ready whose export id is not a uuid',
+      notification: { type: 'export_ready', payload: { ...EXPORT_READY, exportId: 'abc' } },
+      path: 'payload.exportId',
     },
   ])('refuses $label', ({ notification, path }) => {
     expect(issuePathsOf(notificationSchema.safeParse({ ...ROW, ...notification }))).toEqual([path]);

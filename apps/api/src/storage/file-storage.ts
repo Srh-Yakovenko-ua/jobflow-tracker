@@ -2,7 +2,12 @@ export type Signing = { signedAt: Date };
 
 export type UploadUrlRequest = Signing & { key: string; mime: string; sizeBytes: number };
 
-export type DownloadUrlRequest = Signing & { key: string; mime: string; filename: string };
+export type DownloadUrlRequest = Signing & {
+  key: string;
+  mime: string;
+  filename: string;
+  ttlSeconds: number;
+};
 
 export type SignedUrl = { url: string; expiresAt: Date };
 
@@ -22,4 +27,5 @@ export abstract class FileStorage {
   abstract copy(request: CopyRequest): Promise<boolean>;
   abstract put(object: PutObject): Promise<void>;
   abstract delete(key: string): Promise<void>;
+  abstract deletePrefix(prefix: string): Promise<void>;
 }

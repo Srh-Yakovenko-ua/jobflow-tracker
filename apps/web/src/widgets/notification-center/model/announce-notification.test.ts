@@ -8,6 +8,7 @@ import { fixtureIdOf } from '@/test/board-fixtures';
 import {
   AI_DONE_NOTIFICATION,
   buildNotification,
+  EXPORT_READY_NOTIFICATION,
   INTERVIEW_NOTIFICATION,
   MONTHLY_SUMMARY_NOTIFICATION,
   notificationRoutes,
@@ -36,6 +37,7 @@ const FEED = [
   AI_DONE_NOTIFICATION,
   AI_FAILED_NOTIFICATION,
   MONTHLY_SUMMARY_NOTIFICATION,
+  EXPORT_READY_NOTIFICATION,
 ];
 
 function nextTask() {
@@ -89,6 +91,11 @@ describe('announceNotification', () => {
       name: 'a ready monthly summary',
       notification: MONTHLY_SUMMARY_NOTIFICATION,
       title: 'Саммарі за жовтень готове',
+    },
+    {
+      name: 'a ready data export',
+      notification: EXPORT_READY_NOTIFICATION,
+      title: 'Архів з даними готовий',
     },
   ])('$name toasts $title', async ({ notification, title }) => {
     await announced({ notification });

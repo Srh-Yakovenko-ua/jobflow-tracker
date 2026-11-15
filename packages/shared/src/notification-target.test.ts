@@ -5,6 +5,7 @@ import type { Notification } from './notifications.js';
 import {
   AI_DONE,
   APPLICATION_ID,
+  EXPORT_READY,
   INTERVIEW_SOON,
   MONTHLY_SUMMARY_READY,
   NOTIFICATION_ROW,
@@ -101,6 +102,11 @@ describe('notificationTargetOf', () => {
         payload: { ...SILENCE, autoGhostDays: 30 },
       },
       target: '/board',
+    },
+    {
+      name: 'export_ready opens the account settings with its export',
+      notification: { ...NOTIFICATION_ROW, type: 'export_ready', payload: EXPORT_READY },
+      target: '/settings?export=0199f1a2-7c3b-7d4e-8f50-6a7b8c9d0e24#account',
     },
   ])('$name', ({ notification, target }) => {
     expect(notificationTargetOf(notification)).toBe(target);

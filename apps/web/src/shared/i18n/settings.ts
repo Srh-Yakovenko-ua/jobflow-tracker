@@ -7,6 +7,8 @@ import {
   pluralUk,
 } from '@jobflow/shared';
 
+import { settingsAccount } from './settings-account';
+
 const DAY_GENITIVE_FORMS = {
   one: 'дня',
   few: 'днів',
@@ -170,21 +172,7 @@ export const settings = {
     description:
       'N, G з другою літерою, ? і / спрацьовують одним натиском. Вимкни, якщо вводиш текст голосом або перемикачем. Палітра команд відкривається завжди.',
   },
-  account: {
-    title: 'Акаунт',
-    name: "Ім'я",
-    email: 'Пошта',
-    logoutEverywhere: {
-      title: 'Вийти на всіх пристроях',
-      description:
-        'Завершує всі сесії, і цю теж, та вимикає букмарклет. Увійти знову можна будь-коли.',
-      action: 'Вийти на всіх пристроях',
-    },
-    deletion: {
-      title: 'Видалити акаунт',
-      description: 'Спершу вивантажимо всі твої дані, потім попросимо підтвердити.',
-    },
-  },
+  account: settingsAccount,
   password: {
     title: 'Зміна пароля',
     current: 'Поточний пароль',

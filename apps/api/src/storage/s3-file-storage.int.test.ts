@@ -39,6 +39,10 @@ const STORAGE_CALLS = [
     name: 'put',
     call: (storage: S3FileStorage) => storage.put({ key: newKey(), bytes: PDF_BYTES, mime: PDF }),
   },
+  {
+    name: 'deletePrefix',
+    call: (storage: S3FileStorage) => storage.deletePrefix(`users/${randomUUID()}/`),
+  },
 ];
 
 const pdfUpload = (key: string, signedAt = new Date()): UploadUrlRequest => ({
@@ -191,6 +195,7 @@ describe('S3FileStorage against MinIO', () => {
       mime: PDF,
       filename: "Олена's CV.pdf",
       signedAt,
+      ttlSeconds: 300,
     });
     const response = await fetch(url);
 
@@ -211,17 +216,21 @@ describe('S3FileStorage against MinIO', () => {
     ]);
   });
 
-  it('serves a DOCX as an attachment', async () => {
-    const { url } = await storage.createDownloadUrl({
+  it('serves a DOCX as an attachment for as long as the caller asks', async () => {
+    const { url, expiresAt } = await storage.createDownloadUrl({
       key: newKey('docx'),
       mime: DOCX,
       filename: 'cv.docx',
-      signedAt: new Date(),
+      signedAt: SIGNED_AT,
+      ttlSeconds: 3600,
     });
 
-    expect(new URL(url).searchParams.get('response-content-disposition')).toBe(
-      "attachment; filename*=UTF-8''cv.docx",
-    );
+    const query = new URL(url).searchParams;
+    expect([
+      query.get('response-content-disposition'),
+      query.get('X-Amz-Expires'),
+      expiresAt.toISOString(),
+    ]).toEqual(["attachment; filename*=UTF-8''cv.docx", '3600', '2026-11-07T11:00:00.000Z']);
   });
 
   it('reads only the first bytes asked for while the ETag still matches', async () => {
@@ -248,6 +257,30 @@ describe('S3FileStorage against MinIO', () => {
     await storage.delete(key);
 
     expect([await storage.head(key), await storage.head(newKey())]).toEqual([null, null]);
+  });
+
+  it("deletes every object under a user's stored and pending prefixes and keeps another user's", async () => {
+    const [owner, other] = [randomUUID(), randomUUID()];
+    const ownerKeys = [
+      `users/${owner}/resumes/${randomUUID()}.pdf`,
+      `users/${owner}/exports/${randomUUID()}.zip`,
+      `pending/users/${owner}/resumes/${randomUUID()}.pdf`,
+    ];
+    const otherKeys = [`users/${other}/resumes/${randomUUID()}.pdf`];
+    for (const key of [...ownerKeys, ...otherKeys]) {
+      await storage.put({ key, bytes: PDF_BYTES, mime: PDF });
+    }
+
+    await storage.deletePrefix(`users/${owner}/`);
+    await storage.deletePrefix(`pending/users/${owner}/`);
+
+    const left = await Promise.all([...ownerKeys, ...otherKeys].map((key) => storage.head(key)));
+    expect(left.map((stored) => stored?.sizeBytes ?? null)).toEqual([
+      null,
+      null,
+      null,
+      PDF_BYTES.length,
+    ]);
   });
 });
 

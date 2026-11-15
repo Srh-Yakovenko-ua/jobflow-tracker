@@ -12,6 +12,8 @@ export type NotificationCopy = Readonly<{ title: string; text: string; action: s
 
 const COPY = uk.notifications;
 
+const EXPORT_FORMATS = uk.settings.account.export.formats;
+
 function silenceTextOf({ items }: SilenceNotificationPayload): string {
   const companies = items.map((item) => item.company).join(', ');
   const longest = Math.max(...items.map((item) => item.days));
@@ -55,6 +57,10 @@ export function notificationCopyOf(notification: Notification, timeZone: string)
     case 'monthly_summary_ready': {
       const { title, text, action } = COPY.monthlySummaryReady;
       return { title: title(monthNameOf(notification.payload.month)), text, action };
+    }
+    case 'export_ready': {
+      const { title, text, action } = COPY.exportReady;
+      return { title, text: text(EXPORT_FORMATS[notification.payload.format]), action };
     }
     default: {
       const unhandled: never = notification;

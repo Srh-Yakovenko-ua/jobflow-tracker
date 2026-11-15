@@ -51,6 +51,8 @@ export function notificationTargetOf(notification: Notification): string | null 
       return '/analytics';
     case 'monthly_summary_ready':
       return `/analytics/summary/${notification.payload.month}`;
+    case 'export_ready':
+      return `/settings?export=${notification.payload.exportId}#account`;
     default: {
       const unhandled: never = notification;
       throw new Error(`Unhandled notification: ${JSON.stringify(unhandled)}`);

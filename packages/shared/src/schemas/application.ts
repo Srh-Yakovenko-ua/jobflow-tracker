@@ -50,7 +50,7 @@ export const currencySchema = z
     error: 'Unknown ISO 4217 currency code',
   });
 
-const applicationFieldsSchema = z.object({
+export const applicationFieldsSchema = z.object({
   company: textSchema,
   position: textSchema,
   url: z
@@ -71,13 +71,13 @@ export const applicationPatchSchema = applicationFieldsSchema.partial();
 
 type ApplicationPatch = z.infer<typeof applicationPatchSchema>;
 
-const salaryRangeIsOrdered = ({ salaryMin, salaryMax }: ApplicationPatch) =>
+export const salaryRangeIsOrdered = ({ salaryMin, salaryMax }: ApplicationPatch) =>
   typeof salaryMin !== 'number' || typeof salaryMax !== 'number' || salaryMin <= salaryMax;
 
 const salaryRangeIsSentWhole = ({ salaryMin, salaryMax }: ApplicationPatch) =>
   (salaryMin === undefined) === (salaryMax === undefined);
 
-const SALARY_ORDER_ISSUE = {
+export const SALARY_ORDER_ISSUE = {
   error: 'salaryMin must not be greater than salaryMax',
   path: ['salaryMin'],
 };

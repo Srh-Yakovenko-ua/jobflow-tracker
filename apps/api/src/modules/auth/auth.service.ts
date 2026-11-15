@@ -1,6 +1,7 @@
 import type {
   AuthUser,
   ChangePasswordInput,
+  DeleteAccountInput,
   LoginInput,
   MeResponse,
   RegisterInput,
@@ -23,7 +24,12 @@ export type ChangePassword = {
 
 export type OAuthIdentity = OAuthAccountKey & OAuthProfile;
 
+export type AccountConfirmation = DeleteAccountInput & { userId: string };
+
 type EmailLink = { user: UserCredentials; oauthAccount: OAuthAccountKey };
+
+const sameEmail = (given: string, email: string) =>
+  given.trim().toLowerCase() === email.toLowerCase();
 
 function toAuthUser({ id, email, displayName, locale }: AuthUser): AuthUser {
   return { id, email, displayName, locale };
@@ -63,6 +69,20 @@ export class AuthService {
       await this.repository.replacePassword({ userId, passwordHash }, tx);
       await this.tokens.revokeAll({ userId, now, keepFamilyId }, tx);
     });
+  }
+
+  async confirmAccount({ userId, password }: AccountConfirmation): Promise<void> {
+    const credentials = await this.repository.findCredentialsById(userId);
+    if (credentials === null) {
+      throw unauthorized();
+    }
+    const confirmed =
+      credentials.passwordHash === null
+        ? sameEmail(password, credentials.email)
+        : (await this.verified(credentials, password)) !== undefined;
+    if (!confirmed) {
+      throw validation([{ path: 'password', message: 'Password is wrong' }]);
+    }
   }
 
   async signInWithOAuth({

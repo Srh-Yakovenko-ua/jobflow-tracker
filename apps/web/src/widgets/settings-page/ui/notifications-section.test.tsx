@@ -11,6 +11,7 @@ import { regionOf, renderLoadedSettings } from '@/test/render-settings-page';
 import { server } from '@/test/server';
 
 vi.mock('next/navigation', () => import('@/test/navigation'));
+vi.mock('next/link', () => import('@/test/link'));
 
 const notifications = () => within(regionOf('Повідомлення'));
 

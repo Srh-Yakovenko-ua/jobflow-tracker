@@ -3,8 +3,10 @@ import { http, HttpResponse } from 'msw/http';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { userKeys } from '@/entities/user';
+import { exportRoutes } from '@/test/account-fixtures';
 import { apiUrl, errorReply, recordSentRequests } from '@/test/api-handlers';
 import { replace } from '@/test/navigation';
+import { EXPORT_ID } from '@/test/notification-fixtures';
 import { waitForQuery } from '@/test/query-status';
 import { renderInApp } from '@/test/render-in-app';
 import {
@@ -19,15 +21,17 @@ import { ME_RESPONSE } from '@/test/session-fixtures';
 import { SettingsPage } from './settings-page';
 
 vi.mock('next/navigation', () => import('@/test/navigation'));
+vi.mock('next/link', () => import('@/test/link'));
 
 const SECTIONS = ['Пошук і тиша', 'Повідомлення', 'AI та приватність', 'Вигляд і тема', 'Акаунт'];
 
-const HIDDEN_ITEMS = ['Листи на пошту', 'Видалити акаунт'];
+const HIDDEN_ITEMS = ['Листи на пошту'];
 
 const REVOKE_BOOKMARKLET = { name: 'Вимкнути букмарклет' } as const;
 
 afterEach(() => {
   window.location.hash = '';
+  window.history.replaceState(null, '', '/');
   vi.restoreAllMocks();
 });
 
@@ -244,6 +248,33 @@ describe('SettingsPage', () => {
       expect(routes.patches).toEqual([{ singleKeyShortcuts: false }]);
     });
     expect(singleKeys.getAttribute('aria-checked')).toBe('false');
+  });
+
+  it('Акаунт offers the data export, a link to the CSV import and the account deletion', async () => {
+    await renderLoadedSettings();
+    const account = within(regionOf('Акаунт'));
+
+    expect(account.getByRole('button', { name: 'Вивантажити' })).toBeDefined();
+    expect(account.getByRole('link', { name: 'Імпортувати CSV' }).getAttribute('href')).toBe(
+      '/import',
+    );
+    expect(account.getByRole('button', { name: 'Видалити акаунт' })).toBeDefined();
+  });
+
+  it('an export id in the address offers its download in Акаунт and again in the deletion dialog', async () => {
+    window.history.replaceState(null, '', `/settings?export=${EXPORT_ID}#account`);
+    const exports = exportRoutes({ readyAfterLinks: 0 });
+    server.use(...exports.handlers);
+    const { user } = await renderLoadedSettings();
+    const account = within(regionOf('Акаунт'));
+
+    expect(await account.findByRole('link', { name: 'Завантажити архів' })).toBeDefined();
+    await user.click(account.getByRole('button', { name: 'Видалити акаунт' }));
+    const dialog = within(await screen.findByRole('alertdialog'));
+    expect(await dialog.findByRole('link', { name: 'Завантажити архів' })).toBeDefined();
+    expect(dialog.getByRole('button', { name: 'Вивантажити' })).toBeDefined();
+    expect(exports.sent.requests).toEqual([]);
+    expect(new Set(exports.sent.links)).toEqual(new Set([EXPORT_ID]));
   });
 
   it('«Вийти на всіх пристроях» says it switches the bookmarklet off too', async () => {

@@ -274,7 +274,7 @@ describe('ResumeVersionsService.download', () => {
     const download = await service.download(OLENA_ID, RESUME_VERSION_ID);
 
     expect(storage.downloads).toEqual([
-      { key: STORAGE_KEY, mime: DOCX, filename: 'Олена CV.docx', signedAt: NOW },
+      { key: STORAGE_KEY, mime: DOCX, filename: 'Олена CV.docx', signedAt: NOW, ttlSeconds: 300 },
     ]);
     expect(download).toEqual({
       url: `${FAKE_STORAGE_URL}${STORAGE_KEY}`,

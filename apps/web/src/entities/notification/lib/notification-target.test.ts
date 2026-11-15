@@ -6,6 +6,7 @@ import {
   AI_DONE_NOTIFICATION,
   AUTO_GHOSTED_NOTIFICATION,
   buildNotification,
+  EXPORT_READY_NOTIFICATION,
   INTERVIEW_NOTIFICATION,
   MONTHLY_SUMMARY_NOTIFICATION,
   type NotificationSeed,
@@ -104,6 +105,11 @@ describe('notificationTargetOf', () => {
       name: 'auto_ghosted opens the board',
       notification: AUTO_GHOSTED_NOTIFICATION,
       target: '/board',
+    },
+    {
+      name: 'export_ready opens the account section with its export',
+      notification: EXPORT_READY_NOTIFICATION,
+      target: `/settings?export=${fixtureIdOf(81)}#account`,
     },
   ])('$name', ({ notification, target }) => {
     expect(notificationTargetOf(notification)).toBe(target);

@@ -17,7 +17,11 @@ export type MoveContext = UndoContext & { input: MoveApplicationInput };
 
 export type Transition = { from: Stage; to: Stage; stageBeforeGhosted: Stage | null | undefined };
 
-function refusalOf({ from, to, stageBeforeGhosted }: Transition): TransitionRefusalReason | null {
+export function refusalOf({
+  from,
+  to,
+  stageBeforeGhosted,
+}: Transition): TransitionRefusalReason | null {
   const result = canTransition(from, to);
   if (!result.ok) {
     return result.reason;

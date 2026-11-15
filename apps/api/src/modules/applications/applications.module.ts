@@ -6,6 +6,7 @@ import { LiveModule } from '../live/index.js';
 import { ApplicationDraftsRepository } from './application-drafts.repository.js';
 import { ApplicationDraftsService } from './application-drafts.service.js';
 import { ApplicationDuplicatesRepository } from './application-duplicates.repository.js';
+import { ApplicationImportService } from './application-import.service.js';
 import { ApplicationListRepository } from './application-list.repository.js';
 import { ApplicationListService } from './application-list.service.js';
 import { ApplicationLiveSubscriber } from './application-live.subscriber.js';
@@ -27,6 +28,7 @@ import { StageTransitionService } from './stage-transition.service.js';
     ApplicationsRepository,
     ApplicationDraftsRepository,
     ApplicationDuplicatesRepository,
+    ApplicationImportService,
     ApplicationListService,
     ApplicationListRepository,
     ApplicationSearchRepository,

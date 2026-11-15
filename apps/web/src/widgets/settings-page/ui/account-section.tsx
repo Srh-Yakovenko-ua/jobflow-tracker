@@ -1,11 +1,16 @@
 'use client';
 
 import type { MeResponse } from '@jobflow/shared';
+import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 
 import { useSession } from '@/entities/user';
 import { ChangePasswordForm } from '@/features/change-password';
+import { DeleteAccountDialog } from '@/features/delete-account';
+import { ExportDataControl } from '@/features/export-data';
 import { uk } from '@/shared/i18n';
-import { Button } from '@/shared/ui/button';
+import { cn } from '@/shared/lib/cn';
+import { Button, buttonLinkClasses } from '@/shared/ui/button';
 import { TOUCH_HEIGHT } from '@/shared/ui/touch-height';
 
 import type { SettingsItems } from '../model/settings-items';
@@ -15,6 +20,10 @@ import { SettingsBlock, SettingsCard, SettingsSection } from './settings-frame';
 export type AccountSectionProps = Readonly<{ me: MeResponse; items: SettingsItems }>;
 
 const COPY = uk.settings.account;
+
+const EXPORT_PARAM = 'export';
+
+const IMPORT_HREF = '/import';
 
 function Identity({ me }: Readonly<{ me: MeResponse }>) {
   const rows = [
@@ -30,6 +39,33 @@ function Identity({ me }: Readonly<{ me: MeResponse }>) {
         </div>
       ))}
     </dl>
+  );
+}
+
+function DataRows({ items }: Pick<AccountSectionProps, 'items'>) {
+  const exportId = useSearchParams().get(EXPORT_PARAM);
+  const exportControl = <ExportDataControl key={exportId} initialExportId={exportId} />;
+  return (
+    <>
+      <SettingNote copy={COPY.export} action={exportControl} />
+      <SettingNote
+        copy={COPY.import}
+        action={
+          <Link
+            href={IMPORT_HREF}
+            className={cn(buttonLinkClasses({ variant: 'secondary', size: 'md' }), TOUCH_HEIGHT)}
+          >
+            {COPY.import.action}
+          </Link>
+        }
+      />
+      {items.accountDeletion && (
+        <SettingNote
+          copy={COPY.deletion}
+          action={<DeleteAccountDialog exportOffer={exportControl} />}
+        />
+      )}
+    </>
   );
 }
 
@@ -52,7 +88,7 @@ export function AccountSection({ me, items }: AccountSectionProps) {
               </Button>
             }
           />
-          {items.accountDeletion && <SettingNote copy={COPY.deletion} />}
+          <DataRows items={items} />
         </SettingsCard>
       </SettingsBlock>
       <SettingsBlock heading={{ title: uk.settings.password.title }}>

@@ -139,6 +139,7 @@ enum NotificationType {
   insight_unlocked
   plan_item_due
   auto_ghosted
+  export_ready
 
   @@map("notification_type")
 }

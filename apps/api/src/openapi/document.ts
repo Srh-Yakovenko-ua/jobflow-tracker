@@ -1,6 +1,7 @@
 import { OpenApiGeneratorV31, OpenAPIRegistry } from '@asteasolutions/zod-to-openapi';
 
 import { API_PREFIX } from '../common/api-prefix.middleware.js';
+import { ACCOUNT_OPENAPI_PATHS } from '../modules/account/index.js';
 import { AI_OPENAPI_PATHS } from '../modules/ai/index.js';
 import { APPLICATIONS_OPENAPI_PATHS } from '../modules/applications/index.js';
 import { AUTH_OPENAPI_PATHS, REFRESH_COOKIE } from '../modules/auth/index.js';
@@ -29,6 +30,7 @@ export type OpenApiDocument = ReturnType<OpenApiGeneratorV31['generateDocument']
 export const API_OPENAPI_PATHS = [
   ...HEALTH_OPENAPI_PATHS,
   ...AUTH_OPENAPI_PATHS,
+  ...ACCOUNT_OPENAPI_PATHS,
   ...SETTINGS_OPENAPI_PATHS,
   ...SEARCHES_OPENAPI_PATHS,
   ...APPLICATIONS_OPENAPI_PATHS,
@@ -54,6 +56,7 @@ export const API_OPENAPI_PATHS = [
 const TAGS = [
   { name: 'health', description: 'Liveness and readiness probes' },
   { name: 'auth', description: 'Accounts, sessions and the signing key' },
+  { name: 'account', description: 'The data export and the deletion of the signed-in account' },
   { name: 'settings', description: 'The preferences of the signed-in user' },
   { name: 'searches', description: 'The job searches of the signed-in user and their totals' },
   { name: 'applications', description: 'The Applications of the signed-in user' },
