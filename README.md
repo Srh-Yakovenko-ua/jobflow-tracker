@@ -260,6 +260,7 @@ pnpm test:e2e
 - [ADR](docs/adr/README.md): архітектурні рішення.
 - [ERD](docs/diagrams/erd.md): схема бази.
 - [Безпека](docs/security.md).
+- [Тестування](docs/testing.md): перевірки контрактів і фазинг Schemathesis (англійською).
 - [Прогноз оферу](docs/analytics/offer-forecast.md): як рахується.
 - [OpenAPI](docs/api/openapi.json): контракт API.
 - [Дизайн](docs/design/README.md): дизайн-хендоф.

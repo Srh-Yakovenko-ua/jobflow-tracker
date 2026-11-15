@@ -1,7 +1,12 @@
+from typing import Any
+
 from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from loguru import logger
+from pydantic import BaseModel, ConfigDict, Field
+from pydantic.alias_generators import to_camel
+from pydantic.json_schema import SkipJsonSchema
 from starlette.exceptions import HTTPException
 
 from app.core.error_tracking import capture_unhandled
@@ -26,6 +31,28 @@ UNAUTHORIZED_STATUS = 401
 BEARER_CHALLENGE = {"WWW-Authenticate": "Bearer"}
 
 type FieldErrors = list[dict[str, str]]
+
+
+class FieldError(BaseModel):
+    path: str
+    message: str
+
+
+class ProblemBody(BaseModel):
+    model_config = ConfigDict(alias_generator=to_camel, populate_by_name=True)
+
+    type: str = Field(min_length=1)
+    title: str = Field(min_length=1)
+    status: int = Field(ge=400, le=599)
+    detail: str | SkipJsonSchema[None] = None
+    errors: list[FieldError] | SkipJsonSchema[None] = None
+    request_id: str = Field(min_length=1)
+
+
+PROBLEM_RESPONSES: dict[int | str, dict[str, Any]] = {
+    UNAUTHORIZED_STATUS: {"model": ProblemBody},
+    422: {"model": ProblemBody},
+}
 
 
 class ServiceError(Exception):
@@ -69,14 +96,17 @@ def to_service_error(error: Exception, *, request_id: str) -> ServiceError:
 
 def problem(error: ServiceError, request_id: str) -> dict[str, object]:
     error_type, title = error.problem or PROBLEM_TYPES[error.status]
-    extras = {"detail": error.detail, "errors": error.errors}
-    return {
-        "type": error_type,
-        "title": title,
-        "status": error.status,
-        **{key: value for key, value in extras.items() if value is not None},
-        "requestId": request_id,
-    }
+    body = ProblemBody.model_validate(
+        {
+            "type": error_type,
+            "title": title,
+            "status": error.status,
+            "detail": error.detail,
+            "errors": error.errors,
+            "request_id": request_id,
+        }
+    )
+    return body.model_dump(by_alias=True, exclude_none=True)
 
 
 async def respond_with_problem(request: Request, error: Exception) -> JSONResponse:

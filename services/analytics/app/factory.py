@@ -21,7 +21,7 @@ from app.core.auth import key_source_for
 from app.core.config import Settings
 from app.core.enums import check_stages, load_domain_enums
 from app.core.error_tracking import install_error_tracking
-from app.core.errors import install_error_handlers
+from app.core.errors import PROBLEM_RESPONSES, install_error_handlers
 from app.core.logging import configure_logging
 from app.core.metrics import install_metrics
 from app.core.request_id import REQUEST_ID_HEADER, RequestIdMiddleware
@@ -29,6 +29,18 @@ from app.core.resources import create_engine, create_redis
 from app.core.tracing import install_tracing
 from app.repositories.health import select_one
 from app.services.readiness import ReadinessService
+
+ANALYTICS_ROUTES = (
+    funnel,
+    sankey,
+    reasons,
+    sources,
+    timings,
+    resume_ab,
+    forecast,
+    insights,
+    match_validation,
+)
 
 
 def create_app(settings: Settings) -> FastAPI:
@@ -62,15 +74,8 @@ def create_app(settings: Settings) -> FastAPI:
         expose_headers=[REQUEST_ID_HEADER, "Retry-After"],
     )
     app.include_router(health.router)
-    app.include_router(funnel.router)
-    app.include_router(sankey.router)
-    app.include_router(reasons.router)
-    app.include_router(sources.router)
-    app.include_router(timings.router)
-    app.include_router(resume_ab.router)
-    app.include_router(forecast.router)
-    app.include_router(insights.router)
-    app.include_router(match_validation.router)
+    for metric in ANALYTICS_ROUTES:
+        app.include_router(metric.router, responses=PROBLEM_RESPONSES)
     install_metrics(app)
     install_tracing(app, engine=engine, settings=settings)
     return app
