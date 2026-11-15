@@ -13,6 +13,6 @@ export type AiSectionBodyProps<Data> = Readonly<{
 export function AiSectionBody<Data>({ section, children }: AiSectionBodyProps<Data>) {
   const { load, response, job } = section;
   if (load.failed) return <LoadFailedPanel onRetry={load.onRetry} />;
-  if (response === undefined) return <TextSkeleton />;
+  if (load.pending || response === undefined) return <TextSkeleton />;
   return children({ response, job });
 }

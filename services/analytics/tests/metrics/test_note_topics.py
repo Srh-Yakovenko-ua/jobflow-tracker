@@ -4,9 +4,17 @@ from typing import Any
 import pandas as pd
 import pytest
 
+from app.core.enums import NoteTopic, load_domain_enums
 from app.metrics.insights.engine import insights
+from app.metrics.insights.phrases import TOPIC_PHRASES
 from app.metrics.note_topic_stems import TOPIC_STEMS
-from app.metrics.note_topics import StageTopics, note_topics, topic_signal
+from app.metrics.note_topics import (
+    TOPIC_PATTERNS,
+    StageTopics,
+    note_topics,
+    plain_words,
+    topic_signal,
+)
 from app.metrics.rate import Rate
 from tests.factories import NoteRow, application, notes_frame
 from tests.metrics.funnel_design import TECH_INTERVIEW
@@ -117,6 +125,32 @@ def test_the_dictionary_lists_the_eight_interview_topics_in_order() -> None:
         "sql",
         "behavioural",
     )
+
+
+def test_the_stems_and_phrases_cover_exactly_the_shared_note_topics() -> None:
+    shared = {topic.code for topic in load_domain_enums().note_topics}
+
+    assert set(TOPIC_STEMS) == set(TOPIC_PHRASES) == shared
+
+
+@pytest.mark.parametrize(
+    "topic", load_domain_enums().note_topics, ids=lambda topic: topic.code
+)
+def test_a_shared_topic_label_saved_in_a_note_names_only_its_own_topic(
+    topic: NoteTopic,
+) -> None:
+    text = plain_words(topic.label_uk)
+
+    named = {code for code, pattern in TOPIC_PATTERNS.items() if pattern.search(text)}
+
+    assert named == {topic.code}
+
+
+def test_the_asked_topics_note_from_the_timeline_names_its_topics() -> None:
+    assert one_rejection_noted("Що питали: Алгоритми, SQL") == [
+        1,
+        [("algorithms", 1), ("sql", 1)],
+    ]
 
 
 def test_many_notes_on_one_application_count_as_one_mention() -> None:

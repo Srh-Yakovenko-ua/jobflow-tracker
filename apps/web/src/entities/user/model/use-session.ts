@@ -9,7 +9,7 @@ import { showErrorToast } from '@/shared/ui/error-toast';
 
 import { logout } from '../api/logout';
 import { meQueryOptions } from '../api/me';
-import { forgetRecentApplications } from '../lib/recent-applications-key';
+import { forgetUserStorage } from '../lib/user-storage';
 
 export type Session = {
   user: MeResponse['user'] | undefined;
@@ -22,7 +22,7 @@ export function useEndSession(): () => void {
   const router = useRouter();
   const me = useQuery(meQueryOptions()).data;
   return () => {
-    if (me !== undefined) forgetRecentApplications(me.user.id);
+    if (me !== undefined) forgetUserStorage(me.user.id);
     clearAccessToken();
     router.replace(AUTH_ROUTES.login);
   };

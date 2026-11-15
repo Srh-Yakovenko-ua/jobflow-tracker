@@ -184,6 +184,40 @@
       "sortOrder": 12
     }
   ],
+  "noteTopics": [
+    {
+      "code": "algorithms",
+      "labelUk": "Алгоритми"
+    },
+    {
+      "code": "dp",
+      "labelUk": "Динамічне програмування"
+    },
+    {
+      "code": "system_design",
+      "labelUk": "System design"
+    },
+    {
+      "code": "english",
+      "labelUk": "Англійська"
+    },
+    {
+      "code": "take_home",
+      "labelUk": "Тестове завдання"
+    },
+    {
+      "code": "react_internals",
+      "labelUk": "React internals"
+    },
+    {
+      "code": "sql",
+      "labelUk": "SQL"
+    },
+    {
+      "code": "behavioural",
+      "labelUk": "Поведінкові питання"
+    }
+  ],
   "thresholds": {
     "MIN_N_PERCENT": 5,
     "MIN_N_INSIGHT": 10,

@@ -1,6 +1,6 @@
 'use client';
 
-import type { InterviewPrepStep } from '@jobflow/shared';
+import type { ApplicationResponse, InterviewPrepStep } from '@jobflow/shared';
 import { motion } from 'motion/react';
 import { useState } from 'react';
 
@@ -10,12 +10,15 @@ import { SegmentedControl } from '@/shared/ui/segmented-control';
 import { StaggeredList } from '@/shared/ui/staggered-list';
 
 import type { InterviewPrepResult } from '../lib/interview-prep-view';
+import { InterviewPrepTopics } from './interview-prep-topics';
+import { PracticeQuestions } from './practice-questions';
 
-export type InterviewPrepPackProps = Readonly<{ result: InterviewPrepResult }>;
+export type InterviewPrepPackProps = Readonly<{
+  application: ApplicationResponse;
+  result: InterviewPrepResult;
+}>;
 
-type PackRow = Readonly<{ lead: string; detail?: string }>;
-
-type PackListProps = Readonly<{ title: string; rows: readonly PackRow[] }>;
+type PackListProps = Readonly<{ title: string; rows: readonly string[] }>;
 
 type PlanLength = keyof typeof COPY.plans.options;
 
@@ -34,12 +37,9 @@ const ROW_LOOK =
 function PackList({ title, rows }: PackListProps) {
   return (
     <StaggeredList label={{ text: title, marker: 'filled' }} className={LIST}>
-      {rows.map(({ lead, detail }) => (
-        <motion.li key={lead} variants={ROW} className={ROW_LOOK}>
-          <span className="text-[14px] leading-[1.45] font-semibold wrap-anywhere">{lead}</span>
-          {detail !== undefined && (
-            <p className="text-[13px] leading-[1.55] wrap-anywhere text-ink-2">{detail}</p>
-          )}
+      {rows.map((row) => (
+        <motion.li key={row} variants={ROW} className={ROW_LOOK}>
+          <span className="text-[14px] leading-[1.45] font-semibold wrap-anywhere">{row}</span>
         </motion.li>
       ))}
     </StaggeredList>
@@ -68,7 +68,7 @@ function StepList({
   );
 }
 
-function PlanSwitch({ result }: InterviewPrepPackProps) {
+function PlanSwitch({ result }: Pick<InterviewPrepPackProps, 'result'>) {
   const [plan, setPlan] = useState<PlanLength>('plan30');
   return (
     <div className="flex flex-col gap-3">
@@ -83,24 +83,12 @@ function PlanSwitch({ result }: InterviewPrepPackProps) {
   );
 }
 
-export function InterviewPrepPack({ result }: InterviewPrepPackProps) {
+export function InterviewPrepPack({ application, result }: InterviewPrepPackProps) {
   return (
     <div className="flex flex-col gap-6">
-      <PackList
-        title={COPY.topicsTitle}
-        rows={result.topics.map(({ name, why }) => ({ lead: name, detail: why }))}
-      />
-      <PackList
-        title={COPY.questionsTitle}
-        rows={result.questions.map(({ question, hint }) => ({
-          lead: question,
-          detail: COPY.hint(hint),
-        }))}
-      />
-      <PackList
-        title={COPY.askCompanyTitle}
-        rows={result.askCompany.map((question) => ({ lead: question }))}
-      />
+      <InterviewPrepTopics application={application} result={result} />
+      <PracticeQuestions questions={result.questions} />
+      <PackList title={COPY.askCompanyTitle} rows={result.askCompany} />
       <PlanSwitch result={result} />
     </div>
   );

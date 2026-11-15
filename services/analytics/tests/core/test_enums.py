@@ -39,6 +39,21 @@ def test_reads_the_reason_taxonomy_with_its_camel_case_keys() -> None:
     )
 
 
+def test_reads_the_note_topics_with_their_ukrainian_labels_in_order() -> None:
+    topics = load_domain_enums().note_topics
+
+    assert [(topic.code, topic.label_uk) for topic in topics] == [
+        ("algorithms", "Алгоритми"),
+        ("dp", "Динамічне програмування"),
+        ("system_design", "System design"),
+        ("english", "Англійська"),
+        ("take_home", "Тестове завдання"),
+        ("react_internals", "React internals"),
+        ("sql", "SQL"),
+        ("behavioural", "Поведінкові питання"),
+    ]
+
+
 def test_reads_the_data_rule_thresholds_from_their_upper_case_keys() -> None:
     thresholds = load_domain_enums().thresholds
 

@@ -1,5 +1,5 @@
 import { motion } from 'motion/react';
-import type { Ref } from 'react';
+import type { ReactNode, Ref } from 'react';
 
 import { NotePlainText } from '@/entities/note';
 import { cn } from '@/shared/lib/cn';
@@ -13,7 +13,11 @@ export type TimelineEntry = Pick<TimelineRow, 'id' | 'title' | 'meta' | 'metaFor
   when: { label: string; at: Date };
 };
 
-export type TimelineEntryRowProps = Readonly<{ entry: TimelineEntry; ref?: Ref<HTMLLIElement> }>;
+export type TimelineEntryRowProps = Readonly<{
+  entry: TimelineEntry;
+  ref?: Ref<HTMLLIElement>;
+  children?: ReactNode;
+}>;
 
 const TITLE_TONE: Record<TimelineTone, string> = {
   strong: 'font-semibold',
@@ -21,7 +25,7 @@ const TITLE_TONE: Record<TimelineTone, string> = {
   muted: 'font-medium text-ink-2',
 };
 
-export function TimelineEntryRow({ entry, ref }: TimelineEntryRowProps) {
+export function TimelineEntryRow({ entry, ref, children }: TimelineEntryRowProps) {
   return (
     <motion.li
       ref={ref}
@@ -50,6 +54,7 @@ export function TimelineEntryRow({ entry, ref }: TimelineEntryRowProps) {
             )}
           </p>
         )}
+        {children}
       </div>
     </motion.li>
   );

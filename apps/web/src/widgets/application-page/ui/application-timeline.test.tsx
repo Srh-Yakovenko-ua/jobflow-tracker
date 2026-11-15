@@ -5,14 +5,17 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { errorReply } from '@/test/api-handlers';
 import { fixtureIdOf } from '@/test/board-fixtures';
-import { notesRoute } from '@/test/note-fixtures';
+import { noteRoute, notesRoute, sentNoteBodiesOf } from '@/test/note-fixtures';
 import { renderInApp } from '@/test/render-in-app';
 import { server } from '@/test/server';
 import { meRoute } from '@/test/session-fixtures';
 import {
+  answerAskedTopics,
   DESIGN_NOTE,
+  DESIGN_TIMELINE,
   DESIGN_TIMELINE_APPLICATION,
   EMPTY_TIMELINE,
+  interviewDoneOf,
   LONG_COMMENT,
   noteAddedOf,
   timelineRoute,
@@ -60,6 +63,12 @@ function renderTimeline({ route, application = DESIGN_TIMELINE_APPLICATION }: Ti
   return { user, section: screen.getByRole('region', { name: HEADING }) };
 }
 
+const DESIGN_INTERVIEW_ID = fixtureIdOf(308);
+
+const LATER_INTERVIEW = interviewDoneOf({ serial: 310, occurredAt: '2026-09-05T10:00:00Z' });
+
+const QUESTION = { name: 'Що питали?' } as const;
+
 beforeEach(() => {
   vi.useFakeTimers({ toFake: ['Date'] });
   vi.setSystemTime(new Date('2026-09-07T09:00:00Z'));
@@ -67,9 +76,53 @@ beforeEach(() => {
 
 afterEach(() => {
   vi.useRealTimers();
+  localStorage.clear();
+});
+
+describe('ApplicationTimeline after an interview', () => {
+  it('asks «Що питали?» under the latest interview only, and the saved answer lands as a note', async () => {
+    const notes = noteRoute();
+    server.use(notes.handler);
+    const { user, section } = renderTimeline({
+      route: timelineRoute({
+        timeline: { items: [LATER_INTERVIEW, ...DESIGN_TIMELINE.items] },
+      }),
+    });
+
+    const question = await within(section).findByRole('group', QUESTION);
+
+    expect(within(section).getAllByRole('group', QUESTION)).toHaveLength(1);
+    expect(question.closest('li')?.querySelector('time')?.textContent).toBe('позавчора');
+    await user.click(within(question).getByRole('button', { name: 'Алгоритми' }));
+    await user.click(within(section).getByRole('button', { name: 'Зберегти' }));
+    await expect.poll(() => sentNoteBodiesOf(notes.sent)).toEqual(['Що питали: Алгоритми']);
+  });
+
+  it('«Пропустити» by keyboard hands focus to the journal heading, so the place is kept', async () => {
+    const { user, section } = renderTimeline({ route: timelineRoute() });
+    await within(section).findByRole('group', QUESTION);
+
+    within(section).getByRole('button', { name: 'Пропустити' }).focus();
+    await user.keyboard('{Enter}');
+
+    expect(document.activeElement).toBe(within(section).getByRole('heading', { name: HEADING }));
+  });
+
+  it('an answered interview asks nothing', async () => {
+    answerAskedTopics([DESIGN_INTERVIEW_ID]);
+    const { section } = renderTimeline({ route: timelineRoute() });
+
+    await within(section).findByRole('list');
+
+    expect(within(section).queryByRole('group', QUESTION)).toBeNull();
+  });
 });
 
 describe('ApplicationTimeline', () => {
+  beforeEach(() => {
+    answerAskedTopics([DESIGN_INTERVIEW_ID]);
+  });
+
   it('shows the design journal: the waiting row on top, then every item newest first', async () => {
     const { section } = renderTimeline({ route: timelineRoute() });
     expect(section.getAttribute('aria-busy')).toBe('true');

@@ -4,7 +4,7 @@ import { usePathname } from 'next/navigation';
 import { useEffect } from 'react';
 
 import { applicationQueryOptions } from '@/entities/application';
-import { meQueryOptions } from '@/entities/user';
+import { useUserId } from '@/entities/user';
 
 import { rememberRecentApplication } from './recent-applications';
 
@@ -28,10 +28,6 @@ function useApplication({ id, enabled }: ApplicationLookup) {
     ...applicationQueryOptions(id ?? ''),
     enabled: enabled && id !== undefined,
   }).data;
-}
-
-export function useUserId(): string | undefined {
-  return useQuery({ ...meQueryOptions(), select: (me) => me.user.id }).data;
 }
 
 export function useViewedApplication(): ApplicationResponse | undefined {

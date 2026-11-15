@@ -16,10 +16,11 @@ import { InterviewPrepPack } from './interview-prep-pack';
 
 export type InterviewPrepPanelProps = Readonly<{
   application: ApplicationResponse;
-  prep: Readonly<{ response: InterviewPrepResponse; job: AiJob }>;
+  prep: Readonly<{ response: InterviewPrepResponse; job: AiJob; requestable: boolean }>;
 }>;
 
 type StateProps = Readonly<{
+  application: ApplicationResponse;
   view: InterviewPrepView;
   job: AiJob;
   requested: RequestedInterviewPrep;
@@ -27,18 +28,23 @@ type StateProps = Readonly<{
 
 const COPY = uk.interviewPrep;
 
-function PanelState({ view, job, requested }: StateProps) {
-  if (view.kind === 'ready') return <InterviewPrepPack result={view.result} />;
+function PanelState({ application, view, job, requested }: StateProps) {
+  if (view.kind === 'ready')
+    return <InterviewPrepPack application={application} result={view.result} />;
   if (view.kind === 'unbuildable') return <p className={AI_LEAD}>{COPY.unbuildable}</p>;
   return <AiRequestState view={view} job={job} requested={requested} copy={COPY} />;
 }
 
 export function InterviewPrepPanel({ application, prep }: InterviewPrepPanelProps) {
   const requested = useRequestInterviewPrep(application.id);
-  const view = interviewPrepViewOf({ response: prep.response, refusal: requested.refusal });
+  const view = interviewPrepViewOf({
+    response: prep.response,
+    refusal: requested.refusal,
+    requestable: prep.requestable,
+  });
   return (
     <Reveal shown view={{ mode: 'wait', id: view.kind }}>
-      <PanelState view={view} job={prep.job} requested={requested} />
+      <PanelState application={application} view={view} job={prep.job} requested={requested} />
     </Reveal>
   );
 }
