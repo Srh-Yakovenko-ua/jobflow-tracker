@@ -47,8 +47,8 @@ describe('blockHeaderOf', () => {
   it.each<{ block: TitledBlock; title: string; body: string }>([
     {
       block: 'reasons',
-      title: "На техінтерв'ю тебе найчастіше валять: «не вистачає скілів»",
-      body: '3 із 4 відмов на цьому етапі — «не вистачає скілів».',
+      title: "На техінтерв'ю тебе валять алгоритми",
+      body: '3 із 4 відмов на цьому етапі — «не вистачає скілів», і в нотатках усі три згадують live-coding.',
     },
     {
       block: 'sources',

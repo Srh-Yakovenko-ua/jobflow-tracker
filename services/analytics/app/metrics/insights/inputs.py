@@ -1,3 +1,4 @@
+from dataclasses import dataclass
 from datetime import datetime
 
 import pandas as pd
@@ -9,12 +10,22 @@ from app.metrics.ghost_market import ghost_rate_vs_market
 from app.metrics.insights.engine import WHAT_IF_CONVERSION, InsightMetrics
 from app.metrics.journeys import journeys
 from app.metrics.most_expensive import MostExpensiveStage, most_expensive
+from app.metrics.note_topics import note_topics
 from app.metrics.offer_simulation import Improvement
 from app.metrics.rate import Insufficient
 from app.metrics.reasons import reasons
 from app.metrics.resume_ab import resume_ab
 from app.metrics.salary import salary
 from app.metrics.sources import sources
+
+
+@dataclass(frozen=True)
+class InsightFrames:
+    events: pd.DataFrame
+    origins: pd.DataFrame
+    links: pd.DataFrame
+    salaries: pd.DataFrame
+    notes: pd.DataFrame
 
 
 def stage_what_if(
@@ -31,14 +42,8 @@ def stage_what_if(
     return forecast(events, now=now, what_if=WhatIf(improve=improve))
 
 
-def insight_metrics(
-    events: pd.DataFrame,
-    *,
-    origins: pd.DataFrame,
-    links: pd.DataFrame,
-    salaries: pd.DataFrame,
-    now: datetime,
-) -> InsightMetrics:
+def insight_metrics(frames: InsightFrames, *, now: datetime) -> InsightMetrics:
+    events = frames.events
     clean = clean_events(events)
     rows = journeys(clean)
     costliest = most_expensive(rows)
@@ -47,9 +52,10 @@ def insight_metrics(
         stages=funnel_stages(rows),
         most_expensive=costliest,
         reasons=reasons(events, stage=None, now=now),
-        sources=sources(events, origins=origins),
-        resume_ab=resume_ab(events, links=links),
+        sources=sources(events, origins=frames.origins),
+        resume_ab=resume_ab(events, links=frames.links),
         ghosts=ghost_rate_vs_market(events),
         stage_what_if=stage_what_if(events, costliest=costliest, now=now),
-        salary=salary(events, salaries=salaries, now=now),
+        salary=salary(events, salaries=frames.salaries, now=now),
+        note_topics=note_topics(events, notes=frames.notes),
     )

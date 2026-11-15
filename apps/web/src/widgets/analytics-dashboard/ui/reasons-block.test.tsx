@@ -27,11 +27,13 @@ describe('ReasonsBlock', () => {
     expect(chart.options?.plugins?.legend?.position).toBe('bottom');
     expect(
       within(frame).getByRole('heading', {
-        name: "На техінтерв'ю тебе найчастіше валять: «не вистачає скілів»",
+        name: "На техінтерв'ю тебе валять алгоритми",
       }),
     ).toBeDefined();
     expect(
-      within(frame).getByText('3 із 4 відмов на цьому етапі — «не вистачає скілів».'),
+      within(frame).getByText(
+        '3 із 4 відмов на цьому етапі — «не вистачає скілів», і в нотатках усі три згадують live-coding.',
+      ),
     ).toBeDefined();
     expect(
       within(frame).getByRole('img', {

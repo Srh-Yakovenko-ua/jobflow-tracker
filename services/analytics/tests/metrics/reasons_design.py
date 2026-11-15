@@ -1,8 +1,9 @@
+from collections.abc import Sequence
 from datetime import timedelta
 
 import pandas as pd
 
-from tests.factories import EVENTS_BASE_TIME, application
+from tests.factories import EVENTS_BASE_TIME, NoteRow, application, notes_frame
 from tests.metrics.funnel_design import TECH_INTERVIEW
 from tests.metrics.sankey_fixtures import (
     APPLIED,
@@ -15,6 +16,17 @@ from tests.metrics.sankey_fixtures import (
 
 DESIGN_NOW = EVENTS_BASE_TIME + timedelta(days=11)
 WAITING_AT_SCREENING = 5
+DESIGN_NOTES = (
+    "лайвкодинг завалив",
+    "дали live-coding на 40 хвилин",
+    "задача на алгоритми",
+)
+
+
+def design_notes(bodies: Sequence[str] = DESIGN_NOTES) -> pd.DataFrame:
+    return notes_frame(
+        [NoteRow(application(index), body) for index, body in enumerate(bodies)]
+    )
 
 
 def design_journeys(*, ghosted: int = 3) -> list[Journey]:

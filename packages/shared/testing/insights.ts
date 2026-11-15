@@ -27,10 +27,18 @@ const DESIGN_INSIGHTS: Insight[] = [
   },
   {
     block: 'reasons',
-    title: "На техінтерв'ю тебе найчастіше валять: «не вистачає скілів»",
-    body: '3 із 4 відмов на цьому етапі — «не вистачає скілів».',
+    title: "На техінтерв'ю тебе валять алгоритми",
+    body: '3 із 4 відмов на цьому етапі — «не вистачає скілів», і в нотатках усі три згадують live-coding.',
     severity: 'warning',
-    evidence: { stage: 'tech_interview', code: 'skills_gap', count: 3, of: 4 },
+    evidence: {
+      stage: 'tech_interview',
+      code: 'skills_gap',
+      count: 3,
+      of: 4,
+      topic: 'algorithms',
+      topicMentions: 3,
+      notes: 3,
+    },
   },
   {
     block: 'sources',

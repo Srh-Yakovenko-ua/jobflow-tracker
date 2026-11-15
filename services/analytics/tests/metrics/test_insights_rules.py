@@ -34,15 +34,16 @@ from app.metrics.insights.rules.source_gap import (
     weak_and_strong_source,
 )
 from app.metrics.most_expensive import MostExpensiveStage
+from app.metrics.note_topics import note_topics
 from app.metrics.rate import Insufficient, Rate, rate
 from app.metrics.reasons import reasons
 from app.metrics.reasons_trend import TopReason
 from app.metrics.resume_ab import Verdict
 from app.metrics.sources import SourcePerformance
-from tests.metrics import funnel_design
+from tests.metrics import funnel_design, reasons_design
 from tests.metrics.funnel_design import TECH_INTERVIEW
 from tests.metrics.insights_design import design_metrics, one_source_metrics
-from tests.metrics.reasons_design import DESIGN_NOW
+from tests.metrics.reasons_design import DESIGN_NOTES, DESIGN_NOW, design_notes
 from tests.metrics.resume_ab_design import Cohort, ab_events, ab_links
 from tests.metrics.salary_fixtures import floor_events, floor_rows, salary_of
 from tests.metrics.sankey_fixtures import (
@@ -247,6 +248,62 @@ def test_titles_a_candidate_side_leader_as_your_own_refusal(
     assert (said.title, said.body) == (
         "На фінальній співбесіді ти найчастіше відмовляєш сам: «низька вилка»",
         "5 із 21 відмови на цьому етапі — «низька вилка».",
+    )
+
+
+def with_notes(metrics: InsightMetrics, bodies: tuple[str, ...]) -> InsightMetrics:
+    noted = note_topics(reasons_design.design_frame(), notes=design_notes(bodies))
+    return replace(metrics, note_topics=noted)
+
+
+def test_two_noted_mentions_keep_the_reason_headline(
+    metrics: InsightMetrics,
+) -> None:
+    said = dominant_reason(with_notes(metrics, DESIGN_NOTES[:2]))
+
+    assert said is not None
+    assert (said.title, said.body, said.evidence) == (
+        "На техінтерв'ю тебе найчастіше валять: «не вистачає скілів»",
+        "3 із 4 відмов на цьому етапі — «не вистачає скілів».",
+        {"stage": "tech_interview", "code": "skills_gap", "count": 3, "of": 4},
+    )
+
+
+def test_three_noted_mentions_name_the_topic_in_the_reason_headline(
+    metrics: InsightMetrics,
+) -> None:
+    said = dominant_reason(with_notes(metrics, ("англійська", "English", "англ", "")))
+
+    assert said == Insight(
+        block="reasons",
+        title="На техінтерв'ю тебе валить англійська",
+        body="3 із 4 відмов на цьому етапі — «не вистачає скілів», "
+        "і в нотатках 3 із 4 згадують англійську.",
+        severity="warning",
+        evidence={
+            "stage": "tech_interview",
+            "code": "skills_gap",
+            "count": 3,
+            "of": 4,
+            "topic": "english",
+            "topicMentions": 3,
+            "notes": 4,
+        },
+    )
+
+
+def test_a_candidate_side_headline_never_names_a_noted_topic(
+    metrics: InsightMetrics,
+) -> None:
+    top = TopReason(stage="tech_interview", code="low_salary", count=3, of=4)
+    leading = metrics.reasons.model_copy(update={"headline": top})
+
+    said = dominant_reason(replace(metrics, reasons=leading))
+
+    assert said is not None
+    assert (said.title, said.body) == (
+        "На техінтерв'ю ти найчастіше відмовляєш сам: «низька вилка»",
+        "3 із 4 відмов на цьому етапі — «низька вилка».",
     )
 
 

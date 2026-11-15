@@ -14,18 +14,26 @@ from app.metrics.insights.engine import (
     insight_rule,
     insights,
 )
-from app.metrics.insights.inputs import insight_metrics
-from tests.factories import EVENTS_BASE_TIME, salaries_frame, version_links_frame
+from app.metrics.insights.inputs import InsightFrames, insight_metrics
+from tests.factories import (
+    EVENTS_BASE_TIME,
+    notes_frame,
+    salaries_frame,
+    version_links_frame,
+)
 from tests.metrics.sources_design import design_events, design_origins
 
 
 @pytest.fixture(name="metrics")
 def design_metrics() -> InsightMetrics:
     return insight_metrics(
-        design_events(),
-        origins=design_origins(),
-        links=version_links_frame([]),
-        salaries=salaries_frame([]),
+        InsightFrames(
+            design_events(),
+            origins=design_origins(),
+            links=version_links_frame([]),
+            salaries=salaries_frame([]),
+            notes=notes_frame([]),
+        ),
         now=EVENTS_BASE_TIME + timedelta(days=60),
     )
 

@@ -10,7 +10,7 @@ from pydantic import BaseModel
 from app.metrics.forecast import WhatIf, forecast
 from app.metrics.funnel import funnel
 from app.metrics.insights.engine import insights
-from app.metrics.insights.inputs import insight_metrics
+from app.metrics.insights.inputs import InsightFrames, insight_metrics
 from app.metrics.norms import norms
 from app.metrics.reasons import reasons
 from app.metrics.reasons_summary import reasons_summary
@@ -18,7 +18,7 @@ from app.metrics.resume_ab import resume_ab
 from app.metrics.sankey import sankey
 from app.metrics.sources import sources
 from app.metrics.timings import timings
-from tests.factories import salaries_frame
+from tests.factories import notes_frame, salaries_frame
 from tests.golden.story import Story, design_story
 
 STORY_FILE: Final = Path(__file__).with_name("design_story.json")
@@ -38,10 +38,13 @@ METRICS: Final[dict[str, Callable[[Story], BaseModel]]] = {
     "forecast": lambda story: forecast(story.events, now=story.now, what_if=WhatIf()),
     "insights": lambda story: insights(
         insight_metrics(
-            story.events,
-            origins=story.origins,
-            links=story.links,
-            salaries=salaries_frame([]),
+            InsightFrames(
+                story.events,
+                origins=story.origins,
+                links=story.links,
+                salaries=salaries_frame([]),
+                notes=notes_frame([]),
+            ),
             now=story.now,
         )
     ),

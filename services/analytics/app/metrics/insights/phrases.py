@@ -53,6 +53,33 @@ REASON_TITLES: Final[Mapping[str, str]] = {
 }
 
 
+class TopicPhrase(NamedTuple):
+    title: str
+    mention: str
+
+
+TOPIC_PHRASES: Final[Mapping[str, TopicPhrase]] = {
+    "algorithms": TopicPhrase("тебе валять алгоритми", "live-coding"),
+    "dp": TopicPhrase("тебе валить динамічне програмування", "DP"),
+    "system_design": TopicPhrase("тебе валить system design", "system design"),
+    "english": TopicPhrase("тебе валить англійська", "англійську"),
+    "take_home": TopicPhrase("тебе валять тестові завдання", "тестове завдання"),
+    "react_internals": TopicPhrase("тебе валить React під капотом", "React internals"),
+    "sql": TopicPhrase("тебе валить SQL", "SQL"),
+    "behavioural": TopicPhrase(
+        "тебе валять поведінкові питання", "поведінкові питання"
+    ),
+}
+
+ALL_NOTES_WORDS: Final[Mapping[int, str]] = {3: "три", 4: "чотири"}
+
+
+def noted_by(mentions: int, *, notes: int) -> str:
+    if mentions < notes:
+        return f"{mentions} із {notes}"
+    return f"усі {ALL_NOTES_WORDS.get(notes, str(notes))}"
+
+
 def percent(value: float) -> int:
     return round(value * 100)
 

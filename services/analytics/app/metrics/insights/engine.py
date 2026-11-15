@@ -7,6 +7,7 @@ from app.metrics.forecast import Forecast
 from app.metrics.funnel import FunnelStage
 from app.metrics.ghost_market import GhostRateVsMarket
 from app.metrics.most_expensive import MostExpensiveStage
+from app.metrics.note_topics import StageTopics
 from app.metrics.rate import Insufficient, MetricModel
 from app.metrics.reasons import Reasons
 from app.metrics.resume_ab import ResumeAb
@@ -52,6 +53,7 @@ class InsightMetrics:
     ghosts: GhostRateVsMarket
     stage_what_if: Forecast | Insufficient | None = None
     salary: Salary | None = None
+    note_topics: tuple[StageTopics, ...] = ()
 
 
 type Rule = Callable[[InsightMetrics], Insight | None]

@@ -14,8 +14,12 @@ class ReasonCount(MetricModel):
     count: int
 
 
+def rejections_at(clean: pd.DataFrame, *, stage: str) -> pd.DataFrame:
+    return clean[(clean["to_stage"] == REJECTED_STAGE) & (clean["from_stage"] == stage)]
+
+
 def stage_rejections(clean: pd.DataFrame, *, stage: str) -> pd.Series[str]:
-    left = clean[(clean["to_stage"] == REJECTED_STAGE) & (clean["from_stage"] == stage)]
+    left = rejections_at(clean, stage=stage)
     codes: pd.Series[str] = left.set_index("occurred_at")["reason_code"]
     return codes.fillna(UNSPECIFIED_REASON)
 

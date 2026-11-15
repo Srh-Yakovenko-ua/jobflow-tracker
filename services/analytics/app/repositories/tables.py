@@ -54,6 +54,13 @@ timeline_events = Table(
     moment_column("occurred_at"),
 )
 
+notes = Table(
+    "notes",
+    metadata,
+    uuid_column("application_id"),
+    text_column("body"),
+)
+
 rejection_reasons = Table(
     "rejection_reasons",
     metadata,

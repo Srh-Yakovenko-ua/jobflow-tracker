@@ -5,10 +5,13 @@ from app.metrics.insights.phrases import (
     REASON_TITLES,
     SOURCE_PHRASES,
     STAGE_PHRASES,
+    TOPIC_PHRASES,
+    noted_by,
     percent,
     sentence,
     spent_time,
 )
+from app.metrics.note_topic_stems import TOPIC_STEMS
 from app.metrics.reason_tallies import stated_sides
 
 
@@ -22,6 +25,20 @@ def test_every_source_has_its_phrase_and_nothing_else() -> None:
 
 def test_every_stated_side_has_its_reason_title_and_nothing_else() -> None:
     assert tuple(REASON_TITLES) == stated_sides()
+
+
+def test_every_note_topic_has_its_phrase_and_nothing_else() -> None:
+    assert tuple(TOPIC_PHRASES) == tuple(TOPIC_STEMS)
+
+
+@pytest.mark.parametrize(
+    ("mentions", "notes", "who"),
+    [(3, 3, "усі три"), (4, 4, "усі чотири"), (7, 7, "усі 7"), (3, 5, "3 із 5")],
+)
+def test_noted_by_says_all_when_every_note_mentions_the_topic(
+    *, mentions: int, notes: int, who: str
+) -> None:
+    assert noted_by(mentions, notes=notes) == who
 
 
 def test_a_company_reason_title_names_the_stage_and_the_label() -> None:
