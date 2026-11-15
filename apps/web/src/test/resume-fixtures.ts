@@ -19,6 +19,7 @@ import { http, HttpResponse } from 'msw/http';
 
 import { apiUrl } from './api-handlers';
 import { fixtureIdOf, heldReply, type MoveRouteOptions } from './board-fixtures';
+import { VERSIONS_PATH } from './resume-versions-route';
 import { meRoute, meWithSettings } from './session-fixtures';
 import { storageReply, storageRoutes } from './storage-handlers';
 import { storedRoutes, type StoredRoutesSetup, type StoredRoutesSpec } from './stored-routes';
@@ -43,8 +44,6 @@ type Relinked = { applicationId: string; resumeVersionId: string };
 type ActionsSent = { activated: string[]; downloaded: string[]; relinked: Relinked[] };
 
 const SERIAL_FROM = 500;
-
-const VERSIONS_PATH = '/resumes/versions';
 
 const FRESH_VERSION = { aiProfileStatus: 'queued', applicationsCount: 0 } as const;
 
@@ -89,14 +88,6 @@ export function buildResumeVersions(count: number): ResumeVersion[] {
       filename: `cv_v${String(number)}.pdf`,
     });
   });
-}
-
-export function resumeVersionsRoute(items: readonly ResumeVersion[] | HttpResponseResolver = []) {
-  const reply =
-    typeof items === 'function'
-      ? items
-      : () => HttpResponse.json({ items: [...items] } satisfies ResumeVersionListResponse);
-  return http.get(apiUrl(VERSIONS_PATH), reply);
 }
 
 function versionsSpec(session: ResumeSession, numbered: { last: number }) {

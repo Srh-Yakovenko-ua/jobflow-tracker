@@ -5,7 +5,8 @@ import { errorReply } from '@/test/api-handlers';
 import { chipNames, CHIPS_NAME, pickInPill } from '@/test/board-filters';
 import { DESIGN_BOARD } from '@/test/board-fixtures';
 import { renderBoard } from '@/test/render-board';
-import { buildResumeVersion, resumeVersionIdOf, resumeVersionsRoute } from '@/test/resume-fixtures';
+import { buildResumeVersion, resumeVersionIdOf } from '@/test/resume-fixtures';
+import { resumeVersionsRoute } from '@/test/resume-versions-route';
 import { server } from '@/test/server';
 
 vi.mock('next/link', () => import('@/test/link'));
