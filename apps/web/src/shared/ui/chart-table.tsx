@@ -80,8 +80,10 @@ export function ChartTable(props: ChartTableProps) {
         id={tableId}
         {...(shown && { role: 'region', 'aria-label': props.caption, tabIndex: 0 })}
         className={cn(
-          'self-stretch overflow-x-auto',
-          shown ? 'animate-fade-in' : 'sr-only focus-within:not-sr-only',
+          'self-stretch',
+          shown
+            ? 'animate-fade-in overflow-x-auto'
+            : 'sr-only focus-within:not-sr-only focus-within:overflow-x-auto',
         )}
       >
         <DataTable {...props} />
