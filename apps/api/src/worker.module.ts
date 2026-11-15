@@ -1,8 +1,11 @@
 import { Module } from '@nestjs/common';
+import { DiscoveryModule } from '@nestjs/core';
 import { LoggerModule } from 'nestjs-pino';
 
 import { loggerParams } from './common/logger.js';
 import { configModule } from './config/app-config.js';
+import { ErrorTrackingModule } from './error-tracking/error-tracking.module.js';
+import { JobFailureReporter } from './error-tracking/job-failure-reporter.js';
 import { MetricsModule } from './metrics/metrics.module.js';
 import { MetricsWorkerModule } from './metrics/metrics-worker.module.js';
 import { AiWorkerModule } from './modules/ai/index.js';
@@ -25,6 +28,8 @@ import { QueuesModule } from './queues/queues.module.js';
     configModule,
     LoggerModule.forRoot(loggerParams()),
     PrismaModule,
+    ErrorTrackingModule,
+    DiscoveryModule,
     QueuesModule,
     MetricsModule,
     MetricsWorkerModule,
@@ -41,5 +46,6 @@ import { QueuesModule } from './queues/queues.module.js';
     PushWorkerModule,
     AnalyticsCacheWorkerModule,
   ],
+  providers: [JobFailureReporter],
 })
 export class WorkerModule {}

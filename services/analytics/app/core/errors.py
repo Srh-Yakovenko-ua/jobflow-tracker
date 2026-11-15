@@ -4,6 +4,7 @@ from fastapi.responses import JSONResponse
 from loguru import logger
 from starlette.exceptions import HTTPException
 
+from app.core.error_tracking import capture_unhandled
 from app.core.request_id import request_id_from
 
 type Problem = tuple[str, str]
@@ -62,6 +63,7 @@ def to_service_error(error: Exception, *, request_id: str) -> ServiceError:
         case HTTPException():
             return ServiceError(error.status_code)
     logger.error("unhandled error", error=type(error).__name__, requestId=request_id)
+    capture_unhandled(error, request_id=request_id)
     return ServiceError(INTERNAL_STATUS)
 
 

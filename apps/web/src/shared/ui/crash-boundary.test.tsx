@@ -1,9 +1,12 @@
+import * as Sentry from '@sentry/nextjs';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useState } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { uk } from '@/shared/i18n';
+import { shownCrashCode } from '@/test/crashed-page';
+import { recordErrorReports } from '@/test/error-reports';
 import { quietLogs } from '@/test/quiet-logs';
 
 import { CrashBoundary } from './crash-boundary';
@@ -12,7 +15,7 @@ const DEMO = uk.devUi.errorPanels.crashDemo;
 
 const SECRET = 'token=abc123 leaked from the widget';
 
-const CODE_IN_META = /^код ([0-9a-f]{8}) · /;
+const REPORTED = /Ми вже отримали звіт/;
 
 function Widget({ broken }: Readonly<{ broken: boolean }>) {
   if (broken) throw new Error(SECRET);
@@ -58,14 +61,10 @@ async function breakWidget() {
   return user;
 }
 
-function shownCode(): string {
-  const meta = screen.getByText(CODE_IN_META);
-  return CODE_IN_META.exec(meta.textContent)?.[1] ?? '';
-}
-
 describe('CrashBoundary', () => {
-  afterEach(() => {
+  afterEach(async () => {
     vi.restoreAllMocks();
+    await Sentry.close();
   });
 
   it('a widget that throws shows the crash panel with an 8-hex code and never the error text', async () => {
@@ -74,8 +73,9 @@ describe('CrashBoundary', () => {
 
     expect(screen.getByRole('heading', { name: 'Щось зламалось у нас, не в тебе' })).toBeDefined();
     expect(screen.getByText('Блок впав')).toBeDefined();
-    expect(shownCode()).toMatch(/^[0-9a-f]{8}$/);
+    expect(shownCrashCode()).toMatch(/^[0-9a-f]{8}$/);
     expect(document.body.textContent).not.toContain(SECRET);
+    expect(screen.queryByText(REPORTED)).toBeNull();
   });
 
   it('a control outside the crashed widget keeps working', async () => {
@@ -104,6 +104,17 @@ describe('CrashBoundary', () => {
     await breakWidget();
 
     expect(logged).toHaveBeenCalledTimes(1);
-    expect(logged.mock.calls[0]?.[0]).toMatchObject({ code: shownCode() });
+    expect(logged.mock.calls[0]?.[0]).toMatchObject({ code: shownCrashCode() });
+  });
+
+  it('sends the crash to GlitchTip under an event id that starts with the shown code', async () => {
+    quietLogs();
+    const reports = recordErrorReports();
+    await breakWidget();
+
+    const [report, ...more] = await reports.flushed();
+    expect(more).toEqual([]);
+    expect(report?.eventId?.slice(0, 8)).toBe(shownCrashCode());
+    expect(report?.tags.code).toBe(shownCrashCode());
   });
 });

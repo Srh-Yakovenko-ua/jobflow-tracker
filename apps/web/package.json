@@ -13,6 +13,7 @@
     "test:e2e": "playwright test",
     "thesis:screens": "playwright test -c playwright.thesis.config.ts",
     "defense:record": "pnpm -w demo:seed && playwright test -c playwright.defense.config.ts",
+    "sourcemaps:upload": "sentry-cli sourcemaps inject .next/static && sentry-cli --url http://localhost:8003 sourcemaps upload --org jobflow --project jobflow --release \"$NEXT_PUBLIC_SENTRY_RELEASE\" .next/static",
     "typecheck": "next typegen && tsgo -p . --noEmit"
   },
   "dependencies": {
@@ -23,6 +24,7 @@
     "@hookform/resolvers": "6.0.2",
     "@jobflow/bookmarklet": "workspace:*",
     "@jobflow/shared": "workspace:*",
+    "@sentry/nextjs": "11.12.0",
     "@tailwind-merge/next": "0.0.0-dev.ab12ab17b7fbc861f04300973065b9f1cff9863b",
     "@tanstack/react-query": "5.104.4",
     "@tanstack/react-table": "9.3.1",
@@ -54,6 +56,7 @@
     "@jobflow/config": "workspace:*",
     "@playwright/test": "1.65.1",
     "@rolldown/plugin-babel": "0.3.0",
+    "@sentry/cli": "3.8.2",
     "@tailwind-merge/vite": "0.0.0-dev.ab12ab17b7fbc861f04300973065b9f1cff9863b",
     "@tailwindcss/postcss": "4.3.3",
     "@tailwindcss/vite": "4.3.3",

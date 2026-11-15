@@ -3,6 +3,7 @@ import { type ArgumentsHost, Catch, type ExceptionFilter, Logger } from '@nestjs
 import { HttpAdapterHost } from '@nestjs/core';
 import type { Request } from 'express';
 
+import { ErrorReporter } from '../error-tracking/error-reporter.js';
 import { withoutQuery } from './logger.js';
 import { readRequestId } from './request-id.middleware.js';
 import { toAppError } from './to-app-error.js';
@@ -13,7 +14,10 @@ type Failure = { exception: unknown; req: Request; body: ErrorResponse };
 export class AppExceptionFilter implements ExceptionFilter {
   private readonly logger = new Logger(AppExceptionFilter.name);
 
-  constructor(private readonly adapterHost: HttpAdapterHost) {}
+  constructor(
+    private readonly adapterHost: HttpAdapterHost,
+    private readonly reporter: ErrorReporter,
+  ) {}
 
   catch(exception: unknown, host: ArgumentsHost): void {
     const http = host.switchToHttp();
@@ -27,6 +31,9 @@ export class AppExceptionFilter implements ExceptionFilter {
   private report({ exception, req, body }: Failure): void {
     const inRequestLog = Object.hasOwn(req, 'log');
     const failed = body.status >= 500;
+    if (failed) {
+      this.reporter.capture({ exception, tags: { requestId: body.requestId } });
+    }
     if (inRequestLog && !failed) {
       return;
     }

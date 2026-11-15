@@ -11,7 +11,11 @@ const COPY = uk.states.crash;
 
 export type CrashScope = 'page' | 'widget';
 
-export type CrashPanelView = { scope: CrashScope; timeZone?: string | undefined };
+export type CrashPanelView = {
+  scope: CrashScope;
+  reported: boolean;
+  timeZone?: string | undefined;
+};
 
 export type CrashPanelProps = Readonly<{
   incident: Incident;
@@ -22,11 +26,15 @@ export type CrashPanelProps = Readonly<{
 export function CrashPanel({ incident, view, onRetry }: CrashPanelProps) {
   const scope = COPY[view.scope];
   const time = formatIncidentTime({ at: incident.occurredAt, timeZone: view.timeZone });
+  const body = view.reported ? `${scope.body} ${COPY.reported}` : scope.body;
   return (
-    <div role="alert" className="flex min-w-0 flex-col gap-3 bg-surface p-5.5 shadow-e1">
+    <div
+      role="alert"
+      className="flex min-w-0 animate-fade-in flex-col gap-3 bg-surface p-5.5 shadow-e1"
+    >
       <span className={cn(STATE_TEXT.eyebrow, 'text-ink-3')}>{scope.eyebrow}</span>
       <h2 className="font-display text-[26px] leading-[1.2] text-ink">{COPY.title}</h2>
-      <p className="max-w-[56ch] text-[14.5px] leading-[1.6] text-ink-2">{scope.body}</p>
+      <p className="max-w-[56ch] text-[14.5px] leading-[1.6] text-ink-2">{body}</p>
       <div className="flex flex-wrap items-center gap-2.5">
         <Button size="lg" className={TOUCH_HEIGHT} onClick={onRetry}>
           {COPY.action}

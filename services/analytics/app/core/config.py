@@ -34,6 +34,8 @@ class Settings(BaseSettings):
     web_origin: str
     log_level: str = "INFO"
     otel_exporter_otlp_endpoint: str = ""
+    sentry_dsn: str = ""
+    sentry_release: str = ""
 
     @field_validator("database_url_analytics")
     @classmethod

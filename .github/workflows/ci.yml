@@ -331,6 +331,49 @@ jobs:
             docker image ls --filter reference='jobflow-*:ci' --format '| {{.Repository}} | {{.Size}} |'
           } >> "$GITHUB_STEP_SUMMARY"
 
+  sourcemaps:
+    needs: changes
+    if: needs.changes.outputs.code == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      NEXT_PUBLIC_SENTRY_RELEASE: ${{ github.sha }}
+      SENTRY_RELEASE: ${{ github.sha }}
+    steps:
+      - uses: actions/checkout@v7.0.1
+      - uses: ./.github/actions/setup
+      - run: pnpm turbo run build --filter @jobflow/web
+      - run: pnpm --filter @jobflow/web exec sentry-cli sourcemaps inject .next/static
+      - name: Every chunk carries a debug id and a source map
+        run: |
+          shopt -s globstar nullglob
+          checked=0
+          missing=0
+          for chunk in apps/web/.next/static/chunks/**/*.js; do
+            map=$(sed -n 's/.*sourceMappingURL=\([^[:space:]]*\).*/\1/p' "$chunk" | tail -n 1)
+            [[ -n $map ]] || continue
+            checked=$((checked + 1))
+            if ! grep -q 'debugId=' "$chunk" || [[ ! -f $(dirname "$chunk")/$map ]]; then
+              echo "::error file=$chunk::no debugId comment or missing $map"
+              missing=1
+            fi
+          done
+          if (( checked == 0 )); then
+            echo '::error::no chunk under apps/web/.next/static/chunks has a sourceMappingURL'
+            exit 1
+          fi
+          echo "$checked chunks checked"
+          exit "$missing"
+      - name: Upload source maps
+        env:
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+        run: |
+          if [[ -z $SENTRY_AUTH_TOKEN ]]; then
+            echo 'Source map upload skipped: no SENTRY_AUTH_TOKEN secret.' >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          pnpm --filter @jobflow/web sourcemaps:upload
+
   audit:
     runs-on: ubuntu-latest
     timeout-minutes: 5

@@ -4,7 +4,8 @@ import { parseWebConfig } from './web-config';
 
 describe('parseWebConfig', () => {
   it('falls back to the local API and analytics ports when nothing is set', () => {
-    expect(parseWebConfig({})).toEqual({
+    expect(parseWebConfig({})).toStrictEqual({
+      errorTracking: undefined,
       apiUrl: 'http://localhost:4000',
       apiBaseUrl: 'http://localhost:4000/api/v1',
       analyticsBaseUrl: 'http://localhost:8000',
@@ -32,10 +33,36 @@ describe('parseWebConfig', () => {
     });
   });
 
+  it('turns error tracking off when no DSN is set, even with a release', () => {
+    expect(parseWebConfig({ NEXT_PUBLIC_SENTRY_RELEASE: 'abc123' }).errorTracking).toBeUndefined();
+  });
+
+  it('reports to the given DSN under the given release', () => {
+    const config = parseWebConfig({
+      NEXT_PUBLIC_SENTRY_DSN: 'http://public@localhost:8003/1',
+      NEXT_PUBLIC_SENTRY_RELEASE: '59dbb20',
+    });
+
+    expect(config.errorTracking).toEqual({
+      dsn: 'http://public@localhost:8003/1',
+      release: '59dbb20',
+    });
+  });
+
+  it('reports without a release when only the DSN is set', () => {
+    const config = parseWebConfig({ NEXT_PUBLIC_SENTRY_DSN: 'http://public@localhost:8003/1' });
+
+    expect(config.errorTracking).toStrictEqual({
+      dsn: 'http://public@localhost:8003/1',
+      release: undefined,
+    });
+  });
+
   it.each([
     ['NEXT_PUBLIC_API_URL', 'ftp://x'],
     ['NEXT_PUBLIC_ANALYTICS_URL', 'not a url'],
     ['NEXT_PUBLIC_FILES_URL', 'not a url'],
+    ['NEXT_PUBLIC_SENTRY_DSN', 'not a url'],
   ])('refuses a malformed %s and names it', (key, value) => {
     expect(() => parseWebConfig({ [key]: value })).toThrow(key);
   });

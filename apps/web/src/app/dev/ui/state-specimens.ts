@@ -41,5 +41,6 @@ export const OVERSIZED_RESUME: OversizedFile = {
 
 export const CRASH_INCIDENT: Incident = {
   code: '5f3a',
+  eventId: '5f3a9c01e2b44d6f8a7b6c5d4e3f2a1b',
   occurredAt: new Date('2026-09-07T13:04:00Z'),
 };

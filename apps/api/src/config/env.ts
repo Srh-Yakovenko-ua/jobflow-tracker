@@ -79,6 +79,7 @@ const envFields = z.object({
   VAPID_PRIVATE_KEY: z.base64url().length(43).optional(),
   SMTP_URL: z.url({ protocol: /^smtps?$/ }),
   SENTRY_DSN: z.url().optional(),
+  SENTRY_RELEASE: requiredText.optional(),
   MIXPANEL_TOKEN: z.string().optional(),
   TELEGRAM_BOT_TOKEN: z.string().optional(),
   OAUTH_GITHUB_CLIENT_ID: z.string().optional(),

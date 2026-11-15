@@ -122,6 +122,7 @@ describe('validateEnv', () => {
   it.each([
     { key: 'S3_PUBLIC_ENDPOINT', given: 'http://localhost:9000' },
     { key: 'OTEL_EXPORTER_OTLP_ENDPOINT', given: 'http://alloy:4318' },
+    { key: 'SENTRY_RELEASE', given: '59dbb20a6f1c4e2b8d3a7f9e0c1b2d3e4f5a6b7c' },
   ] as const)('leaves $key unset when it is empty and reads it when given', ({ key, given }) => {
     const unset = validateEnv({ ...exampleEnv, [key]: '' });
     const configured = validateEnv({ ...exampleEnv, [key]: given });

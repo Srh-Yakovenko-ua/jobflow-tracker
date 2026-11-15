@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
-import { buildContentSecurityPolicy } from './content-security-policy';
+import { buildContentSecurityPolicy, connectOrigins } from './content-security-policy';
+import { parseWebConfig, type WebConfig } from './web-config';
 
 const ORIGINS = [
   'http://localhost:4000',
@@ -31,6 +32,23 @@ describe('buildContentSecurityPolicy', () => {
 
     expect(development).toBe(
       production.replace("'strict-dynamic';", "'strict-dynamic' 'unsafe-eval';"),
+    );
+  });
+
+  it('lets the browser send crash reports to the error tracking origin only when a DSN is set', () => {
+    const connectSrc = (config: WebConfig) =>
+      directiveOf(
+        buildContentSecurityPolicy({ nonce: 'n', dev: false, origins: connectOrigins(config) }),
+        'connect-src',
+      );
+
+    expect(
+      connectSrc(parseWebConfig({ NEXT_PUBLIC_SENTRY_DSN: 'http://public@localhost:8003/1' })),
+    ).toBe(
+      "connect-src 'self' http://localhost:4000 http://localhost:8000 http://localhost:9000 http://localhost:8003",
+    );
+    expect(connectSrc(parseWebConfig({}))).toBe(
+      "connect-src 'self' http://localhost:4000 http://localhost:8000 http://localhost:9000",
     );
   });
 
