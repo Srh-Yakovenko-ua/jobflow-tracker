@@ -1,6 +1,7 @@
+import { getQueueToken } from '@nestjs/bullmq';
 import { ConfigService } from '@nestjs/config';
 import type { TestingModule, TestingModuleBuilder } from '@nestjs/testing';
-import type { QueueOptions } from 'bullmq';
+import type { Queue, QueueOptions } from 'bullmq';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 
 import { Clock } from '../common/clock.js';
@@ -14,6 +15,7 @@ import {
   createOutboxRows,
   outboxPublication,
   outboxRows,
+  recordingHandler,
   RELAY_SETTLE_LIMIT_MS,
   relayWithinSettleLimit,
   unpublishedOutboxIds,
@@ -21,7 +23,9 @@ import {
 import { HeldStubQueue, StubQueue, stubQueues } from '../test/stub-queues.js';
 import { startTcpProxy, type TcpProxy } from '../test/tcp-proxy.js';
 import { daysBefore, NOW, settableClock } from '../test/time.js';
-import { compileWorker, workerTestingModule } from '../test/worker.js';
+import { recordSpans, REMOTE_PARENT } from '../test/tracing.js';
+import { compileWorker, useTestWorkers, workerTestingModule } from '../test/worker.js';
+import { DomainEventRouter } from './domain-event-router.js';
 import { OutboxRelayService } from './outbox-relay.service.js';
 
 const CREATED = 'application.created' satisfies ApplicationEvent['eventType'];
@@ -233,5 +237,63 @@ describe('two relay passes running at once', () => {
 
     expect(heldQueue.jobs.map(({ id }) => id).sort()).toEqual([...waiting].sort());
     expect(await unpublishedOutboxIds(database.prisma)).toEqual([]);
+  });
+});
+
+describe('OutboxRelayService carrying the trace of the request that wrote the row', () => {
+  const spans = recordSpans();
+  const recorder = recordingHandler();
+  const workers = useTestWorkers(log.sink);
+  const consumedIds = () => recorder.events.map(({ id }) => id);
+
+  async function startWorker(): Promise<TestingModule> {
+    const worker = await workers.compile();
+    worker.get(DomainEventRouter, { strict: false }).subscribe(CREATED, recorder.handle);
+    await worker.init();
+    return worker;
+  }
+
+  function relayOf(worker: TestingModule): OutboxRelayService {
+    return worker.get(OutboxRelayService, { strict: false });
+  }
+
+  it(
+    'consumes the event in the trace of the row under an outbox.relay span',
+    { timeout: OUTAGE_TEST_TIMEOUT_MS },
+    async () => {
+      await createOutboxRows(database.prisma, {
+        count: 1,
+        eventType: CREATED,
+        traceparent: REMOTE_PARENT.traceparent,
+      });
+      const [outboxId] = await unpublishedOutboxIds(database.prisma);
+      await relayOf(await startWorker()).relay();
+
+      await expect.poll(consumedIds).toEqual([outboxId]);
+      const [relaySpan] = await spans.named('outbox.relay');
+      await expect.poll(() => spans.named('process domain-events')).toHaveLength(1);
+      const [processSpan] = await spans.named('process domain-events');
+      expect(relaySpan?.parentSpanContext?.spanId).toBe(REMOTE_PARENT.spanId);
+      expect(relaySpan?.attributes).toEqual({
+        'outbox.id': outboxId,
+        'outbox.event_type': CREATED,
+        'messaging.destination.name': 'domain-events',
+      });
+      expect(processSpan?.spanContext().traceId).toBe(REMOTE_PARENT.traceId);
+      expect(processSpan?.parentSpanContext?.spanId).toBe(relaySpan?.spanContext().spanId);
+    },
+  );
+
+  it('adds a row written outside any trace as a job with no telemetry metadata', async () => {
+    await createOutboxRows(database.prisma, { count: 1, eventType: CREATED });
+    const [outboxId = ''] = await unpublishedOutboxIds(database.prisma);
+    const worker = await workers.compile();
+
+    expect(await relayOf(worker).relay()).toBe(1);
+
+    const domainEvents = worker.get<Queue>(getQueueToken(QUEUES.domainEvents.name));
+    const job = await domainEvents.getJob(outboxId);
+    expect(job?.opts.telemetry?.metadata).toBeFalsy();
+    expect(await spans.named('outbox.relay')).toEqual([]);
   });
 });

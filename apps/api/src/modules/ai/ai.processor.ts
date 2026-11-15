@@ -15,6 +15,8 @@ import { AI_JOBS, type AiCompleteJob, aiCompleteJobSchema } from './ai.jobs.js';
 import { type AiOutcome, AiService } from './ai.service.js';
 import { AiJobRouter } from './ai-job-router.js';
 
+type AiJobReceipt = Pick<AiOutcome, 'aiResultId' | 'cached'>;
+
 const failedJobSchema = aiCompleteJobSchema
   .pick({ aiJobId: true, kind: true, requestId: true })
   .partial();
@@ -31,9 +33,9 @@ export class AiProcessor extends WorkerHost {
     super();
   }
 
-  async process(job: ProcessedJob): Promise<AiOutcome | null> {
+  async process(job: ProcessedJob): Promise<AiJobReceipt | null> {
     const parsed = this.parse(job);
-    return this.ai.complete({
+    const outcome = await this.ai.complete({
       job: parsed,
       finalAttempt: job.attemptsMade + 1 >= DEFAULT_JOB_OPTIONS.attempts,
       retried: job.attemptsMade > 0,
@@ -42,6 +44,11 @@ export class AiProcessor extends WorkerHost {
       progressed: (update) =>
         this.live.publish(parsed.userId, { type: LIVE_EVENTS.jobUpdated, data: update }),
     });
+    if (outcome === null) {
+      return null;
+    }
+    const { aiResultId, cached } = outcome;
+    return { aiResultId, cached };
   }
 
   @OnWorkerEvent('failed')

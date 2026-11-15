@@ -2,6 +2,7 @@ import { rejectionReasonCodeSchema, stageSchema } from '@jobflow/shared';
 import { z } from 'zod';
 
 import type { Prisma } from '../../generated/prisma/client.js';
+import { traceCarrier } from '../../tracing/trace-context.js';
 import type { StageEventPlan } from './stage-transition.repository.js';
 
 export const APPLICATION_EVENTS = {
@@ -77,5 +78,6 @@ export function applicationEvent(
     aggregateId: change.applicationId,
     eventType,
     payload: { userId, ...change },
+    ...traceCarrier(),
   };
 }

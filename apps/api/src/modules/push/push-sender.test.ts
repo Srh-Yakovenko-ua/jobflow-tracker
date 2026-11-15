@@ -1,6 +1,4 @@
 import { createECDH, randomBytes } from 'node:crypto';
-import { once } from 'node:events';
-import { createServer, type Socket } from 'node:net';
 
 import { ConfigService } from '@nestjs/config';
 import { Test } from '@nestjs/testing';
@@ -11,6 +9,7 @@ import { DEPENDENCY_LIMITS } from '../../common/probe.js';
 import { validateEnv } from '../../config/env.js';
 import { exampleEnv } from '../../test/example-env.js';
 import { SILENCE_PUSH } from '../../test/push.js';
+import { startSilentServer } from '../../test/tcp-proxy.js';
 import { pushOptionsOf, pushOutcomeOf, PushSender } from './push-sender.js';
 
 const VAPID = generateVAPIDKeys();
@@ -36,24 +35,6 @@ async function senderWith(keys: Partial<typeof VAPID> = VAPID) {
     providers: [PushSender, { provide: ConfigService, useValue: new ConfigService(env) }],
   }).compile();
   return moduleRef.get(PushSender);
-}
-
-async function listeningServer(onSocket: (socket: Socket) => void) {
-  const sockets = new Set<Socket>();
-  const server = createServer((socket) => {
-    sockets.add(socket);
-    onSocket(socket);
-  });
-  server.listen(0, '127.0.0.1');
-  await once(server, 'listening');
-  const address = server.address();
-  if (address === null || typeof address === 'string') throw new Error('no TCP port');
-  const close = async () => {
-    sockets.forEach((socket) => socket.destroy());
-    server.close();
-    await once(server, 'close');
-  };
-  return { port: address.port, close };
 }
 
 const endpointAt = (port: number) => `https://127.0.0.1:${String(port)}/push/send`;
@@ -85,7 +66,7 @@ describe('PushSender', () => {
   });
 
   it('answers failed when the push service refuses the connection', async () => {
-    const closed = await listeningServer(() => undefined);
+    const closed = await startSilentServer();
     await closed.close();
     const sender = await senderWith();
 
@@ -100,7 +81,7 @@ describe('PushSender', () => {
   it(
     'answers failed within the provider limit when the push service accepts and never answers',
     async () => {
-      const silent = await listeningServer(() => undefined);
+      const silent = await startSilentServer();
       closers.push(silent.close);
       const sender = await senderWith();
       const startedAt = Date.now();

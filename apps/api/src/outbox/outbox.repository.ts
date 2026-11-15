@@ -3,7 +3,12 @@ import { Injectable } from '@nestjs/common';
 import type { Prisma } from '../generated/prisma/client.js';
 import { PrismaService } from '../prisma/prisma.service.js';
 
-export type UnpublishedOutboxRow = { id: string; eventType: string; payload: Prisma.JsonValue };
+export type UnpublishedOutboxRow = {
+  id: string;
+  eventType: string;
+  payload: Prisma.JsonValue;
+  traceparent: string | null;
+};
 
 export type ClaimUnpublished = { limit: number; tx: Prisma.TransactionClient };
 
@@ -15,7 +20,7 @@ export class OutboxRepository {
 
   claimUnpublished({ limit, tx }: ClaimUnpublished): Promise<UnpublishedOutboxRow[]> {
     return tx.$queryRaw<UnpublishedOutboxRow[]>`
-      SELECT id, event_type AS "eventType", payload FROM outbox
+      SELECT id, event_type AS "eventType", payload, traceparent FROM outbox
       WHERE published_at IS NULL
       ORDER BY created_at, id
       LIMIT ${limit}

@@ -25,6 +25,7 @@ from app.core.logging import configure_logging
 from app.core.metrics import install_metrics
 from app.core.request_id import REQUEST_ID_HEADER, RequestIdMiddleware
 from app.core.resources import create_engine, create_redis
+from app.core.tracing import install_tracing
 from app.repositories.health import select_one
 from app.services.readiness import ReadinessService
 
@@ -69,4 +70,5 @@ def create_app(settings: Settings) -> FastAPI:
     app.include_router(insights.router)
     app.include_router(match_validation.router)
     install_metrics(app)
+    install_tracing(app, engine=engine, settings=settings)
     return app

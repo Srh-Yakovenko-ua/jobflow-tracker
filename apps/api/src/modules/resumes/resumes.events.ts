@@ -1,6 +1,7 @@
 import { z } from 'zod';
 
 import type { Prisma } from '../../generated/prisma/client.js';
+import { traceCarrier } from '../../tracing/trace-context.js';
 
 export const RESUME_EVENTS = {
   versionUploaded: 'resume.version_uploaded',
@@ -49,5 +50,6 @@ export function resumeEvent(
     aggregateId: change.resumeVersionId,
     eventType,
     payload: { userId, ...change },
+    ...traceCarrier(),
   };
 }

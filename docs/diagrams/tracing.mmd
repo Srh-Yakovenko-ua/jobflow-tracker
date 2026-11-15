@@ -1,0 +1,36 @@
+flowchart TB
+  browser["Браузер<br/>букмарклет на сторінці вакансії"]
+
+  subgraph trace["Один трейс: збереження вакансії букмарклетом"]
+    capture["api<br/>POST /api/v1/capture/bookmarklet"]
+    outbox[("postgres<br/>рядок outbox application.capture_requested<br/>з traceparent від traceCarrier()")]
+    relay["worker<br/>outbox.relay під traceparent рядка"]
+    events["worker<br/>process domain-events<br/>CaptureQueueService"]
+    aijob["worker<br/>process ai"]
+    complete["ai<br/>ai.complete: модель і токени"]
+    publish["worker<br/>LivePublisher, job.updated з traceparent"]
+    push["api<br/>live.push, подія SSE"]
+  end
+
+  subgraph export["Збір трейсів, профіль observability"]
+    apps["api, worker, analytics, ai<br/>BatchSpanProcessor"]
+    alloy["alloy<br/>OTLP :4317 і :4318"]
+    jaeger[("jaeger<br/>UI :16686")]
+    loki[("loki<br/>логи з trace_id")]
+    grafana["grafana"]
+  end
+
+  browser -->|"Authorization: Capture"| capture
+  capture -->|"одна транзакція"| outbox
+  outbox -->|"claimUnpublished"| relay
+  relay -->|"addBulk, telemetry.metadata"| events
+  events -->|"queueAiCompletion у чергу ai"| aijob
+  aijob -->|"AiClient POST /v1/complete/vacancy_parse, traceparent"| complete
+  aijob --> publish
+  publish -->|"Redis pub/sub"| push
+  push -->|"SSE"| browser
+
+  apps -->|"OTLP HTTP /v1/traces"| alloy
+  alloy -->|"OTLP gRPC"| jaeger
+  grafana -->|"TraceID у рядку логу"| jaeger
+  grafana -->|"tracesToLogs за trace_id і service"| loki

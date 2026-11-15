@@ -14,6 +14,7 @@ import { memoryLog } from '../../test/memory-log.js';
 import { samplesOf } from '../../test/metrics.js';
 import { compileProcessorModule } from '../../test/processor.js';
 import { BOHDAN_ID, MOVE_EVENT_ID, OLENA_ID } from '../../test/service-fixtures.js';
+import { recordSpans, REMOTE_PARENT } from '../../test/tracing.js';
 import type { AccessUser } from '../auth/index.js';
 import { LiveHub } from './live-hub.service.js';
 
@@ -81,6 +82,7 @@ const expiringIn = (userId: string, seconds: number) =>
   liveUserOf(userId, addSeconds(new Date(), seconds));
 
 describe('LiveHub', () => {
+  const spans = recordSpans();
   let redis: FakeRedis;
   let hub: LiveHub;
   let metrics: MetricsRegistry;
@@ -132,6 +134,35 @@ describe('LiveHub', () => {
       { id: MOVE_EVENT_ID, type: 'job.updated', data: JOB_DONE.data },
     ]);
     expect(bohdan.messages).toEqual([]);
+  });
+
+  it('pushes an event published under a trace inside a live.push span of that trace, and keeps the traceparent off the stream', async () => {
+    vi.useRealTimers();
+    const olena = opened(hub, OLENA_ID);
+
+    const traced = { ...JOB_DONE, traceparent: REMOTE_PARENT.traceparent };
+    redis.subscriber.deliver(OLENA_ID, JSON.stringify(traced));
+
+    expect(olena.messages).toEqual([
+      { id: MOVE_EVENT_ID, type: 'job.updated', data: JOB_DONE.data },
+    ]);
+    const pushes = await spans.named('live.push');
+    expect(
+      pushes.map((span) => [span.spanContext().traceId, span.parentSpanContext?.spanId]),
+    ).toEqual([[REMOTE_PARENT.traceId, REMOTE_PARENT.spanId]]);
+    expect(pushes[0]?.attributes).toEqual({ 'live.event.type': 'job.updated' });
+    hub.onModuleDestroy();
+  });
+
+  it('pushes an event published outside any trace without a span', async () => {
+    vi.useRealTimers();
+    const olena = opened(hub, OLENA_ID);
+
+    redis.subscriber.deliver(OLENA_ID, JSON.stringify(JOB_DONE));
+
+    expect(olena.messages).toHaveLength(1);
+    expect(await spans.named('live.push')).toEqual([]);
+    hub.onModuleDestroy();
   });
 
   it.each([

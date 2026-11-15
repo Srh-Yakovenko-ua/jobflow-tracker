@@ -5,9 +5,10 @@ import type { Params } from 'nestjs-pino';
 import type { DestinationStream, SerializedRequest } from 'pino';
 import type { Options } from 'pino-http';
 
+import { traceFields } from '../tracing/trace-context.js';
 import { readRequestId } from './request-id.middleware.js';
 
-const QUIET_PATHS = new Set(['/api/v1/health']);
+export const QUIET_PATHS: ReadonlySet<string> = new Set(['/api/v1/health']);
 
 const QUIET_METHODS = new Set(['GET', 'HEAD']);
 
@@ -56,6 +57,7 @@ const HTTP_LOG_OPTIONS: Options<Request, Response> = {
     ...(req.user ? { userId: userHashOf(req.user.id) } : {}),
   }),
   formatters: { log: withHashedUser },
+  mixin: traceFields,
   serializers: { req: withoutQueryString },
   redact: REDACTED_PATHS,
   autoLogging: {

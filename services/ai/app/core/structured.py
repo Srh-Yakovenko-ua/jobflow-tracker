@@ -3,6 +3,7 @@ import time
 from collections.abc import Awaitable, Callable
 from dataclasses import dataclass, replace
 
+from opentelemetry import trace
 from pydantic import BaseModel, ValidationError
 
 from app.contracts.embed_request import EmbedRequest, Text
@@ -26,6 +27,7 @@ from app.prompts.base import BuiltPrompt
 from app.providers.base import AiProvider, Completion, CompletionRequest, Message
 
 EMBED_KIND = "embed"
+TRACER = trace.get_tracer("jobflow.ai")
 
 
 @dataclass(frozen=True, kw_only=True)
@@ -183,14 +185,27 @@ async def complete_structured(
         temperature=call.prompt.temperature,
         max_tokens=call.prompt.max_tokens,
     )
-    output, answers = await validated_answers(call, request=request, runtime=runtime)
-    return StructuredResult(
-        output=output,
-        model=answers[-1].model,
-        tokens_in=sum(answer.tokens_in for answer in answers),
-        tokens_out=sum(answer.tokens_out for answer in answers),
-        latency_ms=elapsed_ms(started),
-    )
+    with TRACER.start_as_current_span(
+        "ai.complete", attributes={"jobflow.ai.kind": call.kind}, record_exception=False
+    ) as span:
+        output, answers = await validated_answers(
+            call, request=request, runtime=runtime
+        )
+        result = StructuredResult(
+            output=output,
+            model=answers[-1].model,
+            tokens_in=sum(answer.tokens_in for answer in answers),
+            tokens_out=sum(answer.tokens_out for answer in answers),
+            latency_ms=elapsed_ms(started),
+        )
+        span.set_attributes(
+            {
+                "gen_ai.response.model": result.model,
+                "gen_ai.usage.input_tokens": result.tokens_in,
+                "gen_ai.usage.output_tokens": result.tokens_out,
+            }
+        )
+    return result
 
 
 async def embed_texts(request: EmbedRequest, runtime: Runtime) -> EmbedResponse:

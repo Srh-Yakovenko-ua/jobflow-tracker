@@ -55,6 +55,12 @@
       "source": "docs/diagrams/metrics.mmd"
     },
     {
+      "id": "tracing",
+      "type": "diagram",
+      "caption": "Трейс одного збереження вакансії букмарклетом: спани api, outbox.relay і process ai у worker, ai.complete у services/ai і live.push, експорт OTLP через Alloy у Jaeger і зв'язок логів Loki з трейсами",
+      "source": "docs/diagrams/tracing.mmd"
+    },
+    {
       "id": "login-light",
       "type": "screenshot",
       "caption": "Екран входу, світла тема, демо-дані",

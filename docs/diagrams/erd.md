@@ -434,6 +434,7 @@ failed failed
     Json payload 
     DateTime published_at "❓"
     Int attempts 
+    String traceparent "❓"
     DateTime created_at 
     DateTime updated_at 
     }

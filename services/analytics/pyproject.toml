@@ -6,6 +6,11 @@ dependencies = [
     "fastapi>=0.162.0",
     "loguru>=0.7.3",
     "numpy>=2.5.4",
+    "opentelemetry-exporter-otlp-proto-http==1.45.2",
+    "opentelemetry-instrumentation-asyncpg>=0.66b2",
+    "opentelemetry-instrumentation-fastapi>=0.66b2",
+    "opentelemetry-instrumentation-sqlalchemy>=0.66b2",
+    "opentelemetry-sdk==1.45.2",
     "pandas>=3.1.1",
     "prometheus-client>=0.26.0",
     "prometheus-fastapi-instrumentator>=8.1.0",
@@ -34,6 +39,7 @@ max-complexity = 10
 [tool.mypy]
 strict = true
 plugins = ["pydantic.mypy"]
+untyped_calls_exclude = ["opentelemetry.instrumentation.asyncpg"]
 
 [tool.pytest.ini_options]
 addopts = "--disable-socket --allow-unix-socket --allow-hosts=127.0.0.1"

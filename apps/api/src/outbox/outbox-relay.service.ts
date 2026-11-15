@@ -7,7 +7,8 @@ import { Clock } from '../common/clock.js';
 import { withinLimit } from '../common/probe.js';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { QUEUES } from '../queues/queues.js';
-import { OutboxRepository, type UnpublishedOutboxRow } from './outbox.repository.js';
+import { OutboxRepository } from './outbox.repository.js';
+import { endedAfter, tracedDomainEventJobs } from './outbox-trace.js';
 
 export const OUTBOX_LIMITS = {
   batchSize: 100,
@@ -15,10 +16,6 @@ export const OUTBOX_LIMITS = {
   transactionTimeoutMs: 5000,
   retentionDays: 7,
 } as const;
-
-function domainEventJob(row: UnpublishedOutboxRow) {
-  return { name: row.eventType, data: row.payload, opts: { jobId: row.id } };
-}
 
 @Injectable()
 export class OutboxRelayService {
@@ -38,8 +35,9 @@ export class OutboxRelayService {
         if (rows.length === 0) {
           return 0;
         }
-        const added = this.queue.addBulk(rows.map(domainEventJob));
-        await withinLimit(added, OUTBOX_LIMITS.publishTimeoutMs);
+        const { jobs, spans } = tracedDomainEventJobs(rows, this.queue);
+        const added = withinLimit(this.queue.addBulk(jobs), OUTBOX_LIMITS.publishTimeoutMs);
+        await endedAfter(spans, added);
         const ids = rows.map(({ id }) => id);
         await this.repository.markPublished(ids, { now: this.clock.now(), tx });
         return rows.length;

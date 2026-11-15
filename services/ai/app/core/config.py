@@ -26,6 +26,7 @@ class Settings(BaseSettings):
     api_jwks_url: str = "http://localhost:4000/.well-known/jwks.json"
     jwks_timeout_seconds: float = Field(default=2, gt=0)
     log_level: str = "INFO"
+    otel_exporter_otlp_endpoint: str = ""
 
     def vendor_key(self) -> str:
         keys = {

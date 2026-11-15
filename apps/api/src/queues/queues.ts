@@ -1,7 +1,9 @@
 import type { DefaultJobOptions, QueueOptions } from 'bullmq';
+import { BullMQOtel } from 'bullmq-otel';
 import { secondsInDay } from 'date-fns/constants';
 
 import type { AppConfig } from '../config/app-config.js';
+import { TRACER_NAME } from '../tracing/trace-context.js';
 
 export const QUEUES = {
   ai: { name: 'ai', concurrency: 2 },
@@ -28,5 +30,6 @@ export function queueOptions(config: AppConfig): QueueOptions {
   return {
     connection: { url },
     defaultJobOptions: DEFAULT_JOB_OPTIONS,
+    telemetry: new BullMQOtel({ tracerName: TRACER_NAME }),
   };
 }

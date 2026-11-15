@@ -1,6 +1,4 @@
-import socket
 import time
-from collections.abc import Iterator
 
 import pytest
 
@@ -70,22 +68,6 @@ async def test_answers_403_for_a_service_token_without_the_ai_scope() -> None:
         403,
         problem_body(403, type_="forbidden", title="Forbidden"),
     )
-
-
-@pytest.fixture
-def closed_port() -> int:
-    with socket.socket() as probe:
-        probe.bind(("127.0.0.1", 0))
-        port: int = probe.getsockname()[1]
-    return port
-
-
-@pytest.fixture
-def silent_port() -> Iterator[int]:
-    with socket.socket() as listener:
-        listener.bind(("127.0.0.1", 0))
-        listener.listen()
-        yield listener.getsockname()[1]
 
 
 @pytest.mark.parametrize("port_fixture", ["closed_port", "silent_port"])

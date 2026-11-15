@@ -2,6 +2,7 @@ import { followupInputSchema } from '@jobflow/shared';
 import { z } from 'zod';
 
 import type { Prisma } from '../../generated/prisma/client.js';
+import { traceCarrier } from '../../tracing/trace-context.js';
 
 export const FOLLOWUP_EVENTS = { requested: 'application.followup_requested' } as const;
 
@@ -27,5 +28,6 @@ export function followupRequestedEvent(
     aggregateId: requested.applicationId,
     eventType: FOLLOWUP_EVENTS.requested,
     payload: { userId, ...requested },
+    ...traceCarrier(),
   };
 }

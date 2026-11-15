@@ -2,6 +2,7 @@ import { notificationTypeSchema } from '@jobflow/shared';
 import { z } from 'zod';
 
 import type { Prisma } from '../../generated/prisma/client.js';
+import { traceCarrier } from '../../tracing/trace-context.js';
 
 export const NOTIFICATION_EVENTS = { created: 'notification.created' } as const;
 
@@ -24,5 +25,6 @@ export function notificationCreatedEvent(
     aggregateId: notificationId,
     eventType: NOTIFICATION_EVENTS.created,
     payload: { userId, notificationId, type },
+    ...traceCarrier(),
   };
 }

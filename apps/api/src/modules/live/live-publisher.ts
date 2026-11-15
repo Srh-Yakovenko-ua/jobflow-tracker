@@ -6,6 +6,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { errorMessageOf } from '../../common/error-message.js';
 import { DEPENDENCY_LIMITS, withinLimit } from '../../common/probe.js';
 import { RedisService } from '../../redis/redis.service.js';
+import { traceCarrier } from '../../tracing/trace-context.js';
 
 type WithoutId<Event> = Event extends unknown ? Omit<Event, 'id'> : never;
 
@@ -20,7 +21,7 @@ export class LivePublisher {
   constructor(private readonly redis: RedisService) {}
 
   async publish(userId: string, event: LiveEventBody): Promise<void> {
-    const message = JSON.stringify({ id: randomUUID(), ...event });
+    const message = JSON.stringify({ id: randomUUID(), ...event, ...traceCarrier() });
     try {
       const published = this.redis.client.publish(`${LIVE_CHANNEL.prefix}${userId}`, message);
       await withinLimit(published, DEPENDENCY_LIMITS.pingTimeoutMs);

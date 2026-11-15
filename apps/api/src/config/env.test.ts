@@ -119,14 +119,14 @@ describe('validateEnv', () => {
     expect(validateEnv({ ...exampleEnv, S3_REGION: '' }).S3_REGION).toBe('us-east-1');
   });
 
-  it('leaves S3_PUBLIC_ENDPOINT unset when it is empty and reads it when given', () => {
-    const unset = validateEnv({ ...exampleEnv, S3_PUBLIC_ENDPOINT: '' });
-    const given = validateEnv({ ...exampleEnv, S3_PUBLIC_ENDPOINT: 'http://localhost:9000' });
+  it.each([
+    { key: 'S3_PUBLIC_ENDPOINT', given: 'http://localhost:9000' },
+    { key: 'OTEL_EXPORTER_OTLP_ENDPOINT', given: 'http://alloy:4318' },
+  ] as const)('leaves $key unset when it is empty and reads it when given', ({ key, given }) => {
+    const unset = validateEnv({ ...exampleEnv, [key]: '' });
+    const configured = validateEnv({ ...exampleEnv, [key]: given });
 
-    expect([unset.S3_PUBLIC_ENDPOINT, given.S3_PUBLIC_ENDPOINT]).toEqual([
-      undefined,
-      'http://localhost:9000',
-    ]);
+    expect([unset[key], configured[key]]).toEqual([undefined, given]);
   });
 
   it.each([
@@ -174,11 +174,12 @@ describe('parseEnv', () => {
     ]);
   });
 
-  it('refuses an S3_PUBLIC_ENDPOINT with a scheme other than http or https', () => {
-    expect(failedPaths({ ...exampleEnv, S3_PUBLIC_ENDPOINT: 'ftp://localhost:9000' })).toEqual([
-      'S3_PUBLIC_ENDPOINT',
-    ]);
-  });
+  it.each(['S3_PUBLIC_ENDPOINT', 'OTEL_EXPORTER_OTLP_ENDPOINT'] as const)(
+    'refuses an %s with a scheme other than http or https',
+    (key) => {
+      expect(failedPaths({ ...exampleEnv, [key]: 'ftp://localhost:9000' })).toEqual([key]);
+    },
+  );
 
   it('refuses a REDIS_URL with a scheme other than redis or rediss', () => {
     expect(failedPaths({ ...exampleEnv, REDIS_URL: 'http://localhost:6379' })).toEqual([

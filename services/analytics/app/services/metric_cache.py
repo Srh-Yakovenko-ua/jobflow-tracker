@@ -8,6 +8,7 @@ from redis.asyncio import Redis
 
 from app.core.enums import load_domain_enums
 from app.core.metrics import CACHE_LOOKUPS, METRIC_COMPUTE_SECONDS
+from app.core.tracing import metric_span
 from app.services.cache import (
     REDIS_FAILURES,
     cache_aside,
@@ -42,7 +43,10 @@ def looked_up(scope: CacheScope, *, result: str) -> None:
 
 
 async def timed[T](scope: CacheScope, compute: Callable[[], Awaitable[T]]) -> T:
-    with METRIC_COMPUTE_SECONDS.labels(metric=scope.metric).time():
+    with (
+        metric_span(scope.metric),
+        METRIC_COMPUTE_SECONDS.labels(metric=scope.metric).time(),
+    ):
         return await compute()
 
 
