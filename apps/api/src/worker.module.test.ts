@@ -5,6 +5,7 @@ import { describe, expect, it } from 'vitest';
 
 import type { AppConfig } from './config/app-config.js';
 import { WorkerMetricsServer } from './metrics/worker-metrics-server.js';
+import { AccountExportSubscriber } from './modules/account/index.js';
 import { AiMetricsSubscriber, AiProcessor } from './modules/ai/index.js';
 import { AnalyticsCacheSubscriber } from './modules/analytics-cache/index.js';
 import {
@@ -72,6 +73,7 @@ describe('WorkerModule', () => {
       AnalyticsCacheSubscriber,
       ApplicationMetricsSubscriber,
       AiMetricsSubscriber,
+      AccountExportSubscriber,
       WorkerMetricsServer,
     ]) {
       expect(moduleRef.get(provider, { strict: false })).toBeInstanceOf(provider);

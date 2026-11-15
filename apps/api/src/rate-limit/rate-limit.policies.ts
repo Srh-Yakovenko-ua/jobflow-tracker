@@ -24,6 +24,9 @@ const clientIp = (req: RateLimitedRequest): string => req.ip ?? '';
 const callerKey = (req: RateLimitedRequest): string => req.user?.id ?? clientIp(req);
 
 function loginKey(req: RateLimitedRequest): string {
+  if (req.user !== undefined) {
+    return req.user.id;
+  }
   const parsed = emailInBody.safeParse(req.body);
   const email = parsed.success ? parsed.data.email.toLowerCase() : '';
   return `${clientIp(req)}:${createHash('sha256').update(email).digest('hex')}`;

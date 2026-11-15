@@ -113,4 +113,9 @@ export const notifications = {
     text: 'Що вийшло за місяць і які кроки зробити далі.',
     action: shell.palette.actions.analytics,
   },
+  exportReady: {
+    title: 'Архів з даними готовий',
+    text: (format: string) => `Архів ${format} чекає в налаштуваннях акаунта.`,
+    action: 'Завантажити архів',
+  },
 } as const;

@@ -15,7 +15,11 @@ import { Clock } from '../../common/clock.js';
 import type { Prisma } from '../../generated/prisma/client.js';
 import type { InTransaction } from '../../prisma/in-transaction.js';
 import { PrismaService } from '../../prisma/prisma.service.js';
-import { type NotificationRow, NotificationsRepository } from './notifications.repository.js';
+import {
+  type NotificationRow,
+  NotificationsRepository,
+  type OnceKey,
+} from './notifications.repository.js';
 
 type ContentOf<Row> = Row extends Notification ? Pick<Row, 'type' | 'payload'> : never;
 
@@ -25,11 +29,14 @@ export type RecordNotification = NewNotification & InTransaction;
 
 export type OnceNotification = Extract<
   NewNotification,
-  { type: 'ai_done' | 'ai_failed' | 'insight_unlocked' | 'monthly_summary_ready' }
+  { type: 'ai_done' | 'ai_failed' | 'insight_unlocked' | 'monthly_summary_ready' | 'export_ready' }
 >;
 
-const aiJobIdOf = ({ payload }: OnceNotification) =>
-  'aiJobId' in payload ? { aiJobId: payload.aiJobId } : {};
+export function onceKeyOf({ payload }: NewNotification): OnceKey | undefined {
+  if ('aiJobId' in payload) return { field: 'aiJobId', id: payload.aiJobId };
+  if ('exportId' in payload) return { field: 'exportId', id: payload.exportId };
+  return undefined;
+}
 
 const storedSilencePayloadSchema = z.union([
   silenceNotificationPayloadSchema,
@@ -100,7 +107,8 @@ export class NotificationsService {
   async recordOnce(userId: string, notification: OnceNotification): Promise<void> {
     await this.prisma.$transaction(async (tx) => {
       await this.repository.lockUser(userId, { tx });
-      const known = { type: notification.type, ...aiJobIdOf(notification), tx };
+      const once = onceKeyOf(notification);
+      const known = { type: notification.type, ...(once !== undefined && { once }), tx };
       if (!(await this.repository.exists(userId, known))) {
         await this.repository.insert(userId, { ...notification, tx });
       }

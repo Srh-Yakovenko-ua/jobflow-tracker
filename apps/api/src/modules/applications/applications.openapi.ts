@@ -21,6 +21,7 @@ import {
   jsonContent,
 } from '../../openapi/route.js';
 import { DUPLICATE_LIMITS } from './application-duplicates.repository.js';
+import { APPLICATION_IMPORT_OPENAPI_PATHS } from './application-import.openapi.js';
 import { APPLICATION_LIST_OPENAPI_PATHS } from './application-list.openapi.js';
 
 const NEW_APPLICATION = {
@@ -199,4 +200,5 @@ export const APPLICATIONS_OPENAPI_PATHS: RouteConfig[] = [
     },
   },
   ...APPLICATION_LIST_OPENAPI_PATHS,
+  ...APPLICATION_IMPORT_OPENAPI_PATHS,
 ];

@@ -1,5 +1,5 @@
 import { RESUME_UPLOAD_LIMITS } from '@jobflow/shared';
-import { addMinutes } from 'date-fns';
+import { addMinutes, addSeconds } from 'date-fns';
 
 import type {
   CopyRequest,
@@ -11,6 +11,7 @@ import type {
   StoredObject,
   UploadUrlRequest,
 } from '../storage/file-storage.js';
+import { storageDown } from '../storage/s3-outcomes.js';
 
 export type FakeObject = { bytes: Uint8Array; mime: string };
 
@@ -45,8 +46,7 @@ export class FakeFileStorage implements FileStorage {
 
   createDownloadUrl(request: DownloadUrlRequest): Promise<SignedUrl> {
     this.downloads.push(request);
-    const ttlMinutes = RESUME_UPLOAD_LIMITS.downloadUrlTtlSeconds / 60;
-    return signedUrl(request.key, addMinutes(request.signedAt, ttlMinutes));
+    return signedUrl(request.key, addSeconds(request.signedAt, request.ttlSeconds));
   }
 
   head(key: string): Promise<StoredObject | null> {
@@ -82,5 +82,25 @@ export class FakeFileStorage implements FileStorage {
     this.deleted.push(key);
     this.objects.delete(key);
     return Promise.resolve();
+  }
+
+  async deletePrefix(prefix: string): Promise<void> {
+    for (const key of this.keysUnder(prefix)) {
+      await this.delete(key);
+    }
+  }
+
+  keysUnder(prefix: string): string[] {
+    return [...this.objects.keys()].filter((key) => key.startsWith(prefix));
+  }
+}
+
+export class DownFileStorage extends FakeFileStorage {
+  override put(): Promise<void> {
+    return Promise.reject(storageDown(new Error('connect ECONNREFUSED')));
+  }
+
+  override deletePrefix(): Promise<void> {
+    return Promise.reject(storageDown(new Error('connect ECONNREFUSED')));
   }
 }

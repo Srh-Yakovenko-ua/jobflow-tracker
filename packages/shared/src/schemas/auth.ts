@@ -8,7 +8,7 @@ export const PASSWORD_MAX_LENGTH = 128;
 
 const emailSchema = z.email().max(254);
 const newPasswordSchema = z.string().min(PASSWORD_MIN_LENGTH).max(PASSWORD_MAX_LENGTH);
-const givenPasswordSchema = z.string().min(1).max(PASSWORD_MAX_LENGTH);
+export const givenPasswordSchema = z.string().min(1).max(PASSWORD_MAX_LENGTH);
 
 export const registerInputSchema = z.object({
   email: emailSchema,

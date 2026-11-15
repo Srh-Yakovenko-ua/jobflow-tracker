@@ -3,18 +3,15 @@ import {
   DeleteObjectCommand,
   GetObjectCommand,
   HeadObjectCommand,
-  NoSuchKey,
-  NotFound,
+  ListObjectsV2Command,
   PutObjectCommand,
   S3Client,
-  S3ServiceException,
 } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { RESUME_UPLOAD_LIMITS } from '@jobflow/shared';
 import type { OnModuleDestroy } from '@nestjs/common';
 import { addSeconds } from 'date-fns';
 
-import { AppError, ERROR_TYPES } from '../common/app-error.js';
 import { DEPENDENCY_LIMITS } from '../common/probe.js';
 import type { AppConfig } from '../config/app-config.js';
 import type {
@@ -27,6 +24,7 @@ import type {
   StoredObject,
   UploadUrlRequest,
 } from './file-storage.js';
+import { orDown, orMissing, withinStorageLimit } from './s3-outcomes.js';
 
 export type S3Settings = {
   endpoint: string;
@@ -69,29 +67,6 @@ function clientAt(settings: S3Settings, endpoint: string): S3Client {
       requestTimeout: DEPENDENCY_LIMITS.storageTimeoutMs,
     },
   });
-}
-
-const withinStorageLimit = () => ({
-  abortSignal: AbortSignal.timeout(DEPENDENCY_LIMITS.storageTimeoutMs),
-});
-
-const storageDown = (cause: unknown) =>
-  new AppError({ ...ERROR_TYPES[503], status: 503, detail: 'File storage did not answer', cause });
-
-const isMissing = (error: unknown) => error instanceof NotFound || error instanceof NoSuchKey;
-
-const isPreconditionFailed = (error: unknown) =>
-  error instanceof S3ServiceException && error.$metadata.httpStatusCode === 412;
-
-async function orMissing<T>(call: Promise<T>): Promise<T | null> {
-  try {
-    return await call;
-  } catch (error) {
-    if (isMissing(error) || isPreconditionFailed(error)) {
-      return null;
-    }
-    throw storageDown(error);
-  }
 }
 
 const expiryOf = ({ signedAt, ttlSeconds }: Expiry) => ({
@@ -139,12 +114,9 @@ export class S3FileStorage implements FileStorage, OnModuleDestroy {
     key,
     mime,
     filename,
-    signedAt,
+    ...expiryAsked
   }: DownloadUrlRequest): Promise<SignedUrl> {
-    const { expiresAt, ...expiry } = expiryOf({
-      signedAt,
-      ttlSeconds: RESUME_UPLOAD_LIMITS.downloadUrlTtlSeconds,
-    });
+    const { expiresAt, ...expiry } = expiryOf(expiryAsked);
     const disposition = mime === PDF_MIME ? 'inline' : 'attachment';
     const command = new GetObjectCommand({
       Bucket: this.bucket,
@@ -185,9 +157,7 @@ export class S3FileStorage implements FileStorage, OnModuleDestroy {
       ContentType: mime,
       ContentLength: bytes.length,
     });
-    await this.client.send(command, withinStorageLimit()).catch((error: unknown) => {
-      throw storageDown(error);
-    });
+    await orDown(this.client.send(command, withinStorageLimit()));
   }
 
   async readStart({ key, bytes, ifMatch }: ObjectStart): Promise<Uint8Array> {
@@ -205,9 +175,31 @@ export class S3FileStorage implements FileStorage, OnModuleDestroy {
     await orMissing(this.client.send(command, withinStorageLimit()));
   }
 
+  async deletePrefix(prefix: string): Promise<void> {
+    for (const key of await this.keysUnder(prefix)) {
+      await this.delete(key);
+    }
+  }
+
   onModuleDestroy(): void {
     this.client.destroy();
     this.signer.destroy();
+  }
+
+  private async keysUnder(prefix: string): Promise<string[]> {
+    const keys: string[] = [];
+    let continuationToken: string | undefined;
+    do {
+      const command = new ListObjectsV2Command({
+        Bucket: this.bucket,
+        Prefix: prefix,
+        ContinuationToken: continuationToken,
+      });
+      const page = await orDown(this.client.send(command, withinStorageLimit()));
+      keys.push(...(page.Contents ?? []).flatMap(({ Key }) => (Key === undefined ? [] : [Key])));
+      continuationToken = page.NextContinuationToken;
+    } while (continuationToken !== undefined);
+    return keys;
   }
 
   private async bodyOf(command: GetObjectCommand): Promise<Uint8Array> {

@@ -10,6 +10,8 @@ import { route } from '@/test/navigation';
 import {
   buildNotification,
   DESIGN_FEED,
+  EXPORT_ID,
+  EXPORT_READY_NOTIFICATION,
   MONTHLY_SUMMARY_NOTIFICATION,
   NOTIFICATION_NOW,
   notificationIdOf,
@@ -189,13 +191,34 @@ describe('NotificationsPage', () => {
     });
   });
 
-  it('a ready monthly summary names its month and leads to the analytics', async () => {
-    renderPage({ feed: { items: [MONTHLY_SUMMARY_NOTIFICATION], nextCursor: null } });
+  it.each([
+    {
+      name: 'a ready monthly summary names its month and leads to the analytics',
+      notification: MONTHLY_SUMMARY_NOTIFICATION,
+      copy: {
+        title: 'Саммарі за жовтень готове',
+        text: COPY.monthlySummaryReady.text,
+        action: COPY.monthlySummaryReady.action,
+      },
+      href: '/analytics/summary/2026-10',
+    },
+    {
+      name: 'a ready export names its format and leads to the account section',
+      notification: EXPORT_READY_NOTIFICATION,
+      copy: {
+        title: 'Архів з даними готовий',
+        text: 'Архів CSV чекає в налаштуваннях акаунта.',
+        action: 'Завантажити архів',
+      },
+      href: `/settings?export=${EXPORT_ID}#account`,
+    },
+  ])('$name', async ({ notification, copy, href }) => {
+    renderPage({ feed: { items: [notification], nextCursor: null } });
 
-    expect(await screen.findByText('Саммарі за жовтень готове')).toBeDefined();
-    expect(screen.getByText(COPY.monthlySummaryReady.text)).toBeDefined();
-    const open = screen.getByRole('link', { name: COPY.monthlySummaryReady.action });
-    expect(open.getAttribute('href')).toBe('/analytics/summary/2026-10');
+    expect(await screen.findByText(copy.title)).toBeDefined();
+    expect(screen.getByText(copy.text)).toBeDefined();
+    const open = screen.getByRole('link', { name: copy.action });
+    expect(open.getAttribute('href')).toBe(href);
   });
 
   it('shows the loading state while the first page is on its way', async () => {

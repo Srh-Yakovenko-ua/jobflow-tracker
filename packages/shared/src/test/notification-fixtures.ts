@@ -1,5 +1,6 @@
 import type {
   AiDoneNotificationPayload,
+  ExportReadyNotificationPayload,
   InterviewSoonNotificationPayload,
   MonthlySummaryReadyNotificationPayload,
   SilenceItem,
@@ -34,6 +35,11 @@ export const AI_DONE: AiDoneNotificationPayload = {
 export const MONTHLY_SUMMARY_READY: MonthlySummaryReadyNotificationPayload = {
   aiJobId: '0199f1a2-7c3b-7d4e-8f50-6a7b8c9d0e23',
   month: '2026-08',
+};
+
+export const EXPORT_READY: ExportReadyNotificationPayload = {
+  exportId: '0199f1a2-7c3b-7d4e-8f50-6a7b8c9d0e24',
+  format: 'csv',
 };
 
 export const NOTIFICATION_ROW = {

@@ -6,6 +6,7 @@ import { AiJobRouter, type SettledAiJob } from '../modules/ai/index.js';
 import {
   type NewNotification,
   NotificationsService,
+  onceKeyOf,
   type OnceNotification,
   type RecordNotification,
 } from '../modules/notifications/index.js';
@@ -74,11 +75,8 @@ export async function createNotifications(
   return ids;
 }
 
-const aiJobIdOf = ({ payload }: NewNotification) =>
-  'aiJobId' in payload ? payload.aiJobId : undefined;
-
 const sameAs = (notification: OnceNotification) => (recorded: RecordedNotification) =>
-  recorded.type === notification.type && aiJobIdOf(recorded) === aiJobIdOf(notification);
+  recorded.type === notification.type && onceKeyOf(recorded)?.id === onceKeyOf(notification)?.id;
 
 export class RecordingNotifications {
   readonly notifications: RecordedNotification[] = [];

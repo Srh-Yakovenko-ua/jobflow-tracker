@@ -7,6 +7,7 @@ import { EFFECTIVE_STAGE_EVENTS } from '../../prisma/effective-stage-events.js';
 import type { InTransaction } from '../../prisma/in-transaction.js';
 import { PrismaService } from '../../prisma/prisma.service.js';
 import { type ApplicationEvent, applicationEvent } from './applications.events.js';
+import type { ImportedApplication } from './imported-application.js';
 
 export const LATEST_STAGE_EVENT_SELECT = {
   ...EFFECTIVE_STAGE_EVENTS,
@@ -64,6 +65,11 @@ export type InsertApplication = InTransaction & {
   firstEvent: FirstStageEvent;
 };
 
+export type InsertApplications = Required<InTransaction> & {
+  searchId: string;
+  applications: readonly ImportedApplication[];
+};
+
 export type RecordApplicationEvent = InTransaction & { event: ApplicationEvent };
 
 export type RecordApplicationEvents = InTransaction & { events: readonly ApplicationEvent[] };
@@ -104,6 +110,35 @@ export class ApplicationsRepository {
       data: { ...withoutUndefined(application), userId, stageEvents: { create: firstEvent } },
       select: APPLICATION_SELECT,
     });
+  }
+
+  async insertMany(
+    userId: string,
+    { searchId, applications, tx }: InsertApplications,
+  ): Promise<string[]> {
+    const ids = await tx.$queryRaw<{ id: string }[]>`
+      SELECT uuidv7() AS id FROM generate_series(1, ${applications.length}::int)`;
+    const rows = applications.flatMap((application, index) => {
+      const id = ids[index]?.id;
+      return id === undefined ? [] : [{ id, application }];
+    });
+    await tx.application.createMany({
+      data: rows.map(({ id, application: { fields, currentStage, appliedAt, lastEventAt } }) => ({
+        ...withoutUndefined(fields),
+        id,
+        userId,
+        searchId,
+        currentStage,
+        appliedAt,
+        lastEventAt,
+      })),
+    });
+    await tx.stageEvent.createMany({
+      data: rows.flatMap(({ id, application }) =>
+        application.events.map((event) => ({ ...event, applicationId: id })),
+      ),
+    });
+    return rows.map(({ id }) => id);
   }
 
   async recordEvent(

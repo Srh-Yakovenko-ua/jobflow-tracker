@@ -77,6 +77,7 @@ describe('pushMessageOf', () => {
   it.each([
     { type: 'ai_done', payload: { aiJobId: MISSING_ID, kind: 'vacancy_parse' } },
     { type: 'insight_unlocked', payload: { applications: 10 } },
+    { type: 'export_ready', payload: { exportId: MISSING_ID, format: 'csv' } },
   ] as const)('pushes no $type', (content) => {
     expect(isPushed(notificationOf(content))).toBe(false);
   });

@@ -32,6 +32,7 @@ const SCREEN_NAMES: Readonly<Record<AuditedRoute, string>> = {
   '/notifications': 'notifications',
   '/resumes': 'resumes',
   '/settings': 'settings',
+  '/import': 'import',
   [APPLICATION_ROUTE]: 'application',
 };
 

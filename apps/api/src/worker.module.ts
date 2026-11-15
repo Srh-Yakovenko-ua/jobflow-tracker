@@ -8,6 +8,7 @@ import { ErrorTrackingModule } from './error-tracking/error-tracking.module.js';
 import { JobFailureReporter } from './error-tracking/job-failure-reporter.js';
 import { MetricsModule } from './metrics/metrics.module.js';
 import { MetricsWorkerModule } from './metrics/metrics-worker.module.js';
+import { AccountWorkerModule } from './modules/account/index.js';
 import { AiWorkerModule } from './modules/ai/index.js';
 import { AnalyticsCacheWorkerModule } from './modules/analytics-cache/index.js';
 import { ApplicationsWorkerModule } from './modules/applications/index.js';
@@ -41,6 +42,7 @@ import { QueuesModule } from './queues/queues.module.js';
     MatchWorkerModule,
     FollowupsWorkerModule,
     SummariesWorkerModule,
+    AccountWorkerModule,
     RemindersWorkerModule,
     NotificationsWorkerModule,
     PushWorkerModule,

@@ -49,6 +49,20 @@ describe('RATE_LIMIT_POLICIES', () => {
     expect(loginKey(SECOND_IP, undefined)).not.toBe(missing);
   });
 
+  it('keys a signed-in password check by the user id, whatever email and IP each attempt carries', () => {
+    const attempt = (ip: string, email: string) =>
+      RATE_LIMIT_POLICIES.login.keyOf({
+        ip,
+        body: { password: 'guess', email },
+        user: { id: USER_ID, scope: ['user'] },
+      });
+
+    expect([attempt(FIRST_IP, 'a@b.test'), attempt(SECOND_IP, 'c@d.test')]).toEqual([
+      USER_ID,
+      USER_ID,
+    ]);
+  });
+
   it('keys registration by the client IP alone', () => {
     const key = RATE_LIMIT_POLICIES.register.keyOf({ ip: FIRST_IP, body: { email: 'a@b.test' } });
 

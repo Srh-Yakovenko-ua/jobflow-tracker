@@ -29,5 +29,5 @@ export const FEATURE_FLAGS: FeatureFlags = {
   emailNotifications: false,
   captureToken: true,
   aiDataDeletion: true,
-  accountDeletion: false,
+  accountDeletion: true,
 };

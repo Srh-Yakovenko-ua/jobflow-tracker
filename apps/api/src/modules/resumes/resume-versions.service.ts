@@ -1,8 +1,9 @@
-import type {
-  ResumeDownload,
-  ResumeVersion,
-  ResumeVersionListResponse,
-  UpdateResumeVersionInput,
+import {
+  RESUME_UPLOAD_LIMITS,
+  type ResumeDownload,
+  type ResumeVersion,
+  type ResumeVersionListResponse,
+  type UpdateResumeVersionInput,
 } from '@jobflow/shared';
 import { Injectable } from '@nestjs/common';
 
@@ -86,6 +87,7 @@ export class ResumeVersionsService {
       mime,
       filename,
       signedAt: this.clock.now(),
+      ttlSeconds: RESUME_UPLOAD_LIMITS.downloadUrlTtlSeconds,
     });
     return { url, expiresAt: expiresAt.toISOString() };
   }

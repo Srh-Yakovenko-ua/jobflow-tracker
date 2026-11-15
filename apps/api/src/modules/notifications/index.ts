@@ -10,6 +10,7 @@ export { NOTIFICATIONS_OPENAPI_PATHS } from './notifications.openapi.js';
 export {
   type NewNotification,
   NotificationsService,
+  onceKeyOf,
   type OnceNotification,
   type RecordNotification,
 } from './notifications.service.js';

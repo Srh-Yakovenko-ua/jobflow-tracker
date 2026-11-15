@@ -248,6 +248,57 @@ describe('AuthService.changePassword', () => {
   );
 });
 
+describe('AuthService.confirmAccount', () => {
+  const WRONG_PASSWORD = {
+    body: {
+      status: 422,
+      type: 'validation_error',
+      errors: [{ path: 'password', message: 'Password is wrong' }],
+    },
+  };
+
+  it.each<{ case: string; user: UserCredentials; password: string }>([
+    { case: 'its password', user: annaWithPassword, password: 'correct password' },
+    {
+      case: 'its own email in another case when it has no password',
+      user: { ...ANNA, passwordHash: null },
+      password: ' ANNA@Example.test ',
+    },
+  ])('confirms an account by $case', async ({ user, password }) => {
+    const { service } = await authServiceWith([user]);
+
+    await expect(service.confirmAccount({ userId: ANNA.id, password })).resolves.toBeUndefined();
+  });
+
+  it.each<{ case: string; user: UserCredentials; password: string }>([
+    { case: 'a wrong password', user: annaWithPassword, password: 'wrong password' },
+    {
+      case: 'its email when it has a password',
+      user: annaWithPassword,
+      password: ANNA.email,
+    },
+    {
+      case: 'another email when it has no password',
+      user: { ...ANNA, passwordHash: null },
+      password: 'bohdan@example.test',
+    },
+  ])('refuses $case with 422 on password', async ({ user, password }) => {
+    const { service } = await authServiceWith([user]);
+
+    await expect(service.confirmAccount({ userId: ANNA.id, password })).rejects.toMatchObject(
+      WRONG_PASSWORD,
+    );
+  });
+
+  it('refuses a user that is gone with 401', async () => {
+    const { service } = await authServiceWith([]);
+
+    await expect(
+      service.confirmAccount({ userId: ANNA.id, password: 'correct password' }),
+    ).rejects.toMatchObject({ body: { status: 401, type: 'unauthorized' } });
+  });
+});
+
 describe('AuthService.signInWithOAuth', () => {
   const GITHUB_ANNA: OAuthAccountKey = { provider: 'github', providerUserId: '1001' };
 

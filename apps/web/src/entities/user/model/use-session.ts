@@ -18,16 +18,22 @@ export type Session = {
   logoutEverywhere: () => void;
 };
 
-export function useSession(): Session {
+export function useEndSession(): () => void {
   const router = useRouter();
   const me = useQuery(meQueryOptions()).data;
+  return () => {
+    if (me !== undefined) forgetRecentApplications(me.user.id);
+    clearAccessToken();
+    router.replace(AUTH_ROUTES.login);
+  };
+}
+
+export function useSession(): Session {
+  const me = useQuery(meQueryOptions()).data;
+  const endSession = useEndSession();
   const { mutate } = useMutation({
     mutationFn: logout,
-    onSuccess: () => {
-      if (me !== undefined) forgetRecentApplications(me.user.id);
-      clearAccessToken();
-      router.replace(AUTH_ROUTES.login);
-    },
+    onSuccess: endSession,
     onError: () => {
       showErrorToast(uk.shell.logout.failed);
     },

@@ -11,4 +11,5 @@ export const SIGNED_IN_PAGES = [
   '/notifications',
   '/resumes',
   '/settings',
+  '/import',
 ] as const;
