@@ -7,6 +7,7 @@ import { sourceSchema } from '../sources.js';
 import { outcomeStageSchema, stageSchema } from '../stages.js';
 import { applicationResponseSchema } from './application.js';
 import { paginatedSchema, paginationQuerySchema } from './pagination.js';
+import { resumeVersionIdSchema } from './resume-version.js';
 import { plainTextSchema } from './text.js';
 
 export const APPLICATION_SORTS = ['-lastEventAt', 'lastEventAt', 'relevance'] as const;
@@ -35,6 +36,7 @@ export const applicationFiltersSchema = z.object({
     .optional(),
   silence: csvListOf(silenceLevelSchema).optional(),
   salaryFrom: z.coerce.number().int().positive().max(2147483647).optional(),
+  resumeVersion: csvListOf(resumeVersionIdSchema).optional(),
 });
 
 export const applicationListQuerySchema = applicationFiltersSchema

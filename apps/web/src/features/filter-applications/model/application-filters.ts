@@ -1,6 +1,8 @@
 import {
   type ApplicationFilters,
   applicationFiltersSchema,
+  type ResumeVersion,
+  resumeVersionLabel,
   SOURCE_LABELS,
   STAGE_LABELS,
 } from '@jobflow/shared';
@@ -21,6 +23,7 @@ type ListChips<Value> = {
   values: readonly Value[] | undefined;
   labelOf: (value: Value) => string;
   removalOf: (rest: Value[] | undefined) => ApplicationFilters;
+  idOf?: (value: Value) => string;
 };
 
 export function applicationFiltersOf(params: FilterSearchParams): ApplicationFilters {
@@ -45,8 +48,27 @@ function chipOf(label: string, removal: ApplicationFilters): FilterChip {
   return { id: label, label, removal };
 }
 
-function listChips<Value>({ values = [], labelOf, removalOf }: ListChips<Value>) {
-  return values.map((value) => chipOf(labelOf(value), removalOf(toggledIn(values, value))));
+function listChips<Value>({ values = [], labelOf, removalOf, idOf = labelOf }: ListChips<Value>) {
+  return values.map((value) => ({
+    id: idOf(value),
+    label: labelOf(value),
+    removal: removalOf(toggledIn(values, value)),
+  }));
+}
+
+function resumeVersionChips(
+  { resumeVersion }: ApplicationFilters,
+  versions: readonly ResumeVersion[],
+): FilterChip[] {
+  return listChips({
+    values: resumeVersion,
+    idOf: (id) => id,
+    labelOf: (id) => {
+      const version = versions.find((item) => item.id === id);
+      return version === undefined ? COPY.unknownResumeVersion : resumeVersionLabel(version);
+    },
+    removalOf: (rest) => ({ resumeVersion: rest }),
+  });
 }
 
 function scoreChips({ hasScore }: ApplicationFilters): FilterChip[] {
@@ -62,13 +84,17 @@ function salaryChips({ salaryFrom }: ApplicationFilters): FilterChip[] {
     : [chipOf(COPY.salaryFrom(formatAmount(salaryFrom)), { salaryFrom: undefined })];
 }
 
-export function chipsOf(filters: ApplicationFilters): FilterChip[] {
+export function chipsOf(
+  filters: ApplicationFilters,
+  versions: readonly ResumeVersion[] = [],
+): FilterChip[] {
   return [
     ...listChips({
       values: filters.source,
       labelOf: (source) => COPY.source(SOURCE_LABELS[source].labelUk),
       removalOf: (source) => ({ source }),
     }),
+    ...resumeVersionChips(filters, versions),
     ...listChips({
       values: filters.stage,
       labelOf: (stage) => COPY.stage(STAGE_LABELS[stage].labelUk),

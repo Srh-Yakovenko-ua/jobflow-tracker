@@ -91,6 +91,14 @@ export function buildResumeVersions(count: number): ResumeVersion[] {
   });
 }
 
+export function resumeVersionsRoute(items: readonly ResumeVersion[] | HttpResponseResolver = []) {
+  const reply =
+    typeof items === 'function'
+      ? items
+      : () => HttpResponse.json({ items: [...items] } satisfies ResumeVersionListResponse);
+  return http.get(apiUrl(VERSIONS_PATH), reply);
+}
+
 function versionsSpec(session: ResumeSession, numbered: { last: number }) {
   const spec: StoredRoutesSpec<ResumeVersion, CreateResumeVersionInput, UpdateResumeVersionInput> =
     {

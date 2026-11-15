@@ -5,15 +5,15 @@ import { ChipList } from '@/shared/ui/chip-list';
 
 import { chipsOf } from '../model/application-filters';
 import { useApplicationFilters } from '../model/filters-store';
+import { useFilterChips } from '../model/use-filter-chips';
 import { focusFilterSearch } from './filter-search';
 import { ResetFiltersButton } from './reset-filters-button';
 
 const COPY = uk.board.filters;
 
 export function FilterChips() {
-  const filters = useApplicationFilters((store) => store.filters);
   const { remove } = useApplicationFilters((store) => store.actions);
-  const chips = chipsOf(filters);
+  const chips = useFilterChips();
   if (chips.length === 0) {
     return null;
   }

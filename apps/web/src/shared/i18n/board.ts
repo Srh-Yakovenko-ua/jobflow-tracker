@@ -121,6 +121,14 @@ const reject = {
 const filters = {
   search: { label: 'Пошук по картках', placeholder: 'компанія, посада або стек' },
   source: { menu: 'Джерело', pill: (picked: string) => `Джерело: ${picked}`, all: 'усі' },
+  resumeVersion: {
+    menu: 'Версія CV',
+    pill: (picked: string) => `CV: ${picked}`,
+    all: 'усі',
+    short: (number: number) => `CV v${String(number)}`,
+    archived: (label: string) => `${label} · в архіві`,
+    none: 'Ще немає жодної версії CV',
+  },
   more: {
     menu: 'Фільтри',
     pill: (count: number) => (count === 0 ? 'Фільтри' : `Фільтри · ${String(count)}`),
@@ -133,6 +141,7 @@ const filters = {
     label: 'Активні фільтри',
     source: (name: string) => `джерело: ${name}`,
     stage: (name: string) => `етап: ${name}`,
+    unknownResumeVersion: 'невідома версія CV',
     hasScore: { with: 'з Match Score', without: 'без Match Score' },
     silence: {
       none: 'без тиші',

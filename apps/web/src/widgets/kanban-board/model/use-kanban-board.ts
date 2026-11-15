@@ -39,6 +39,7 @@ type SearchInput = Readonly<{ filters: ApplicationFilters; shown: ApplicationBoa
 function boardQueryOf({ expanded, filters }: BoardQueryInput): ApplicationBoardQuery {
   return {
     source: filters.source,
+    resumeVersion: filters.resumeVersion,
     q: filters.q,
     hasScore: filters.hasScore,
     silence: filters.silence,

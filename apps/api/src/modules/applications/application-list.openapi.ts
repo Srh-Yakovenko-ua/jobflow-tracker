@@ -48,7 +48,7 @@ const LIST_ITEM = {
 const TAGS = ['applications'];
 
 const FILTERS =
-  'Filters are comma lists (stage, source, silence), q searches company, position, stack, vacancy text and notes by word prefix in web search syntax (quotes, or, -), hasScore is true or false. salaryFrom is a whole amount that keeps applications whose salaryMax reaches it, or whose salaryMin does when salaryMax is empty; applications without a salary drop out and currencies are not converted. Without searchId only the active search is read.';
+  "Filters are comma lists (stage, source, silence), q searches company, position, stack, vacancy text and notes by word prefix in web search syntax (quotes, or, -), hasScore is true or false. salaryFrom is a whole amount that keeps applications whose salaryMax reaches it, or whose salaryMin does when salaryMax is empty; applications without a salary drop out and currencies are not converted. resumeVersion is a comma list of CV version ids and keeps the applications sent with one of them; another user's id matches nothing. Without searchId only the active search is read.";
 
 const LIST =
   'sort=relevance orders by rank and needs q, and its cursor pages only that sort. With q each item carries snippet, the matched words of its stack, vacancy text and notes, or null when only company or position matched; without q snippet is null.';

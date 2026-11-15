@@ -7,6 +7,7 @@ import {
   applicationResponseSchema,
   type createApplicationInputSchema,
   type MoveApplicationInput,
+  type Stage,
 } from '@jobflow/shared';
 import type { ModuleMetadata } from '@nestjs/common';
 import type { NestExpressApplication } from '@nestjs/platform-express';
@@ -176,6 +177,27 @@ export async function listApplications(
 
 export const companiesOf = ({ items }: ApplicationListResponse) =>
   items.map(({ company }) => company);
+
+export type BoardColumnView = { count: number; companies: string[] | null };
+
+export const EMPTY_BOARD: Record<Stage, BoardColumnView> = {
+  applied: { count: 0, companies: [] },
+  screening: { count: 0, companies: [] },
+  tech_interview: { count: 0, companies: [] },
+  final: { count: 0, companies: [] },
+  offer: { count: 0, companies: [] },
+  rejected: { count: 0, companies: null },
+  ghosted: { count: 0, companies: null },
+  withdrawn: { count: 0, companies: null },
+};
+
+export const columnViewsOf = ({ columns }: ApplicationBoardResponse) =>
+  Object.fromEntries(
+    Object.entries(columns).map(([stage, { count, items }]) => [
+      stage,
+      { count, companies: items?.map(({ company }) => company) ?? null },
+    ]),
+  );
 
 export async function listPages(
   app: NestExpressApplication,

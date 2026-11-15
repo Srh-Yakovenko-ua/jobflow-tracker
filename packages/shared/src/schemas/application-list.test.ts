@@ -81,6 +81,11 @@ describe('applicationListQuerySchema', () => {
     });
   });
 
+  it('reads a comma list of two resume version ids as two ids', () => {
+    const query = { resumeVersion: ` ${SEARCH_ID}, ${CARD.id},` };
+    expect(applicationListQuerySchema.parse(query).resumeVersion).toEqual([SEARCH_ID, CARD.id]);
+  });
+
   it('reads hasScore true as true', () => {
     expect(applicationListQuerySchema.parse({ hasScore: 'true' }).hasScore).toBe(true);
   });
@@ -119,6 +124,12 @@ describe('applicationListQuerySchema', () => {
     { label: 'limit 0', query: { limit: '0' }, path: 'limit' },
     { label: 'limit 101', query: { limit: '101' }, path: 'limit' },
     { label: 'a searchId that is not a uuid', query: { searchId: '42' }, path: 'searchId' },
+    { label: 'a resume version v2', query: { resumeVersion: 'v2' }, path: 'resumeVersion.0' },
+    {
+      label: 'a malformed second resume version',
+      query: { resumeVersion: `${SEARCH_ID},42` },
+      path: 'resumeVersion.1',
+    },
   ])('refuses $label at $path', ({ query, path }) => {
     expect(issuePathsOf(applicationListQuerySchema.safeParse(query))).toEqual([path]);
   });
@@ -128,6 +139,12 @@ describe('applicationBoardQuerySchema', () => {
   it('accepts expand rejected,ghosted', () => {
     expect(applicationBoardQuerySchema.parse({ expand: 'rejected,ghosted' })).toEqual({
       expand: ['rejected', 'ghosted'],
+    });
+  });
+
+  it('keeps the resume version filter', () => {
+    expect(applicationBoardQuerySchema.parse({ resumeVersion: SEARCH_ID })).toEqual({
+      resumeVersion: [SEARCH_ID],
     });
   });
 

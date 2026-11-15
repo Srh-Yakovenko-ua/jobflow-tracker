@@ -15,6 +15,7 @@ import {
 export type ApplicationFiltersActions = Readonly<{
   setQuery: (text: string) => void;
   toggleSource: (source: Source) => void;
+  toggleResumeVersion: (id: string) => void;
   toggleStage: (stage: Stage) => void;
   toggleHasScore: () => void;
   toggleSilentOnly: () => void;
@@ -47,6 +48,9 @@ export function createApplicationFiltersStore(initial: ApplicationFilters) {
         },
         toggleSource: (source) => {
           patch({ source: toggledIn(current().source, source) });
+        },
+        toggleResumeVersion: (id) => {
+          patch({ resumeVersion: toggledIn(current().resumeVersion, id) });
         },
         toggleStage: (stage) => {
           patch({ stage: toggledIn(current().stage, stage) });
