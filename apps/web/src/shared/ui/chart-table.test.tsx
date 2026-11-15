@@ -54,4 +54,18 @@ describe('ChartTable', () => {
       focused: true,
     });
   });
+
+  it('the shown table scrolls inside a keyboard focusable region named by its caption, and the hidden one adds no tab stop', async () => {
+    const user = userEvent.setup();
+    render(<ChartTable {...TABLE} />);
+    expect(screen.queryByRole('region')).toBeNull();
+
+    await user.click(screen.getByRole('button', { name: 'Показати таблицю' }));
+    const region = screen.getByRole('region', { name: TABLE.caption });
+
+    expect({
+      tabIndex: region.getAttribute('tabindex'),
+      holdsTable: region === screen.getByRole('table').parentElement,
+    }).toEqual({ tabIndex: '0', holdsTable: true });
+  });
 });

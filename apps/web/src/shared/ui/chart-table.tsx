@@ -78,6 +78,7 @@ export function ChartTable(props: ChartTableProps) {
       </Button>
       <div
         id={tableId}
+        {...(shown && { role: 'region', 'aria-label': props.caption, tabIndex: 0 })}
         className={cn(
           'self-stretch overflow-x-auto',
           shown ? 'animate-fade-in' : 'sr-only focus-within:not-sr-only',
