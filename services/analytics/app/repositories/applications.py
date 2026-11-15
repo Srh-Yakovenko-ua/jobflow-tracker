@@ -48,6 +48,19 @@ def application_sources_statement(
     ).where(*confirmed_in_search(user_id=user_id, search_id=search_id))
 
 
+def salaries_statement(*, user_id: UUID, search_id: UUID | None) -> Select[Any]:
+    parsed = applications.c.ai_parsed
+    return select(
+        applications.c.id.label("application_id"),
+        applications.c.salary_min,
+        applications.c.salary_max,
+        applications.c.currency,
+        applications.c.stack,
+        parsed[("seniority", "value")].astext.label("seniority"),
+        parsed[("salaryTax", "value")].astext.label("salary_tax"),
+    ).where(*confirmed_in_search(user_id=user_id, search_id=search_id))
+
+
 def match_scores_statement(*, user_id: UUID) -> Select[Any]:
     return select(
         applications.c.id.label("application_id"), applications.c.match_score
@@ -73,6 +86,14 @@ async def load_application_sources(
 ) -> pd.DataFrame:
     return await read_frame(
         engine, application_sources_statement(user_id=user_id, search_id=search_id)
+    )
+
+
+async def load_salaries(
+    engine: AsyncEngine, *, user_id: UUID, search_id: UUID | None
+) -> pd.DataFrame:
+    return await read_frame(
+        engine, salaries_statement(user_id=user_id, search_id=search_id)
     )
 
 

@@ -10,6 +10,7 @@ export * from './plans.js';
 export * from './rates.js';
 export * from './reasons.js';
 export * from './resume-ab.js';
+export * from './salary.js';
 export * from './sankey.js';
 export * from './sources.js';
 export * from './timings.js';

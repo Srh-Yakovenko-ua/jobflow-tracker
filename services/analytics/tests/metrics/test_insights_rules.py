@@ -24,6 +24,10 @@ from app.metrics.insights.rules.most_expensive import (
     practice_costly_stage,
 )
 from app.metrics.insights.rules.resume_switch import keep_winning_resume, resume_switch
+from app.metrics.insights.rules.salary_floor import (
+    raise_salary_floor,
+    salary_floor_note,
+)
 from app.metrics.insights.rules.source_gap import (
     cut_weak_source,
     lean_on_strong_source,
@@ -40,6 +44,7 @@ from tests.metrics.funnel_design import TECH_INTERVIEW
 from tests.metrics.insights_design import design_metrics, one_source_metrics
 from tests.metrics.reasons_design import DESIGN_NOW
 from tests.metrics.resume_ab_design import Cohort, ab_events, ab_links
+from tests.metrics.salary_fixtures import floor_events, floor_rows, salary_of
 from tests.metrics.sankey_fixtures import (
     APPLIED,
     cohort,
@@ -327,8 +332,8 @@ def test_every_rule_stays_silent_on_insufficient_metrics() -> None:
     ]
 
     assert all(isinstance(metric, Insufficient) for metric in measured)
-    assert [rule(tiny) for rule in engine.RULES] == [None] * 6
-    assert [rule(tiny) for rule in engine.ACTION_RULES] == [None] * 4
+    assert [rule(tiny) for rule in engine.RULES] == [None] * 7
+    assert [rule(tiny) for rule in engine.ACTION_RULES] == [None] * 5
 
 
 def test_a_rule_declared_anywhere_joins_the_insights_without_an_engine_edit(
@@ -350,6 +355,7 @@ def test_a_rule_declared_anywhere_joins_the_insights_without_an_engine_edit(
         "ghost_share",
         "most_expensive_stage",
         "resume_switch",
+        "salary_floor_note",
         "weak_and_strong_source",
         "declared_here",
     ]
@@ -465,6 +471,75 @@ def test_leans_on_a_rated_source_by_name_without_the_small_sample_note(
         title="Більше відгуків через Work.ua",
         expected_effect="9 скринінгів на 10 відгуків через Work.ua.",
     )
+
+
+def with_salary_rejections(
+    metrics: InsightMetrics, *, declined_reason: str
+) -> InsightMetrics:
+    found = salary_of(
+        floor_events(declined_reason=declined_reason),
+        rows=floor_rows(offer_high=5800),
+    )
+    return replace(metrics, salary=found)
+
+
+def test_two_salary_rejections_advise_raising_the_salary_floor(
+    metrics: InsightMetrics,
+) -> None:
+    raised = with_salary_rejections(metrics, declined_reason="low_salary")
+
+    assert (salary_floor_note(raised), raise_salary_floor(raised)) == (
+        Insight(
+            block="salary",
+            title="Відмови через зарплату: усі на вилках нижче $4 500",
+            body="2 відмови через зарплатні очікування, усі по вакансіях із вилкою "
+            "нижче $4 500. Нижню межу фільтра варто підняти.",
+            severity="warning",
+            evidence={"floor": 4500, "rejections": 2, "below": 7},
+        ),
+        InsightAction(
+            block="salary",
+            title="Підняти нижню межу вилки до $4 500",
+            expected_effect="2 відмови вже були через зарплатні очікування, "
+            "фільтр зекономить 3 або 4 відгуки на місяць.",
+        ),
+    )
+
+
+def test_the_salary_advice_agrees_with_five_rejections_and_one_saving(
+    metrics: InsightMetrics,
+) -> None:
+    raised = with_salary_rejections(metrics, declined_reason="low_salary")
+    assert raised.salary is not None and raised.salary.floor is not None
+    floor = raised.salary.floor.model_copy(
+        update={"rejections": 5, "per_month_low": 2, "per_month_high": 2}
+    )
+    salary_found = raised.salary.model_copy(update={"floor": floor})
+
+    said = raise_salary_floor(replace(raised, salary=salary_found))
+
+    assert said is not None
+    assert said.expected_effect == (
+        "5 відмов вже було через зарплатні очікування, "
+        "фільтр зекономить 2 відгуки на місяць."
+    )
+
+
+@pytest.mark.parametrize(
+    "salary_metrics",
+    [
+        lambda metrics: with_salary_rejections(metrics, declined_reason="red_flags"),
+        lambda metrics: metrics,
+    ],
+    ids=["one salary rejection", "no salary metric"],
+)
+def test_says_nothing_about_the_salary_floor_without_two_salary_rejections(
+    metrics: InsightMetrics,
+    salary_metrics: Callable[[InsightMetrics], InsightMetrics],
+) -> None:
+    quiet = salary_metrics(metrics)
+
+    assert (salary_floor_note(quiet), raise_salary_floor(quiet)) == (None, None)
 
 
 @pytest.mark.parametrize(

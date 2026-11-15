@@ -1,10 +1,11 @@
 import type { Insight } from '@jobflow/shared';
-import { designInsightsBody } from '@jobflow/shared/testing';
 import { describe, expect, it } from 'vitest';
+
+import { salaryInsightsBody } from '@/test/analytics-fixtures';
 
 import { blockHeaderOf, funnelNotesOf, type TitledBlock } from './block-titles';
 
-const { insights } = designInsightsBody();
+const { insights } = salaryInsightsBody();
 
 const FUNNEL_NOTES = [
   {
@@ -59,6 +60,11 @@ describe('blockHeaderOf', () => {
       title: 'Схоже, CV v2 працює краще',
       body: 'Після переходу на CV v2 конверсія виросла з 24% до 41%.',
     },
+    {
+      block: 'salary',
+      title: 'Відмови через зарплату: усі на вилках нижче $4 500',
+      body: '2 відмови через зарплатні очікування, усі по вакансіях із вилкою нижче $4 500. Нижню межу фільтра варто підняти.',
+    },
   ])(
     'the $block block takes its conclusion and the evidence under it from the insights',
     ({ block, title, body }) => {
@@ -70,6 +76,7 @@ describe('blockHeaderOf', () => {
     { block: 'reasons', title: 'Де відмовляють найчастіше' },
     { block: 'sources', title: 'Яке джерело працює' },
     { block: 'resume_ab', title: 'Яка версія CV працює краще' },
+    { block: 'salary', title: 'На якій вилці приходить офер' },
   ])(
     'without an insight the $block block asks a neutral question with no evidence line',
     ({ block, title }) => {

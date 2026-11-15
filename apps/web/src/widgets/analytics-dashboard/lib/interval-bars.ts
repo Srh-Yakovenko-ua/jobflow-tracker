@@ -1,6 +1,7 @@
 import type { RateResult } from '@jobflow/shared';
 
 import { uk } from '@/shared/i18n';
+import type { ChartPalette } from '@/shared/lib/chart';
 import type { ChartFrameState } from '@/shared/ui/chart-frame';
 import type { ChartTableRow } from '@/shared/ui/chart-table';
 import type { EmptyStateContent } from '@/shared/ui/empty-state';
@@ -12,13 +13,15 @@ const ANALYTICS = uk.analytics;
 
 export type DataColour = 0 | 1 | 2 | 3 | 4 | 5;
 
+export type BarColour = DataColour | keyof ChartPalette['outcome'];
+
 export type IntervalBarRow = Readonly<{
   label: readonly [string, ...string[]];
   value: number;
   whisker: [number, number];
   tip: readonly string[];
   href?: string;
-  colour?: DataColour;
+  colour?: BarColour;
 }>;
 
 export type IntervalScale = Readonly<{

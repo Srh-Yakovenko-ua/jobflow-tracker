@@ -1,6 +1,13 @@
 import { z } from 'zod';
 
-export const INSIGHT_BLOCKS = ['funnel', 'reasons', 'sources', 'resume_ab', 'ghosted'] as const;
+export const INSIGHT_BLOCKS = [
+  'funnel',
+  'reasons',
+  'sources',
+  'salary',
+  'resume_ab',
+  'ghosted',
+] as const;
 
 export const INSIGHT_SEVERITIES = ['positive', 'neutral', 'warning'] as const;
 

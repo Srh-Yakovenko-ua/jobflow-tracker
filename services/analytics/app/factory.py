@@ -13,6 +13,7 @@ from app.api.routes import (
     match_validation,
     reasons,
     resume_ab,
+    salary,
     sankey,
     sources,
     timings,
@@ -40,6 +41,7 @@ ANALYTICS_ROUTES = (
     forecast,
     insights,
     match_validation,
+    salary,
 )
 
 

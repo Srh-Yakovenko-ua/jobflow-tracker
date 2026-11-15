@@ -4,6 +4,7 @@ import { ANALYTICS_ANCHORS, type AnalyticsBlock } from '@/shared/lib/analytics-a
 import { cn } from '@/shared/lib/cn';
 
 import { matchBarsOf } from '../lib/match-bars';
+import { salaryBarsOf } from '../lib/salary-bars';
 import { sourcesViewOf } from '../lib/source-bars';
 import { timingBarsOf } from '../lib/timing-bars';
 import type { DashboardView } from '../model/dashboard-view';
@@ -65,6 +66,7 @@ export function DashboardBlocks({ view, silenceDays, sankey, forecast }: Dashboa
       <div className={cn(GRID, NARROW_COLUMNS)}>
         <EvidenceBlock frame={frames.timings} viewOf={timingBarsOf} />
         <EvidenceBlock frame={frames.matchValidation} viewOf={matchBarsOf} />
+        <EvidenceBlock frame={frames.salary} viewOf={salaryBarsOf} />
       </div>
       <WhatToDoPanel view={view.actions} />
     </div>

@@ -225,6 +225,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/analytics/salary": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Salary */
+        get: operations["get_salary_analytics_salary_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -354,7 +371,7 @@ export interface components {
             expectedEffect: string;
         };
         /** @enum {string} */
-        InsightBlock: "funnel" | "reasons" | "sources" | "resume_ab" | "ghosted";
+        InsightBlock: "funnel" | "reasons" | "sources" | "salary" | "resume_ab" | "ghosted";
         /** @enum {string} */
         InsightSeverity: "positive" | "neutral" | "warning";
         /** Insights */
@@ -435,6 +452,18 @@ export interface components {
             };
             /** Mediandaystooffer */
             medianDaysToOffer: number | null;
+        };
+        /** OutcomeRange */
+        OutcomeRange: {
+            /** Applications */
+            applications: number;
+            /** Low */
+            low: number;
+            /** Median */
+            median: number;
+            /** High */
+            high: number;
+            key: components["schemas"]["SalaryOutcome"];
         };
         /** ProblemBody */
         ProblemBody: {
@@ -600,6 +629,52 @@ export interface components {
             before: components["schemas"]["RateResult"];
             after: components["schemas"]["RateResult"];
         };
+        /** Salary */
+        Salary: {
+            /** Withsalary */
+            withSalary: number;
+            /** Missing */
+            missing: number;
+            /** Unconverted */
+            unconverted: number;
+            /** Median */
+            median: number | null;
+            /** Outcomes */
+            outcomes: components["schemas"]["OutcomeRange"][];
+            /** Seniority */
+            seniority: components["schemas"]["SalaryGroup"][];
+            /** Stack */
+            stack: components["schemas"]["SalaryGroup"][];
+            floor: components["schemas"]["SalaryFloor"] | null;
+        };
+        /** SalaryFloor */
+        SalaryFloor: {
+            /** Floor */
+            floor: number;
+            /** Rejections */
+            rejections: number;
+            /** Below */
+            below: number;
+            /** Permonthlow */
+            perMonthLow: number;
+            /** Permonthhigh */
+            perMonthHigh: number;
+        };
+        /** SalaryGroup */
+        SalaryGroup: {
+            /** Applications */
+            applications: number;
+            /** Low */
+            low: number;
+            /** Median */
+            median: number;
+            /** High */
+            high: number;
+            /** Key */
+            key: string;
+        };
+        /** @enum {string} */
+        SalaryOutcome: "offer" | "salary_rejection" | "other";
         /** Sankey */
         Sankey: {
             split: components["schemas"]["SankeySplit"] | null;
@@ -1272,6 +1347,46 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["MatchValidation"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemBody"];
+                };
+            };
+            /** @description Unprocessable Content */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemBody"];
+                };
+            };
+        };
+    };
+    get_salary_analytics_salary_get: {
+        parameters: {
+            query?: {
+                searchId?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Salary"];
                 };
             };
             /** @description Unauthorized */

@@ -60,6 +60,22 @@ def test_reads_the_analytics_cache_key_templates_shared_with_the_worker() -> Non
     )
 
 
+def test_reads_the_salary_rates_and_seniorities_shared_with_the_web() -> None:
+    enums = load_domain_enums()
+
+    assert (
+        dict(enums.salary.per_usd),
+        enums.salary.net_share_of_gross,
+        enums.salary.reason_codes,
+        enums.seniorities,
+    ) == (
+        {"USD": 1, "EUR": 0.86, "UAH": 41.5},
+        0.77,
+        ("salary_expectations", "low_salary"),
+        ("intern", "junior", "middle", "senior", "lead"),
+    )
+
+
 def test_the_funnel_stages_are_the_progress_stages_in_enums_json_order() -> None:
     assert progress_stages() == (
         "applied",

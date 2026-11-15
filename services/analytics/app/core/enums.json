@@ -190,6 +190,25 @@
     "MIN_N_FORECAST": 15,
     "WHAT_IF_CONVERSION": 0.6
   },
+  "salary": {
+    "perUsd": {
+      "USD": 1,
+      "EUR": 0.86,
+      "UAH": 41.5
+    },
+    "netShareOfGross": 0.77,
+    "reasonCodes": [
+      "salary_expectations",
+      "low_salary"
+    ]
+  },
+  "seniorities": [
+    "intern",
+    "junior",
+    "middle",
+    "senior",
+    "lead"
+  ],
   "tokenScopes": [
     "user",
     "analytics:read",

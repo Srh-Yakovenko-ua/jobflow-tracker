@@ -9,6 +9,8 @@ import {
   REJECTION_REASONS,
   REJECTION_SIDES,
   RESPONSE_STAGES,
+  SALARY_NORMALISATION,
+  SENIORITIES,
   SOURCES,
   STAGES,
   TERMINAL_STAGES,
@@ -34,6 +36,8 @@ const enums = {
   rejectionSides: REJECTION_SIDES,
   rejectionReasons,
   thresholds: THRESHOLDS,
+  salary: SALARY_NORMALISATION,
+  seniorities: SENIORITIES,
   tokenScopes: TOKEN_SCOPES,
   analyticsCache: ANALYTICS_CACHE,
 };

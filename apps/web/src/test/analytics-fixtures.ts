@@ -2,6 +2,8 @@ import {
   ACTIVE_STAGES,
   DEFAULT_SEARCH_TITLE,
   type FunnelResponse,
+  type Insight,
+  type InsightsResponse,
   type MatchValidationResponse,
   type ResumeAbResponse,
   type SearchListResponse,
@@ -14,6 +16,7 @@ import {
   buildDesignReasons,
   buildDesignResumeAb,
   buildDesignResumeAbComparison,
+  buildDesignSalary,
   buildDesignSankey,
   buildDesignSources,
   buildDesignTimings,
@@ -38,6 +41,7 @@ export const DASHBOARD_ROUTES = [
   'timings',
   'forecast',
   'insights',
+  'salary',
   'resume-ab',
   'match-validation',
 ] as const;
@@ -146,6 +150,19 @@ export function lowDataMatchValidation(): MatchValidationResponse {
   };
 }
 
+const SALARY_INSIGHT: Insight = {
+  block: 'salary',
+  title: 'Відмови через зарплату: усі на вилках нижче $4 500',
+  body: '2 відмови через зарплатні очікування, усі по вакансіях із вилкою нижче $4 500. Нижню межу фільтра варто підняти.',
+  severity: 'warning',
+  evidence: { floor: 4500, rejections: 2, below: 7 },
+};
+
+export function salaryInsightsBody(): InsightsResponse {
+  const body = designInsightsBody();
+  return { ...body, insights: [...body.insights, SALARY_INSIGHT] };
+}
+
 const URLS: Record<DashboardRoute, string> = {
   searches: apiUrl('/searches'),
   funnel: analyticsUrl('/analytics/funnel'),
@@ -155,6 +172,7 @@ const URLS: Record<DashboardRoute, string> = {
   timings: analyticsUrl('/analytics/timings'),
   forecast: analyticsUrl('/analytics/forecast'),
   insights: analyticsUrl('/analytics/insights'),
+  salary: analyticsUrl('/analytics/salary'),
   'resume-ab': RESUME_AB_URL,
   'match-validation': analyticsUrl('/analytics/match-validation'),
 };
@@ -176,6 +194,7 @@ function designBodies(): Record<DashboardRoute, JsonBodyType | HttpResponseResol
     timings: buildDesignTimings(),
     forecast: buildForecast(),
     insights: designInsightsBody(),
+    salary: buildDesignSalary(),
     'resume-ab': DESIGN_RESUME_AB,
     'match-validation': buildDesignMatchValidation(),
   };

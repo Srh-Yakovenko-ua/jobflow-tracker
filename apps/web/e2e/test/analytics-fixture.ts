@@ -3,6 +3,7 @@ import {
   buildDesignMatchValidation,
   buildDesignReasons,
   buildDesignResumeAb,
+  buildDesignSalary,
   buildDesignSankey,
   buildDesignSources,
   buildDesignTimings,
@@ -28,6 +29,7 @@ const DESIGN_REPLIES: Readonly<Record<string, DesignReply>> = {
   '/analytics/timings': () => buildDesignTimings(),
   '/analytics/forecast': () => buildForecast(),
   '/analytics/insights': () => designInsightsBody(),
+  '/analytics/salary': () => buildDesignSalary(),
   '/analytics/resume-ab': () => buildDesignResumeAb(),
   '/analytics/match-validation': () => buildDesignMatchValidation(),
 };

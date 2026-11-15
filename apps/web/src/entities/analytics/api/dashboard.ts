@@ -4,6 +4,7 @@ import {
   insightsResponseSchema,
   matchValidationResponseSchema,
   reasonsResponseSchema,
+  salaryResponseSchema,
   sankeyResponseSchema,
   sourcesResponseSchema,
   timingsResponseSchema,
@@ -60,6 +61,7 @@ const ROUTES = {
     schema: insightsResponseSchema,
     keyOf: analyticsKeys.insights,
   },
+  salary: { path: '/analytics/salary', schema: salaryResponseSchema, keyOf: analyticsKeys.salary },
 } as const;
 
 function pathQueryOptions<T>({ route, queryKey, params }: PathRequest<T>) {
@@ -121,6 +123,9 @@ export function forecastQueryOptions({ searchId, applicationsPerWeek, improve }:
 
 export const insightsQueryOptions = (searchId?: string) =>
   scopedQueryOptions({ route: ROUTES.insights, searchId });
+
+export const salaryQueryOptions = (searchId?: string) =>
+  scopedQueryOptions({ route: ROUTES.salary, searchId });
 
 export const matchValidationQueryOptions = () =>
   pathQueryOptions({

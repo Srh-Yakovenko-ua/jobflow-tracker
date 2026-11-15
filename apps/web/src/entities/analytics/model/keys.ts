@@ -30,5 +30,6 @@ export const analyticsKeys = {
   forecast: ({ searchId, applicationsPerWeek, improve }: ForecastScope) =>
     [...SUMMARY, 'forecast', { searchId }, { applicationsPerWeek, improve }] as const,
   insights: searchScoped('insights'),
+  salary: searchScoped('salary'),
   matchValidation: () => [...SUMMARY, 'match-validation'] as const,
 };

@@ -18,6 +18,7 @@ from app.metrics.resume_ab import resume_ab
 from app.metrics.sankey import sankey
 from app.metrics.sources import sources
 from app.metrics.timings import timings
+from tests.factories import salaries_frame
 from tests.golden.story import Story, design_story
 
 STORY_FILE: Final = Path(__file__).with_name("design_story.json")
@@ -37,7 +38,11 @@ METRICS: Final[dict[str, Callable[[Story], BaseModel]]] = {
     "forecast": lambda story: forecast(story.events, now=story.now, what_if=WhatIf()),
     "insights": lambda story: insights(
         insight_metrics(
-            story.events, origins=story.origins, links=story.links, now=story.now
+            story.events,
+            origins=story.origins,
+            links=story.links,
+            salaries=salaries_frame([]),
+            now=story.now,
         )
     ),
 }

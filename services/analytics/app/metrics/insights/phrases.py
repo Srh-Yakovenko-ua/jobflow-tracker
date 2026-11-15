@@ -57,6 +57,10 @@ def percent(value: float) -> int:
     return round(value * 100)
 
 
+def dollars(value: int) -> str:
+    return "$" + f"{value:,}".replace(",", "\N{NO-BREAK SPACE}")
+
+
 def sentence(text: str) -> str:
     return text[:1].upper() + text[1:]
 
