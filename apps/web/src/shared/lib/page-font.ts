@@ -12,3 +12,8 @@ export function pageFont({ variable, fallback }: PageFontInput): string {
   const family = getComputedStyle(document.documentElement).getPropertyValue(variable).trim();
   return family || fallback;
 }
+
+export async function loadPageFonts(fonts: readonly string[]): Promise<void> {
+  await Promise.allSettled(fonts.map((font) => document.fonts.load(font)));
+  await document.fonts.ready;
+}

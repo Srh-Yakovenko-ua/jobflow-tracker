@@ -1,6 +1,6 @@
 import { Chart, type ChartOptions } from 'chart.js';
 
-import { PAGE_FONTS, pageFont } from '@/shared/lib/page-font';
+import { loadPageFonts, PAGE_FONTS, pageFont } from '@/shared/lib/page-font';
 
 import type { SceneFont, SceneSankey, SceneText, ShareCardScene } from './share-card-scene';
 
@@ -35,10 +35,9 @@ function fontOf({ role, size, weight }: SceneFont): string {
   return `${String(weight)} ${String(size)}px ${pageFont(PAGE_FONTS[role])}`;
 }
 
-async function loadFonts(scene: ShareCardScene): Promise<void> {
+function loadFonts(scene: ShareCardScene): Promise<void> {
   const fonts = new Set([...scene.texts.map(({ font }) => fontOf(font)), fontOf(NODE_LABEL)]);
-  await document.fonts.ready;
-  await Promise.all([...fonts].map((font) => document.fonts.load(font)));
+  return loadPageFonts([...fonts]);
 }
 
 function sankeyChart(sankey: SceneSankey, context: CanvasRenderingContext2D) {
