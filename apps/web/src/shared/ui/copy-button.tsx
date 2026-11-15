@@ -16,9 +16,9 @@ const OUTCOMES = {
   refused: { tone: 'error', title: uk.ui.copyFailed },
 } as const satisfies Record<string, ToastContent>;
 
-export function copyToClipboard(value: string): void {
+function writeThenToast(write: () => Promise<void>): void {
   void Promise.resolve()
-    .then(() => navigator.clipboard.writeText(value))
+    .then(write)
     .then(
       () => {
         showToast(OUTCOMES.copied, COPY_TOAST);
@@ -27,6 +27,14 @@ export function copyToClipboard(value: string): void {
         showToast(OUTCOMES.refused, COPY_TOAST);
       },
     );
+}
+
+export function copyToClipboard(value: string): void {
+  writeThenToast(() => navigator.clipboard.writeText(value));
+}
+
+export function copyImageToClipboard(blob: Blob): void {
+  writeThenToast(() => navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]));
 }
 
 export function CopyButton({ value, label }: CopyButtonProps) {

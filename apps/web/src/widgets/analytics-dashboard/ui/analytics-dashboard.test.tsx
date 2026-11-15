@@ -81,6 +81,8 @@ const WHAT_TO_DO = 'що зробити';
 
 const ADD_LINK = 'Додати вакансію';
 
+const SHARE = { name: 'Поділитися' } as const;
+
 const AFFECTED: Record<Exclude<DashboardRoute, 'insights'>, readonly Block[]> = {
   searches: ['sankey', 'sent', 'screening'],
   funnel: ['sent', 'screening'],
@@ -249,6 +251,15 @@ describe('AnalyticsDashboard', () => {
     expect(screen.getByRole('heading', { name: 'Схоже, CV v2 працює краще' })).toBeDefined();
   });
 
+  it('the share button waits for the funnel and the sankey, then opens the share dialog', async () => {
+    const { user } = renderDashboard();
+    expect(screen.queryByRole('button', SHARE)).toBeNull();
+
+    await user.click(await screen.findByRole('button', SHARE));
+
+    expect(await screen.findByRole('dialog', { name: 'Поділитися пошуком' })).toBeDefined();
+  });
+
   it('four applications turn the whole dashboard into its low data state with one useful action', async () => {
     renderDashboard({ funnel: lowDataFunnel() });
 
@@ -265,6 +276,7 @@ describe('AnalyticsDashboard', () => {
     expect(blockRegions()).toHaveLength(0);
     expect(screen.queryByText(WHAT_TO_DO)).toBeNull();
     expect(screen.queryByRole('group', { name: TILES.screening })).toBeNull();
+    expect(await screen.findByRole('button', SHARE)).toBeDefined();
   });
 
   it('an archived search in its low data state offers no link to add an application', async () => {

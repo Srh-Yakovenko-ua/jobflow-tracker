@@ -2,7 +2,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { OBJECT_URL, stubFileDownload } from '@/test/file-download';
 
-import { saveTextFile } from './save-text-file';
+import { saveBlob, saveTextFile } from './save-text-file';
 
 const ICS_FILE = {
   text: 'BEGIN:VCALENDAR\r\nEND:VCALENDAR\r\n',
@@ -10,11 +10,20 @@ const ICS_FILE = {
   type: 'text/calendar',
 } as const;
 
-describe('saveTextFile', () => {
-  afterEach(() => {
-    vi.restoreAllMocks();
-  });
+type FileDownload = ReturnType<typeof stubFileDownload>;
 
+async function expectOneDownload(download: FileDownload, fileName: string) {
+  expect(download.anchors()).toEqual([{ href: OBJECT_URL, download: fileName }]);
+  await vi.waitFor(() => {
+    expect(download.revoked()).toEqual([OBJECT_URL]);
+  });
+}
+
+afterEach(() => {
+  vi.restoreAllMocks();
+});
+
+describe('saveTextFile', () => {
   it('downloads the text under its file name through one object URL, then revokes it', async () => {
     const download = stubFileDownload();
 
@@ -23,9 +32,19 @@ describe('saveTextFile', () => {
     const [blob] = download.blobs();
     expect(blob?.type).toBe('text/calendar');
     expect(await blob?.text()).toBe('BEGIN:VCALENDAR\r\nEND:VCALENDAR\r\n');
-    expect(download.anchors()).toEqual([{ href: OBJECT_URL, download: 'jobflow-event.ics' }]);
-    await vi.waitFor(() => {
-      expect(download.revoked()).toEqual([OBJECT_URL]);
-    });
+    await expectOneDownload(download, 'jobflow-event.ics');
+  });
+});
+
+describe('saveBlob', () => {
+  it('downloads the given image blob itself under its file name, then revokes the URL', async () => {
+    const download = stubFileDownload();
+    const image = new Blob([new Uint8Array([137, 80, 78, 71])], { type: 'image/png' });
+
+    saveBlob({ blob: image, fileName: 'jobflow-funnel.png' });
+
+    expect(download.blobs()).toHaveLength(1);
+    expect(download.blobs()[0]).toBe(image);
+    await expectOneDownload(download, 'jobflow-funnel.png');
   });
 });
