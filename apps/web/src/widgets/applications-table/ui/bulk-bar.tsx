@@ -6,7 +6,7 @@ import { type BulkMoveTarget, useBulkMoveMutation } from '@/features/move-applic
 import { uk } from '@/shared/i18n';
 import { Button } from '@/shared/ui/button';
 import { ConfirmFooter } from '@/shared/ui/confirm-footer';
-import { Dialog, DialogContent, DialogTrigger } from '@/shared/ui/dialog';
+import { AlertDialogContent, Dialog, DialogTrigger } from '@/shared/ui/dialog';
 
 import { SELECT_ALL_ID } from './table-head';
 
@@ -71,7 +71,7 @@ export function BulkBar({ picked, actions }: BulkBarProps) {
             {COPY.withdraw}
           </Button>
         </DialogTrigger>
-        <DialogContent
+        <AlertDialogContent
           header={{
             title: COPY.confirm.title(picked.length),
             description: COPY.confirm.description,
@@ -86,7 +86,7 @@ export function BulkBar({ picked, actions }: BulkBarProps) {
               },
             }}
           />
-        </DialogContent>
+        </AlertDialogContent>
       </Dialog>
       <Button variant="ghost" size="xs" disabled={bulk.isPending} onClick={done}>
         {COPY.clear}

@@ -2,7 +2,7 @@
 
 import type { Application, ApplicationResponse, Stage } from '@jobflow/shared';
 import { useRouter } from 'next/navigation';
-import { type RefObject, useRef } from 'react';
+import { useRef } from 'react';
 
 import { DeleteApplicationDialog } from '@/features/delete-application';
 import { ApplicationEditForm, type EditField } from '@/features/edit-application';
@@ -21,7 +21,7 @@ import {
   type ApplicationPanel,
   useApplicationPage,
 } from '../model/use-application-page';
-import { ApplicationActions } from './application-actions';
+import { ApplicationActions, type ApplicationFocusTargets } from './application-actions';
 import { ApplicationContext } from './application-context';
 import { ApplicationFollowup } from './application-followup';
 import { ApplicationHeader } from './application-header';
@@ -58,10 +58,10 @@ function schedulePlanOf(panel: ApplicationPanel | null): SchedulePlan | null {
 type PageActionsProps = Readonly<{
   application: ApplicationResponse;
   page: Readonly<{ actions: ApplicationPageActions; suggestion: Stage | null }>;
-  focusTarget: RefObject<HTMLHeadingElement | null>;
+  focus: ApplicationFocusTargets;
 }>;
 
-function PageActions({ application, page, focusTarget }: PageActionsProps) {
+function PageActions({ application, page, focus }: PageActionsProps) {
   const { actions, suggestion } = page;
   return (
     <div className="flex flex-col gap-4">
@@ -69,7 +69,7 @@ function PageActions({ application, page, focusTarget }: PageActionsProps) {
       <ApplicationActions
         application={application}
         actions={actions}
-        focusTarget={focusTarget}
+        focus={focus}
         suggestion={suggestion}
       />
     </div>
@@ -80,15 +80,15 @@ type PageEditingProps = Readonly<{
   application: ApplicationResponse;
   page: ApplicationPageState;
   editor: Readonly<{ editing: EditField | null; onDone: () => void }>;
-  titleRef: RefObject<HTMLHeadingElement | null>;
+  focus: ApplicationFocusTargets;
 }>;
 
-function PageEditing({ application, page, editor, titleRef }: PageEditingProps) {
+function PageEditing({ application, page, editor, focus }: PageEditingProps) {
   const { editing } = editor;
   return (
     <div>
       <Reveal shown={editing === null}>
-        <PageActions application={application} page={page} focusTarget={titleRef} />
+        <PageActions application={application} page={page} focus={focus} />
       </Reveal>
       <Reveal shown={editing !== null}>
         {editing !== null && (
@@ -111,6 +111,7 @@ type LoadedPageProps = Readonly<{
 
 function LoadedPage({ application, page, view }: LoadedPageProps) {
   const titleRef = useRef<HTMLHeadingElement>(null);
+  const moreRef = useRef<HTMLButtonElement>(null);
   const onDeleted = useLeaveAfterDelete();
   const match = useApplicationMatch(application);
   const { panel } = page;
@@ -122,11 +123,9 @@ function LoadedPage({ application, page, view }: LoadedPageProps) {
     page.actions.onClose();
     focusTitle();
   };
-  const returnFocus = {
-    onCloseAutoFocus: (event: Event) => {
-      event.preventDefault();
-      focusTitle();
-    },
+  const returnFocus = (event: Event, target: HTMLElement | null) => {
+    event.preventDefault();
+    target?.focus();
   };
   return (
     <div className="animate-fade-in">
@@ -144,7 +143,7 @@ function LoadedPage({ application, page, view }: LoadedPageProps) {
                 application={application}
                 page={page}
                 editor={{ editing, onDone: closeEditor }}
-                titleRef={titleRef}
+                focus={{ title: titleRef, more: moreRef }}
               />
             </ApplicationHeader>
           ),
@@ -171,13 +170,21 @@ function LoadedPage({ application, page, view }: LoadedPageProps) {
       <DeleteApplicationDialog
         application={panel?.kind === 'delete' ? application : null}
         actions={{ onCancel: page.actions.onClose, onDeleted }}
-        handlers={returnFocus}
+        handlers={{
+          onCloseAutoFocus: (event) => {
+            returnFocus(event, moreRef.current);
+          },
+        }}
       />
       <ScheduleEventDialog
         application={application}
         plan={schedulePlanOf(panel)}
         actions={{ onClose: page.actions.onClose }}
-        handlers={returnFocus}
+        handlers={{
+          onCloseAutoFocus: (event) => {
+            returnFocus(event, titleRef.current);
+          },
+        }}
       />
     </div>
   );

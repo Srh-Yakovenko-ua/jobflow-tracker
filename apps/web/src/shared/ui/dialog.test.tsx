@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
 
@@ -6,6 +6,7 @@ import { uk } from '@/shared/i18n';
 
 import { Button } from './button';
 import {
+  AlertDialogContent,
   Dialog,
   DialogClose,
   DialogContent,
@@ -17,13 +18,18 @@ import {
 
 const COPY = uk.devUi.feedback;
 
-function renderDialog(handlers?: DialogContentHandlers) {
+type RenderOptions = Readonly<{
+  handlers?: DialogContentHandlers;
+  content?: typeof DialogContent;
+}>;
+
+function renderDialog({ handlers, content: Content = DialogContent }: RenderOptions = {}) {
   render(
     <Dialog>
       <DialogTrigger asChild>
         <Button variant="secondary">{COPY.openModal}</Button>
       </DialogTrigger>
-      <DialogContent
+      <Content
         header={{ title: COPY.modal.title, description: COPY.modal.description }}
         {...(handlers && { handlers })}
       >
@@ -32,7 +38,7 @@ function renderDialog(handlers?: DialogContentHandlers) {
             <Button>{COPY.modal.save}</Button>
           </DialogClose>
         </DialogFooter>
-      </DialogContent>
+      </Content>
     </Dialog>,
   );
   return screen.getByRole('button', { name: COPY.openModal });
@@ -54,31 +60,44 @@ describe('Dialog', () => {
     expect(document.activeElement).toBe(trigger);
   });
 
-  it('Tab keeps focus inside, from the close button to the last action and back', async () => {
-    const user = userEvent.setup();
-    renderDialog();
+  it.each([
+    { role: 'dialog', content: DialogContent },
+    { role: 'alertdialog', content: AlertDialogContent },
+  ] as const)(
+    '$role is named by its title, described by its body, and Tab keeps focus inside, from the close button to the last action and back',
+    async ({ role, content }) => {
+      const user = userEvent.setup();
+      renderDialog({ content });
 
-    await user.tab();
-    await user.keyboard('{Enter}');
-    const close = await screen.findByRole('button', { name: uk.app.close });
-    expect(document.activeElement).toBe(close);
+      await user.tab();
+      await user.keyboard('{Enter}');
+      const dialog = await screen.findByRole(role, {
+        name: COPY.modal.title,
+        description: COPY.modal.description,
+      });
+      const close = within(dialog).getByRole('button', { name: uk.app.close });
+      expect(document.activeElement).toBe(close);
 
-    await user.tab();
-    expect(document.activeElement).toBe(screen.getByRole('button', { name: COPY.modal.save }));
-    await user.tab();
-    expect(document.activeElement).toBe(close);
-  });
+      await user.tab();
+      const save = within(dialog).getByRole('button', { name: COPY.modal.save });
+      expect(document.activeElement).toBe(save);
+      await user.tab();
+      expect(document.activeElement).toBe(close);
+    },
+  );
 
   it('handlers reach the dialog: the open focus can stay on the dialog, keys typed inside are heard, the close focus is handed over', async () => {
     const user = userEvent.setup();
     const keys: string[] = [];
     const closeFocus: string[] = [];
     const trigger = renderDialog({
-      onOpenAutoFocus: keepFocusOnDialog,
-      onKeyDown: (event) => keys.push(event.key),
-      onCloseAutoFocus: (event) => {
-        event.preventDefault();
-        closeFocus.push('handed over');
+      handlers: {
+        onOpenAutoFocus: keepFocusOnDialog,
+        onKeyDown: (event) => keys.push(event.key),
+        onCloseAutoFocus: (event) => {
+          event.preventDefault();
+          closeFocus.push('handed over');
+        },
       },
     });
 

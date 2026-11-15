@@ -1,4 +1,12 @@
+'use client';
+
 import Link from 'next/link';
+import { useId, useState } from 'react';
+
+import { uk } from '@/shared/i18n';
+import { cn } from '@/shared/lib/cn';
+
+import { Button } from './button';
 
 export type ChartTableCell = Readonly<{ text: string; href?: string | undefined }>;
 
@@ -24,32 +32,59 @@ function CellContent({ text, href }: ChartTableCell) {
   );
 }
 
-export function ChartTable({ caption, heads, rows }: ChartTableProps) {
+function DataTable({ caption, heads, rows }: ChartTableProps) {
   return (
-    <div className="sr-only overflow-x-auto focus-within:not-sr-only">
-      <table className="w-full text-left text-[12.5px] text-ink-2">
-        <caption className="eyebrow pb-1.5 text-left text-ink-3">{caption}</caption>
-        <thead>
-          <tr>
-            {heads.map((head) => (
-              <th key={head} scope="col" className={CELL}>
-                {head}
-              </th>
+    <table className="w-full text-left text-[12.5px] text-ink-2">
+      <caption className="eyebrow pb-1.5 text-left text-ink-3">{caption}</caption>
+      <thead>
+        <tr>
+          {heads.map((head) => (
+            <th key={head} scope="col" className={CELL}>
+              {head}
+            </th>
+          ))}
+        </tr>
+      </thead>
+      <tbody>
+        {rows.map((row) => (
+          <tr key={row.key}>
+            {row.cells.map((cell, column) => (
+              <td key={heads[column] ?? cell.text} className={CELL}>
+                <CellContent {...cell} />
+              </td>
             ))}
           </tr>
-        </thead>
-        <tbody>
-          {rows.map((row) => (
-            <tr key={row.key}>
-              {row.cells.map((cell, column) => (
-                <td key={heads[column] ?? cell.text} className={CELL}>
-                  <CellContent {...cell} />
-                </td>
-              ))}
-            </tr>
-          ))}
-        </tbody>
-      </table>
+        ))}
+      </tbody>
+    </table>
+  );
+}
+
+export function ChartTable(props: ChartTableProps) {
+  const tableId = useId();
+  const [shown, setShown] = useState(false);
+  return (
+    <div className="flex min-w-0 flex-col items-start gap-1.5">
+      <Button
+        variant="ghost"
+        size="xs"
+        aria-expanded={shown}
+        aria-controls={tableId}
+        onClick={() => {
+          setShown(!shown);
+        }}
+      >
+        {shown ? uk.ui.hideTable : uk.ui.showTable}
+      </Button>
+      <div
+        id={tableId}
+        className={cn(
+          'self-stretch overflow-x-auto',
+          shown ? 'animate-fade-in' : 'sr-only focus-within:not-sr-only',
+        )}
+      >
+        <DataTable {...props} />
+      </div>
     </div>
   );
 }

@@ -15,6 +15,12 @@ const SCHEMES = ['light', 'dark'] as const;
 
 type Scheme = (typeof SCHEMES)[number];
 
+const VISION_DEFICIENCIES = ['protanopia', 'deuteranopia', 'achromatopsia'] as const;
+
+const VISION_SCREENS = new Set(['board', 'dashboard']);
+
+type Variant = Scheme | (typeof VISION_DEFICIENCIES)[number];
+
 type Detail = Readonly<{ name: string; locate: (page: Page) => Locator }>;
 
 type Screen = Readonly<{
@@ -24,7 +30,7 @@ type Screen = Readonly<{
   details?: readonly Detail[];
 }>;
 
-type Shot = Readonly<{ page: Page; scheme: Scheme }>;
+type Shot = Readonly<{ page: Page; variant: Variant }>;
 
 const SHOTS = {
   dir: path.join(REPO_ROOT, 'docs/screenshots'),
@@ -68,7 +74,7 @@ function signedIn({ applicationId, month }: DemoTargets): readonly Screen[] {
   ];
 }
 
-const shotPath = (name: string, scheme: Scheme) => path.join(SHOTS.dir, `${name}-${scheme}.png`);
+const shotPath = (name: string, variant: Variant) => path.join(SHOTS.dir, `${name}-${variant}.png`);
 
 async function settle(page: Page, screen: Screen): Promise<void> {
   await expect(page.getByRole('heading', { level: 1 }).first()).toBeVisible(SHOTS.wait);
@@ -76,13 +82,15 @@ async function settle(page: Page, screen: Screen): Promise<void> {
   await expect(page.locator('[aria-busy="true"]')).toHaveCount(0, SHOTS.wait);
 }
 
-async function shoot({ page, scheme }: Shot, screen: Screen): Promise<void> {
+async function shoot({ page, variant }: Shot, screen: Screen): Promise<void> {
   await page.goto(screen.route);
   await settle(page, screen);
-  await page.screenshot({ ...SHOTS.capture, fullPage: true, path: shotPath(screen.name, scheme) });
-  if (scheme !== SHOTS.detailScheme) return;
+  await page.screenshot({ ...SHOTS.capture, fullPage: true, path: shotPath(screen.name, variant) });
+  if (variant !== SHOTS.detailScheme) return;
   for (const detail of screen.details ?? []) {
-    await detail.locate(page).screenshot({ ...SHOTS.capture, path: shotPath(detail.name, scheme) });
+    await detail
+      .locate(page)
+      .screenshot({ ...SHOTS.capture, path: shotPath(detail.name, variant) });
   }
 }
 
@@ -92,12 +100,30 @@ for (const scheme of SCHEMES) {
     async ({ page, request }) => {
       await page.emulateMedia({ colorScheme: scheme });
       for (const screen of SIGNED_OUT) {
-        await shoot({ page, scheme }, screen);
+        await shoot({ page, variant: scheme }, screen);
       }
       await signIn(page, DEMO_USER);
       for (const screen of signedIn(await demoTargets(request))) {
-        await shoot({ page, scheme }, screen);
+        await shoot({ page, variant: scheme }, screen);
       }
     },
   );
 }
+
+signedOutTest(
+  'the colour vision screenshots of the board and the dashboard',
+  async ({ page, request }) => {
+    await page.emulateMedia({ colorScheme: SHOTS.detailScheme });
+    await signIn(page, DEMO_USER);
+    const screens = signedIn(await demoTargets(request)).filter(({ name }) =>
+      VISION_SCREENS.has(name),
+    );
+    const cdp = await page.context().newCDPSession(page);
+    for (const type of VISION_DEFICIENCIES) {
+      await cdp.send('Emulation.setEmulatedVisionDeficiency', { type });
+      for (const screen of screens) {
+        await shoot({ page, variant: type }, screen);
+      }
+    }
+  },
+);

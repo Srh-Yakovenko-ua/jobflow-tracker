@@ -123,7 +123,7 @@ async function renderFailedPage(query: AddQuery = FAILED_QUERY, deletion: MoveRo
 
 async function confirmDelete(user: UserEvent) {
   await user.click(await screen.findByRole('button', { name: 'Видалити картку' }));
-  const asked = within(await screen.findByRole('dialog', { name: 'Видалити картку?' }));
+  const asked = within(await screen.findByRole('alertdialog', { name: 'Видалити картку?' }));
   await user.click(asked.getByRole('button', { name: 'Видалити' }));
 }
 

@@ -20,7 +20,10 @@ async function openDialog(onConfirm: OnConfirm) {
   render(<ConfirmDialog trigger={TRIGGER} copy={COPY} action={{ pending: false, onConfirm }} />);
   const trigger = screen.getByRole('button', { name: TRIGGER.label });
   await user.click(trigger);
-  const dialog = await screen.findByRole('dialog', { name: COPY.title });
+  const dialog = await screen.findByRole('alertdialog', {
+    name: COPY.title,
+    description: COPY.body,
+  });
   return { user, trigger, dialog };
 }
 
@@ -33,11 +36,11 @@ describe('ConfirmDialog', () => {
         action={{ pending: false, onConfirm: () => undefined }}
       />,
     );
-    expect(screen.queryByRole('dialog')).toBeNull();
+    expect(screen.queryByRole('alertdialog')).toBeNull();
 
     await userEvent.setup().click(screen.getByRole('button', { name: TRIGGER.label }));
 
-    expect((await screen.findByRole('dialog', { name: COPY.title })).textContent).toContain(
+    expect((await screen.findByRole('alertdialog', { name: COPY.title })).textContent).toContain(
       COPY.body,
     );
   });
@@ -49,7 +52,7 @@ describe('ConfirmDialog', () => {
     await user.click(screen.getByRole('button', { name: COPY.cancel }));
 
     expect(onConfirm).toHaveBeenCalledTimes(0);
-    expect(screen.queryByRole('dialog')).toBeNull();
+    expect(screen.queryByRole('alertdialog')).toBeNull();
   });
 
   it('confirm runs the action once and stays open until the action closes it', async () => {
@@ -70,7 +73,7 @@ describe('ConfirmDialog', () => {
     await user.click(screen.getByRole('button', { name: COPY.confirm }));
 
     await waitFor(() => {
-      expect(screen.queryByRole('dialog')).toBeNull();
+      expect(screen.queryByRole('alertdialog')).toBeNull();
     });
     expect(document.activeElement).toBe(trigger);
   });

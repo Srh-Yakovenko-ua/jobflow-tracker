@@ -235,6 +235,42 @@
       "source": "docs/screenshots/method-resume-ab-light.png"
     },
     {
+      "id": "board-protanopia",
+      "type": "screenshot",
+      "caption": "Канбан-дошка в симуляції протанопії, демо-дані",
+      "source": "docs/screenshots/board-protanopia.png"
+    },
+    {
+      "id": "board-deuteranopia",
+      "type": "screenshot",
+      "caption": "Канбан-дошка в симуляції дейтеранопії, демо-дані",
+      "source": "docs/screenshots/board-deuteranopia.png"
+    },
+    {
+      "id": "board-achromatopsia",
+      "type": "screenshot",
+      "caption": "Канбан-дошка в симуляції ахроматопсії, демо-дані",
+      "source": "docs/screenshots/board-achromatopsia.png"
+    },
+    {
+      "id": "dashboard-protanopia",
+      "type": "screenshot",
+      "caption": "Дашборд аналітики в симуляції протанопії, демо-дані",
+      "source": "docs/screenshots/dashboard-protanopia.png"
+    },
+    {
+      "id": "dashboard-deuteranopia",
+      "type": "screenshot",
+      "caption": "Дашборд аналітики в симуляції дейтеранопії, демо-дані",
+      "source": "docs/screenshots/dashboard-deuteranopia.png"
+    },
+    {
+      "id": "dashboard-achromatopsia",
+      "type": "screenshot",
+      "caption": "Дашборд аналітики в симуляції ахроматопсії, демо-дані",
+      "source": "docs/screenshots/dashboard-achromatopsia.png"
+    },
+    {
       "id": "ai-eval-vacancy",
       "type": "table",
       "builder": "aiEval",
@@ -308,6 +344,20 @@
       "builder": "securityHeaders",
       "caption": "Директиви Content Security Policy і заголовки безпеки вебзастосунку (SEC-01)",
       "source": "docs/security.md"
+    },
+    {
+      "id": "lighthouse",
+      "type": "table",
+      "builder": "aiEval",
+      "caption": "Оцінка доступності Lighthouse по екранах",
+      "source": "docs/thesis/data/lighthouse.tsv"
+    },
+    {
+      "id": "contrast",
+      "type": "table",
+      "builder": "aiEval",
+      "caption": "Контраст пар текстових токенів у світлій і темній темах, поріг 4,5:1",
+      "source": "docs/thesis/data/contrast.tsv"
     }
   ]
 }

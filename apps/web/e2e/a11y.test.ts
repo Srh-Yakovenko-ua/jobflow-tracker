@@ -4,6 +4,7 @@ import { uk } from '@/shared/i18n';
 
 import { addByHand, uniqueCompany } from './test/applications';
 import { seriousViolations } from './test/axe';
+import { SIGNED_IN_PAGES, SIGNED_OUT_PAGES } from './test/routes';
 import { expect, signedOutTest, test } from './test/session';
 import { toastRegion } from './test/toasts';
 
@@ -15,20 +16,9 @@ const TAB_LIMIT = 40;
 
 const CSP_MARK = 'Content Security Policy';
 
-const SIGNED_OUT_PAGES = ['/login', '/register'];
+const HIT_REACH = 21;
 
-const SIGNED_IN_PAGES = [
-  '/board',
-  '/applications',
-  '/calendar',
-  '/add',
-  '/analytics',
-  '/analytics/summary/2026-10',
-  '/reminders',
-  '/notifications',
-  '/resumes',
-  '/settings',
-];
+const DATA_DELETION = uk.settings.aiPrivacy.dataDeletion;
 
 async function expectAccessible(page: Page, route: string): Promise<void> {
   await test.step(route, async () => {
@@ -64,6 +54,35 @@ async function firstTabbedRegion(
   return null;
 }
 
+async function hitsAroundCentre(button: Locator): Promise<boolean[]> {
+  return button.evaluate((element, reach) => {
+    const { left, top, width, height } = element.getBoundingClientRect();
+    const x = left + width / 2;
+    const y = top + height / 2;
+    return [y - reach, y + reach].map((pointY) => {
+      const hit = document.elementFromPoint(x, pointY);
+      return hit !== null && element.contains(hit);
+    });
+  }, HIT_REACH);
+}
+
+async function expectConfirmHitArea(page: Page): Promise<void> {
+  await test.step('/settings delete confirm', async () => {
+    await page.goto('/settings');
+    await page.getByRole('button', { name: DATA_DELETION.action, exact: true }).click();
+    const confirm = page.getByRole('alertdialog', { name: DATA_DELETION.dialog.title });
+    await expect(confirm).toBeVisible();
+    for (const name of [DATA_DELETION.dialog.cancel, DATA_DELETION.dialog.confirm]) {
+      const button = confirm.getByRole('button', { name, exact: true });
+      expect(await hitsAroundCentre(button), name).toEqual([true, true]);
+    }
+    for (const colorScheme of SCHEMES) {
+      await page.emulateMedia({ colorScheme });
+      expect(await seriousViolations(page), colorScheme).toEqual([]);
+    }
+  });
+}
+
 for (const colorScheme of SCHEMES) {
   signedOutTest(
     `the signed-out pages have no serious axe violations in ${colorScheme}`,
@@ -89,7 +108,7 @@ for (const colorScheme of SCHEMES) {
   });
 }
 
-test('at 390 px the notifications and application pages pass axe and Tab meets the follow-up before the notes', async ({
+test('at 390 px the notifications and application pages pass axe, Tab meets the follow-up before the notes and the open confirm takes a 44 px touch and passes axe in light and dark', async ({
   page,
 }) => {
   const applicationId = await addByHand(page, {
@@ -110,6 +129,7 @@ test('at 390 px the notifications and application pages pass axe and Tab meets t
       notes: main.getByRole('region', { name: uk.applicationPage.notes.kicker }),
     }),
   ).toBe('followup');
+  await expectConfirmHitArea(page);
 });
 
 test('at 390 px no signed-in page scrolls sideways', async ({ page }) => {

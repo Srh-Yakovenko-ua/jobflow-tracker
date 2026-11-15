@@ -25,7 +25,7 @@ async function submitAuthForm(page: Page, { user, submit }: AuthFormInput): Prom
   await page.waitForURL('**/board');
 }
 
-async function register(page: Page): Promise<E2eUser> {
+export async function register(page: Page): Promise<E2eUser> {
   const user = newUser();
   await page.goto('/register');
   await submitAuthForm(page, { user, submit: AUTH.register.submit });

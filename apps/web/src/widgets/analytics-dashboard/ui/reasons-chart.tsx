@@ -3,7 +3,7 @@
 import type { ChartOptions } from 'chart.js';
 
 import { uk } from '@/shared/i18n';
-import { reasonColours, useChartTheme } from '@/shared/lib/chart';
+import { patternFill, REASON_PATTERNS, reasonColours, useChartTheme } from '@/shared/lib/chart';
 
 import type { BarActions } from '../lib/bar-look';
 import { type ReasonBars, REJECTED_BOARD_HREF } from '../lib/reason-bars';
@@ -37,14 +37,19 @@ function lookOf(bars: ReasonBars) {
 }
 
 export function ReasonsChart({ bars, actions }: ReasonsChartProps) {
-  const colours = reasonColours(useChartTheme().palette);
+  const { palette } = useChartTheme();
+  const colours = reasonColours(palette);
   const data = {
     labels: bars.labels,
     datasets: bars.datasets.map((bar) => ({
       label: bar.label,
       data: bar.data,
       stack: bar.stack,
-      backgroundColor: colours[bar.code],
+      backgroundColor: patternFill({
+        colour: colours[bar.code],
+        pattern: REASON_PATTERNS[bar.code],
+        ink: palette.colors.surface,
+      }),
       borderRadius: 5,
       borderSkipped: false,
       maxBarThickness: 26,

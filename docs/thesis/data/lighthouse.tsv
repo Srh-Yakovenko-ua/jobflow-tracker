@@ -1,0 +1,14 @@
+screen	route	score	minimum	result
+login	/login	100	95	PASS
+register	/register	100	95	PASS
+board	/board	100	95	PASS
+applications	/applications	100	95	PASS
+calendar	/calendar	100	95	PASS
+add	/add	100	95	PASS
+dashboard	/analytics	100	95	PASS
+summary	/analytics/summary/2026-10	100	95	PASS
+reminders	/reminders	100	95	PASS
+notifications	/notifications	100	95	PASS
+resumes	/resumes	100	95	PASS
+settings	/settings	100	95	PASS
+application	/applications/:id	100	95	PASS

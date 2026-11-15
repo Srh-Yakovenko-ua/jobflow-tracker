@@ -19,14 +19,15 @@ async function openDialog(reply?: HttpResponseResolver) {
   const user = renderInApp(<DeleteAiResultsDialog />);
   const trigger = screen.getByRole('button', TRIGGER);
   await user.click(trigger);
-  const dialog = await screen.findByRole('dialog', DIALOG);
+  const dialog = await screen.findByRole('alertdialog', DIALOG);
   return { user, trigger, dialog, deletes: route.sent };
 }
 
 describe('DeleteAiResultsDialog', () => {
-  it('asks first and says the vacancies and resumes stay', async () => {
+  it('asks first as an alert whose description says the vacancies and resumes stay', async () => {
     const { dialog } = await openDialog();
 
+    expect(screen.getByRole('alertdialog', { description: /^Розбори/ })).toBe(dialog);
     expect(dialog.textContent).toContain(
       'Розбори вакансій, Match Score, профілі резюме, місячне AI-саммарі й драфти фоллоу-апів зникнуть назавжди. Самі вакансії й резюме лишаться. Збережені плани теж лишаться разом із текстом, який написала модель.',
     );
@@ -37,7 +38,7 @@ describe('DeleteAiResultsDialog', () => {
 
     await user.click(screen.getByRole('button', { name: 'Скасувати' }));
 
-    expect(screen.queryByRole('dialog')).toBeNull();
+    expect(screen.queryByRole('alertdialog')).toBeNull();
     expect(deletes).toEqual([]);
   });
 
@@ -47,7 +48,7 @@ describe('DeleteAiResultsDialog', () => {
     await user.click(screen.getByRole('button', { name: 'Видалити' }));
 
     await waitFor(() => {
-      expect(screen.queryByRole('dialog')).toBeNull();
+      expect(screen.queryByRole('alertdialog')).toBeNull();
     });
     expect(deletes).toEqual(['DELETE']);
     expect(document.activeElement).toBe(trigger);
@@ -62,7 +63,7 @@ describe('DeleteAiResultsDialog', () => {
     await user.click(screen.getByRole('button', { name: 'Видалити' }));
 
     expect(await screen.findByText('Не вдалося видалити AI-результати')).toBeDefined();
-    expect(screen.getByRole('dialog', DIALOG)).toBeDefined();
+    expect(screen.getByRole('alertdialog', DIALOG)).toBeDefined();
     expect(deletes).toEqual(['DELETE']);
   });
 });

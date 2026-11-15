@@ -40,13 +40,15 @@ afterEach(() => {
 });
 
 describe('DeleteApplicationDialog', () => {
-  it('names the position and says the card leaves the board', () => {
+  it('asks as an alert named by its question and described by the position leaving the board', () => {
     renderDialog();
 
-    const dialog = screen.getByRole('dialog', DIALOG);
-    expect(dialog.textContent).toContain(
-      'Картка «Senior React Developer» зникне з дошки. Відновити її не вийде.',
-    );
+    expect(
+      screen.getByRole('alertdialog', {
+        ...DIALOG,
+        description: 'Картка «Senior React Developer» зникне з дошки. Відновити її не вийде.',
+      }),
+    ).toBeDefined();
   });
 
   it('Видалити sends one DELETE and reports the card deleted', async () => {
@@ -75,7 +77,7 @@ describe('DeleteApplicationDialog', () => {
     const exits = holdExitAnimations();
     const onDeleted = vi.fn<() => void>();
     const user = renderInApp(<ClosingDialog onDeleted={onDeleted} />);
-    const dialog = screen.getByRole('dialog', DIALOG);
+    const dialog = screen.getByRole('alertdialog', DIALOG);
 
     await user.click(within(dialog).getByRole('button', { name: 'Скасувати' }));
     expect(dialog.isConnected).toBe(true);
@@ -84,7 +86,7 @@ describe('DeleteApplicationDialog', () => {
     await user.click(confirm);
 
     exits.finish();
-    expect(screen.queryByRole('dialog')).toBeNull();
+    expect(screen.queryByRole('alertdialog')).toBeNull();
     expect(onDeleted).not.toHaveBeenCalled();
     expect(route.sent).toEqual([]);
   });
@@ -97,7 +99,7 @@ describe('DeleteApplicationDialog', () => {
     await user.click(screen.getByRole('button', { name: 'Видалити' }));
 
     expect(await screen.findByText('Не вдалося видалити')).toBeDefined();
-    expect(screen.getByRole('dialog', DIALOG)).toBeDefined();
+    expect(screen.getByRole('alertdialog', DIALOG)).toBeDefined();
     expect(actions.onDeleted).not.toHaveBeenCalled();
     expect(deletes).toEqual([ACME_APPLICATION.id]);
   });

@@ -1,13 +1,12 @@
 import { describe, expect, it } from 'vitest';
 
 import { CHART_THEME } from '../../tokens/generated/chart-theme.js';
-import source from '../../tokens/tokens.json';
+import { tokens, withColor } from '../test/tokens.js';
 import { THRESHOLDS } from '../thresholds.js';
+import { contrastRatio } from './contrast.js';
 import { renderThemeCss, renderTokensCss } from './css.js';
 import { bezierOf, renderChartTheme, renderRnTheme } from './native.js';
-import { type ColorToken, parseTokens, type Tokens } from './schema.js';
-
-const tokens = parseTokens(source);
+import { type ColorToken, parseTokens } from './schema.js';
 
 function blockAfter(css: string, selector: string): string {
   const start = css.indexOf(`${selector} {`);
@@ -20,26 +19,6 @@ function lightnessOf(color: ColorToken | undefined): number {
 
 function stepsOf(ladder: number[]): number[] {
   return ladder.slice(1).map((value, index) => value - (ladder[index] ?? value));
-}
-
-function withColor(name: string, value: ColorToken): Tokens {
-  return parseTokens({ ...tokens, color: { ...tokens.color, [name]: value } });
-}
-
-function luminanceOf(hex: string | undefined): number {
-  const channels = (hex?.match(/[\dA-F]{2}/gi) ?? []).map((pair) => {
-    const value = Number.parseInt(pair, 16) / 255;
-    return value <= 0.04045 ? value / 12.92 : ((value + 0.055) / 1.055) ** 2.4;
-  });
-  const [red = 0, green = 0, blue = 0] = channels;
-  return 0.2126 * red + 0.7152 * green + 0.0722 * blue;
-}
-
-function contrastRatio(first: string | undefined, second: string | undefined): number {
-  const [darker, lighter] = [luminanceOf(first), luminanceOf(second)].sort(
-    (left, right) => left - right,
-  );
-  return ((lighter ?? 0) + 0.05) / ((darker ?? 0) + 0.05);
 }
 
 describe('tokens.json', () => {

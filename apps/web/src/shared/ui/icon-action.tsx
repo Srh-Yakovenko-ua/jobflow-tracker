@@ -30,7 +30,7 @@ export function IconButton({ label, icon: Icon, className, ...props }: IconActio
 
 export function IconAction(props: IconActionProps) {
   return (
-    <Tooltip content={props.label}>
+    <Tooltip content={props.label} describes={false}>
       <IconButton {...props} />
     </Tooltip>
   );

@@ -41,7 +41,8 @@
     "test": "vitest run --coverage",
     "test:watch": "vitest watch",
     "tokens:build": "node scripts/build-tokens.js",
-    "tokens:check": "node scripts/build-tokens.js --check"
+    "tokens:check": "node scripts/build-tokens.js --check",
+    "tokens:contrast": "node scripts/check-contrast.js"
   },
   "tsup": {
     "entry": {

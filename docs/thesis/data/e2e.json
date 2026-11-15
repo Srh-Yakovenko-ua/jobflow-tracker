@@ -18,7 +18,7 @@
     },
     {
       "file": "a11y.test.ts",
-      "title": "at 390 px the notifications and application pages pass axe and Tab meets the follow-up before the notes"
+      "title": "at 390 px the notifications and application pages pass axe, Tab meets the follow-up before the notes and the confirm buttons take a 44 px touch"
     },
     {
       "file": "a11y.test.ts",
@@ -45,6 +45,14 @@
       "title": "the dashboard shows the funnel, the offer forecast and the insight headlines"
     },
     {
+      "file": "dashboard.test.ts",
+      "title": "the dashboard with its charts drawn has no serious axe violations in light and the funnel table opens"
+    },
+    {
+      "file": "dashboard.test.ts",
+      "title": "the dashboard with its charts drawn has no serious axe violations in dark and the funnel table opens"
+    },
+    {
       "file": "demo.test.ts",
       "title": "the demo account sees its seeded funnel on the dashboard"
     },
@@ -63,6 +71,78 @@
     {
       "file": "silence-followup.test.ts",
       "title": "a silent card reaches reminders, gets a follow-up, and the panel opens from the table and the calendar"
+    },
+    {
+      "file": "lighthouse.test.ts",
+      "title": "/login scores 95 or more in accessibility"
+    },
+    {
+      "file": "lighthouse.test.ts",
+      "title": "/register scores 95 or more in accessibility"
+    },
+    {
+      "file": "lighthouse.test.ts",
+      "title": "a new user with one application signs in for the signed-in screens"
+    },
+    {
+      "file": "lighthouse.test.ts",
+      "title": "/board scores 95 or more in accessibility"
+    },
+    {
+      "file": "lighthouse.test.ts",
+      "title": "/applications scores 95 or more in accessibility"
+    },
+    {
+      "file": "lighthouse.test.ts",
+      "title": "/calendar scores 95 or more in accessibility"
+    },
+    {
+      "file": "lighthouse.test.ts",
+      "title": "/add scores 95 or more in accessibility"
+    },
+    {
+      "file": "lighthouse.test.ts",
+      "title": "/analytics scores 95 or more in accessibility"
+    },
+    {
+      "file": "lighthouse.test.ts",
+      "title": "/analytics/summary/2026-10 scores 95 or more in accessibility"
+    },
+    {
+      "file": "lighthouse.test.ts",
+      "title": "/reminders scores 95 or more in accessibility"
+    },
+    {
+      "file": "lighthouse.test.ts",
+      "title": "/notifications scores 95 or more in accessibility"
+    },
+    {
+      "file": "lighthouse.test.ts",
+      "title": "/resumes scores 95 or more in accessibility"
+    },
+    {
+      "file": "lighthouse.test.ts",
+      "title": "/settings scores 95 or more in accessibility"
+    },
+    {
+      "file": "lighthouse.test.ts",
+      "title": "/applications/:id scores 95 or more in accessibility"
+    },
+    {
+      "file": "push-delivery.test.ts",
+      "title": "enabling from the offer asks once, subscribes this browser and shows a delivered push"
+    },
+    {
+      "file": "push.test.ts",
+      "title": "a first visit asks for no notification permission and offers no push"
+    },
+    {
+      "file": "push.test.ts",
+      "title": "the service worker and its icon load without a session"
+    },
+    {
+      "file": "push.test.ts",
+      "title": "a silent card brings the push offer, and not now keeps it away after a reload"
     },
     {
       "file": "bookmarklet.test.ts",

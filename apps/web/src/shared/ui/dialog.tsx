@@ -86,7 +86,13 @@ export function DialogOverlay({ className, ...props }: DialogOverlayProps) {
   );
 }
 
-export function DialogContent({ header, children, className, handlers }: DialogContentProps) {
+type DialogSurfaceProps = Readonly<{
+  content: DialogContentProps;
+  role: 'dialog' | 'alertdialog';
+}>;
+
+function DialogSurface({ content, role }: DialogSurfaceProps) {
+  const { header, children, className, handlers } = content;
   const describedBy = header.description ? {} : { 'aria-describedby': undefined };
   return (
     <DialogPrimitive.Portal>
@@ -94,6 +100,7 @@ export function DialogContent({ header, children, className, handlers }: DialogC
       <DialogPrimitive.Content
         {...describedBy}
         {...handlers}
+        role={role}
         className={cn(
           'fixed top-1/2 left-1/2 z-50 flex max-h-[calc(100dvh-32px)] w-[calc(100vw-32px)] max-w-130 -translate-1/2 animate-spring-in flex-col gap-4.5 overflow-y-auto rounded-3xl bg-surface p-6 font-ui text-ink shadow-e3 data-[state=closed]:animate-spring-out',
           className,
@@ -112,4 +119,12 @@ export function DialogContent({ header, children, className, handlers }: DialogC
       </DialogPrimitive.Content>
     </DialogPrimitive.Portal>
   );
+}
+
+export function DialogContent(props: DialogContentProps) {
+  return <DialogSurface content={props} role="dialog" />;
+}
+
+export function AlertDialogContent(props: DialogContentProps) {
+  return <DialogSurface content={props} role="alertdialog" />;
 }

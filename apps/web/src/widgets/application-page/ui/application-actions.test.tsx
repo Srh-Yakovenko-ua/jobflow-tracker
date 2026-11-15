@@ -119,32 +119,53 @@ describe('ApplicationActions', () => {
 
       await user.click(await screen.findByRole('button', { name: 'Ще дії' }));
       await user.click(await screen.findByRole('menuitem', { name: 'Видалити' }));
-      const dialog = await screen.findByRole('dialog', { name: 'Видалити картку?' });
+      const dialog = await screen.findByRole('alertdialog', { name: 'Видалити картку?' });
       await user.click(within(dialog).getByRole('button', { name: 'Видалити' }));
 
       await waitFor(() => {
         expect(left).toHaveBeenCalledWith(...to);
       });
       await waitFor(() => {
-        expect(screen.queryByRole('dialog')).toBeNull();
+        expect([screen.queryByRole('alertdialog'), screen.queryByRole('dialog')]).toEqual([
+          null,
+          null,
+        ]);
       });
       expect(left).toHaveBeenCalledTimes(1);
       expect(deletes).toEqual([ACME_APPLICATION.id]);
     },
   );
 
-  it('Скасувати in the delete dialog sends nothing and returns focus to the title', async () => {
+  it('Скасувати in the delete dialog sends nothing and returns focus to Ще дії', async () => {
     const { user, deletes } = renderApplicationPage();
 
-    await user.click(await screen.findByRole('button', { name: 'Ще дії' }));
+    const more = await screen.findByRole('button', { name: 'Ще дії' });
+    await user.click(more);
     await user.click(await screen.findByRole('menuitem', { name: 'Видалити' }));
     await user.click(await screen.findByRole('button', { name: 'Скасувати' }));
 
-    const heading = await findApplicationTitle();
     await waitFor(() => {
-      expect(document.activeElement).toBe(heading);
+      expect(document.activeElement).toBe(more);
     });
-    expect(screen.queryByRole('dialog', { name: 'Видалити картку?' })).toBeNull();
+    expect(screen.queryByRole('alertdialog', { name: 'Видалити картку?' })).toBeNull();
+    expect(deletes).toEqual([]);
+  });
+
+  it('Escape on the delete confirm opened from the keyboard returns focus to Ще дії', async () => {
+    const { user, deletes } = renderApplicationPage();
+
+    const more = await screen.findByRole('button', { name: 'Ще дії' });
+    more.focus();
+    await user.keyboard('{Enter}');
+    (await screen.findByRole('menuitem', { name: 'Видалити' })).focus();
+    await user.keyboard('{Enter}');
+    await screen.findByRole('alertdialog', { name: 'Видалити картку?' });
+    await user.keyboard('{Escape}');
+
+    await waitFor(() => {
+      expect(document.activeElement).toBe(more);
+    });
+    expect(screen.queryByRole('alertdialog')).toBeNull();
     expect(deletes).toEqual([]);
   });
 
