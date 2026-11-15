@@ -1,0 +1,12 @@
+{
+  "position": "Tech Lead, Node.js",
+  "requirements": [
+    { "name": "Node.js", "weight": "must", "coverage": "full" },
+    { "name": "NestJS", "weight": "must", "coverage": "partial" },
+    { "name": "GraphQL", "weight": "must", "coverage": "partial" },
+    { "name": "Лідерство команди 4+", "weight": "must", "coverage": "missing" },
+    { "name": "Python", "weight": "nice", "coverage": "missing" }
+  ],
+  "explanation": "Node.js сильний; NestJS і GraphQL частково, лідерства і Python у CV немає.",
+  "absent": ["Python", "лідер", "team lead", "тімлід"]
+}

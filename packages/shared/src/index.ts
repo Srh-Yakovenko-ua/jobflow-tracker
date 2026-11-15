@@ -1,6 +1,7 @@
 export * from './ai/call-meta.js';
 export * from './ai/completion.js';
 export * from './ai/contracts.js';
+export * from './ai/cv-hints.js';
 export * from './ai/embed.js';
 export * from './ai/followup.js';
 export * from './ai/kinds.js';
@@ -41,6 +42,7 @@ export * from './schemas/application-list.js';
 export * from './schemas/auth.js';
 export * from './schemas/capture.js';
 export * from './schemas/contact.js';
+export * from './schemas/cv-hints.js';
 export * from './schemas/document-extraction.js';
 export * from './schemas/error-response.js';
 export * from './schemas/followup.js';

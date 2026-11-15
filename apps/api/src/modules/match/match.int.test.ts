@@ -56,8 +56,7 @@ describe('the Match Score of an application', () => {
   );
 
   beforeEach(() => {
-    ai.calls.length = 0;
-    ai.answer = () => Promise.resolve(MATCH_COMPLETION);
+    ai.restart(MATCH_COMPLETION);
   });
 
   async function versionOf(

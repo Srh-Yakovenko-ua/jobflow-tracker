@@ -14,6 +14,7 @@ export const OUTPUT_FAILURES: Record<AiKind, (output: unknown) => string | null>
   match: (output) => matchFailure(matchOutputSchema.parse(output)),
   followup: () => null,
   monthly_summary: () => null,
+  cv_hints: () => null,
 };
 
 export type AiRefusal = { error: AiServiceError; kind: AiKind };
@@ -25,7 +26,7 @@ export const FAILED_CALL = {
   latencyMs: 0,
 } as const;
 
-const FAILS_AT_ONCE: ReadonlySet<AiKind> = new Set(['followup']);
+const FAILS_AT_ONCE: ReadonlySet<AiKind> = new Set(['followup', 'cv_hints']);
 
 export function isFinal({ error, kind }: AiRefusal): boolean {
   const refused = error.status >= 400 && error.status < 500 && error.status !== 429;

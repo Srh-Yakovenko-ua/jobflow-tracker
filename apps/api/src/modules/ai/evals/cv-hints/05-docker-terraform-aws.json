@@ -1,0 +1,12 @@
+{
+  "position": "Full Stack Engineer, platform",
+  "requirements": [
+    { "name": "TypeScript", "weight": "must", "coverage": "full" },
+    { "name": "Docker", "weight": "must", "coverage": "partial" },
+    { "name": "Terraform", "weight": "must", "coverage": "missing" },
+    { "name": "AWS", "weight": "must", "coverage": "missing" },
+    { "name": "React", "weight": "nice", "coverage": "full" }
+  ],
+  "explanation": "TypeScript і React є, Docker частково; Terraform і AWS у CV немає.",
+  "absent": ["Terraform", "AWS", "IaC"]
+}

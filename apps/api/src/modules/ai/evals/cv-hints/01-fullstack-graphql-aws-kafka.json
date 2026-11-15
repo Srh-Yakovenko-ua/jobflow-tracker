@@ -1,0 +1,12 @@
+{
+  "position": "Senior Full Stack Engineer",
+  "requirements": [
+    { "name": "React + TypeScript", "weight": "must", "coverage": "full" },
+    { "name": "Node.js", "weight": "must", "coverage": "full" },
+    { "name": "GraphQL API", "weight": "must", "coverage": "partial" },
+    { "name": "AWS (Lambda, S3)", "weight": "must", "coverage": "missing" },
+    { "name": "Kafka", "weight": "nice", "coverage": "missing" }
+  ],
+  "explanation": "Сильний React і Node.js; GraphQL лише рік, AWS і Kafka в CV немає.",
+  "absent": ["AWS", "Lambda", "Kafka"]
+}

@@ -1,3 +1,4 @@
+import { cvHintsInputSchema } from './cv-hints.js';
 import { followupInputSchema } from './followup.js';
 import type { AiKind } from './kinds.js';
 import { matchInputSchema } from './match.js';
@@ -11,6 +12,7 @@ export const AI_PAYLOAD_FIELDS = {
   match: matchInputSchema.keyof().options,
   followup: followupInputSchema.keyof().options,
   monthly_summary: monthlySummaryInputSchema.keyof().options,
+  cv_hints: cvHintsInputSchema.keyof().options,
 } satisfies Record<AiKind, readonly string[]>;
 
 export type AiPayloadField<Kind extends AiKind> = (typeof AI_PAYLOAD_FIELDS)[Kind][number];

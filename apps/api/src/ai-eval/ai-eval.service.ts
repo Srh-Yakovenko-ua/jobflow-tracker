@@ -2,7 +2,7 @@ import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 
 import {
-  AI_JOB_FAILURES,
+  cvHintsOutputSchema,
   followupOutputSchema,
   matchOutputSchema,
   type ResumeParseOutput,
@@ -14,12 +14,14 @@ import { ConfigService } from '@nestjs/config';
 
 import { pricePerMillionOf, type TokenCounts } from '../ai-usage/ai-cost.js';
 import { Clock } from '../common/clock.js';
-import { ServiceCallError } from '../common/service-call-error.js';
 import type { Env } from '../config/env.js';
 import { AI_PAYLOAD_BUILDERS, AiClient, type AiCompleteCall } from '../modules/ai/index.js';
 import { scoreMatch } from '../modules/match/index.js';
 import { detectResumeFormat, DocumentsClient } from '../modules/resumes/index.js';
+import { type CvHintsEvalCase, loadCvHintsCases } from './cv-hints-cases.js';
+import { type CvHintsCaseAnswer, cvHintsReport } from './cv-hints-report.js';
 import type { EvalReport } from './eval-cases.js';
+import { isStopped, refusalOf, type Stopped } from './eval-refusal.js';
 import { type EvalCall, evalUsageLines } from './eval-usage.js';
 import { type FollowupEvalCase, loadFollowupCases } from './followup-cases.js';
 import { type FollowupCaseAnswer, followupReport } from './followup-report.js';
@@ -29,25 +31,6 @@ import { loadResumeCases, type ResumeEvalCase } from './resume-cases.js';
 import { type ResumeCaseAnswer, resumeReport } from './resume-score.js';
 import { loadVacancyCases, type VacancyEvalCase } from './vacancy-cases.js';
 import { type VacancyCaseAnswer, vacancyReport } from './vacancy-score.js';
-
-const RUN_STOPPERS = new Set<string>([
-  AI_JOB_FAILURES.notReady,
-  AI_JOB_FAILURES.timeout,
-  'documents_timeout',
-]);
-
-type Stopped = { stoppedBy: string };
-
-type Refusal = { error: string } | Stopped;
-
-const isStopped = (outcome: object): outcome is Stopped => 'stoppedBy' in outcome;
-
-function refusalOf(error: unknown): Refusal {
-  if (!(error instanceof ServiceCallError)) {
-    throw error;
-  }
-  return RUN_STOPPERS.has(error.type) ? { stoppedBy: error.type } : { error: error.type };
-}
 
 @Injectable()
 export class AiEvalService {
@@ -84,6 +67,12 @@ export class AiEvalService {
     const cases = await loadFollowupCases(casesDir);
     const answers = await this.answerAll(cases, (evalCase) => this.followupAnswer(evalCase));
     return Array.isArray(answers) ? followupReport(answers) : answers;
+  }
+
+  async cvHints(casesDir: string): Promise<EvalReport> {
+    const cases = await loadCvHintsCases(casesDir);
+    const answers = await this.answerAll(cases, (evalCase) => this.cvHintsAnswer(evalCase));
+    return Array.isArray(answers) ? cvHintsReport(answers) : answers;
   }
 
   async resume(casesDir: string): Promise<EvalReport> {
@@ -156,6 +145,15 @@ export class AiEvalService {
       return { file, input, output: followupOutputSchema.parse(output) };
     } catch (error) {
       return { file, input, ...refusalOf(error) };
+    }
+  }
+
+  private async cvHintsAnswer(evalCase: CvHintsEvalCase): Promise<CvHintsCaseAnswer | Stopped> {
+    try {
+      const { output } = await this.complete({ kind: 'cv_hints', input: evalCase.input });
+      return { ...evalCase, output: cvHintsOutputSchema.parse(output) };
+    } catch (error) {
+      return { ...evalCase, ...refusalOf(error) };
     }
   }
 

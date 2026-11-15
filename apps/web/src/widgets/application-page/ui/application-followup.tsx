@@ -3,28 +3,12 @@ import { useEffect } from 'react';
 
 import { FollowupPanel } from '@/features/generate-followup';
 import { uk } from '@/shared/i18n';
-import { LoadFailedPanel } from '@/shared/ui/error-panel';
-import { TextSkeleton } from '@/shared/ui/skeleton';
 
-import {
-  type ApplicationFollowupState,
-  useApplicationFollowup,
-} from '../model/use-application-followup';
+import { useApplicationFollowup } from '../model/use-application-followup';
+import { AiSectionBody } from './ai-section-body';
 import { ApplicationSection } from './application-section';
 
 export type ApplicationFollowupProps = Readonly<{ application: ApplicationResponse }>;
-
-type FollowupBodyProps = Readonly<{
-  application: ApplicationResponse;
-  followup: ApplicationFollowupState;
-}>;
-
-function FollowupBody({ application, followup }: FollowupBodyProps) {
-  const { load, response, job } = followup;
-  if (load.failed) return <LoadFailedPanel onRetry={load.onRetry} />;
-  if (response === undefined) return <TextSkeleton />;
-  return <FollowupPanel application={application} followup={{ response, job }} />;
-}
 
 const ANCHOR = 'follow-up';
 
@@ -59,7 +43,9 @@ export function ApplicationFollowup({ application }: ApplicationFollowupProps) {
         busy: followup.load.pending,
       }}
     >
-      <FollowupBody application={application} followup={followup} />
+      <AiSectionBody section={followup}>
+        {(ready) => <FollowupPanel application={application} followup={ready} />}
+      </AiSectionBody>
     </ApplicationSection>
   );
 }

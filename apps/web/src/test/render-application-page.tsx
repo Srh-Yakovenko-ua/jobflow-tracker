@@ -2,6 +2,7 @@ import type {
   ApplicationMatchResponse,
   ApplicationResponse,
   ApplicationTimelineResponse,
+  CvHintsResponse,
   FollowupResponse,
 } from '@jobflow/shared';
 import { screen } from '@testing-library/react';
@@ -31,6 +32,7 @@ import {
   undoRoute,
 } from './board-fixtures';
 import { contactRoutes, type ContactRoutesOptions } from './contact-fixtures';
+import { cvHintsRoutes } from './cv-hints-fixtures';
 import { followupRoutes } from './followup-fixtures';
 import { LiveUpdates } from './live-stream';
 import { matchRoute } from './match-fixtures';
@@ -65,6 +67,7 @@ export type ApplicationPageSetup = Partial<Pick<ApplicationRouteOptions, 'reply'
   contacts?: ContactRoutesOptions;
   match?: ApplicationMatchResponse;
   followup?: FollowupResponse;
+  cvHints?: CvHintsResponse;
   resumes?: ResumeRoutesOptions;
   inShell?: boolean;
   live?: boolean;
@@ -135,6 +138,7 @@ export function renderApplicationPage({
   contacts,
   match: matchResponse,
   followup: followupResponse,
+  cvHints: cvHintsResponse,
   resumes,
   inShell = false,
   live,
@@ -151,6 +155,7 @@ export function renderApplicationPage({
   const match = matchRoute(matchResponse);
   const versions = resumeRoutes(resumes);
   const followup = followupRoutes({ response: followupResponse });
+  const cvHints = cvHintsRoutes(cvHintsResponse);
   server.use(
     meRoute(),
     page.handler,
@@ -167,6 +172,7 @@ export function renderApplicationPage({
     match.handler,
     ...versions.handlers,
     ...followup.handlers,
+    ...cvHints.handlers,
   );
   const ui = shownPage({ id, mode, inShell, live, wrap: beside.wrap });
   const { user, view } = renderViewInApp(ui);
@@ -187,6 +193,7 @@ export function renderApplicationPage({
     contacts: recruiters.sent,
     match,
     followup,
+    cvHints,
     resumes: versions.sent,
   };
 }

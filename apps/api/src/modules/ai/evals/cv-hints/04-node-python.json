@@ -1,0 +1,11 @@
+{
+  "position": "Full Stack Developer (Node.js / Python)",
+  "requirements": [
+    { "name": "Node.js", "weight": "must", "coverage": "full" },
+    { "name": "Python (Django)", "weight": "must", "coverage": "missing" },
+    { "name": "PostgreSQL", "weight": "nice", "coverage": "full" },
+    { "name": "GraphQL", "weight": "nice", "coverage": "partial" }
+  ],
+  "explanation": "Node.js і PostgreSQL є; Python у CV немає, GraphQL трохи.",
+  "absent": ["Python", "Django"]
+}

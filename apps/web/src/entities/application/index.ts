@@ -1,12 +1,13 @@
 export { applicationQueryOptions } from './api/application';
 export { boardQueryOptions } from './api/board';
+export { applicationCvHintsQueryOptions } from './api/cv-hints';
 export { applicationFollowupQueryOptions } from './api/followup';
 export { jobQueryOptions } from './api/job';
 export { applicationListQueryOptions } from './api/list';
 export { applicationMatchQueryOptions } from './api/match';
 export { applicationTableQueryOptions } from './api/table';
 export { timelineQueryOptions } from './api/timeline';
-export { aiJobOf } from './lib/ai-job';
+export { aiJobOf, jobWaiting } from './lib/ai-job';
 export { daysInFunnelOf } from './lib/days-in-funnel';
 export {
   cardHrefOf,

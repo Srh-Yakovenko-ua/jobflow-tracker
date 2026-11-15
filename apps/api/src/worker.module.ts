@@ -13,6 +13,7 @@ import { AiWorkerModule } from './modules/ai/index.js';
 import { AnalyticsCacheWorkerModule } from './modules/analytics-cache/index.js';
 import { ApplicationsWorkerModule } from './modules/applications/index.js';
 import { CaptureWorkerModule } from './modules/capture/index.js';
+import { CvHintsWorkerModule } from './modules/cv-hints/index.js';
 import { FollowupsWorkerModule } from './modules/followups/index.js';
 import { MaintenanceWorkerModule } from './modules/maintenance/index.js';
 import { MatchWorkerModule } from './modules/match/index.js';
@@ -41,6 +42,7 @@ import { QueuesModule } from './queues/queues.module.js';
     ResumesWorkerModule,
     MatchWorkerModule,
     FollowupsWorkerModule,
+    CvHintsWorkerModule,
     SummariesWorkerModule,
     AccountWorkerModule,
     RemindersWorkerModule,

@@ -1,4 +1,5 @@
 import {
+  byPointsLostThenName,
   type MatchBreakdown,
   type MatchCoverage,
   matchFailure,
@@ -26,9 +27,6 @@ type MissingRequirement = MatchBreakdown['missing'][number];
 const isWeighed = (requirement: MatchRequirement): requirement is WeighedRequirement =>
   requirement.weight !== 'mentioned';
 
-const byLossThenName = (left: MissingRequirement, right: MissingRequirement) =>
-  right.pointsLost - left.pointsLost || left.name.localeCompare(right.name, 'en');
-
 const earnedOf = ({ weight, coverage }: WeighedRequirement) =>
   MATCH_POINTS[weight] * COVERAGE_CREDIT[coverage];
 
@@ -49,7 +47,7 @@ function missingOf(requirements: ScoredRequirement[]): MissingRequirement[] {
   return requirements
     .filter(({ coverage }) => coverage === 'missing')
     .map(({ name, weight, pointsLost }) => ({ name, weight, pointsLost }))
-    .sort(byLossThenName);
+    .sort(byPointsLostThenName);
 }
 
 export function scoreMatch(output: MatchOutput): MatchBreakdown | null {

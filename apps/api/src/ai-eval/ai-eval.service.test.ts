@@ -3,7 +3,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { matchInputSchema } from '@jobflow/shared';
+import { cvHintsInputSchema, matchInputSchema } from '@jobflow/shared';
 import {
   buildFollowupInput,
   buildMatchCompletion,
@@ -18,6 +18,7 @@ import { validateEnv } from '../config/env.js';
 import { AiClient, AiServiceError } from '../modules/ai/index.js';
 import { DocumentsClient, DocumentsError } from '../modules/resumes/index.js';
 import {
+  CV_HINTS_COMPLETION,
   FakeAiClient,
   FOLLOWUP_COMPLETION,
   MATCH_COMPLETION,
@@ -320,5 +321,48 @@ describe('AiEvalService.followup', () => {
       '## 01-uk.json',
     ]);
     expect(report.passed).toBe(true);
+  });
+});
+
+const CV_HINTS_CASES_DIR = fileURLToPath(new URL('../modules/ai/evals/cv-hints', import.meta.url));
+
+function gapsOnly(ai: FakeAiClient): FakeAiClient['answer'] {
+  return () => {
+    const sent = cvHintsInputSchema.parse(ai.calls.at(-1)?.input);
+    const gaps = sent.requirements.filter(({ coverage }) => coverage === 'missing');
+    const output = { hints: [], gaps: gaps.map(({ name }) => name) };
+    return Promise.resolve({ ...CV_HINTS_COMPLETION, output });
+  };
+}
+
+describe('AiEvalService.cvHints', () => {
+  it('sends each case as a cv_hints input and prints the gaps of every answer', async () => {
+    const ai = new FakeAiClient();
+    ai.answer = gapsOnly(ai);
+
+    const report = await (await evalService(ai)).cvHints(CV_HINTS_CASES_DIR);
+
+    expect(ai.calls).toHaveLength(8);
+    expect(new Set(ai.calls.map(({ kind }) => kind))).toEqual(new Set(['cv_hints']));
+    expect(report.lines.slice(0, 2)).toEqual([
+      'case\thints\tevidence_not_in_cv\tforeign_requirement\tabsent_named\tresult',
+      '01-fullstack-graphql-aws-kafka.json\t0\t0\t0\t0\tok',
+    ]);
+    expect(report.lines).toContain('gaps: AWS (Lambda, S3); Kafka');
+    expect(report.passed).toBe(true);
+  });
+
+  it('counts a 422 ai_invalid_output as a failed case and goes on to the next one', async () => {
+    const ai = new FakeAiClient();
+    const answer = gapsOnly(ai);
+    ai.answer = () => (ai.calls.length === 1 ? Promise.reject(INVALID_OUTPUT) : answer());
+
+    const report = await (await evalService(ai)).cvHints(CV_HINTS_CASES_DIR);
+
+    expect(ai.calls).toHaveLength(8);
+    expect(report.lines[1]).toBe(
+      '01-fullstack-graphql-aws-kafka.json\t-\t-\t-\t-\tai_invalid_output',
+    );
+    expect(report.passed).toBe(false);
   });
 });

@@ -16,6 +16,7 @@ import {
   buildResumeParseOutput,
   buildVacancyCompletion,
   buildVacancyParseOutput,
+  CV_HINTS_OUTPUT,
   VACANCY_SAMPLE_TEXT,
   vacancyFieldOf,
 } from '@jobflow/shared/testing';
@@ -130,6 +131,12 @@ export const FOLLOWUP_COMPLETION: AiCompletion<'followup'> = {
   promptVersion: AI_PROMPT_VERSIONS.followup,
 };
 
+export const CV_HINTS_COMPLETION: AiCompletion<'cv_hints'> = {
+  ...VACANCY_COMPLETION,
+  output: CV_HINTS_OUTPUT,
+  promptVersion: AI_PROMPT_VERSIONS.cv_hints,
+};
+
 export const FOLLOWUP_JOB: AiCompleteJob = {
   aiJobId: AI_JOB_ID,
   userId: OLENA_ID,
@@ -223,6 +230,11 @@ export class FakeAiClient {
   complete(call: AiCompleteCall): Promise<AiCompletion<AiKind>> {
     this.calls.push(call);
     return this.answer();
+  }
+
+  restart(completion: AiCompletion<AiKind>): void {
+    this.calls.length = 0;
+    this.answer = () => Promise.resolve(completion);
   }
 }
 

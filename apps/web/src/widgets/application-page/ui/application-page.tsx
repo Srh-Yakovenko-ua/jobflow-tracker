@@ -25,13 +25,11 @@ import { ApplicationActions, type ApplicationFocusTargets } from './application-
 import { ApplicationContext } from './application-context';
 import { ApplicationFollowup } from './application-followup';
 import { ApplicationHeader } from './application-header';
-import { ApplicationMatch } from './application-match';
-import { ApplicationNotes } from './application-notes';
 import { ApplicationRecruiter } from './application-recruiter';
 import { ApplicationSchedule } from './application-schedule';
-import { ApplicationTimeline } from './application-timeline';
 import { AttachedResume } from './attached-resume';
 import { PageColumns } from './page-columns';
+import { PageMain } from './page-main';
 import { type ApplicationPageMode, PageTopBar } from './page-top-bar';
 
 export type { ApplicationPageMode } from './page-top-bar';
@@ -148,13 +146,7 @@ function LoadedPage({ application, page, view }: LoadedPageProps) {
             </ApplicationHeader>
           ),
           followup: <ApplicationFollowup application={application} />,
-          main: (
-            <>
-              <ApplicationMatch match={match} />
-              <ApplicationTimeline application={application} />
-              <ApplicationNotes key={application.id} application={application} />
-            </>
-          ),
+          main: <PageMain application={application} match={match} />,
           side: (
             <>
               <ApplicationRecruiter key={application.id} application={application} />

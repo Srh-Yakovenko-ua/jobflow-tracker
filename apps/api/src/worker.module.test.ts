@@ -14,6 +14,7 @@ import {
 } from './modules/applications/index.js';
 import { JwtKeys } from './modules/auth/index.js';
 import { CaptureSubscriber } from './modules/capture/index.js';
+import { CvHintsSubscriber } from './modules/cv-hints/index.js';
 import { FollowupsSubscriber } from './modules/followups/index.js';
 import { LivePublisher } from './modules/live/index.js';
 import { MaintenanceProcessor, MaintenanceScheduler } from './modules/maintenance/index.js';
@@ -63,6 +64,7 @@ describe('WorkerModule', () => {
       MatchTriggerSubscriber,
       MatchTriggerProcessor,
       FollowupsSubscriber,
+      CvHintsSubscriber,
       LivePublisher,
       RemindersSubscriber,
       NotificationsSubscriber,

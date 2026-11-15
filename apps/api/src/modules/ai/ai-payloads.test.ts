@@ -7,7 +7,7 @@ import {
   type NoteInput,
   resumeParseInputSchema,
 } from '@jobflow/shared';
-import { buildFollowupInput } from '@jobflow/shared/testing';
+import { buildFollowupInput, CV_HINTS_INPUT } from '@jobflow/shared/testing';
 import { describe, expect, it } from 'vitest';
 
 import {
@@ -17,6 +17,7 @@ import {
   RESUME_PROFILE,
   VACANCY_TEXT,
 } from '../../test/ai.js';
+import { MATCH_BREAKDOWN } from '../../test/cv-hints.js';
 import {
   RESUME_TEXT,
   SCAN_EXTRACTION,
@@ -142,6 +143,32 @@ describe('AI_PAYLOAD_BUILDERS.followup', () => {
       hint: null,
     });
     expect(followupInputSchema.safeParse(payload).success).toBe(true);
+  });
+});
+
+describe('AI_PAYLOAD_BUILDERS.cv_hints', () => {
+  const SOURCE = { position: 'Senior React developer', profile: RESUME_PROFILE };
+
+  it('sends every weighed requirement largest loss first with its coverage, and the profile without employers, languages or skill positions', () => {
+    const payload = AI_PAYLOAD_BUILDERS.cv_hints({ ...SOURCE, breakdown: MATCH_BREAKDOWN });
+
+    expect(payload).toEqual(CV_HINTS_INPUT);
+    expect(Object.keys(payload)).toEqual(AI_PAYLOAD_FIELDS.cv_hints);
+    expect(JSON.stringify(payload)).not.toMatch(/company|languages|"positions":\[\d|Домен fintech/);
+    expect(privatePayloadPaths(payload)).toEqual([]);
+  });
+
+  it('breaks a tie in lost points by the requirement name', () => {
+    const tied = { name: 'Docker', weight: 'nice', pointsLost: 9 } as const;
+    const breakdown = { ...MATCH_BREAKDOWN, missing: [...MATCH_BREAKDOWN.missing, tied] };
+
+    const { requirements } = AI_PAYLOAD_BUILDERS.cv_hints({ ...SOURCE, breakdown });
+
+    expect(requirements.map(({ name }) => name).slice(0, 3)).toEqual([
+      'AWS / інфраструктура',
+      'Docker',
+      'Досвід ліда команди 3+',
+    ]);
   });
 });
 
