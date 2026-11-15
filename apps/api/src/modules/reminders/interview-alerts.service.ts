@@ -3,17 +3,18 @@ import { Injectable } from '@nestjs/common';
 import { differenceInMinutes } from 'date-fns';
 
 import { PrismaService } from '../../prisma/prisma.service.js';
+import { InterviewPrepService } from '../interview-prep/index.js';
 import { type NewNotification, NotificationsService } from '../notifications/index.js';
 import {
   type DueInterviewRow,
   type InterviewAlertChange,
   InterviewAlertsRepository,
 } from './interview-alerts.repository.js';
-import { nextInterviewReminderAt } from './interview-reminders.js';
+import { isInterviewPrepMark, nextInterviewReminderAt } from './interview-reminders.js';
 
 type DueInterview = { row: DueInterviewRow; now: Date };
 
-type Settlement = { next: InterviewAlertChange; alert?: NewNotification };
+type Settlement = { next: InterviewAlertChange; alert?: NewNotification; prepares?: true };
 
 const OPEN: readonly Stage[] = OPEN_STAGES;
 
@@ -29,6 +30,9 @@ function settlementOf({ row, now }: DueInterview): Settlement {
     return { next: { status: 'done' } };
   }
   const dueAt = nextInterviewReminderAt(event.startsAt, now);
+  if (dueAt !== null && isInterviewPrepMark(event.startsAt, now)) {
+    return { next: { dueAt }, prepares: true };
+  }
   const payload = {
     applicationId: row.applicationId,
     scheduledEventId: event.id,
@@ -47,6 +51,7 @@ export class InterviewAlertsService {
   constructor(
     private readonly alerts: InterviewAlertsRepository,
     private readonly notifications: NotificationsService,
+    private readonly interviewPrep: InterviewPrepService,
     private readonly prisma: PrismaService,
   ) {}
 
@@ -60,10 +65,13 @@ export class InterviewAlertsService {
   }
 
   private settle(userId: string, due: DueInterview): Promise<boolean> {
-    const { next, alert } = settlementOf(due);
-    const { id, dueAt } = due.row;
+    const { next, alert, prepares } = settlementOf(due);
+    const { id, dueAt, applicationId } = due.row;
     return this.prisma.$transaction(async (tx) => {
       const count = await this.alerts.rearmInterview(userId, { id, dueAt, next, tx });
+      if (count > 0 && prepares) {
+        await this.interviewPrep.suggest(userId, { applicationId, tx });
+      }
       if (count === 0 || alert === undefined) {
         return false;
       }

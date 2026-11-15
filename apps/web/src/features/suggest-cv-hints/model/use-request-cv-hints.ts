@@ -1,12 +1,8 @@
 'use client';
 
 import type { ApplicationResponse } from '@jobflow/shared';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
 
-import { applicationKeys } from '@/entities/application';
-import { useSubmitKey } from '@/shared/api';
-
-import { requestCvHints } from '../api/request-cv-hints';
+import { useApplicationAiRequest } from '@/entities/application';
 
 export type RequestedCvHints = Readonly<{
   isPending: boolean;
@@ -14,18 +10,8 @@ export type RequestedCvHints = Readonly<{
   request: () => void;
 }>;
 
-const SUBMIT = { kind: 'cv-hints' } as const;
-
 export function useRequestCvHints(applicationId: ApplicationResponse['id']): RequestedCvHints {
-  const queryClient = useQueryClient();
-  const submitKey = useSubmitKey();
-  const mutation = useMutation({
-    mutationFn: () => requestCvHints({ applicationId, idempotencyKey: submitKey.keyFor(SUBMIT) }),
-    onSuccess: () => {
-      submitKey.reset();
-      return queryClient.invalidateQueries({ queryKey: applicationKeys.cvHints(applicationId) });
-    },
-  });
+  const mutation = useApplicationAiRequest({ applicationId, segment: 'cv-hints' });
   return {
     isPending: mutation.isPending,
     refused: mutation.isError,

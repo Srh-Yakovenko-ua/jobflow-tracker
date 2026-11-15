@@ -6,6 +6,7 @@ import {
   CircleDashed,
   Download,
   Ghost,
+  ListChecks,
   type LucideIcon,
   PhoneCall,
   Sparkles,
@@ -32,6 +33,7 @@ const ICONS: Record<Notification['type'], LucideIcon> = {
   monthly_summary_ready: Sparkles,
   auto_ghosted: Ghost,
   export_ready: Download,
+  interview_prep_ready: ListChecks,
 };
 
 const FADE = 'transition-[background-color,color,opacity] duration-(--duration-base) ease-standard';

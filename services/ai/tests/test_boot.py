@@ -18,6 +18,7 @@ def test_reads_the_prompt_versions_exported_from_the_shared_package() -> None:
         "followup": "v3",
         "monthly_summary": "v1",
         "cv_hints": "v1",
+        "interview_prep": "v1",
     }
 
 

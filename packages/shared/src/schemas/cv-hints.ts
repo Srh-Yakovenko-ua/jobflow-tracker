@@ -1,11 +1,11 @@
 import { z } from 'zod';
 
 import { cvHintsOutputSchema } from '../ai/cv-hints.js';
-import { jobStatusSchema } from './job.js';
+import { aiResultJobSchema, generatedAtShape } from './job.js';
 
 export const cvHintsResponseSchema = z.object({
-  result: cvHintsOutputSchema.extend({ generatedAt: z.iso.datetime() }).nullable(),
-  job: jobStatusSchema.pick({ id: true, status: true, errorType: true }).nullable(),
+  result: cvHintsOutputSchema.extend(generatedAtShape).nullable(),
+  job: aiResultJobSchema,
 });
 
 export type CvHintsResponse = z.infer<typeof cvHintsResponseSchema>;

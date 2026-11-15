@@ -3,11 +3,18 @@ import {
   type Application,
   type Contact,
   followupInputSchema,
+  type Insight,
+  interviewPrepInputSchema,
   matchInputSchema,
   type NoteInput,
   resumeParseInputSchema,
 } from '@jobflow/shared';
-import { buildFollowupInput, CV_HINTS_INPUT } from '@jobflow/shared/testing';
+import {
+  buildDesignReasons,
+  buildFollowupInput,
+  CV_HINTS_INPUT,
+  designInsightsBody,
+} from '@jobflow/shared/testing';
 import { describe, expect, it } from 'vitest';
 
 import {
@@ -24,6 +31,7 @@ import {
   SCAN_PAGE_JPEG,
   TEXT_EXTRACTION,
 } from '../../test/documents.js';
+import { DESIGN_WEAK_SPOTS, INTERVIEW_PREP_VACANCY } from '../../test/interview-prep.js';
 import { privatePayloadPaths } from './ai-payload-guard.js';
 import { AI_PAYLOAD_BUILDERS, type VacancySource } from './ai-payloads.js';
 import type { FollowupSource } from './followup-payload.js';
@@ -169,6 +177,86 @@ describe('AI_PAYLOAD_BUILDERS.cv_hints', () => {
       'Docker',
       'Досвід ліда команди 3+',
     ]);
+  });
+});
+
+type DesignReason = ReturnType<typeof buildDesignReasons>['stages'][number]['reasons'][number];
+
+const skillsGapAsCandidateSide = (reason: DesignReason): DesignReason =>
+  reason.code === 'skills_gap' ? { ...reason, code: 'accepted_other' } : reason;
+
+describe('AI_PAYLOAD_BUILDERS.interview_prep', () => {
+  const WEAK_SPOTS = { reasons: buildDesignReasons(), insights: designInsightsBody() };
+
+  it('sends the vacancy part, the company-side reason codes by count and only the topic codes of the insights', () => {
+    const payload = AI_PAYLOAD_BUILDERS.interview_prep({
+      vacancy: INTERVIEW_PREP_VACANCY,
+      weakSpots: WEAK_SPOTS,
+    });
+
+    expect(payload).toEqual({
+      ...INTERVIEW_PREP_VACANCY,
+      weakSpots: DESIGN_WEAK_SPOTS,
+    });
+    expect(Object.keys(payload).sort()).toEqual([...AI_PAYLOAD_FIELDS.interview_prep].sort());
+    expect(JSON.stringify(payload)).not.toMatch(/live-coding|валять|нотатках/);
+    expect(privatePayloadPaths(payload)).toEqual([]);
+    expect(interviewPrepInputSchema.safeParse(payload).success).toBe(true);
+  });
+
+  it('leaves out a candidate-side reason even when it is the most frequent', () => {
+    const reasons = buildDesignReasons();
+    const candidateSide = {
+      ...reasons,
+      stages: reasons.stages.map((stage) => ({
+        ...stage,
+        reasons: stage.reasons.map(skillsGapAsCandidateSide),
+      })),
+    };
+
+    const { weakSpots } = AI_PAYLOAD_BUILDERS.interview_prep({
+      vacancy: INTERVIEW_PREP_VACANCY,
+      weakSpots: { ...WEAK_SPOTS, reasons: candidateSide },
+    });
+
+    expect(weakSpots.reasons.map(({ code }) => code)).toEqual([
+      'english_level',
+      'salary_expectations',
+      'chose_other',
+      'position_closed',
+      'no_explanation',
+    ]);
+  });
+
+  it('keeps each topic code once and drops a topic that is not a code or not a string', () => {
+    const insights = designInsightsBody();
+    const topicInsight = (topic: string | number): Insight => ({
+      block: 'reasons',
+      title: 'live-coding',
+      body: 'live-coding',
+      severity: 'warning',
+      evidence: { topic },
+    });
+    const extra = ['algorithms', 'Live coding!', 7, 'system_design'].map(topicInsight);
+
+    const { weakSpots } = AI_PAYLOAD_BUILDERS.interview_prep({
+      vacancy: INTERVIEW_PREP_VACANCY,
+      weakSpots: {
+        ...WEAK_SPOTS,
+        insights: { ...insights, insights: [...insights.insights, ...extra] },
+      },
+    });
+
+    expect(weakSpots.topics).toEqual(['algorithms', 'system_design']);
+  });
+
+  it('sends empty weak spots when analytics gave none', () => {
+    const payload = AI_PAYLOAD_BUILDERS.interview_prep({
+      vacancy: INTERVIEW_PREP_VACANCY,
+      weakSpots: null,
+    });
+
+    expect(payload.weakSpots).toEqual({ reasons: [], topics: [] });
   });
 });
 

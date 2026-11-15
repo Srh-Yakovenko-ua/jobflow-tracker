@@ -7,7 +7,7 @@ import {
   followupOutputSchema,
   followupToneSchema,
 } from '../ai/followup.js';
-import { jobStatusSchema } from './job.js';
+import { aiResultJobSchema, generatedAtShape } from './job.js';
 import { withoutNul } from './text.js';
 
 export const followupRequestFieldsSchema = z.object({
@@ -25,8 +25,8 @@ const withoutEmptyHint = ({ hint, ...request }: FollowupRequestFields) =>
 export const followupRequestSchema = followupRequestFieldsSchema.transform(withoutEmptyHint);
 
 export const followupResponseSchema = z.object({
-  draft: followupOutputSchema.extend({ generatedAt: z.iso.datetime() }).nullable(),
-  job: jobStatusSchema.pick({ id: true, status: true, errorType: true }).nullable(),
+  draft: followupOutputSchema.extend(generatedAtShape).nullable(),
+  job: aiResultJobSchema,
   language: followupLanguageSchema,
   silenceDays: followupInputSchema.shape.silenceDays,
 });

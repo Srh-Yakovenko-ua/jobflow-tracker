@@ -17,6 +17,7 @@ import {
   buildVacancyCompletion,
   buildVacancyParseOutput,
   CV_HINTS_OUTPUT,
+  INTERVIEW_PREP_OUTPUT,
   VACANCY_SAMPLE_TEXT,
   vacancyFieldOf,
 } from '@jobflow/shared/testing';
@@ -135,6 +136,12 @@ export const CV_HINTS_COMPLETION: AiCompletion<'cv_hints'> = {
   ...VACANCY_COMPLETION,
   output: CV_HINTS_OUTPUT,
   promptVersion: AI_PROMPT_VERSIONS.cv_hints,
+};
+
+export const INTERVIEW_PREP_COMPLETION: AiCompletion<'interview_prep'> = {
+  ...VACANCY_COMPLETION,
+  output: INTERVIEW_PREP_OUTPUT,
+  promptVersion: AI_PROMPT_VERSIONS.interview_prep,
 };
 
 export const FOLLOWUP_JOB: AiCompleteJob = {

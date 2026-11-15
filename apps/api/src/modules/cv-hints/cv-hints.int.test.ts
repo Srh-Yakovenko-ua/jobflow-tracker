@@ -1,16 +1,20 @@
-import { captureRetryResponseSchema, cvHintsResponseSchema } from '@jobflow/shared';
+import { cvHintsResponseSchema } from '@jobflow/shared';
 import { CV_HINTS_INPUT, CV_HINTS_OUTPUT } from '@jobflow/shared/testing';
-import type { INestApplicationContext } from '@nestjs/common';
 import { beforeEach, describe, expect, it } from 'vitest';
 
 import { Prisma } from '../../generated/prisma/client.js';
-import { OutboxRelayService } from '../../outbox/outbox-relay.service.js';
 import type { PrismaService } from '../../prisma/prisma.service.js';
-import { CV_HINTS_COMPLETION, FakeAiClient, storedAiJob } from '../../test/ai.js';
+import { CV_HINTS_COMPLETION, FakeAiClient } from '../../test/ai.js';
 import { useTestApp } from '../../test/app.js';
+import {
+  AI_WORKER_TEST,
+  applicationAiRoute,
+  postedTwice,
+  servedFromCache,
+} from '../../test/application-ai-route.js';
 import { cvHintsPath, type ScoredOwner, scoredOwner } from '../../test/cv-hints.js';
 import { createAiJob, createAiResult } from '../../test/factories.js';
-import { callRoute, statusAndType } from '../../test/http.js';
+import { statusAndType } from '../../test/http.js';
 import { memoryLog } from '../../test/memory-log.js';
 import { outboxRows } from '../../test/outbox.js';
 import { daysBefore } from '../../test/time.js';
@@ -18,13 +22,7 @@ import { useTestWorkers } from '../../test/worker.js';
 import { AiClient, AiServiceError } from '../ai/index.js';
 import { CvHintsRepository } from './cv-hints.repository.js';
 
-const WORKER_TEST = { timeout: 45_000 };
-
-const SETTLED = { timeout: 30_000 };
-
 const REQUESTED_EVENT = { eventType: 'application.cv_hints_requested' };
-
-type Caller = Pick<ScoredOwner, 'applicationId'> & { accessToken?: string | undefined };
 
 const log = memoryLog();
 
@@ -42,28 +40,8 @@ describe('the CV hints API', () => {
 
   const owner = () => scoredOwner(testApp.prisma);
 
-  const call = (method: 'get' | 'post', { accessToken, applicationId }: Caller) =>
-    callRoute(testApp.app, { method, path: cvHintsPath(applicationId), accessToken });
-
-  async function requested(caller: Caller): Promise<string> {
-    const response = await call('post', caller);
-    expect(response.status).toBe(202);
-    return captureRetryResponseSchema.parse(response.body).jobId;
-  }
-
-  async function read(caller: Caller) {
-    const response = await call('get', caller);
-    expect(response.status).toBe(200);
-    return cvHintsResponseSchema.parse(response.body);
-  }
-
-  async function settled(worker: INestApplicationContext, jobId: string) {
-    await worker.get(OutboxRelayService, { strict: false }).relay();
-    await expect
-      .poll(async () => (await storedAiJob(testApp.prisma, jobId)).status, SETTLED)
-      .toMatch(/^(done|failed)$/);
-    return storedAiJob(testApp.prisma, jobId);
-  }
+  const route = applicationAiRoute(testApp, { path: cvHintsPath, response: cvHintsResponseSchema });
+  const { call, requested, read, settled } = route;
 
   const cvHintsResultsOf = (userId: string) =>
     testApp.prisma.aiResult.findMany({
@@ -73,23 +51,22 @@ describe('the CV hints API', () => {
 
   it(
     'answers queued, then done with the hints, and serves the same input again from one cached and costed ai_results row',
-    WORKER_TEST,
+    AI_WORKER_TEST,
     async () => {
       const olena = await owner();
       const worker = await workers.compile();
 
-      const firstId = await requested(olena);
-      const whileQueued = await read(olena);
-      await worker.init();
-      const first = await settled(worker, firstId);
-      const secondId = await requested(olena);
-      const second = await settled(worker, secondId);
+      const { firstId, secondId, whileQueued, first, second } = await servedFromCache(route, {
+        caller: olena,
+        worker,
+      });
 
       expect(whileQueued).toEqual({
         result: null,
         job: { id: firstId, status: 'queued', errorType: null },
       });
       expect([first.status, second.status]).toEqual(['done', 'done']);
+      expect(secondId).not.toBe(firstId);
       expect(second.aiResultId).toBe(first.aiResultId);
       expect(ai.calls).toEqual([
         expect.objectContaining({ kind: 'cv_hints', input: CV_HINTS_INPUT }),
@@ -108,12 +85,11 @@ describe('the CV hints API', () => {
   it('writes the request event with the built input and answers the running job to a second request', async () => {
     const olena = await owner();
 
-    const first = await call('post', olena);
-    const second = await call('post', olena);
+    const { first, second, jobId, requestId } = await postedTwice(route, olena);
 
     expect([first.status, second.status]).toEqual([202, 202]);
     expect(second.body).toEqual(first.body);
-    const { jobId } = captureRetryResponseSchema.parse(first.body);
+    expect(await testApp.prisma.aiJob.count({ where: { kind: 'cv_hints' } })).toBe(1);
     expect(await outboxRows(testApp.prisma, REQUESTED_EVENT)).toEqual([
       {
         aggregate: 'application',
@@ -124,14 +100,14 @@ describe('the CV hints API', () => {
           applicationId: olena.applicationId,
           resumeVersionId: olena.resumeVersionId,
           aiJobId: jobId,
-          requestId: first.get('x-request-id'),
+          requestId,
           input: CV_HINTS_INPUT,
         },
       },
     ]);
   });
 
-  it('answers failed with the error type once services/ai times out', WORKER_TEST, async () => {
+  it('answers failed with the error type once services/ai times out', AI_WORKER_TEST, async () => {
     ai.answer = () => Promise.reject(new AiServiceError({ status: 504, type: 'ai_timeout' }));
     const olena = await owner();
     const worker = await (await workers.compile()).init();

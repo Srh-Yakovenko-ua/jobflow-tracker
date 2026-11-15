@@ -19,6 +19,7 @@ import { CvHintsModule } from './modules/cv-hints/index.js';
 import { EventsModule } from './modules/events/index.js';
 import { FollowupsModule } from './modules/followups/index.js';
 import { HealthModule } from './modules/health/index.js';
+import { InterviewPrepModule } from './modules/interview-prep/index.js';
 import { JobsModule } from './modules/jobs/index.js';
 import { LiveStreamModule } from './modules/live/index.js';
 import { MaintenanceModule } from './modules/maintenance/index.js';
@@ -69,6 +70,7 @@ import { RedisModule } from './redis/redis.module.js';
     MatchModule,
     FollowupsModule,
     CvHintsModule,
+    InterviewPrepModule,
     PlansModule,
     SummariesModule,
     JobsModule,

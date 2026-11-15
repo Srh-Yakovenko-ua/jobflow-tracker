@@ -6,17 +6,21 @@ import {
 
 import { apiClient } from '@/shared/api';
 
-export type RequestCvHints = Readonly<{
+export type ApplicationAiSegment = 'cv-hints' | 'interview-prep';
+
+export type ApplicationAiJobRequest = Readonly<{
   applicationId: ApplicationResponse['id'];
+  segment: ApplicationAiSegment;
   idempotencyKey: string;
 }>;
 
-export function requestCvHints({
+export function requestApplicationAiJob({
   applicationId,
+  segment,
   idempotencyKey,
-}: RequestCvHints): Promise<CaptureRetryResponse> {
+}: ApplicationAiJobRequest): Promise<CaptureRetryResponse> {
   return apiClient.request({
-    path: `/applications/${applicationId}/cv-hints`,
+    path: `/applications/${applicationId}/${segment}`,
     method: 'POST',
     schema: captureRetryResponseSchema,
     idempotencyKey,

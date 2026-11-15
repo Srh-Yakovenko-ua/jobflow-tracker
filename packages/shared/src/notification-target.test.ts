@@ -6,6 +6,7 @@ import {
   AI_DONE,
   APPLICATION_ID,
   EXPORT_READY,
+  INTERVIEW_PREP_READY,
   INTERVIEW_SOON,
   MONTHLY_SUMMARY_READY,
   NOTIFICATION_ROW,
@@ -107,6 +108,15 @@ describe('notificationTargetOf', () => {
       name: 'export_ready opens the account settings with its export',
       notification: { ...NOTIFICATION_ROW, type: 'export_ready', payload: EXPORT_READY },
       target: '/settings?export=0199f1a2-7c3b-7d4e-8f50-6a7b8c9d0e24#account',
+    },
+    {
+      name: 'interview_prep_ready opens the card holding the pack',
+      notification: {
+        ...NOTIFICATION_ROW,
+        type: 'interview_prep_ready',
+        payload: INTERVIEW_PREP_READY,
+      },
+      target: `/applications/${APPLICATION_ID}`,
     },
   ])('$name', ({ notification, target }) => {
     expect(notificationTargetOf(notification)).toBe(target);

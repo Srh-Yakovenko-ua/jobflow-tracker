@@ -5,6 +5,7 @@ import {
   AUTO_GHOSTED_NOTIFICATION,
   buildNotification,
   EXPORT_READY_NOTIFICATION,
+  INTERVIEW_PREP_READY_NOTIFICATION,
 } from '@/test/notification-fixtures';
 
 import { notificationCopyOf } from './notification-copy';
@@ -25,6 +26,14 @@ describe('notificationCopyOf', () => {
       title: 'Архів з даними готовий',
       text: 'Архів CSV чекає в налаштуваннях акаунта.',
       action: 'Завантажити архів',
+    });
+  });
+
+  it('interview_prep_ready names the day, the interview kind and the company, and says the prep is ready', () => {
+    expect(notificationCopyOf(INTERVIEW_PREP_READY_NOTIFICATION, TIME_ZONE)).toEqual({
+      title: "Завтра техінтерв'ю в Acme",
+      text: 'Підготовка готова',
+      action: 'Відкрити картку',
     });
   });
 

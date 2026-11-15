@@ -11,14 +11,14 @@ import {
   designInsightsBody,
 } from '@jobflow/shared/testing';
 import { getQueueToken } from '@nestjs/bullmq';
-import { ConfigService } from '@nestjs/config';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { AnalyticsClient } from '../../analytics-client/index.js';
-import { validateEnv } from '../../config/env.js';
 import { AI_JOB_ID, FakeAiRepository } from '../../test/ai.js';
-import { testJwtKeys } from '../../test/auth.js';
-import { exampleEnv } from '../../test/example-env.js';
+import {
+  ANALYTICS,
+  analyticsClientProvider,
+  jsonReply as json,
+} from '../../test/analytics-client.js';
 import {
   type FetchReply,
   recordFetch,
@@ -37,10 +37,6 @@ import { SummaryQueueService } from './summary-queue.service.js';
 
 const log = memoryLog();
 
-const ANALYTICS_URL = 'http://analytics.test:8000';
-
-const ANALYTICS = `${ANALYTICS_URL}/analytics`;
-
 const FIRST_DELIVERY = { eventId: 'event-1', finalAttempt: false };
 
 const REQUESTED: SummaryRequestedPayload = {
@@ -52,11 +48,6 @@ const REQUESTED: SummaryRequestedPayload = {
 };
 
 const WHAT_IF_URL = `${ANALYTICS}/forecast?searchId=${SEARCH_ID}&improve=tech_interview%3A0.6`;
-
-const json =
-  (body: unknown): FetchReply =>
-  () =>
-    Response.json(body);
 
 const designReplies = (forecast: unknown = buildForecast()): Record<string, FetchReply> => ({
   [`${ANALYTICS}/funnel?searchId=${SEARCH_ID}&month=2026-08`]: json(buildDesignFunnel()),
@@ -77,12 +68,6 @@ class RecordingPlanProgress {
   }
 }
 
-const analyticsClient = () =>
-  new AnalyticsClient(
-    new ConfigService(validateEnv({ ...exampleEnv, ANALYTICS_URL })),
-    testJwtKeys,
-  );
-
 async function queueWithFakes() {
   const ai = new FakeAiRepository();
   ai.queueJob(OLENA_ID);
@@ -90,7 +75,7 @@ async function queueWithFakes() {
   const plans = new RecordingPlanProgress();
   const moduleRef = await compileProcessorModule(log.sink, [
     SummaryQueueService,
-    { provide: AnalyticsClient, useValue: analyticsClient() },
+    analyticsClientProvider(),
     { provide: PlansService, useValue: plans },
     { provide: AiService, useValue: ai },
     { provide: getQueueToken('ai'), useValue: queue },

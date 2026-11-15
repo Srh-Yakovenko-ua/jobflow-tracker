@@ -1,5 +1,6 @@
 import { cvHintsInputSchema } from './cv-hints.js';
 import { followupInputSchema } from './followup.js';
+import { interviewPrepInputSchema } from './interview-prep.js';
 import type { AiKind } from './kinds.js';
 import { matchInputSchema } from './match.js';
 import { monthlySummaryInputSchema } from './monthly-summary.js';
@@ -13,6 +14,7 @@ export const AI_PAYLOAD_FIELDS = {
   followup: followupInputSchema.keyof().options,
   monthly_summary: monthlySummaryInputSchema.keyof().options,
   cv_hints: cvHintsInputSchema.keyof().options,
+  interview_prep: interviewPrepInputSchema.keyof().options,
 } satisfies Record<AiKind, readonly string[]>;
 
 export type AiPayloadField<Kind extends AiKind> = (typeof AI_PAYLOAD_FIELDS)[Kind][number];

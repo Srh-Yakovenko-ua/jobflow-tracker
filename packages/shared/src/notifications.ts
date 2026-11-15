@@ -1,6 +1,7 @@
 import { z } from 'zod';
 
 import type { AiKind } from './ai/kinds.js';
+import { scheduledEventKindSchema } from './scheduled-events.js';
 import { exportFormatSchema } from './schemas/account.js';
 import { paginatedSchema, paginationQuerySchema } from './schemas/pagination.js';
 import { yearMonthSchema } from './schemas/year-month.js';
@@ -15,6 +16,7 @@ export const NOTIFICATION_TYPES = [
   'plan_item_due',
   'auto_ghosted',
   'export_ready',
+  'interview_prep_ready',
 ] as const;
 
 export const NOTIFIED_AI_KINDS = [
@@ -76,6 +78,14 @@ export const exportReadyNotificationPayloadSchema = z.object({
   format: exportFormatSchema,
 });
 
+export const interviewPrepReadyNotificationPayloadSchema = z.object({
+  aiJobId: z.uuid(),
+  applicationId: z.uuid(),
+  company: z.string().min(1),
+  eventKind: scheduledEventKindSchema,
+  startsAt: z.iso.datetime(),
+});
+
 const notificationBaseSchema = z.object({
   id: z.uuid(),
   readAt: z.iso.datetime().nullable(),
@@ -98,6 +108,7 @@ export const notificationSchema = z.discriminatedUnion('type', [
   notificationOf('monthly_summary_ready', monthlySummaryReadyNotificationPayloadSchema),
   notificationOf('auto_ghosted', autoGhostedNotificationPayloadSchema),
   notificationOf('export_ready', exportReadyNotificationPayloadSchema),
+  notificationOf('interview_prep_ready', interviewPrepReadyNotificationPayloadSchema),
 ]);
 
 export const notificationListQuerySchema = paginationQuerySchema.extend({
@@ -132,6 +143,9 @@ export type MonthlySummaryReadyNotificationPayload = z.infer<
   typeof monthlySummaryReadyNotificationPayloadSchema
 >;
 export type ExportReadyNotificationPayload = z.infer<typeof exportReadyNotificationPayloadSchema>;
+export type InterviewPrepReadyNotificationPayload = z.infer<
+  typeof interviewPrepReadyNotificationPayloadSchema
+>;
 export type Notification = z.infer<typeof notificationSchema>;
 export type NotificationListQuery = z.infer<typeof notificationListQuerySchema>;
 export type NotificationListResponse = z.infer<typeof notificationListResponseSchema>;

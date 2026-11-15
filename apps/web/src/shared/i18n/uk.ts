@@ -15,6 +15,7 @@ import { cvHints } from './cv-hints';
 import { dataImport } from './data-import';
 import { devUi } from './dev-ui';
 import { followup } from './followup';
+import { interviewPrep } from './interview-prep';
 import { notifications } from './notifications';
 import { push } from './push';
 import { reminders } from './reminders';
@@ -68,6 +69,7 @@ export const uk = {
   applicationPage,
   followup,
   cvHints,
+  interviewPrep,
   contact,
   timeline,
   states,

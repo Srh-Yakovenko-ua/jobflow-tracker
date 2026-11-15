@@ -1,7 +1,9 @@
-import type {
-  AutoGhostedNotificationPayload,
-  Notification,
-  SilenceNotificationPayload,
+import {
+  type AutoGhostedNotificationPayload,
+  interviewPrepTitleOf,
+  type InterviewSoonNotificationPayload,
+  type Notification,
+  type SilenceNotificationPayload,
 } from '@jobflow/shared';
 
 import { uk } from '@/shared/i18n';
@@ -30,20 +32,29 @@ function autoGhostedCopy(payload: AutoGhostedNotificationPayload): NotificationC
   return { title, text: silenceTextOf(payload), action: COPY.autoGhosted.action };
 }
 
+function interviewSoonCopy(
+  { startsAt, company }: InterviewSoonNotificationPayload,
+  timeZone: string,
+): NotificationCopy {
+  const clock = formatClock({ at: new Date(startsAt), timeZone });
+  return {
+    title: COPY.interviewSoon.title(clock),
+    text: company,
+    action: COPY.interviewSoon.action,
+  };
+}
+
 export function notificationCopyOf(notification: Notification, timeZone: string): NotificationCopy {
   switch (notification.type) {
     case 'silence':
       return silenceCopy(notification.payload);
     case 'auto_ghosted':
       return autoGhostedCopy(notification.payload);
-    case 'interview_soon': {
-      const { startsAt, company } = notification.payload;
-      const clock = formatClock({ at: new Date(startsAt), timeZone });
-      return {
-        title: COPY.interviewSoon.title(clock),
-        text: company,
-        action: COPY.interviewSoon.action,
-      };
+    case 'interview_soon':
+      return interviewSoonCopy(notification.payload, timeZone);
+    case 'interview_prep_ready': {
+      const title = interviewPrepTitleOf(notification, { timezone: timeZone });
+      return { title, ...COPY.interviewPrepReady };
     }
     case 'ai_done':
       return COPY.aiDone[notification.payload.kind];

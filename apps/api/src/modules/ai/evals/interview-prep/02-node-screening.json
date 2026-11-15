@@ -1,0 +1,11 @@
+{
+  "position": "Middle Node.js Engineer",
+  "interviewKind": "screening_call",
+  "requirements": ["Node.js", "NestJS", "PostgreSQL", "Docker", "Англійська B2"],
+  "gaps": [{ "name": "Англійська B2", "coverage": "partial" }],
+  "weakSpots": {
+    "reasons": [{ "stage": "screening", "code": "salary_expectations", "count": 2 }],
+    "topics": []
+  },
+  "absent": ["React", "Kotlin", "Swift"]
+}

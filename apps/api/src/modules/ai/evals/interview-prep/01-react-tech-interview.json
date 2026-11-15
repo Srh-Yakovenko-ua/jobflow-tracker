@@ -1,0 +1,23 @@
+{
+  "position": "Senior React Developer",
+  "interviewKind": "tech_interview",
+  "requirements": [
+    "React + TypeScript",
+    "Next.js",
+    "GraphQL",
+    "Тестування (Jest, Playwright)",
+    "AWS (Lambda, S3)"
+  ],
+  "gaps": [
+    { "name": "AWS (Lambda, S3)", "coverage": "missing" },
+    { "name": "GraphQL", "coverage": "partial" }
+  ],
+  "weakSpots": {
+    "reasons": [
+      { "stage": "tech_interview", "code": "skills_gap", "count": 3 },
+      { "stage": "applied", "code": "english_level", "count": 2 }
+    ],
+    "topics": ["algorithms", "live_coding"]
+  },
+  "absent": ["Kafka", "Kubernetes", "Django"]
+}

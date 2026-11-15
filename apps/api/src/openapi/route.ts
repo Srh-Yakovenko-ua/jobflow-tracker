@@ -1,5 +1,10 @@
 import type { ResponseConfig, RouteConfig, ZodContentObject } from '@asteasolutions/zod-to-openapi';
-import { applicationIdSchema, errorResponseSchema, type UserSettings } from '@jobflow/shared';
+import {
+  applicationIdSchema,
+  captureRetryResponseSchema,
+  errorResponseSchema,
+  type UserSettings,
+} from '@jobflow/shared';
 import { z } from 'zod';
 
 import {
@@ -136,5 +141,15 @@ export function errorResponses(
     ...Object.fromEntries(statuses.map((status) => [status, errorReply(status)])),
     ...rateLimitReply(policy),
     500: errorReply(500),
+  };
+}
+
+export function aiJobAcceptedResponses(jobId: string): RouteResponses {
+  return {
+    202: {
+      description: 'The AI job to follow: the new one, or the one that is still running',
+      content: jsonContent(captureRetryResponseSchema, { jobId }),
+    },
+    ...errorResponses([401, 403, 404, 409, 422], 'ai'),
   };
 }

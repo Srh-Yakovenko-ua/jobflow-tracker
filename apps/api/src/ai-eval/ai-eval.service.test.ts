@@ -21,6 +21,7 @@ import {
   CV_HINTS_COMPLETION,
   FakeAiClient,
   FOLLOWUP_COMPLETION,
+  INTERVIEW_PREP_COMPLETION,
   MATCH_COMPLETION,
   RESUME_COMPLETION,
   VACANCY_COMPLETION,
@@ -364,5 +365,46 @@ describe('AiEvalService.cvHints', () => {
       '01-fullstack-graphql-aws-kafka.json\t-\t-\t-\t-\tai_invalid_output',
     );
     expect(report.passed).toBe(false);
+  });
+});
+
+const INTERVIEW_PREP_CASES_DIR = fileURLToPath(
+  new URL('../modules/ai/evals/interview-prep', import.meta.url),
+);
+
+describe('AiEvalService.interviewPrep', () => {
+  it('sends each case as an interview_prep input and fails a pack with a topic that rests on no input item', async () => {
+    const ai = new FakeAiClient();
+    ai.answer = () => Promise.resolve(INTERVIEW_PREP_COMPLETION);
+
+    const report = await (await evalService(ai)).interviewPrep(INTERVIEW_PREP_CASES_DIR);
+
+    expect(ai.calls.map(({ kind }) => kind)).toEqual(
+      Array.from({ length: 5 }, () => 'interview_prep'),
+    );
+    expect(ai.calls[0]?.input).toMatchObject({ position: 'Senior React Developer' });
+    expect(report.lines.slice(0, 2)).toEqual([
+      'case\ttopics\tuntraced_topics\tquestions\task_company\tplan30_min\tplan120_min\tabsent_named\tresult',
+      '01-react-tech-interview.json\t5\t1\t10\t3\t30\t120\t0\tfail',
+    ]);
+    expect(report.lines).toContain(
+      '- AWS: Вакансія просить AWS, а в CV його немає. [AWS / інфраструктура]',
+    );
+    expect(report.passed).toBe(false);
+  });
+
+  it('counts a 422 ai_invalid_output as a failed case and goes on to the next one', async () => {
+    const ai = new FakeAiClient();
+    ai.answer = () =>
+      ai.calls.length === 1
+        ? Promise.reject(INVALID_OUTPUT)
+        : Promise.resolve(INTERVIEW_PREP_COMPLETION);
+
+    const report = await (await evalService(ai)).interviewPrep(INTERVIEW_PREP_CASES_DIR);
+
+    expect(ai.calls).toHaveLength(5);
+    expect(report.lines[1]).toBe(
+      '01-react-tech-interview.json\t-\t-\t-\t-\t-\t-\t-\tai_invalid_output',
+    );
   });
 });

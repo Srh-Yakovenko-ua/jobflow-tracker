@@ -8,6 +8,14 @@ export const LATEST_AI_JOB_SELECT = {
   select: { id: true, status: true },
 } satisfies Prisma.AiJobFindManyArgs;
 
+export const AI_RESULT_JOB_SELECT = {
+  id: true,
+  status: true,
+  errorType: true,
+  finishedAt: true,
+  aiResult: { select: { output: true } },
+} satisfies Prisma.AiJobSelect;
+
 const UNSETTLED_AI_JOB_STATUSES: AiJobStatus[] = ['queued', 'processing'];
 
 export const UNSETTLED_AI_JOB_WHERE = {

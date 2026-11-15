@@ -20,6 +20,8 @@ export const applicationKeys = {
   match: (id: Application['id']) => [...applicationKeys.detail(id), 'match'] as const,
   followup: (id: Application['id']) => [...applicationKeys.detail(id), 'followup'] as const,
   cvHints: (id: Application['id']) => [...applicationKeys.detail(id), 'cv-hints'] as const,
+  interviewPrep: (id: Application['id']) =>
+    [...applicationKeys.detail(id), 'interview-prep'] as const,
   reasonsSummaries: () => [...applicationKeys.all, 'reasons-summary'] as const,
   reasonsSummary: (stage: Stage) => [...applicationKeys.reasonsSummaries(), stage] as const,
 };

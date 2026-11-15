@@ -312,6 +312,42 @@ def cv_hint(requirement: str, evidence: str, *, impact: int = 5) -> dict[str, An
     }
 
 
+INTERVIEW_PREP_PATH = "/v1/complete/interview_prep"
+INTERVIEW_PREP_FIXTURE: dict[str, Any] = json.loads(fixture_of("interview_prep"))
+INTERVIEW_PREP_INPUT = {
+    "position": "Senior React developer",
+    "interviewKind": "tech_interview",
+    "requirements": [
+        "React + TypeScript",
+        "Node.js у проді",
+        "AWS / інфраструктура",
+        "GraphQL",
+    ],
+    "gaps": [
+        {"name": "AWS / інфраструктура", "coverage": "missing"},
+        {"name": "GraphQL", "coverage": "partial"},
+    ],
+    "weakSpots": {
+        "reasons": [{"stage": "tech_interview", "code": "skills_gap", "count": 3}],
+        "topics": ["algorithms", "live_coding"],
+    },
+}
+
+
+def interview_prep_body(**overrides: Any) -> Any:
+    return {"input": {**INTERVIEW_PREP_INPUT, **overrides}}
+
+
+def interview_prep_reply(**overrides: Any) -> Any:
+    return {**INTERVIEW_PREP_FIXTURE, **overrides}
+
+
+def with_basis(index: int, basis: str) -> list[dict[str, str]]:
+    topics = [dict(topic) for topic in INTERVIEW_PREP_FIXTURE["topics"]]
+    topics[index] = {**topics[index], "basis": basis}
+    return topics
+
+
 def monthly_summary_request(**overrides: Any) -> Any:
     return {"input": {**MONTHLY_SUMMARY_INPUT, **overrides}}
 

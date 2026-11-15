@@ -13,6 +13,7 @@ import {
 import {
   AI_DONE,
   EXPORT_READY,
+  INTERVIEW_PREP_READY,
   INTERVIEW_SOON,
   MONTHLY_SUMMARY_READY,
   NOTIFICATION_ID,
@@ -101,6 +102,10 @@ describe('notificationSchema', () => {
       { ...ROW, type: 'auto_ghosted', payload: { ...SILENCE, autoGhostDays: 30 } },
     ],
     ['an export ready', { ...ROW, type: 'export_ready', payload: EXPORT_READY }],
+    [
+      'an interview prep ready',
+      { ...ROW, type: 'interview_prep_ready', payload: INTERVIEW_PREP_READY },
+    ],
   ])('keeps %s notification as sent', (_label, notification) => {
     expect(notificationSchema.parse(notification)).toStrictEqual(notification);
   });
@@ -148,6 +153,22 @@ describe('notificationSchema', () => {
       label: 'an export ready whose export id is not a uuid',
       notification: { type: 'export_ready', payload: { ...EXPORT_READY, exportId: 'abc' } },
       path: 'payload.exportId',
+    },
+    {
+      label: 'an interview prep ready for an event kind the schedule does not know',
+      notification: {
+        type: 'interview_prep_ready',
+        payload: { ...INTERVIEW_PREP_READY, eventKind: 'mock_interview' },
+      },
+      path: 'payload.eventKind',
+    },
+    {
+      label: 'an interview prep ready without its AI job',
+      notification: {
+        type: 'interview_prep_ready',
+        payload: { ...INTERVIEW_PREP_READY, aiJobId: undefined },
+      },
+      path: 'payload.aiJobId',
     },
   ])('refuses $label', ({ notification, path }) => {
     expect(issuePathsOf(notificationSchema.safeParse({ ...ROW, ...notification }))).toEqual([path]);

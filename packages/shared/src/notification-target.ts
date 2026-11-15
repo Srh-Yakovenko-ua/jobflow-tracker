@@ -41,6 +41,7 @@ export function notificationTargetOf(notification: Notification): string | null 
     case 'silence':
       return longestSilentOf(notification.payload);
     case 'interview_soon':
+    case 'interview_prep_ready':
       return `/applications/${notification.payload.applicationId}`;
     case 'ai_done':
     case 'ai_failed':

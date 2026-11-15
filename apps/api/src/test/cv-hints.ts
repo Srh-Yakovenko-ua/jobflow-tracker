@@ -2,10 +2,10 @@ import type { ApplicationMatchResponse, MatchBreakdown, MatchOutput } from '@job
 
 import { notFound } from '../common/app-error.js';
 import { APPLICATION_NOT_FOUND } from '../common/owned.js';
+import type { StoredAiResultJob } from '../modules/ai/index.js';
 import type {
   CvHintsQuery,
   CvHintsSourceRow,
-  LatestCvHintsJob,
   RecordCvHintsRequested,
 } from '../modules/cv-hints/index.js';
 import { scoreMatch } from '../modules/match/index.js';
@@ -61,7 +61,7 @@ export class FakeMatchReader {
 export class FakeCvHintsRepository {
   source: CvHintsSourceRow = CV_HINTS_SOURCE_ROW;
 
-  latest: LatestCvHintsJob | null = null;
+  latest: StoredAiResultJob | null = null;
 
   runningJobId: string | null = null;
 
@@ -83,7 +83,7 @@ export class FakeCvHintsRepository {
     return Promise.resolve();
   }
 
-  findLatest(userId: string, query: CvHintsQuery): Promise<LatestCvHintsJob | null> {
+  findLatest(userId: string, query: CvHintsQuery): Promise<StoredAiResultJob | null> {
     this.latestReads.push(query);
     return Promise.resolve(reachesOlena(userId, query.applicationId) ? this.latest : null);
   }

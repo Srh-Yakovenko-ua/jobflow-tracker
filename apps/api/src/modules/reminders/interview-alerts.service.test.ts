@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { FAKE_TRANSACTION, fakeTransactionModule } from '../../test/fake-prisma.js';
+import { RecordingInterviewPrep } from '../../test/interview-prep.js';
 import { RecordingNotifications } from '../../test/notifications.js';
 import type { ByUser } from '../../test/recorded-events.js';
 import {
@@ -10,6 +11,7 @@ import {
   SCHEDULED_EVENT_ID,
 } from '../../test/service-fixtures.js';
 import { minutesAfter, NOW } from '../../test/time.js';
+import { InterviewPrepService } from '../interview-prep/index.js';
 import { NotificationsService } from '../notifications/index.js';
 import {
   type DueInterviewRow,
@@ -74,21 +76,56 @@ const alertRow = ({
 async function alertsOf(fields: AlertFields) {
   const alerts = new FakeInterviewAlertsRepository();
   const notifications = new RecordingNotifications();
+  const prep = new RecordingInterviewPrep();
   alerts.rows.push(alertRow(fields));
   const moduleRef = await fakeTransactionModule({
     providers: [
       InterviewAlertsService,
       { provide: InterviewAlertsRepository, useValue: alerts },
       { provide: NotificationsService, useValue: notifications },
+      { provide: InterviewPrepService, useValue: prep },
     ],
     now: NOW,
   }).compile();
-  return { alerts, notifications, service: moduleRef.get(InterviewAlertsService) };
+  return { alerts, notifications, prep, service: moduleRef.get(InterviewAlertsService) };
 }
 
 const stateOf = ({ status, dueAt }: StoredAlert) => [status, dueAt.toISOString()];
 
 describe('InterviewAlertsService.fireDue', () => {
+  it.each([
+    { case: 'on the day mark', minutesAway: 1440, dueAt: NOW, prepares: true },
+    {
+      case: 'on a tick that comes late with 3 hours left',
+      minutesAway: 180,
+      dueAt: minutesAfter(-1260),
+      prepares: true,
+    },
+    {
+      case: 'on the day mark with nothing to prepare from',
+      minutesAway: 1440,
+      dueAt: NOW,
+      prepares: false,
+    },
+  ])(
+    'requests the prep pack in the settle transaction $case and re-arms the row to the 2 hour mark without an alert',
+    async ({ minutesAway, dueAt, prepares }) => {
+      const startsAt = minutesAfter(minutesAway);
+      const { alerts, notifications, prep, service } = await alertsOf({ startsAt, dueAt });
+      prep.prepares = prepares;
+
+      await expect(service.fireDue(OLENA_ID, NOW)).resolves.toBe(0);
+
+      expect(alerts.rows.map(stateOf)).toEqual([
+        ['pending', new Date(startsAt.getTime() - 120 * 60_000).toISOString()],
+      ]);
+      expect(prep.suggested).toEqual([
+        [OLENA_ID, { applicationId: APPLICATION_ID, tx: FAKE_TRANSACTION }],
+      ]);
+      expect(notifications.notifications).toEqual([]);
+    },
+  );
+
   it.each([
     { case: 'on the 2 hour mark', minutesAway: 120, dueAt: NOW },
     { case: 'on a tick 2 minutes late', minutesAway: 118, dueAt: minutesAfter(-2) },
@@ -141,20 +178,26 @@ describe('InterviewAlertsService.fireDue', () => {
       status: 'dismissed',
     },
   ] as const)('closes the row of $case as $status without an alert', async ({ fields, status }) => {
-    const { alerts, notifications, service } = await alertsOf(fields);
+    const { alerts, notifications, prep, service } = await alertsOf(fields);
 
     await expect(service.fireDue(OLENA_ID, NOW)).resolves.toBe(0);
 
     expect(alerts.rows.map(stateOf)).toEqual([[status, NOW.toISOString()]]);
     expect(notifications.notifications).toEqual([]);
+    expect(prep.suggested).toEqual([]);
   });
 
-  it('writes no alert when another tick has already moved the row', async () => {
-    const { alerts, notifications, service } = await alertsOf({ startsAt: minutesAfter(120) });
-    alerts.losesRace = true;
+  it.each([120, 1440])(
+    'writes no alert and requests no prep pack %i minutes before when another tick has already moved the row',
+    async (minutesAway) => {
+      const { alerts, notifications, prep, service } = await alertsOf({
+        startsAt: minutesAfter(minutesAway),
+      });
+      alerts.losesRace = true;
 
-    await expect(service.fireDue(OLENA_ID, NOW)).resolves.toBe(0);
+      await expect(service.fireDue(OLENA_ID, NOW)).resolves.toBe(0);
 
-    expect(notifications.notifications).toEqual([]);
-  });
+      expect([notifications.notifications, prep.suggested]).toEqual([[], []]);
+    },
+  );
 });

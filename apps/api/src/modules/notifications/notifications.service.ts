@@ -29,7 +29,15 @@ export type RecordNotification = NewNotification & InTransaction;
 
 export type OnceNotification = Extract<
   NewNotification,
-  { type: 'ai_done' | 'ai_failed' | 'insight_unlocked' | 'monthly_summary_ready' | 'export_ready' }
+  {
+    type:
+      | 'ai_done'
+      | 'ai_failed'
+      | 'insight_unlocked'
+      | 'monthly_summary_ready'
+      | 'export_ready'
+      | 'interview_prep_ready';
+  }
 >;
 
 export function onceKeyOf({ payload }: NewNotification): OnceKey | undefined {

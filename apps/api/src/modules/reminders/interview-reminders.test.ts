@@ -1,14 +1,19 @@
 import { describe, expect, it } from 'vitest';
 
 import { minutesAfter, NOW } from '../../test/time.js';
-import { INTERVIEW_REMINDER_LEADS_MIN, nextInterviewReminderAt } from './interview-reminders.js';
+import {
+  INTERVIEW_REMINDER_LEADS_MIN,
+  isInterviewPrepMark,
+  nextInterviewReminderAt,
+} from './interview-reminders.js';
 
 describe('nextInterviewReminderAt', () => {
-  it('reminds 2 hours and then 15 minutes before an interview', () => {
-    expect(INTERVIEW_REMINDER_LEADS_MIN).toEqual([120, 15]);
+  it('suggests the prep pack a day before, then reminds 2 hours and 15 minutes before an interview', () => {
+    expect(INTERVIEW_REMINDER_LEADS_MIN).toEqual([1440, 120, 15]);
   });
 
   it.each([
+    { case: '2 days before', startsAt: minutesAfter(2880), reminder: '2026-10-23T09:00:00.000Z' },
     { case: '3 hours before', startsAt: minutesAfter(180), reminder: '2026-10-22T10:00:00.000Z' },
     { case: '1 hour before', startsAt: minutesAfter(60), reminder: '2026-10-22T09:45:00.000Z' },
     { case: '10 minutes before', startsAt: minutesAfter(10), reminder: null },
@@ -21,5 +26,16 @@ describe('nextInterviewReminderAt', () => {
     expect(nextInterviewReminderAt(minutesAfter(120), NOW)?.toISOString()).toBe(
       '2026-10-22T10:45:00.000Z',
     );
+  });
+});
+
+describe('isInterviewPrepMark', () => {
+  it.each([
+    { case: 'a day before', minutesAway: 1440, prep: true },
+    { case: 'a late tick 121 minutes before', minutesAway: 121, prep: true },
+    { case: 'exactly 2 hours before', minutesAway: 120, prep: false },
+    { case: '15 minutes before', minutesAway: 15, prep: false },
+  ])('settles $case as a prep mark: $prep', ({ minutesAway, prep }) => {
+    expect(isInterviewPrepMark(minutesAfter(minutesAway), NOW)).toBe(prep);
   });
 });

@@ -11,6 +11,8 @@ from tests.factories import (
     CV_HINTS_PATH,
     FOLLOWUP_FIXTURE,
     FOLLOWUP_PATH,
+    INTERVIEW_PREP_FIXTURE,
+    INTERVIEW_PREP_PATH,
     MATCH_FIXTURE,
     MATCH_PATH,
     MONTHLY_SUMMARY_FIXTURE,
@@ -27,6 +29,8 @@ from tests.factories import (
     draft_of,
     failing_vacancy,
     followup_body,
+    interview_prep_body,
+    interview_prep_reply,
     match_body,
     monthly_summary_request,
     post_as_worker,
@@ -35,6 +39,7 @@ from tests.factories import (
     settings_for,
     summary_of,
     vendor_settings,
+    with_basis,
 )
 
 if TYPE_CHECKING:
@@ -46,6 +51,10 @@ FIXTURE_REPLY = (FIXTURES / "vacancy_parse.json").read_text()
 FIXTURE_FOLLOWUP = (FIXTURES / "followup.json").read_text()
 FIXTURE_SUMMARY = (FIXTURES / "monthly_summary.json").read_text()
 INVENTED_SUMMARY = summary_of(ending=" 37 відгуків")
+UNTRACED_PREP = json.dumps(interview_prep_reply(topics=with_basis(1, "Kubernetes")))
+FOUR_TOPICS = json.dumps(
+    interview_prep_reply(topics=INTERVIEW_PREP_FIXTURE["topics"][:4])
+)
 
 REPAIR_REQUEST = (
     "Your answer did not match the JSON schema: answer: Invalid JSON: expected value at line 1 column 1. "
@@ -157,6 +166,50 @@ async def test_returns_cv_hints_without_a_hint_on_evidence_the_profile_lacks() -
     assert (len(fake.requests), fake.requests[0].temperature) == (1, 0.0)
 
 
+async def test_returns_the_prep_pack_with_each_basis_in_the_input_spelling() -> None:
+    reply = interview_prep_reply(topics=with_basis(4, " graphql "))
+    fake = FakeAiProvider(replies=[json.dumps(reply)])
+
+    response = await post_as_worker(
+        INTERVIEW_PREP_PATH, interview_prep_body(), app=build_app(provider=fake)
+    )
+
+    body = response.json()
+    assert isinstance(body.pop("latencyMs"), int)
+    assert (response.status_code, body) == (
+        200,
+        {
+            "output": INTERVIEW_PREP_FIXTURE,
+            "model": "fake",
+            "promptVersion": "v1",
+            "tokensIn": 100,
+            "tokensOut": 50,
+        },
+    )
+    assert (len(fake.requests), fake.requests[0].temperature) == (1, 0.3)
+
+
+async def test_answers_invalid_output_when_the_repaired_prep_pack_is_off_schema() -> (
+    None
+):
+    fake = FakeAiProvider(replies=[FOUR_TOPICS, FOUR_TOPICS])
+
+    response = await post_as_worker(
+        INTERVIEW_PREP_PATH, interview_prep_body(), app=build_app(provider=fake)
+    )
+
+    assert (response.status_code, len(fake.requests)) == (422, 2)
+    assert response.json() == invalid_output(
+        detail="The model output did not match the schema after one repair",
+        errors=[
+            {
+                "path": "topics",
+                "message": "List should have at least 5 items after validation, not 4",
+            }
+        ],
+    )
+
+
 async def test_repairs_a_short_followup_draft_once_with_its_problems() -> None:
     fake = FakeAiProvider(replies=[draft_of(5), FIXTURE_FOLLOWUP])
 
@@ -205,6 +258,13 @@ async def test_regenerates_a_monthly_summary_with_an_invented_number_once() -> N
             [INVENTED_SUMMARY, INVENTED_SUMMARY],
             "the number 37 is not in the input",
             id="monthly_summary_keeps_the_number",
+        ),
+        pytest.param(
+            INTERVIEW_PREP_PATH,
+            interview_prep_body(),
+            [UNTRACED_PREP, UNTRACED_PREP],
+            "topic 2 has a basis that is not one input item copied word for word",
+            id="interview_prep_keeps_an_untraced_topic",
         ),
     ],
 )
