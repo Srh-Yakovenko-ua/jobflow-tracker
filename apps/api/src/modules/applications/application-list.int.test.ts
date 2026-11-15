@@ -17,7 +17,9 @@ import {
   applicationPath,
   APPLICATIONS_BOARD_PATH,
   APPLICATIONS_PATH,
+  columnViewsOf,
   companiesOf,
+  EMPTY_BOARD,
   getApplicationBoard,
   getWithQuery,
   listApplications,
@@ -37,8 +39,6 @@ import { callRoute, errorPathsOf } from '../../test/http.js';
 import { daysBefore, fixedClock, minutesAfter, minutesBefore, NOW } from '../../test/time.js';
 
 type Owner = { userId: string; searchId: string };
-
-type BoardColumnView = { count: number; companies: string[] | null };
 
 const clock: Clock = fixedClock(NOW);
 
@@ -139,17 +139,6 @@ const LIKE_PATTERN_ROWS = [
   { company: 'Back\\slash', lastEventAt: daysBefore(4) },
 ].map((row) => ({ ...row, position: 'Backend engineer' })) satisfies ApplicationRowInput[];
 
-const EMPTY_BOARD: Record<Stage, BoardColumnView> = {
-  applied: { count: 0, companies: [] },
-  screening: { count: 0, companies: [] },
-  tech_interview: { count: 0, companies: [] },
-  final: { count: 0, companies: [] },
-  offer: { count: 0, companies: [] },
-  rejected: { count: 0, companies: null },
-  ghosted: { count: 0, companies: null },
-  withdrawn: { count: 0, companies: null },
-};
-
 function rowsByStage(counts: Partial<Record<Stage, number>>): ApplicationRowInput[] {
   return STAGES.flatMap((stage) => Array.from({ length: counts[stage] ?? 0 }, () => stage)).map(
     (currentStage, index) => ({ currentStage, lastEventAt: minutesBefore(index + 1) }),
@@ -162,14 +151,6 @@ const countsOf = ({ columns }: ApplicationBoardResponse) =>
 const itemCountsOf = ({ columns }: ApplicationBoardResponse) =>
   Object.fromEntries(
     Object.entries(columns).map(([stage, { items }]) => [stage, items?.length ?? null]),
-  );
-
-const columnViewsOf = ({ columns }: ApplicationBoardResponse) =>
-  Object.fromEntries(
-    Object.entries(columns).map(([stage, { count, items }]) => [
-      stage,
-      { count, companies: items?.map(({ company }) => company) ?? null },
-    ]),
   );
 
 const boardCards = ({ columns }: ApplicationBoardResponse): ApplicationCard[] =>
@@ -527,9 +508,11 @@ describe('the application list and board routes', () => {
     { path: APPLICATIONS_PATH, query: { searchId: '42' }, error: 'searchId' },
     { path: APPLICATIONS_PATH, query: { q: 'a\u0000b' }, error: 'q' },
     { path: APPLICATIONS_PATH, query: { salaryFrom: '' }, error: 'salaryFrom' },
+    { path: APPLICATIONS_PATH, query: { resumeVersion: 'v2' }, error: 'resumeVersion.0' },
     { path: APPLICATIONS_BOARD_PATH, query: { expand: 'offer' }, error: 'expand.0' },
     { path: APPLICATIONS_BOARD_PATH, query: { q: 'a\u0000b' }, error: 'q' },
     { path: APPLICATIONS_BOARD_PATH, query: { salaryFrom: '' }, error: 'salaryFrom' },
+    { path: APPLICATIONS_BOARD_PATH, query: { resumeVersion: 'v2' }, error: 'resumeVersion.0' },
     { path: REASONS_SUMMARY_PATH, query: {}, error: 'stage' },
     { path: REASONS_SUMMARY_PATH, query: { stage: 'hired' }, error: 'stage' },
   ])('answers GET $path with $query by 422 at $error', async ({ path, query, error }) => {

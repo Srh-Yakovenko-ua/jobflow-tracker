@@ -460,6 +460,9 @@ describe('KanbanBoard drag and drop', () => {
       screen.getByRole('button', {
         name: uk.board.filters.source.pill(uk.board.filters.source.all),
       }),
+      screen.getByRole('button', {
+        name: uk.board.filters.resumeVersion.pill(uk.board.filters.resumeVersion.all),
+      }),
       screen.getByRole('button', { name: uk.board.filters.more.menu }),
       screen.getByRole('radio', { name: uk.board.density.full }),
       screen.getByRole('radio', { name: uk.board.views.board }),

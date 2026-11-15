@@ -11,7 +11,7 @@ import { describe, expect, it } from 'vitest';
 
 import { Clock } from '../../common/clock.js';
 import { AI_JOB_ID } from '../../test/ai.js';
-import { BOHDAN_ID, OLENA_ID, SEARCH_ID } from '../../test/service-fixtures.js';
+import { BOHDAN_ID, OLENA_ID, RESUME_VERSION_ID, SEARCH_ID } from '../../test/service-fixtures.js';
 import { daysBefore, fixedClock, NOW } from '../../test/time.js';
 import { applicationCursorSchema, type ApplicationListRequest } from './application-cursor.js';
 import {
@@ -271,6 +271,7 @@ describe('ApplicationListService.list', () => {
       source: ['dou'],
       q: 'смерека',
       hasScore: true,
+      resumeVersion: [RESUME_VERSION_ID],
     });
 
     expect(search.matchQueries).toEqual([{ userId: OLENA_ID, q: 'смерека' }]);
@@ -281,6 +282,7 @@ describe('ApplicationListService.list', () => {
           stage: ['applied'],
           source: ['dou'],
           hasScore: true,
+          resumeVersion: [RESUME_VERSION_ID],
           applicationIds: ['0199f0a0-0000-7000-8000-0000000000c1'],
         },
         sort: 'lastEventAt',

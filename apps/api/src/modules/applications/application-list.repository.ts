@@ -87,12 +87,14 @@ function filterWhere({
   source,
   hasScore,
   salaryFrom,
+  resumeVersion,
   silenceWindows,
   applicationIds,
 }: ApplicationListFilter): Where[] {
   const conditions: (Where | undefined)[] = [
     stage && { currentStage: { in: stage } },
     source && { source: { in: source } },
+    resumeVersion && { resumeVersionId: { in: resumeVersion } },
     applicationIds && { id: { in: [...applicationIds] } },
     hasScore === undefined ? undefined : { matchScore: hasScore ? { not: null } : null },
     salaryFrom === undefined ? undefined : salaryFromWhere(salaryFrom),
