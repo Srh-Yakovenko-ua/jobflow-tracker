@@ -43,10 +43,14 @@ describe('OUTPUT_FAILURES.interview_prep', () => {
   });
 });
 
-const ON_DEMAND_KINDS: AiKind[] = ['followup', 'cv_hints', 'interview_prep'];
+const ON_DEMAND_KINDS: AiKind[] = ['followup', 'cv_hints'];
 
 describe('isFinal', () => {
   const refusal = (status: number, type: string) => new AiServiceError({ status, type });
+
+  it('an interview prep timeout is retried, not failed at once', () => {
+    expect(isFinal({ error: refusal(504, 'ai_timeout'), kind: 'interview_prep' })).toBe(false);
+  });
 
   it.each(
     ON_DEMAND_KINDS.flatMap((kind) => [

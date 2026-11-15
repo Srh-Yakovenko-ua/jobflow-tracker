@@ -55,6 +55,18 @@ export const interviewSoonAt = (startsAt: Date): Notification =>
     },
   });
 
+export const interviewPrepReadyFor = (startsAt: Date): Notification =>
+  notificationOf({
+    type: 'interview_prep_ready',
+    payload: {
+      aiJobId: AI_JOB_ID,
+      applicationId: APPLICATION_ID,
+      company: 'Acme',
+      eventKind: 'tech_interview',
+      startsAt: startsAt.toISOString(),
+    },
+  });
+
 export const MONTHLY_SUMMARY_NOTIFICATION = notificationOf({
   type: 'monthly_summary_ready',
   payload: { aiJobId: AI_JOB_ID, month: '2026-09' },

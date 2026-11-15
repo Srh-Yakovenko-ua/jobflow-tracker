@@ -24,8 +24,14 @@ export class AccountExportService {
       return;
     }
     const bytes = exportZipOf({ tables: exportTablesOf(data), format });
+    const key = exportKey({ userId, exportId });
     await this.storage.deletePrefix(exportsPrefix(userId));
-    await this.storage.put({ key: exportKey({ userId, exportId }), bytes, mime: EXPORT_MIME });
+    await this.storage.put({ key, bytes, mime: EXPORT_MIME });
+    if (!(await this.repository.accountExists(userId))) {
+      await this.storage.delete(key);
+      this.logger.log({ exportId, requestId }, 'export removed: the account is gone');
+      return;
+    }
     await this.notifications.recordOnce(userId, {
       type: 'export_ready',
       payload: { exportId, format },

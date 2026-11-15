@@ -1,4 +1,4 @@
-import { chmodSync, copyFileSync, mkdirSync, readFileSync } from 'node:fs';
+import { mkdirSync, readFileSync } from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
@@ -7,32 +7,31 @@ import { chromium } from 'playwright';
 
 import { DOCS_PATHS, inRepo } from './paths.js';
 import { run } from './run.js';
-import { gitleaksCount, trivyCounts, zapCounts } from './snapshots.js';
+import { gitleaksCount, sarifCounts, zapCounts } from './snapshots.js';
 
 export const SCANNER_IMAGES = {
-  trivy:
-    'aquasec/trivy:0.76.2@sha256:8f6bb947dbc528902e11f2f5be52f7b519f6a39d5d148f41166f2040499768fb',
-  zap: 'ghcr.io/zaproxy/zaproxy:2.17.0@sha256:9624669db72f54d86c4b46a7064518bd9bf79d8c61a4c31befa9923489f328af',
   gitleaks:
     'ghcr.io/gitleaks/gitleaks:v8.30.1@sha256:c00b6bd0aeb3071cbcb79009cb16a60dd9e0a7c60e2be9ab65d25e6bc8abbb7f',
 };
 
 const SCAN_RULES = {
-  services: ['api', 'web', 'analytics', 'ai', 'documents'],
-  trivyEverything: [
-    '--severity',
-    'UNKNOWN,LOW,MEDIUM,HIGH,CRITICAL',
-    '--ignore-unfixed=false',
-    '--exit-code',
-    '0',
-    '--format',
-    'json',
+  runList: [
+    ...['run', 'list', '--workflow', 'security.yml', '--branch', 'main'],
+    ...['--status', 'success', '--limit', '20', '--json', 'databaseId'],
+  ],
+  artifacts: { trivy: 'trivy-sarif', zap: 'zap-report' },
+  trivyTargets: [
+    { report: 'fs', scanner: 'Trivy fs', target: 'репозиторій, main' },
+    ...['api', 'web', 'analytics', 'ai', 'documents'].map((service) => ({
+      report: service,
+      scanner: 'Trivy image',
+      target: `jobflow-${service}:ci`,
+    })),
   ],
   zapTargets: [
     { name: 'web', url: 'http://localhost:3000' },
     { name: 'api', url: 'http://localhost:4000/api/v1/health' },
   ],
-  zapOkCodes: [0, 2],
   gitleaksOkCodes: [0, 1],
   gitSafeDirectory: [
     'GIT_CONFIG_COUNT=1',
@@ -43,62 +42,57 @@ const SCAN_RULES = {
   viewport: { width: 1280, height: 1400 },
 };
 
-const imageTag = (service) => `jobflow-${service}:ci`;
-
 const readJson = (file) => JSON.parse(readFileSync(file, 'utf8'));
 
-const dockerRun = ({ args, okCodes = [0] }) =>
-  run({ command: 'docker', args: ['run', '--rm', ...args], okCodes });
+const gh = (args) => run({ command: 'gh', args });
 
-export function requireImages() {
-  const tags = SCAN_RULES.services.map(imageTag);
-  const missing = tags.filter(
-    (tag) => run({ command: 'docker', args: ['images', '-q', tag] }).trim() === '',
-  );
-  if (missing.length > 0) {
+function hasScanArtifacts(runId) {
+  const names = gh([
+    'api',
+    `repos/{owner}/{repo}/actions/runs/${runId}/artifacts`,
+    '--jq',
+    '.artifacts[] | select(.expired | not) | .name',
+  ]).split('\n');
+  return Object.values(SCAN_RULES.artifacts).every((name) => names.includes(name));
+}
+
+function latestScanRun() {
+  const runId = JSON.parse(gh(SCAN_RULES.runList))
+    .map(({ databaseId }) => String(databaseId))
+    .find(hasScanArtifacts);
+  if (runId === undefined) {
     throw new Error(
-      `docs:data security scans the prod images ${tags.join(', ')}; missing ${missing.join(', ')}. Build them with the README quick start (README.md#швидкий-старт).`,
+      `No successful Security run on main among the last 20 keeps both ${Object.values(SCAN_RULES.artifacts).join(' and ')}`,
     );
   }
+  return runId;
 }
 
-function exportHead(scratch) {
-  const archive = path.join(scratch, 'head.tar');
-  const tree = path.join(scratch, 'head');
-  mkdirSync(tree);
-  run({ command: 'git', args: ['archive', '--format=tar', '-o', archive, 'HEAD'] });
-  run({ command: 'tar', args: ['-xf', archive, '-C', tree] });
-  return tree;
+function downloadArtifacts(scratch) {
+  const dir = path.join(scratch, 'artifacts');
+  const names = Object.values(SCAN_RULES.artifacts).flatMap((name) => ['-n', name]);
+  gh(['run', 'download', latestScanRun(), ...names, '-D', dir]);
+  return {
+    trivy: path.join(dir, SCAN_RULES.artifacts.trivy),
+    zap: path.join(dir, SCAN_RULES.artifacts.zap),
+  };
 }
 
-function trivy({ scratch, tree }, { mounts = [], args }) {
-  const cache = path.join(scratch, 'trivy-cache');
-  mkdirSync(cache, { recursive: true });
-  const report = dockerRun({
-    args: [
-      ...['-v', `${cache}:/root/.cache/trivy`, '-v', `${tree}:/src`, '-w', '/src', ...mounts],
-      SCANNER_IMAGES.trivy,
-      ...args,
-      ...SCAN_RULES.trivyEverything,
-    ],
-  });
-  return trivyCounts(JSON.parse(report));
-}
+const trivyScans = (dir) =>
+  SCAN_RULES.trivyTargets.map(({ report, scanner, target }) => ({
+    scanner,
+    target,
+    ...sarifCounts(readJson(path.join(dir, `trivy-${report}.sarif`))),
+  }));
 
-function trivyScans(scan) {
-  const repository = trivy(scan, { args: ['fs', '--scanners', 'vuln,secret,misconfig', '.'] });
-  const socket = ['-v', '/var/run/docker.sock:/var/run/docker.sock'];
-  return [
-    { scanner: 'Trivy fs', target: 'репозиторій, git archive HEAD', ...repository },
-    ...SCAN_RULES.services.map((service) => ({
-      scanner: 'Trivy image',
-      target: imageTag(service),
-      ...trivy(scan, { mounts: socket, args: ['image', '--scanners', 'vuln', imageTag(service)] }),
-    })),
-  ];
-}
+const zapScans = (dir) =>
+  SCAN_RULES.zapTargets.map(({ name, url }) => ({
+    scanner: 'OWASP ZAP baseline',
+    target: url,
+    ...zapCounts(readJson(path.join(dir, `zap-${name}.json`))),
+  }));
 
-function gitleaks({ scratch, tree }) {
+function gitleaks(scratch) {
   const gitDir = run({
     command: 'git',
     args: ['rev-parse', '--path-format=absolute', '--git-common-dir'],
@@ -106,20 +100,15 @@ function gitleaks({ scratch, tree }) {
   const out = path.join(scratch, 'gitleaks');
   mkdirSync(out);
   const { uid, gid } = os.userInfo();
-  dockerRun({
+  run({
+    command: 'docker',
     args: [
-      ...['--user', `${String(uid)}:${String(gid)}`],
+      ...['run', '--rm', '--user', `${String(uid)}:${String(gid)}`],
       ...SCAN_RULES.gitSafeDirectory.flatMap((variable) => ['-e', variable]),
-      ...['-v', `${gitDir}:/repo:ro`, '-v', `${tree}/.gitleaks.toml:/config.toml:ro`],
+      ...['-v', `${gitDir}:/repo:ro`, '-v', `${inRepo('.gitleaks.toml')}:/config.toml:ro`],
       ...['-v', `${out}:/out`, SCANNER_IMAGES.gitleaks, 'git', '/repo', '--config', '/config.toml'],
-      ...[
-        '--redact',
-        '--no-banner',
-        '--report-format',
-        'json',
-        '--report-path',
-        '/out/report.json',
-      ],
+      ...['--redact', '--no-banner', '--report-format', 'json'],
+      ...['--report-path', '/out/report.json'],
     ],
     okCodes: SCAN_RULES.gitleaksOkCodes,
   });
@@ -127,36 +116,11 @@ function gitleaks({ scratch, tree }) {
   return { scanner: 'gitleaks', target: 'історія git, усі гілки', findings };
 }
 
-function zap({ work, tree }) {
-  mkdirSync(work);
-  chmodSync(work, 0o777);
-  copyFileSync(path.join(tree, '.zap/rules.tsv'), path.join(work, 'rules.tsv'));
-  return SCAN_RULES.zapTargets.map(({ name, url }) => {
-    dockerRun({
-      args: [
-        ...[
-          '--network',
-          'host',
-          '-v',
-          `${work}:/zap/wrk:rw`,
-          SCANNER_IMAGES.zap,
-          'zap-baseline.py',
-        ],
-        ...['-t', url, '-c', 'rules.tsv', '-r', `zap-${name}.html`, '-J', `zap-${name}.json`],
-        ...['-I', '-m', '1', '-T', '10'],
-      ],
-      okCodes: SCAN_RULES.zapOkCodes,
-    });
-    const counts = zapCounts(readJson(path.join(work, `zap-${name}.json`)));
-    return { scanner: 'OWASP ZAP baseline', target: url, ...counts };
-  });
-}
-
-async function renderZapReport(work) {
+async function renderZapReport(dir) {
   const browser = await chromium.launch();
   try {
     const page = await browser.newPage({ viewport: SCAN_RULES.viewport });
-    await page.goto(pathToFileURL(path.join(work, 'zap-web.html')).href);
+    await page.goto(pathToFileURL(path.join(dir, 'zap-web.html')).href);
     await page.screenshot({ path: inRepo(SCAN_RULES.screenshot) });
   } finally {
     await browser.close();
@@ -164,13 +128,8 @@ async function renderZapReport(work) {
 }
 
 export async function measureSecurityScans(scratch) {
-  const tree = exportHead(scratch);
-  const work = path.join(scratch, 'zap');
-  const scans = [
-    ...trivyScans({ scratch, tree }),
-    gitleaks({ scratch, tree }),
-    ...zap({ work, tree }),
-  ];
-  await renderZapReport(work);
+  const artifacts = downloadArtifacts(scratch);
+  const scans = [...trivyScans(artifacts.trivy), gitleaks(scratch), ...zapScans(artifacts.zap)];
+  await renderZapReport(artifacts.zap);
   return scans;
 }

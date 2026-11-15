@@ -142,6 +142,26 @@ describe('the CV hints API', () => {
     expect(await read(olena)).toEqual({ result: null, job: null });
   });
 
+  it('a request after a re-score starts a new job instead of returning the hidden one', async () => {
+    const olena = await owner();
+    const hiddenId = await createAiJob(testApp.prisma, {
+      userId: olena.userId,
+      applicationId: olena.applicationId,
+      resumeVersionId: olena.resumeVersionId,
+      kind: 'cv_hints',
+      status: 'queued',
+      createdAt: daysBefore(1),
+    });
+
+    const jobId = await requested(olena);
+
+    expect(jobId).not.toBe(hiddenId);
+    expect(await read(olena)).toEqual({
+      result: null,
+      job: { id: jobId, status: 'queued', errorType: null },
+    });
+  });
+
   it.each([
     {
       case: 'no Match Score',
@@ -202,9 +222,7 @@ describe('the CV hints API', () => {
     const { applicationId, resumeVersionId } = olena;
     const query = { applicationId, resumeVersionId, since: daysBefore(1) };
     const lockAs = (userId: string) =>
-      testApp.prisma.$transaction((tx) =>
-        repository.lockApplication(userId, { applicationId, tx }),
-      );
+      testApp.prisma.$transaction((tx) => repository.lockApplication(userId, { ...query, tx }));
 
     const asBohdan = await Promise.all([
       repository.findProfile(bohdan.userId, applicationId),

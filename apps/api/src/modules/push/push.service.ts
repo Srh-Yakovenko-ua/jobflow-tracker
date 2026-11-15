@@ -7,6 +7,7 @@ import {
 import { Injectable } from '@nestjs/common';
 
 import { notFound } from '../../common/app-error.js';
+import { Clock } from '../../common/clock.js';
 import { PushRepository } from './push.repository.js';
 import { PushSender } from './push-sender.js';
 
@@ -20,6 +21,7 @@ export class PushService {
   constructor(
     private readonly repository: PushRepository,
     private readonly sender: PushSender,
+    private readonly clock: Clock,
   ) {}
 
   publicKey(): PushPublicKey {
@@ -31,7 +33,8 @@ export class PushService {
     { input, userAgent }: NewPushSubscription,
   ): Promise<PushSubscriptionCreated> {
     const cut = userAgent?.slice(0, PUSH_LIMITS.userAgentMax) ?? null;
-    const id = await this.repository.upsert(userId, { ...input, userAgent: cut });
+    const now = this.clock.now();
+    const id = await this.repository.upsert(userId, { ...input, userAgent: cut, now });
     await this.repository.keepLatest(userId, { keep: PUSH_LIMITS.subscriptionsPerUser });
     return { id };
   }

@@ -33,6 +33,17 @@ def scrubbed_exception(exception: dict[str, Any]) -> dict[str, Any]:
     return kept | {"stacktrace": stacktrace | {"frames": frames}}
 
 
+def fingerprint_of(values: list[dict[str, Any]]) -> list[str] | None:
+    thrown = (values or [{}])[-1]
+    frames = (thrown.get("stacktrace") or {}).get("frames", [])
+    in_app = [frame for frame in frames if frame.get("in_app") is not False]
+    if not in_app:
+        return None
+    top = in_app[-1]
+    route = URL_TAIL.split(top.get("filename") or "")[0]
+    return [thrown.get("type") or "Error", route, top.get("function") or ""]
+
+
 def scrub_event(event: Event, hint: Hint) -> Event:
     scrubbed = event.copy()
     for key in USER_TEXT_KEYS:
@@ -44,6 +55,9 @@ def scrub_event(event: Event, hint: Hint) -> Event:
     if exception is not None:
         values = [scrubbed_exception(value) for value in exception.get("values", [])]
         scrubbed["exception"] = exception | {"values": values}
+        fingerprint = fingerprint_of(values)
+        if fingerprint is not None:
+            scrubbed["fingerprint"] = fingerprint
     return scrubbed
 
 

@@ -1,0 +1,8 @@
+{
+  "position": "Junior Python Developer",
+  "interviewKind": "tech_interview",
+  "requirements": ["Python", "Django", "PostgreSQL"],
+  "gaps": [],
+  "weakSpots": { "reasons": [], "topics": [] },
+  "absent": ["React", "Kotlin", "Kubernetes"]
+}

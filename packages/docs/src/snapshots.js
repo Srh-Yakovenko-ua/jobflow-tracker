@@ -82,6 +82,8 @@ const TRIVY_SEVERITIES = {
   UNKNOWN: 'info',
 };
 
+const TRIVY_START = { critical: 0, high: 0, medium: 0, low: 0, info: 0 };
+
 const ZAP_RISKS = { 3: 'high', 2: 'medium', 1: 'low', 0: 'info' };
 
 function tally(levels, start) {
@@ -92,20 +94,19 @@ function tally(levels, start) {
   return counts;
 }
 
-export function trivyCounts(report) {
-  if (report.SchemaVersion !== 2) {
-    throw new Error('The report is not a Trivy JSON report (SchemaVersion 2)');
+function sarifLevel(rule) {
+  const severity = rule?.properties?.tags?.find((tag) => Object.hasOwn(TRIVY_SEVERITIES, tag));
+  return severity === undefined ? 'info' : TRIVY_SEVERITIES[severity];
+}
+
+export function sarifCounts(report) {
+  if (!Array.isArray(report.runs)) {
+    throw new Error('The report is not a SARIF report (no run list)');
   }
-  const findings = (report.Results ?? []).flatMap((result) => [
-    ...(result.Vulnerabilities ?? []),
-    ...(result.Misconfigurations ?? []),
-    ...(result.Secrets ?? []),
-  ]);
-  const start = { critical: 0, high: 0, medium: 0, low: 0, info: 0 };
-  return tally(
-    findings.map(({ Severity }) => TRIVY_SEVERITIES[Severity] ?? 'info'),
-    start,
+  const levels = report.runs.flatMap(({ tool, results = [] }) =>
+    results.map(({ ruleIndex }) => sarifLevel(tool.driver.rules?.[ruleIndex])),
   );
+  return tally(levels, TRIVY_START);
 }
 
 export function zapCounts(report) {

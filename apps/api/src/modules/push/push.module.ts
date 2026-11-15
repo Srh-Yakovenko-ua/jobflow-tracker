@@ -15,7 +15,7 @@ import { PushSender } from './push-sender.js';
 
 @Module({
   controllers: [PushController],
-  providers: [PushService, PushRepository, PushSender],
+  providers: [PushService, PushRepository, PushSender, Clock],
 })
 export class PushModule {}
 

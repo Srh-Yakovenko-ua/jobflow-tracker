@@ -1,7 +1,7 @@
 import { Test } from '@nestjs/testing';
 import { describe, expect, it } from 'vitest';
 
-import { FileStorage } from '../../storage/file-storage.js';
+import { FileStorage, type PutObject } from '../../storage/file-storage.js';
 import { zipFilesOf } from '../../test/account.js';
 import { DownFileStorage, FakeFileStorage } from '../../test/file-storage.js';
 import { RecordingNotifications } from '../../test/notifications.js';
@@ -94,10 +94,29 @@ class FakeAccountExportRepository {
   findExportData(userId: string): Promise<ExportData | null> {
     return Promise.resolve(this.data.get(userId) ?? null);
   }
+
+  accountExists(userId: string): Promise<boolean> {
+    return Promise.resolve(this.data.has(userId));
+  }
 }
 
-async function exportService(storage: FakeFileStorage = new FakeFileStorage()) {
-  const repository = new FakeAccountExportRepository();
+class DeletedDuringPutStorage extends FakeFileStorage {
+  constructor(private readonly deleteAccount: () => void) {
+    super();
+  }
+
+  override async put(object: PutObject): Promise<void> {
+    this.deleteAccount();
+    await super.put(object);
+  }
+}
+
+type ExportFakes = { storage?: FakeFileStorage; repository?: FakeAccountExportRepository };
+
+async function exportService({
+  storage = new FakeFileStorage(),
+  repository = new FakeAccountExportRepository(),
+}: ExportFakes = {}) {
   const notifications = new RecordingNotifications();
   const moduleRef = await Test.createTestingModule({
     providers: [
@@ -197,7 +216,7 @@ describe('AccountExportService.build', () => {
     const zip = { bytes: new Uint8Array([1]), mime: 'application/zip' };
     await storage.put({ key: keyOf(OLENA_ID, OLDER_EXPORT_ID), ...zip });
     await storage.put({ key: keyOf(BOHDAN_ID, OLDER_EXPORT_ID), ...zip });
-    const { service } = await exportService(storage);
+    const { service } = await exportService({ storage });
 
     await service.build(requested('csv'));
 
@@ -226,8 +245,21 @@ describe('AccountExportService.build', () => {
     expect([storage.objects.size, notifications.notifications.length]).toEqual([0, 0]);
   });
 
+  it('an export finished after the deletion leaves no object', async () => {
+    const repository = new FakeAccountExportRepository();
+    const storage = new DeletedDuringPutStorage(() => repository.data.delete(OLENA_ID));
+    const { service, notifications } = await exportService({ storage, repository });
+
+    await service.build(requested('csv'));
+
+    expect([storage.keysUnder(`users/${OLENA_ID}/`), notifications.notifications]).toEqual([
+      [],
+      [],
+    ]);
+  });
+
   it('fails for a retry and records no notification while the file storage is down', async () => {
-    const { service, notifications } = await exportService(new DownFileStorage());
+    const { service, notifications } = await exportService({ storage: new DownFileStorage() });
 
     await expect(service.build(requested('csv'))).rejects.toMatchObject({ status: 503 });
     expect(notifications.notifications).toEqual([]);

@@ -1,3 +1,7 @@
+from typing import Any, TypedDict
+
+from pydantic import TypeAdapter
+
 from app.contracts.cv_hints_output import CvHintsOutput, Gap, Hint
 from app.contracts.cv_hints_request import (
     Coverage,
@@ -28,6 +32,14 @@ HINTS_MAX: int = OUTPUT_MODEL.model_json_schema(by_alias=True)["properties"]["hi
     "maxItems"
 ]
 
+
+class HintsReply(TypedDict):
+    hints: list[Hint]
+
+
+REPLY = TypeAdapter(dict[str, Any])
+HINTS = TypeAdapter(HintsReply)
+
 OPEN_TAG = "<cv_hints_input>"
 CLOSE_TAG = "</cv_hints_input>"
 DELIMITER_TAG = delimiter_tag("cv_hints_input")
@@ -56,8 +68,8 @@ def built_user(request: CvHintsRequest) -> str:
 
 def problems_of(request: CvHintsRequest, output: CvHintsOutput) -> list[str]:
     given = set(numbers_in(request.input.model_dump_json(by_alias=True)))
-    suggestions = "\n".join(hint.suggestion for hint in output.hints)
-    return invented_numbers(suggestions, given)
+    kept = kept_hints(request, output.hints)
+    return invented_numbers("\n".join(hint.suggestion for hint in kept), given)
 
 
 def normalised(text: str) -> str:
@@ -106,6 +118,12 @@ def kept_hints(request: CvHintsRequest, hints: list[Hint]) -> list[Hint]:
     return ranked[:HINTS_MAX]
 
 
+def parsed(request: CvHintsRequest, text: str) -> CvHintsOutput:
+    reply = REPLY.validate_json(text)
+    hints = HINTS.validate_python(reply)["hints"]
+    return CvHintsOutput.model_validate({**reply, "hints": kept_hints(request, hints)})
+
+
 def checked(request: CvHintsRequest, output: CvHintsOutput) -> CvHintsOutput:
     gaps = [
         Gap(requirement.name)
@@ -124,6 +142,7 @@ RULES = RuledKind(
     output_model=OUTPUT_MODEL,
     user=built_user,
     problems=problems_of,
+    parse=parsed,
 )
 
 

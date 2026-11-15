@@ -1,4 +1,4 @@
 10020	FAIL	Missing Anti-clickjacking Header: SEC-01 pins X-Frame-Options DENY and frame-ancestors none
 10021	FAIL	X-Content-Type-Options Header Missing: SEC-01 pins nosniff
 10038	FAIL	Content Security Policy (CSP) Header Not Set: SEC-01 sets the nonce-based policy on every page
-10055	IGNORE	CSP: style-src keeps 'unsafe-inline' for Motion, Radix and sonner style attributes, documented in docs/security.md
+10055	WARN	CSP: style-src keeps 'unsafe-inline' for Motion, Radix and sonner style attributes, documented in docs/security.md

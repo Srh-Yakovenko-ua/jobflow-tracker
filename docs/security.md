@@ -87,7 +87,7 @@ and the nonce. The API's headers come from helmet's defaults and are checked in
 `.github/workflows/security.yml` runs on every pull request, on every push to
 `main`, every Monday at 03:00 UTC and by hand. Trivy, OWASP ZAP and gitleaks run
 from their official images, pinned by tag and digest. `.husky/pre-commit` and
-`packages/docs/src/security-scans.js` use the same pins, and
+`packages/docs/src/security-scans.js` use the same gitleaks pin, and
 `packages/docs/test/security-scans.test.js` fails when they drift apart.
 
 | Job        | What it scans                                                                                                                                                        | Fails on                                                 |
@@ -115,9 +115,10 @@ dependency fails the job. No vulnerable lockfile is committed.
 - `.zap/rules.tsv`. The baseline runs with `-I`, so a WARN alert lands in the
   report without failing the job. Three rules are FAIL: 10020 (anti-clickjacking
   header), 10021 (`X-Content-Type-Options`) and 10038 (CSP header not set), so a
-  lost SEC-01 header turns the run red. An IGNORE rule never warns or fails the
-  run. 10055 (CSP) is ignored because `style-src` keeps `'unsafe-inline'` on
-  purpose, as described under Styles above.
+  lost SEC-01 header turns the run red. 10055 (CSP) is WARN, so every CSP alert
+  shows in the report. Only the `style-src` alert is accepted: the policy keeps
+  `'unsafe-inline'` there on purpose, as described under Styles above. Any other
+  CSP alert is a finding.
 - `.gitleaks.toml`. The default gitleaks rules plus six allowlists, each with
   its description: the local GlitchTip placeholders in `.env.example`, UUID ids,
   example JWTs, the example refresh token of the OpenAPI document, an example
@@ -134,22 +135,27 @@ code scanning.
 
 **Before a commit.** `.husky/pre-commit` pipes the lines a commit adds into the
 same gitleaks image in `stdin` mode, before lint-staged, so a commit that adds a
-secret is refused. It needs Docker running. A commit that only removes a secret
-passes.
+secret is refused. The diff runs with `--no-color`, so a `color.ui=always`
+setting cannot hide the added lines from the filter. It needs Docker running. A
+commit that only removes a secret passes.
 
 **Updates.** `.github/dependabot.yml` asks Dependabot every week for npm updates
 of the pnpm workspace, uv updates of the three services and GitHub Actions
 updates of the workflows and the two composite actions. Minor and patch updates
 come grouped, one pull request per ecosystem.
 
-**Thesis numbers.** `pnpm docs:data security` runs the same images on this
-machine: Trivy on a `git archive HEAD` export and on the five `jobflow-*:ci`
-images, gitleaks on the git history and ZAP on the running stack, with every
-severity and unfixed findings included. It needs the five images that the
-README quick start builds and stops before any step when one is missing. It
-writes
-`docs/thesis/data/security-scans.json` and renders the ZAP web report to
-`docs/screenshots/zap-report.png`.
+**Thesis numbers.** `pnpm docs:data security` takes its numbers from CI, so it
+needs no local images and no running stack. With `gh run download` it fetches
+the `trivy-sarif` and `zap-report` artifacts of the latest successful
+`Security` run on `main` that has both. A docs-only push skips those jobs, so
+it looks back up to 20 runs. The Trivy rows are what the CI gate sees: HIGH and
+CRITICAL findings that have a fix, as `trivy.yaml` sets, counted by the
+severity tag of each SARIF result's rule. The ZAP rows come from
+`zap-web.json` and `zap-api.json`. gitleaks runs on this machine, over the git
+history, from its pinned image. The step needs `gh` signed in, Docker for
+gitleaks and Playwright's Chromium for the screenshot. It writes
+`docs/thesis/data/security-scans.json` and renders the downloaded ZAP web
+report to `docs/screenshots/zap-report.png`.
 
 ## Threat model
 

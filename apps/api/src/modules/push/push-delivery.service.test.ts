@@ -6,6 +6,7 @@ import { describe, expect, it } from 'vitest';
 import { Clock } from '../../common/clock.js';
 import { NEW_USER_SETTINGS } from '../../test/factories.js';
 import {
+  interviewPrepReadyFor,
   interviewSoonAt,
   NOTIFICATION_ID,
   notificationOf,
@@ -74,6 +75,21 @@ describe('PushDeliveryService.schedule', () => {
     await delivery.schedule({ ...CREATED, type: 'interview_soon' });
 
     expect(queue.addOptions).toEqual([{ jobId: NOTIFICATION_ID, delay: 0 }]);
+  });
+
+  it('a pack pushed the next morning says Сьогодні', async () => {
+    const notification = {
+      ...interviewPrepReadyFor(new Date('2026-11-15T09:00:00.000Z')),
+      createdAt: '2026-11-14T20:30:00.000Z',
+    };
+    const { queue, delivery } = await deliveryWith({ notification });
+
+    await delivery.schedule({ ...CREATED, type: 'interview_prep_ready' });
+
+    expect(queue.jobs[0]?.data).toMatchObject({
+      message: { title: "Сьогодні техінтерв'ю в Acme" },
+    });
+    expect(queue.addOptions).toEqual([{ jobId: NOTIFICATION_ID, delay: 32_400_000 }]);
   });
 
   it.each([

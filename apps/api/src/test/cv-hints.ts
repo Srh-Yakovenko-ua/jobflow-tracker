@@ -67,13 +67,16 @@ export class FakeCvHintsRepository {
 
   readonly latestReads: CvHintsQuery[] = [];
 
+  readonly lockReads: CvHintsQuery[] = [];
+
   readonly recorded: [string, RecordCvHintsRequested][] = [];
 
   findProfile(userId: string, applicationId: string): Promise<CvHintsSourceRow | null> {
     return Promise.resolve(reachesOlena(userId, applicationId) ? this.source : null);
   }
 
-  lockApplication(userId: string, { applicationId }: { applicationId: string }) {
+  lockApplication(userId: string, { applicationId, resumeVersionId, since }: CvHintsQuery) {
+    this.lockReads.push({ applicationId, resumeVersionId, since });
     const reached = reachesOlena(userId, applicationId);
     return Promise.resolve(reached ? { runningJobId: this.runningJobId } : null);
   }

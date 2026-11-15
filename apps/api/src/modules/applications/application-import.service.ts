@@ -48,11 +48,18 @@ export class ApplicationImportService {
       'application' in outcome ? [outcome.application] : [],
     );
     await this.prisma.$transaction(async (tx) => {
-      const { searchId } = await this.applications.findCreateDefaults(userId, { tx });
+      const { searchId, resumeVersionId } = await this.applications.findCreateDefaults(userId, {
+        tx,
+      });
       if (searchId === null) {
         throw conflict('No active search');
       }
-      const ids = await this.applications.insertMany(userId, { searchId, applications, tx });
+      const ids = await this.applications.insertMany(userId, {
+        searchId,
+        resumeVersionId,
+        applications,
+        tx,
+      });
       const events = ids.map((applicationId) => ({
         eventType: APPLICATION_EVENTS.created,
         applicationId,

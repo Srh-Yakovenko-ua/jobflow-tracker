@@ -286,6 +286,21 @@ describe('SettingsPage', () => {
     expect(new Set(exports.sent.links)).toEqual(new Set([EXPORT_ID]));
   });
 
+  it('a crafted export param sends no request outside /me/exports', async () => {
+    window.history.replaceState(null, '', '/settings?export=..%2F..%2Fauth%2Flogout-all#account');
+    const sentRequests = recordSentRequests();
+    server.use(...exportRoutes().handlers);
+    await renderLoadedSettings();
+    const account = within(regionOf('Акаунт'));
+
+    expect(account.getByRole('button', { name: 'Вивантажити' })).toBeDefined();
+    const paths = sentRequests().map(
+      ({ url }) => new URL(url instanceof Request ? url.url : url).pathname,
+    );
+    expect(paths.filter((path) => /logout-all|\/me\/exports/.test(path))).toEqual([]);
+    expect(account.queryByText('Збираю архів…')).toBeNull();
+  });
+
   it('«Вийти на всіх пристроях» says it switches the bookmarklet off too', async () => {
     await renderLoadedSettings();
 

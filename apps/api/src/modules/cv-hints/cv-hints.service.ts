@@ -15,7 +15,7 @@ import { PrismaService } from '../../prisma/prisma.service.js';
 import { AI_PAYLOAD_BUILDERS, aiResultResponse, AiService } from '../ai/index.js';
 import { MatchService } from '../match/index.js';
 import type { CvHintsRequested } from './cv-hints.events.js';
-import { CvHintsRepository } from './cv-hints.repository.js';
+import { type CvHintsQuery, CvHintsRepository } from './cv-hints.repository.js';
 
 export type CvHintsGeneration = { applicationId: string; requestId: string };
 
@@ -28,6 +28,12 @@ type PendingRequest = Required<InTransaction> & { requested: Omit<CvHintsRequest
 const NO_SCORE = 'CV hints need a Match Score of the application';
 
 const NO_PROFILE = 'CV hints need the skills profile of the linked CV version';
+
+const queryOf = ({ applicationId, match }: ScoredSource): CvHintsQuery => ({
+  applicationId,
+  resumeVersionId: match.resumeVersion.id,
+  since: new Date(match.computedAt),
+});
 
 @Injectable()
 export class CvHintsService {
@@ -43,11 +49,7 @@ export class CvHintsService {
     if (match === null) {
       return { result: null, job: null };
     }
-    const latest = await this.repository.findLatest(userId, {
-      applicationId,
-      resumeVersionId: match.resumeVersion.id,
-      since: new Date(match.computedAt),
-    });
+    const latest = await this.repository.findLatest(userId, queryOf({ applicationId, match }));
     return aiResultResponse(latest ?? undefined, cvHintsOutputSchema);
   }
 
@@ -60,10 +62,10 @@ export class CvHintsService {
       throw conflict(NO_SCORE);
     }
     const input = await this.inputOf(userId, { applicationId, match });
-    const resumeVersionId = match.resumeVersion.id;
-    const requested = { applicationId, resumeVersionId, requestId, input };
+    const query = queryOf({ applicationId, match });
+    const requested = { applicationId, resumeVersionId: query.resumeVersionId, requestId, input };
     return this.prisma.$transaction(async (tx) => {
-      const locked = owned(await this.repository.lockApplication(userId, { applicationId, tx }));
+      const locked = owned(await this.repository.lockApplication(userId, { ...query, tx }));
       const jobId = locked.runningJobId ?? (await this.created(userId, { requested, tx }));
       return { jobId };
     });

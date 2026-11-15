@@ -1,5 +1,5 @@
 import { Test } from '@nestjs/testing';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
 import { unauthorized, validation } from '../../common/app-error.js';
 import { PrismaService } from '../../prisma/prisma.service.js';
@@ -83,7 +83,7 @@ async function deletionWith(storageOf: (steps: unknown[][]) => FakeFileStorage) 
       { provide: PrismaService, useValue: new FakePrisma() },
     ],
   }).compile();
-  return { service: moduleRef.get(AccountDeletionService), steps, storage };
+  return { service: moduleRef.get(AccountDeletionService), steps, storage, repository };
 }
 
 describe('AccountDeletionService.delete', () => {
@@ -101,7 +101,23 @@ describe('AccountDeletionService.delete', () => {
       ['lockUser', OLENA_ID, FAKE_TRANSACTION],
       ['deleteOutboxOf', OLENA_ID, FAKE_TRANSACTION],
       ['deleteUser', OLENA_ID, FAKE_TRANSACTION],
+      ['deletePrefix', `users/${OLENA_ID}/exports/`],
     ]);
+    expect([...storage.objects.keys()]).toEqual(BOHDAN_KEYS);
+  });
+
+  it('a zip written between the purge and the commit is removed', async () => {
+    const { service, storage, repository } = await deletionWith(() => new FakeFileStorage());
+    vi.spyOn(repository, 'lockUser').mockImplementationOnce(() =>
+      storage.put({
+        key: `users/${OLENA_ID}/exports/late.zip`,
+        bytes: new Uint8Array([1]),
+        mime: 'application/zip',
+      }),
+    );
+
+    await service.delete(OLENA_ID, { password: PASSWORD });
+
     expect([...storage.objects.keys()]).toEqual(BOHDAN_KEYS);
   });
 

@@ -88,7 +88,7 @@ jobs:
           status=0
           fuzz() {
             local name=$1 spec=$2 url=$3 token
-            token=$(curl -fsS -X POST http://localhost:4000/api/v1/auth/login -H 'Content-Type: application/json' -d '{"email":"demo@jobflow.local","password":"jobflow-demo"}' | jq -r .accessToken)
+            token=$(curl -fsS -X POST http://localhost:4000/api/v1/auth/login -H 'Content-Type: application/json' -d '{"email":"demo@jobflow.local","password":"jobflow-demo"}' | jq -er .accessToken) || { echo '::error::login returned no accessToken'; exit 1; }
             uvx schemathesis==4.32.7 run "$spec" --url "$url" \
               --checks not_a_server_error,response_schema_conformance,ignored_auth \
               -H "Authorization: Bearer $token" \

@@ -2607,7 +2607,7 @@
                   "password": {
                     "type": "string",
                     "minLength": 1,
-                    "maxLength": 128
+                    "maxLength": 254
                   }
                 },
                 "required": [

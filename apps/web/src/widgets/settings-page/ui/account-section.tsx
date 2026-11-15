@@ -1,6 +1,6 @@
 'use client';
 
-import type { MeResponse } from '@jobflow/shared';
+import { exportAcceptedSchema, type MeResponse } from '@jobflow/shared';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 
@@ -43,7 +43,10 @@ function Identity({ me }: Readonly<{ me: MeResponse }>) {
 }
 
 function DataRows({ items }: Pick<AccountSectionProps, 'items'>) {
-  const exportId = useSearchParams().get(EXPORT_PARAM);
+  const exportParam = exportAcceptedSchema.shape.exportId.safeParse(
+    useSearchParams().get(EXPORT_PARAM),
+  );
+  const exportId = exportParam.success ? exportParam.data : null;
   const exportControl = <ExportDataControl key={exportId} initialExportId={exportId} />;
   return (
     <>

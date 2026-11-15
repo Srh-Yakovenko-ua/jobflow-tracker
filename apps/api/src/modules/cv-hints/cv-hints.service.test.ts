@@ -137,13 +137,16 @@ describe('CvHintsService.request', () => {
     ]);
   });
 
-  it('answers the running job instead of creating a second one', async () => {
+  it('answers the running job of the linked version since the current score instead of creating a second one', async () => {
     const fakes = await serviceWithFakes();
     fakes.repository.runningJobId = RUNNING_JOB_ID;
 
     await expect(fakes.generate()).resolves.toEqual({ jobId: RUNNING_JOB_ID });
 
     expect(nothingStored(fakes)).toEqual([0, 0]);
+    expect(fakes.repository.lockReads).toEqual([
+      { applicationId: APPLICATION_ID, resumeVersionId: RESUME_VERSION_ID, since: NOW },
+    ]);
   });
 
   it('answers 409 and creates no job when the application has no Match Score', async () => {

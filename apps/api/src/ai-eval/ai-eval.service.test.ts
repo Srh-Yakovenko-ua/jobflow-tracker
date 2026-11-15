@@ -43,6 +43,8 @@ const VACANCY_CALL = { kind: 'vacancy_parse', input: { text: VACANCY_TEXT } };
 
 const INVALID_OUTPUT = new AiServiceError({ status: 422, type: 'ai_invalid_output' });
 
+const TIMEOUT = new AiServiceError({ status: 504, type: 'ai_timeout' });
+
 async function casesDir(cases: Record<string, unknown>): Promise<string> {
   const dir = await mkdtemp(join(tmpdir(), 'jobflow-ai-eval-'));
   await Promise.all(
@@ -111,11 +113,11 @@ describe('AiEvalService.vacancy', () => {
     { status: 503, type: 'not_ready' },
     { status: 504, type: 'ai_timeout' },
   ])(
-    'stops at the first case on a $status $type from services/ai and fails the run',
+    'stops at the first case once a $status $type outlasts the three attempts a worker job gets, and fails the run',
     async (failure) => {
       const { ai, report } = await runTwoCases(() => Promise.reject(new AiServiceError(failure)));
 
-      expect(ai.calls).toHaveLength(1);
+      expect(ai.calls).toHaveLength(3);
       expect(report).toEqual({
         lines: [`stopped\t01-djinni-en.json\t${failure.type}`, 'FAIL'],
         passed: false,
@@ -380,7 +382,7 @@ describe('AiEvalService.interviewPrep', () => {
     const report = await (await evalService(ai)).interviewPrep(INTERVIEW_PREP_CASES_DIR);
 
     expect(ai.calls.map(({ kind }) => kind)).toEqual(
-      Array.from({ length: 5 }, () => 'interview_prep'),
+      Array.from({ length: 6 }, () => 'interview_prep'),
     );
     expect(ai.calls[0]?.input).toMatchObject({ position: 'Senior React Developer' });
     expect(report.lines.slice(0, 2)).toEqual([
@@ -402,9 +404,35 @@ describe('AiEvalService.interviewPrep', () => {
 
     const report = await (await evalService(ai)).interviewPrep(INTERVIEW_PREP_CASES_DIR);
 
-    expect(ai.calls).toHaveLength(5);
+    expect(ai.calls).toHaveLength(6);
     expect(report.lines[1]).toBe(
       '01-react-tech-interview.json\t-\t-\t-\t-\t-\t-\t-\tai_invalid_output',
     );
+  });
+
+  it('asks again after a 504 ai_timeout, as the worker retries a pack, and reports the answer', async () => {
+    const ai = new FakeAiClient();
+    ai.answer = () =>
+      ai.calls.length === 1 ? Promise.reject(TIMEOUT) : Promise.resolve(INTERVIEW_PREP_COMPLETION);
+
+    const report = await (await evalService(ai)).interviewPrep(INTERVIEW_PREP_CASES_DIR);
+
+    expect(ai.calls).toHaveLength(7);
+    expect(report.lines[1]).toBe('01-react-tech-interview.json\t5\t1\t10\t3\t30\t120\t0\tfail');
+  });
+});
+
+describe('AiEvalService timeouts of a kind the worker fails at once', () => {
+  it('stops the cv_hints run at the first 504 ai_timeout without asking again', async () => {
+    const ai = new FakeAiClient();
+    ai.answer = () => Promise.reject(TIMEOUT);
+
+    const report = await (await evalService(ai)).cvHints(CV_HINTS_CASES_DIR);
+
+    expect(ai.calls).toHaveLength(1);
+    expect(report).toEqual({
+      lines: ['stopped\t01-fullstack-graphql-aws-kafka.json\tai_timeout', 'FAIL'],
+      passed: false,
+    });
   });
 });

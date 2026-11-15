@@ -19,7 +19,7 @@ export function jobFields(job: ProcessedJob) {
 
 export function failedJobFields(job: ProcessedJob | undefined, error: Error) {
   const fields = job === undefined ? {} : { ...jobFields(job), attemptsMade: job.attemptsMade };
-  return { ...fields, err: error.message };
+  return { ...fields, err: error };
 }
 
 export function parsedJob<Data>(job: ProcessedJob, contract: JobContract<Data>): Data {
@@ -33,5 +33,5 @@ export function parsedJob<Data>(job: ProcessedJob, contract: JobContract<Data>):
 }
 
 export function warnWorkerError(logger: Logger, { queue, error }: WorkerFailure): void {
-  logger.warn({ queue, err: error.message }, 'worker connection error');
+  logger.warn({ queue, err: error }, 'worker connection error');
 }

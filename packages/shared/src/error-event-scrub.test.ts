@@ -101,6 +101,21 @@ describe('scrubErrorEvent', () => {
     expect(chained.fingerprint).toEqual(['RangeError', 'http://localhost:3000/board', 'BoardPage']);
   });
 
+  it('an error event keeps no frame variables', () => {
+    const withVars = scrubErrorEvent({
+      exception: {
+        values: [
+          {
+            type: 'Error',
+            stacktrace: { frames: FRAMES.map((frame) => ({ ...frame, vars: { note: NOTE } })) },
+          },
+        ],
+      },
+    });
+
+    expect(withVars.exception.values).toEqual([{ type: 'Error', stacktrace: { frames: FRAMES } }]);
+  });
+
   it('passes an event without a request or an exception through', () => {
     expect(scrubErrorEvent({ message: LEAK, tags: { code: '5f3a9c0e' } })).toEqual({
       tags: { code: '5f3a9c0e' },

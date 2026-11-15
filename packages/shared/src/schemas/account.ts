@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-import { givenPasswordSchema } from './auth.js';
+import { EMAIL_MAX_LENGTH } from './auth.js';
 
 export const EXPORT_FORMATS = ['json', 'csv'] as const;
 
@@ -23,7 +23,9 @@ export const exportLinkSchema = z.discriminatedUnion('status', [
   readyExportLinkSchema,
 ]);
 
-export const deleteAccountInputSchema = z.object({ password: givenPasswordSchema });
+export const deleteAccountInputSchema = z.object({
+  password: z.string().min(1).max(EMAIL_MAX_LENGTH),
+});
 
 export type ExportFormat = z.infer<typeof exportFormatSchema>;
 export type ExportRequest = z.infer<typeof exportRequestSchema>;

@@ -27,16 +27,17 @@ describe('the interview prep eval cases', () => {
     cases = await loadInterviewPrepCases(CASES_DIR);
   });
 
-  it('parses five inputs, among them one without a Match Score and one without weak spots', () => {
+  it('parses six inputs, among them two without a Match Score and two without weak spots', () => {
     expect(cases.map(({ file }) => file)).toEqual([
       '01-react-tech-interview.json',
       '02-node-screening.json',
       '03-fullstack-no-score.json',
       '04-lead-final.json',
       '05-injected-requirement.json',
+      '06-three-items.json',
     ]);
-    expect(cases.filter(({ input }) => input.gaps.length === 0)).toHaveLength(1);
-    expect(cases.filter(({ input }) => input.weakSpots.reasons.length === 0)).toHaveLength(1);
+    expect(cases.filter(({ input }) => input.gaps.length === 0)).toHaveLength(2);
+    expect(cases.filter(({ input }) => input.weakSpots.reasons.length === 0)).toHaveLength(2);
   });
 
   it('covers four interview kinds', () => {

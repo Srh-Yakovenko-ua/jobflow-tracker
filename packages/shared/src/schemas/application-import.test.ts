@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
+import { REJECTION_REASON_CODES } from '../rejection-reasons.js';
+import { OUTCOME_STAGES } from '../stages.js';
 import { issuePathsOf } from '../test/zod-issues.js';
 import {
   IMPORT_LIMITS,
@@ -143,6 +145,28 @@ describe('importApplicationsInputSchema', () => {
   it('takes 500 rows', () => {
     const rows = Array.from({ length: 500 }, () => ROW);
     expect(importApplicationsInputSchema.safeParse({ rows }).success).toBe(true);
+  });
+
+  it('the largest valid mapped import stays under the body limit', () => {
+    const longest = <Code extends string>(codes: readonly Code[]) =>
+      codes.reduce((kept, code) => (code.length > kept.length ? code : kept));
+    const toStage = longest(OUTCOME_STAGES);
+    const outcome = {
+      toStage,
+      reasonCode: longest(REJECTION_REASON_CODES),
+      occurredAt: ROW.appliedAt,
+    };
+    const stageHistory = [
+      HISTORY[0],
+      ...Array.from({ length: IMPORT_LIMITS.historyMax - 1 }, () => outcome),
+    ];
+    const row = { ...ROW, stage: toStage, stageHistory };
+    const body = { rows: Array.from({ length: IMPORT_LIMITS.rowsMax }, () => row) };
+
+    expect(rowSchema.safeParse(row).success).toBe(true);
+    expect(new TextEncoder().encode(JSON.stringify(body)).byteLength).toBeLessThan(
+      IMPORT_LIMITS.bodyMaxBytes,
+    );
   });
 });
 

@@ -67,6 +67,7 @@ export type InsertApplication = InTransaction & {
 
 export type InsertApplications = Required<InTransaction> & {
   searchId: string;
+  resumeVersionId: string | null;
   applications: readonly ImportedApplication[];
 };
 
@@ -114,7 +115,7 @@ export class ApplicationsRepository {
 
   async insertMany(
     userId: string,
-    { searchId, applications, tx }: InsertApplications,
+    { searchId, resumeVersionId, applications, tx }: InsertApplications,
   ): Promise<string[]> {
     const ids = await tx.$queryRaw<{ id: string }[]>`
       SELECT uuidv7() AS id FROM generate_series(1, ${applications.length}::int)`;
@@ -128,6 +129,7 @@ export class ApplicationsRepository {
         id,
         userId,
         searchId,
+        resumeVersionId,
         currentStage,
         appliedAt,
         lastEventAt,

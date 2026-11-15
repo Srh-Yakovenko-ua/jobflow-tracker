@@ -130,6 +130,15 @@ describe('DELETE /me', () => {
     return { ...signedIn, userId, applicationId };
   }
 
+  async function confirmedByEmail(
+    { userId, accessToken }: { userId: string; accessToken: string },
+    email: string,
+  ) {
+    await testApp.prisma.user.update({ where: { id: userId }, data: { passwordHash: null } });
+    const response = await deleteAccount(accessToken, email);
+    return [response.status, await testApp.prisma.user.count({ where: { id: userId } })];
+  }
+
   async function ownedCounts(userId: string, applicationIds: string[]) {
     const plans = await testApp.prisma.plan.findMany({ where: { userId }, select: { id: true } });
     return {
@@ -197,12 +206,18 @@ describe('DELETE /me', () => {
 
   it('confirms an account without a password by its own email', async () => {
     const olena = await signedUpWithEverything(OLENA);
-    await testApp.prisma.user.update({ where: { id: olena.userId }, data: { passwordHash: null } });
 
-    const response = await deleteAccount(olena.accessToken, OLENA.email.toUpperCase());
+    expect(await confirmedByEmail(olena, OLENA.email.toUpperCase())).toEqual([204, 0]);
+  });
 
-    expect(response.status).toBe(204);
-    expect(await testApp.prisma.user.count({ where: { id: olena.userId } })).toBe(0);
+  it('an OAuth email of 200 characters confirms the deletion', async () => {
+    const email = `${'o'.repeat(64)}@${'d'.repeat(63)}.${'e'.repeat(58)}.jobflow.test`;
+    const { user, accessToken } = await signUp(testApp.app, { ...OLENA, email });
+
+    expect([
+      email.length,
+      ...(await confirmedByEmail({ userId: user.id, accessToken }, email)),
+    ]).toEqual([200, 204, 0]);
   });
 
   it('answers 503 when the file storage is down and keeps the account whole', async () => {

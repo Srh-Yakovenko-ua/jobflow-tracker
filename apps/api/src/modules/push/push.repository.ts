@@ -4,7 +4,7 @@ import { Injectable } from '@nestjs/common';
 import type { Prisma } from '../../generated/prisma/client.js';
 import { PrismaService } from '../../prisma/prisma.service.js';
 
-export type SavePushSubscription = PushSubscriptionInput & { userAgent: string | null };
+export type SavePushSubscription = PushSubscriptionInput & { userAgent: string | null; now: Date };
 
 export type DeliveredPush = { id: string; now: Date };
 
@@ -25,9 +25,9 @@ export class PushRepository {
 
   async upsert(
     userId: string,
-    { endpoint, keys, userAgent }: SavePushSubscription,
+    { endpoint, keys, userAgent, now }: SavePushSubscription,
   ): Promise<string> {
-    const owned = { userId, p256dh: keys.p256dh, auth: keys.auth, userAgent };
+    const owned = { userId, p256dh: keys.p256dh, auth: keys.auth, userAgent, createdAt: now };
     const { id } = await this.prisma.pushSubscription.upsert({
       where: { endpoint },
       create: { ...owned, endpoint },

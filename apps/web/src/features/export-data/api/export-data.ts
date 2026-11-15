@@ -11,7 +11,14 @@ import { apiClient } from '@/shared/api';
 
 import { exportKeys } from '../model/keys';
 
-export const EXPORT_DATA_LIMITS = { pollMs: 2_000 } as const;
+export const EXPORT_DATA_LIMITS = { pollMs: 2_000, pollsMax: 60 } as const;
+
+export type ExportLinkPolls = Readonly<{ data: ExportLink | undefined; dataUpdateCount: number }>;
+
+export function isExportStalled(polls: ExportLinkPolls | undefined): boolean {
+  if (polls?.data?.status !== 'pending') return false;
+  return polls.dataUpdateCount >= EXPORT_DATA_LIMITS.pollsMax;
+}
 
 export type RequestExportInput = Readonly<{ body: ExportRequest; idempotencyKey: string }>;
 
@@ -39,6 +46,8 @@ export function exportLinkQueryOptions(exportId: string | null) {
     staleTime: 0,
     refetchOnWindowFocus: true,
     refetchInterval: ({ state }) =>
-      state.data?.status === 'pending' ? EXPORT_DATA_LIMITS.pollMs : false,
+      state.data?.status === 'pending' && !isExportStalled(state)
+        ? EXPORT_DATA_LIMITS.pollMs
+        : false,
   });
 }
