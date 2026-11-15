@@ -363,7 +363,11 @@ describe('ApplicationsTable bulk actions', () => {
     await user.click(checkboxNamed('Обрати «Бета»'));
 
     await user.click(screen.getByRole('button', { name: 'Відкликати' }));
-    const dialog = await screen.findByRole('dialog', { name: 'Відкликати 2 картки?' });
+    const dialog = await screen.findByRole('alertdialog', {
+      name: 'Відкликати 2 картки?',
+      description:
+        'Етап «відкликав» остаточний, повернути картку з нього не вийде. Картки, які вже закриті, лишаться як є.',
+    });
     expect(moves).toEqual([]);
 
     await user.click(within(dialog).getByRole('button', { name: 'Відкликати' }));
@@ -375,7 +379,7 @@ describe('ApplicationsTable bulk actions', () => {
       ]);
     });
     await waitFor(() => {
-      expect(screen.queryByRole('dialog')).toBeNull();
+      expect(screen.queryByRole('alertdialog')).toBeNull();
     });
   });
 

@@ -93,6 +93,18 @@ describe('Button', () => {
     expect((await screen.findByRole('tooltip')).textContent).toBe(LABELS.addVacancy);
   });
 
+  it('a focused icon-only button is announced by its name only, with no tooltip description repeating it', async () => {
+    const user = userEvent.setup();
+    render(<Button variant="outline" icon={<Plus aria-hidden />} aria-label={LABELS.addVacancy} />);
+
+    await user.tab();
+
+    await screen.findByRole('tooltip');
+    expect(screen.getByRole('button', { name: LABELS.addVacancy, description: '' })).toBe(
+      document.activeElement,
+    );
+  });
+
   it.each([
     [
       'outline',

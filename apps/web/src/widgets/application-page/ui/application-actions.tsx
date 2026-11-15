@@ -24,16 +24,26 @@ import { DANGER_MENU_ITEM, Menu, MenuContent, MenuItem, MenuTrigger } from '@/sh
 
 import type { ApplicationPageActions } from '../model/use-application-page';
 
+export type ApplicationFocusTargets = Readonly<{
+  title: RefObject<HTMLHeadingElement | null>;
+  more: RefObject<HTMLButtonElement | null>;
+}>;
+
 export type ApplicationActionsProps = Readonly<{
   application: ApplicationResponse;
   actions: ApplicationPageActions;
-  focusTarget: RefObject<HTMLHeadingElement | null>;
+  focus: ApplicationFocusTargets;
   suggestion: Stage | null;
+}>;
+
+type MoreMenuProps = Readonly<{
+  actions: ApplicationPageActions;
+  triggerRef: ApplicationFocusTargets['more'];
 }>;
 
 const COPY = uk.applicationPage;
 
-function MoreMenu({ actions }: Readonly<{ actions: ApplicationPageActions }>) {
+function MoreMenu({ actions, triggerRef }: MoreMenuProps) {
   const edit = useMenuChoice(() => {
     actions.onEdit('position');
   });
@@ -41,6 +51,7 @@ function MoreMenu({ actions }: Readonly<{ actions: ApplicationPageActions }>) {
     <Menu>
       <MenuTrigger asChild>
         <Button
+          ref={triggerRef}
           variant="outline"
           aria-label={COPY.more}
           icon={<Ellipsis aria-hidden size={16} strokeWidth={1.9} />}
@@ -73,7 +84,7 @@ function VacancyLink({ url }: Readonly<{ url: string | null }>) {
 export function ApplicationActions({
   application,
   actions,
-  focusTarget,
+  focus,
   suggestion,
 }: ApplicationActionsProps) {
   const move = useMoveApplicationMutation();
@@ -112,14 +123,14 @@ export function ApplicationActions({
           {COPY.reject}
         </Button>
       )}
-      <MoreMenu actions={actions} />
+      <MoreMenu actions={actions} triggerRef={focus.more} />
       <RejectionReasonDialog
         prompt={rejection.prompt}
         actions={rejection.actions}
         handlers={{
           onCloseAutoFocus: (event) => {
             event.preventDefault();
-            focusTarget.current?.focus();
+            focus.title.current?.focus();
           },
         }}
       />

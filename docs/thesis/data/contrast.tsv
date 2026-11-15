@@ -1,0 +1,69 @@
+theme	text	background	ratio	minimum	result
+light	ink	paper	14.93	4.5	PASS
+light	ink-2	paper	7.84	4.5	PASS
+light	ink-3	paper	5.58	4.5	PASS
+light	accent	paper	5.12	4.5	PASS
+light	link	paper	7.19	4.5	PASS
+light	danger	paper	6.88	4.5	PASS
+light	ink	surface	15.82	4.5	PASS
+light	ink-2	surface	8.31	4.5	PASS
+light	ink-3	surface	5.92	4.5	PASS
+light	accent	surface	5.43	4.5	PASS
+light	link	surface	7.62	4.5	PASS
+light	danger	surface	7.29	4.5	PASS
+light	ink	surface-2	14.81	4.5	PASS
+light	ink-2	surface-2	7.78	4.5	PASS
+light	ink-3	surface-2	5.54	4.5	PASS
+light	accent	surface-2	5.08	4.5	PASS
+light	link	surface-2	7.13	4.5	PASS
+light	danger	surface-2	6.83	4.5	PASS
+light	ink	surface-3	14.29	4.5	PASS
+light	ink-2	surface-3	7.51	4.5	PASS
+light	ink-3	surface-3	5.34	4.5	PASS
+light	accent	surface-3	4.90	4.5	PASS
+light	link	surface-3	6.89	4.5	PASS
+light	danger	surface-3	6.59	4.5	PASS
+light	ink	accent-tint	14.53	4.5	PASS
+light	ink-2	accent-tint	7.63	4.5	PASS
+light	accent-ink	accent-tint	8.11	4.5	PASS
+light	link	accent-tint	7.00	4.5	PASS
+light	surface	accent	5.43	4.5	PASS
+light	paper	ink	14.93	4.5	PASS
+light	surface	accent-press	7.62	4.5	PASS
+light	danger	danger/6 over surface	6.67	4.5	PASS
+light	danger	danger/10 over surface	6.25	4.5	PASS
+light	danger	danger/6 over surface-2	6.23	4.5	PASS
+light	danger	danger/10 over surface-2	5.88	4.5	PASS
+dark	ink	paper	14.04	4.5	PASS
+dark	ink-2	paper	9.25	4.5	PASS
+dark	ink-3	paper	6.49	4.5	PASS
+dark	accent	paper	7.02	4.5	PASS
+dark	link	paper	7.02	4.5	PASS
+dark	danger	paper	6.22	4.5	PASS
+dark	ink	surface	12.31	4.5	PASS
+dark	ink-2	surface	8.11	4.5	PASS
+dark	ink-3	surface	5.70	4.5	PASS
+dark	accent	surface	6.15	4.5	PASS
+dark	link	surface	6.15	4.5	PASS
+dark	danger	surface	5.45	4.5	PASS
+dark	ink	surface-2	10.70	4.5	PASS
+dark	ink-2	surface-2	7.05	4.5	PASS
+dark	ink-3	surface-2	4.95	4.5	PASS
+dark	accent	surface-2	5.35	4.5	PASS
+dark	link	surface-2	5.35	4.5	PASS
+dark	danger	surface-2	4.74	4.5	PASS
+dark	ink	surface-3	14.04	4.5	PASS
+dark	ink-2	surface-3	9.25	4.5	PASS
+dark	ink-3	surface-3	6.49	4.5	PASS
+dark	accent	surface-3	7.02	4.5	PASS
+dark	link	surface-3	7.02	4.5	PASS
+dark	danger	surface-3	6.22	4.5	PASS
+dark	ink	accent-tint	9.58	4.5	PASS
+dark	ink-2	accent-tint	6.31	4.5	PASS
+dark	accent-ink	accent-tint	4.79	4.5	PASS
+dark	link	accent-tint	4.79	4.5	PASS
+dark	surface	accent	6.15	4.5	PASS
+dark	paper	ink	14.04	4.5	PASS
+dark	paper	accent-press	5.13	4.5	PASS
+dark	danger	danger/6 over surface	4.97	4.5	PASS
+dark	danger	danger/10 over surface	4.65	4.5	PASS

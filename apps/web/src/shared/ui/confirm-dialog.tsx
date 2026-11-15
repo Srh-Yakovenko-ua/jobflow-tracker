@@ -4,7 +4,7 @@ import { useState } from 'react';
 
 import { Button, type ButtonVariant } from './button';
 import { ConfirmFooter, type ConfirmFooterProps } from './confirm-footer';
-import { Dialog, DialogContent, DialogTrigger } from './dialog';
+import { AlertDialogContent, Dialog, DialogTrigger } from './dialog';
 import { TOUCH_HEIGHT } from './touch-height';
 
 export type ConfirmAction = Readonly<{
@@ -30,7 +30,7 @@ export function ConfirmDialog({ trigger, copy, action }: ConfirmDialogProps) {
           {trigger.label}
         </Button>
       </DialogTrigger>
-      <DialogContent header={{ title: copy.title, description: copy.body }}>
+      <AlertDialogContent header={{ title: copy.title, description: copy.body }}>
         <ConfirmFooter
           copy={copy}
           action={{
@@ -40,7 +40,7 @@ export function ConfirmDialog({ trigger, copy, action }: ConfirmDialogProps) {
             },
           }}
         />
-      </DialogContent>
+      </AlertDialogContent>
     </Dialog>
   );
 }

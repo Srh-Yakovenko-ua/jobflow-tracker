@@ -116,14 +116,14 @@ async function renderWithButton(options?: CaptureTokenRoutesOptions) {
 
 async function openConfirm(user: UserEvent, copy: ConfirmCopy) {
   await user.click(await screen.findByRole('button', { name: copy.trigger }));
-  return screen.findByRole('dialog', { name: copy.dialog });
+  return screen.findByRole('alertdialog', { name: copy.dialog });
 }
 
 async function cancelConfirm(user: UserEvent, copy: ConfirmCopy) {
   const dialog = await openConfirm(user, copy);
   const warning = dialog.textContent;
   await user.click(screen.getByRole('button', CANCEL));
-  return { warning, open: screen.queryByRole('dialog') };
+  return { warning, open: screen.queryByRole('alertdialog') };
 }
 
 async function confirm(user: UserEvent, copy: ConfirmCopy) {
@@ -304,7 +304,7 @@ describe('InstallBookmarklet', () => {
     await waitFor(() => {
       expect(screen.getByRole('link', LINK).getAttribute('href')).toBe(hrefOf('capture-token-two'));
     });
-    expect(screen.queryByRole('dialog')).toBeNull();
+    expect(screen.queryByRole('alertdialog')).toBeNull();
     expect(sent).toEqual(['POST', 'POST']);
     expect(await screen.findByText('Нова кнопка готова')).toBeDefined();
     expect(
@@ -476,14 +476,14 @@ describe('InstallBookmarklet', () => {
       if (settled === 'pending') await advanceBy(API_CLIENT_LIMITS.requestTimeoutMs);
 
       expect(await screen.findByText(REVOKE_FAILED)).toBeDefined();
-      expect(screen.getByRole('dialog', { name: REVOKE.dialog })).toBeDefined();
+      expect(screen.getByRole('alertdialog', { name: REVOKE.dialog })).toBeDefined();
       expect(sent).toEqual([`DELETE ${USED_TOKEN.id}`]);
       expect(await screen.findByRole('button', { name: REVOKE.press, busy: false })).toHaveProperty(
         'disabled',
         false,
       );
       await user.click(screen.getByRole('button', CANCEL));
-      expect(screen.queryByRole('dialog')).toBeNull();
+      expect(screen.queryByRole('alertdialog')).toBeNull();
     },
   );
 

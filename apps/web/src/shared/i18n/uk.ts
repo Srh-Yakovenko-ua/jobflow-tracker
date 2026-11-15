@@ -48,6 +48,8 @@ export const uk = {
     showPassword: 'Показати пароль',
     copied: 'Скопійовано',
     copyFailed: 'Не вдалося скопіювати',
+    showTable: 'Показати таблицю',
+    hideTable: 'Сховати таблицю',
     editor: {
       save: 'Зберегти',
       cancel: 'Скасувати',

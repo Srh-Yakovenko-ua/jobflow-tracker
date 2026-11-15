@@ -118,5 +118,9 @@ export function Button({
   );
   const label = props['aria-label'];
   if (!iconOnly || label === undefined) return button;
-  return <Tooltip content={label}>{button}</Tooltip>;
+  return (
+    <Tooltip content={label} describes={false}>
+      {button}
+    </Tooltip>
+  );
 }

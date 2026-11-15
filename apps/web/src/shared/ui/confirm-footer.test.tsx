@@ -41,6 +41,29 @@ describe('ConfirmFooter', () => {
     expect(onConfirm).not.toHaveBeenCalled();
   });
 
+  it('both buttons grow to the 44 px touch height below md', () => {
+    renderFooter({ pending: false });
+
+    const buttons = [COPY.cancel, COPY.confirm].map((name) => screen.getByRole('button', { name }));
+
+    expect(buttons.map((button) => button.classList.contains('max-md:min-h-11'))).toEqual([
+      true,
+      true,
+    ]);
+  });
+
+  it('in dark the confirm button leaves the danger tint off the surface-2 footer', () => {
+    renderFooter({ pending: false });
+
+    const confirm = screen.getByRole('button', { name: COPY.confirm });
+
+    expect(
+      ['dark:bg-transparent', 'dark:not-disabled:hover:bg-surface-3'].map((name) =>
+        confirm.classList.contains(name),
+      ),
+    ).toEqual([true, true]);
+  });
+
   it('while the action runs the confirm button is busy and refuses a second click', async () => {
     const { user, onConfirm } = renderFooter({ pending: true });
     const confirm = screen.getByRole('button', { name: COPY.confirm });

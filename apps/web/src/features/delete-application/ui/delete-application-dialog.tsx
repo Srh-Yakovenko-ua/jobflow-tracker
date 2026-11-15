@@ -5,7 +5,7 @@ import type { ApplicationResponse } from '@jobflow/shared';
 import { uk } from '@/shared/i18n';
 import { useLastPresent } from '@/shared/lib/use-last-present';
 import { ConfirmFooter } from '@/shared/ui/confirm-footer';
-import { Dialog, DialogContent, type DialogContentHandlers } from '@/shared/ui/dialog';
+import { AlertDialogContent, Dialog, type DialogContentHandlers } from '@/shared/ui/dialog';
 
 import { useDeleteApplicationMutation } from '../model/use-delete-application-mutation';
 
@@ -34,7 +34,7 @@ export function DeleteApplicationDialog({
       }}
     >
       {shown && (
-        <DialogContent
+        <AlertDialogContent
           header={{ title: COPY.title, description: COPY.body(shown.position) }}
           handlers={{ ...handlers }}
         >
@@ -48,7 +48,7 @@ export function DeleteApplicationDialog({
               },
             }}
           />
-        </DialogContent>
+        </AlertDialogContent>
       )}
     </Dialog>
   );

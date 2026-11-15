@@ -1,22 +1,30 @@
 import { designInsightsBody } from '@jobflow/shared/testing';
+import type { Locator, Page } from '@playwright/test';
 
 import { uk } from '@/shared/i18n';
 
 import { designSankey, routeDesignAnalytics } from './test/analytics-fixture';
+import { seriousViolations } from './test/axe';
 import { expect, test } from './test/session';
 
 const BLOCKS = uk.analytics.blocks;
 
 const INSIGHTS = designInsightsBody();
 
+const SCHEMES = ['light', 'dark'] as const;
+
+async function openDesignDashboard(page: Page): Promise<Locator> {
+  await routeDesignAnalytics(page);
+  await page.goto('/analytics');
+  const sankey = designSankey(page);
+  await expect(sankey.getByRole('list', { name: BLOCKS.sankey.funnel })).toBeVisible();
+  return sankey;
+}
+
 test('the dashboard shows the funnel, the offer forecast and the insight headlines', async ({
   page,
 }) => {
-  await routeDesignAnalytics(page);
-  await page.goto('/analytics');
-
-  const sankey = designSankey(page);
-  await expect(sankey.getByRole('list', { name: BLOCKS.sankey.funnel })).toBeVisible();
+  const sankey = await openDesignDashboard(page);
   await expect(sankey.getByRole('table', { name: BLOCKS.sankey.table.caption })).toBeAttached();
 
   const forecast = page.getByRole('region', { name: BLOCKS.forecast.eyebrow });
@@ -32,3 +40,21 @@ test('the dashboard shows the funnel, the offer forecast and the insight headlin
     await expect(actions.getByText(title)).toBeVisible();
   }
 });
+
+for (const colorScheme of SCHEMES) {
+  test(`the dashboard with its charts drawn has no serious axe violations in ${colorScheme} and the funnel table opens`, async ({
+    page,
+  }) => {
+    await page.emulateMedia({ colorScheme });
+    const sankey = await openDesignDashboard(page);
+    await expect(page.locator('[aria-busy="true"]')).toHaveCount(0);
+
+    await sankey.getByRole('button', { name: uk.ui.showTable }).click();
+    await expect(sankey.getByRole('button', { name: uk.ui.hideTable })).toHaveAttribute(
+      'aria-expanded',
+      'true',
+    );
+    await expect(sankey.getByRole('table', { name: BLOCKS.sankey.table.caption })).toBeVisible();
+    expect(await seriousViolations(page)).toEqual([]);
+  });
+}

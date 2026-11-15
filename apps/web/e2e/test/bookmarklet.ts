@@ -14,7 +14,7 @@ async function issueToken(page: Page): Promise<void> {
   }
   await renew.click();
   await page
-    .getByRole('dialog', { name: COPY.regenerate.dialog.title })
+    .getByRole('alertdialog', { name: COPY.regenerate.dialog.title })
     .getByRole('button', { name: COPY.regenerate.dialog.confirm, exact: true })
     .click();
 }

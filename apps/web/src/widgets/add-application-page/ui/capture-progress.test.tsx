@@ -592,14 +592,14 @@ describe('CaptureProgress', () => {
     const { user, deletes, actions } = renderFailed();
 
     await user.click(await screen.findByRole('button', { name: DELETE }));
-    const asked = within(screen.getByRole('dialog', DELETE_DIALOG));
+    const asked = within(screen.getByRole('alertdialog', DELETE_DIALOG));
     await user.click(asked.getByRole('button', { name: 'Скасувати' }));
     expect(deletes).toEqual([]);
     expect(screen.getByText(FAILED_LINE)).toBeDefined();
     expect(actions.onDeleted).not.toHaveBeenCalled();
 
     await user.click(await screen.findByRole('button', { name: DELETE }));
-    const again = within(await screen.findByRole('dialog', DELETE_DIALOG));
+    const again = within(await screen.findByRole('alertdialog', DELETE_DIALOG));
     await user.click(again.getByRole('button', { name: 'Видалити' }));
 
     await waitFor(() => {
@@ -613,11 +613,11 @@ describe('CaptureProgress', () => {
     const opener = await screen.findByRole('button', { name: DELETE });
 
     await user.click(opener);
-    await screen.findByRole('dialog', DELETE_DIALOG);
+    await screen.findByRole('alertdialog', DELETE_DIALOG);
     await user.keyboard('{Escape}');
 
     await waitFor(() => {
-      expect(screen.queryByRole('dialog')).toBeNull();
+      expect(screen.queryByRole('alertdialog')).toBeNull();
     });
     expect(document.activeElement).toBe(opener);
     expect(deletes).toEqual([]);

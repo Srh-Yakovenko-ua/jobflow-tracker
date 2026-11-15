@@ -103,7 +103,7 @@ describe('ApplicationSheet', () => {
     await user.click(await within(sheet).findByRole('button', { name: 'Ще дії' }));
     await user.click(await screen.findByRole('menuitem', { name: 'Видалити' }));
     exits.finish();
-    const confirm = await screen.findByRole('dialog', { name: 'Видалити картку?' });
+    const confirm = await screen.findByRole('alertdialog', { name: 'Видалити картку?' });
     await user.click(within(confirm).getByRole('button', { name: 'Видалити' }));
 
     await waitFor(() => {

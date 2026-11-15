@@ -109,6 +109,29 @@ describe('thesis tables', () => {
     }
   });
 
+  it('renders the contrast and lighthouse tables of the accessibility audit with Ukrainian headers', () => {
+    const lines = TABLE_BUILDERS.aiEval([
+      tsvSource(
+        'contrast.tsv',
+        'theme\ttext\tbackground\tratio\tminimum\tresult\nlight\tink\tsurface\t15.20\t4.5\tPASS\n',
+      ),
+      tsvSource(
+        'lighthouse.tsv',
+        'screen\troute\tscore\tminimum\tresult\nboard\t/board\t100\t95\tPASS\n',
+      ),
+    ]);
+
+    assert.deepEqual(lines, [
+      '| Тема | Текст | Тло | Контраст | Мінімум | Результат |',
+      '| --- | --- | --- | --- | --- | --- |',
+      '| light | ink | surface | 15.20 | 4.5 | PASS |',
+      '',
+      '| Екран | Маршрут | Оцінка | Мінімум | Результат |',
+      '| --- | --- | --- | --- | --- |',
+      '| board | /board | 100 | 95 | PASS |',
+    ]);
+  });
+
   it('lists coverage per package with a dash for a missing metric and the test total', () => {
     const lines = TABLE_BUILDERS.coverage([
       jsonSource('coverage.json', {
