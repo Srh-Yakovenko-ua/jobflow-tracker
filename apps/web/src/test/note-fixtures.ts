@@ -42,6 +42,10 @@ export function noteRoute(control: MoveRouteOptions = {}) {
   return { handler, sent };
 }
 
+export function sentNoteBodiesOf(sent: readonly SentCreate<NoteInput>[]): string[] {
+  return sent.map(({ body }) => body.body);
+}
+
 export function notesRoute({ items = [], ...control }: NotesRouteOptions = {}) {
   const sent: string[] = [];
   const handler = http.get<{ id: string }>(apiUrl('/applications/:id/notes'), (info) => {

@@ -13,16 +13,16 @@ import { renderHookInApp } from '@/test/render-in-app';
 import { server } from '@/test/server';
 import { ME_RESPONSE, meRoute } from '@/test/session-fixtures';
 
-import { recentApplicationsKeyOf } from '../lib/recent-applications-key';
+import { userStorageKeyOf } from '../lib/user-storage';
 import { useSession } from './use-session';
 
 vi.mock('next/navigation', () => import('@/test/navigation'));
 
 const LOGOUT_ALL_URL = apiUrl('/auth/logout-all');
 
-const MY_RECENTS = recentApplicationsKeyOf(ME_RESPONSE.user.id);
+const MY_RECENTS = userStorageKeyOf({ name: 'recent-applications', userId: ME_RESPONSE.user.id });
 
-const OTHER_RECENTS = recentApplicationsKeyOf(fixtureIdOf(901));
+const OTHER_RECENTS = userStorageKeyOf({ name: 'recent-applications', userId: fixtureIdOf(901) });
 
 const STORED_RECENTS = '[{"id":"1","company":"Roku","position":"Mobile Engineer"}]';
 

@@ -1,10 +1,10 @@
 import { useRouter } from 'next/navigation';
 
+import { useUserId } from '@/entities/user';
 import type { PageCommand } from '@/shared/lib/page-commands';
 
 import type { PaletteRun } from './palette-commands';
 import { type RecentApplication, rememberRecentApplication } from './recent-applications';
-import { useUserId } from './use-palette-target';
 import type { ShellSurfaces } from './use-shell-surfaces';
 import { useThemeFlip } from './use-theme-flip';
 

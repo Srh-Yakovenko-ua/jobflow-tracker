@@ -5,19 +5,9 @@ import { ACTIVE_STAGES, type ApplicationListItem, STAGE_LABELS } from '@jobflow/
 import { STAGE_COLOR_CLASS } from '@/entities/application';
 import { uk } from '@/shared/i18n';
 import { cn } from '@/shared/lib/cn';
-import { TOUCH_HEIGHT } from '@/shared/ui/touch-height';
+import { ToggleChip } from '@/shared/ui/toggle-chip';
 
 import { useApplicationFilters } from '../model/filters-store';
-
-const CHIP = {
-  base: cn(
-    'touch-target flex h-7.5 flex-none items-center gap-1.75 rounded-full px-2.75 text-[12px] font-medium transition-colors duration-(--duration-instant) ease-standard',
-    TOUCH_HEIGHT,
-  ),
-  idle: 'bg-surface-2 text-ink-2 inset-ring inset-ring-line hover:bg-surface-3 active:bg-surface-3',
-  picked:
-    'bg-accent text-surface shadow-accent hover:bg-accent-press active:bg-accent-press dark:hover:text-paper dark:active:text-paper',
-} as const;
 
 export type StageChipsProps = Readonly<{
   applications: readonly ApplicationListItem[] | undefined;
@@ -37,11 +27,9 @@ export function StageChips({ applications }: StageChipsProps) {
       {ACTIVE_STAGES.map((stage) => {
         const on = picked?.includes(stage) ?? false;
         return (
-          <button
+          <ToggleChip
             key={stage}
-            type="button"
-            aria-pressed={on}
-            className={cn(CHIP.base, on ? CHIP.picked : CHIP.idle)}
+            pressed={on}
             onClick={() => {
               toggleStage(stage);
             }}
@@ -58,7 +46,7 @@ export function StageChips({ applications }: StageChipsProps) {
                 {applications.filter((application) => application.currentStage === stage).length}
               </span>
             )}
-          </button>
+          </ToggleChip>
         );
       })}
     </div>

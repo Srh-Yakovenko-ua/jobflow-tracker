@@ -10,9 +10,12 @@ import {
 import type { HttpResponseResolver } from 'msw';
 import { http, HttpResponse } from 'msw/http';
 
+import { userStorageKeyOf } from '@/entities/user';
+
 import { apiUrl } from './api-handlers';
 import { ACME_APPLICATION } from './application-fixtures';
 import { fixtureIdOf } from './board-fixtures';
+import { ME_RESPONSE } from './session-fixtures';
 
 export type TimelineItemSeed = Omit<TimelineItem, 'id' | 'actor'> & {
   serial: number;
@@ -59,6 +62,24 @@ export function noteAddedOf({
   };
 }
 
+export function interviewDoneOf({
+  serial,
+  occurredAt,
+}: Pick<TimelineItemSeed, 'serial' | 'occurredAt'>) {
+  return timelineItemOf({
+    serial,
+    type: 'interview_done',
+    occurredAt,
+    title: "Техінтерв'ю пройдено · 90 хв",
+    meta: { kind: 'tech_interview', durationMin: 90 },
+  });
+}
+
+export function answerAskedTopics(itemIds: readonly TimelineItem['id'][]): void {
+  const key = userStorageKeyOf({ name: 'asked-topics', userId: ME_RESPONSE.user.id });
+  localStorage.setItem(key, JSON.stringify(itemIds));
+}
+
 export const EMPTY_TIMELINE: ApplicationTimelineResponse = { items: [] };
 
 export const LONG_COMMENT = `https://jobs.example.com/${'x'.repeat(975)}`;
@@ -77,13 +98,7 @@ export const DESIGN_TIMELINE_APPLICATION: ApplicationResponse = {
 export const DESIGN_TIMELINE = applicationTimelineResponseSchema.parse({
   items: [
     noteAddedOf({ id: fixtureIdOf(309), body: DESIGN_NOTE, createdAt: '2026-09-03T12:40:00Z' }),
-    timelineItemOf({
-      serial: 308,
-      type: 'interview_done',
-      occurredAt: '2026-09-03T10:00:00Z',
-      title: "Техінтерв'ю пройдено · 90 хв",
-      meta: { kind: 'tech_interview', durationMin: 90 },
-    }),
+    interviewDoneOf({ serial: 308, occurredAt: '2026-09-03T10:00:00Z' }),
     timelineItemOf({
       serial: 307,
       type: 'stage_changed',

@@ -2,6 +2,7 @@ import type { Stage } from '@jobflow/shared';
 import { type KeyboardEvent as ReactKeyboardEvent, useState } from 'react';
 
 import { isSearchable, type MovingApplication } from '@/entities/application';
+import { useUserId } from '@/entities/user';
 import type { ApplicationSearch } from '@/features/search-applications';
 import { FEATURE_FLAGS } from '@/shared/config';
 import { uk } from '@/shared/i18n';
@@ -18,7 +19,7 @@ import { readRecentApplications, type RecentApplication } from './recent-applica
 import { usePaletteMove } from './use-palette-move';
 import { type PalettePageId, usePaletteRuns } from './use-palette-runs';
 import { usePaletteSearch } from './use-palette-search';
-import { usePaletteTarget, useUserId, useViewedApplication } from './use-palette-target';
+import { usePaletteTarget, useViewedApplication } from './use-palette-target';
 import type { ShellSurfaces } from './use-shell-surfaces';
 
 export type PaletteRootView = Readonly<{

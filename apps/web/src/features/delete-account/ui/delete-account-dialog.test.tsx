@@ -2,7 +2,7 @@ import { screen, waitFor, within } from '@testing-library/react';
 import type { HttpResponseResolver } from 'msw';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { recentApplicationsKeyOf } from '@/entities/user';
+import { userStorageKeyOf } from '@/entities/user';
 import { deleteAccountRoute } from '@/test/account-fixtures';
 import { errorReply, validationReply } from '@/test/api-handlers';
 import { replace } from '@/test/navigation';
@@ -18,7 +18,7 @@ const DIALOG = { name: 'Видалити акаунт назавжди?' } as co
 
 const CONFIRM = { name: 'Видалити акаунт' } as const;
 
-const RECENT_KEY = recentApplicationsKeyOf(ME_RESPONSE.user.id);
+const RECENT_KEY = userStorageKeyOf({ name: 'recent-applications', userId: ME_RESPONSE.user.id });
 
 async function openDialog(reply?: HttpResponseResolver) {
   const route = deleteAccountRoute(reply);

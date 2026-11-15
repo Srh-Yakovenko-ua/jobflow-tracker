@@ -1,13 +1,11 @@
 'use client';
 
 import Link from 'next/link';
-import { useId, useState } from 'react';
 
 import { uk } from '@/shared/i18n';
 import { cn } from '@/shared/lib/cn';
 
-import { Button } from './button';
-import { TOUCH_HEIGHT } from './touch-height';
+import { DisclosureButton, useDisclosure } from './disclosure';
 
 export type ChartTableCell = Readonly<{ text: string; href?: string | undefined }>;
 
@@ -61,25 +59,16 @@ function DataTable({ caption, heads, rows }: ChartTableProps) {
   );
 }
 
+const TABLE_LABELS = { show: uk.ui.showTable, hide: uk.ui.hideTable };
+
 export function ChartTable(props: ChartTableProps) {
-  const tableId = useId();
-  const [shown, setShown] = useState(false);
+  const disclosure = useDisclosure();
+  const { shown } = disclosure;
   return (
     <div className="flex min-w-0 flex-col items-start gap-1.5">
-      <Button
-        variant="ghost"
-        size="xs"
-        className={TOUCH_HEIGHT}
-        aria-expanded={shown}
-        aria-controls={tableId}
-        onClick={() => {
-          setShown(!shown);
-        }}
-      >
-        {shown ? uk.ui.hideTable : uk.ui.showTable}
-      </Button>
+      <DisclosureButton disclosure={disclosure} labels={TABLE_LABELS} />
       <div
-        id={tableId}
+        id={disclosure.regionId}
         {...(shown && { role: 'region', 'aria-label': props.caption, tabIndex: 0 })}
         className={cn(
           'self-stretch',

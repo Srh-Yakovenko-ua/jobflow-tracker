@@ -24,6 +24,7 @@ export function useApplicationTimeline(application: ApplicationResponse) {
     rows: timelineRowsOf({ items, application, notes: notes.data?.items ?? [], linkedVersion }),
     waiting: waitingRowOf({ application, silenceDays, timeZone }),
     count: items.length,
+    latestInterviewId: items.find((item) => item.type === 'interview_done')?.id,
     now: new Date(Math.max(timeline.dataUpdatedAt, mountedAt)),
     timeZone,
     load,

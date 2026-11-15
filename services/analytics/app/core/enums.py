@@ -46,6 +46,11 @@ class RejectionReason(EnumsModel):
     sort_order: int
 
 
+class NoteTopic(EnumsModel):
+    code: str
+    label_uk: str
+
+
 class Thresholds(EnumsModel):
     min_n_percent: int = Field(alias="MIN_N_PERCENT")
     min_n_insight: int = Field(alias="MIN_N_INSIGHT")
@@ -78,6 +83,7 @@ class DomainEnums(EnumsModel):
     work_modes: tuple[str, ...]
     rejection_sides: tuple[str, ...]
     rejection_reasons: tuple[RejectionReason, ...]
+    note_topics: tuple[NoteTopic, ...]
     thresholds: Thresholds
     salary: SalaryRules
     seniorities: tuple[str, ...]
