@@ -61,7 +61,12 @@ describe('deleteAccountInputSchema', () => {
     });
   });
 
-  it.each([{ password: '' }, { password: 'x'.repeat(129) }, {}])('refuses %j', (body) => {
+  it('an OAuth email of 200 characters confirms the deletion', () => {
+    const email = `${'a'.repeat(188)}@example.com`;
+    expect(deleteAccountInputSchema.parse({ password: email })).toEqual({ password: email });
+  });
+
+  it.each([{ password: '' }, { password: 'x'.repeat(255) }, {}])('refuses %j', (body) => {
     expect(issuePathsOf(deleteAccountInputSchema.safeParse(body))).toEqual(['password']);
   });
 });

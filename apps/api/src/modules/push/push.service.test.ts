@@ -2,9 +2,11 @@ import { PUSH_LIMITS } from '@jobflow/shared';
 import { Test } from '@nestjs/testing';
 import { describe, expect, it } from 'vitest';
 
+import { Clock } from '../../common/clock.js';
 import { CHROME_SUBSCRIPTION, ScriptedPushSender } from '../../test/push.js';
 import { type ByUser } from '../../test/recorded-events.js';
 import { BOHDAN_ID, MISSING_ID, OLENA_ID } from '../../test/service-fixtures.js';
+import { fixedClock, NOW } from '../../test/time.js';
 import { PushRepository, type SavePushSubscription } from './push.repository.js';
 import { PushService } from './push.service.js';
 import { PushSender } from './push-sender.js';
@@ -43,6 +45,7 @@ async function serviceWith(sender = new ScriptedPushSender()) {
       PushService,
       { provide: PushRepository, useValue: repository },
       { provide: PushSender, useValue: sender },
+      { provide: Clock, useValue: fixedClock(NOW) },
     ],
   }).compile();
   return { repository, service: moduleRef.get(PushService) };
@@ -62,7 +65,7 @@ describe('PushService.publicKey', () => {
 });
 
 describe('PushService.subscribe', () => {
-  it('saves the endpoint and keys for the user with the user agent cut to its limit', async () => {
+  it('saves the endpoint and keys for the user with the user agent cut to its limit, as of now', async () => {
     const { repository, service } = await serviceWith();
     const userAgent = 'Mozilla/5.0 '.repeat(30);
 
@@ -75,6 +78,7 @@ describe('PushService.subscribe', () => {
         userId: OLENA_ID,
         ...CHROME_SUBSCRIPTION,
         userAgent: userAgent.slice(0, PUSH_LIMITS.userAgentMax),
+        now: NOW,
       },
     ]);
     expect(repository.saved[0]?.userAgent).toHaveLength(256);

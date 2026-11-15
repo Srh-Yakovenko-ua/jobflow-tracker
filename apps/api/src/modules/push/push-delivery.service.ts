@@ -29,7 +29,8 @@ export class PushDeliveryService {
     if (!settings.notifyPush) return;
     const now = this.clock.now();
     const deliverAt = quietHoursDeliveryAt({ settings, notification, now });
-    const job: PushSendJob = { userId, message: pushMessageOf(notification, settings) };
+    const message = pushMessageOf(notification, { settings, deliverAt });
+    const job: PushSendJob = { userId, message };
     const options = { jobId: notificationId, delay: deliverAt.getTime() - now.getTime() };
     await withinLimit(this.queue.add(PUSH_JOBS.send, job, options), OUTBOX_LIMITS.publishTimeoutMs);
   }

@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import { describe, it } from 'node:test';
 
 import {
@@ -7,10 +8,12 @@ import {
   evalProblem,
   gitleaksCount,
   pytestRow,
-  trivyCounts,
+  sarifCounts,
   vitestRow,
   zapCounts,
 } from '../src/snapshots.js';
+
+const FIXTURES = { trivySarif: new URL('fixtures/trivy-fs.sarif', import.meta.url) };
 
 const evalTsv = (model) =>
   [
@@ -103,22 +106,11 @@ describe('docs:data snapshots', () => {
     assert.throws(() => auditCounts({ error: 'offline' }), /no vulnerability counts/);
   });
 
-  it('counts the Trivy findings of every result kind by severity and refuses another shape', () => {
-    const counts = trivyCounts({
-      SchemaVersion: 2,
-      Results: [
-        {
-          Target: 'pnpm-lock.yaml',
-          Vulnerabilities: [{ Severity: 'HIGH' }, { Severity: 'LOW' }, { Severity: 'UNKNOWN' }],
-        },
-        { Target: 'apps/api/Dockerfile', Misconfigurations: [{ Severity: 'MEDIUM' }] },
-        { Target: 'services/ai/uv.lock' },
-        { Target: '.env.example', Secrets: [{ Severity: 'CRITICAL' }] },
-      ],
-    });
+  it('counts the Trivy SARIF results by the severity tag of their rule and refuses another shape', () => {
+    const counts = sarifCounts(JSON.parse(readFileSync(FIXTURES.trivySarif, 'utf8')));
 
     assert.deepEqual(counts, { findings: 5, critical: 1, high: 1, medium: 1, low: 1, info: 1 });
-    assert.deepEqual(trivyCounts({ SchemaVersion: 2 }), {
+    assert.deepEqual(sarifCounts({ runs: [{ tool: { driver: { name: 'Trivy' } } }] }), {
       findings: 0,
       critical: 0,
       high: 0,
@@ -126,7 +118,7 @@ describe('docs:data snapshots', () => {
       low: 0,
       info: 0,
     });
-    assert.throws(() => trivyCounts({ metadata: {} }), /not a Trivy JSON report/);
+    assert.throws(() => sarifCounts({ SchemaVersion: 2 }), /not a SARIF report/);
   });
 
   it('counts the ZAP alerts of every site by risk and refuses another shape', () => {

@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
-import { AI_JOB_ID } from '../../test/ai.js';
 import {
+  interviewPrepReadyFor,
   interviewSoonAt,
   MONTHLY_SUMMARY_NOTIFICATION,
   notificationOf,
@@ -9,6 +9,7 @@ import {
   SILENCE_NOTIFICATION,
 } from '../../test/notifications.js';
 import { APPLICATION_ID, MISSING_ID } from '../../test/service-fixtures.js';
+import { NOW } from '../../test/time.js';
 import { isPushed, pushMessageOf } from './push-message.js';
 
 const KYIV = { timezone: 'Europe/Kyiv' };
@@ -17,7 +18,7 @@ const LONGER_SILENCE = { applicationId: MISSING_ID, company: 'Globex', days: 12 
 
 const message = (notification: Parameters<typeof isPushed>[0]) => {
   if (!isPushed(notification)) throw new Error(`${notification.type} is not pushed`);
-  return pushMessageOf(notification, KYIV);
+  return pushMessageOf(notification, { settings: KYIV, deliverAt: NOW });
 };
 
 describe('pushMessageOf', () => {
@@ -67,16 +68,7 @@ describe('pushMessageOf', () => {
   });
 
   it('names the day, the interview kind and the company of a ready prep pack and opens its card', () => {
-    const ready = notificationOf({
-      type: 'interview_prep_ready',
-      payload: {
-        aiJobId: AI_JOB_ID,
-        applicationId: APPLICATION_ID,
-        company: 'Acme',
-        eventKind: 'tech_interview',
-        startsAt: '2026-10-23T08:00:00.000Z',
-      },
-    });
+    const ready = interviewPrepReadyFor(new Date('2026-10-23T08:00:00.000Z'));
 
     expect(message(ready)).toEqual({
       title: "Завтра техінтерв'ю в Acme",

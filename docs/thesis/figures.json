@@ -346,6 +346,19 @@
       "source": "docs/security.md"
     },
     {
+      "id": "security-scans",
+      "type": "table",
+      "builder": "securityScans",
+      "caption": "Знахідки сканерів безпеки Trivy, gitleaks і OWASP ZAP за рівнями",
+      "source": "docs/thesis/data/security-scans.json"
+    },
+    {
+      "id": "zap-report",
+      "type": "screenshot",
+      "caption": "Звіт OWASP ZAP baseline для вебзастосунку з останнього запуску Security на main",
+      "source": "docs/screenshots/zap-report.png"
+    },
+    {
       "id": "lighthouse",
       "type": "table",
       "builder": "aiEval",

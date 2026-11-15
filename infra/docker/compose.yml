@@ -16,7 +16,7 @@ x-api-environment: &api-environment
   SENTRY_RELEASE: ${SENTRY_RELEASE:-}
 
 x-glitchtip-environment: &glitchtip-environment
-  DATABASE_URL: postgres://postgres:${POSTGRES_PASSWORD:-postgres}@postgres:5432/glitchtip
+  DATABASE_URL: postgres://glitchtip:${GLITCHTIP_DB_PASSWORD:-glitchtip}@postgres:5432/glitchtip
   SECRET_KEY: ${GLITCHTIP_SECRET_KEY:-36c66ab0deb723a6b013c1d870ce6aa731577e77ec00aab4}
   GLITCHTIP_DOMAIN: http://localhost:8003
   VALKEY_URL: ''
@@ -420,13 +420,24 @@ services:
   glitchtip-db:
     image: postgres:18.6-alpine
     profiles: [observability]
-    entrypoint: ['/bin/sh', '-c']
+    entrypoint: ['psql']
     command:
-      - >-
-        printf '%s\n' "SELECT 'CREATE DATABASE glitchtip' WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname = 'glitchtip')\gexec" |
-        psql -v ON_ERROR_STOP=1 -h postgres -U postgres -d postgres
+      - -v
+      - ON_ERROR_STOP=1
+      - -v
+      - password=${GLITCHTIP_DB_PASSWORD:-glitchtip}
+      - -h
+      - postgres
+      - -U
+      - postgres
+      - -d
+      - postgres
+      - -f
+      - /glitchtip/database.sql
     environment:
       PGPASSWORD: ${POSTGRES_PASSWORD:-postgres}
+    volumes:
+      - ./observability/glitchtip/database.sql:/glitchtip/database.sql:ro
     depends_on:
       postgres:
         condition: service_healthy

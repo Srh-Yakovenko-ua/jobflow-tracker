@@ -12,7 +12,7 @@ import path from 'node:path';
 import { measureCoverage } from './coverage.js';
 import { DOCS_PATHS, inRepo } from './paths.js';
 import { run } from './run.js';
-import { measureSecurityScans, requireImages } from './security-scans.js';
+import { measureSecurityScans } from './security-scans.js';
 import { auditCounts, e2eTests, evalProblem } from './snapshots.js';
 
 const WEB_URL = process.env.THESIS_WEB_URL ?? 'http://localhost:3000';
@@ -20,6 +20,7 @@ const WEB_URL = process.env.THESIS_WEB_URL ?? 'http://localhost:3000';
 const DATA_RULES = {
   evalKinds: ['vacancy', 'resume', 'match', 'followup', 'cv-hints', 'interview-prep'],
   probeTimeoutMs: 3000,
+  stackFreeSteps: ['security'],
   services: [
     { name: 'ai', url: 'http://127.0.0.1:8001/health' },
     { name: 'documents', url: 'http://127.0.0.1:8002/health' },
@@ -140,10 +141,9 @@ function chosenSteps(names) {
 }
 
 const steps = chosenSteps(process.argv.slice(2));
-if (steps.includes('security')) {
-  requireImages();
+if (!steps.every((name) => DATA_RULES.stackFreeSteps.includes(name))) {
+  await requireServices();
 }
-await requireServices();
 const measuredAt = new Date().toISOString();
 const scratch = mkdtempSync(path.join(os.tmpdir(), 'jobflow-docs-data-'));
 mkdirSync(inRepo(DOCS_PATHS.data), { recursive: true });

@@ -2,7 +2,15 @@
   "extends": ["//"],
   "tasks": {
     "test": {
-      "inputs": ["$TURBO_DEFAULT$", "$TURBO_ROOT$/docs/**", "$TURBO_ROOT$/infra/docker/compose.yml"]
+      "inputs": [
+        "$TURBO_DEFAULT$",
+        "$TURBO_ROOT$/docs/**",
+        "$TURBO_ROOT$/infra/docker/compose.yml",
+        "$TURBO_ROOT$/.husky/pre-commit",
+        "$TURBO_ROOT$/.zap/rules.tsv",
+        "$TURBO_ROOT$/.github/workflows/e2e.yml",
+        "$TURBO_ROOT$/.github/workflows/security.yml"
+      ]
     }
   }
 }

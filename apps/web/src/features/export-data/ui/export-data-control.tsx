@@ -48,25 +48,33 @@ function ExportDownload({ link }: Readonly<{ link: ReadyExportLink }>) {
   );
 }
 
-type LinkState = Readonly<{ error: Error | null; data: ExportLink | undefined }>;
+type LinkState = Readonly<{ error: Error | null; data: ExportLink | undefined; stalled: boolean }>;
 
 const STATUS_LINE = 'flex items-center gap-2 text-[13px] leading-[1.45] text-ink-2';
 
-function exportStateOf({ error, data }: LinkState): 'failed' | 'gone' | 'ready' | 'building' {
+function exportStateOf({
+  error,
+  data,
+  stalled,
+}: LinkState): 'failed' | 'gone' | 'ready' | 'building' {
   if (error !== null) return isNotFound(error) ? 'gone' : 'failed';
+  if (stalled) return 'failed';
   return data?.status === 'ready' ? 'ready' : 'building';
 }
 
-function ExportStatus({ exportId }: Readonly<{ exportId: string }>) {
-  const link = useExportLinkQuery(exportId);
-  const state = exportStateOf(link);
+export type ExportStatusProps = Readonly<{ exportId: string; actions: { onRestart: () => void } }>;
+
+function ExportStatus({ exportId, actions }: ExportStatusProps) {
+  const { link, stalled } = useExportLinkQuery(exportId);
+  const state = exportStateOf({ error: link.error, data: link.data, stalled });
   return (
     <AnimatePresence mode="popLayout" initial={false}>
       <Fade key={state}>
         {state === 'failed' && (
           <LoadFailedAlert
             onRetry={() => {
-              void link.refetch();
+              if (stalled) actions.onRestart();
+              else void link.refetch();
             }}
           />
         )}
@@ -91,6 +99,11 @@ export function ExportDataControl({ initialExportId }: ExportDataControlProps) {
   const [format, setFormat] = useState<ExportFormat>('json');
   const [exportId, setExportId] = useState(initialExportId);
   const exporting = useRequestExportMutation();
+  const restart = () => {
+    exporting.request(format, (accepted) => {
+      setExportId(accepted.exportId);
+    });
+  };
   return (
     <div className="flex min-w-0 flex-col items-start gap-3">
       <div className="flex flex-wrap items-center gap-3">
@@ -104,11 +117,7 @@ export function ExportDataControl({ initialExportId }: ExportDataControlProps) {
           variant="secondary"
           className={TOUCH_HEIGHT}
           loading={exporting.isPending}
-          onClick={() => {
-            exporting.request(format, (accepted) => {
-              setExportId(accepted.exportId);
-            });
-          }}
+          onClick={restart}
         >
           {COPY.action}
         </Button>
@@ -116,7 +125,7 @@ export function ExportDataControl({ initialExportId }: ExportDataControlProps) {
       <AnimatePresence initial={false}>
         {exportId !== null && (
           <Fade key={exportId}>
-            <ExportStatus exportId={exportId} />
+            <ExportStatus exportId={exportId} actions={{ onRestart: restart }} />
           </Fade>
         )}
       </AnimatePresence>

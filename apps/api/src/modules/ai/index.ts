@@ -20,6 +20,7 @@ export type {
 } from './ai.repository.js';
 export { type AiJobOfUser, type AiOutcome, AiService } from './ai.service.js';
 export { AiClient, type AiCompleteCall } from './ai-client.js';
+export { isFinal } from './ai-failures.js';
 export { AiJobRouter, type SettledAiJob } from './ai-job-router.js';
 export { AiJobStatusService } from './ai-job-status.service.js';
 export { AiMetricsSubscriber } from './ai-metrics.subscriber.js';

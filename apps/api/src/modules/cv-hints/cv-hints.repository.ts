@@ -20,7 +20,7 @@ export type CvHintsSourceRow = Prisma.ApplicationGetPayload<{
 
 export type CvHintsQuery = { applicationId: string; resumeVersionId: string; since: Date };
 
-export type CvHintsLock = InTransaction & { applicationId: string };
+export type CvHintsLock = CvHintsQuery & InTransaction;
 
 export type RecordCvHintsRequested = InTransaction & { requested: CvHintsRequested };
 
@@ -35,8 +35,8 @@ export class CvHintsRepository {
     });
   }
 
-  lockApplication(userId: string, { applicationId, tx = this.prisma }: CvHintsLock) {
-    return lockWithRunningAiJob(tx, { userId, applicationId, kind: 'cv_hints' });
+  lockApplication(userId: string, { applicationId, tx = this.prisma, ...within }: CvHintsLock) {
+    return lockWithRunningAiJob(tx, { userId, applicationId, kind: 'cv_hints', within });
   }
 
   async recordRequested(

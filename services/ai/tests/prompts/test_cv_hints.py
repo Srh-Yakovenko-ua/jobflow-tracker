@@ -1,11 +1,21 @@
+import json
 from typing import Any
 
 import pytest
 
 from app.contracts.cv_hints_output import CvHintsOutput
 from app.contracts.cv_hints_request import CvHintsRequest
+from app.core.structured import StructuredCall, checked_answer
 from app.prompts import cv_hints, load_prompt_versions
-from tests.factories import CV_HINTS_FIXTURE, CV_HINTS_INPUT, cv_hint, cv_hints_body
+from app.providers.base import Completion
+from tests.factories import (
+    CV_HINTS_FIXTURE,
+    CV_HINTS_INPUT,
+    cv_hint,
+    cv_hints_body,
+    hints_for,
+    partial_requirements,
+)
 
 INPUT_JSON = (
     '{"position":"Senior React developer","score":59,"requirements":['
@@ -24,10 +34,16 @@ INPUT_JSON = (
 EVIDENCE = "Built the Acme dashboard in React"
 MISSING_GAPS = ["AWS / інфраструктура", "Досвід ліда команди 3+"]
 FIXTURE_OUTPUT = CvHintsOutput.model_validate(CV_HINTS_FIXTURE)
+TOP_FIVE = [("R6", 6), ("R5", 5), ("R4", 4), ("R3", 3), ("R2", 2)]
 
 
 def request_of(body: Any) -> CvHintsRequest:
     return CvHintsRequest.model_validate(body)
+
+
+SIX_REQUEST = request_of(
+    cv_hints_body(requirements=partial_requirements(1, 2, 3, 4, 5, 6))
+)
 
 
 def guarded(hints: list[dict[str, Any]], **overrides: Any) -> dict[str, Any]:
@@ -178,33 +194,47 @@ def test_keeps_the_first_hint_of_a_requirement_named_twice() -> None:
 
 
 def test_keeps_the_5_largest_impacts_in_descending_order() -> None:
-    requirements = [
-        {
-            "name": f"R{points}",
-            "weight": "nice",
-            "pointsLost": points,
-            "coverage": "partial",
-        }
-        for points in (1, 2, 3, 4, 5, 6)
-    ]
     hints = [cv_hint(f"R{points}", "React") for points in (2, 6, 1, 4, 3)]
     five = CvHintsOutput.model_validate({"hints": hints, "gaps": []})
     sixth = five.hints[0].model_copy(update={"requirement": "R5"})
     six = five.model_copy(update={"hints": [*five.hints, sixth]})
-    request = request_of(cv_hints_body(requirements=requirements))
 
-    result = cv_hints.checked(request, six)
+    result = cv_hints.checked(SIX_REQUEST, six)
 
     assert [
         (hint.requirement, hint.expected_score_impact) for hint in result.hints
-    ] == [
-        ("R6", 6),
-        ("R5", 5),
-        ("R4", 4),
-        ("R3", 3),
-        ("R2", 2),
-    ]
+    ] == TOP_FIVE
     assert result.gaps == []
+
+
+def test_a_sixth_hint_is_cut_not_refused() -> None:
+    reply = {"hints": hints_for(2, 6, 1, 4, 3, 5), "gaps": []}
+    call = StructuredCall(
+        kind="cv_hints",
+        prompt=cv_hints.build(SIX_REQUEST),
+        output_model=cv_hints.OUTPUT_MODEL,
+    )
+    answer = Completion(text=json.dumps(reply), model="fake", tokens_in=1, tokens_out=1)
+
+    output, problems = checked_answer(call, answer)
+
+    assert problems == []
+    assert [
+        (hint["requirement"], hint["expectedScoreImpact"])
+        for hint in output.model_dump(mode="json", by_alias=True)["hints"]
+    ] == TOP_FIVE
+
+
+def test_an_invented_number_in_a_dropped_hint_is_not_a_problem() -> None:
+    dropped = {
+        **cv_hint("GraphQL", "Ran GraphQL at Globex"),
+        "suggestion": "Додай 7 проєктів на GraphQL.",
+    }
+    output = CvHintsOutput.model_validate(
+        {"hints": [dropped, *CV_HINTS_FIXTURE["hints"]], "gaps": []}
+    )
+
+    assert cv_hints.problems_of(request_of(cv_hints_body()), output) == []
 
 
 @pytest.mark.parametrize(

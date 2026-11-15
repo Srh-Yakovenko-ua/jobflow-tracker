@@ -58,10 +58,9 @@ function silenceText(payload: SilenceNotificationPayload): PushText {
   };
 }
 
-function textOf(
-  notification: PushedNotification,
-  settings: Pick<UserSettings, 'timezone'>,
-): PushText {
+export type PushDelivery = { settings: Pick<UserSettings, 'timezone'>; deliverAt: Date };
+
+function textOf(notification: PushedNotification, { settings, deliverAt }: PushDelivery): PushText {
   switch (notification.type) {
     case 'silence':
       return silenceText(notification.payload);
@@ -85,8 +84,9 @@ function textOf(
       };
     }
     case 'interview_prep_ready': {
-      const title = interviewPrepTitleOf(notification, settings);
-      const tag = `interview-prep:${notification.payload.applicationId}`;
+      const { payload } = notification;
+      const title = interviewPrepTitleOf({ payload, createdAt: deliverAt.toISOString() }, settings);
+      const tag = `interview-prep:${payload.applicationId}`;
       return { title, body: 'Підготовка готова', tag };
     }
     default: {
@@ -98,10 +98,10 @@ function textOf(
 
 export function pushMessageOf(
   notification: PushedNotification,
-  settings: Pick<UserSettings, 'timezone'>,
+  delivery: PushDelivery,
 ): PushMessage {
   return {
-    ...textOf(notification, settings),
+    ...textOf(notification, delivery),
     url: notificationTargetOf(notification) ?? FALLBACK_URL,
   };
 }

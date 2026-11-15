@@ -1,6 +1,7 @@
 import re
 from collections.abc import Callable
 from dataclasses import dataclass
+from functools import partial
 from typing import Any, Protocol
 
 from pydantic import BaseModel
@@ -17,6 +18,7 @@ class BuiltPrompt:
     max_tokens: int
     images: tuple[str, ...] = ()
     problems: Callable[[BaseModel], list[str]] | None = None
+    parse: Callable[[str], BaseModel] | None = None
 
 
 class PromptModule(Protocol):
@@ -53,6 +55,7 @@ class RuledKind[R: Sampled, O: BaseModel]:
     output_model: type[O]
     user: Callable[[R], str]
     problems: Callable[[R, O], list[str]]
+    parse: Callable[[R, str], O] | None = None
 
 
 def ruled_prompt[R: Sampled, O: BaseModel](
@@ -62,6 +65,7 @@ def ruled_prompt[R: Sampled, O: BaseModel](
         return kind.problems(request, kind.output_model.model_validate(output))
 
     return BuiltPrompt(
+        parse=None if kind.parse is None else partial(kind.parse, request),
         system=kind.system,
         user=kind.user(request),
         temperature=kind.temperature

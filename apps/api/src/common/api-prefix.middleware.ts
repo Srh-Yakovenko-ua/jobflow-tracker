@@ -6,6 +6,8 @@ export const API_PREFIX = 'api/v1';
 
 export const JWKS_PATH = '.well-known/jwks.json';
 
+export const IMPORT_PATH = `/${API_PREFIX}/applications/import`;
+
 export function rejectOutsidePrefix(req: Request, _res: Response, next: NextFunction): void {
   const inside =
     req.path === `/${API_PREFIX}` ||

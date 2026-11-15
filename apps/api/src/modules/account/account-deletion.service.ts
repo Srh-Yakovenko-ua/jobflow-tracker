@@ -5,7 +5,7 @@ import { PrismaService } from '../../prisma/prisma.service.js';
 import { FileStorage } from '../../storage/file-storage.js';
 import { AuthService } from '../auth/index.js';
 import { AccountRepository } from './account.repository.js';
-import { userObjectsPrefix } from './export-files.js';
+import { exportsPrefix, userObjectsPrefix } from './export-files.js';
 
 const userObjectPrefixes = (userId: string) => [
   userObjectsPrefix(userId),
@@ -31,5 +31,6 @@ export class AccountDeletionService {
       await this.repository.deleteOutboxOf(userId, { tx });
       await this.repository.deleteUser(userId, { tx });
     });
+    await this.storage.deletePrefix(exportsPrefix(userId));
   }
 }

@@ -69,6 +69,17 @@ describe('push subscriptions', () => {
       headers: { 'user-agent': 'Chrome/142 on Linux' },
     });
 
+  async function subscribeBrowsers(accessToken: string, count: number): Promise<string[]> {
+    const endpoints = Array.from(
+      { length: count },
+      (_, index) => `${CHROME_SUBSCRIPTION.endpoint}-${String(index + 1)}`,
+    );
+    for (const endpoint of endpoints) {
+      await subscribe(accessToken, { ...CHROME_SUBSCRIPTION, endpoint });
+    }
+    return endpoints;
+  }
+
   const storedSubscriptions = () =>
     testApp.prisma.pushSubscription.findMany({ select: STORED_SUBSCRIPTION });
 
@@ -131,13 +142,10 @@ describe('push subscriptions', () => {
   it('an eleventh subscription replaces the oldest', async () => {
     const [olena, bohdan] = [await signedIn(), await signedIn()];
     await subscribe(bohdan.accessToken, BOHDAN_SUBSCRIPTION);
-    const endpoints = Array.from(
-      { length: PUSH_LIMITS.subscriptionsPerUser + 1 },
-      (_, index) => `${CHROME_SUBSCRIPTION.endpoint}-${String(index + 1)}`,
+    const endpoints = await subscribeBrowsers(
+      olena.accessToken,
+      PUSH_LIMITS.subscriptionsPerUser + 1,
     );
-    for (const endpoint of endpoints) {
-      await subscribe(olena.accessToken, { ...CHROME_SUBSCRIPTION, endpoint });
-    }
 
     const kept = await testApp.prisma.pushSubscription.findMany({
       where: { userId: olena.userId },
@@ -147,6 +155,24 @@ describe('push subscriptions', () => {
     expect(kept.map(({ endpoint }) => endpoint)).toEqual(endpoints.slice(1));
     expect(await testApp.prisma.pushSubscription.count({ where: { userId: bohdan.userId } })).toBe(
       1,
+    );
+  });
+
+  it('re-subscribing an old endpoint keeps the subscription', async () => {
+    const [olena, bohdan] = [await signedIn(), await signedIn()];
+    await subscribe(bohdan.accessToken, BOHDAN_SUBSCRIPTION);
+    await subscribeBrowsers(olena.accessToken, PUSH_LIMITS.subscriptionsPerUser);
+
+    const again = await subscribe(olena.accessToken, BOHDAN_SUBSCRIPTION);
+
+    expect(again.status).toBe(201);
+    const kept = await testApp.prisma.pushSubscription.findMany({
+      where: { userId: olena.userId, endpoint: BOHDAN_SUBSCRIPTION.endpoint },
+      select: { id: true },
+    });
+    expect(kept).toEqual([pushSubscriptionCreatedSchema.parse(again.body)]);
+    expect(await testApp.prisma.pushSubscription.count({ where: { userId: olena.userId } })).toBe(
+      PUSH_LIMITS.subscriptionsPerUser,
     );
   });
 

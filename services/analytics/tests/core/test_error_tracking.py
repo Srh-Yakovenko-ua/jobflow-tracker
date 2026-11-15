@@ -1,7 +1,7 @@
 import gzip
 import json
 import time
-from collections.abc import Iterator
+from collections.abc import Callable, Iterator
 from contextlib import contextmanager
 from typing import TYPE_CHECKING, Any
 
@@ -9,6 +9,7 @@ import httpx2
 import pytest
 import sentry_sdk
 from fastapi import APIRouter, FastAPI
+from sentry_sdk.utils import event_from_exception
 
 from app.core.config import DEPENDENCY_LIMITS
 from app.core.error_tracking import scrub_event
@@ -135,6 +136,30 @@ def test_answers_the_500_in_time_when_the_error_collector_is_down(
     assert flush_took < DEPENDENCY_LIMITS.connect + FLUSH_SLACK_SECONDS
 
 
+def raise_in_funnel() -> None:
+    raise ValueError(LEAKED_NOTE)
+
+
+def raise_in_sankey() -> None:
+    raise ValueError(LEAKED_NOTE)
+
+
+def fingerprint_of(raise_error: Callable[[], None]) -> object:
+    try:
+        raise_error()
+    except ValueError as error:
+        event, hint = event_from_exception(error)
+        return scrub_event(event, hint).get("fingerprint")
+    return None
+
+
+def test_two_errors_raised_in_different_functions_get_different_fingerprints() -> None:
+    assert [fingerprint_of(raise_in_funnel), fingerprint_of(raise_in_sankey)] == [
+        ["ValueError", "tests/core/test_error_tracking.py", "raise_in_funnel"],
+        ["ValueError", "tests/core/test_error_tracking.py", "raise_in_sankey"],
+    ]
+
+
 def test_scrubs_user_text_and_frame_vars_but_keeps_what_finds_the_crash() -> None:
     event: Event = {
         "event_id": "5f3a9c0e1b2d4e6f8a7b6c5d4e3f2a1b",
@@ -159,7 +184,13 @@ def test_scrubs_user_text_and_frame_vars_but_keeps_what_finds_the_crash() -> Non
                     "value": LEAKED_NOTE,
                     "stacktrace": {
                         "frames": [
-                            {"function": "crash", "lineno": 12, "vars": {"c": "x"}}
+                            {
+                                "filename": "app/metrics/funnel.py?v=1#top",
+                                "function": "crash",
+                                "lineno": 12,
+                                "vars": {"c": "x"},
+                            },
+                            {"filename": "fastapi/routing.py", "in_app": False},
                         ]
                     },
                 }
@@ -175,9 +206,19 @@ def test_scrubs_user_text_and_frame_vars_but_keeps_what_finds_the_crash() -> Non
             "values": [
                 {
                     "type": "RuntimeError",
-                    "stacktrace": {"frames": [{"function": "crash", "lineno": 12}]},
+                    "stacktrace": {
+                        "frames": [
+                            {
+                                "filename": "app/metrics/funnel.py?v=1#top",
+                                "function": "crash",
+                                "lineno": 12,
+                            },
+                            {"filename": "fastapi/routing.py", "in_app": False},
+                        ]
+                    },
                 }
             ]
         },
         "tags": {"requestId": REQUEST_ID},
+        "fingerprint": ["RuntimeError", "app/metrics/funnel.py", "crash"],
     }

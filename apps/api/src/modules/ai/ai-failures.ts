@@ -27,7 +27,7 @@ export const FAILED_CALL = {
   latencyMs: 0,
 } as const;
 
-const FAILS_AT_ONCE: ReadonlySet<AiKind> = new Set(['followup', 'cv_hints', 'interview_prep']);
+const FAILS_AT_ONCE: ReadonlySet<AiKind> = new Set(['followup', 'cv_hints']);
 
 export function isFinal({ error, kind }: AiRefusal): boolean {
   const refused = error.status >= 400 && error.status < 500 && error.status !== 429;

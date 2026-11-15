@@ -141,14 +141,14 @@ describe('MaintenanceProcessor', () => {
       new Error('boom'),
     );
 
-    expect(log.parsed()).toEqual([
-      expect.objectContaining({
+    expect(log.parsed()).toMatchObject([
+      {
         level: 40,
         msg: 'job failed',
         requestId: 'req-8',
         attemptsMade: 2,
-        err: 'boom',
-      }),
+        err: { type: 'Error' },
+      },
     ]);
   });
 

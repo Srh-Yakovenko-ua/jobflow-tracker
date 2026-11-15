@@ -7,6 +7,7 @@ type ScrubbableFrame = {
   filename?: string | undefined;
   function?: string | undefined;
   in_app?: boolean | undefined;
+  vars?: unknown;
 };
 
 type ScrubbableException = {
@@ -51,10 +52,20 @@ function requestOf({ request }: ScrubbableErrorEvent): { request?: ScrubbableReq
   };
 }
 
+function withoutVars(frame: ScrubbableFrame): ScrubbableFrame {
+  const kept = { ...frame };
+  delete kept.vars;
+  return kept;
+}
+
 function withoutValue(exception: ScrubbableException): ScrubbableException {
   const kept = { ...exception };
   delete kept.value;
-  return kept;
+  if (kept.stacktrace?.frames === undefined) return kept;
+  return {
+    ...kept,
+    stacktrace: { ...kept.stacktrace, frames: kept.stacktrace.frames.map(withoutVars) },
+  };
 }
 
 function exceptionOf({ exception }: ScrubbableErrorEvent): Pick<ScrubbableErrorEvent, 'exception'> {

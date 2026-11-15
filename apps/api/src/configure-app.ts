@@ -1,4 +1,4 @@
-import { CAPTURE_BOOKMARKLET_LIMITS } from '@jobflow/shared';
+import { CAPTURE_BOOKMARKLET_LIMITS, IMPORT_LIMITS } from '@jobflow/shared';
 import { type NestApplicationOptions, RequestMethod } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import type { NestExpressApplication } from '@nestjs/platform-express';
@@ -7,7 +7,12 @@ import helmet from 'helmet';
 import { Logger } from 'nestjs-pino';
 
 import { BOOT_OPTIONS } from './boot.js';
-import { API_PREFIX, JWKS_PATH, rejectOutsidePrefix } from './common/api-prefix.middleware.js';
+import {
+  API_PREFIX,
+  IMPORT_PATH,
+  JWKS_PATH,
+  rejectOutsidePrefix,
+} from './common/api-prefix.middleware.js';
 import { BOOKMARKLET_PATH, corsFor } from './common/cors.js';
 import { requestId } from './common/request-id.middleware.js';
 import type { AppConfig } from './config/app-config.js';
@@ -33,6 +38,7 @@ export function configureApp(app: NestExpressApplication): NestExpressApplicatio
   app.enableCors(corsFor(config.get('WEB_ORIGIN', { infer: true })));
   app.use(rejectOutsidePrefix);
   app.use(BOOKMARKLET_PATH, json({ limit: CAPTURE_BOOKMARKLET_LIMITS.bodyMaxBytes }));
+  app.use(IMPORT_PATH, json({ limit: IMPORT_LIMITS.bodyMaxBytes }));
   app.useBodyParser('json', { limit: '1mb' });
   app.setGlobalPrefix(API_PREFIX, {
     exclude: [{ path: JWKS_PATH, method: RequestMethod.GET }],

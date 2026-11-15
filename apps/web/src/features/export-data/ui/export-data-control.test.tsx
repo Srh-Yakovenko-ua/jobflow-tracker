@@ -4,6 +4,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { EXPORT_LINK, exportRoutes, type ExportRoutesOptions } from '@/test/account-fixtures';
 import { ANY_IDEMPOTENCY_KEY, apiUrl, errorReply } from '@/test/api-handlers';
+import { fixtureIdOf } from '@/test/board-fixtures';
 import { advanceBy, advancePastQueryRetries, fakeTimeoutsAndIntervals } from '@/test/fake-timeouts';
 import { EXPORT_ID } from '@/test/notification-fixtures';
 import { renderInApp } from '@/test/render-in-app';
@@ -12,6 +13,8 @@ import { server } from '@/test/server';
 import { ExportDataControl } from './export-data-control';
 
 const POLL_MS = 2_000;
+
+const NEXT_EXPORT_ID = fixtureIdOf(82);
 
 const DOWNLOAD = { name: 'Завантажити архів' } as const;
 
@@ -121,5 +124,25 @@ describe('ExportDataControl', () => {
 
     expect(await screen.findByRole('link', DOWNLOAD)).toBeDefined();
     expect(sent.links.length).toBeGreaterThan(1);
+  });
+
+  it('an export still pending after the poll bound shows the failed state with a retry', async () => {
+    const { user, sent } = renderControl({
+      exportId: EXPORT_ID,
+      routes: { readyAfterLinks: 60, acceptedId: NEXT_EXPORT_ID },
+    });
+
+    expect(await screen.findByText('Збираю архів…')).toBeDefined();
+    await advanceBy(POLL_MS * 60);
+    const retry = await screen.findByRole('button', { name: 'Спробувати ще раз' });
+    expect(sent.links).toHaveLength(60);
+    expect(screen.queryByText('Збираю архів…')).toBeNull();
+    await user.click(retry);
+
+    expect(await screen.findByRole('link', DOWNLOAD)).toBeDefined();
+    expect(sent.requests).toEqual([
+      { body: { format: 'json' }, idempotencyKey: ANY_IDEMPOTENCY_KEY },
+    ]);
+    expect(sent.links.slice(60)).toEqual([NEXT_EXPORT_ID]);
   });
 });

@@ -2,6 +2,7 @@ import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 
 import {
+  type AiCompletion,
   type AiKind,
   cvHintsOutputSchema,
   followupOutputSchema,
@@ -18,9 +19,16 @@ import type { z } from 'zod';
 import { pricePerMillionOf, type TokenCounts } from '../ai-usage/ai-cost.js';
 import { Clock } from '../common/clock.js';
 import type { Env } from '../config/env.js';
-import { AI_PAYLOAD_BUILDERS, AiClient, type AiCompleteCall } from '../modules/ai/index.js';
+import {
+  AI_PAYLOAD_BUILDERS,
+  AiClient,
+  type AiCompleteCall,
+  AiServiceError,
+  isFinal,
+} from '../modules/ai/index.js';
 import { scoreMatch } from '../modules/match/index.js';
 import { detectResumeFormat, DocumentsClient } from '../modules/resumes/index.js';
+import { DEFAULT_JOB_OPTIONS } from '../queues/queues.js';
 import { loadCvHintsCases } from './cv-hints-cases.js';
 import { cvHintsReport } from './cv-hints-report.js';
 import type { EvalReport } from './eval-cases.js';
@@ -105,7 +113,22 @@ export class AiEvalService {
     return Array.isArray(answers) ? resumeReport(answers) : answers;
   }
 
-  private async complete(call: AiCompleteCall) {
+  private async complete(
+    call: AiCompleteCall,
+    attemptsLeft: number = DEFAULT_JOB_OPTIONS.attempts,
+  ): Promise<AiCompletion<AiKind>> {
+    try {
+      return await this.completeOnce(call);
+    } catch (error) {
+      const retried = error instanceof AiServiceError && !isFinal({ error, kind: call.kind });
+      if (!retried || attemptsLeft <= 1) {
+        throw error;
+      }
+      return this.complete(call, attemptsLeft - 1);
+    }
+  }
+
+  private async completeOnce(call: AiCompleteCall) {
     const completion = await this.ai.complete(call);
     const { model, tokensIn, tokensOut, latencyMs } = completion;
     this.calls.push({ kind: call.kind, model, tokensIn, tokensOut, latencyMs });

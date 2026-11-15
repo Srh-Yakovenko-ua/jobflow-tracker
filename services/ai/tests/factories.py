@@ -312,6 +312,22 @@ def cv_hint(requirement: str, evidence: str, *, impact: int = 5) -> dict[str, An
     }
 
 
+def partial_requirements(*points: int) -> list[dict[str, Any]]:
+    return [
+        {
+            "name": f"R{each}",
+            "weight": "nice",
+            "pointsLost": each,
+            "coverage": "partial",
+        }
+        for each in points
+    ]
+
+
+def hints_for(*points: int) -> list[dict[str, Any]]:
+    return [cv_hint(f"R{each}", "React", impact=each) for each in points]
+
+
 INTERVIEW_PREP_PATH = "/v1/complete/interview_prep"
 INTERVIEW_PREP_FIXTURE: dict[str, Any] = json.loads(fixture_of("interview_prep"))
 INTERVIEW_PREP_INPUT = {

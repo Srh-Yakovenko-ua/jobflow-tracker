@@ -121,7 +121,8 @@ def repair_request(
 def checked_answer(
     call: StructuredCall, answer: Completion
 ) -> tuple[BaseModel, list[str]]:
-    output = call.output_model.model_validate_json(answer.text)
+    parse = call.prompt.parse or call.output_model.model_validate_json
+    output = parse(answer.text)
     problems = call.prompt.problems
     return output, [] if problems is None else problems(output)
 

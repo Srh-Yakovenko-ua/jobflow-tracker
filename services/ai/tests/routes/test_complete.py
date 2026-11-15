@@ -29,10 +29,12 @@ from tests.factories import (
     draft_of,
     failing_vacancy,
     followup_body,
+    hints_for,
     interview_prep_body,
     interview_prep_reply,
     match_body,
     monthly_summary_request,
+    partial_requirements,
     post_as_worker,
     post_completion,
     retry_soon,
@@ -164,6 +166,17 @@ async def test_returns_cv_hints_without_a_hint_on_evidence_the_profile_lacks() -
         },
     )
     assert (len(fake.requests), fake.requests[0].temperature) == (1, 0.0)
+
+
+async def test_cuts_a_sixth_cv_hint_instead_of_refusing_the_reply() -> None:
+    reply = {"hints": hints_for(2, 6, 1, 4, 3, 5), "gaps": []}
+    fake = FakeAiProvider(replies=[json.dumps(reply)])
+    body = cv_hints_body(requirements=partial_requirements(1, 2, 3, 4, 5, 6))
+
+    response = await post_as_worker(CV_HINTS_PATH, body, app=build_app(provider=fake))
+
+    assert (response.status_code, len(fake.requests)) == (200, 1)
+    assert response.json()["output"] == {"hints": hints_for(6, 5, 4, 3, 2), "gaps": []}
 
 
 async def test_returns_the_prep_pack_with_each_basis_in_the_input_spelling() -> None:

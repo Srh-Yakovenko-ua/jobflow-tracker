@@ -20,15 +20,20 @@ const NO_CONTENT: HttpResponseResolver = () => new HttpResponse(null, { status: 
 export type ExportRoutesOptions = Readonly<{
   readyAfterLinks?: number;
   link?: HttpResponseResolver;
+  acceptedId?: string;
 }>;
 
-export function exportRoutes({ readyAfterLinks = 1, link }: ExportRoutesOptions = {}) {
+export function exportRoutes({
+  readyAfterLinks = 1,
+  link,
+  acceptedId = EXPORT_ID,
+}: ExportRoutesOptions = {}) {
   const sent = { requests: [] as SentBody[], links: [] as string[] };
   const handlers = [
     http.post(apiUrl('/me/export'), async ({ request }) => {
       const body: unknown = await request.json();
       sent.requests.push({ body, idempotencyKey: idempotencyKeyOf(request.headers) });
-      return HttpResponse.json<ExportAccepted>({ exportId: EXPORT_ID }, { status: 202 });
+      return HttpResponse.json<ExportAccepted>({ exportId: acceptedId }, { status: 202 });
     }),
     http.get(apiUrl('/me/exports/:exportId'), (info) => {
       sent.links.push(String(info.params['exportId']));

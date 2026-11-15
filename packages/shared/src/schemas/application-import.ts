@@ -36,6 +36,7 @@ export const IMPORT_LIMITS = {
   previewRows: 10,
   fileMaxBytes: 1_000_000,
   historyMax: 100,
+  bodyMaxBytes: 5 * 1024 * 1024,
 } as const;
 
 export const FUTURE_DATE_ISSUE = { error: 'The date must not be in the future' } as const;

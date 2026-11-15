@@ -7,6 +7,7 @@ import { describe, expect, it } from 'vitest';
 
 import { useTestApp } from '../../test/app.js';
 import { APPLICATIONS_IMPORT_PATH, signedInWithSearch } from '../../test/applications.js';
+import { createActiveResumeVersion } from '../../test/factories.js';
 import { callRoute, statusAndType } from '../../test/http.js';
 import { expectReplayedCreate } from '../../test/idempotency.js';
 import { outboxRows } from '../../test/outbox.js';
@@ -40,6 +41,14 @@ describe('POST /applications/import', () => {
       orderBy: { company: 'asc' },
       select: { company: true, currentStage: true, searchId: true },
     });
+
+  const linkedVersionsOf = async (userId: string) =>
+    (
+      await testApp.prisma.application.findMany({
+        where: { userId },
+        select: { resumeVersionId: true },
+      })
+    ).map(({ resumeVersionId }) => resumeVersionId);
 
   it('imports the valid rows into the active search and reports the others by row and path', async () => {
     const olena = await signedInWithSearch(testApp.prisma);
@@ -118,6 +127,35 @@ describe('POST /applications/import', () => {
       await testApp.prisma.stageEvent.count({ where: { application: { userId: olena.userId } } }),
       (await outboxRows(testApp.prisma, { eventType: 'application.created' })).length,
     ]).toEqual([500, 1500, 500]);
+  });
+
+  it('an imported application is linked to the active CV', async () => {
+    const bohdan = await signedInWithSearch(testApp.prisma);
+    const bohdanVersionId = await createActiveResumeVersion(testApp.prisma, bohdan.userId);
+    const olena = await signedInWithSearch(testApp.prisma);
+    const olenaVersionId = await createActiveResumeVersion(testApp.prisma, olena.userId);
+
+    await postImport(olena.accessToken, [VELA, { ...VELA, company: 'Ромашка' }]);
+    await postImport(bohdan.accessToken, [VELA]);
+
+    expect(await linkedVersionsOf(olena.userId)).toEqual([olenaVersionId, olenaVersionId]);
+    expect(await linkedVersionsOf(bohdan.userId)).toEqual([bohdanVersionId]);
+  });
+
+  it('a mapped import of a file near the size limit is not refused with 413', async () => {
+    const olena = await signedInWithSearch(testApp.prisma);
+    const nextRound = { toStage: 'tech_interview', reasonCode: null, occurredAt: VELA.appliedAt };
+    const stageHistory = [
+      { ...nextRound, toStage: 'applied' },
+      ...Array.from({ length: IMPORT_LIMITS.historyMax - 1 }, () => nextRound),
+    ];
+    const rows = Array.from({ length: 130 }, () => ({ ...VELA, stageHistory }));
+    const bodyBytes = new TextEncoder().encode(JSON.stringify({ rows })).byteLength;
+
+    const response = await postImport(olena.accessToken, rows);
+
+    expect([bodyBytes > 1024 * 1024, bodyBytes < IMPORT_LIMITS.bodyMaxBytes]).toEqual([true, true]);
+    expect([response.status, response.body]).toEqual([200, { imported: 130, errors: [] }]);
   });
 
   it('answers the first result again to a repeated Idempotency-Key and imports once', async () => {

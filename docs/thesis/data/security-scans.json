@@ -1,0 +1,89 @@
+{
+  "scans": [
+    {
+      "scanner": "Trivy fs",
+      "target": "репозиторій, main",
+      "findings": 0,
+      "critical": 0,
+      "high": 0,
+      "medium": 0,
+      "low": 0,
+      "info": 0
+    },
+    {
+      "scanner": "Trivy image",
+      "target": "jobflow-api:ci",
+      "findings": 0,
+      "critical": 0,
+      "high": 0,
+      "medium": 0,
+      "low": 0,
+      "info": 0
+    },
+    {
+      "scanner": "Trivy image",
+      "target": "jobflow-web:ci",
+      "findings": 0,
+      "critical": 0,
+      "high": 0,
+      "medium": 0,
+      "low": 0,
+      "info": 0
+    },
+    {
+      "scanner": "Trivy image",
+      "target": "jobflow-analytics:ci",
+      "findings": 0,
+      "critical": 0,
+      "high": 0,
+      "medium": 0,
+      "low": 0,
+      "info": 0
+    },
+    {
+      "scanner": "Trivy image",
+      "target": "jobflow-ai:ci",
+      "findings": 0,
+      "critical": 0,
+      "high": 0,
+      "medium": 0,
+      "low": 0,
+      "info": 0
+    },
+    {
+      "scanner": "Trivy image",
+      "target": "jobflow-documents:ci",
+      "findings": 0,
+      "critical": 0,
+      "high": 0,
+      "medium": 0,
+      "low": 0,
+      "info": 0
+    },
+    {
+      "scanner": "gitleaks",
+      "target": "історія git, усі гілки",
+      "findings": 0
+    },
+    {
+      "scanner": "OWASP ZAP baseline",
+      "target": "http://localhost:3000",
+      "findings": 10,
+      "critical": null,
+      "high": 0,
+      "medium": 2,
+      "low": 4,
+      "info": 4
+    },
+    {
+      "scanner": "OWASP ZAP baseline",
+      "target": "http://localhost:4000/api/v1/health",
+      "findings": 1,
+      "critical": null,
+      "high": 0,
+      "medium": 0,
+      "low": 0,
+      "info": 1
+    }
+  ]
+}
