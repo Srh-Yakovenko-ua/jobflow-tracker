@@ -78,6 +78,7 @@
 - 6608 unit-тестів у семи пакетах, покриття рядків від 77,3% (api) до 99,47% (shared) ([coverage.json](thesis/data/coverage.json)).
 - 17 E2E-сценаріїв Playwright з axe ([e2e.json](thesis/data/e2e.json)).
 - `pnpm audit`: 0 high і 0 critical, 3 moderate і 2 low ([audit.json](thesis/data/audit.json)).
+- Сканування в CI: Trivy блокує HIGH і CRITICAL з виправленням у залежностях і п'яти образах, а канарка lodash 4.17.20 доводить це на кожному запуску ([security.md](security.md)).
 - Рисунок: [coverage.json](thesis/data/coverage.json).
 - Час: 0,5 хв.
 

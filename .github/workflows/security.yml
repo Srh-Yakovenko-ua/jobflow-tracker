@@ -1,0 +1,134 @@
+name: Security
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  schedule:
+    - cron: '0 3 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-security-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+env:
+  TRIVY_IMAGE: aquasec/trivy:0.76.2@sha256:8f6bb947dbc528902e11f2f5be52f7b519f6a39d5d148f41166f2040499768fb
+  ZAP_IMAGE: ghcr.io/zaproxy/zaproxy:2.17.0@sha256:9624669db72f54d86c4b46a7064518bd9bf79d8c61a4c31befa9923489f328af
+  GITLEAKS_IMAGE: ghcr.io/gitleaks/gitleaks:v8.30.1@sha256:c00b6bd0aeb3071cbcb79009cb16a60dd9e0a7c60e2be9ab65d25e6bc8abbb7f
+
+jobs:
+  changes:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      code: ${{ steps.diff.outputs.code }}
+    steps:
+      - uses: actions/checkout@v7.0.1
+        with:
+          fetch-depth: 0
+      - id: diff
+        uses: ./.github/actions/changes
+
+  gitleaks:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v7.0.1
+        with:
+          fetch-depth: 0
+      - name: Secrets in the full history
+        run: docker run --rm --user "$(id -u):$(id -g)" -v "$PWD:/repo" "$GITLEAKS_IMAGE" git /repo --config /repo/.gitleaks.toml --redact --no-banner -v
+
+  trivy:
+    needs: changes
+    if: needs.changes.outputs.code == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7.0.1
+      - name: Dependencies, secrets and misconfig of the repository
+        run: |
+          mkdir -p "$RUNNER_TEMP/trivy-cache"
+          docker run --rm -v "$RUNNER_TEMP/trivy-cache:/root/.cache/trivy" -v "$PWD:/src" -w /src "$TRIVY_IMAGE" fs --config trivy.yaml --scanners vuln,secret,misconfig --format json --output trivy-fs.json .
+      - name: Canary, Trivy refuses lodash 4.17.20
+        if: ${{ !cancelled() }}
+        shell: bash
+        run: |
+          mkdir -p "$RUNNER_TEMP/canary" "$RUNNER_TEMP/trivy-cache"
+          echo '{"lockfileVersion":3,"packages":{"":{"dependencies":{"lodash":"4.17.20"}},"node_modules/lodash":{"version":"4.17.20"}}}' > "$RUNNER_TEMP/canary/package-lock.json"
+          status=0
+          docker run --rm -v "$RUNNER_TEMP/trivy-cache:/root/.cache/trivy" -v "$RUNNER_TEMP/canary:/canary" -v "$PWD:/src" -w /src "$TRIVY_IMAGE" fs --config trivy.yaml --scanners vuln /canary | tee "$RUNNER_TEMP/canary.txt" || status=$?
+          if (( status == 0 )) || ! grep -q CVE-2021-23337 "$RUNNER_TEMP/canary.txt"; then
+            echo '::error::Trivy passed lodash 4.17.20'
+            exit 1
+          fi
+          echo 'Trivy refused lodash 4.17.20 (CVE-2021-23337, HIGH, fixed in 4.17.21): a vulnerable dependency fails this job.'
+      - uses: ./.github/actions/images
+        if: ${{ !cancelled() }}
+      - name: Prod images
+        if: ${{ !cancelled() }}
+        run: |
+          status=0
+          for service in api web analytics ai documents; do
+            docker run --rm -v /var/run/docker.sock:/var/run/docker.sock -v "$RUNNER_TEMP/trivy-cache:/root/.cache/trivy" -v "$PWD:/src" -w /src "$TRIVY_IMAGE" image --config trivy.yaml --scanners vuln --format json --output "trivy-$service.json" "jobflow-$service:ci" || status=1
+          done
+          exit "$status"
+      - name: SARIF and tables
+        if: ${{ !cancelled() }}
+        run: |
+          shopt -s nullglob
+          for report in trivy-*.json; do
+            docker run --rm -v "$PWD:/src" -w /src "$TRIVY_IMAGE" convert --exit-code 0 --format sarif --output "${report%.json}.sarif" "$report"
+            docker run --rm -v "$PWD:/src" -w /src "$TRIVY_IMAGE" convert --exit-code 0 --format table "$report"
+          done
+      - uses: actions/upload-artifact@v7.0.2
+        if: ${{ !cancelled() }}
+        with:
+          name: trivy-sarif
+          path: '*.sarif'
+          if-no-files-found: error
+
+  zap:
+    needs: changes
+    if: needs.changes.outputs.code == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      DATABASE_URL: postgresql://jobflow_app:jobflow_app@localhost:5432/jobflow
+    steps:
+      - uses: actions/checkout@v7.0.1
+      - uses: ./.github/actions/setup
+      - uses: ./.github/actions/images
+      - name: Start the stack
+        run: |
+          cp .env.example .env
+          echo 'COMPOSE_FILE=infra/docker/compose.yml:infra/docker/compose.ci.yml' >> .env
+          pnpm gen:keys
+          chmod -R a+rX .secrets
+          pnpm infra:up
+          pnpm db:migrate
+          docker compose up -d --wait api web
+      - name: ZAP baseline of the web and the API
+        run: |
+          mkdir -p "$RUNNER_TEMP/zap"
+          chmod a+rwx "$RUNNER_TEMP/zap"
+          cp .zap/rules.tsv "$RUNNER_TEMP/zap/"
+          status=0
+          docker run --rm --network host -v "$RUNNER_TEMP/zap:/zap/wrk:rw" "$ZAP_IMAGE" zap-baseline.py -t http://localhost:3000 -c rules.tsv -r zap-web.html -J zap-web.json -I -m 1 -T 10 || status=1
+          docker run --rm --network host -v "$RUNNER_TEMP/zap:/zap/wrk:rw" "$ZAP_IMAGE" zap-baseline.py -t http://localhost:4000/api/v1/health -c rules.tsv -r zap-api.html -J zap-api.json -I -m 1 -T 10 || status=1
+          exit "$status"
+      - uses: actions/upload-artifact@v7.0.2
+        if: ${{ !cancelled() }}
+        with:
+          name: zap-report
+          path: |
+            ${{ runner.temp }}/zap/zap-*.html
+            ${{ runner.temp }}/zap/zap-*.json
+          if-no-files-found: error
+      - name: Compose logs
+        if: failure()
+        run: docker compose logs --no-color

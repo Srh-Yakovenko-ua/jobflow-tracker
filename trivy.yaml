@@ -1,0 +1,9 @@
+severity:
+  - HIGH
+  - CRITICAL
+exit-code: 1
+vulnerability:
+  ignore-unfixed: true
+scan:
+  skip-files:
+    - '**/Dockerfile.dockerignore'

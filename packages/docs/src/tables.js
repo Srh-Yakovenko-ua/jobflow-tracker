@@ -10,6 +10,7 @@ const TABLE_RULES = {
   evalFile: /^ai-eval-(.+)\.tsv$/,
   severities: ['critical', 'high', 'moderate', 'low', 'info'],
   coverageColumns: ['package', 'tests', 'lines', 'branches', 'functions'],
+  scanColumns: ['scanner', 'target', 'findings', 'critical', 'high', 'medium', 'low', 'info'],
   cspBlock: /## Content Security Policy[\s\S]*?```text\n([\s\S]*?)\n```/,
   headerRow: /^\| `[A-Z][\w-]+` +\| /,
 };
@@ -67,11 +68,18 @@ function aiCost(sources) {
 
 const parsed = (sources) => JSON.parse(sources[0]?.text ?? '{}');
 
+const columnRows = (entries, columns) => entries.map((entry) => columns.map((name) => entry[name]));
+
 function coverage(sources) {
   const { packages = [] } = parsed(sources);
   const tests = packages.reduce((sum, entry) => sum + entry.tests, 0);
-  const rows = packages.map((entry) => TABLE_RULES.coverageColumns.map((name) => entry[name]));
+  const rows = columnRows(packages, TABLE_RULES.coverageColumns);
   return markdownTable([TABLE_RULES.coverageColumns, ...rows, ['Разом', tests, null, null, null]]);
+}
+
+function securityScans(sources) {
+  const { scans = [] } = parsed(sources);
+  return markdownTable([TABLE_RULES.scanColumns, ...columnRows(scans, TABLE_RULES.scanColumns)]);
 }
 
 function e2e(sources) {
@@ -113,7 +121,15 @@ function securityHeaders(sources) {
   return markdownTable([['header', 'value'], ...cspDirectives(text), ...headerRows(text)]);
 }
 
-export const TABLE_BUILDERS = { aiEval, aiCost, coverage, e2e, audit, securityHeaders };
+export const TABLE_BUILDERS = {
+  aiEval,
+  aiCost,
+  coverage,
+  e2e,
+  audit,
+  securityHeaders,
+  securityScans,
+};
 
 export const tableOutput = (entry) => `${DOCS_PATHS.build}/tables/${entry.id}.md`;
 

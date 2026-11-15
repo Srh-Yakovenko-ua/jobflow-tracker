@@ -1,0 +1,21 @@
+name: Changes
+description: Tell whether the push or pull request touches more than docs, so docs-only changes skip the stack jobs
+outputs:
+  code:
+    description: false when every changed file is under docs/ or a .md file, except the ERD, the OpenAPI file and the READMEs
+    value: ${{ steps.diff.outputs.code }}
+runs:
+  using: composite
+  steps:
+    - id: diff
+      shell: bash
+      env:
+        BASE: ${{ github.event.pull_request.base.sha || github.event.before }}
+      run: |
+        code=true
+        if files=$(git -c core.quotePath=false diff --name-only "$BASE" HEAD); then
+          if ! grep -qvE '^docs/|\.md$' <<< "$files" && ! grep -qxF -e 'docs/diagrams/erd.md' -e 'docs/api/openapi.json' -e README.md -e README.en.md <<< "$files"; then
+            code=false
+          fi
+        fi
+        echo "code=$code" >> "$GITHUB_OUTPUT"

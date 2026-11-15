@@ -23,6 +23,9 @@ flowchart LR
     node_exporter["node-exporter<br/>метрики машини"]
     cadvisor["cadvisor<br/>метрики контейнерів"]
     grafana["grafana<br/>дашборди, :3001"]
+    glitchtip["glitchtip<br/>помилки, сумісний із Sentry, :8003"]
+    glitchtip_db["glitchtip-db<br/>створює базу glitchtip"]
+    glitchtip_bootstrap["glitchtip-bootstrap<br/>адмін, проєкт і DSN"]
   end
 
   subgraph volumes["Іменовані томи"]
@@ -69,3 +72,11 @@ flowchart LR
   browser --> grafana
   loki --- lokidata
   prometheus --- prometheusdata
+  glitchtip_db --> postgres
+  glitchtip -->|база glitchtip| postgres
+  glitchtip -->|пошта| mailpit
+  glitchtip_bootstrap --> glitchtip
+  api -->|Sentry| glitchtip
+  worker -->|Sentry| glitchtip
+  analytics -->|Sentry| glitchtip
+  browser -->|"Sentry з web, UI :8003"| glitchtip

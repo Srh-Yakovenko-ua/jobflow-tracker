@@ -1,0 +1,31 @@
+[extend]
+useDefault = true
+
+[[allowlists]]
+description = "Local GlitchTip placeholders in .env.example: the DSN key, secret key and API token that glitchtip-bootstrap creates on the developer's machine (OBS-04)"
+regexes = [
+  '''^3e1d458052fe5e094290f89b928b7db2$''',
+  '''^36c66ab0deb723a6b013c1d870ce6aa731577e77ec00aab4$''',
+  '''^6c49ae8c9fe1631175c7809ad8771f561c7b341881423357c73b92f236c86030$''',
+]
+
+[[allowlists]]
+description = "UUID ids in tests and OpenAPI examples (idempotency keys, capture token ids) are identifiers, not keys"
+targetRules = ["generic-api-key"]
+regexes = ['''^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$''']
+
+[[allowlists]]
+description = "Example JWTs in the OpenAPI examples and the shared auth schema test: the signature segment is the base64 of the word signature or sig"
+regexes = ['''^eyJhbGciOiJSUzI1NiJ9\.[A-Za-z0-9_-]*\.(c2lnbmF0dXJl|c2ln)$''']
+
+[[allowlists]]
+description = "Example refresh token of the auth OpenAPI examples"
+regexes = ['''^q8Zr3VbX0nLw5Tf2Ky7Hc1Md9Pg4Rs6Ua_Ej-WoNxIb$''']
+
+[[allowlists]]
+description = "Example web push subscription auth value in the push OpenAPI example and the web push fixture"
+regexes = ['''^tBHItJI5svbpez7KI4CCXg$''']
+
+[[allowlists]]
+description = "Marker password of the auth integration test, which checks that a password never reaches a log line"
+regexes = ['''^marker-pass-6f1c2a$''']
