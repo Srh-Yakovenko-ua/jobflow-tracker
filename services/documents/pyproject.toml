@@ -54,12 +54,12 @@ formatters = ["builtin"]
 
 [dependency-groups]
 dev = [
-    "datamodel-code-generator==0.87.0",
+    "datamodel-code-generator==0.94.0",
     "httpx2==2.16.0",
     "mypy==2.4.1",
     "pypdf==7.0.1",
     "pytest==9.2.0",
     "pytest-cov==7.1.0",
     "pytest-socket==0.8.1",
-    "ruff==0.17.3",
+    "ruff==0.17.4",
 ]
