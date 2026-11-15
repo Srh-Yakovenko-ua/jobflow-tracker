@@ -13,6 +13,7 @@ from app.metrics.offer_simulation import Improvement
 from app.metrics.rate import Insufficient
 from app.metrics.reasons import reasons
 from app.metrics.resume_ab import resume_ab
+from app.metrics.salary import salary
 from app.metrics.sources import sources
 
 
@@ -35,6 +36,7 @@ def insight_metrics(
     *,
     origins: pd.DataFrame,
     links: pd.DataFrame,
+    salaries: pd.DataFrame,
     now: datetime,
 ) -> InsightMetrics:
     clean = clean_events(events)
@@ -49,4 +51,5 @@ def insight_metrics(
         resume_ab=resume_ab(events, links=links),
         ghosts=ghost_rate_vs_market(events),
         stage_what_if=stage_what_if(events, costliest=costliest, now=now),
+        salary=salary(events, salaries=salaries, now=now),
     )

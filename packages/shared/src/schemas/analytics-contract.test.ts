@@ -8,6 +8,7 @@ import type { insightsResponseSchema } from './analytics-insights.js';
 import type { matchValidationResponseSchema } from './analytics-match-validation.js';
 import type { reasonsResponseSchema } from './analytics-reasons.js';
 import type { resumeAbResponseSchema } from './analytics-resume-ab.js';
+import type { salaryResponseSchema } from './analytics-salary.js';
 import type { sankeyResponseSchema } from './analytics-sankey.js';
 import type { sourcesResponseSchema } from './analytics-sources.js';
 import type { normsResponseSchema, timingsResponseSchema } from './analytics-timings.js';
@@ -28,6 +29,7 @@ type WebSchemas = {
   '/analytics/forecast': typeof forecastResponseSchema;
   '/analytics/match-validation': typeof matchValidationResponseSchema;
   '/analytics/insights': typeof insightsResponseSchema;
+  '/analytics/salary': typeof salaryResponseSchema;
 };
 
 type Drift = {

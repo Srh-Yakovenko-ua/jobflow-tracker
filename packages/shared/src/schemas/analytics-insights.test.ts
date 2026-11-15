@@ -20,6 +20,17 @@ describe('insightsResponseSchema', () => {
     ]);
   });
 
+  it('accepts the salary action that raises the floor to $4 500', () => {
+    const action = {
+      block: 'salary',
+      title: 'Підняти нижню межу вилки до $4 500',
+      expectedEffect:
+        '2 відмови вже були через очікування, фільтр зекономить 3 або 4 відгуки на місяць.',
+    } as const;
+    const body = { insights: [], actions: [action] };
+    expect(insightsResponseSchema.parse(body)).toEqual(body);
+  });
+
   it('accepts empty lists below the insight threshold', () => {
     expect(insightsResponseSchema.parse({ insights: [], actions: [] })).toEqual({
       insights: [],

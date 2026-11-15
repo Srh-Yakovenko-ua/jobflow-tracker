@@ -29,6 +29,7 @@ CANDIDATE_SIDE: Final = "candidate"
 LINKEDIN_SOURCE: Final = "linkedin"
 ACTIVE_SEARCH: Final = "active"
 FOLLOWUP_SENT: Final = "followup_sent"
+GROSS_SALARY: Final = "gross"
 
 
 class EnumsModel(BaseModel):
@@ -52,6 +53,12 @@ class Thresholds(EnumsModel):
     what_if_conversion: float = Field(alias="WHAT_IF_CONVERSION")
 
 
+class SalaryRules(EnumsModel):
+    per_usd: Mapping[str, float]
+    net_share_of_gross: float
+    reason_codes: tuple[str, ...]
+
+
 class AnalyticsCache(EnumsModel):
     version_key: str
     entry_key: str
@@ -71,6 +78,8 @@ class DomainEnums(EnumsModel):
     rejection_sides: tuple[str, ...]
     rejection_reasons: tuple[RejectionReason, ...]
     thresholds: Thresholds
+    salary: SalaryRules
+    seniorities: tuple[str, ...]
     token_scopes: tuple[str, ...]
     analytics_cache: AnalyticsCache
 

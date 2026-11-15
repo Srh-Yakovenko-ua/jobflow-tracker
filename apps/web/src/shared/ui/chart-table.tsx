@@ -7,6 +7,7 @@ import { uk } from '@/shared/i18n';
 import { cn } from '@/shared/lib/cn';
 
 import { Button } from './button';
+import { TOUCH_HEIGHT } from './touch-height';
 
 export type ChartTableCell = Readonly<{ text: string; href?: string | undefined }>;
 
@@ -68,6 +69,7 @@ export function ChartTable(props: ChartTableProps) {
       <Button
         variant="ghost"
         size="xs"
+        className={TOUCH_HEIGHT}
         aria-expanded={shown}
         aria-controls={tableId}
         onClick={() => {

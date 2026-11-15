@@ -4,6 +4,7 @@ export {
   insightsQueryOptions,
   matchValidationQueryOptions,
   reasonsQueryOptions,
+  salaryQueryOptions,
   sankeyQueryOptions,
   sourcesQueryOptions,
   timingsQueryOptions,

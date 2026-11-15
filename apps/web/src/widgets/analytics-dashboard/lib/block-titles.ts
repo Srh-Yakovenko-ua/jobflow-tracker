@@ -2,7 +2,7 @@ import type { Insight, InsightBlock } from '@jobflow/shared';
 
 import { uk } from '@/shared/i18n';
 
-export type TitledBlock = Extract<InsightBlock, 'reasons' | 'sources' | 'resume_ab'>;
+export type TitledBlock = Extract<InsightBlock, 'reasons' | 'sources' | 'salary' | 'resume_ab'>;
 
 export type BlockTitleInput = Readonly<{ insights: readonly Insight[]; block: TitledBlock }>;
 

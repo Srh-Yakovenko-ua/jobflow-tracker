@@ -5,6 +5,7 @@ import {
   type MatchValidationResponse,
   type ReasonsResponse,
   type ResumeAbResponse,
+  type SalaryResponse,
   type SankeyResponse,
   type SourcesResponse,
   THRESHOLDS,
@@ -32,7 +33,14 @@ const BLOCKS = uk.analytics.blocks;
 export type DashboardFrame = Readonly<{ header: ChartFrameHeader; state: ChartFrameState }>;
 
 export type DashboardFrameId =
-  'sankey' | 'reasons' | 'sources' | 'resumeAb' | 'forecast' | 'timings' | 'matchValidation';
+  | 'sankey'
+  | 'reasons'
+  | 'sources'
+  | 'resumeAb'
+  | 'forecast'
+  | 'timings'
+  | 'matchValidation'
+  | 'salary';
 
 export type SankeyFrame = DashboardFrame &
   Readonly<{
@@ -60,6 +68,8 @@ export type TimingsFrame = DashboardFrame & Readonly<{ data: TimingsResponse | u
 export type MatchValidationFrame = DashboardFrame &
   Readonly<{ data: MatchValidationResponse | undefined }>;
 
+export type SalaryFrame = DashboardFrame & Readonly<{ data: SalaryResponse | undefined }>;
+
 export type DashboardFrames = Record<DashboardFrameId, DashboardFrame> & {
   sankey: SankeyFrame;
   reasons: ReasonsFrame;
@@ -68,14 +78,17 @@ export type DashboardFrames = Record<DashboardFrameId, DashboardFrame> & {
   forecast: ForecastFrame;
   timings: TimingsFrame;
   matchValidation: MatchValidationFrame;
+  salary: SalaryFrame;
 };
 
 export type DashboardViewInput = Readonly<{ queries: DashboardQueries; searches: FrameQuery }>;
 
 type SearchBoundQuery = Readonly<{ query: FrameQuery; searches: FrameQuery }>;
 
+type DataQuery<Data> = FrameQuery & Readonly<{ data: Data | undefined }>;
+
 type LowDataQuery<Data> = Readonly<{
-  query: FrameQuery & Readonly<{ data: Data | undefined }>;
+  query: DataQuery<Data>;
   low: (data: Data) => InsufficientState | undefined;
 }>;
 
@@ -122,9 +135,10 @@ function sankeyHeader(sent: number | undefined): ChartFrameHeader {
 
 function framesOf({ queries, searches }: DashboardViewInput): DashboardFrames {
   const insights = queries.insights.data?.insights ?? [];
-  const titled = (block: TitledBlock): ChartFrameHeader => ({
-    eyebrow: BLOCKS[block].eyebrow,
-    ...blockHeaderOf({ insights, block }),
+  const titled = <Data>(block: TitledBlock, query: DataQuery<Data>) => ({
+    header: { eyebrow: BLOCKS[block].eyebrow, ...blockHeaderOf({ insights, block }) },
+    state: chartFrameStateOf(query),
+    data: query.data,
   });
   return {
     sankey: {
@@ -134,16 +148,9 @@ function framesOf({ queries, searches }: DashboardViewInput): DashboardFrames {
       stages: queries.funnel.data?.stages,
       notes: funnelNotesOf(insights),
     },
-    reasons: {
-      header: titled('reasons'),
-      state: chartFrameStateOf(queries.reasons),
-      data: queries.reasons.data,
-    },
-    sources: {
-      header: titled('sources'),
-      state: chartFrameStateOf(queries.sources),
-      data: queries.sources.data,
-    },
+    reasons: titled('reasons', queries.reasons),
+    sources: titled('sources', queries.sources),
+    salary: titled('salary', queries.salary),
     forecast: {
       header: { eyebrow: BLOCKS.forecast.eyebrow },
       state: chartFrameStateOf(queries.forecast),

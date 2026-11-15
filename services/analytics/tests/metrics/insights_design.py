@@ -12,7 +12,11 @@ from app.metrics.most_expensive import most_expensive
 from app.metrics.reasons import reasons
 from app.metrics.resume_ab import resume_ab
 from app.metrics.sources import sources
-from tests.factories import ApplicationSource, application_sources_frame
+from tests.factories import (
+    ApplicationSource,
+    application_sources_frame,
+    salaries_frame,
+)
 from tests.metrics import (
     funnel_design,
     reasons_design,
@@ -145,7 +149,11 @@ def one_source_metrics(
         ]
     )
     return insight_metrics(
-        events, origins=origins, links=links, now=reasons_design.DESIGN_NOW
+        events,
+        origins=origins,
+        links=links,
+        salaries=salaries_frame([]),
+        now=reasons_design.DESIGN_NOW,
     )
 
 

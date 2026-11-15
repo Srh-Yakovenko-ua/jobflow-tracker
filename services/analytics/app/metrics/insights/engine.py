@@ -10,9 +10,12 @@ from app.metrics.most_expensive import MostExpensiveStage
 from app.metrics.rate import Insufficient, MetricModel
 from app.metrics.reasons import Reasons
 from app.metrics.resume_ab import ResumeAb
+from app.metrics.salary import Salary
 from app.metrics.sources import Sources
 
-type InsightBlock = Literal["funnel", "reasons", "sources", "resume_ab", "ghosted"]
+type InsightBlock = Literal[
+    "funnel", "reasons", "sources", "salary", "resume_ab", "ghosted"
+]
 type InsightSeverity = Literal["positive", "neutral", "warning"]
 
 MAX_ACTIONS: Final = 4
@@ -48,6 +51,7 @@ class InsightMetrics:
     resume_ab: ResumeAb
     ghosts: GhostRateVsMarket
     stage_what_if: Forecast | Insufficient | None = None
+    salary: Salary | None = None
 
 
 type Rule = Callable[[InsightMetrics], Insight | None]

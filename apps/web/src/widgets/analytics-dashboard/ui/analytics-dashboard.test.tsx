@@ -1,3 +1,5 @@
+import { CHART_THEME } from '@jobflow/shared/chart-theme';
+import { buildNoSalary } from '@jobflow/shared/testing';
 import { screen, waitFor, within } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -9,11 +11,13 @@ import {
   dashboardRoutes,
   type DashboardRoutesOptions,
   lowDataFunnel,
+  salaryInsightsBody,
   type SentRequest,
 } from '@/test/analytics-fixtures';
 import { OUTAGES } from '@/test/api-handlers';
-import { frameOf, selectArchivedSearch } from '@/test/dashboard-frames';
+import { frameOf, selectArchivedSearch, smallNoteOf } from '@/test/dashboard-frames';
 import { advancePastQueryRetries, fakeTimeouts } from '@/test/fake-timeouts';
+import { drawnChartIn } from '@/test/recorded-chart';
 import { renderInApp } from '@/test/render-in-app';
 import { server } from '@/test/server';
 import { meRoute } from '@/test/session-fixtures';
@@ -32,6 +36,7 @@ const FRAMES = {
   forecast: 'прогноз офера',
   timings: 'час на етапах · медіана',
   matchValidation: 'Match Score · перевірка на відгуках',
+  salary: 'зарплатна аналітика · твої картки',
 } as const;
 
 const TILES = {
@@ -57,6 +62,7 @@ const BLOCKS: readonly Block[] = [
   'forecast',
   'timings',
   'matchValidation',
+  'salary',
   'sent',
   'screening',
   'response',
@@ -64,6 +70,10 @@ const BLOCKS: readonly Block[] = [
 ];
 
 const TOASTER = 'Сповіщення';
+
+const NBSP = '\u00a0';
+
+const OUTCOME = CHART_THEME.light.outcome;
 
 const HERO_TITLE = 'Куди пішли всі 54 відгуки';
 
@@ -81,6 +91,7 @@ const AFFECTED: Record<Exclude<DashboardRoute, 'insights'>, readonly Block[]> = 
   forecast: ['forecast'],
   'resume-ab': ['resumeAb'],
   'match-validation': ['matchValidation'],
+  salary: ['salary'],
 };
 
 const RETRIED: Partial<Record<DashboardRoute, readonly DashboardRoute[]>> = {
@@ -160,7 +171,7 @@ describe('AnalyticsDashboard', () => {
     expect(ghost.getByText('ринок: 18–22%')).toBeDefined();
   });
 
-  it('block titles are the conclusions from the insights and the served verdicts, forecast and timings keep only the eyebrow, salary and the AI summary are absent', async () => {
+  it('block titles are the conclusions from the insights and the served verdicts, forecast and timings keep only the eyebrow, salary asks its neutral question, the AI summary is absent', async () => {
     renderDashboard();
 
     expect(
@@ -175,9 +186,45 @@ describe('AnalyticsDashboard', () => {
     expect(screen.getByRole('region', { name: FRAMES.forecast })).toBeDefined();
     expect(screen.getByRole('region', { name: FRAMES.timings })).toBeDefined();
     expect(screen.getByRole('region', { name: WHAT_TO_DO })).toBeDefined();
-    expect(blockRegions()).toHaveLength(8);
-    expect(screen.queryByRole('heading', { name: /зарплат/i })).toBeNull();
+    expect(screen.getByRole('heading', { name: 'На якій вилці приходить офер' })).toBeDefined();
+    expect(blockRegions()).toHaveLength(9);
     expect(screen.queryByText(/саммарі/i)).toBeNull();
+  });
+
+  it('the salary block sits in the timings row, takes its title from the salary insight and reads the median, the outcome bars and the small sample note', async () => {
+    renderDashboard({ insights: salaryInsightsBody() });
+
+    expect(
+      await screen.findByRole('heading', {
+        name: `Відмови через зарплату: усі на вилках нижче $4${NBSP}500`,
+      }),
+    ).toBeDefined();
+    const salary = blockOf('salary');
+    expect(salary.parentElement).toBe(blockOf('timings').parentElement);
+    expect(await within(salary).findByText('$4 900 медіана вилки')).toBeDefined();
+    expect(within(salary).getByText('3 відгуки без вилки не входять у розрахунок.')).toBeDefined();
+    const [median, whisker] = drawnChartIn(salary).data.datasets;
+    expect(median?.data).toEqual([5800, 3950, 5050]);
+    expect(median?.backgroundColor).toEqual([
+      OUTCOME.offer,
+      OUTCOME.rejected,
+      CHART_THEME.light.data[1],
+    ]);
+    expect(whisker?.data).toEqual([
+      [5800, 5800],
+      [3800, 4100],
+      [4500, 6000],
+    ]);
+    expect(smallNoteOf(salary)).toHaveLength(3);
+    expect(within(salary).getByRole('table', { name: 'Зарплатні вилки, $ net' })).toBeDefined();
+  });
+
+  it('a search without a single salary shows the salary empty copy and no chart', async () => {
+    renderDashboard({ salary: buildNoSalary() });
+
+    const salary = blockOf('salary');
+    expect(await within(salary).findByText('Вилок ще немає')).toBeDefined();
+    expect(salary.querySelector('canvas')).toBeNull();
   });
 
   it('a done monthly summary takes the place of the insight actions', async () => {
@@ -187,7 +234,7 @@ describe('AnalyticsDashboard', () => {
     await waitFor(() => {
       expect(screen.queryByRole('region', { name: WHAT_TO_DO })).toBeNull();
     });
-    expect(blockRegions()).toHaveLength(7);
+    expect(blockRegions()).toHaveLength(8);
   });
 
   it('without insights the blocks ask neutral questions, the CV block keeps its served verdict', async () => {
@@ -248,6 +295,7 @@ describe('AnalyticsDashboard', () => {
         timings: '',
         forecast: '',
         insights: '',
+        salary: '',
         'resume-ab': '',
         'match-validation': '',
       });
@@ -264,6 +312,7 @@ describe('AnalyticsDashboard', () => {
         timings: archived,
         forecast: archived,
         insights: archived,
+        salary: archived,
       });
     });
   });

@@ -11,6 +11,7 @@ from app.repositories.applications import (
     applications_statement,
     latest_change_statement,
     match_scores_statement,
+    salaries_statement,
 )
 from app.repositories.events import events_statement, user_events_statement
 from app.repositories.resume_versions import version_links_statement
@@ -34,6 +35,7 @@ STATEMENTS = {
     "events": (events_statement, OWNERSHIP_PREDICATES),
     "applications": (applications_statement, OWNERSHIP_PREDICATES),
     "application sources": (application_sources_statement, OWNERSHIP_PREDICATES),
+    "salaries": (salaries_statement, OWNERSHIP_PREDICATES),
     "follow-ups": (followups_statement, OWNERSHIP_PREDICATES),
     "search": (search_statement, SEARCH_PREDICATES),
 }
@@ -56,13 +58,16 @@ def test_reads_only_what_the_user_owns_in_the_search(
 
 def user_wide(statement: Select[Any]) -> tuple[set[object], str]:
     compiled = statement.compile(dialect=postgresql.dialect())
-    return set(compiled.params.values()), str(compiled)
+    filters = {
+        value for value in compiled.params.values() if not isinstance(value, tuple)
+    }
+    return filters, str(compiled)
 
 
 @pytest.mark.parametrize(
     "statement",
-    [events_statement, application_sources_statement],
-    ids=["events", "application sources"],
+    [events_statement, application_sources_statement, salaries_statement],
+    ids=["events", "application sources", "salaries"],
 )
 def test_reads_the_active_search_of_the_user_without_a_search_id(
     statement: Statement,
@@ -114,6 +119,17 @@ def test_the_version_links_read_only_the_users_applications_and_versions() -> No
     assert [
         p for p in (*OWNERSHIP_PREDICATES, "resume_versions.user_id =") if p not in sql
     ] == ["applications.search_id ="]
+
+
+def test_the_salaries_read_seniority_and_tax_as_text_from_the_vacancy_parse() -> None:
+    sql = str(
+        salaries_statement(user_id=USER_ID, search_id=SEARCH_ID).compile(
+            dialect=postgresql.dialect(), compile_kwargs={"literal_binds": True}
+        )
+    )
+
+    assert "applications.ai_parsed #>> '{seniority, value}' AS seniority" in sql
+    assert "applications.ai_parsed #>> '{salaryTax, value}' AS salary_tax" in sql
 
 
 def test_the_follow_ups_read_only_the_sent_follow_ups_of_the_active_search() -> None:

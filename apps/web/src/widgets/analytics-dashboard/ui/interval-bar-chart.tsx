@@ -6,7 +6,7 @@ import { uk } from '@/shared/i18n';
 import { type ChartPalette, useChartTheme } from '@/shared/lib/chart';
 
 import type { BarActions } from '../lib/bar-look';
-import type { IntervalBarRow, IntervalBars, IntervalLook } from '../lib/interval-bars';
+import type { BarColour, IntervalBarRow, IntervalBars, IntervalLook } from '../lib/interval-bars';
 import { BarPlot } from './bar-plot';
 
 const ANALYTICS = uk.analytics;
@@ -47,8 +47,14 @@ function lookOf({ rows, scale }: IntervalBars) {
   } satisfies ChartOptions<'bar'>;
 }
 
+function colourOf(colour: BarColour, palette: ChartPalette) {
+  return typeof colour === 'number' ? palette.data[colour] : palette.outcome[colour];
+}
+
 function fillOf(rows: readonly IntervalBarRow[], palette: ChartPalette) {
-  return isColoured(rows) ? rows.map(({ colour = 1 }) => palette.data[colour]) : palette.data[1];
+  return isColoured(rows)
+    ? rows.map(({ colour = 1 }) => colourOf(colour, palette))
+    : palette.data[1];
 }
 
 export function IntervalBarChart({ chart, actions }: IntervalBarChartProps) {

@@ -42,6 +42,7 @@ OPENAPI_PATHS = [
     "/analytics/reasons",
     "/analytics/reasons/summary",
     "/analytics/resume-ab",
+    "/analytics/salary",
     "/analytics/sankey",
     "/analytics/sources",
     "/analytics/timings",
@@ -130,6 +131,21 @@ class MatchScore:
 
 def match_scores_frame(rows: list[MatchScore]) -> pd.DataFrame:
     return records_frame(rows, record=MatchScore)
+
+
+@dataclass(frozen=True)
+class SalaryRow:
+    application_id: UUID
+    salary_min: int | None
+    salary_max: int | None
+    currency: str | None = "USD"
+    stack: tuple[str, ...] = ()
+    seniority: str | None = None
+    salary_tax: str | None = None
+
+
+def salaries_frame(rows: list[SalaryRow]) -> pd.DataFrame:
+    return records_frame(rows, record=SalaryRow)
 
 
 @dataclass(frozen=True)

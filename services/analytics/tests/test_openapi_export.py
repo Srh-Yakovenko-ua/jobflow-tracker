@@ -36,7 +36,7 @@ def test_documents_401_and_422_on_every_analytics_route_as_the_problem_body(
         if path.startswith("/analytics/")
         for status in ("401", "422")
     }
-    assert len(documented) == 22
+    assert len(documented) == 24
     assert [schema for schema in documented.values() if schema != problem_ref] == []
     assert "HTTPValidationError" not in document["components"]["schemas"]
     assert document["components"]["schemas"]["ProblemBody"] == {
