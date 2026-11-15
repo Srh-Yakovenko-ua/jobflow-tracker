@@ -6,7 +6,8 @@ import { KpiTile, type KpiTileProps } from './kpi-tile';
 
 const KPI = uk.analytics.kpi;
 
-export const KPI_GRID = 'grid grid-cols-[repeat(auto-fit,minmax(min(224px,100%),1fr))] gap-3.5';
+export const KPI_GRID =
+  'grid grid-cols-[repeat(auto-fit,minmax(min(224px,100%),1fr))] gap-3.5 print:grid-cols-4';
 
 export type KpiRowProps = Readonly<{ kpi: DashboardKpi; silenceDays: number }>;
 

@@ -7,6 +7,7 @@ import { PAGE_FONTS, pageFont } from '../page-font';
 import { usePrefersReducedMotion } from '../reduced-motion';
 import { useShownScheme } from '../theme';
 import { type ChartPalette, type ChartThemeOptions, chartThemeOptions } from './chart-options';
+import { CHART_PRINT, usePrintCharts } from './print-charts';
 
 export type ChartTheme = Readonly<{
   palette: ChartPalette;
@@ -15,7 +16,12 @@ export type ChartTheme = Readonly<{
 
 export function useChartTheme(): ChartTheme {
   const palette = CHART_THEME[useShownScheme()];
-  const reduced = usePrefersReducedMotion();
+  const print = usePrintCharts();
+  const reduced = usePrefersReducedMotion() || print;
   const [fontFamily] = useState(() => pageFont(PAGE_FONTS.ui));
-  return { palette, options: chartThemeOptions({ palette, reduced, fontFamily }) };
+  const options = chartThemeOptions({ palette, reduced, fontFamily });
+  return {
+    palette,
+    options: print ? { ...options, devicePixelRatio: CHART_PRINT.pixelRatio } : options,
+  };
 }

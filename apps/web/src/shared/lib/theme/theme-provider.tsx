@@ -4,6 +4,7 @@ import type { Theme } from '@jobflow/shared';
 import type { ReactNode } from 'react';
 import { createContext, use, useEffect, useState } from 'react';
 
+import { cn } from '../cn';
 import { writeThemeCookie } from './theme-cookie';
 
 export type ThemeContextValue = { theme: Theme; setTheme: (theme: Theme) => void };
@@ -26,6 +27,19 @@ export function ThemeProvider({ children, initialTheme }: ThemeProviderProps) {
   }, [theme]);
 
   return <ThemeContext value={{ theme, setTheme }}>{children}</ThemeContext>;
+}
+
+export type LightSchemeProps = Readonly<{ children: ReactNode; className?: string }>;
+
+export function LightScheme({ children, className }: LightSchemeProps) {
+  const { setTheme } = useTheme();
+  return (
+    <ThemeContext value={{ theme: 'light', setTheme }}>
+      <div data-theme="light" className={cn('bg-paper text-ink', className)}>
+        {children}
+      </div>
+    </ThemeContext>
+  );
 }
 
 export function useTheme(): ThemeContextValue {

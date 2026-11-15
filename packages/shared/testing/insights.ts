@@ -104,9 +104,30 @@ const DESIGN_ACTIONS: InsightAction[] = [
   },
 ];
 
+const SALARY_FLOOR = '$4 500';
+
+const SALARY_FLOOR_INSIGHT: Insight = {
+  block: 'salary',
+  title: `Відмови через зарплату: усі на вилках нижче ${SALARY_FLOOR}`,
+  body: `2 відмови через зарплатні очікування, усі по вакансіях із вилкою нижче ${SALARY_FLOOR}. Нижню межу фільтра варто підняти.`,
+  severity: 'warning',
+  evidence: { floor: 4500, rejections: 2, below: 7 },
+};
+
 export function designInsightsBody(): InsightsResponse {
   return {
     insights: DESIGN_INSIGHTS.map((insight) => ({ ...insight, evidence: { ...insight.evidence } })),
     actions: DESIGN_ACTIONS.map((action) => ({ ...action })),
+  };
+}
+
+export function salaryFloorInsightsBody(): InsightsResponse {
+  const design = designInsightsBody();
+  return {
+    insights: [
+      ...design.insights,
+      { ...SALARY_FLOOR_INSIGHT, evidence: { ...SALARY_FLOOR_INSIGHT.evidence } },
+    ],
+    actions: design.actions,
   };
 }

@@ -5,9 +5,9 @@ import { useState } from 'react';
 
 import { searchesQueryOptions } from '@/entities/search';
 
-export function useSearchScope() {
+export function useSearchScope(initialId?: string) {
   const searches = useQuery(searchesQueryOptions());
-  const [selectedId, setSelectedId] = useState<string>();
+  const [selectedId, setSelectedId] = useState<string | undefined>(initialId);
   const activeId = searches.data?.items.find((search) => search.status === 'active')?.id;
   return {
     searches,

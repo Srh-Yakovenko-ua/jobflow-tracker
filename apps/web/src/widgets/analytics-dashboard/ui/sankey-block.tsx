@@ -98,7 +98,7 @@ function SankeyPlot({ graph, stages }: SankeyPlotProps) {
       <FunnelChart graph={shown} stages={stages} actions={{ onExpand: expand }} />
       <AnimatePresence initial={false}>
         {folded && (
-          <Fade key="expand" className="self-start">
+          <Fade key="expand" className="self-start print:hidden">
             <Button variant="ghost" size="sm" onClick={expand}>
               {COPY.expand}
             </Button>

@@ -1,11 +1,13 @@
 import { CHART_THEME } from '@jobflow/shared/chart-theme';
-import { act } from '@testing-library/react';
+import { act, renderHook } from '@testing-library/react';
+import type { ReactNode } from 'react';
 import { afterEach, describe, expect, it } from 'vitest';
 
-import { useTheme } from '@/shared/lib/theme';
+import { LightScheme, ThemeProvider, useTheme } from '@/shared/lib/theme';
 import { stubMotionPreference } from '@/test/motion-preference';
 import { renderHookInTheme } from '@/test/theme';
 
+import { PrintCharts } from './print-charts';
 import { useChartTheme } from './use-chart-theme';
 
 const HASHED_ONEST = "'Onest', 'Onest Fallback'";
@@ -14,6 +16,16 @@ const { light, dark } = CHART_THEME;
 
 function renderChartTheme() {
   return renderHookInTheme(() => ({ chart: useChartTheme(), ...useTheme() }), 'light');
+}
+
+function renderDarkChartThemeInside(Island: (props: { children: ReactNode }) => ReactNode) {
+  return renderHook(useChartTheme, {
+    wrapper: ({ children }: { children: ReactNode }) => (
+      <ThemeProvider initialTheme="dark">
+        <Island>{children}</Island>
+      </ThemeProvider>
+    ),
+  }).result.current;
 }
 
 describe('useChartTheme', () => {
@@ -55,5 +67,19 @@ describe('useChartTheme', () => {
 
     expect(options.font).toEqual({ family: HASHED_ONEST });
     expect(options.plugins.tooltip.bodyFont).toEqual({ family: HASHED_ONEST });
+  });
+
+  it('draws the light palette inside a light scheme while the user keeps the dark theme', () => {
+    const { palette, options } = renderDarkChartThemeInside(LightScheme);
+
+    expect(palette).toBe(light);
+    expect(options.plugins.tooltip.backgroundColor).toBe(light.colors.ink);
+  });
+
+  it('renders charts under print charts at three device pixels with no animation', () => {
+    const { options } = renderDarkChartThemeInside(PrintCharts);
+
+    expect(options.devicePixelRatio).toBe(3);
+    expect(options.animation).toBe(false);
   });
 });

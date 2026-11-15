@@ -1,5 +1,5 @@
 import { CHART_THEME } from '@jobflow/shared/chart-theme';
-import { buildNoSalary } from '@jobflow/shared/testing';
+import { buildNoSalary, salaryFloorInsightsBody } from '@jobflow/shared/testing';
 import { screen, waitFor, within } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -11,8 +11,7 @@ import {
   dashboardRoutes,
   type DashboardRoutesOptions,
   lowDataFunnel,
-  salaryInsightsBody,
-  type SentRequest,
+  queriesOf,
 } from '@/test/analytics-fixtures';
 import { OUTAGES } from '@/test/api-handlers';
 import { frameOf, selectArchivedSearch, smallNoteOf } from '@/test/dashboard-frames';
@@ -83,6 +82,8 @@ const ADD_LINK = 'Додати вакансію';
 
 const SHARE = { name: 'Поділитися' } as const;
 
+const REPORT = { name: 'Звіт для друку' } as const;
+
 const AFFECTED: Record<Exclude<DashboardRoute, 'insights'>, readonly Block[]> = {
   searches: ['sankey', 'sent', 'screening'],
   funnel: ['sent', 'screening'],
@@ -135,10 +136,6 @@ function expectedStates(affected: readonly Block[], state: BlockState) {
 
 function blockRegions() {
   return screen.queryAllByRole('region', { name: (name) => !name.startsWith(TOASTER) });
-}
-
-function queriesOf(sent: readonly SentRequest[]) {
-  return Object.fromEntries(sent.map(({ route, url }) => [route, url.search]));
 }
 
 beforeEach(() => {
@@ -194,7 +191,7 @@ describe('AnalyticsDashboard', () => {
   });
 
   it('the salary block sits in the timings row, takes its title from the salary insight and reads the median, the outcome bars and the small sample note', async () => {
-    renderDashboard({ insights: salaryInsightsBody() });
+    renderDashboard({ insights: salaryFloorInsightsBody() });
 
     expect(
       await screen.findByRole('heading', {
@@ -258,6 +255,21 @@ describe('AnalyticsDashboard', () => {
     await user.click(await screen.findByRole('button', SHARE));
 
     expect(await screen.findByRole('dialog', { name: 'Поділитися пошуком' })).toBeDefined();
+  });
+
+  it('the print report link opens the active search with no period and a selected archived search with its id as the period', async () => {
+    const { user } = renderDashboard();
+    expect((await screen.findByRole('link', REPORT)).getAttribute('href')).toBe(
+      '/analytics/report',
+    );
+
+    await selectArchivedSearch(user);
+
+    await waitFor(() => {
+      expect(screen.getByRole('link', REPORT).getAttribute('href')).toBe(
+        `/analytics/report?period=${ARCHIVED_SEARCH.id}`,
+      );
+    });
   });
 
   it('four applications turn the whole dashboard into its low data state with one useful action', async () => {

@@ -35,7 +35,10 @@ function themedOptions({ palette, fontFamily }: Omit<ChartThemeInput, 'reduced'>
   };
 }
 
-export type ChartThemeOptions = ReturnType<typeof themedOptions> & { animation?: false };
+export type ChartThemeOptions = ReturnType<typeof themedOptions> & {
+  animation?: false;
+  devicePixelRatio?: number;
+};
 
 export function chartThemeOptions({ reduced, ...look }: ChartThemeInput): ChartThemeOptions {
   const options = themedOptions(look);

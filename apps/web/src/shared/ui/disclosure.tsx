@@ -2,6 +2,8 @@
 
 import { useId, useState } from 'react';
 
+import { cn } from '@/shared/lib/cn';
+
 import { Button } from './button';
 import { TOUCH_HEIGHT } from './touch-height';
 
@@ -34,7 +36,12 @@ export function useDisclosure(): Disclosure {
 
 export function DisclosureButton({ disclosure, labels }: DisclosureButtonProps) {
   return (
-    <Button variant="ghost" size="xs" className={TOUCH_HEIGHT} {...disclosure.toggle}>
+    <Button
+      variant="ghost"
+      size="xs"
+      className={cn(TOUCH_HEIGHT, 'print:hidden')}
+      {...disclosure.toggle}
+    >
       {disclosure.shown ? labels.hide : labels.show}
     </Button>
   );
