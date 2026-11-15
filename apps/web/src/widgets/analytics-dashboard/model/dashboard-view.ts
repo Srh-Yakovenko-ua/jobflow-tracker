@@ -12,6 +12,7 @@ import {
   type TimingsResponse,
 } from '@jobflow/shared';
 
+import type { FunnelStory } from '@/features/share-funnel';
 import { uk } from '@/shared/i18n';
 import type { ChartFrameHeader, ChartFrameState } from '@/shared/ui/chart-frame';
 import { chartFrameStateOf, type FrameQuery } from '@/shared/ui/chart-frame-state';
@@ -160,6 +161,14 @@ function framesOf({ queries, searches }: DashboardViewInput): DashboardFrames {
   };
 }
 
+function storyOf({ funnel, sankey, insights }: DashboardQueries): FunnelStory | undefined {
+  const kpis = funnel.data?.kpis;
+  const graph = sankey.data?.merged;
+  if (kpis === undefined || graph === undefined) return undefined;
+  const headline = insights.data?.insights.find(({ block }) => block === 'funnel')?.title;
+  return { kpis, graph, headline };
+}
+
 export function dashboardViewOf(input: DashboardViewInput) {
   const { funnel, timings, insights, summary } = input.queries;
   const kpis = funnel.data?.kpis;
@@ -172,6 +181,7 @@ export function dashboardViewOf(input: DashboardViewInput) {
     kpis,
     lowData: kpis !== undefined && kpis.sent.total < THRESHOLDS.MIN_N_INSIGHT,
     frames: framesOf(input),
+    story: storyOf(input.queries),
     actions,
     kpi: {
       funnel: {

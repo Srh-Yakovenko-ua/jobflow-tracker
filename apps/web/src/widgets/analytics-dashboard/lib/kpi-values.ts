@@ -9,14 +9,13 @@ import {
 } from '@jobflow/shared';
 
 import { uk } from '@/shared/i18n';
+import { DAYS_IN_WEEK } from '@/shared/lib/search-weeks';
 
 const COPY = uk.analytics;
 
 const KPI = COPY.kpi;
 
 const PERCENT = 100;
-
-const DAYS_IN_WEEK = 7;
 
 const HOURS_IN_DAY = 24;
 
@@ -47,10 +46,6 @@ export type ResponseKpiInput = Readonly<{ timings: TimingsResponse; silenceDays:
 export const percentOf = (fraction: number) => Math.round(fraction * PERCENT);
 
 export const oneDecimal = (value: number) => ONE_DECIMAL.format(value);
-
-export function searchWeeks(daysInSearch: number): number {
-  return Math.max(1, Math.round(daysInSearch / DAYS_IN_WEEK));
-}
 
 export function sentKpi({ sent, daysInSearch }: FunnelKpis): KpiContent {
   const change = sent.thisMonth - sent.previousMonth;

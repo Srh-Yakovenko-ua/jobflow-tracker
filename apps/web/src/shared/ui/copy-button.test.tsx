@@ -4,7 +4,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { renderInApp } from '@/test/render-in-app';
 
-import { CopyButton } from './copy-button';
+import { CopyButton, copyImageToClipboard } from './copy-button';
 
 const EMAIL = 'o.levchenko@acme.io';
 
@@ -30,6 +30,18 @@ describe('CopyButton', () => {
     vi.spyOn(navigator.clipboard, 'writeText').mockRejectedValue(new Error('denied'));
 
     await user.click(screen.getByRole('button', { name: LABEL }));
+
+    expect(await screen.findByText('Не вдалося скопіювати')).toBeDefined();
+    expect(screen.queryByText('Скопійовано')).toBeNull();
+  });
+});
+
+describe('copyImageToClipboard', () => {
+  it('a browser with no image clipboard shows that nothing was copied', async () => {
+    renderInApp(<CopyButton value={EMAIL} label={LABEL} />);
+    expect('ClipboardItem' in globalThis).toBe(false);
+
+    copyImageToClipboard(new Blob([new Uint8Array([137, 80, 78, 71])], { type: 'image/png' }));
 
     expect(await screen.findByText('Не вдалося скопіювати')).toBeDefined();
     expect(screen.queryByText('Скопійовано')).toBeNull();

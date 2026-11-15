@@ -21,6 +21,7 @@ import { push } from './push';
 import { reminders } from './reminders';
 import { resumes } from './resumes';
 import { settings } from './settings';
+import { shareCard } from './share-card';
 import { shell } from './shell';
 import { states } from './states';
 import { summary } from './summary';
@@ -93,6 +94,7 @@ export const uk = {
   settings,
   dataImport,
   analytics,
+  shareCard,
   summary,
   designSystem: {
     pageTitle: 'Дизайн-система',

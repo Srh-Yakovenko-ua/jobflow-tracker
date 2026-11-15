@@ -10,7 +10,12 @@ import {
 } from '@jobflow/shared';
 
 import { withSearchParams } from '@/shared/api';
-import { sankeyNodeName } from '@/shared/lib/chart';
+import {
+  sankeyCountLabel,
+  sankeyFlowThrough,
+  sankeyNodeName,
+  sankeyNodeTotal,
+} from '@/shared/lib/chart';
 
 import { conversionLine, type StageStep } from './sankey-tooltip';
 
@@ -75,18 +80,7 @@ export type FunnelRowsInput = Readonly<{
   stages: readonly FunnelStage[] | undefined;
 }>;
 
-type FlowSide = 'from' | 'to';
-
 type RowInput = FunnelRowsInput & Readonly<{ node: SankeyNode }>;
-
-function flowThrough({ links }: SankeyGraph, side: FlowSide) {
-  return (node: string) =>
-    links.reduce((total, link) => (link[side] === node ? total + link.flow : total), 0);
-}
-
-function countLabel(id: string, count: number): string {
-  return `${sankeyNodeName(id)} ${String(count)}`;
-}
 
 function endingOf({ id, kind }: SankeyNode): EndingId | null {
   return ENDING_OF[kind](id);
@@ -97,7 +91,11 @@ function exitsOf({ graph, node }: RowInput): FunnelExit[] {
     const target = graph.nodes.find(({ id }) => id === link.to);
     const ending = target === undefined || target.kind === 'stage' ? null : endingOf(target);
     if (link.from !== node.id || target === undefined || ending === null) return [];
-    const exit = { link, node: target, label: countLabel(target.id, link.flow) };
+    const exit = {
+      link,
+      node: target,
+      label: sankeyCountLabel({ id: target.id, count: link.flow }),
+    };
     return [{ rank: EXIT_RANK[ending], exit: { ...exit, fill: ENDING_FILL[ending] } }];
   });
   return ranked.sort((left, right) => left.rank - right.rank).map(({ exit }) => exit);
@@ -111,12 +109,12 @@ function stepOf({ stages = [], node }: RowInput): StageStep | null {
 
 function rowOf(input: RowInput): FunnelRow {
   const { graph, node } = input;
-  const reached = Math.max(flowThrough(graph, 'to')(node.id), flowThrough(graph, 'from')(node.id));
+  const reached = sankeyNodeTotal(graph)(node.id);
   const stageIds = new Set(graph.nodes.filter(({ kind }) => kind === 'stage').map(({ id }) => id));
   const step = stepOf(input);
   return {
     node,
-    label: countLabel(node.id, reached),
+    label: sankeyCountLabel({ id: node.id, count: reached }),
     reached,
     passed: graph.links
       .filter((link) => link.from === node.id && stageIds.has(link.to))
@@ -144,8 +142,8 @@ export function funnelRowsOf({ graph, stages }: FunnelRowsInput): FunnelRow[] {
 }
 
 export function endingsOf(graph: SankeyGraph): FunnelEnding[] {
-  const inflow = flowThrough(graph, 'to');
-  const outflow = flowThrough(graph, 'from');
+  const inflow = sankeyFlowThrough(graph, 'to');
+  const outflow = sankeyFlowThrough(graph, 'from');
   const rests = graph.nodes.map((node) => ({
     ending: endingOf(node),
     rest: Math.max(0, inflow(node.id) - outflow(node.id)),
