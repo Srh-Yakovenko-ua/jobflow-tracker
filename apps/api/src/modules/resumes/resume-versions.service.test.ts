@@ -54,13 +54,18 @@ const LINKED_CONFLICT = {
 class FakeResumeVersionsRepository {
   readonly updates: ByUser<UpdateResumeVersion>[] = [];
   readonly deletedIds: string[] = [];
+  readonly locked: string[] = [];
+  readonly steps: string[] = [];
   readonly active = new ActiveVersions([
     [OLENA_ID, RESUME_VERSION_ID],
     [BOHDAN_ID, null],
   ]);
   stored = STORED_ROW;
+  linksAtDelete = false;
 
-  lockOwner(): Promise<void> {
+  lockOwner(userId: string): Promise<void> {
+    this.locked.push(userId);
+    this.steps.push('lockOwner');
     return Promise.resolve();
   }
 
@@ -69,6 +74,7 @@ class FakeResumeVersionsRepository {
   }
 
   findOwned(userId: string, { id }: ResumeVersionById): Promise<ResumeVersionRow | null> {
+    this.steps.push('findOwned');
     return Promise.resolve(this.owns(userId, id) ? this.stored : null);
   }
 
@@ -87,7 +93,8 @@ class FakeResumeVersionsRepository {
   }
 
   deleteUnlinked(userId: string, { id }: ResumeVersionById): Promise<number> {
-    if (!this.owns(userId, id) || this.stored._count.applications > 0) {
+    const linked = this.stored._count.applications > 0 || this.linksAtDelete;
+    if (!this.owns(userId, id) || linked) {
       return Promise.resolve(0);
     }
     this.deletedIds.push(id);
@@ -239,23 +246,46 @@ describe('ResumeVersionsService.activate', () => {
 });
 
 describe('ResumeVersionsService.remove', () => {
-  it('deletes an unlinked version and its file', async () => {
+  it('deletes an unlinked version under the owner lock, then its pending upload and its file', async () => {
     const { repository, storage, service } = await serviceWithFakes();
 
     await service.remove(OLENA_ID, RESUME_VERSION_ID);
 
-    expect([repository.deletedIds, storage.deleted]).toEqual([[RESUME_VERSION_ID], [STORAGE_KEY]]);
+    expect([repository.locked, repository.deletedIds, storage.deleted]).toEqual([
+      [OLENA_ID],
+      [RESUME_VERSION_ID],
+      [`pending/${STORAGE_KEY}`, STORAGE_KEY],
+    ]);
   });
 
-  it('refuses a version linked to an application with 409 and the archive hint, keeping its file', async () => {
-    const { repository, storage, service } = await serviceWithFakes();
-    repository.stored = { ...STORED_ROW, _count: { applications: 1 } };
+  it('takes the owner lock before it reads the version', async () => {
+    const { repository, service } = await serviceWithFakes();
 
-    await expect(service.remove(OLENA_ID, RESUME_VERSION_ID)).rejects.toMatchObject(
-      LINKED_CONFLICT,
-    );
-    expect([repository.deletedIds, storage.deleted]).toEqual([[], []]);
+    await service.remove(OLENA_ID, RESUME_VERSION_ID);
+
+    expect(repository.steps).toEqual(['lockOwner', 'findOwned']);
   });
+
+  it.each([
+    {
+      when: 'when it is read',
+      stored: { ...STORED_ROW, _count: { applications: 1 } },
+      linksAtDelete: false,
+    },
+    { when: 'between the read and the delete', stored: STORED_ROW, linksAtDelete: true },
+  ])(
+    'refuses a version linked to an application $when with 409 and the archive hint, keeping its file',
+    async ({ stored, linksAtDelete }) => {
+      const { repository, storage, service } = await serviceWithFakes();
+      repository.stored = stored;
+      repository.linksAtDelete = linksAtDelete;
+
+      await expect(service.remove(OLENA_ID, RESUME_VERSION_ID)).rejects.toMatchObject(
+        LINKED_CONFLICT,
+      );
+      expect([repository.deletedIds, storage.deleted]).toEqual([[], []]);
+    },
+  );
 
   it("answers another user's version with 404 and deletes nothing", async () => {
     const { repository, storage, service } = await serviceWithFakes();

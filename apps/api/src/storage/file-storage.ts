@@ -23,7 +23,7 @@ export abstract class FileStorage {
   abstract createUploadUrl(request: UploadUrlRequest): Promise<SignedUrl>;
   abstract createDownloadUrl(request: DownloadUrlRequest): Promise<SignedUrl>;
   abstract head(key: string): Promise<StoredObject | null>;
-  abstract readStart(start: ObjectStart): Promise<Uint8Array>;
+  abstract readStart(start: ObjectStart): Promise<Uint8Array | null>;
   abstract copy(request: CopyRequest): Promise<boolean>;
   abstract put(object: PutObject): Promise<void>;
   abstract delete(key: string): Promise<void>;

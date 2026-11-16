@@ -12,5 +12,6 @@ export const PENDING_RESUME_PREFIX = 'pending/';
 export const resumeStorageKey = ({ userId, uploadId, mime }: ResumeObjectRef) =>
   `users/${userId}/resumes/${uploadId}.${EXTENSIONS[mime]}`;
 
-export const pendingResumeKey = (ref: ResumeObjectRef) =>
-  `${PENDING_RESUME_PREFIX}${resumeStorageKey(ref)}`;
+export const pendingKeyOf = (storageKey: string) => `${PENDING_RESUME_PREFIX}${storageKey}`;
+
+export const pendingResumeKey = (ref: ResumeObjectRef) => pendingKeyOf(resumeStorageKey(ref));

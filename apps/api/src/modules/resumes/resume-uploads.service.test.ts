@@ -47,6 +47,14 @@ const DOCX_BYTES = Uint8Array.from([0x50, 0x4b, 0x03, 0x04, 0x14, 0x00, 0x06, 0x
 
 const EXE_BYTES = Uint8Array.from([0x4d, 0x5a, 0x90, 0x00, 0x03, 0x00, 0x00, 0x00]);
 
+const FILE_CHANGED_CONFLICT = {
+  body: {
+    status: 409,
+    type: 'conflict',
+    detail: 'The file changed after the check; upload it again',
+  },
+};
+
 const OVER_LIMIT_PDF = new Uint8Array(5_242_881);
 OVER_LIMIT_PDF.set(PDF_BYTES);
 
@@ -98,7 +106,7 @@ class FakeResumeVersionsRepository extends RecordedEvents<RecordResumeEvent> {
 }
 
 class StorageWrittenAgainAfterCheck extends FakeFileStorage {
-  override async readStart(start: ObjectStart): Promise<Uint8Array> {
+  override async readStart(start: ObjectStart): Promise<Uint8Array | null> {
     const read = await super.readStart(start);
     const object = this.objects.get(start.key);
     if (object) {
@@ -109,7 +117,7 @@ class StorageWrittenAgainAfterCheck extends FakeFileStorage {
 }
 
 class StorageSwappedWhileSignatureRead extends FakeFileStorage {
-  override async readStart(start: ObjectStart): Promise<Uint8Array> {
+  override async readStart(start: ObjectStart): Promise<Uint8Array | null> {
     const written = this.objects.get(start.key);
     const etag = this.objects.etags.get(start.key);
     this.objects.set(start.key, { bytes: PDF_BYTES, mime: PDF });
@@ -119,6 +127,13 @@ class StorageSwappedWhileSignatureRead extends FakeFileStorage {
       this.objects.etags.set(start.key, etag);
     }
     return read;
+  }
+}
+
+class StorageGoneBeforeSignatureRead extends FakeFileStorage {
+  override readStart(start: ObjectStart): Promise<Uint8Array | null> {
+    this.objects.delete(start.key);
+    return super.readStart(start);
   }
 }
 
@@ -314,34 +329,57 @@ describe('ResumeUploadsService.createVersion', () => {
     ]);
   });
 
-  it('answers 409 when the file was written again after the check and inserts nothing', async () => {
-    const { storage, repository, service } = await serviceWithStorage(
-      new StorageWrittenAgainAfterCheck(),
-    );
-    storage.objects.set(PDF_KEY, { bytes: PDF_BYTES, mime: PDF });
+  it.each([
+    { change: 'written again after the check', storage: new StorageWrittenAgainAfterCheck() },
+    { change: 'gone before the signature read', storage: new StorageGoneBeforeSignatureRead() },
+  ])(
+    'answers 409 when the file was $change, deleting nothing and inserting nothing',
+    async ({ storage: changedStorage }) => {
+      const { storage, repository, service } = await serviceWithStorage(changedStorage);
+      storage.objects.set(PDF_KEY, { bytes: PDF_BYTES, mime: PDF });
 
-    await expect(service.createVersion(OLENA_ID, VERSION_INPUT)).rejects.toMatchObject({
-      body: {
-        status: 409,
-        type: 'conflict',
-        detail: 'The file changed after the check; upload it again',
-      },
-    });
-    expect([storage.objects.has(VERSION_KEY), repository.inserted, repository.events]).toEqual([
-      false,
-      [],
-      [],
-    ]);
-  });
-
-  it.each<{ case: string; storage: () => FakeFileStorage }>([
-    { case: 'a file without the PDF signature', storage: () => new FakeFileStorage() },
-    {
-      case: 'EXE bytes swapped for a PDF only while the signature is read',
-      storage: () => new StorageSwappedWhileSignatureRead(),
+      await expect(service.createVersion(OLENA_ID, VERSION_INPUT)).rejects.toMatchObject(
+        FILE_CHANGED_CONFLICT,
+      );
+      expect([
+        storage.deleted,
+        storage.objects.has(VERSION_KEY),
+        repository.inserted,
+        repository.events,
+      ]).toEqual([[], false, [], []]);
     },
-  ])('refuses $case with 422 at file, deletes it and copies nothing', async (row) => {
-    const { storage, repository, service } = await serviceWithStorage(row.storage());
+  );
+
+  it.each([
+    {
+      call: 'confirm',
+      send: (service: ResumeUploadsService) =>
+        service.confirm(OLENA_ID, { uploadId: UPLOAD_ID, mime: PDF }),
+    },
+    {
+      call: 'createVersion',
+      send: (service: ResumeUploadsService) => service.createVersion(OLENA_ID, VERSION_INPUT),
+    },
+  ])(
+    '$call answers 409 to EXE bytes swapped for a PDF only while the signature is read, keeping the file and copying nothing',
+    async ({ send }) => {
+      const { storage, repository, service } = await serviceWithStorage(
+        new StorageSwappedWhileSignatureRead(),
+      );
+      storage.objects.set(PDF_KEY, { bytes: EXE_BYTES, mime: PDF });
+
+      await expect(send(service)).rejects.toMatchObject(FILE_CHANGED_CONFLICT);
+      expect([
+        storage.deleted,
+        storage.objects.has(PDF_KEY),
+        storage.copies,
+        repository.inserted,
+      ]).toEqual([[], true, [], []]);
+    },
+  );
+
+  it('refuses a file without the PDF signature with 422 at file, deletes it and copies nothing', async () => {
+    const { storage, repository, service } = await serviceWithStorage();
     storage.objects.set(PDF_KEY, { bytes: EXE_BYTES, mime: PDF });
 
     await expect(service.createVersion(OLENA_ID, VERSION_INPUT)).rejects.toMatchObject({

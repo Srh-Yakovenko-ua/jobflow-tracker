@@ -102,7 +102,7 @@ export const RESUME_VERSIONS_OPENAPI_PATHS: RouteConfig[] = [
     tags: TAGS,
     summary: 'Create a resume version from a confirmed upload',
     description:
-      "Checks the pending upload again and copies it to the version's own key only while it is still the file checked; a file written again since answers 409. The first version creates the user's resume, each next one takes the next number, and one upload makes one version: a second create from it answers 409. The first version becomes the active one when the user has none. A resume_parse AI job and a resume.version_uploaded event are written in the same transaction; the worker extracts the text and builds the AI skills profile, so the version starts with aiProfileStatus queued.",
+      "Checks the pending upload again and copies it to the version's own key only while it is still the file checked. No file under the signed-in user's key, another user's uploadId included, answers 404 'Upload not found'. A file that fails the size, type or signature check answers 422 at file and is deleted. A file written again or gone between the check and the signature read or the copy answers 409 and nothing is deleted; upload it again. One upload makes one version: a create from an upload that already has a version answers 409. Storage that does not answer gives 503. The first version creates the user's resume and each next one takes the next number. The first version becomes the active one when the user has none. A resume_parse AI job and a resume.version_uploaded event are written in the same transaction; the worker extracts the text and builds the AI skills profile, so the version starts with aiProfileStatus queued.",
     request: {
       headers: idempotencyHeaders,
       body: {
@@ -147,7 +147,7 @@ export const RESUME_VERSIONS_OPENAPI_PATHS: RouteConfig[] = [
     tags: TAGS,
     summary: 'Delete a resume version no Application links to',
     description:
-      'Deletes the version and its file. A version linked to an Application answers 409; archive it instead.',
+      'Deletes the version, its file and the pending file of its upload, so a later create from that uploadId answers 404. A version linked to an Application answers 409; archive it instead. Storage that does not answer gives 503 and keeps the version.',
     request: { params: versionIdParams },
     responses: {
       204: { description: 'The version and its file are deleted' },

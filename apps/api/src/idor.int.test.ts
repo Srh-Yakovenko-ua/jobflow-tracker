@@ -7,16 +7,20 @@ import {
 import request from 'supertest';
 import { describe, expect, it } from 'vitest';
 
+import { FileStorage } from './storage/file-storage.js';
 import { useTestApp } from './test/app.js';
 import { applicationPath, createApplication, ROMASHKA } from './test/applications.js';
 import { BOHDAN, OLENA, signUp } from './test/auth.js';
-import { callRoute, type RouteCall } from './test/http.js';
+import { callRoute, type RouteCall, statusAndDetail } from './test/http.js';
 import { CHROME_SUBSCRIPTION, PUSH_SUBSCRIPTIONS_PATH, pushSubscriptionPath } from './test/push.js';
 import {
   activationPath,
   downloadPath,
+  PDF_BYTES,
+  postResumeVersion,
   resumeLinkPath,
   resumeVersionPath,
+  uploadedPdf,
   uploadResumeVersion,
 } from './test/resumes.js';
 import { TO_SCREENING } from './test/service-fixtures.js';
@@ -343,6 +347,32 @@ describe("another user's data", () => {
       expect(owner.status).toBe(ownerStatus);
     },
   );
+
+  it("answers BOHDAN's POST /resumes/versions with OLENA's uploadId with 404 and leaves her upload for her own version", async () => {
+    const olena = await signUp(testApp.app, OLENA);
+    const bohdan = await signUp(testApp.app, BOHDAN);
+    const ticket = await uploadedPdf(testApp.app, {
+      accessToken: olena.accessToken,
+      bytes: PDF_BYTES,
+    });
+    const olenasPending = `pending/users/${olena.user.id}/resumes/${ticket.uploadId}.pdf`;
+
+    const intruder = await postResumeVersion(testApp.app, {
+      accessToken: bohdan.accessToken,
+      ticket,
+    });
+
+    expect(statusAndDetail(intruder)).toEqual([404, 'Upload not found']);
+    expect(await testApp.prisma.resumeVersion.count()).toBe(0);
+    expect(await testApp.app.get(FileStorage).head(olenasPending)).toMatchObject({
+      sizeBytes: PDF_BYTES.length,
+    });
+    const owner = await postResumeVersion(testApp.app, {
+      accessToken: olena.accessToken,
+      ticket,
+    });
+    expect(owner.status).toBe(201);
+  });
 
   it("answers BOHDAN's DELETE /push/subscriptions/:id on OLENA's subscription with 404 and keeps it", async () => {
     const olena = await signUp(testApp.app, OLENA);

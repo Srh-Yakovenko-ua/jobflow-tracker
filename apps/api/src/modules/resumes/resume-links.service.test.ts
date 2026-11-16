@@ -30,7 +30,13 @@ const RELINK = { applicationId: APPLICATION_ID, resumeVersionId: RESUME_VERSION_
 
 class FakeVersionLinksRepository extends RecordedEvents<RecordResumeEvent> {
   readonly relinks: ByUser<RelinkApplication>[] = [];
+  readonly locked: string[] = [];
   linked: string | null = FIRST_VERSION_ID;
+
+  lockOwner(userId: string): Promise<void> {
+    this.locked.push(userId);
+    return Promise.resolve();
+  }
 
   findVersionLabel(userId: string, { id }: ResumeVersionById) {
     return Promise.resolve(userId === OLENA_ID && id === RESUME_VERSION_ID ? LABEL : null);
@@ -78,6 +84,7 @@ describe('ResumeLinksService.relink', () => {
 
     await service.relink(OLENA_ID, RELINK);
 
+    expect(repository.locked).toEqual([OLENA_ID]);
     expect(repository.relinks).toEqual([{ userId: OLENA_ID, ...RELINK, tx: FAKE_TRANSACTION }]);
     expect(timeline.events).toEqual([
       {

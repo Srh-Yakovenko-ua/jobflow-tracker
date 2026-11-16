@@ -6,8 +6,10 @@ import {
   resumeVersionListResponseSchema,
   resumeVersionSchema,
 } from '@jobflow/shared';
+import type { Response } from 'supertest';
 import { describe, expect, it } from 'vitest';
 
+import { Prisma } from '../../generated/prisma/client.js';
 import { FileStorage } from '../../storage/file-storage.js';
 import { useTestApp } from '../../test/app.js';
 import {
@@ -17,6 +19,7 @@ import {
   timelinePath,
 } from '../../test/applications.js';
 import { BOHDAN, OLENA, signUp } from '../../test/auth.js';
+import { queuedBehindRowLock, type RowLockQueue } from '../../test/database.js';
 import { callRoute, errorPathsOf, type RouteCall, statusAndDetail } from '../../test/http.js';
 import { outboxRows } from '../../test/outbox.js';
 import {
@@ -34,6 +37,7 @@ import {
   type UploadedVersion,
   uploadResumeVersion,
 } from '../../test/resumes.js';
+import type { ResumeRelink } from './resume-links.service.js';
 
 type Owner = { userId: string; accessToken: string };
 
@@ -130,6 +134,44 @@ describe('the resume versions of a user', () => {
 
   const activate = (owner: Owner, id: string) =>
     call(owner.accessToken, { method: 'post', path: activationPath(id) });
+
+  const archive = (owner: Owner, id: string) =>
+    call(owner.accessToken, {
+      method: 'patch',
+      path: resumeVersionPath(id),
+      body: { isArchived: true },
+    });
+
+  const remove = (owner: Owner, id: string) =>
+    call(owner.accessToken, { method: 'delete', path: resumeVersionPath(id) });
+
+  const relink = (owner: Owner, { applicationId, resumeVersionId }: ResumeRelink) =>
+    call(owner.accessToken, {
+      method: 'patch',
+      path: resumeLinkPath(applicationId),
+      body: { resumeVersionId },
+    });
+
+  const behindOwnerLock = (owner: Owner, calls: RowLockQueue<Response>['calls']) =>
+    queuedBehindRowLock(testApp.prisma, {
+      lock: Prisma.sql`SELECT user_id FROM user_settings WHERE user_id = ${owner.userId}::uuid FOR UPDATE`,
+      calls,
+    });
+
+  const versionIdsOf = ({ userId }: Owner) =>
+    testApp.prisma.resumeVersion.findMany({ where: { userId }, select: { id: true } });
+
+  const activeVersionOf = ({ userId }: Owner) =>
+    testApp.prisma.userSettings.findUnique({
+      where: { userId },
+      select: { activeResumeVersionId: true },
+    });
+
+  const linkOf = (applicationId: string) =>
+    testApp.prisma.application.findUnique({
+      where: { id: applicationId },
+      select: { resumeVersionId: true },
+    });
 
   const newApplication = (owner: Owner, company = ROMASHKA.company) =>
     createApplication(testApp.app, {
@@ -236,7 +278,7 @@ describe('the resume versions of a user', () => {
     const start = await testApp.app
       .get(FileStorage)
       .readStart({ key: storedKey(owner, ticket), bytes: 5 });
-    expect(new TextDecoder().decode(start)).toBe('%PDF-');
+    expect(start).toEqual(PDF_BYTES.slice(0, 5));
   });
 
   it('links a new Application to version 2 once version 2 is made active', async () => {
@@ -254,23 +296,14 @@ describe('the resume versions of a user', () => {
     const [first, second] = await twoVersions(owner);
     await activate(owner, second.version.id);
     const application = await newApplication(owner);
-    const relink = () =>
-      call(owner.accessToken, {
-        method: 'patch',
-        path: resumeLinkPath(application.id),
-        body: { resumeVersionId: first.version.id },
-      });
+    const relinkToFirst = () =>
+      relink(owner, { applicationId: application.id, resumeVersionId: first.version.id });
 
-    const relinked = await relink();
-    const repeated = await relink();
+    const relinked = await relinkToFirst();
+    const repeated = await relinkToFirst();
 
     expect([relinked.status, repeated.status]).toEqual([204, 204]);
-    expect(
-      await testApp.prisma.application.findUnique({
-        where: { id: application.id },
-        select: { resumeVersionId: true },
-      }),
-    ).toEqual({ resumeVersionId: first.version.id });
+    expect(await linkOf(application.id)).toEqual({ resumeVersionId: first.version.id });
     expect(await outboxRows(testApp.prisma, { eventType: 'resume.attached' })).toEqual([
       {
         aggregate: 'resume_version',
@@ -301,24 +334,13 @@ describe('the resume versions of a user', () => {
     await activate(owner, linked.version.id);
     await newApplication(owner);
 
-    const refused = await call(owner.accessToken, {
-      method: 'delete',
-      path: resumeVersionPath(linked.version.id),
-    });
-    const deleted = await call(owner.accessToken, {
-      method: 'delete',
-      path: resumeVersionPath(unlinked.version.id),
-    });
+    const refused = await remove(owner, linked.version.id);
+    const deleted = await remove(owner, unlinked.version.id);
 
     expect(statusAndDetail(refused)).toEqual(LINKED_REFUSAL);
     expect(errorResponseSchema.parse(refused.body).type).toBe('conflict');
     expect(deleted.status).toBe(204);
-    expect(
-      await testApp.prisma.resumeVersion.findMany({
-        where: { userId: owner.userId },
-        select: { id: true },
-      }),
-    ).toEqual([{ id: linked.version.id }]);
+    expect(await versionIdsOf(owner)).toEqual([{ id: linked.version.id }]);
     const storage = testApp.app.get(FileStorage);
     const heads = await Promise.all(
       [linked, unlinked].map(({ ticket }) => storage.head(storedKey(owner, ticket))),
@@ -331,11 +353,7 @@ describe('the resume versions of a user', () => {
     const { version } = await uploadResumeVersion(testApp.app, owner);
     await activate(owner, version.id);
 
-    const archived = await call(owner.accessToken, {
-      method: 'patch',
-      path: resumeVersionPath(version.id),
-      body: { isArchived: true },
-    });
+    const archived = await archive(owner, version.id);
     const reactivated = await activate(owner, version.id);
 
     expect([archived.status, resumeVersionSchema.parse(archived.body).isArchived]).toEqual([
@@ -346,12 +364,67 @@ describe('the resume versions of a user', () => {
       409,
       'Unarchive the version before making it active',
     ]);
+    expect(await activeVersionOf(owner)).toEqual({ activeResumeVersionId: null });
+  });
+
+  it('answers an archive and a DELETE of the active version queued behind the owner lock with 200 and 204, leaving no version and none active', async () => {
+    const owner = await signedUp();
+    const { version } = await uploadResumeVersion(testApp.app, owner);
+    await activate(owner, version.id);
+
+    const responses = await behindOwnerLock(owner, [
+      () => archive(owner, version.id),
+      () => remove(owner, version.id),
+    ]);
+
+    expect(responses.map(({ status }) => status)).toEqual([200, 204]);
+    expect(await versionIdsOf(owner)).toEqual([]);
+    expect(await activeVersionOf(owner)).toEqual({ activeResumeVersionId: null });
+  });
+
+  it('keeps the link of a relink queued before a DELETE of the same version and answers the DELETE with 409', async () => {
+    const owner = await signedUp();
+    const [first, second] = await twoVersions(owner);
+    await activate(owner, second.version.id);
+    const application = await newApplication(owner);
+
+    const responses = await behindOwnerLock(owner, [
+      () => relink(owner, { applicationId: application.id, resumeVersionId: first.version.id }),
+      () => remove(owner, first.version.id),
+    ]);
+
+    expect(responses.map(statusAndDetail)).toEqual([[204, undefined], LINKED_REFUSAL]);
+    expect(await linkOf(application.id)).toEqual({ resumeVersionId: first.version.id });
+  });
+
+  it('answers two POSTs of the same upload queued behind the owner lock with one 201 and one 409 and keeps one row', async () => {
+    const owner = await signedUp();
+    const ticket = await uploadedPdf(testApp.app, { ...owner, bytes: PDF_BYTES });
+    const post = () => postResumeVersion(testApp.app, { ...owner, ticket });
+
+    const responses = await behindOwnerLock(owner, [post, post]);
+
+    expect(responses.map(({ status }) => status).sort((left, right) => left - right)).toEqual([
+      201, 409,
+    ]);
+    expect(responses.map(statusAndDetail)).toContainEqual([
+      409,
+      'A version from this upload already exists',
+    ]);
+    expect(await versionIdsOf(owner)).toHaveLength(1);
+  });
+
+  it('answers 404 to a POST from the upload of a deleted version and keeps no pending file of it', async () => {
+    const owner = await signedUp();
+    const { ticket, version } = await uploadResumeVersion(testApp.app, owner);
+
+    const deleted = await remove(owner, version.id);
+    const reposted = await postResumeVersion(testApp.app, { ...owner, ticket });
+
+    expect([deleted.status, statusAndDetail(reposted)]).toEqual([204, [404, 'Upload not found']]);
     expect(
-      await testApp.prisma.userSettings.findUnique({
-        where: { userId: owner.userId },
-        select: { activeResumeVersionId: true },
-      }),
-    ).toEqual({ activeResumeVersionId: null });
+      await testApp.app.get(FileStorage).head(`pending/${storedKey(owner, ticket)}`),
+    ).toBeNull();
   });
 
   it('answers 422 at title to a title over 120 characters', async () => {
@@ -421,10 +494,7 @@ describe('the resume versions of a user', () => {
     });
 
     const listed = await call(owner.accessToken, { method: 'get', path: RESUME_VERSIONS_PATH });
-    const refused = await call(owner.accessToken, {
-      method: 'delete',
-      path: resumeVersionPath(second.version.id),
-    });
+    const refused = await remove(owner, second.version.id);
 
     const { items } = resumeVersionListResponseSchema.parse(listed.body);
     expect(items.map(({ number, applicationsCount }) => [number, applicationsCount])).toEqual([
