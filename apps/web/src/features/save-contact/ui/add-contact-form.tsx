@@ -8,8 +8,10 @@ import { useForm } from 'react-hook-form';
 
 import type { GuardedSave } from '@/shared/api';
 import { uk } from '@/shared/i18n';
+import { cn } from '@/shared/lib/cn';
 import { Button } from '@/shared/ui/button';
 import { FormServerError } from '@/shared/ui/form-server-error';
+import { TOUCH_HEIGHT } from '@/shared/ui/touch-height';
 
 import { EMPTY_CONTACT, newContactSchema, suggestionInputOf } from '../model/contact-form';
 import { useCreateContactMutation } from '../model/use-create-contact-mutation';
@@ -85,7 +87,12 @@ export function AddContactForm({ application, suggestions, actions }: AddContact
       >
         <FormServerError control={methods.control} />
         <ContactTextField methods={methods} name="name" />
-        <Button type="submit" variant="outline" loading={creation.isPending} className="self-start">
+        <Button
+          type="submit"
+          variant="outline"
+          loading={creation.isPending}
+          className={cn('self-start', TOUCH_HEIGHT)}
+        >
           {COPY.add}
         </Button>
       </form>

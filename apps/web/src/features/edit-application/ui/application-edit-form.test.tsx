@@ -1,6 +1,7 @@
 import { screen, waitFor } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
+import { TOUCH_HEIGHT } from '@/shared/ui/touch-height';
 import { errorReply, validationReply } from '@/test/api-handlers';
 import { doubleClickWhileHeld } from '@/test/double-click-while-held';
 import { descriptionOf } from '@/test/field-description';
@@ -208,6 +209,8 @@ describe('ApplicationEditForm', () => {
       expect(descriptionOf(position)).toBe(POSITION_ERROR);
     });
     expect(updates).toEqual([]);
+    expect(saveButton().classList).toContain(TOUCH_HEIGHT);
+    expect(screen.getByRole('button', { name: CANCEL }).classList).toContain(TOUCH_HEIGHT);
   });
 
   it('Редагувати from the menu focuses the position, and an unchanged save sends nothing', async () => {

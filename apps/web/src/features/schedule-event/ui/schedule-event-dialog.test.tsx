@@ -2,6 +2,7 @@ import { screen, waitFor } from '@testing-library/react';
 import { toast } from 'sonner';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { TOUCH_HEIGHT } from '@/shared/ui/touch-height';
 import {
   ANY_IDEMPOTENCY_KEY,
   errorReply,
@@ -235,5 +236,7 @@ describe('ScheduleEventDialog', () => {
       dialog.getByRole('spinbutton', { name: 'Тривалість' }).getAttribute('aria-invalid'),
     ).toBe('true');
     expect(onClose).not.toHaveBeenCalled();
+    expect(dialog.getByRole('button', { name: 'Скасувати' }).classList).toContain(TOUCH_HEIGHT);
+    expect(dialog.getByRole('button', { name: 'Запланувати' }).classList).toContain(TOUCH_HEIGHT);
   });
 });

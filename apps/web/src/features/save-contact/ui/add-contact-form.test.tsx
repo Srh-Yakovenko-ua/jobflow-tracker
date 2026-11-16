@@ -2,6 +2,7 @@ import type { Contact } from '@jobflow/shared';
 import { screen, waitFor } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
+import { TOUCH_HEIGHT } from '@/shared/ui/touch-height';
 import { validationReply } from '@/test/api-handlers';
 import { ACME_APPLICATION } from '@/test/application-fixtures';
 import { fixtureIdOf } from '@/test/board-fixtures';
@@ -151,5 +152,6 @@ describe('AddContactForm', () => {
       expect(descriptionOf(name)).toBe("Вкажи ім'я одним коротким рядком");
     });
     expect(sent.created).toEqual([]);
+    expect(screen.getByRole('button', { name: ADD }).classList).toContain(TOUCH_HEIGHT);
   });
 });

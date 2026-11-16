@@ -21,6 +21,7 @@ import {
   DialogFooter,
 } from '@/shared/ui/dialog';
 import { FormServerError } from '@/shared/ui/form-server-error';
+import { TOUCH_HEIGHT } from '@/shared/ui/touch-height';
 
 import { eventDaysOf } from '../lib/event-days';
 import {
@@ -100,9 +101,11 @@ function ScheduleForm({ application, plan, actions }: ScheduleFormProps) {
       <ScheduleFormFields form={{ methods, days }} />
       <DialogFooter className="justify-end">
         <DialogClose asChild>
-          <Button variant="outline">{COPY.cancel}</Button>
+          <Button variant="outline" className={TOUCH_HEIGHT}>
+            {COPY.cancel}
+          </Button>
         </DialogClose>
-        <Button type="submit" loading={mutation.isPending}>
+        <Button type="submit" loading={mutation.isPending} className={TOUCH_HEIGHT}>
           {COPY.save[plan.kind]}
         </Button>
       </DialogFooter>
