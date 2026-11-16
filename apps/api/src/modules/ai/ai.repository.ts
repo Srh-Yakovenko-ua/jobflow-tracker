@@ -11,6 +11,7 @@ import {
 import { PrismaService } from '../../prisma/prisma.service.js';
 import { AI_BUDGET } from './ai-budget.js';
 import { AI_QUEUE_ESTIMATE } from './ai-queue-estimate.js';
+import { resultChange, resultRow } from './ai-result-row.js';
 
 const CACHED_RESULT_SELECT = { id: true, output: true } satisfies Prisma.AiResultSelect;
 
@@ -63,26 +64,15 @@ export type SaveAiResult = AiResultFields & {
   output?: Prisma.InputJsonValue;
 };
 
-export type SaveAiFailure = AiResultFields;
+export type SaveAiFailure = AiResultFields & InTransaction;
+
+export type FailAiJobWithResult = { result: SaveAiFailure; job: FailAiJob };
 
 export type BudgetWindow = { dayStart: Date; monthStart: Date };
 
 export type BudgetUsage = { calls: number; tokens: number };
 
 export type QueueSample = { ahead: number; latencies: number[] };
-
-function resultRow(userId: string, { now, ...result }: SaveAiResult) {
-  return { userId, ...result, updatedAt: now };
-}
-
-function resultChange({ now, tokensIn, tokensOut, ...result }: SaveAiResult) {
-  return {
-    ...result,
-    updatedAt: now,
-    tokensIn: { increment: tokensIn },
-    tokensOut: { increment: tokensOut },
-  };
-}
 
 @Injectable()
 export class AiRepository {
@@ -115,12 +105,22 @@ export class AiRepository {
     return count;
   }
 
-  async failJob(userId: string, { id, ...failure }: FailAiJob): Promise<number> {
-    const { count } = await this.prisma.aiJob.updateMany({
+  async failJob(
+    userId: string,
+    { id, tx = this.prisma, ...failure }: FailAiJob & InTransaction,
+  ): Promise<number> {
+    const { count } = await tx.aiJob.updateMany({
       where: { id, userId, ...UNSETTLED_AI_JOB_WHERE },
       data: failedAiJobChange(failure),
     });
     return count;
+  }
+
+  failJobWithResult(userId: string, { result, job }: FailAiJobWithResult): Promise<number> {
+    return this.prisma.$transaction(async (tx) => {
+      await this.saveFailure(userId, { ...result, tx });
+      return this.failJob(userId, { ...job, tx });
+    });
   }
 
   findJob(userId: string, id: string): Promise<AiJobRow | null> {
@@ -148,15 +148,18 @@ export class AiRepository {
     return id;
   }
 
-  async saveFailure(userId: string, failure: SaveAiFailure): Promise<void> {
+  async saveFailure(
+    userId: string,
+    { tx = this.prisma, ...failure }: SaveAiFailure,
+  ): Promise<void> {
     const { kind, inputHash } = failure;
     const failed: SaveAiResult = { ...failure, status: 'failed' };
-    const { count } = await this.prisma.aiResult.updateMany({
+    const { count } = await tx.aiResult.updateMany({
       where: { userId, kind, inputHash, status: 'failed' },
       data: resultChange(failed),
     });
     if (count === 0) {
-      await this.prisma.aiResult.createMany({
+      await tx.aiResult.createMany({
         data: [resultRow(userId, failed)],
         skipDuplicates: true,
       });

@@ -1,5 +1,4 @@
 import {
-  AI_JOB_FAILURES,
   type AiCompleteOptions,
   aiCompleteRequestSchemas,
   type AiCompletion,
@@ -19,7 +18,7 @@ import { fetchFailureOf, refusalTypeOf } from '../../common/service-call-error.j
 import { withoutUndefined } from '../../common/without-undefined.js';
 import type { Env } from '../../config/env.js';
 import { JwtKeys, signServiceToken } from '../auth/index.js';
-import { AiServiceError } from './ai-service-error.js';
+import { AI_SERVICE_ERRORS, AiServiceError, type AiServiceErrorType } from './ai-service-error.js';
 
 export type AiCompleteCall = {
   kind: AiKind;
@@ -32,7 +31,7 @@ type AiServicePost = { path: string; body: unknown; requestId?: string | undefin
 
 type Checked = {
   value: unknown;
-  refusal: 'validation_error' | typeof AI_JOB_FAILURES.invalidOutput;
+  refusal: AiServiceErrorType;
 };
 
 function checked<Body>(schema: z.ZodType<Body>, { value, refusal }: Checked): Body {
@@ -44,12 +43,19 @@ function checked<Body>(schema: z.ZodType<Body>, { value, refusal }: Checked): Bo
 }
 
 function allowedBody<Body>(schema: z.ZodType<Body>, value: unknown): Body {
-  return checked(schema, { value, refusal: 'validation_error' });
+  return checked(schema, { value, refusal: AI_SERVICE_ERRORS.validation });
+}
+
+function unparsedBody(error: unknown): undefined {
+  if (error instanceof SyntaxError) {
+    return undefined;
+  }
+  throw error;
 }
 
 async function readBody(response: Response): Promise<unknown> {
   if (response.ok) {
-    return response.json();
+    return response.json().catch(unparsedBody);
   }
   throw new AiServiceError({ status: response.status, type: await refusalTypeOf(response) });
 }
@@ -77,14 +83,17 @@ export class AiClient {
     const schema: z.ZodType<AiCompletion<AiKind>> = aiCompletionSchemas[kind];
     return checked(schema, {
       value: completion,
-      refusal: AI_JOB_FAILURES.invalidOutput,
+      refusal: AI_SERVICE_ERRORS.invalidOutput,
     });
   }
 
   async embed(request: AiEmbedRequest, requestId?: string): Promise<AiEmbedding> {
     const body = allowedBody(aiEmbedRequestSchema, request);
     const embedding = await this.post({ path: '/v1/embed', body, requestId });
-    return checked(aiEmbeddingSchema, { value: embedding, refusal: AI_JOB_FAILURES.invalidOutput });
+    return checked(aiEmbeddingSchema, {
+      value: embedding,
+      refusal: AI_SERVICE_ERRORS.invalidOutput,
+    });
   }
 
   private async post({ path, body, requestId }: AiServicePost): Promise<unknown> {
@@ -108,7 +117,7 @@ export class AiClient {
       return await readBody(response);
     } catch (error) {
       throw fetchFailureOf(error, {
-        timeoutType: AI_JOB_FAILURES.timeout,
+        timeoutType: AI_SERVICE_ERRORS.timeout,
         ErrorClass: AiServiceError,
       });
     }

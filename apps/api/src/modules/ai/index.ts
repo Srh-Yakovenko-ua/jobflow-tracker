@@ -13,6 +13,7 @@ export type {
   CachedAiResult,
   CreateAiJob,
   FailAiJob,
+  FailAiJobWithResult,
   FinishAiJob,
   QueueSample,
   SaveAiFailure,

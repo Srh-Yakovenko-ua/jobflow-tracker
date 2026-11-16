@@ -1,11 +1,11 @@
 import { tz } from '@date-fns/tz';
-import { AI_JOB_FAILURES } from '@jobflow/shared';
 import { startOfDay, startOfMonth } from 'date-fns';
 
 import type { BudgetWindow } from './ai.repository.js';
+import { AI_SERVICE_ERRORS } from './ai-service-error.js';
 
 export const AI_BUDGET = {
-  countedFailures: [AI_JOB_FAILURES.invalidOutput, AI_JOB_FAILURES.timeout],
+  countedFailures: [AI_SERVICE_ERRORS.invalidOutput, AI_SERVICE_ERRORS.timeout],
 } as const;
 
 const IN_UTC = { in: tz('UTC') };

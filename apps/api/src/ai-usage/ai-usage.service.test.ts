@@ -31,7 +31,7 @@ describe('AiUsageService.report', () => {
     await expect(reportAt(SONNET_PRICES)).resolves.toEqual([
       'day\tkind\tstatus\tmodel\tcalls\ttokens_in\ttokens_out\tavg_latency_ms\tcost_usd',
       '2026-11-04\tvacancy_parse\tsucceeded\tfake\t2\t400\t100\t1500\t0.0027',
-      '2026-11-04\tvacancy_parse\tfailed\t\t1\t0\t0\t0\t0.0000',
+      '2026-11-04\tvacancy_parse\tfailed\tfake\t1\t0\t0\t0\t0.0000',
       '2026-11-05\tmatch\tsucceeded\tfake\t1\t50\t10\t500\t0.0003',
       '2026-11-05\tvacancy_parse\tsucceeded\tmeta/llama-3.3-70b-instruct\t1\t20\t5\t701\t0.0001',
       '',

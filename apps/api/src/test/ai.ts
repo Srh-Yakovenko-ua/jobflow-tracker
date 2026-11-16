@@ -36,6 +36,7 @@ import type {
   CachedAiResult,
   CreateAiJob,
   FailAiJob,
+  FailAiJobWithResult,
   FinishAiJob,
   QueueSample,
   SaveAiFailure,
@@ -81,6 +82,10 @@ export const NAMELESS_VACANCY_COMPLETION = buildVacancyCompletion({
     company: vacancyFieldOf(null, null),
     position: vacancyFieldOf(null, null),
   }),
+});
+
+export const NUL_VACANCY_COMPLETION = buildVacancyCompletion({
+  output: buildVacancyParseOutput({ company: vacancyFieldOf('Ac\u0000me', null) }),
 });
 
 export const PARSED_VACANCY_COLUMNS = {
@@ -201,7 +206,7 @@ export const AI_USAGE_ROWS: AiUsageRow[] = [
     day: '2026-11-04',
     kind: 'vacancy_parse',
     status: 'failed',
-    model: '',
+    model: 'fake',
     calls: 1,
     tokensIn: 0,
     tokensOut: 0,
@@ -345,6 +350,11 @@ export class FakeAiRepository {
         this.store(userId, { ...failure, status: 'failed' });
       }
     });
+  }
+
+  async failJobWithResult(userId: string, { result, job }: FailAiJobWithResult): Promise<number> {
+    await this.saveFailure(userId, result);
+    return this.failJob(userId, job);
   }
 
   budgetUsage(userId: string, window: BudgetWindow): Promise<BudgetUsage> {

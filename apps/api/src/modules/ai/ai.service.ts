@@ -1,50 +1,31 @@
-import {
-  AI_JOB_FAILURES,
-  AI_KIND_SCHEMAS,
-  AI_PROMPT_VERSIONS,
-  type AiKind,
-  type AiKindOutput,
-  type JobUpdated,
-} from '@jobflow/shared';
+import { AI_JOB_FAILURES, AI_KIND_SCHEMAS, AI_PROMPT_VERSIONS } from '@jobflow/shared';
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { UnrecoverableError } from 'bullmq';
 
 import { Clock } from '../../common/clock.js';
+import { errorMessageOf } from '../../common/error-message.js';
 import type { Env } from '../../config/env.js';
-import type { jobFields } from '../../queues/processed-job.js';
-import type { AiCompleteJob } from './ai.jobs.js';
 import { type AiJobFailure, AiRepository, type CreateAiJob } from './ai.repository.js';
 import { budgetWindow } from './ai-budget.js';
 import { AiClient } from './ai-client.js';
 import { FAILED_CALL, isFinal, OUTPUT_FAILURES } from './ai-failures.js';
 import { jobInputHash } from './ai-input-hash.js';
-import type { SettledAiJob } from './ai-job-router.js';
 import { jobUpdateOf } from './ai-job-update.js';
 import { AiPayloadError, privatePayloadPaths } from './ai-payload-guard.js';
 import { type AiQueuePosition, queueEstimate } from './ai-queue-estimate.js';
-import { AiServiceError } from './ai-service-error.js';
+import {
+  type AiAnswer,
+  type AiCompleteAttempt,
+  type AiFailureNotice,
+  type AiJobOfUser,
+  type AiOutcome,
+  type AiRun,
+  traceOf,
+} from './ai-run.js';
+import { AI_SERVICE_ERRORS, AiServiceError, untypedAiError } from './ai-service-error.js';
 
-export type AiCompleteAttempt = {
-  job: AiCompleteJob;
-  finalAttempt: boolean;
-  retried: boolean;
-  logFields: ReturnType<typeof jobFields>;
-  settled: (outcome: SettledAiJob) => Promise<void>;
-  progressed: (update: JobUpdated) => Promise<void>;
-};
-
-export type AiOutcome = { aiResultId: string; output: AiKindOutput<AiKind>; cached: boolean };
-
-export type AiJobOfUser = { userId: string; aiJobId: string };
-
-type AiRun = AiCompleteAttempt & { now: Date; inputHash: string };
-
-type AiAnswer = Pick<AiOutcome, 'aiResultId' | 'output'>;
-
-function traceOf({ job, logFields }: AiCompleteAttempt) {
-  return { requestId: job.requestId, ...logFields, aiJobId: job.aiJobId, kind: job.kind };
-}
+export type { AiCompleteAttempt, AiJobOfUser, AiOutcome } from './ai-run.js';
 
 @Injectable()
 export class AiService {
@@ -74,9 +55,16 @@ export class AiService {
       await this.skip(attempt);
       return null;
     }
-    await attempt.progressed(jobUpdateOf({ job: attempt.job, status: 'processing' }));
     const run = { ...attempt, now, inputHash: jobInputHash(attempt.job) };
-    return (attempt.job.fresh ? null : await this.fromCache(run)) ?? this.callWithinBudget(run);
+    try {
+      await attempt.progressed(jobUpdateOf({ job: attempt.job, status: 'processing' }));
+      return (
+        (attempt.job.fresh ? null : await this.fromCache(run)) ?? (await this.callWithinBudget(run))
+      );
+    } catch (error) {
+      await this.failLastAttempt(run);
+      throw error;
+    }
   }
 
   createJob(userId: string, job: CreateAiJob): Promise<string> {
@@ -176,13 +164,28 @@ export class AiService {
   private async fail(run: AiRun, errorType: string): Promise<void> {
     const { job, now } = run;
     const failed = await this.repository.failJob(job.userId, { id: job.aiJobId, errorType, now });
-    if (failed === 1) {
-      try {
-        await run.settled({ job, status: 'failed', errorType });
-      } finally {
-        await run.progressed(jobUpdateOf({ job, status: 'failed', errorType }));
-      }
+    await this.announceFailure(run, { failed, errorType });
+  }
+
+  private async announceFailure(run: AiRun, { failed, errorType }: AiFailureNotice): Promise<void> {
+    if (failed !== 1) {
+      return;
     }
+    const { job } = run;
+    try {
+      await run.settled({ job, status: 'failed', errorType });
+    } finally {
+      await run.progressed(jobUpdateOf({ job, status: 'failed', errorType }));
+    }
+  }
+
+  private async failLastAttempt(run: AiRun): Promise<void> {
+    if (!run.finalAttempt) {
+      return;
+    }
+    await this.fail(run, AI_SERVICE_ERRORS.internal).catch((error: unknown) => {
+      this.logger.warn({ ...traceOf(run), err: errorMessageOf(error) }, 'ai job not failed');
+    });
   }
 
   private guardPayload(run: AiRun): void {
@@ -198,28 +201,22 @@ export class AiService {
   }
 
   private async refuse(run: AiRun, error: unknown): Promise<never> {
-    if (!(error instanceof AiServiceError)) {
-      throw error;
-    }
-    const final = isFinal({ error, kind: run.job.kind });
+    const typed = error instanceof AiServiceError ? error : untypedAiError(error);
+    const final = isFinal({ error: typed, kind: run.job.kind });
     if (final || run.finalAttempt) {
-      await this.recordFailure(run, error.type);
+      await this.recordFailure(run, typed.type);
     }
-    throw final ? new UnrecoverableError(error.message) : error;
+    throw final ? new UnrecoverableError(typed.message) : typed;
   }
 
   private async recordFailure(run: AiRun, errorType: string): Promise<void> {
     const { job, inputHash, now } = run;
     const { userId, kind } = job;
     const promptVersion = AI_PROMPT_VERSIONS[kind];
-    await this.repository.saveFailure(userId, {
-      kind,
-      inputHash,
-      promptVersion,
-      error: errorType,
-      now,
-      ...FAILED_CALL,
+    const failed = await this.repository.failJobWithResult(userId, {
+      result: { kind, inputHash, promptVersion, error: errorType, now, ...FAILED_CALL },
+      job: { id: job.aiJobId, errorType, now },
     });
-    await this.fail(run, errorType);
+    await this.announceFailure(run, { failed, errorType });
   }
 }

@@ -438,6 +438,19 @@ describe('AiService.complete settling the job', () => {
     expect(repository.jobs.get(AI_JOB_ID)).toEqual(doneJob('ai-result-1'));
   });
 
+  it('fails the job with internal_error when the settle callback throws on the done path of the last attempt', async () => {
+    const { repository, service } = await serviceWithFakes();
+    const refused = new Error('connect ECONNREFUSED 127.0.0.1:5432');
+    const settled = ({ status }: SettledAiJob) =>
+      status === 'done' ? Promise.reject(refused) : Promise.resolve();
+
+    await expect(service.complete(attemptOf({ finalAttempt: true, settled }))).rejects.toBe(
+      refused,
+    );
+
+    expect(repository.jobs.get(AI_JOB_ID)).toEqual(failedJob('internal_error'));
+  });
+
   it('settles a failed job again on the retry after its settle callback threw, without a second call, and reports failed once', async () => {
     const { repository, ai, service } = await serviceWithFakes();
     const { seen, progressed } = progressOf(repository);
