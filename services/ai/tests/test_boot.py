@@ -12,7 +12,7 @@ from tests.factories import settings_for
 
 def test_reads_the_prompt_versions_exported_from_the_shared_package() -> None:
     assert load_prompt_versions() == {
-        "vacancy_parse": "v3",
+        "vacancy_parse": "v4",
         "resume_parse": "v1",
         "match": "v3",
         "followup": "v3",
@@ -29,7 +29,7 @@ def test_refuses_to_boot_when_a_prompt_version_differs_from_ai_prompt_versions(
 
     with pytest.raises(
         PromptVersionMismatchError,
-        match="vacancy_parse: AI_PROMPT_VERSIONS v3, prompt module v0",
+        match="vacancy_parse: AI_PROMPT_VERSIONS v4, prompt module v0",
     ):
         create_app(settings_for())
 
@@ -41,7 +41,7 @@ def test_refuses_to_boot_when_a_kind_has_no_prompt_module(
 
     with pytest.raises(
         PromptVersionMismatchError,
-        match="vacancy_parse: AI_PROMPT_VERSIONS v3, prompt module none",
+        match="vacancy_parse: AI_PROMPT_VERSIONS v4, prompt module none",
     ):
         create_app(settings_for())
 
@@ -53,6 +53,6 @@ def test_refuses_to_boot_when_a_prompt_module_has_no_shared_version(
 
     with pytest.raises(
         PromptVersionMismatchError,
-        match="horoscope: AI_PROMPT_VERSIONS none, prompt module v3",
+        match="horoscope: AI_PROMPT_VERSIONS none, prompt module v4",
     ):
         create_app(settings_for())

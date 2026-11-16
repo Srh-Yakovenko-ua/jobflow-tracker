@@ -40,7 +40,7 @@ describe('AI_PROMPT_VERSIONS', () => {
   it('pins one prompt version for exactly the AI kinds', () => {
     expect(Object.keys(AI_PROMPT_VERSIONS)).toEqual([...AI_KINDS]);
     expect(AI_PROMPT_VERSIONS).toEqual({
-      vacancy_parse: 'v3',
+      vacancy_parse: 'v4',
       resume_parse: 'v1',
       match: 'v3',
       followup: 'v3',

@@ -1,0 +1,7 @@
+{
+  "textMaxLength": 20000,
+  "evidenceMaxLength": 300,
+  "requirementMaxLength": 200,
+  "requirementsMax": 8,
+  "stackMax": 20
+}

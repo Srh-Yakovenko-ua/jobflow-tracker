@@ -10,8 +10,14 @@ import {
 } from './vacancy-parse.js';
 
 describe('vacancyParseInputSchema', () => {
-  it('keeps the vacancy text limit at 20 000 characters', () => {
-    expect(VACANCY_PARSE_LIMITS).toEqual({ textMaxLength: 20_000 });
+  it('keeps the vacancy text, quote, requirement and stack limits', () => {
+    expect(VACANCY_PARSE_LIMITS).toEqual({
+      textMaxLength: 20_000,
+      evidenceMaxLength: 300,
+      requirementMaxLength: 200,
+      requirementsMax: 8,
+      stackMax: 20,
+    });
   });
 
   it('keeps a vacancy text of exactly 20 000 characters byte for byte', () => {
@@ -56,6 +62,11 @@ describe('vacancyParseOutputSchema', () => {
 
   it('accepts a quote of exactly 300 characters and a stack of exactly 20 items', () => {
     const stack = vacancyFieldOf(itemsOf(20), 'в'.repeat(300));
+    expect(vacancyParseOutputSchema.parse(buildVacancyParseOutput({ stack })).stack).toEqual(stack);
+  });
+
+  it('accepts a stack item of exactly 50 characters', () => {
+    const stack = vacancyFieldOf(['в'.repeat(50)], 'React');
     expect(vacancyParseOutputSchema.parse(buildVacancyParseOutput({ stack })).stack).toEqual(stack);
   });
 
@@ -109,6 +120,31 @@ describe('vacancyParseOutputSchema', () => {
       label: 'an unknown work mode',
       patch: { workMode: vacancyFieldOf('onsite', 'onsite') },
       path: 'workMode.value',
+    },
+    {
+      label: 'a stack item of 51 characters',
+      patch: { stack: vacancyFieldOf(['в'.repeat(51)], 'React') },
+      path: 'stack.value.0',
+    },
+    {
+      label: 'an empty location',
+      patch: { location: vacancyFieldOf('', 'Kyiv') },
+      path: 'location.value',
+    },
+    {
+      label: 'a NUL character in the company',
+      patch: { company: vacancyFieldOf('Acme\u0000', 'Acme') },
+      path: 'company.value',
+    },
+    {
+      label: 'a NUL character in a stack item',
+      patch: { stack: vacancyFieldOf(['React\u0000'], 'React') },
+      path: 'stack.value.0',
+    },
+    {
+      label: 'a NUL character in a quote',
+      patch: { company: vacancyFieldOf('Acme', 'Acme\u0000') },
+      path: 'company.evidence',
     },
   ])('refuses $label', ({ patch, path }) => {
     const result = vacancyParseOutputSchema.safeParse({ ...buildVacancyParseOutput(), ...patch });

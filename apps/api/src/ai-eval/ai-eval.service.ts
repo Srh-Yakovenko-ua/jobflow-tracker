@@ -1,20 +1,9 @@
 import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 
-import {
-  type AiCompletion,
-  type AiKind,
-  cvHintsOutputSchema,
-  followupOutputSchema,
-  interviewPrepOutputSchema,
-  matchOutputSchema,
-  type ResumeParseOutput,
-  resumeParseOutputSchema,
-  vacancyParseOutputSchema,
-} from '@jobflow/shared';
+import type { AiCompletion, AiKind, ResumeParseOutput } from '@jobflow/shared';
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import type { z } from 'zod';
 
 import { pricePerMillionOf, type TokenCounts } from '../ai-usage/ai-cost.js';
 import { Clock } from '../common/clock.js';
@@ -43,9 +32,8 @@ import { type MatchCaseAnswer, matchReport } from './match-report.js';
 import { loadResumeCases, type ResumeEvalCase } from './resume-cases.js';
 import { type ResumeCaseAnswer, resumeReport } from './resume-score.js';
 import { loadVacancyCases, type VacancyEvalCase } from './vacancy-cases.js';
-import { type VacancyCaseAnswer, vacancyReport } from './vacancy-score.js';
-
-type CheckedKind<O> = { kind: AiKind; schema: z.ZodType<O> };
+import { vacancyReport } from './vacancy-score.js';
+import type { VacancyCaseAnswer } from './vacancy-verdicts.js';
 
 type Checked<C, O> = (C & { output: O }) | (C & { error: string });
 
@@ -84,7 +72,7 @@ export class AiEvalService {
     const drafts = await loadFollowupCases(casesDir);
     const cases = drafts.map(({ file, ...input }) => ({ file, input }));
     const answers = await this.answerAll(cases, (evalCase) =>
-      this.checkedAnswer(evalCase, { kind: 'followup', schema: followupOutputSchema }),
+      this.checkedAnswer(evalCase, 'followup'),
     );
     return Array.isArray(answers) ? followupReport(answers) : answers;
   }
@@ -92,7 +80,7 @@ export class AiEvalService {
   async cvHints(casesDir: string): Promise<EvalReport> {
     const cases = await loadCvHintsCases(casesDir);
     const answers = await this.answerAll(cases, (evalCase) =>
-      this.checkedAnswer(evalCase, { kind: 'cv_hints', schema: cvHintsOutputSchema }),
+      this.checkedAnswer(evalCase, 'cv_hints'),
     );
     return Array.isArray(answers) ? cvHintsReport(answers) : answers;
   }
@@ -100,7 +88,7 @@ export class AiEvalService {
   async interviewPrep(casesDir: string): Promise<EvalReport> {
     const cases = await loadInterviewPrepCases(casesDir);
     const answers = await this.answerAll(cases, (evalCase) =>
-      this.checkedAnswer(evalCase, { kind: 'interview_prep', schema: interviewPrepOutputSchema }),
+      this.checkedAnswer(evalCase, 'interview_prep'),
     );
     return Array.isArray(answers) ? interviewPrepReport(answers) : answers;
   }
@@ -113,10 +101,10 @@ export class AiEvalService {
     return Array.isArray(answers) ? resumeReport(answers) : answers;
   }
 
-  private async complete(
-    call: AiCompleteCall,
+  private async complete<Kind extends AiKind>(
+    call: AiCompleteCall<Kind>,
     attemptsLeft: number = DEFAULT_JOB_OPTIONS.attempts,
-  ): Promise<AiCompletion<AiKind>> {
+  ): Promise<AiCompletion<Kind>> {
     try {
       return await this.completeOnce(call);
     } catch (error) {
@@ -128,7 +116,7 @@ export class AiEvalService {
     }
   }
 
-  private async completeOnce(call: AiCompleteCall) {
+  private async completeOnce<Kind extends AiKind>(call: AiCompleteCall<Kind>) {
     const completion = await this.ai.complete(call);
     const { model, tokensIn, tokensOut, latencyMs } = completion;
     this.calls.push({ kind: call.kind, model, tokensIn, tokensOut, latencyMs });
@@ -161,7 +149,7 @@ export class AiEvalService {
     try {
       const input = AI_PAYLOAD_BUILDERS.vacancy_parse({ rawText: text });
       const { output } = await this.complete({ kind: 'vacancy_parse', input });
-      return { file, expected, output: vacancyParseOutputSchema.parse(output) };
+      return { file, expected, output };
     } catch (error) {
       return { file, expected, ...refusalOf(error) };
     }
@@ -174,20 +162,20 @@ export class AiEvalService {
   }: MatchEvalCase): Promise<MatchCaseAnswer | Stopped> {
     try {
       const { output } = await this.complete({ kind: 'match', input });
-      const breakdown = scoreMatch(matchOutputSchema.parse(output));
+      const breakdown = scoreMatch(output);
       return { file, manualRank: rank, score: breakdown?.score ?? null };
     } catch (error) {
       return { file, manualRank: rank, ...refusalOf(error) };
     }
   }
 
-  private async checkedAnswer<C extends { input: unknown }, O>(
+  private async checkedAnswer<C extends { input: unknown }, Kind extends AiKind>(
     evalCase: C,
-    { kind, schema }: CheckedKind<O>,
-  ): Promise<Checked<C, O> | Stopped> {
+    kind: Kind,
+  ): Promise<Checked<C, AiCompletion<Kind>['output']> | Stopped> {
     try {
       const { output } = await this.complete({ kind, input: evalCase.input });
-      return { ...evalCase, output: schema.parse(output) };
+      return { ...evalCase, output };
     } catch (error) {
       return { ...evalCase, ...refusalOf(error) };
     }
@@ -213,6 +201,6 @@ export class AiEvalService {
     const extraction = await this.documents.extract({ bytes, filename: document, mime });
     const input = AI_PAYLOAD_BUILDERS.resume_parse(extraction);
     const { output } = await this.complete({ kind: 'resume_parse', input });
-    return resumeParseOutputSchema.parse(output);
+    return output;
   }
 }

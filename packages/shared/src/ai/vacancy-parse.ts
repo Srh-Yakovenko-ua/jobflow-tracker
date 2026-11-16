@@ -1,10 +1,16 @@
 import { z } from 'zod';
 
-import { applicationSchema, STACK_MAX_ITEMS } from '../schemas/application.js';
-import { rawTextSchema } from '../schemas/text.js';
+import { applicationFieldsSchema, STACK_MAX_ITEMS } from '../schemas/application.js';
+import { rawTextSchema, withoutNul } from '../schemas/text.js';
 import { sourceSchema } from '../sources.js';
 
-export const VACANCY_PARSE_LIMITS = { textMaxLength: 20_000 } as const;
+export const VACANCY_PARSE_LIMITS = {
+  textMaxLength: 20_000,
+  evidenceMaxLength: 300,
+  requirementMaxLength: 200,
+  requirementsMax: 8,
+  stackMax: STACK_MAX_ITEMS,
+} as const;
 
 export const VACANCY_CONFIDENCES = ['exact', 'check', 'missing'] as const;
 export const VACANCY_CURRENCIES = ['USD', 'UAH', 'EUR'] as const;
@@ -30,18 +36,24 @@ export const vacancyParseInputSchema = z.object({
   text: rawTextSchema(VACANCY_PARSE_LIMITS.textMaxLength),
 });
 
+const quotedTextSchema = (maxLength: number) => z.string().min(1).max(maxLength).check(withoutNul);
+
+const applicationFields = applicationFieldsSchema.shape;
+
 export const vacancyValueSchemas = {
-  company: applicationSchema.shape.company.nullable(),
-  position: applicationSchema.shape.position.nullable(),
+  company: applicationFields.company.nullable(),
+  position: applicationFields.position.nullable(),
   seniority: senioritySchema.nullable(),
-  salaryMin: applicationSchema.shape.salaryMin,
-  salaryMax: applicationSchema.shape.salaryMax,
+  salaryMin: applicationFields.salaryMin,
+  salaryMax: applicationFields.salaryMax,
   currency: vacancyCurrencySchema.nullable(),
   salaryTax: salaryTaxSchema.nullable(),
-  location: applicationSchema.shape.location,
-  workMode: applicationSchema.shape.workMode,
-  stack: z.array(z.string().min(1)).max(STACK_MAX_ITEMS),
-  requirements: z.array(z.string().min(1).max(200)).max(8),
+  location: applicationFields.location,
+  workMode: applicationFields.workMode,
+  stack: applicationFields.stack,
+  requirements: z
+    .array(quotedTextSchema(VACANCY_PARSE_LIMITS.requirementMaxLength))
+    .max(VACANCY_PARSE_LIMITS.requirementsMax),
   englishLevel: englishLevelSchema.nullable(),
   sourceGuess: sourceSchema.nullable(),
 };
@@ -50,7 +62,7 @@ const vacancyField = <Value extends z.ZodType>(value: Value) =>
   z.object({
     value,
     confidence: vacancyConfidenceSchema,
-    evidence: z.string().min(1).max(300).nullable(),
+    evidence: quotedTextSchema(VACANCY_PARSE_LIMITS.evidenceMaxLength).nullable(),
   });
 
 export const vacancyParseOutputSchema = z.object({

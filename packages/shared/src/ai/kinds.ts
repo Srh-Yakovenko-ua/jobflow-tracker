@@ -15,7 +15,7 @@ export const aiKindSchema = z.enum(AI_KINDS);
 export type AiKind = z.infer<typeof aiKindSchema>;
 
 export const AI_PROMPT_VERSIONS = {
-  vacancy_parse: 'v3',
+  vacancy_parse: 'v4',
   resume_parse: 'v1',
   match: 'v3',
   followup: 'v3',

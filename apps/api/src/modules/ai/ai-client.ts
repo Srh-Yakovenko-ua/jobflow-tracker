@@ -20,12 +20,14 @@ import type { Env } from '../../config/env.js';
 import { JwtKeys, signServiceToken } from '../auth/index.js';
 import { AI_SERVICE_ERRORS, AiServiceError, type AiServiceErrorType } from './ai-service-error.js';
 
-export type AiCompleteCall = {
-  kind: AiKind;
+export type AiCompleteCall<Kind extends AiKind = AiKind> = {
+  kind: Kind;
   input: unknown;
   options?: AiCompleteOptions | undefined;
   requestId?: string | undefined;
 };
+
+const COMPLETION_SCHEMAS: { [Kind in AiKind]: z.ZodType<AiCompletion<Kind>> } = aiCompletionSchemas;
 
 type AiServicePost = { path: string; body: unknown; requestId?: string | undefined };
 
@@ -71,17 +73,16 @@ export class AiClient {
     this.baseUrl = config.get('AI_SERVICE_URL', { infer: true });
   }
 
-  async complete({
+  async complete<Kind extends AiKind>({
     kind,
     input,
     options,
     requestId,
-  }: AiCompleteCall): Promise<AiCompletion<AiKind>> {
+  }: AiCompleteCall<Kind>): Promise<AiCompletion<Kind>> {
     const requestSchema: z.ZodType = aiCompleteRequestSchemas[kind];
     const body = allowedBody(requestSchema, { ...options, input });
     const completion = await this.post({ path: `/v1/complete/${kind}`, body, requestId });
-    const schema: z.ZodType<AiCompletion<AiKind>> = aiCompletionSchemas[kind];
-    return checked(schema, {
+    return checked(COMPLETION_SCHEMAS[kind], {
       value: completion,
       refusal: AI_SERVICE_ERRORS.invalidOutput,
     });
