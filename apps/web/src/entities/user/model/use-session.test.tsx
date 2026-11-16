@@ -1,10 +1,11 @@
-import { act, waitFor } from '@testing-library/react';
+import { act, screen, waitFor } from '@testing-library/react';
 import { http, HttpResponse } from 'msw/http';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { setAccessToken } from '@/shared/api';
+import { uk } from '@/shared/i18n';
 import { SESSION_COOKIE } from '@/shared/lib/session-cookie';
-import { apiUrl, recordSentRequests, SESSION_TOKENS } from '@/test/api-handlers';
+import { apiUrl, errorReply, recordSentRequests, SESSION_TOKENS } from '@/test/api-handlers';
 import { fixtureIdOf } from '@/test/board-fixtures';
 import { replace } from '@/test/navigation';
 import { installPushBrowser, OLD_PUSH_KEY } from '@/test/push-browser';
@@ -108,6 +109,22 @@ describe('useSession logout', () => {
       });
     },
   );
+
+  it('keeps the recent applications and stays put when the logout answers 500', async () => {
+    localStorage.setItem(MY_RECENTS, STORED_RECENTS);
+    const result = await renderSignedIn();
+    server.use(
+      http.post(apiUrl('/auth/logout'), () => errorReply({ status: 500, type: 'internal_error' })),
+    );
+
+    act(() => {
+      result.current.logout();
+    });
+
+    await screen.findByText(uk.shell.logout.failed.title);
+    expect(localStorage.getItem(MY_RECENTS)).toBe(STORED_RECENTS);
+    expect(replace).not.toHaveBeenCalled();
+  });
 
   it('still lands on login when the storage refuses to forget, and logs it once', async () => {
     const warn = refuseStorage();

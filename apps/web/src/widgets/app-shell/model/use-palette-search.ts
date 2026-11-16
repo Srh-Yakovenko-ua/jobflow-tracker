@@ -3,7 +3,7 @@ import { swapLayout } from '@/shared/lib/keyboard-layout';
 
 export function usePaletteSearch(text: string): ApplicationSearch {
   const typed = useApplicationSearch(text);
-  const nothingFound = typed.isSuccess && !typed.isPlaceholderData && typed.data.items.length === 0;
-  const swapped = useApplicationSearch(nothingFound ? swapLayout(text) : '');
-  return nothingFound ? swapped : typed;
+  const typedEmpty = typed.isSuccess && typed.data.items.length === 0;
+  const swapped = useApplicationSearch(typedEmpty ? swapLayout(text) : '');
+  return typedEmpty ? swapped : typed;
 }
