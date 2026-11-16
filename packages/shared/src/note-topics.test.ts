@@ -1,6 +1,11 @@
 import { describe, expect, it } from 'vitest';
 
-import { NOTE_TOPIC_LABELS, NOTE_TOPICS, noteTopicSchema } from './note-topics.js';
+import {
+  NOTE_TOPIC_LABELS,
+  NOTE_TOPIC_REASONS,
+  NOTE_TOPICS,
+  noteTopicSchema,
+} from './note-topics.js';
 
 describe('NOTE_TOPICS', () => {
   it('keeps the AN-15 note topics in their order', () => {
@@ -28,6 +33,19 @@ describe('NOTE_TOPICS', () => {
       'Поведінкові питання',
     ]);
     expect(Object.keys(NOTE_TOPIC_LABELS)).toEqual([...NOTE_TOPICS]);
+  });
+
+  it('every note topic names the reason it explains', () => {
+    expect(NOTE_TOPIC_REASONS).toEqual({
+      algorithms: 'skills_gap',
+      dp: 'skills_gap',
+      system_design: 'skills_gap',
+      english: 'english_level',
+      take_home: 'skills_gap',
+      react_internals: 'skills_gap',
+      sql: 'skills_gap',
+      behavioural: 'skills_gap',
+    });
   });
 
   it('refuses a topic outside the list', () => {

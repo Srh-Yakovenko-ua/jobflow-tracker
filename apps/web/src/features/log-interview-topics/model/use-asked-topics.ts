@@ -71,7 +71,7 @@ export function useAskedTopics({ application, itemId, actions }: AskedTopicsInpu
   const key = useUserStorageKey('asked-topics');
   const answered = useStoredJson({ key, schema: answeredSchema, fallback: [] });
   const close = () => {
-    answered.store([...answered.value, itemId]);
+    answered.store((latest) => (latest.includes(itemId) ? latest : [...latest, itemId]));
     actions.onClosed();
   };
   const mutation = useSaveAskedTopics({ application, onSaved: close });

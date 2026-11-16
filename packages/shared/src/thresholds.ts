@@ -4,4 +4,5 @@ export const THRESHOLDS = {
   MIN_N_FORECAST: 15,
   WHAT_IF_CONVERSION: 0.6,
   MIN_N_NOTE_TOPIC: 3,
+  MIN_SHARE_NOTE_TOPIC: 0.5,
 } as const;

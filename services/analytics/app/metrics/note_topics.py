@@ -73,12 +73,23 @@ def note_topics(
 
 
 def topic_signal(
-    stages: tuple[StageTopics, ...], *, stage: str
+    stages: tuple[StageTopics, ...], *, stage: str, reason: str
 ) -> tuple[StageTopics, TopicShare] | None:
     found = next((item for item in stages if item.stage == stage), None)
-    if found is None or not found.topics:
+    if found is None:
         return None
-    strongest = max(found.topics, key=lambda topic: topic.mentions)
-    if strongest.mentions < load_domain_enums().thresholds.min_n_note_topic:
+    enums = load_domain_enums()
+    matching = {
+        topic.code for topic in enums.note_topics if topic.reason_code == reason
+    }
+    topics = [topic for topic in found.topics if topic.topic in matching]
+    if not topics:
+        return None
+    strongest = max(topics, key=lambda topic: topic.mentions)
+    thresholds = enums.thresholds
+    needed = max(
+        thresholds.min_n_note_topic, thresholds.min_share_note_topic * found.notes
+    )
+    if strongest.mentions < needed:
         return None
     return found, strongest

@@ -19,7 +19,7 @@ import {
 } from '@/test/render-application-page';
 import { OFFER_APPLICATION } from '@/test/search-fixtures';
 import { server } from '@/test/server';
-import { stageMoveOf, timelineItemOf } from '@/test/timeline-fixtures';
+import { GHOSTED_FROM_SCREENING_TIMELINE } from '@/test/timeline-fixtures';
 
 vi.mock('next/navigation', () => import('@/test/navigation'));
 vi.mock('next/link', () => import('@/test/link'));
@@ -34,17 +34,7 @@ const SETTLED_STAGES: readonly Stage[] = ['offer', 'rejected', 'ghosted', 'withd
 
 const GHOSTED_FROM_SCREENING: ApplicationPageSetup = {
   application: { ...ACME_APPLICATION, currentStage: 'ghosted' },
-  timeline: {
-    items: [
-      timelineItemOf({
-        serial: 402,
-        type: 'stage_changed',
-        occurredAt: '2026-10-20T09:00:00Z',
-        title: 'скринінг → ghosted',
-        meta: stageMoveOf({ fromStage: 'screening', toStage: 'ghosted', daysInPreviousStage: 30 }),
-      }),
-    ],
-  },
+  timeline: GHOSTED_FROM_SCREENING_TIMELINE,
 };
 
 const REVIVE = 'Компанія відповіла: повернути в скринінг';

@@ -42,15 +42,15 @@ def test_reads_the_reason_taxonomy_with_its_camel_case_keys() -> None:
 def test_reads_the_note_topics_with_their_ukrainian_labels_in_order() -> None:
     topics = load_domain_enums().note_topics
 
-    assert [(topic.code, topic.label_uk) for topic in topics] == [
-        ("algorithms", "Алгоритми"),
-        ("dp", "Динамічне програмування"),
-        ("system_design", "System design"),
-        ("english", "Англійська"),
-        ("take_home", "Тестове завдання"),
-        ("react_internals", "React internals"),
-        ("sql", "SQL"),
-        ("behavioural", "Поведінкові питання"),
+    assert [(topic.code, topic.label_uk, topic.reason_code) for topic in topics] == [
+        ("algorithms", "Алгоритми", "skills_gap"),
+        ("dp", "Динамічне програмування", "skills_gap"),
+        ("system_design", "System design", "skills_gap"),
+        ("english", "Англійська", "english_level"),
+        ("take_home", "Тестове завдання", "skills_gap"),
+        ("react_internals", "React internals", "skills_gap"),
+        ("sql", "SQL", "skills_gap"),
+        ("behavioural", "Поведінкові питання", "skills_gap"),
     ]
 
 
@@ -63,7 +63,8 @@ def test_reads_the_data_rule_thresholds_from_their_upper_case_keys() -> None:
         thresholds.min_n_forecast,
         thresholds.what_if_conversion,
         thresholds.min_n_note_topic,
-    ) == (5, 10, 15, 0.6, 3)
+        thresholds.min_share_note_topic,
+    ) == (5, 10, 15, 0.6, 3, 0.5)
 
 
 def test_reads_the_analytics_cache_key_templates_shared_with_the_worker() -> None:

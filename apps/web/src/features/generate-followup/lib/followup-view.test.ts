@@ -69,7 +69,7 @@ describe('followupViewOf', () => {
     });
   });
 
-  it('a row the bulk queue never sent opens the own text with the budget line', () => {
+  it('a per-minute 429 does not say the daily limit is spent', () => {
     const view = followupViewOf({
       response: NO_FOLLOWUP,
       manual: false,
@@ -77,7 +77,18 @@ describe('followupViewOf', () => {
       limited: true,
     });
 
-    expect(view).toMatchObject({ kind: 'ready', own: true, failure: { reason: 'budget' } });
+    expect(view).toEqual({ kind: 'failed', reason: 'rateLimited' });
+  });
+
+  it('a row the queue stopped on a 429 shows its draft with no failure once a retry brought one', () => {
+    const view = followupViewOf({
+      response: READY_FOLLOWUP,
+      manual: false,
+      refused: false,
+      limited: true,
+    });
+
+    expect(view).toMatchObject({ kind: 'ready', key: READY_KEY, own: false, failure: null });
   });
 
   it('a done draft carries no failure', () => {

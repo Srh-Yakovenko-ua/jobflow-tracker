@@ -157,6 +157,18 @@ export const DESIGN_TIMELINE = applicationTimelineResponseSchema.parse({
   ],
 });
 
+export const GHOSTED_FROM_SCREENING_TIMELINE: ApplicationTimelineResponse = {
+  items: [
+    timelineItemOf({
+      serial: 402,
+      type: 'stage_changed',
+      occurredAt: '2026-10-20T09:00:00Z',
+      title: 'скринінг → ghosted',
+      meta: stageMoveOf({ fromStage: 'screening', toStage: 'ghosted', daysInPreviousStage: 30 }),
+    }),
+  ],
+};
+
 export function timelineRoute({
   timeline = DESIGN_TIMELINE,
   reply = () => HttpResponse.json(timeline),

@@ -30,12 +30,61 @@ describe('redactMoney', () => {
       hidden: 'Просили приховано, дали менше',
     },
     { form: 'hryvnias', text: 'Вилка 120 000 грн на руки', hidden: 'Вилка приховано на руки' },
+    {
+      form: 'a comma thousands separator',
+      text: 'Нижче $4,000 на місяць',
+      hidden: 'Нижче приховано на місяць',
+    },
+    {
+      form: 'thousands written as тис.',
+      text: 'Просили 4 тис. грн на руки',
+      hidden: 'Просили приховано на руки',
+    },
+    {
+      form: 'thousands written as a k',
+      text: 'Офер на $4k прийшов',
+      hidden: 'Офер на приховано прийшов',
+    },
+    {
+      form: 'a euro sign before the amount',
+      text: 'Вилка €3 500 нетто',
+      hidden: 'Вилка приховано нетто',
+    },
+    { form: 'euro spelled out', text: 'Вилка 3 500 євро нетто', hidden: 'Вилка приховано нетто' },
+    {
+      form: 'EUR before the amount',
+      text: 'Вилка EUR 3.500 нетто',
+      hidden: 'Вилка приховано нетто',
+    },
+    {
+      form: 'a hryvnia sign after the amount',
+      text: 'Вилка 90 000₴ нетто',
+      hidden: 'Вилка приховано нетто',
+    },
+    {
+      form: 'hryvnias spelled out',
+      text: 'Вилка 90 тисяч гривень нетто',
+      hidden: 'Вилка приховано нетто',
+    },
+    { form: 'a range', text: 'Вилка $3,800–4,200 нетто', hidden: 'Вилка приховано нетто' },
   ])('hides $form', ({ text, hidden }) => {
     expect(redactMoney(text)).toBe(hidden);
   });
 
+  it('$4,000 and 4 тис. грн are hidden', () => {
+    expect(redactMoney('Від $4,000 до 4 тис. грн на місяць')).toBe(
+      'Від приховано до приховано на місяць',
+    );
+  });
+
   it('hides every amount in a text that holds several', () => {
     expect(redactMoney('Від $3 800 до 4 100 USD.')).toBe('Від приховано до приховано.');
+  });
+
+  it('starts an amount at a word boundary, so a number glued to a word stays', () => {
+    const text = 'Збірка v2 USD-рахунку та IPv4 грн-гаманця.';
+
+    expect(redactMoney(text)).toBe(text);
   });
 
   it('leaves a text with no money in it as it was, counts and percents included', () => {

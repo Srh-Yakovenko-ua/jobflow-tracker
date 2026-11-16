@@ -187,35 +187,43 @@
   "noteTopics": [
     {
       "code": "algorithms",
-      "labelUk": "Алгоритми"
+      "labelUk": "Алгоритми",
+      "reasonCode": "skills_gap"
     },
     {
       "code": "dp",
-      "labelUk": "Динамічне програмування"
+      "labelUk": "Динамічне програмування",
+      "reasonCode": "skills_gap"
     },
     {
       "code": "system_design",
-      "labelUk": "System design"
+      "labelUk": "System design",
+      "reasonCode": "skills_gap"
     },
     {
       "code": "english",
-      "labelUk": "Англійська"
+      "labelUk": "Англійська",
+      "reasonCode": "english_level"
     },
     {
       "code": "take_home",
-      "labelUk": "Тестове завдання"
+      "labelUk": "Тестове завдання",
+      "reasonCode": "skills_gap"
     },
     {
       "code": "react_internals",
-      "labelUk": "React internals"
+      "labelUk": "React internals",
+      "reasonCode": "skills_gap"
     },
     {
       "code": "sql",
-      "labelUk": "SQL"
+      "labelUk": "SQL",
+      "reasonCode": "skills_gap"
     },
     {
       "code": "behavioural",
-      "labelUk": "Поведінкові питання"
+      "labelUk": "Поведінкові питання",
+      "reasonCode": "skills_gap"
     }
   ],
   "thresholds": {
@@ -223,7 +231,8 @@
     "MIN_N_INSIGHT": 10,
     "MIN_N_FORECAST": 15,
     "WHAT_IF_CONVERSION": 0.6,
-    "MIN_N_NOTE_TOPIC": 3
+    "MIN_N_NOTE_TOPIC": 3,
+    "MIN_SHARE_NOTE_TOPIC": 0.5
   },
   "salary": {
     "perUsd": {

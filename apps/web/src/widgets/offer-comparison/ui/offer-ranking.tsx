@@ -8,7 +8,7 @@ import { uk } from '@/shared/i18n';
 import { cn } from '@/shared/lib/cn';
 import { Fade } from '@/shared/ui/fade';
 
-import { rankOffers, type ScoredOffer } from '../lib/offer-score';
+import { type ComparedOffer, rankOffers, type ScoredOffer } from '../lib/offer-score';
 import type { ComparisonMode } from '../model/comparison-mode';
 import type { OfferNotes } from '../model/comparison-store';
 import { type ComparisonStore, useComparisonStore } from '../model/use-comparison-store';
@@ -75,18 +75,25 @@ function RankedColumns({ ranked, store, readOnly }: RankedColumnsProps) {
 }
 
 export type OfferRankingProps = Readonly<{
-  offers: readonly ApplicationResponse[];
+  offers: readonly ComparedOffer[];
   mode: ComparisonMode;
 }>;
 
 export function OfferRanking({ offers, mode }: OfferRankingProps) {
   const store = useComparisonStore(offers.map((offer) => offer.id));
   const ranked = rankOffers({ offers, comparison: store.value });
-  const keptFocus = useKeptFocus(ranked.map(({ offer }) => offer.id).join());
+  const { containerRef, onFocus, onBlur } = useKeptFocus(
+    ranked.map(({ offer }) => offer.id).join(),
+  );
   if (!store.ready) return <ComparisonSkeleton />;
   const readOnly = mode === 'print';
   return (
-    <div className="flex min-w-0 flex-col gap-6" onFocus={keptFocus.onFocus}>
+    <div
+      ref={containerRef}
+      className="flex min-w-0 flex-col gap-6"
+      onFocus={onFocus}
+      onBlur={onBlur}
+    >
       {readOnly ? (
         <WeightSummary comparison={store.value} />
       ) : (

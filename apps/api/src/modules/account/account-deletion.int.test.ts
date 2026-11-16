@@ -1,5 +1,5 @@
 import { ConfigService } from '@nestjs/config';
-import { beforeAll, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 
 import type { AppConfig } from '../../config/app-config.js';
 import { Prisma } from '../../generated/prisma/client.js';
@@ -30,7 +30,11 @@ import {
 } from '../../test/auth.js';
 import { issueCaptureToken } from '../../test/capture.js';
 import { createNotes, createScheduledEvent, randomEmail } from '../../test/factories.js';
-import { DownFileStorage, FakeFileStorage } from '../../test/file-storage.js';
+import {
+  DownFileStorage,
+  ExportsPurgeDownFileStorage,
+  FakeFileStorage,
+} from '../../test/file-storage.js';
 import { callRoute, errorPathsOf, statusAndType } from '../../test/http.js';
 import { fillUserOwnedTables } from '../../test/owned-rows.js';
 import { expectRateLimited, randomClientIp } from '../../test/rate-limit.js';
@@ -97,6 +101,10 @@ describe('DELETE /me', () => {
   const testApp: TestApp = useTestApp(() =>
     appTestingModule().overrideProvider(FileStorage).useValue(storage),
   );
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
 
   const deleteAccount = (accessToken: string | undefined, password: string) =>
     callRoute(testApp.app, { method: 'delete', path: ME_PATH, accessToken, body: { password } });
@@ -231,6 +239,20 @@ describe('DELETE /me', () => {
     expect(statusAndType(response)).toEqual([503, 'not_ready']);
     const after = await ownedCounts(olena.userId, [olena.applicationId]);
     expect([after.users, after.outbox > 0, after.files.length]).toEqual([1, true, 2]);
+  });
+
+  it('a deletion whose export purge fails answers 204 and clears the cookie', async () => {
+    const olena = await signedUpWithEverything(OLENA);
+    const exportsDown = new ExportsPurgeDownFileStorage();
+    vi.spyOn(storage, 'deletePrefix').mockImplementation((prefix) =>
+      exportsDown.deletePrefix(prefix),
+    );
+
+    const response = await deleteAccount(olena.accessToken, OLENA.password);
+
+    expect(response.status).toBe(204);
+    expect(refreshCookieOf(response)).toMatchObject(clearedCookie('/api/v1/auth'));
+    expect(await testApp.prisma.user.count({ where: { id: olena.userId } })).toBe(0);
   });
 
   it('answers 401 without a token', async () => {

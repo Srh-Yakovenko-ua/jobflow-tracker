@@ -49,6 +49,7 @@ class RejectionReason(EnumsModel):
 class NoteTopic(EnumsModel):
     code: str
     label_uk: str
+    reason_code: str
 
 
 class Thresholds(EnumsModel):
@@ -57,6 +58,7 @@ class Thresholds(EnumsModel):
     min_n_forecast: int = Field(alias="MIN_N_FORECAST")
     what_if_conversion: float = Field(alias="WHAT_IF_CONVERSION")
     min_n_note_topic: int = Field(alias="MIN_N_NOTE_TOPIC")
+    min_share_note_topic: float = Field(alias="MIN_SHARE_NOTE_TOPIC")
 
 
 class SalaryRules(EnumsModel):

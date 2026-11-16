@@ -1,11 +1,17 @@
+import { Logger } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { unauthorized, validation } from '../../common/app-error.js';
 import { PrismaService } from '../../prisma/prisma.service.js';
 import { FileStorage } from '../../storage/file-storage.js';
+import { STORAGE_DOWN_DETAIL } from '../../storage/s3-outcomes.js';
 import { FAKE_TRANSACTION, FakePrisma } from '../../test/fake-prisma.js';
-import { DownFileStorage, FakeFileStorage } from '../../test/file-storage.js';
+import {
+  DownFileStorage,
+  ExportsPurgeDownFileStorage,
+  FakeFileStorage,
+} from '../../test/file-storage.js';
 import { BOHDAN_ID, OLENA_ID } from '../../test/service-fixtures.js';
 import { type AccountConfirmation, AuthService } from '../auth/index.js';
 import { AccountRepository, type InAccountTransaction } from './account.repository.js';
@@ -87,6 +93,10 @@ async function deletionWith(storageOf: (steps: unknown[][]) => FakeFileStorage) 
 }
 
 describe('AccountDeletionService.delete', () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
   it('confirms the password, removes the files under both prefixes, then deletes the outbox rows and the user in one transaction', async () => {
     const { service, steps, storage } = await deletionWith(
       (recorded) => new RecordingStorage(recorded),
@@ -130,6 +140,21 @@ describe('AccountDeletionService.delete', () => {
     expect([steps.map(([step]) => step), storage.keysUnder(`users/${OLENA_ID}/`)]).toEqual([
       ['confirmAccount'],
       OLENA_KEYS.slice(0, 2),
+    ]);
+  });
+
+  it('a deletion whose export purge fails after the commit resolves and logs', async () => {
+    const warn = vi.spyOn(Logger.prototype, 'warn').mockImplementation(() => undefined);
+    const { service, steps } = await deletionWith(() => new ExportsPurgeDownFileStorage());
+
+    await expect(service.delete(OLENA_ID, { password: PASSWORD })).resolves.toBeUndefined();
+
+    expect(steps.at(-1)).toEqual(['deleteUser', OLENA_ID, FAKE_TRANSACTION]);
+    expect(warn.mock.calls).toEqual([
+      [
+        { userId: OLENA_ID, err: STORAGE_DOWN_DETAIL },
+        'exports not purged after the account deletion',
+      ],
     ]);
   });
 

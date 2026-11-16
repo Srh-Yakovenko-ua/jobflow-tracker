@@ -89,7 +89,13 @@ function rowOf({ key, name, applications, median, low, high }: NamedRange): Char
 }
 
 export function salaryBarsOf(data: SalaryResponse): EvidenceView {
-  if (data.withSalary === 0) return { status: 'empty', content: COPY.empty };
+  if (data.withSalary === 0) {
+    const leftOut = notesOf({ ...data, median: null }).map(({ text }) => text);
+    return {
+      status: 'empty',
+      content: { ...COPY.empty, hint: [COPY.empty.hint, ...leftOut].join(' ') },
+    };
+  }
   return {
     status: 'plotted',
     chart: {

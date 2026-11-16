@@ -272,23 +272,55 @@ def test_two_noted_mentions_keep_the_reason_headline(
 def test_three_noted_mentions_name_the_topic_in_the_reason_headline(
     metrics: InsightMetrics,
 ) -> None:
-    said = dominant_reason(with_notes(metrics, ("англійська", "English", "англ", "")))
+    said = dominant_reason(with_notes(metrics, (*DESIGN_NOTES, "")))
 
     assert said == Insight(
         block="reasons",
-        title="На техінтерв'ю тебе валить англійська",
+        title="На техінтерв'ю тебе валять алгоритми",
         body="3 із 4 відмов на цьому етапі — «не вистачає скілів», "
-        "і в нотатках 3 із 4 згадують англійську.",
+        "і в нотатках 3 із 4 згадують live-coding.",
         severity="warning",
         evidence={
             "stage": "tech_interview",
             "code": "skills_gap",
             "count": 3,
             "of": 4,
-            "topic": "english",
+            "topic": "algorithms",
             "topicMentions": 3,
             "notes": 4,
         },
+    )
+
+
+def test_three_algorithm_notes_out_of_twenty_keep_the_reason_headline(
+    metrics: InsightMetrics,
+) -> None:
+    events = reasoned_frame(rejected_at(TECH_INTERVIEW, reason="skills_gap", count=20))
+    noted = note_topics(events, notes=design_notes((*DESIGN_NOTES, *["команда"] * 17)))
+    top = TopReason(stage="tech_interview", code="skills_gap", count=20, of=20)
+    leading = metrics.reasons.model_copy(update={"headline": top})
+
+    said = dominant_reason(replace(metrics, reasons=leading, note_topics=noted))
+
+    assert said is not None
+    assert (said.title, said.body) == (
+        "На техінтерв'ю тебе найчастіше валять: «не вистачає скілів»",
+        "20 із 20 відмов на цьому етапі — «не вистачає скілів».",
+    )
+
+
+def test_an_english_headline_over_algorithm_notes_keeps_the_reason_title(
+    metrics: InsightMetrics,
+) -> None:
+    top = TopReason(stage="tech_interview", code="english_level", count=3, of=4)
+    leading = metrics.reasons.model_copy(update={"headline": top})
+
+    said = dominant_reason(replace(with_notes(metrics, DESIGN_NOTES), reasons=leading))
+
+    assert said is not None
+    assert (said.title, said.body) == (
+        "На техінтерв'ю тебе найчастіше валять: «рівень англійської»",
+        "3 із 4 відмов на цьому етапі — «рівень англійської».",
     )
 
 

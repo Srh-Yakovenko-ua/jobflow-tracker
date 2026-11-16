@@ -4,6 +4,8 @@ import { applications, FORMS } from './analytics-forms';
 
 const TECH_INTERVIEW_FORMS = { other: "техінтерв'ю" } as const satisfies PluralForms;
 
+const sentenceOf = (line: string) => `${line.charAt(0).toLocaleUpperCase('uk')}${line.slice(1)}`;
+
 export type ShareStoryCounts = Readonly<{ sent: number; interviews: number; offers: number }>;
 
 export const shareCard = {
@@ -27,5 +29,5 @@ export const shareCard = {
   storyHidden: 'Воронка мого пошуку роботи',
   period: (weeks: number) => `за ${countedUk(weeks, FORMS.week)}`,
   kpi: { sent: 'відгуки', interviews: "техінтерв'ю", offers: 'офери' },
-  alt: (lines: readonly string[]) => `Картка пошуку роботи. ${lines.join('. ')}.`,
+  alt: (lines: readonly string[]) => `Картка пошуку роботи. ${lines.map(sentenceOf).join('. ')}.`,
 } as const;

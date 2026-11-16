@@ -45,7 +45,7 @@ export const ACCOUNT_OPENAPI_PATHS: RouteConfig[] = [
     tags: TAGS,
     summary: 'Delete my account and all of my data',
     description:
-      'Confirms the account with its password; an account signed up through Google or GitHub, which has no password, types its own email into the same field. Removes every file of the user from the file storage first, so a 503 leaves the account whole for a retry, then deletes the user with every row it owns and its outbox events in one transaction. Every refresh token goes with it, so a refresh answers 401; an access token stays valid until it expires and finds nothing.',
+      'Confirms the account with its password; an account signed up through Google or GitHub, which has no password, types its own email into the same field. Removes every file of the user from the file storage first, so a 503 leaves the account whole for a retry, then deletes the user with every row it owns and its outbox events in one transaction. The exports are purged again after the commit; a failure there is logged and still answers 204, since the account is gone. Every refresh token goes with it, so a refresh answers 401; an access token stays valid until it expires and finds nothing.',
     request: {
       body: {
         required: true,

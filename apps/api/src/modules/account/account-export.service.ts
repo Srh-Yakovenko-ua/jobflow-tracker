@@ -20,6 +20,7 @@ export class AccountExportService {
   async build({ userId, exportId, format, requestId }: ExportRequestedPayload): Promise<void> {
     const data = await this.repository.findExportData(userId);
     if (data === null) {
+      await this.storage.deletePrefix(exportsPrefix(userId));
       this.logger.log({ exportId, requestId }, 'export skipped: the account is gone');
       return;
     }

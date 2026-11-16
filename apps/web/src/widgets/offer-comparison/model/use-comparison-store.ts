@@ -34,7 +34,8 @@ export function useComparisonStore(offerIds: readonly OfferId[]): ComparisonStor
         const notes = next.offers[offerId];
         return notes === undefined ? [] : [[offerId, notes] as const];
       });
-      stored.store({ ...next, offers: Object.fromEntries(kept) });
+      const pruned = { ...next, offers: Object.fromEntries(kept) };
+      stored.store(() => pruned);
     },
   };
 }

@@ -95,6 +95,14 @@ export class FakeFileStorage implements FileStorage {
   }
 }
 
+export class ExportsPurgeDownFileStorage extends FakeFileStorage {
+  override deletePrefix(prefix: string): Promise<void> {
+    return prefix.endsWith('/exports/')
+      ? Promise.reject(storageDown(new Error('connect ECONNREFUSED')))
+      : super.deletePrefix(prefix);
+  }
+}
+
 export class DownFileStorage extends FakeFileStorage {
   override put(): Promise<void> {
     return Promise.reject(storageDown(new Error('connect ECONNREFUSED')));

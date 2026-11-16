@@ -8,7 +8,7 @@ import {
 } from '@jobflow/shared';
 import { Injectable } from '@nestjs/common';
 
-import { unauthorized } from '../../common/app-error.js';
+import { unauthorized, validation } from '../../common/app-error.js';
 import { Clock } from '../../common/clock.js';
 import { PrismaService } from '../../prisma/prisma.service.js';
 import {
@@ -34,8 +34,11 @@ function pauseChanges(
 ): SettingsChanges {
   if (pausedUntil === undefined) return {};
   if (pausedUntil === null) return { pausedUntil: null, pausedFrom: null };
+  if (pausedUntil < today) {
+    throw validation([{ path: 'pausedUntil', message: 'pausedUntil is before the local today' }]);
+  }
   const runningUntil = calendarDateOf(current.pausedUntil);
-  const starts = pausedUntil >= today && (runningUntil === null || runningUntil < today);
+  const starts = runningUntil === null || runningUntil < today;
   return {
     pausedUntil: dateColumnOf(pausedUntil),
     ...(starts && { pausedFrom: dateColumnOf(today) }),

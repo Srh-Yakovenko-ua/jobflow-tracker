@@ -1,4 +1,4 @@
-import type { ApplicationResponse, WorkMode } from '@jobflow/shared';
+import type { ApplicationListItem, ApplicationResponse, WorkMode } from '@jobflow/shared';
 
 import { usdNetPerMonthOf } from '@/entities/application';
 
@@ -12,13 +12,15 @@ import {
   type OfferNotes,
 } from '../model/comparison-store';
 
+export type ComparedOffer = ApplicationResponse & Pick<ApplicationListItem, 'aiStatus'>;
+
 export type RankInput = Readonly<{
-  offers: readonly ApplicationResponse[];
+  offers: readonly ComparedOffer[];
   comparison: Comparison;
 }>;
 
 export type ScoredOffer = Readonly<{
-  offer: ApplicationResponse;
+  offer: ComparedOffer;
   usdNet: number | null;
   score: number | null;
 }>;

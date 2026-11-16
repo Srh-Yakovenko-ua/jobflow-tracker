@@ -9,7 +9,7 @@ import {
 } from '../model/comparison-store';
 import { rankOffers } from './offer-score';
 
-const OFFERS = buildDesignOffers(4);
+const OFFERS = buildDesignOffers(4).map((offer) => ({ ...offer, aiStatus: null }));
 
 const [TRIDENT, NORTHWIND, LUMEN] = OFFERS;
 

@@ -54,7 +54,7 @@ export const SETTINGS_OPENAPI_PATHS: RouteConfig[] = [
     tags: TAGS,
     summary: 'Change some of the settings',
     description:
-      'Writes only the sent fields and records settings.changed with their names in the same transaction. activeResumeVersionId is not changed here. pausedFrom and suggestedWeeklyGoal are written by the server: a pausedUntil on or after the local today starts a pause on that day unless one is still running, null clears both.',
+      'Writes only the sent fields and records settings.changed with their names in the same transaction. activeResumeVersionId is not changed here. pausedFrom and suggestedWeeklyGoal are written by the server: a pausedUntil on or after the local today starts a pause on that day unless one is still running, null clears both. A pausedUntil before the local today answers 422 on pausedUntil and writes nothing.',
     request: {
       body: {
         required: true,

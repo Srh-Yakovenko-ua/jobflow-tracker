@@ -19,6 +19,7 @@ import type { AppConfig } from './config/app-config.js';
 import { httpMetrics } from './metrics/http-metrics.middleware.js';
 import { mountMetrics } from './metrics/metrics-endpoint.js';
 import { MetricsRegistry } from './metrics/metrics-registry.js';
+import { bearerBeforeBody, CredentialsService } from './modules/auth/index.js';
 import { mountApiDocs } from './openapi/api-docs.js';
 import { mountBullBoard } from './queues/bull-board.js';
 
@@ -38,7 +39,11 @@ export function configureApp(app: NestExpressApplication): NestExpressApplicatio
   app.enableCors(corsFor(config.get('WEB_ORIGIN', { infer: true })));
   app.use(rejectOutsidePrefix);
   app.use(BOOKMARKLET_PATH, json({ limit: CAPTURE_BOOKMARKLET_LIMITS.bodyMaxBytes }));
-  app.use(IMPORT_PATH, json({ limit: IMPORT_LIMITS.bodyMaxBytes }));
+  app.use(
+    IMPORT_PATH,
+    bearerBeforeBody(() => app.get(CredentialsService)),
+    json({ limit: IMPORT_LIMITS.bodyMaxBytes }),
+  );
   app.useBodyParser('json', { limit: '1mb' });
   app.setGlobalPrefix(API_PREFIX, {
     exclude: [{ path: JWKS_PATH, method: RequestMethod.GET }],
