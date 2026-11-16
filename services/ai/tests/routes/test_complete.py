@@ -94,7 +94,7 @@ async def test_returns_the_fixture_output_with_model_and_prompt_version() -> Non
     assert body == {
         "output": PARSED_VACANCY,
         "model": "fake",
-        "promptVersion": "v3",
+        "promptVersion": "v4",
         "tokensIn": 100,
         "tokensOut": 50,
     }

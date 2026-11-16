@@ -8,7 +8,7 @@ from pydantic import BaseModel, ConfigDict, Field, RootModel
 
 
 class Value(RootModel[str]):
-    root: Annotated[str, Field(min_length=1)]
+    root: Annotated[str, Field(max_length=200, min_length=1)]
 
 
 class Confidence(StrEnum):
@@ -39,7 +39,7 @@ class Position(BaseModel):
     evidence: Evidence | None
 
 
-class Value12(StrEnum):
+class Value13(StrEnum):
     intern = 'intern'
     junior = 'junior'
     middle = 'middle'
@@ -51,20 +51,20 @@ class Seniority(BaseModel):
     model_config = ConfigDict(
         populate_by_name=True,
     )
-    value: Value12 | None
+    value: Value13 | None
     confidence: Confidence
     evidence: Evidence | None
 
 
-class Value13(RootModel[int]):
-    root: Annotated[int, Field(ge=0, le=9007199254740991)]
+class Value14(RootModel[int]):
+    root: Annotated[int, Field(ge=0, le=2147483647)]
 
 
 class SalaryMin(BaseModel):
     model_config = ConfigDict(
         populate_by_name=True,
     )
-    value: Value13 | None
+    value: Value14 | None
     confidence: Confidence
     evidence: Evidence | None
 
@@ -73,12 +73,12 @@ class SalaryMax(BaseModel):
     model_config = ConfigDict(
         populate_by_name=True,
     )
-    value: Value13 | None
+    value: Value14 | None
     confidence: Confidence
     evidence: Evidence | None
 
 
-class Value15(StrEnum):
+class Value16(StrEnum):
     usd = 'USD'
     uah = 'UAH'
     eur = 'EUR'
@@ -88,12 +88,12 @@ class Currency(BaseModel):
     model_config = ConfigDict(
         populate_by_name=True,
     )
-    value: Value15 | None
+    value: Value16 | None
     confidence: Confidence
     evidence: Evidence | None
 
 
-class Value16(StrEnum):
+class Value17(StrEnum):
     net = 'net'
     gross = 'gross'
 
@@ -102,21 +102,25 @@ class SalaryTax(BaseModel):
     model_config = ConfigDict(
         populate_by_name=True,
     )
-    value: Value16 | None
+    value: Value17 | None
     confidence: Confidence
     evidence: Evidence | None
+
+
+class Value18(RootModel[str]):
+    root: Annotated[str, Field(max_length=200, min_length=1)]
 
 
 class Location(BaseModel):
     model_config = ConfigDict(
         populate_by_name=True,
     )
-    value: str | None
+    value: Value18 | None
     confidence: Confidence
     evidence: Evidence | None
 
 
-class Value17(StrEnum):
+class Value19(StrEnum):
     remote = 'remote'
     hybrid = 'hybrid'
     office = 'office'
@@ -126,13 +130,13 @@ class WorkMode(BaseModel):
     model_config = ConfigDict(
         populate_by_name=True,
     )
-    value: Value17 | None
+    value: Value19 | None
     confidence: Confidence
     evidence: Evidence | None
 
 
 class ValueItem(RootModel[str]):
-    root: Annotated[str, Field(min_length=1)]
+    root: Annotated[str, Field(max_length=50, min_length=1)]
 
 
 class Stack(BaseModel):
@@ -157,7 +161,7 @@ class Requirements(BaseModel):
     evidence: Evidence | None
 
 
-class Value18(StrEnum):
+class Value20(StrEnum):
     beginner = 'beginner'
     pre_intermediate = 'pre_intermediate'
     intermediate = 'intermediate'
@@ -169,12 +173,12 @@ class EnglishLevel(BaseModel):
     model_config = ConfigDict(
         populate_by_name=True,
     )
-    value: Value18 | None
+    value: Value20 | None
     confidence: Confidence
     evidence: Evidence | None
 
 
-class Value19(StrEnum):
+class Value21(StrEnum):
     djinni = 'djinni'
     dou = 'dou'
     robota = 'robota'
@@ -189,7 +193,7 @@ class SourceGuess(BaseModel):
     model_config = ConfigDict(
         populate_by_name=True,
     )
-    value: Value19 | None
+    value: Value21 | None
     confidence: Confidence
     evidence: Evidence | None
 

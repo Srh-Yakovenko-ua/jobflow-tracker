@@ -1,7 +1,10 @@
+import json
+from pathlib import Path
 from typing import Any
 
 import pytest
 
+from app import contracts
 from app.contracts.vacancy_parse_output import VacancyParseOutput
 from app.contracts.vacancy_parse_request import Input, VacancyParseRequest
 from app.prompts import vacancy_parse
@@ -79,12 +82,27 @@ def test_system_prompt_states_the_confidence_and_evidence_rules(rule: str) -> No
         "location: the city, region or country of the workplace as written, or missing.",
         "Work mode words go only into workMode",
         "'Remote', 'Fully remote', 'Удалённо', 'віддалено'",
-        "'Office in Lviv' gives location 'Lviv' and workMode office.",
+        "'Office in Odesa' gives location 'Odesa' and workMode office.",
         "A vacancy that names only a work mode gives location missing.",
     ],
 )
 def test_system_prompt_keeps_work_mode_out_of_location(rule: str) -> None:
     assert rule in vacancy_parse.SYSTEM
+
+
+def test_system_prompt_states_the_limits_read_from_vacancy_parse_limits() -> None:
+    limits = json.loads(
+        Path(contracts.__file__).with_name("vacancy_parse_limits.json").read_text()
+    )
+
+    assert limits == vacancy_parse.LIMITS
+    assert (limits["evidenceMaxLength"], limits["stackMax"]) == (300, 20)
+    assert (limits["requirementsMax"], limits["requirementMaxLength"]) == (8, 200)
+    assert "as written, at most 20." in vacancy_parse.SYSTEM
+    assert (
+        "requirements: at most 8 short items, each at most 200 characters"
+        in vacancy_parse.SYSTEM
+    )
 
 
 def test_fixture_output_passes_the_generated_output_model() -> None:
@@ -127,6 +145,32 @@ def test_checked_marks_a_field_check_without_a_real_quote_or_value(
     }
 
 
+@pytest.mark.parametrize(
+    ("name", "value", "evidence", "confidence"),
+    [
+        ("company", "Globex", "Acme", "check"),
+        ("company", "acme", "developer at Acme", "exact"),
+        ("location", "Lviv", "Fully remote", "check"),
+        ("stack", ["React", "Vue"], "React", "check"),
+        ("stack", ["react"], "Senior React developer", "exact"),
+        ("salaryMin", 4700, "4 700 – 5 900", "exact"),
+        ("salaryMin", 4800, "4 700 – 5 900", "check"),
+        ("salaryMax", 700, "4 700 – 5 900", "check"),
+        ("workMode", "remote", "Fully remote", "exact"),
+    ],
+)
+def test_checked_keeps_exact_only_when_the_quote_holds_the_value(
+    *, name: str, value: Any, evidence: str, confidence: str
+) -> None:
+    text = "Senior React developer at Acme. Fully remote, 4 700 – 5 900 USD."
+    field = {"value": value, "confidence": "exact", "evidence": evidence}
+
+    assert checked_fields(text, **{name: field})[name] == {
+        **field,
+        "confidence": confidence,
+    }
+
+
 def test_checked_keeps_an_exact_quote_that_differs_only_in_whitespace() -> None:
     text = "Senior React developer,\n\n  Acme,\tremote,  4000-5000\nUSD"
     salary = {"value": 4000, "confidence": "exact", "evidence": " 4000-5000  USD\n"}
@@ -164,7 +208,10 @@ def test_checked_turns_an_empty_field_without_a_quote_into_missing() -> None:
 
 @pytest.mark.parametrize(
     ("evidence", "confidence"),
-    [("Write to [email]", "exact"), ("Write to hr@acme.example", "check")],
+    [
+        ("Acme hires. Write to [email]", "exact"),
+        ("Acme hires. Write to hr@acme.example", "check"),
+    ],
 )
 def test_checked_compares_quotes_with_the_scrubbed_text_the_model_saw(
     evidence: str, confidence: str

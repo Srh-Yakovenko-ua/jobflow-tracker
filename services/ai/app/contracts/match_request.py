@@ -8,7 +8,7 @@ from pydantic import BaseModel, ConfigDict, Field, RootModel
 
 
 class StackItem(RootModel[str]):
-    root: Annotated[str, Field(min_length=1)]
+    root: Annotated[str, Field(max_length=50, min_length=1)]
 
 
 class Text(RootModel[str]):

@@ -4,7 +4,8 @@ import { describe, expect, it } from 'vitest';
 
 import { VACANCY_EXPECTED, VACANCY_TEXT } from '../test/ai.js';
 import type { VacancyExpected } from './vacancy-cases.js';
-import { type VacancyCaseAnswer, vacancyReport } from './vacancy-score.js';
+import { vacancyReport } from './vacancy-score.js';
+import type { VacancyCaseAnswer } from './vacancy-verdicts.js';
 
 type AnswerOf = {
   file?: string;
@@ -73,6 +74,7 @@ describe('vacancyReport', () => {
         'company\t0.9\t1.000\tPASS',
         'position\t0.9\t1.000\tPASS',
         'salary\t0.9\t1.000\tPASS',
+        'location\t0.8\t1.000\tPASS',
         'stackF1\t0.85\t1.000\tPASS',
         'PASS',
       ],
@@ -214,10 +216,11 @@ describe('vacancyReport', () => {
   it('passes at exactly 0.9 on company, position and salary and 0.85 on the stack F1', () => {
     const { lines, passed } = vacancyReport(runOf({ misread: 1, wrongStacks: 3 }));
 
-    expect(lines.slice(-5)).toEqual([
+    expect(lines.slice(-6)).toEqual([
       'company\t0.9\t0.900\tPASS',
       'position\t0.9\t0.900\tPASS',
       'salary\t0.9\t0.900\tPASS',
+      'location\t0.8\t1.000\tPASS',
       'stackF1\t0.85\t0.850\tPASS',
       'PASS',
     ]);
@@ -227,13 +230,26 @@ describe('vacancyReport', () => {
   it('fails each threshold missed and ends on FAIL', () => {
     const { lines, passed } = vacancyReport(runOf({ misread: 2, wrongStacks: 4 }));
 
-    expect(lines.slice(-5)).toEqual([
+    expect(lines.slice(-6)).toEqual([
       'company\t0.9\t0.800\tFAIL',
       'position\t0.9\t0.800\tFAIL',
       'salary\t0.9\t0.800\tFAIL',
+      'location\t0.8\t1.000\tPASS',
       'stackF1\t0.85\t0.800\tFAIL',
       'FAIL',
     ]);
+    expect(passed).toBe(false);
+  });
+
+  it('fails the location threshold when a work mode stands as the location in 4 of 15 cases', () => {
+    const answers = Array.from({ length: 15 }, (_, index) =>
+      answerOf(index < 4 ? { output: { location: vacancyFieldOf('Remote', 'Remote') } } : {}),
+    );
+
+    const { lines, passed } = vacancyReport(answers);
+
+    expect(lines).toContain('location\t0.8\t0.733\tFAIL');
+    expect(lines.at(-1)).toBe('FAIL');
     expect(passed).toBe(false);
   });
 });

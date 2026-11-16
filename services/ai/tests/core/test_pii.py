@@ -7,6 +7,7 @@ import pytest
 from app.core.pii import EMAIL, scrub
 
 VACANCY_CASES = Path(__file__).parents[4] / "apps/api/src/modules/ai/evals/vacancy"
+CASE_FILES = sorted(VACANCY_CASES.glob("*.json"))
 
 
 @pytest.mark.parametrize(
@@ -71,9 +72,11 @@ def test_matches_emails_in_linear_time_on_long_tokens(text: str) -> None:
     assert elapsed < 0.1
 
 
-@pytest.mark.parametrize(
-    "case_file", sorted(VACANCY_CASES.glob("*.json")), ids=lambda path: path.name
-)
+def test_finds_every_vacancy_eval_case() -> None:
+    assert len(CASE_FILES) == 15
+
+
+@pytest.mark.parametrize("case_file", CASE_FILES, ids=lambda path: path.name)
 def test_keeps_every_vacancy_eval_case_unchanged(case_file: Path) -> None:
     text = json.loads(case_file.read_text())["text"]
 

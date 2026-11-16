@@ -8,7 +8,7 @@ from pydantic import BaseModel, ConfigDict, Field, RootModel
 
 
 class Value(RootModel[str]):
-    root: Annotated[str, Field(min_length=1)]
+    root: Annotated[str, Field(max_length=200, min_length=1)]
 
 
 class Confidence(StrEnum):
@@ -57,7 +57,7 @@ class Seniority(BaseModel):
 
 
 class Value3(RootModel[int]):
-    root: Annotated[int, Field(ge=0, le=9007199254740991)]
+    root: Annotated[int, Field(ge=0, le=2147483647)]
 
 
 class SalaryMin(BaseModel):
@@ -107,16 +107,20 @@ class SalaryTax(BaseModel):
     evidence: Evidence | None
 
 
+class Value7(RootModel[str]):
+    root: Annotated[str, Field(max_length=200, min_length=1)]
+
+
 class Location(BaseModel):
     model_config = ConfigDict(
         populate_by_name=True,
     )
-    value: str | None
+    value: Value7 | None
     confidence: Confidence
     evidence: Evidence | None
 
 
-class Value7(StrEnum):
+class Value8(StrEnum):
     remote = 'remote'
     hybrid = 'hybrid'
     office = 'office'
@@ -126,13 +130,13 @@ class WorkMode(BaseModel):
     model_config = ConfigDict(
         populate_by_name=True,
     )
-    value: Value7 | None
+    value: Value8 | None
     confidence: Confidence
     evidence: Evidence | None
 
 
 class ValueItem(RootModel[str]):
-    root: Annotated[str, Field(min_length=1)]
+    root: Annotated[str, Field(max_length=50, min_length=1)]
 
 
 class Stack(BaseModel):
@@ -157,7 +161,7 @@ class Requirements(BaseModel):
     evidence: Evidence | None
 
 
-class Value8(StrEnum):
+class Value9(StrEnum):
     beginner = 'beginner'
     pre_intermediate = 'pre_intermediate'
     intermediate = 'intermediate'
@@ -169,12 +173,12 @@ class EnglishLevel(BaseModel):
     model_config = ConfigDict(
         populate_by_name=True,
     )
-    value: Value8 | None
+    value: Value9 | None
     confidence: Confidence
     evidence: Evidence | None
 
 
-class Value9(StrEnum):
+class Value10(StrEnum):
     djinni = 'djinni'
     dou = 'dou'
     robota = 'robota'
@@ -189,7 +193,7 @@ class SourceGuess(BaseModel):
     model_config = ConfigDict(
         populate_by_name=True,
     )
-    value: Value9 | None
+    value: Value10 | None
     confidence: Confidence
     evidence: Evidence | None
 
