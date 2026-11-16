@@ -17,6 +17,7 @@ import { memoryLog } from '../../test/memory-log.js';
 import { processedJob } from '../../test/processed-job.js';
 import { compileProcessorModule } from '../../test/processor.js';
 import { APPLICATION_ID, OLENA_ID } from '../../test/service-fixtures.js';
+import { NOW } from '../../test/time.js';
 import { LivePublisher } from '../live/index.js';
 import { AiProcessor } from './ai.processor.js';
 import { AiRepository } from './ai.repository.js';
@@ -141,22 +142,39 @@ describe('AiProcessor', () => {
     ]);
   });
 
+  const FAILED_OUTCOME = { job: VACANCY_JOB, status: 'failed', errorType: 'ai_invalid_output' };
+
   it.each([
     {
       routed: 'one failed outcome',
-      attempt: 'on a retry',
+      attempt: 'on a retry of an unsettled failure',
       attemptsMade: 1,
-      outcomes: [{ job: VACANCY_JOB, status: 'failed', errorType: 'ai_invalid_output' }],
+      settled: {},
+      outcomes: [FAILED_OUTCOME],
     },
-    { routed: 'nothing', attempt: 'on a first delivery', attemptsMade: 0, outcomes: [] },
+    {
+      routed: 'one failed outcome',
+      attempt: 'on a first delivery of an unsettled failure',
+      attemptsMade: 0,
+      settled: {},
+      outcomes: [FAILED_OUTCOME],
+    },
+    {
+      routed: 'nothing',
+      attempt: 'on a first delivery of a settled failure',
+      attemptsMade: 0,
+      settled: { failureSettledAt: NOW },
+      outcomes: [],
+    },
   ])(
     'routes $routed for a job found already failed $attempt, publishes nothing and calls nothing',
-    async ({ attemptsMade, outcomes }) => {
+    async ({ attemptsMade, settled, outcomes }) => {
       repository.jobs.set(AI_JOB_ID, {
         userId: OLENA_ID,
         status: 'failed',
         step: 2,
         errorType: 'ai_invalid_output',
+        ...settled,
       });
 
       await expect(processor.process({ ...aiJob(VACANCY_JOB), attemptsMade })).resolves.toBeNull();

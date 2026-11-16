@@ -7,7 +7,6 @@ import type { SettledAiJob } from './ai-job-router.js';
 export type AiCompleteAttempt = {
   job: AiCompleteJob;
   finalAttempt: boolean;
-  retried: boolean;
   logFields: ReturnType<typeof jobFields>;
   settled: (outcome: SettledAiJob) => Promise<void>;
   progressed: (update: JobUpdated) => Promise<void>;

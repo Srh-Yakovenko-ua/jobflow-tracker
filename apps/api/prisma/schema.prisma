@@ -501,24 +501,25 @@ model AiResult {
 }
 
 model AiJob {
-  id              String         @id @default(dbgenerated("uuidv7()")) @db.Uuid
-  userId          String         @map("user_id") @db.Uuid
-  kind            String
-  status          AiJobStatus    @default(queued)
-  step            Int            @default(0)
-  errorType       String?        @map("error_type")
-  aiResultId      String?        @map("ai_result_id") @db.Uuid
-  applicationId   String?        @map("application_id") @db.Uuid
-  resumeVersionId String?        @map("resume_version_id") @db.Uuid
-  periodMonth     String?        @map("period_month")
-  startedAt       DateTime?      @map("started_at") @db.Timestamptz
-  finishedAt      DateTime?      @map("finished_at") @db.Timestamptz
-  createdAt       DateTime       @default(now()) @map("created_at") @db.Timestamptz
-  updatedAt       DateTime       @default(now()) @updatedAt @map("updated_at") @db.Timestamptz
-  user            User           @relation(fields: [userId], references: [id], onDelete: Cascade)
-  aiResult        AiResult?      @relation(fields: [aiResultId, userId], references: [id, userId], onDelete: SetNull)
-  application     Application?   @relation(fields: [applicationId, userId], references: [id, userId], onDelete: Cascade)
-  resumeVersion   ResumeVersion? @relation(fields: [resumeVersionId, userId], references: [id, userId], onDelete: Cascade)
+  id               String         @id @default(dbgenerated("uuidv7()")) @db.Uuid
+  userId           String         @map("user_id") @db.Uuid
+  kind             String
+  status           AiJobStatus    @default(queued)
+  step             Int            @default(0)
+  errorType        String?        @map("error_type")
+  aiResultId       String?        @map("ai_result_id") @db.Uuid
+  applicationId    String?        @map("application_id") @db.Uuid
+  resumeVersionId  String?        @map("resume_version_id") @db.Uuid
+  periodMonth      String?        @map("period_month")
+  startedAt        DateTime?      @map("started_at") @db.Timestamptz
+  finishedAt       DateTime?      @map("finished_at") @db.Timestamptz
+  failureSettledAt DateTime?      @map("failure_settled_at") @db.Timestamptz
+  createdAt        DateTime       @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt        DateTime       @default(now()) @updatedAt @map("updated_at") @db.Timestamptz
+  user             User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  aiResult         AiResult?      @relation(fields: [aiResultId, userId], references: [id, userId], onDelete: SetNull)
+  application      Application?   @relation(fields: [applicationId, userId], references: [id, userId], onDelete: Cascade)
+  resumeVersion    ResumeVersion? @relation(fields: [resumeVersionId, userId], references: [id, userId], onDelete: Cascade)
 
   @@index([userId, createdAt])
   @@index([status, createdAt])

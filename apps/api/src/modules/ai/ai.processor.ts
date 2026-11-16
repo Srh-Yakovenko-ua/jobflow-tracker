@@ -38,7 +38,6 @@ export class AiProcessor extends WorkerHost {
     const outcome = await this.ai.complete({
       job: parsed,
       finalAttempt: job.attemptsMade + 1 >= DEFAULT_JOB_OPTIONS.attempts,
-      retried: job.attemptsMade > 0,
       logFields: jobFields(job),
       settled: (outcome) => this.router.route(outcome),
       progressed: (update) =>

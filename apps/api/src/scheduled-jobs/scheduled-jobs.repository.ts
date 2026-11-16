@@ -6,11 +6,14 @@ import {
   type FailedAiJobChange,
   failedAiJobChange,
   UNSETTLED_AI_JOB_WHERE,
+  UNSETTLED_FAILURE_WHERE,
 } from '../prisma/latest-ai-job.js';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { silenceWindowWhere } from '../prisma/silence-window-where.js';
 
 export type StaleAiJobs = FailedAiJobChange & { createdBefore: Date };
+
+export type AiFailureWindow = { finishedAfter: Date; finishedBefore: Date; take: number };
 
 export type LocalTimeCandidate = { userId: string; timezone: string };
 
@@ -67,9 +70,23 @@ export class ScheduledJobsRepository {
     return countOf(
       this.prisma.aiJob.updateMany({
         where: { ...UNSETTLED_AI_JOB_WHERE, createdAt: { lt: createdBefore } },
-        data: failedAiJobChange(failure),
+        data: failedAiJobChange({ ...failure, settledAt: failure.now }),
       }),
     );
+  }
+
+  async unsettledAiFailureIds({
+    finishedAfter,
+    finishedBefore,
+    take,
+  }: AiFailureWindow): Promise<string[]> {
+    const rows = await this.prisma.aiJob.findMany({
+      where: { ...UNSETTLED_FAILURE_WHERE, finishedAt: { gt: finishedAfter, lte: finishedBefore } },
+      orderBy: [{ finishedAt: 'asc' }, { id: 'asc' }],
+      take,
+      select: { id: true },
+    });
+    return rows.map(({ id }) => id);
   }
 
   monthlySummaryCandidates(): Promise<LocalTimeCandidate[]> {

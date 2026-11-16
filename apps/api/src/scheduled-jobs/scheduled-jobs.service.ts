@@ -1,8 +1,7 @@
-import { AI_JOB_FAILURES, userNow } from '@jobflow/shared';
+import { userNow } from '@jobflow/shared';
 import { Injectable, Logger } from '@nestjs/common';
-import { type Duration, milliseconds, subMilliseconds } from 'date-fns';
 
-import { Clock } from '../common/clock.js';
+import { before, Clock } from '../common/clock.js';
 import { IDEMPOTENCY_LIMITS } from '../common/idempotency/idempotency-request.js';
 import {
   InterviewAlertsService,
@@ -14,7 +13,6 @@ import { type LocalTimeCandidate, ScheduledJobsRepository } from './scheduled-jo
 export const SCHEDULED_JOB_LIMITS = {
   idempotencyKeyMinutes: IDEMPOTENCY_LIMITS.replayWindowMinutes,
   notificationRetentionDays: 90,
-  aiJobStaleMinutes: 60,
 } as const;
 
 const MONTHLY_SUMMARY_LOCAL_TIME = { day: 1, hour: 7 } as const;
@@ -45,8 +43,6 @@ type LocalTimePick = {
   label: string;
 };
 
-const before = (now: Date, duration: Duration) => subMilliseconds(now, milliseconds(duration));
-
 @Injectable()
 export class ScheduledJobsService {
   private readonly logger = new Logger(ScheduledJobsService.name);
@@ -71,17 +67,6 @@ export class ScheduledJobsService {
     };
     this.logger.log(counts, 'expired rows deleted');
     return counts;
-  }
-
-  async sweepStaleAiJobs(): Promise<number> {
-    const now = this.clock.now();
-    const count = await this.repository.failStaleAiJobs({
-      createdBefore: before(now, { minutes: SCHEDULED_JOB_LIMITS.aiJobStaleMinutes }),
-      now,
-      errorType: AI_JOB_FAILURES.abandoned,
-    });
-    this.logger.log({ count }, 'stale ai jobs failed');
-    return count;
   }
 
   async monthlySummaryUsers(): Promise<string[]> {

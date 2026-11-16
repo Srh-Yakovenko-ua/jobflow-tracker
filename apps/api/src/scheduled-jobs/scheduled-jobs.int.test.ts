@@ -6,12 +6,7 @@ import { Clock } from '../common/clock.js';
 import { InterviewAlertsService, SilenceScanService } from '../modules/reminders/index.js';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { useTestDatabase } from '../test/database.js';
-import {
-  createActiveVersionOwner,
-  createAiJob,
-  createSearch,
-  createUser,
-} from '../test/factories.js';
+import { createActiveVersionOwner, createSearch, createUser } from '../test/factories.js';
 import { memoryLog } from '../test/memory-log.js';
 import { compileProcessorModule } from '../test/processor.js';
 import { daysBefore, fixedClock, NOW } from '../test/time.js';
@@ -118,48 +113,6 @@ describe('ScheduledJobsService on the database', () => {
       { type: 'silence', createdAt: new Date(BOUNDARIES.notification) },
       { type: 'insight_unlocked', createdAt: atOffset(BOUNDARIES.notification, JUST_OUTSIDE) },
     ]);
-  });
-
-  it('fails queued and processing ai jobs older than 60 minutes keeping their step, and leaves a younger one and a done one', async () => {
-    const { prisma } = database;
-    const { id: userId } = await createUser(prisma);
-    const old = new Date('2026-10-22T07:59:00.000Z');
-    const young = new Date('2026-10-22T08:01:00.000Z');
-    const queued = await createAiJob(prisma, { userId, status: 'queued', createdAt: old });
-    const processing = await createAiJob(prisma, {
-      userId,
-      status: 'processing',
-      step: 2,
-      createdAt: old,
-    });
-    const waiting = await createAiJob(prisma, { userId, status: 'queued', createdAt: young });
-    const done = await createAiJob(prisma, { userId, status: 'done', step: 3, createdAt: old });
-
-    await expect(service.sweepStaleAiJobs()).resolves.toBe(2);
-
-    const rows = await prisma.aiJob.findMany({
-      select: { id: true, status: true, step: true, errorType: true, finishedAt: true },
-    });
-    const byId = new Map(rows.map(({ id, ...row }) => [id, row]));
-    expect(byId.get(queued)).toEqual({
-      status: 'failed',
-      step: 0,
-      errorType: 'ai_abandoned',
-      finishedAt: NOW,
-    });
-    expect(byId.get(processing)).toEqual({
-      status: 'failed',
-      step: 2,
-      errorType: 'ai_abandoned',
-      finishedAt: NOW,
-    });
-    expect(byId.get(waiting)).toEqual({
-      status: 'queued',
-      step: 0,
-      errorType: null,
-      finishedAt: null,
-    });
-    expect(byId.get(done)).toEqual({ status: 'done', step: 3, errorType: null, finishedAt: null });
   });
 
   it('lists only users with the monthly summary on as monthly summary candidates', async () => {

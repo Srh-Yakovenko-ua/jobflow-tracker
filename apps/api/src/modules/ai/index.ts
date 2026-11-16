@@ -1,4 +1,4 @@
-export { AI_JOBS, type AiCompleteJob, queueAiCompletion } from './ai.jobs.js';
+export { AI_JOBS, type AiCompleteJob, queueAiCompletion, retryAiCompletion } from './ai.jobs.js';
 export { AiModule, AiWorkerModule } from './ai.module.js';
 export { AI_OPENAPI_PATHS } from './ai.openapi.js';
 export { AiProcessor } from './ai.processor.js';
@@ -7,7 +7,6 @@ export type {
   AiJobFailure,
   AiJobRow,
   AiJobTarget,
-  AiResultKey,
   BudgetUsage,
   BudgetWindow,
   CachedAiResult,
@@ -16,8 +15,6 @@ export type {
   FailAiJobWithResult,
   FinishAiJob,
   QueueSample,
-  SaveAiFailure,
-  SaveAiResult,
 } from './ai.repository.js';
 export { AiRepository } from './ai.repository.js';
 export { type AiJobOfUser, type AiOutcome, AiService } from './ai.service.js';
@@ -31,6 +28,7 @@ export { AI_PAYLOAD_BUILDERS, type MatchInputSource, type VacancySource } from '
 export { type GuardedCompletion, queueOrFailAiJob } from './ai-queue.js';
 export type { AiQueuePosition } from './ai-queue-estimate.js';
 export { aiResultResponse, type StoredAiResultJob } from './ai-result-response.js';
+export type { AiResultKey, SaveAiFailure, SaveAiResult } from './ai-result-row.js';
 export { AiServiceError } from './ai-service-error.js';
 export type { CvHintsSource } from './cv-hints-payload.js';
 export type { FollowupSource } from './followup-payload.js';

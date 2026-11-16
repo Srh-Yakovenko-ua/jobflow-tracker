@@ -25,3 +25,16 @@ export function queueAiCompletion(queue: Queue, job: AiCompleteJob): Promise<Job
   const added = queue.add(AI_JOBS.complete, job, { jobId: job.aiJobId });
   return withinLimit(added, OUTBOX_LIMITS.publishTimeoutMs);
 }
+
+async function retriedFailedJob(queue: Queue, aiJobId: string): Promise<boolean> {
+  const job = await queue.getJob(aiJobId);
+  if (job === undefined) {
+    return false;
+  }
+  await job.retry('failed');
+  return true;
+}
+
+export function retryAiCompletion(queue: Queue, aiJobId: string): Promise<boolean> {
+  return withinLimit(retriedFailedJob(queue, aiJobId), OUTBOX_LIMITS.publishTimeoutMs);
+}
