@@ -8,6 +8,7 @@ export * from './interview-prep.js';
 export * from './jobs.js';
 export * from './match-validation.js';
 export * from './monthly-summary.js';
+export * from './offers.js';
 export * from './plans.js';
 export * from './rates.js';
 export * from './reasons.js';

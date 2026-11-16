@@ -1,9 +1,7 @@
 'use client';
 
-import { Printer } from 'lucide-react';
-
 import { uk } from '@/shared/i18n';
-import { Button } from '@/shared/ui/button';
+import { PrintButton } from '@/shared/ui/print-button';
 import { Switch } from '@/shared/ui/switch';
 
 const COPY = uk.analytics.report;
@@ -20,14 +18,7 @@ export function ReportToolbar({ salary }: ReportToolbarProps) {
         checked={salary.hidden}
         onCheckedChange={salary.onHiddenChange}
       />
-      <Button
-        icon={<Printer aria-hidden size={16} strokeWidth={1.9} />}
-        onClick={() => {
-          window.print();
-        }}
-      >
-        {COPY.print}
-      </Button>
+      <PrintButton label={COPY.print} />
     </div>
   );
 }

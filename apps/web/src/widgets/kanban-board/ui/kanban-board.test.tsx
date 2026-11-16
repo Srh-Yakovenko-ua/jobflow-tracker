@@ -261,6 +261,24 @@ describe('KanbanBoard', () => {
     expect(final.queryByText(BOARD.columnEmpty[0])).toBeNull();
   });
 
+  it.each([
+    { count: 2, href: '/offers/compare' },
+    { count: 1, href: null },
+  ])(
+    'an офер column of $count cards links to the offer comparison: $href',
+    async ({ count, href }) => {
+      renderBoard({
+        counts: { offer: count },
+        cards: cardsIn({ stage: 'offer', count, from: 501 }),
+      });
+      await screen.findByText(`Vacancy ${String(500 + count)}`);
+
+      const offer = within(columnNamed(`офер ${String(count)}`));
+      const link = offer.queryByRole('link', { name: 'Порівняти офери' });
+      expect(link?.getAttribute('href') ?? null).toBe(href);
+    },
+  );
+
   it('an empty фінал column on a busy board keeps only its own note', async () => {
     renderBoard(DESIGN_BOARD);
     await screen.findByText('Senior Frontend Engineer');

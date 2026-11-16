@@ -1,10 +1,11 @@
 import { DEMO_USER } from '@jobflow/shared';
 import { salaryFloorInsightsBody } from '@jobflow/shared/testing';
-import type { Locator, Page } from '@playwright/test';
+import type { Page } from '@playwright/test';
 
 import { uk } from '@/shared/i18n';
 
 import { routeDesignAnalytics } from './test/analytics-fixture';
+import { paperOf, printedA4Pages } from './test/print';
 import { expect, signedOutTest, signIn, test } from './test/session';
 
 const COPY = uk.analytics;
@@ -13,17 +14,11 @@ const REPORT = COPY.report;
 
 const PRINT_PIXEL_RATIO = 3;
 
-const PAGE_OBJECT = /\/Type\s*\/Page(?!s)/g;
-
 async function openReport(page: Page): Promise<void> {
   await page.goto('/analytics/report');
   await expect(page.getByRole('list', { name: COPY.blocks.sankey.funnel })).toBeVisible();
   await expect(page.getByRole('region', { name: COPY.blocks.forecast.eyebrow })).toBeVisible();
   await expect(page.locator('[aria-busy="true"]')).toHaveCount(0);
-}
-
-function paperOf(element: Locator): Promise<string> {
-  return element.evaluate((node) => getComputedStyle(node).getPropertyValue('--paper').trim());
 }
 
 function salaryInsightTitle(): string {
@@ -36,9 +31,8 @@ signedOutTest('the demo report prints on 3 or 4 A4 pages', async ({ page }) => {
   await signIn(page, DEMO_USER);
   await openReport(page);
 
-  const pdf = (await page.pdf({ format: 'A4' })).toString('latin1');
+  const pages = await printedA4Pages(page);
 
-  const pages = pdf.match(PAGE_OBJECT)?.length ?? 0;
   expect(pages).toBeGreaterThanOrEqual(3);
   expect(pages).toBeLessThanOrEqual(4);
 });

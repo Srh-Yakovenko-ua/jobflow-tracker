@@ -175,6 +175,7 @@ export const board = {
   moreBelow: (count: number) => `ще ${countedUk(count, CARDS_BELOW)}`,
   finalNote: ['Тут буває тісно рідко.', 'Це нормально.'],
   columnEmpty: ['тут поки порожньо'],
+  compareOffers: 'Порівняти офери',
   parsing: (count: number) => `AI розбирає ${countedUk(count, DRAFTS)}`,
   filters,
   emptySearch,
