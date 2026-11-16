@@ -1,5 +1,5 @@
 import type { PushMessage, PushSubscriptionInput } from '@jobflow/shared';
-import type { CDPSession, Page } from '@playwright/test';
+import type { CDPSession, Page, Worker } from '@playwright/test';
 
 import { uk } from '@/shared/i18n';
 import { SUBSCRIPTION_INPUT } from '@/test/push-fixtures';
@@ -52,8 +52,30 @@ function shownNotifications(page: Page) {
   });
 }
 
+const SHOWN_KEY = 'jobflow.e2e.shown-title';
+
+function recordShownTitle(key: string): void {
+  const registration: unknown = Reflect.get(globalThis, 'registration');
+  if (!(registration instanceof ServiceWorkerRegistration)) return;
+  const show = registration.showNotification.bind(registration);
+  registration.showNotification = async (title, options) => {
+    await show(title, options);
+    Reflect.set(globalThis, key, title);
+  };
+}
+
+function pushWorker(page: Page): Promise<Worker> {
+  const url = new URL('/sw.js', page.url()).href;
+  const isPushWorker = (worker: Worker) => worker.url() === url;
+  const context = page.context();
+  const running = context.serviceWorkers().find(isPushWorker);
+  return running ? Promise.resolve(running) : context.waitForEvent('serviceworker', isPushWorker);
+}
+
 async function deliverPush(page: Page, message: PushMessage): Promise<void> {
   const origin = new URL(page.url()).origin;
+  const worker = await pushWorker(page);
+  await worker.evaluate(recordShownTitle, SHOWN_KEY);
   const cdp = await page.context().newCDPSession(page);
   const registrationId = await registrationIdOf(cdp, origin);
   await cdp.send('ServiceWorker.deliverPushMessage', {
@@ -61,6 +83,9 @@ async function deliverPush(page: Page, message: PushMessage): Promise<void> {
     registrationId,
     data: JSON.stringify(message),
   });
+  await expect
+    .poll(() => worker.evaluate((key): unknown => Reflect.get(globalThis, key), SHOWN_KEY))
+    .toBe(message.title);
 }
 
 test('enabling from the offer asks once, subscribes this browser and shows a delivered push', async ({
