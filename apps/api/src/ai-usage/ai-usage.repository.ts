@@ -20,10 +20,10 @@ export class AiUsageRepository {
 
   dailyUsage(): Promise<AiUsageRow[]> {
     return this.prisma.$queryRaw<AiUsageRow[]>`
-      SELECT to_char(updated_at AT TIME ZONE 'UTC', 'YYYY-MM-DD') AS day, kind, status, model,
+      SELECT to_char(created_at AT TIME ZONE 'UTC', 'YYYY-MM-DD') AS day, kind, status, model,
         count(*)::int AS calls, sum(tokens_in)::int AS "tokensIn",
         sum(tokens_out)::int AS "tokensOut", round(avg(latency_ms))::int AS "avgLatencyMs"
-      FROM ai_results
+      FROM ai_calls
       GROUP BY 1, 2, 3, 4
       ORDER BY 1, 2, 3, 4`;
   }

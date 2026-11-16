@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { FAILED_AI_RESULT, storedAiJob, VACANCY_COMPLETION } from '../../test/ai.js';
 import { useTestDatabase } from '../../test/database.js';
 import {
+  createAiCall,
   createAiJob,
   createAiResult,
   createOwnedApplication,
@@ -13,6 +14,8 @@ import {
 import { daysBefore, minutesBefore, NOW } from '../../test/time.js';
 import { AiRepository, type SaveAiFailure, type SaveAiResult } from './ai.repository.js';
 import { budgetWindow } from './ai-budget.js';
+import type { AiCallRecord } from './ai-call-row.js';
+import { FAILED_CALL } from './ai-failures.js';
 import { AI_SERVICE_ERRORS } from './ai-service-error.js';
 
 type JobTarget = { userId: string; id: string; aiResultId: string };
@@ -100,8 +103,36 @@ const failedJob =
       finishedAt,
     });
 
-const othersFailedJob = async () =>
-  failedJob({ errorType: 'ai_timeout' })(await createOwnedApplication(database.prisma));
+const failedCall =
+  ({ errorType, finishedAt = EARLIER_TODAY }: FailedJob) =>
+  ({ userId }: OwnedApplication) =>
+    createAiCall(database.prisma, {
+      userId,
+      ...FAILED_CALL,
+      status: 'failed',
+      errorType,
+      createdAt: finishedAt,
+    });
+
+const succeededCall = ({ userId }: OwnedApplication) =>
+  createAiCall(database.prisma, { userId, createdAt: EARLIER_TODAY });
+
+const othersFailedCall = async () =>
+  failedCall({ errorType: 'ai_timeout' })(await createOwnedApplication(database.prisma));
+
+const SUCCEEDED_CALL: AiCallRecord = { ...SUCCESS, errorType: null };
+
+async function failedAttempt(userId: string, errorType: string): Promise<void> {
+  const repository = aiRepository();
+  await repository.recordCall(userId, { ...FAILURE, status: 'failed', errorType });
+  await repository.saveFailure(userId, { ...FAILURE, error: errorType });
+}
+
+async function succeededAttempt(userId: string, now = NOW): Promise<void> {
+  const repository = aiRepository();
+  await repository.recordCall(userId, { ...SUCCEEDED_CALL, now });
+  await repository.saveResult(userId, { ...SUCCESS, now });
+}
 
 const COUNTED_TYPES = ['ai_invalid_output', 'ai_timeout'];
 
@@ -119,29 +150,41 @@ const UNCOUNTED_TYPES = [
 ];
 
 const DAILY_CALLS = [
-  { verdict: 'counts', row: 'a succeeded result from today', seed: succeededResult, calls: 1 },
+  { verdict: 'counts', row: 'a succeeded call from today', seed: succeededCall, calls: 1 },
   ...COUNTED_TYPES.map((errorType) => ({
     verdict: 'counts',
-    row: `a job failed today with ${errorType}`,
-    seed: failedJob({ errorType }),
+    row: `a call failed today with ${errorType}`,
+    seed: failedCall({ errorType }),
     calls: 1,
   })),
   ...UNCOUNTED_TYPES.map((errorType) => ({
     verdict: 'leaves out',
-    row: `a job failed today with ${errorType}`,
-    seed: failedJob({ errorType }),
+    row: `a call failed today with ${errorType}`,
+    seed: failedCall({ errorType }),
     calls: 0,
   })),
   {
     verdict: 'leaves out',
-    row: 'a job failed yesterday with ai_timeout',
-    seed: failedJob({ errorType: 'ai_timeout', finishedAt: daysBefore(1) }),
+    row: 'a call failed yesterday with ai_timeout',
+    seed: failedCall({ errorType: 'ai_timeout', finishedAt: daysBefore(1) }),
     calls: 0,
   },
   {
     verdict: 'leaves out',
-    row: "another user's job failed today with ai_timeout",
-    seed: othersFailedJob,
+    row: "another user's call failed today with ai_timeout",
+    seed: othersFailedCall,
+    calls: 0,
+  },
+  {
+    verdict: 'leaves out',
+    row: 'a succeeded result from today with no recorded call',
+    seed: succeededResult,
+    calls: 0,
+  },
+  {
+    verdict: 'leaves out',
+    row: 'a job failed today with ai_timeout and no recorded call',
+    seed: failedJob({ errorType: 'ai_timeout' }),
     calls: 0,
   },
 ];
@@ -347,22 +390,58 @@ describe('AiRepository.budgetUsage on Postgres', () => {
     ).resolves.toHaveProperty('calls', calls);
   });
 
-  it('counts two timed-out retries of one text as two calls of the day', async () => {
-    const { userId, applicationId } = await createOwnedApplication(database.prisma);
-    const repository = aiRepository();
-    const timedOutRetry = async () => {
-      const id = await repository.createJob(userId, { kind: 'vacancy_parse', applicationId });
-      await repository.startJob(userId, { id, now: NOW });
-      await repository.saveFailure(userId, { ...FAILURE, error: 'ai_timeout' });
-      await repository.failJob(userId, { id, errorType: 'ai_timeout', now: NOW });
-    };
+  it('counts two timed-out calls of one text as two calls of the day', async () => {
+    const { id: userId } = await createUser(database.prisma);
 
-    await timedOutRetry();
-    await timedOutRetry();
+    await failedAttempt(userId, 'ai_timeout');
+    await failedAttempt(userId, 'ai_timeout');
 
-    await expect(repository.budgetUsage(userId, budgetWindow(NOW))).resolves.toHaveProperty(
+    await expect(aiRepository().budgetUsage(userId, budgetWindow(NOW))).resolves.toHaveProperty(
       'calls',
       2,
     );
+  });
+
+  it('counts an ai_invalid_output then a not_ready on the same input the same day as one call', async () => {
+    const { id: userId } = await createUser(database.prisma);
+
+    await failedAttempt(userId, 'ai_invalid_output');
+    await failedAttempt(userId, 'not_ready');
+
+    await expect(aiRepository().budgetUsage(userId, budgetWindow(NOW))).resolves.toHaveProperty(
+      'calls',
+      1,
+    );
+  });
+
+  it("adds only this call's tokens to this month for a result that succeeded last month and succeeds again", async () => {
+    const { id: userId } = await createUser(database.prisma);
+    await succeededAttempt(userId, new Date('2026-09-30T12:00:00.000Z'));
+
+    await succeededAttempt(userId);
+
+    await expect(aiRepository().budgetUsage(userId, budgetWindow(NOW))).resolves.toEqual({
+      calls: 1,
+      tokens: 160,
+    });
+  });
+
+  it("keeps the user's daily calls and the monthly token sum of all users after the user deletes all AI results", async () => {
+    const [olena, bohdan] = [await createUser(database.prisma), await createUser(database.prisma)];
+    await succeededAttempt(olena.id);
+    await succeededAttempt(bohdan.id);
+    await createAiCall(database.prisma, {
+      userId: bohdan.id,
+      tokensIn: 1000,
+      createdAt: new Date('2026-09-30T23:59:00.000Z'),
+    });
+    const repository = aiRepository();
+
+    const before = await repository.budgetUsage(olena.id, budgetWindow(NOW));
+    await repository.deleteResults(olena.id);
+    const after = await repository.budgetUsage(olena.id, budgetWindow(NOW));
+
+    expect(before).toEqual({ calls: 1, tokens: 320 });
+    expect(after).toEqual({ calls: 1, tokens: 320 });
   });
 });

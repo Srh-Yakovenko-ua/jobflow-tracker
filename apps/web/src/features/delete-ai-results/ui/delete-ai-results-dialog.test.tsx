@@ -33,6 +33,17 @@ describe('DeleteAiResultsDialog', () => {
     );
   });
 
+  it('the alert description says the usage count of AI calls stays and the limits keep counting it', async () => {
+    await openDialog();
+
+    expect(
+      screen.getByRole('alertdialog', {
+        description:
+          /Облік AI-викликів лишиться: скільки викликів було й скільки токенів вони витратили, без жодного тексту\. Денний ліміт і місячний бюджет і далі їх рахують\.$/,
+      }),
+    ).toBeDefined();
+  });
+
   it('Скасувати closes it and sends nothing', async () => {
     const { user, deletes } = await openDialog();
 

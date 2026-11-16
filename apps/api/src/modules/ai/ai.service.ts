@@ -1,4 +1,4 @@
-import { AI_JOB_FAILURES, AI_KIND_SCHEMAS, AI_PROMPT_VERSIONS } from '@jobflow/shared';
+import { AI_JOB_FAILURES, AI_KIND_SCHEMAS } from '@jobflow/shared';
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { UnrecoverableError } from 'bullmq';
@@ -9,7 +9,7 @@ import type { Env } from '../../config/env.js';
 import { type AiJobFailure, AiRepository, type CreateAiJob } from './ai.repository.js';
 import { budgetWindow } from './ai-budget.js';
 import { AiClient } from './ai-client.js';
-import { FAILED_CALL, isFinal, OUTPUT_FAILURES } from './ai-failures.js';
+import { failedCallOf, failedResultOf, isFinal, OUTPUT_FAILURES } from './ai-failures.js';
 import { jobInputHash } from './ai-input-hash.js';
 import { jobUpdateOf } from './ai-job-update.js';
 import { AiPayloadError, privatePayloadPaths } from './ai-payload-guard.js';
@@ -135,6 +135,7 @@ export class AiService {
       now,
       ...meta,
     } as const;
+    await this.repository.recordCall(userId, { ...succeeded, errorType: null });
     const aiResultId = await this.repository.saveResult(userId, succeeded);
     await this.finish(run, { aiResultId, output });
     this.logger.log({ ...traceOf(run), ...meta }, 'ai completion done');
@@ -202,6 +203,7 @@ export class AiService {
 
   private async refuse(run: AiRun, error: unknown): Promise<never> {
     const typed = error instanceof AiServiceError ? error : untypedAiError(error);
+    await this.repository.recordCall(run.job.userId, failedCallOf(run, typed.type));
     const final = isFinal({ error: typed, kind: run.job.kind });
     if (final || run.finalAttempt) {
       await this.recordFailure(run, typed.type);
@@ -210,11 +212,9 @@ export class AiService {
   }
 
   private async recordFailure(run: AiRun, errorType: string): Promise<void> {
-    const { job, inputHash, now } = run;
-    const { userId, kind } = job;
-    const promptVersion = AI_PROMPT_VERSIONS[kind];
-    const failed = await this.repository.failJobWithResult(userId, {
-      result: { kind, inputHash, promptVersion, error: errorType, now, ...FAILED_CALL },
+    const { job, now } = run;
+    const failed = await this.repository.failJobWithResult(job.userId, {
+      result: failedResultOf(run, errorType),
       job: { id: job.aiJobId, errorType, now },
     });
     await this.announceFailure(run, { failed, errorType });

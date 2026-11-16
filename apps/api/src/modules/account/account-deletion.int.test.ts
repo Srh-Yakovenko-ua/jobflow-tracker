@@ -44,6 +44,7 @@ import { NOW } from '../../test/time.js';
 const ME_PATH = '/api/v1/me';
 
 const USER_ID_TABLES = [
+  'ai_calls',
   'ai_jobs',
   'ai_results',
   'applications',

@@ -1,5 +1,10 @@
 import type { PrismaService } from '../prisma/prisma.service.js';
-import { createAiResult, createResumeVersion, type OwnedApplication } from './factories.js';
+import {
+  createAiCall,
+  createAiResult,
+  createResumeVersion,
+  type OwnedApplication,
+} from './factories.js';
 
 export const AI_RESULT = {
   kind: 'parse_vacancy',
@@ -39,6 +44,7 @@ export async function fillUserOwnedTables(
   const { userId, applicationId } = owned;
   const resumeVersionId = await attachResumeVersion(prisma, owned);
   const aiResultId = await createAiResult(prisma, { userId });
+  await createAiCall(prisma, { userId });
   await prisma.aiJob.create({
     data: { userId, kind: AI_RESULT.kind, aiResultId, applicationId, resumeVersionId },
   });

@@ -270,7 +270,7 @@ describe('AiService.complete', () => {
     expect(repository.jobs.get(AI_JOB_ID)).toEqual(failedJob('ai_invalid_output'));
   });
 
-  it('rethrows a 503 before the last attempt so BullMQ retries it, writing nothing', async () => {
+  it('rethrows a 503 before the last attempt so BullMQ retries it, writing no result', async () => {
     const { repository, ai, service } = await serviceWithFakes();
     ai.answer = () => Promise.reject(NOT_READY);
 
@@ -358,6 +358,80 @@ describe('AiService.complete', () => {
     expect(log.parsed()).toEqual([
       expect.objectContaining({ msg: 'ai job skipped', aiJobId: AI_JOB_ID, requestId: 'req-ai-7' }),
     ]);
+  });
+});
+
+describe('AiService.complete recording calls', () => {
+  const failedCallOf = (errorType: string) => ({
+    userId: OLENA_ID,
+    kind: 'vacancy_parse',
+    status: 'failed',
+    errorType,
+    model: '',
+    tokensIn: 0,
+    tokensOut: 0,
+    latencyMs: 0,
+    now: NOW,
+  });
+
+  it("records one succeeded call with the model, tokens and latency services/ai returned at the clock's now", async () => {
+    const { repository, service } = await serviceWithFakes();
+
+    await service.complete(attemptOf());
+
+    expect(repository.calls).toEqual([
+      expect.objectContaining({
+        userId: OLENA_ID,
+        kind: 'vacancy_parse',
+        status: 'succeeded',
+        errorType: null,
+        model: 'fake',
+        tokensIn: 120,
+        tokensOut: 40,
+        latencyMs: 15,
+        now: NOW,
+      }),
+    ]);
+  });
+
+  it.each([
+    { refusal: 'a 503 before the last attempt', error: NOT_READY, finalAttempt: false },
+    { refusal: 'a 503 on the last attempt', error: NOT_READY, finalAttempt: true },
+    {
+      refusal: 'a 422 at the first attempt',
+      error: new AiServiceError(INVALID_OUTPUT),
+      finalAttempt: false,
+    },
+  ])('records one failed call with no tokens for $refusal', async ({ error, finalAttempt }) => {
+    const { repository, ai, service } = await serviceWithFakes();
+    ai.answer = () => Promise.reject(error);
+
+    await expect(service.complete(attemptOf({ finalAttempt }))).rejects.toBeInstanceOf(Error);
+
+    expect(repository.calls).toEqual([failedCallOf(error.type)]);
+  });
+
+  it('records no call for a budget refusal or a refused private payload', async () => {
+    const overBudget = await serviceWithFakes();
+    overBudget.repository.usage = { calls: 3, tokens: 0 };
+    const privatePayload = await serviceWithFakes();
+
+    await expect(overBudget.service.complete(attemptOf())).rejects.toThrow('budget_exceeded');
+    await expect(privatePayload.service.complete(attemptOf({ job: NOTE_JOB }))).rejects.toThrow(
+      AiPayloadError,
+    );
+
+    expect([overBudget.repository.calls, privatePayload.repository.calls]).toEqual([[], []]);
+  });
+
+  it('records no call for the same vacancy served from the cache', async () => {
+    const { repository, service } = await serviceWithFakes();
+    await service.complete(attemptOf());
+    repository.queueJob(OLENA_ID, PASTED_AGAIN_JOB_ID);
+
+    await service.complete(attemptOf({ job: { ...VACANCY_JOB, aiJobId: PASTED_AGAIN_JOB_ID } }));
+
+    expect(repository.calls).toHaveLength(1);
   });
 });
 
