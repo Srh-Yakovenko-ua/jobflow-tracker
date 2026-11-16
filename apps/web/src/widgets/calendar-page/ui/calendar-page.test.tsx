@@ -1,4 +1,4 @@
-import { fireEvent, screen, waitFor } from '@testing-library/react';
+import { fireEvent, screen, waitFor, within } from '@testing-library/react';
 import type { HttpResponseResolver } from 'msw';
 import { HttpResponse } from 'msw/http';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -7,6 +7,7 @@ import { errorReply, OUTAGES } from '@/test/api-handlers';
 import { ACME_APPLICATION } from '@/test/application-fixtures';
 import { boardRoute, type ColumnCounts } from '@/test/board-fixtures';
 import {
+  AUTO_GHOST_ITEM,
   calendarRoute,
   type CalendarRouteOptions,
   FOLLOWUP_ITEM,
@@ -194,6 +195,18 @@ describe('CalendarPage', () => {
     const pill = (await screen.findByText(FOLLOWUP_ITEM.title)).parentElement;
 
     expect(pill?.querySelector('svg.lucide-alarm-clock')).not.toBeNull();
+  });
+
+  it('shows an auto ghost date with the ghost icon under its авто-ghost legend line and opens its vacancy card on a click', async () => {
+    const { user } = renderCalendar({ items: [AUTO_GHOST_ITEM], narrow: true });
+
+    const title = await screen.findByText('Ghost за 30 днів · Acme Technologies');
+
+    expect(title.parentElement?.querySelector('svg.lucide-ghost')).not.toBeNull();
+    const legend = screen.getByRole('list', { name: 'Позначення подій' });
+    expect(within(legend).getByText('авто-ghost')).toBeDefined();
+    await user.click(title);
+    expect(push).toHaveBeenCalledWith(`/applications/${ACME_APPLICATION.id}`);
   });
 
   it('opens the vacancy card of a clicked event', async () => {

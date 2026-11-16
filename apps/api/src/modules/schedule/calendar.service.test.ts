@@ -4,9 +4,13 @@ import { describe, expect, it } from 'vitest';
 import { APPLICATION_ID, REMINDER_ID, SCHEDULED_EVENT_ID } from '../../test/service-fixtures.js';
 import { type FollowupRow, RemindersService } from '../reminders/index.js';
 import { CalendarService } from './calendar.service.js';
-import { type CalendarEventRow, ScheduledEventsRepository } from './scheduled-events.repository.js';
+import {
+  type AutoGhostDateRow,
+  type CalendarEventRow,
+  ScheduledEventsRepository,
+} from './scheduled-events.repository.js';
 
-type CalendarFixture = { timeZone: string; followups: FollowupRow[] };
+type CalendarFixture = { timeZone: string; followups: FollowupRow[]; ghosts?: AutoGhostDateRow[] };
 
 const WEEK = { from: '2026-11-02T00:00:00+02:00', to: '2026-11-09T00:00:00+02:00' };
 
@@ -35,7 +39,24 @@ const followup = (fields: Partial<FollowupRow>): FollowupRow => ({
   ...fields,
 });
 
-async function calendarWith({ timeZone, followups }: CalendarFixture) {
+const autoGhost = (fields: Partial<AutoGhostDateRow>): AutoGhostDateRow => ({
+  applicationId: APPLICATION_ID,
+  ...ACME,
+  autoGhostDays: 30,
+  ghostAt: new Date('2026-11-08T21:30:00.000Z'),
+  ...fields,
+});
+
+const LOCAL_DATES = [
+  { timeZone: 'Europe/Kyiv', at: '2026-11-08T21:30:00.000Z', date: '2026-11-08' },
+  { timeZone: 'Europe/Kyiv', at: '2026-11-08T22:30:00.000Z', date: '2026-11-09' },
+  { timeZone: 'America/New_York', at: '2026-11-08T21:30:00.000Z', date: '2026-11-08' },
+  { timeZone: 'America/New_York', at: '2026-11-09T04:30:00.000Z', date: '2026-11-08' },
+  { timeZone: 'Europe/Kyiv', at: '2026-10-24T21:30:00.000Z', date: '2026-10-25' },
+  { timeZone: 'Europe/Kyiv', at: '2026-10-25T22:30:00.000Z', date: '2026-10-26' },
+];
+
+async function calendarWith({ timeZone, followups, ghosts = [] }: CalendarFixture) {
   const events = [{ ...TECH_INTERVIEW, id: LATER_EVENT_ID }, TECH_INTERVIEW];
   const moduleRef = await Test.createTestingModule({
     providers: [CalendarService, ScheduledEventsRepository, RemindersService],
@@ -43,6 +64,7 @@ async function calendarWith({ timeZone, followups }: CalendarFixture) {
     .overrideProvider(ScheduledEventsRepository)
     .useValue({
       findCalendarEvents: () => Promise.resolve(events),
+      findAutoGhostDates: () => Promise.resolve(ghosts),
       findTimeZone: () => Promise.resolve(timeZone),
     })
     .overrideProvider(RemindersService)
@@ -75,19 +97,12 @@ describe('CalendarService.items', () => {
     });
   });
 
-  it.each([
-    { timeZone: 'Europe/Kyiv', dueAt: '2026-11-08T21:30:00.000Z', date: '2026-11-08' },
-    { timeZone: 'Europe/Kyiv', dueAt: '2026-11-08T22:30:00.000Z', date: '2026-11-09' },
-    { timeZone: 'America/New_York', dueAt: '2026-11-08T21:30:00.000Z', date: '2026-11-08' },
-    { timeZone: 'America/New_York', dueAt: '2026-11-09T04:30:00.000Z', date: '2026-11-08' },
-    { timeZone: 'Europe/Kyiv', dueAt: '2026-10-24T21:30:00.000Z', date: '2026-10-25' },
-    { timeZone: 'Europe/Kyiv', dueAt: '2026-10-25T22:30:00.000Z', date: '2026-10-26' },
-  ])(
-    'dates a follow-up due $dueAt as $date for a $timeZone user',
-    async ({ timeZone, dueAt, date }) => {
+  it.each(LOCAL_DATES)(
+    'dates a follow-up due $at as $date for a $timeZone user',
+    async ({ timeZone, at, date }) => {
       const calendar = await calendarWith({
         timeZone,
-        followups: [followup({ dueAt: new Date(dueAt) })],
+        followups: [followup({ dueAt: new Date(at) })],
       });
 
       const { items } = await calendar.items(APPLICATION_ID, WEEK);
@@ -118,12 +133,57 @@ describe('CalendarService.items', () => {
     expect(items.find(({ allDay }) => allDay)?.start).toBe('2026-11-05');
   });
 
+  it.each([
+    { autoGhostDays: 30, title: 'Ghost за 30 днів · Acme' },
+    { autoGhostDays: 21, title: 'Ghost за 21 день · Acme' },
+    { autoGhostDays: 22, title: 'Ghost за 22 дні · Acme' },
+  ])(
+    'answers an auto ghost after $autoGhostDays days as an all-day item titled $title',
+    async ({ autoGhostDays, title }) => {
+      const ghosts = [autoGhost({ autoGhostDays })];
+      const calendar = await calendarWith({ timeZone: 'Europe/Kyiv', followups: [], ghosts });
+
+      const { items } = await calendar.items(APPLICATION_ID, WEEK);
+
+      expect(items.find(({ allDay }) => allDay)).toEqual({
+        id: APPLICATION_ID,
+        title,
+        start: '2026-11-08',
+        end: null,
+        allDay: true,
+        extendedProps: {
+          type: 'auto_ghost',
+          applicationId: APPLICATION_ID,
+          company: 'Acme',
+          stage: 'tech_interview',
+        },
+      });
+    },
+  );
+
+  it.each(LOCAL_DATES)(
+    'dates an auto ghost due $at as $date for a $timeZone user',
+    async ({ timeZone, at, date }) => {
+      const ghosts = [autoGhost({ ghostAt: new Date(at) })];
+      const calendar = await calendarWith({ timeZone, followups: [], ghosts });
+
+      const { items } = await calendar.items(APPLICATION_ID, WEEK);
+
+      expect(items.find(({ allDay }) => allDay)?.start).toBe(date);
+    },
+  );
+
   it('sorts the items by start, then id', async () => {
-    const calendar = await calendarWith({ timeZone: 'Europe/Kyiv', followups: [followup({})] });
+    const calendar = await calendarWith({
+      timeZone: 'Europe/Kyiv',
+      followups: [followup({})],
+      ghosts: [autoGhost({})],
+    });
 
     const { items } = await calendar.items(APPLICATION_ID, WEEK);
 
     expect(items.map(({ id, start }) => [start, id])).toEqual([
+      ['2026-11-08', APPLICATION_ID],
       ['2026-11-08', REMINDER_ID],
       ['2026-11-08T21:00:00.000Z', SCHEDULED_EVENT_ID],
       ['2026-11-08T21:00:00.000Z', LATER_EVENT_ID],

@@ -1,7 +1,12 @@
 import { describe, expect, it } from 'vitest';
 
 import { ACME_APPLICATION } from '@/test/application-fixtures';
-import { droppedAt, FOLLOWUP_ITEM, scheduledItemOf } from '@/test/calendar-fixtures';
+import {
+  AUTO_GHOST_ITEM,
+  droppedAt,
+  FOLLOWUP_ITEM,
+  scheduledItemOf,
+} from '@/test/calendar-fixtures';
 
 import { rescheduleOf } from './reschedule';
 
@@ -32,8 +37,11 @@ describe('rescheduleOf', () => {
     expect(rescheduleOf(dropped)).toBeNull();
   });
 
-  it('has nothing to send for a follow-up', () => {
-    const dropped = droppedAt({ item: FOLLOWUP_ITEM, start: '2026-11-05T00:00:00+02:00' });
+  it.each([
+    { name: 'a follow-up', item: FOLLOWUP_ITEM },
+    { name: 'an auto ghost date', item: AUTO_GHOST_ITEM },
+  ])('has nothing to send for $name', ({ item }) => {
+    const dropped = droppedAt({ item, start: '2026-11-05T00:00:00+02:00' });
 
     expect(rescheduleOf(dropped)).toBeNull();
   });

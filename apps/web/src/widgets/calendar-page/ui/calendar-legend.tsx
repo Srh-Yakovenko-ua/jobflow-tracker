@@ -1,4 +1,4 @@
-import { AlarmClock, type LucideIcon } from 'lucide-react';
+import { AlarmClock, Ghost, type LucideIcon } from 'lucide-react';
 
 import { SCHEDULED_EVENT_ICON } from '@/entities/application';
 import { uk } from '@/shared/i18n';
@@ -22,6 +22,7 @@ const LEGEND: readonly LegendEntry[] = [
   { id: 'interview', look: NEUTRAL_LOOK, Icon: SCHEDULED_EVENT_ICON.tech_interview },
   { id: 'call', look: NEUTRAL_LOOK, Icon: SCHEDULED_EVENT_ICON.screening_call },
   { id: 'followup', look: FOLLOWUP_LOOK, Icon: AlarmClock },
+  { id: 'autoGhost', look: EVENT_LOOK.ghosted, Icon: Ghost },
   { id: 'offer', look: EVENT_LOOK.offer },
   { id: 'archive', look: EVENT_LOOK.ghosted },
 ];

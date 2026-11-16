@@ -150,6 +150,17 @@ const CALENDAR_ITEMS: { label: string; item: CalendarItem }[] = [
       extendedProps: { type: 'followup', ...CALENDAR_APPLICATION, reminderStatus: 'pending' },
     },
   },
+  {
+    label: 'an all-day auto ghost date',
+    item: {
+      id: CALENDAR_APPLICATION.applicationId,
+      title: 'Ghost за 30 днів · Монобанк',
+      start: '2026-11-21',
+      end: null,
+      allDay: true,
+      extendedProps: { type: 'auto_ghost', ...CALENDAR_APPLICATION },
+    },
+  },
 ];
 
 describe('calendarItemSchema', () => {
@@ -165,5 +176,13 @@ describe('calendarItemSchema', () => {
     expect(issuePathsOf(calendarItemSchema.safeParse(followup))).toEqual([
       'extendedProps.reminderStatus',
     ]);
+  });
+
+  it('refuses an all-day item whose type is not a calendar item type', () => {
+    const ghosted = {
+      ...CALENDAR_ITEMS[2]?.item,
+      extendedProps: { type: 'auto_ghosted', ...CALENDAR_APPLICATION },
+    };
+    expect(issuePathsOf(calendarItemSchema.safeParse(ghosted))).toEqual(['extendedProps.type']);
   });
 });

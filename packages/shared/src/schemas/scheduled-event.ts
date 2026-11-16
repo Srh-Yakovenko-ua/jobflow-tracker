@@ -99,6 +99,7 @@ export const calendarItemSchema = z.object({
       type: z.literal('followup'),
       reminderStatus: reminderStatusSchema,
     }),
+    calendarApplicationSchema.extend({ type: z.literal('auto_ghost') }),
   ]),
 });
 
