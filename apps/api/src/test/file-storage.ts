@@ -1,6 +1,9 @@
+import { setTimeout as delay } from 'node:timers/promises';
+
 import { RESUME_UPLOAD_LIMITS } from '@jobflow/shared';
 import { addMinutes, addSeconds } from 'date-fns';
 
+import { DEPENDENCY_LIMITS } from '../common/probe.js';
 import type {
   CopyRequest,
   DownloadUrlRequest,
@@ -57,10 +60,10 @@ export class FakeFileStorage implements FileStorage {
     );
   }
 
-  readStart({ key, bytes, ifMatch }: ObjectStart): Promise<Uint8Array> {
+  readStart({ key, bytes, ifMatch }: ObjectStart): Promise<Uint8Array | null> {
     const object = this.objects.get(key);
     const unchanged = ifMatch === undefined || this.objects.etags.get(key) === ifMatch;
-    return Promise.resolve(object && unchanged ? object.bytes.slice(0, bytes) : new Uint8Array());
+    return Promise.resolve(object && unchanged ? object.bytes.slice(0, bytes) : null);
   }
 
   copy(request: CopyRequest): Promise<boolean> {
@@ -100,6 +103,18 @@ export class ExportsPurgeDownFileStorage extends FakeFileStorage {
     return prefix.endsWith('/exports/')
       ? Promise.reject(storageDown(new Error('connect ECONNREFUSED')))
       : super.deletePrefix(prefix);
+  }
+}
+
+export class StorageHeldFileStorage extends FakeFileStorage {
+  override async copy(request: CopyRequest): Promise<boolean> {
+    this.copies.push(request);
+    await delay(DEPENDENCY_LIMITS.storageTimeoutMs);
+    throw storageDown(new Error('copy timed out'));
+  }
+
+  override delete(): Promise<void> {
+    return Promise.reject(storageDown(new Error('connect ECONNREFUSED')));
   }
 }
 

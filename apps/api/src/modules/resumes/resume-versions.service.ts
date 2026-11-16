@@ -10,12 +10,22 @@ import { Injectable } from '@nestjs/common';
 import { conflict } from '../../common/app-error.js';
 import { Clock } from '../../common/clock.js';
 import { changedOrNotFound, owned } from '../../common/owned.js';
+import { DEPENDENCY_LIMITS } from '../../common/probe.js';
 import { PrismaService } from '../../prisma/prisma.service.js';
 import { FileStorage } from '../../storage/file-storage.js';
+import { pendingKeyOf } from './resume-storage-key.js';
 import { RESUME_VERSION_NOT_FOUND, toResumeVersion } from './resume-version-response.js';
-import { ResumeVersionsRepository } from './resume-versions.repository.js';
+import {
+  type ResumeVersionById,
+  type ResumeVersionRow,
+  ResumeVersionsRepository,
+} from './resume-versions.repository.js';
 
 export type EditResumeVersion = { id: string; input: UpdateResumeVersionInput };
+
+const REMOVE_TRANSACTION = {
+  timeout: DEPENDENCY_LIMITS.queryTimeoutMs + 2 * DEPENDENCY_LIMITS.storageTimeoutMs,
+};
 
 @Injectable()
 export class ResumeVersionsService {
@@ -49,27 +59,21 @@ export class ResumeVersionsService {
 
   async remove(userId: string, id: string): Promise<void> {
     await this.prisma.$transaction(async (tx) => {
-      const version = owned(
-        await this.repository.findOwned(userId, { id, tx }),
-        RESUME_VERSION_NOT_FOUND,
-      );
+      const version = await this.lockedVersion(userId, { id, tx });
       const linked =
         version._count.applications > 0 ||
         (await this.repository.deleteUnlinked(userId, { id, tx })) === 0;
       if (linked) {
         throw conflict('The version is linked to applications; archive it instead');
       }
+      await this.storage.delete(pendingKeyOf(version.storageKey));
       await this.storage.delete(version.storageKey);
-    });
+    }, REMOVE_TRANSACTION);
   }
 
   async activate(userId: string, id: string): Promise<void> {
     await this.prisma.$transaction(async (tx) => {
-      await this.repository.lockOwner(userId, { tx });
-      const version = owned(
-        await this.repository.findOwned(userId, { id, tx }),
-        RESUME_VERSION_NOT_FOUND,
-      );
+      const version = await this.lockedVersion(userId, { id, tx });
       if (version.isArchived) {
         throw conflict('Unarchive the version before making it active');
       }
@@ -90,5 +94,13 @@ export class ResumeVersionsService {
       ttlSeconds: RESUME_UPLOAD_LIMITS.downloadUrlTtlSeconds,
     });
     return { url, expiresAt: expiresAt.toISOString() };
+  }
+
+  private async lockedVersion(
+    userId: string,
+    { id, tx }: Required<ResumeVersionById>,
+  ): Promise<ResumeVersionRow> {
+    await this.repository.lockOwner(userId, { tx });
+    return owned(await this.repository.findOwned(userId, { id, tx }), RESUME_VERSION_NOT_FOUND);
   }
 }

@@ -13,7 +13,6 @@ import { Injectable } from '@nestjs/common';
 
 import { conflict, notFound, validation } from '../../common/app-error.js';
 import { Clock } from '../../common/clock.js';
-import type { Prisma } from '../../generated/prisma/client.js';
 import { PrismaService } from '../../prisma/prisma.service.js';
 import { FileStorage, type StoredObject } from '../../storage/file-storage.js';
 import { detectResumeFormat, RESUME_SIGNATURE_BYTES } from './resume-file-format.js';
@@ -27,7 +26,9 @@ type UploadKey = ConfirmResumeUploadInput & { key: string };
 
 type StoredUpload = UploadKey & { stored: StoredObject };
 
-type VersionCopy = { from: string; to: string; etag: string | null; tx: Prisma.TransactionClient };
+type VersionCopy = { from: string; to: string; etag: string | null };
+
+const FILE_CHANGED = 'The file changed after the check; upload it again';
 
 @Injectable()
 export class ResumeUploadsService {
@@ -72,21 +73,22 @@ export class ResumeUploadsService {
   async createVersion(userId: string, input: CreateResumeVersionInput): Promise<ResumeVersion> {
     const ref = { userId, uploadId: input.uploadId, mime: input.mime };
     const from = pendingResumeKey(ref);
+    const storageKey = resumeStorageKey(ref);
     const stored = await this.checkedUpload({ key: from, mime: input.mime });
+    await this.writer.refuseDuplicate(userId, { storageKey });
+    await this.copyUnchanged({ from, to: storageKey, etag: stored.etag });
     const uploadedAt = this.clock.now();
     const row = await this.prisma.$transaction(async (tx) => {
-      const storageKey = resumeStorageKey(ref);
-      await this.copyOnce(userId, { from, to: storageKey, etag: stored.etag, tx });
+      await this.writer.claim(userId, { storageKey, tx });
       return this.writer.insert(userId, { input, storageKey, stored, uploadedAt, tx });
     });
     return toResumeVersion(row);
   }
 
-  private async copyOnce(userId: string, { from, to, etag, tx }: VersionCopy): Promise<void> {
-    await this.writer.claim(userId, { storageKey: to, tx });
+  private async copyUnchanged({ from, to, etag }: VersionCopy): Promise<void> {
     const copied = etag !== null && (await this.storage.copy({ from, to, ifMatch: etag }));
     if (!copied) {
-      throw conflict('The file changed after the check; upload it again');
+      throw conflict(FILE_CHANGED);
     }
   }
 
@@ -115,6 +117,9 @@ export class ResumeUploadsService {
       bytes: RESUME_SIGNATURE_BYTES,
       ifMatch: stored.etag ?? undefined,
     });
+    if (start === null) {
+      throw conflict(FILE_CHANGED);
+    }
     return detectResumeFormat(start) === mime ? null : 'The file content is not a PDF or DOCX';
   }
 }

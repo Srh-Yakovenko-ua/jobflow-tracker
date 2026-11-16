@@ -17,6 +17,8 @@ export class ResumeExtractionService {
       key: storageKey,
       bytes: RESUME_UPLOAD_LIMITS.maxBytes,
     });
-    return bytes.length === 0 ? null : this.documents.extract({ bytes, filename, mime });
+    return bytes === null || bytes.length === 0
+      ? null
+      : this.documents.extract({ bytes, filename, mime });
   }
 }

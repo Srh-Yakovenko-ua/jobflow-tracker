@@ -5,7 +5,11 @@ import { conflict } from '../../common/app-error.js';
 import type { Prisma } from '../../generated/prisma/client.js';
 import type { StoredObject } from '../../storage/file-storage.js';
 import { AiService } from '../ai/index.js';
-import { type ResumeVersionRow, ResumeVersionsRepository } from './resume-versions.repository.js';
+import {
+  type ResumeVersionRow,
+  ResumeVersionsRepository,
+  type VersionByStorageKey,
+} from './resume-versions.repository.js';
 import { RESUME_EVENTS } from './resumes.events.js';
 
 export type VersionClaim = { storageKey: string; tx: Prisma.TransactionClient };
@@ -23,11 +27,15 @@ export class ResumeVersionWriter {
     private readonly ai: AiService,
   ) {}
 
-  async claim(userId: string, { storageKey, tx }: VersionClaim): Promise<void> {
-    await this.versions.lockOwner(userId, { tx });
-    if ((await this.versions.findByStorageKey(userId, { storageKey, tx })) !== null) {
+  async refuseDuplicate(userId: string, lookup: VersionByStorageKey): Promise<void> {
+    if ((await this.versions.findByStorageKey(userId, lookup)) !== null) {
       throw conflict('A version from this upload already exists');
     }
+  }
+
+  async claim(userId: string, claim: VersionClaim): Promise<void> {
+    await this.versions.lockOwner(userId, { tx: claim.tx });
+    await this.refuseDuplicate(userId, claim);
   }
 
   async insert(

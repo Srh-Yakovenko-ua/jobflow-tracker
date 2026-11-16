@@ -201,6 +201,20 @@ describe('the supporting tables in Postgres', () => {
     });
   });
 
+  it('refuses a second version with the same number in one resume', async () => {
+    const { prisma } = database;
+    const { id: userId } = await createUser(prisma);
+    const first = resumeVersionData({ userId, resumeId: await createResume(prisma, userId) });
+    const second = { ...first, storageKey: `${first.storageKey}.copy` };
+    await prisma.resumeVersion.create({ data: first });
+
+    await expect(prisma.resumeVersion.create({ data: second })).rejects.toMatchObject({
+      code: 'P2002',
+    });
+    const renumbered = await prisma.resumeVersion.create({ data: { ...second, number: 2 } });
+    expect(renumbered.number).toBe(2);
+  });
+
   it('accepts an AI result for the same input under another kind', async () => {
     const { prisma } = database;
     const { id: userId } = await createUser(prisma);

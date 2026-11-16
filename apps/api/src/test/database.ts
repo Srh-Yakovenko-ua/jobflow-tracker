@@ -8,7 +8,7 @@ import type { Prisma } from '../generated/prisma/client.js';
 import { PrismaModule } from '../prisma/prisma.module.js';
 import { PrismaService } from '../prisma/prisma.service.js';
 
-const TEST_DATABASE_NAME = /^jobflow_(test|[a-z]+_\d+)$/;
+const TEST_DATABASE_NAME = /^jobflow_(test|(ctl_)?[a-z]+_\d+)$/;
 
 const ROW_LOCK_WAIT_MS = DEPENDENCY_LIMITS.queryTimeoutMs - 1000;
 
@@ -47,27 +47,35 @@ async function countLockWaiters(prisma: PrismaService): Promise<number | undefin
   return row?.waiting;
 }
 
+async function lockWaitersReach(prisma: PrismaService, waiters: number): Promise<void> {
+  await expect
+    .poll(() => countLockWaiters(prisma), {
+      timeout: ROW_LOCK_WAIT_MS,
+      message: 'the calls did not queue behind the row lock',
+    })
+    .toBe(waiters);
+}
+
 export async function queuedBehindRowLock<T>(
   prisma: PrismaService,
   { lock, calls }: RowLockQueue<T>,
 ): Promise<Awaited<T>[]> {
-  let queued: Promise<Awaited<T>[]> = Promise.resolve([]);
+  const started: Promise<T>[] = [];
   try {
     await prisma.$transaction(async (tx) => {
       await tx.$queryRaw(lock);
-      queued = Promise.all(calls.map((call) => call()));
-      await expect
-        .poll(() => countLockWaiters(prisma), {
-          timeout: ROW_LOCK_WAIT_MS,
-          message: 'the calls did not queue behind the row lock',
-        })
-        .toBe(calls.length);
+      for (const call of calls) {
+        const answer = Promise.resolve(call());
+        void answer.catch(() => undefined);
+        started.push(answer);
+        await lockWaitersReach(prisma, started.length);
+      }
     });
   } catch (error) {
-    await queued.catch(() => undefined);
+    await Promise.allSettled(started);
     throw error;
   }
-  return queued;
+  return Promise.all(started);
 }
 
 export function useTestDatabase(): TestDatabase {

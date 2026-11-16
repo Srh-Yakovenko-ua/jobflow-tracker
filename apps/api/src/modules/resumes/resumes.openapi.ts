@@ -83,7 +83,7 @@ export const RESUMES_OPENAPI_PATHS: RouteConfig[] = [
     path: `${UPLOADS_PATH}/{uploadId}/confirm`,
     tags: TAGS,
     summary: 'Check an uploaded resume file',
-    description: `Looks for the file under the signed-in user's key, so another user's uploadId answers 404. The file must be at most ${MAX_BYTES} bytes, stored with the declared type and start with the PDF (%PDF-) or DOCX (PK) signature of that type; otherwise it is deleted and the answer is 422 at file. A repeat confirm of a good file answers the same.`,
+    description: `Looks for the file under the signed-in user's key, so another user's uploadId answers 404. The file must be at most ${MAX_BYTES} bytes, stored with the declared type and start with the PDF (%PDF-) or DOCX (PK) signature of that type; otherwise it is deleted and the answer is 422 at file. A file written again or gone between the check and the signature read answers 409 and nothing is deleted; upload it again. A repeat confirm of a good file answers the same.`,
     request: {
       params: uploadIdParams,
       body: {
@@ -97,7 +97,7 @@ export const RESUMES_OPENAPI_PATHS: RouteConfig[] = [
         description: 'The file is a resume of the declared type',
         content: jsonContent(confirmedResumeUploadSchema, CONFIRMED),
       },
-      ...errorResponses([400, 401, 403, 404, 422, 503]),
+      ...errorResponses([400, 401, 403, 404, 409, 422, 503]),
     },
   },
   ...RESUME_VERSIONS_OPENAPI_PATHS,

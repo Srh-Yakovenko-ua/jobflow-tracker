@@ -160,14 +160,14 @@ export class S3FileStorage implements FileStorage, OnModuleDestroy {
     await orDown(this.client.send(command, withinStorageLimit()));
   }
 
-  async readStart({ key, bytes, ifMatch }: ObjectStart): Promise<Uint8Array> {
+  async readStart({ key, bytes, ifMatch }: ObjectStart): Promise<Uint8Array | null> {
     const command = new GetObjectCommand({
       Bucket: this.bucket,
       Key: key,
       Range: `bytes=0-${String(bytes - 1)}`,
       IfMatch: ifMatch,
     });
-    return (await orMissing(this.bodyOf(command))) ?? new Uint8Array();
+    return orMissing(this.bodyOf(command));
   }
 
   async delete(key: string): Promise<void> {

@@ -39,6 +39,7 @@ const STORAGE_CALLS = [
     name: 'put',
     call: (storage: S3FileStorage) => storage.put({ key: newKey(), bytes: PDF_BYTES, mime: PDF }),
   },
+  { name: 'delete', call: (storage: S3FileStorage) => storage.delete(newKey()) },
   {
     name: 'deletePrefix',
     call: (storage: S3FileStorage) => storage.deletePrefix(`users/${randomUUID()}/`),
@@ -123,8 +124,7 @@ describe('S3FileStorage against MinIO', () => {
     await storage.put({ key, bytes: PDF_BYTES, mime: PDF });
 
     expect(await storage.head(key)).toMatchObject({ sizeBytes: PDF_BYTES.length, mime: PDF });
-    const start = await storage.readStart({ key, bytes: 5 });
-    expect(new TextDecoder().decode(start)).toBe('%PDF-');
+    expect(await storage.readStart({ key, bytes: 5 })).toEqual(PDF_BYTES.slice(0, 5));
   });
 
   it('copies an object whose ETag still matches the one read', async () => {
@@ -239,15 +239,18 @@ describe('S3FileStorage against MinIO', () => {
 
     const start = await storage.readStart({ key, bytes: 8, ifMatch: PDF_ETAG });
 
-    expect(new TextDecoder().decode(start)).toBe('%PDF-1.7');
+    expect(start).toEqual(PDF_BYTES.slice(0, 8));
   });
 
-  it('reads nothing from an object written again since its ETag was read', async () => {
+  it('answers null to a read of an object written again since its ETag was read, and of a missing one', async () => {
     const key = newKey();
     await putPdf(key);
     await putThroughUrl(key, { type: PDF, body: new Uint8Array(PDF_BYTES.length) });
 
-    expect(await storage.readStart({ key, bytes: 8, ifMatch: PDF_ETAG })).toEqual(new Uint8Array());
+    expect([
+      await storage.readStart({ key, bytes: 8, ifMatch: PDF_ETAG }),
+      await storage.readStart({ key: newKey(), bytes: 8 }),
+    ]).toEqual([null, null]);
   });
 
   it('answers null for a missing object and deletes a stored one', async () => {

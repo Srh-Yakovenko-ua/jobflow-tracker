@@ -22,6 +22,7 @@ export class ResumeLinksService {
   async relink(userId: string, { applicationId, resumeVersionId }: ResumeRelink): Promise<void> {
     const occurredAt = this.clock.now();
     await this.prisma.$transaction(async (tx) => {
+      await this.repository.lockOwner(userId, { tx });
       const label = owned(
         await this.repository.findVersionLabel(userId, { id: resumeVersionId, tx }),
         RESUME_VERSION_NOT_FOUND,
