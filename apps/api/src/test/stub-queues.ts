@@ -10,6 +10,8 @@ export type StubBulkJob = { name: string; data: unknown; opts?: JobsOptions };
 
 export type StubAdd = [name: string, data: unknown, opts?: StubBulkJob['opts']];
 
+export type StubRetryableJob = { retry: (state: string) => Promise<void> };
+
 export class StubQueue {
   readonly jobs: StubJob[] = [];
 
@@ -19,7 +21,21 @@ export class StubQueue {
 
   readonly opts: Partial<QueueOptions> = {};
 
+  readonly retried: [id: string, state: string][] = [];
+
+  readonly gone = new Set<string>();
+
   constructor(readonly name: string) {}
+
+  getJob(id: string): Promise<StubRetryableJob | undefined> {
+    const job = {
+      retry: (state: string) => {
+        this.retried.push([id, state]);
+        return Promise.resolve();
+      },
+    };
+    return Promise.resolve(this.gone.has(id) ? undefined : job);
+  }
 
   add(...[name, data, opts = {}]: StubAdd): Promise<StubJob> {
     this.addOptions.push(opts);
@@ -49,23 +65,31 @@ export class StubQueue {
   }
 }
 
-export class SilentQueue extends StubQueue {
+abstract class UnreachableQueue extends StubQueue {
+  protected abstract unreachable(): Promise<never>;
+
   override add(): Promise<never> {
-    return new Promise<never>(() => undefined);
+    return this.unreachable();
   }
 
   override addBulk(): Promise<never> {
-    return this.add();
+    return this.unreachable();
+  }
+
+  override getJob(): Promise<never> {
+    return this.unreachable();
   }
 }
 
-export class RefusingQueue extends StubQueue {
-  override add(): Promise<never> {
-    return Promise.reject(new Error('Connection is closed.'));
+export class SilentQueue extends UnreachableQueue {
+  protected unreachable(): Promise<never> {
+    return new Promise<never>(() => undefined);
   }
+}
 
-  override addBulk(): Promise<never> {
-    return this.add();
+export class RefusingQueue extends UnreachableQueue {
+  protected unreachable(): Promise<never> {
+    return Promise.reject(new Error('Connection is closed.'));
   }
 }
 

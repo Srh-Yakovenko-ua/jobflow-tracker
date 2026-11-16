@@ -2,6 +2,7 @@ import { UnrecoverableError } from 'bullmq';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 
 import { OutboxRelayService } from '../../outbox/outbox-relay.service.js';
+import { AiJobsSweepService } from '../../scheduled-jobs/ai-jobs-sweep.service.js';
 import { AutoGhostScanService } from '../../scheduled-jobs/auto-ghost-scan.service.js';
 import { ScheduledJobsService } from '../../scheduled-jobs/scheduled-jobs.service.js';
 import { memoryLog } from '../../test/memory-log.js';
@@ -11,6 +12,7 @@ import { RhythmRequestsService } from '../rhythm/index.js';
 import { SummaryRequestsService } from '../summaries/index.js';
 import { LocalHourRequestsService } from './local-hour-requests.service.js';
 import { MaintenanceProcessor } from './maintenance.processor.js';
+import { ScheduledSweepsService } from './scheduled-sweeps.service.js';
 
 const log = memoryLog();
 
@@ -33,10 +35,6 @@ class FakeScheduledJobs {
 
   cleanup(): Promise<void> {
     return this.called('cleanup');
-  }
-
-  sweepStaleAiJobs(): Promise<void> {
-    return this.called('sweepStaleAiJobs');
   }
 
   async monthlySummaryUsers(): Promise<string[]> {
@@ -74,6 +72,20 @@ class RecordingAutoGhostScan {
   }
 }
 
+class RecordingAiJobsSweep {
+  readonly calls: string[] = [];
+
+  sweepStaleAiJobs(): Promise<number> {
+    this.calls.push('sweepStaleAiJobs');
+    return Promise.resolve(1);
+  }
+
+  redeliverUnsettledAiFailures(): Promise<number> {
+    this.calls.push('redeliverUnsettledAiFailures');
+    return Promise.resolve(1);
+  }
+}
+
 class RecordingLocalHourRequests {
   readonly requested: [string, string[]][] = [];
 
@@ -104,6 +116,7 @@ describe('MaintenanceProcessor', () => {
   const scheduledJobs = new FakeScheduledJobs();
   const requests = new RecordingLocalHourRequests();
   const autoGhost = new RecordingAutoGhostScan();
+  const aiJobs = new RecordingAiJobsSweep();
   let processor: MaintenanceProcessor;
   let close: () => Promise<void>;
 
@@ -111,10 +124,12 @@ describe('MaintenanceProcessor', () => {
     const moduleRef = await compileProcessorModule(log.sink, [
       MaintenanceProcessor,
       LocalHourRequestsService,
+      ScheduledSweepsService,
       { provide: OutboxRelayService, useValue: outbox },
       { provide: ScheduledJobsService, useValue: scheduledJobs },
       { provide: SummaryRequestsService, useValue: requests },
       { provide: AutoGhostScanService, useValue: autoGhost },
+      { provide: AiJobsSweepService, useValue: aiJobs },
       { provide: RhythmRequestsService, useValue: requests },
     ]);
     processor = moduleRef.get(MaintenanceProcessor);
@@ -127,6 +142,7 @@ describe('MaintenanceProcessor', () => {
     scheduledJobs.calls.length = 0;
     requests.requested.length = 0;
     autoGhost.scans = 0;
+    aiJobs.calls.length = 0;
   });
 
   afterAll(async () => {
@@ -188,7 +204,6 @@ describe('MaintenanceProcessor', () => {
   });
 
   it.each([
-    ['ai-jobs.sweep', 'sweepStaleAiJobs'],
     ['monthly-summary.pick', 'monthlySummaryUsers'],
     ['rhythm.week-close.pick', 'weekCloseUsers'],
     ['silence.scan', 'silenceScan'],
@@ -197,6 +212,14 @@ describe('MaintenanceProcessor', () => {
     await processor.process(tickJob(name));
 
     expect(scheduledJobs.calls).toEqual([method]);
+    expect(outbox.calls).toEqual([]);
+  });
+
+  it('fails the stale ai jobs and then redelivers the unsettled ai failures for an ai-jobs.sweep job', async () => {
+    await processor.process(tickJob('ai-jobs.sweep'));
+
+    expect(aiJobs.calls).toEqual(['sweepStaleAiJobs', 'redeliverUnsettledAiFailures']);
+    expect(scheduledJobs.calls).toEqual([]);
     expect(outbox.calls).toEqual([]);
   });
 

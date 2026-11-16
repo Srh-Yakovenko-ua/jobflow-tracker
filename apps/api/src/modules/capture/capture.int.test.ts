@@ -14,6 +14,7 @@ import {
 import { getQueueToken } from '@nestjs/bullmq';
 import type { INestApplicationContext } from '@nestjs/common';
 import type { Queue } from 'bullmq';
+import { subMinutes } from 'date-fns';
 import type { Response } from 'supertest';
 import { afterAll, beforeEach, describe, expect, it, onTestFinished, vi } from 'vitest';
 import type { z } from 'zod';
@@ -22,11 +23,13 @@ import type { Prisma } from '../../generated/prisma/client.js';
 import { DomainEventRouter } from '../../outbox/domain-event-router.js';
 import { OutboxRelayService } from '../../outbox/outbox-relay.service.js';
 import { QUEUES } from '../../queues/queues.js';
+import { AiJobsSweepService } from '../../scheduled-jobs/ai-jobs-sweep.service.js';
 import {
   FakeAiClient,
   NAMELESS_VACANCY_COMPLETION,
   PARSED_VACANCY_COLUMNS,
   storedAiJob,
+  storedFailureSettledAt,
   VACANCY_COMPLETION,
   VACANCY_TEXT,
 } from '../../test/ai.js';
@@ -36,6 +39,7 @@ import {
   applicationPath,
   createApplication,
   getApplicationBoard,
+  notePath,
   ROMASHKA,
   signedInWithSearch,
   stageEventsOf,
@@ -177,6 +181,12 @@ const AI_QUEUE_AFTER_ONE_PARSE = { waiting: 0, active: 0, delayed: 0, completed:
 const WORKER_TEST = { timeout: 30_000 };
 
 const SETTLED = { timeout: 20_000 };
+
+const SWEEP_TEST = { timeout: 60_000 };
+
+const BULL_RETRIES_SPENT = { timeout: 40_000 };
+
+const PAST_SWEEP_GRACE_MINUTES = 10;
 
 const doneFrameOf = ({ frames }: SseStream) =>
   frames.find(({ data = '' }) => data.includes('"done"'));
@@ -337,6 +347,25 @@ describe('POST /api/v1/capture/paste', () => {
       aggregateId: applicationId,
     });
     return updates.map(({ payload }) => payload);
+  }
+
+  const aiQueueOf = (worker: INestApplicationContext) =>
+    worker.get<Queue>(getQueueToken(QUEUES.ai.name));
+
+  const expectBullJobFailed = (worker: INestApplicationContext, jobId: string) =>
+    expect.poll(() => aiQueueOf(worker).getJobState(jobId), BULL_RETRIES_SPENT).toBe('failed');
+
+  async function sweptPastGrace(worker: INestApplicationContext, jobId: string) {
+    const { finishedAt } = await storedAiJob(testApp.prisma, jobId);
+    if (finishedAt === null) {
+      throw new Error('the failed ai job has no finishedAt');
+    }
+    await testApp.prisma.aiJob.update({
+      where: { id: jobId },
+      data: { finishedAt: subMinutes(finishedAt, PAST_SWEEP_GRACE_MINUTES) },
+      select: { id: true },
+    });
+    return worker.get(AiJobsSweepService, { strict: false }).redeliverUnsettledAiFailures();
   }
 
   function fillAs(userId: string, applicationId: string) {
@@ -659,6 +688,63 @@ describe('POST /api/v1/capture/paste', () => {
       });
       expect(await kindsOf(captured.applicationId)).toEqual(['captured', 'note_added']);
       expect(ai.calls).toHaveLength(1);
+    },
+  );
+
+  it(
+    'keeps the pasted text as one note once the sweep redelivers a final failure whose note write was refused on every BullMQ attempt',
+    SWEEP_TEST,
+    async () => {
+      ai.answer = refusedByAi;
+      const { accessToken } = await signedInWithSearch(testApp.prisma);
+      const captured = await paste(accessToken);
+      const worker = await startedWorker();
+      const create = vi
+        .spyOn(worker.get(NotesService, { strict: false }), 'create')
+        .mockRejectedValue(refusedNoteWrite());
+      await relay(worker);
+      await expectBullJobFailed(worker, captured.jobId);
+      create.mockRestore();
+
+      await expect(sweptPastGrace(worker, captured.jobId)).resolves.toBe(1);
+
+      await expect
+        .poll(() => notesOf(captured.applicationId), SETTLED)
+        .toEqual([{ body: VACANCY_TEXT }]);
+      expect(await storedFailureSettledAt(testApp.prisma, captured.jobId)).toBeInstanceOf(Date);
+      expect(await kindsOf(captured.applicationId)).toEqual(['captured', 'note_added']);
+      expect(ai.calls).toHaveLength(1);
+    },
+  );
+
+  it(
+    'writes no note back after the user deleted it when a settled final failure is redelivered by BullMQ and passed by the sweep',
+    WORKER_TEST,
+    async () => {
+      ai.answer = refusedByAi;
+      const { accessToken } = await signedInWithSearch(testApp.prisma);
+      const captured = await paste(accessToken);
+      const worker = await relayed(captured, 'failed');
+      await expectBullJobFailed(worker, captured.jobId);
+      const settledAt = await storedFailureSettledAt(testApp.prisma, captured.jobId);
+      const { id: noteId } = await testApp.prisma.note.findFirstOrThrow({
+        where: { applicationId: captured.applicationId },
+        select: { id: true },
+      });
+      const deleted = await callRoute(testApp.app, {
+        method: 'delete',
+        path: notePath({ id: captured.applicationId, noteId }),
+        accessToken,
+      });
+
+      await (await aiQueueOf(worker).getJob(captured.jobId))?.retry('failed');
+      const swept = await sweptPastGrace(worker, captured.jobId);
+
+      await expect.poll(() => loggedFor(captured.jobId, 'ai job skipped'), SETTLED).toBe(true);
+      expect([deleted.status, swept]).toEqual([204, 0]);
+      expect(settledAt).toBeInstanceOf(Date);
+      expect(await notesOf(captured.applicationId)).toEqual([]);
+      expect(await storedFailureSettledAt(testApp.prisma, captured.jobId)).toEqual(settledAt);
     },
   );
 

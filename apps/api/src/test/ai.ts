@@ -192,6 +192,14 @@ export function storedAiJob(prisma: PrismaService, id: string) {
   return prisma.aiJob.findUniqueOrThrow({ where: { id }, select: AI_JOB_ROW });
 }
 
+export async function storedFailureSettledAt(prisma: PrismaService, id: string) {
+  const { failureSettledAt } = await prisma.aiJob.findUniqueOrThrow({
+    where: { id },
+    select: { failureSettledAt: true },
+  });
+  return failureSettledAt;
+}
+
 export const AI_USAGE_ROWS: AiUsageRow[] = [
   {
     day: '2026-11-04',
@@ -269,6 +277,7 @@ export type FakeAiJob = {
   aiResultId?: string;
   errorType?: string;
   finishedAt?: Date;
+  failureSettledAt?: Date;
 };
 
 type StoredAiResult = SaveAiResult & { id: string; userId: string };
@@ -322,9 +331,25 @@ export class FakeAiRepository {
     return this.reached(() => this.moveJob(userId, { id, from: ['processing'], to }));
   }
 
-  failJob(userId: string, { id, errorType, now }: FailAiJob): Promise<number> {
-    const to = { status: 'failed', errorType, finishedAt: now } as const;
+  failJob(userId: string, { id, errorType, now, settledAt }: FailAiJob): Promise<number> {
+    const settled = settledAt === undefined ? {} : { failureSettledAt: settledAt };
+    const to = { status: 'failed', errorType, finishedAt: now, ...settled } as const;
     return this.reached(() => this.moveJob(userId, { id, from: ['queued', 'processing'], to }));
+  }
+
+  findUnsettledFailure(userId: string, id: string): Promise<string | null> {
+    return this.reached(() => this.unsettledFailure(userId, id)?.errorType ?? null);
+  }
+
+  markFailureSettled(userId: string, { id, now }: AiJobChange): Promise<number> {
+    return this.reached(() => {
+      const job = this.unsettledFailure(userId, id);
+      if (job === undefined) {
+        return 0;
+      }
+      this.jobs.set(id, { ...job, failureSettledAt: now });
+      return 1;
+    });
   }
 
   findJob(userId: string, id: string): Promise<AiJobRow | null> {
@@ -387,6 +412,16 @@ export class FakeAiRepository {
     const id = this.results.get(key)?.id ?? `ai-result-${String(this.results.size + 1)}`;
     this.results.set(key, { ...result, id, userId });
     return id;
+  }
+
+  private unsettledFailure(userId: string, id: string): FakeAiJob | undefined {
+    const job = this.jobs.get(id);
+    const unsettled =
+      job?.userId === userId &&
+      job.status === 'failed' &&
+      job.failureSettledAt === undefined &&
+      job.errorType !== undefined;
+    return unsettled ? job : undefined;
   }
 
   private moveJob(userId: string, { id, from, to }: JobMove): number {

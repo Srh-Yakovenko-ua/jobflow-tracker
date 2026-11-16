@@ -22,7 +22,22 @@ export const UNSETTLED_AI_JOB_WHERE = {
   status: { in: UNSETTLED_AI_JOB_STATUSES },
 } satisfies Prisma.AiJobWhereInput;
 
-export type FailedAiJobChange = { errorType: NonNullable<JobStatus['errorType']>; now: Date };
+export const UNSETTLED_FAILURE_WHERE = {
+  status: 'failed',
+  failureSettledAt: null,
+  errorType: { not: null },
+} satisfies Prisma.AiJobWhereInput;
 
-export const failedAiJobChange = ({ errorType, now }: FailedAiJobChange) =>
-  ({ status: 'failed', errorType, finishedAt: now }) satisfies Prisma.AiJobUpdateManyMutationInput;
+export type FailedAiJobChange = {
+  errorType: NonNullable<JobStatus['errorType']>;
+  now: Date;
+  settledAt?: Date;
+};
+
+export const failedAiJobChange = ({ errorType, now, settledAt }: FailedAiJobChange) =>
+  ({
+    status: 'failed',
+    errorType,
+    finishedAt: now,
+    failureSettledAt: settledAt ?? null,
+  }) satisfies Prisma.AiJobUpdateManyMutationInput;

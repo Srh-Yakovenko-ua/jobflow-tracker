@@ -58,6 +58,7 @@ export type NewAiJob = {
   step?: number;
   errorType?: string;
   finishedAt?: Date;
+  failureSettledAt?: Date;
 };
 
 export type NewAiResult = Pick<Prisma.AiResultUncheckedCreateInput, 'userId'> &

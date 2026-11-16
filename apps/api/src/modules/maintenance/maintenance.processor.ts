@@ -12,7 +12,6 @@ import {
   warnWorkerError,
 } from '../../queues/processed-job.js';
 import { QUEUES } from '../../queues/queues.js';
-import { AutoGhostScanService } from '../../scheduled-jobs/auto-ghost-scan.service.js';
 import { ScheduledJobsService } from '../../scheduled-jobs/scheduled-jobs.service.js';
 import { LocalHourRequestsService } from './local-hour-requests.service.js';
 import {
@@ -21,6 +20,7 @@ import {
   maintenanceJobNameSchema,
   pingJobSchema,
 } from './maintenance.jobs.js';
+import { ScheduledSweepsService } from './scheduled-sweeps.service.js';
 import { pushUptime } from './uptime-push.js';
 
 type MaintenanceHandler = (job: ProcessedJob) => Promise<unknown>;
@@ -38,11 +38,11 @@ export class MaintenanceProcessor extends WorkerHost {
     [MAINTENANCE_JOBS.ping]: (job) => this.ping(job),
     [MAINTENANCE_JOBS.outboxRelay]: () => this.outbox.relay(),
     [MAINTENANCE_JOBS.cleanup]: () => this.cleanup(),
-    [MAINTENANCE_JOBS.aiJobsSweep]: () => this.scheduledJobs.sweepStaleAiJobs(),
+    [MAINTENANCE_JOBS.aiJobsSweep]: () => this.sweeps.aiJobsSweep(),
     [MAINTENANCE_JOBS.monthlySummaryPick]: () => this.localHour.monthlySummary(),
     [MAINTENANCE_JOBS.rhythmWeekClosePick]: () => this.localHour.weekClose(),
     [MAINTENANCE_JOBS.silenceScan]: (job) => this.ran(job, () => this.scheduledJobs.silenceScan()),
-    [MAINTENANCE_JOBS.autoGhostScan]: (job) => this.ran(job, () => this.autoGhost.scan()),
+    [MAINTENANCE_JOBS.autoGhostScan]: (job) => this.ran(job, () => this.sweeps.autoGhostScan()),
     [MAINTENANCE_JOBS.eventRemindersScan]: (job) =>
       this.ran(job, () => this.scheduledJobs.interviewReminders()),
     [MAINTENANCE_JOBS.uptimePush]: (job) => pushUptime({ job, logger: this.logger }),
@@ -51,7 +51,7 @@ export class MaintenanceProcessor extends WorkerHost {
   constructor(
     private readonly outbox: OutboxRelayService,
     private readonly scheduledJobs: ScheduledJobsService,
-    private readonly autoGhost: AutoGhostScanService,
+    private readonly sweeps: ScheduledSweepsService,
     private readonly localHour: LocalHourRequestsService,
   ) {
     super();

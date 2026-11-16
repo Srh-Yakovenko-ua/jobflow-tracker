@@ -5,13 +5,13 @@ import { InterviewAlertsService, SilenceScanService } from '../modules/reminders
 import { memoryLog } from '../test/memory-log.js';
 import { compileProcessorModule } from '../test/processor.js';
 import { NOW, settableClock } from '../test/time.js';
-import type { LocalTimeCandidate, StaleAiJobs } from './scheduled-jobs.repository.js';
+import type { LocalTimeCandidate } from './scheduled-jobs.repository.js';
 import { ScheduledJobsRepository } from './scheduled-jobs.repository.js';
 import { ScheduledJobsService } from './scheduled-jobs.service.js';
 
 const log = memoryLog();
 
-type RepositoryCall = { method: string; at: Date } | { method: string; sweep: StaleAiJobs };
+type RepositoryCall = { method: string; at: Date };
 
 class FakeScheduledJobsRepository {
   readonly calls: RepositoryCall[] = [];
@@ -28,10 +28,6 @@ class FakeScheduledJobsRepository {
 
   deleteNotificationsBefore(at: Date): Promise<number> {
     return this.counted({ method: 'deleteNotificationsBefore', at }, 4);
-  }
-
-  failStaleAiJobs(sweep: StaleAiJobs): Promise<number> {
-    return this.counted({ method: 'failStaleAiJobs', sweep }, 5);
   }
 
   monthlySummaryCandidates(): Promise<LocalTimeCandidate[]> {
@@ -122,21 +118,6 @@ describe('ScheduledJobsService', () => {
     ]);
     expect(log.parsed()).toEqual([
       expect.objectContaining({ idempotencyKeys: 2, refreshTokens: 3, notifications: 4 }),
-    ]);
-  });
-
-  it('fails ai jobs created more than 60 minutes ago as abandoned, finished now', async () => {
-    await expect(service.sweepStaleAiJobs()).resolves.toBe(5);
-
-    expect(repository.calls).toEqual([
-      {
-        method: 'failStaleAiJobs',
-        sweep: {
-          createdBefore: new Date('2026-10-22T08:00:00.000Z'),
-          now: new Date('2026-10-22T09:00:00.000Z'),
-          errorType: 'ai_abandoned',
-        },
-      },
     ]);
   });
 

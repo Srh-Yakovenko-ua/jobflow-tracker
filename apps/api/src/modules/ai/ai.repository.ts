@@ -1,4 +1,4 @@
-import { AI_JOB_STEPS, type AiKind, type AiResultStatus, type YearMonth } from '@jobflow/shared';
+import { AI_JOB_STEPS, type AiKind, type YearMonth } from '@jobflow/shared';
 import { Injectable } from '@nestjs/common';
 
 import { Prisma } from '../../generated/prisma/client.js';
@@ -7,12 +7,19 @@ import {
   type FailedAiJobChange,
   failedAiJobChange,
   UNSETTLED_AI_JOB_WHERE,
+  UNSETTLED_FAILURE_WHERE,
 } from '../../prisma/latest-ai-job.js';
 import { PrismaService } from '../../prisma/prisma.service.js';
 import { AI_BUDGET } from './ai-budget.js';
 import { type AiCallRecord, callRow } from './ai-call-row.js';
 import { AI_QUEUE_ESTIMATE } from './ai-queue-estimate.js';
-import { resultChange, resultRow } from './ai-result-row.js';
+import {
+  type AiResultKey,
+  resultChange,
+  resultRow,
+  type SaveAiFailure,
+  type SaveAiResult,
+} from './ai-result-row.js';
 
 const CACHED_RESULT_SELECT = { id: true, output: true } satisfies Prisma.AiResultSelect;
 
@@ -47,25 +54,6 @@ export type CreateAiJob = InTransaction &
     | ({ kind: Exclude<AiKind, 'monthly_summary'> } & AiJobTarget)
     | { kind: 'monthly_summary'; periodMonth: YearMonth }
   );
-
-export type AiResultKey = { kind: AiKind; inputHash: string };
-
-export type AiResultFields = AiResultKey & {
-  error: string | null;
-  model: string;
-  promptVersion: string;
-  tokensIn: number;
-  tokensOut: number;
-  latencyMs: number;
-  now: Date;
-};
-
-export type SaveAiResult = AiResultFields & {
-  status: AiResultStatus;
-  output?: Prisma.InputJsonValue;
-};
-
-export type SaveAiFailure = AiResultFields & InTransaction;
 
 export type FailAiJobWithResult = { result: SaveAiFailure; job: FailAiJob };
 
@@ -126,6 +114,22 @@ export class AiRepository {
 
   findJob(userId: string, id: string): Promise<AiJobRow | null> {
     return this.prisma.aiJob.findFirst({ where: { id, userId }, select: AI_JOB_SELECT });
+  }
+
+  async findUnsettledFailure(userId: string, id: string): Promise<string | null> {
+    const failed = await this.prisma.aiJob.findFirst({
+      where: { id, userId, ...UNSETTLED_FAILURE_WHERE },
+      select: { errorType: true },
+    });
+    return failed?.errorType ?? null;
+  }
+
+  async markFailureSettled(userId: string, { id, now }: AiJobChange): Promise<number> {
+    const { count } = await this.prisma.aiJob.updateMany({
+      where: { id, userId, ...UNSETTLED_FAILURE_WHERE },
+      data: { failureSettledAt: now },
+    });
+    return count;
   }
 
   findCachedResult(

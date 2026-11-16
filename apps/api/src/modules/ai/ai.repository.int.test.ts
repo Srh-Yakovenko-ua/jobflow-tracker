@@ -1,6 +1,11 @@
 import { describe, expect, it } from 'vitest';
 
-import { FAILED_AI_RESULT, storedAiJob, VACANCY_COMPLETION } from '../../test/ai.js';
+import {
+  FAILED_AI_RESULT,
+  storedAiJob,
+  storedFailureSettledAt,
+  VACANCY_COMPLETION,
+} from '../../test/ai.js';
 import { useTestDatabase } from '../../test/database.js';
 import {
   createAiCall,
@@ -12,10 +17,11 @@ import {
   type OwnedApplication,
 } from '../../test/factories.js';
 import { daysBefore, minutesBefore, NOW } from '../../test/time.js';
-import { AiRepository, type SaveAiFailure, type SaveAiResult } from './ai.repository.js';
+import { AiRepository } from './ai.repository.js';
 import { budgetWindow } from './ai-budget.js';
 import type { AiCallRecord } from './ai-call-row.js';
 import { FAILED_CALL } from './ai-failures.js';
+import type { SaveAiFailure, SaveAiResult } from './ai-result-row.js';
 import { AI_SERVICE_ERRORS } from './ai-service-error.js';
 
 type JobTarget = { userId: string; id: string; aiResultId: string };
@@ -260,6 +266,70 @@ describe('AiRepository job steps and findJob on Postgres', () => {
       applicationId,
     });
     expect(foreign).toBeNull();
+  });
+});
+
+describe('AiRepository failure settle marker on Postgres', () => {
+  const failedFor = ({ userId, applicationId }: OwnedApplication) =>
+    createAiJob(database.prisma, {
+      userId,
+      applicationId,
+      status: 'failed',
+      errorType: 'ai_timeout',
+    });
+
+  it('marks an unsettled failure settled once, after which it is no longer found', async () => {
+    const owner = await createOwnedApplication(database.prisma);
+    const id = await failedFor(owner);
+    const repository = aiRepository();
+
+    const found = await repository.findUnsettledFailure(owner.userId, id);
+    const marks = [
+      await repository.markFailureSettled(owner.userId, { id, now: NOW }),
+      await repository.markFailureSettled(owner.userId, { id, now: EARLIER_TODAY }),
+    ];
+
+    expect(found).toBe('ai_timeout');
+    expect(marks).toEqual([1, 0]);
+    expect(await repository.findUnsettledFailure(owner.userId, id)).toBeNull();
+    expect(await storedFailureSettledAt(database.prisma, id)).toEqual(NOW);
+  });
+
+  it("neither finds nor marks another user's unsettled failure", async () => {
+    const owner = await createOwnedApplication(database.prisma);
+    const bohdan = await createUser(database.prisma);
+    const id = await failedFor(owner);
+    const repository = aiRepository();
+
+    const found = await repository.findUnsettledFailure(bohdan.id, id);
+    const marked = await repository.markFailureSettled(bohdan.id, { id, now: NOW });
+
+    expect([found, marked]).toEqual([null, 0]);
+    expect(await storedFailureSettledAt(database.prisma, id)).toBeNull();
+  });
+
+  it.each(['done', 'queued'] as const)('marks nothing on a %s job', async (status) => {
+    const { userId, applicationId } = await createOwnedApplication(database.prisma);
+    const id = await createAiJob(database.prisma, { userId, applicationId, status });
+
+    await expect(aiRepository().markFailureSettled(userId, { id, now: NOW })).resolves.toBe(0);
+    expect(await storedFailureSettledAt(database.prisma, id)).toBeNull();
+  });
+
+  it('stores the marker with a failure given settledAt and leaves it null without', async () => {
+    const { userId, applicationId } = await createOwnedApplication(database.prisma);
+    const create = () =>
+      createAiJob(database.prisma, { userId, applicationId, status: 'processing' });
+    const [settled, unsettled] = [await create(), await create()];
+    const failure = { errorType: 'needs_text', now: NOW } as const;
+
+    await aiRepository().failJob(userId, { id: settled, ...failure, settledAt: NOW });
+    await aiRepository().failJob(userId, { id: unsettled, ...failure });
+
+    expect([
+      await storedFailureSettledAt(database.prisma, settled),
+      await storedFailureSettledAt(database.prisma, unsettled),
+    ]).toEqual([NOW, null]);
   });
 });
 

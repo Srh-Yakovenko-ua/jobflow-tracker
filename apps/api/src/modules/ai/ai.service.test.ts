@@ -47,20 +47,18 @@ const NOTE_JOB: AiCompleteJob = { ...VACANCY_JOB, input: { text: VACANCY_TEXT, .
 const INVALID_OUTPUT = { status: 422, type: 'ai_invalid_output' };
 
 type AttemptOptions = Partial<
-  Pick<AiCompleteAttempt, 'job' | 'finalAttempt' | 'retried' | 'settled' | 'progressed'>
+  Pick<AiCompleteAttempt, 'job' | 'finalAttempt' | 'settled' | 'progressed'>
 >;
 
 function attemptOf({
   job = VACANCY_JOB,
   finalAttempt = false,
-  retried = false,
   settled = new SettledAiJobs().record,
   progressed = () => Promise.resolve(),
 }: AttemptOptions = {}): AiCompleteAttempt {
   return {
     job,
     finalAttempt,
-    retried,
     logFields: { jobId: job.aiJobId, queue: 'ai', jobName: 'ai.complete' },
     settled,
     progressed,
@@ -82,12 +80,17 @@ async function serviceWithFakes(nodeEnv: Env['NODE_ENV'] = 'development') {
   return { repository, ai, service: moduleRef.get(AiService) };
 }
 
-const failedJob = (errorType: string): FakeAiJob => ({
+const unsettledFailure = (errorType: string): FakeAiJob => ({
   userId: OLENA_ID,
   status: 'failed',
   step: 2,
   errorType,
   finishedAt: NOW,
+});
+
+const failedJob = (errorType: string): FakeAiJob => ({
+  ...unsettledFailure(errorType),
+  failureSettledAt: NOW,
 });
 
 const PROCESSING: FakeAiJob = { userId: OLENA_ID, status: 'processing', step: 2 };
@@ -535,14 +538,17 @@ describe('AiService.complete settling the job', () => {
     const first = await service
       .complete(attemptOf({ settled: refusedOnce, progressed }))
       .catch((thrown: unknown) => thrown);
-    const retried = await service.complete(
-      attemptOf({ retried: true, settled: settledJobs.record, progressed }),
-    );
+    const afterThrow = repository.jobs.get(AI_JOB_ID);
+    const retried = await service.complete(attemptOf({ settled: settledJobs.record, progressed }));
 
     expect(first).toHaveProperty('message', 'connect ECONNREFUSED 127.0.0.1:5432');
     expect(retried).toBeNull();
     expect(settledJobs.outcomes).toEqual([
       { job: VACANCY_JOB, status: 'failed', errorType: 'ai_invalid_output' },
+    ]);
+    expect([afterThrow, repository.jobs.get(AI_JOB_ID)]).toEqual([
+      unsettledFailure('ai_invalid_output'),
+      failedJob('ai_invalid_output'),
     ]);
     expect(seen.map(({ update }) => update.status)).toEqual(['processing', 'failed']);
     expect(ai.calls).toEqual([VACANCY_CALL]);
@@ -556,30 +562,74 @@ describe('AiService.complete settling the job', () => {
     expect(log.lines.join('')).not.toContain(VACANCY_TEXT);
   });
 
-  it.each<{ delivery: string; retried: boolean; stored: FakeAiJob }>([
+  it.each<{ delivery: string; stored: FakeAiJob }>([
     {
-      delivery: 'a first delivery of a job already failed',
-      retried: false,
+      delivery: 'a delivery of a failed job whose failure is already settled',
       stored: failedJob('ai_invalid_output'),
     },
-    { delivery: 'a retry of a job already done', retried: true, stored: doneJob('ai-result-1') },
+    { delivery: 'a delivery of a job already done', stored: doneJob('ai-result-1') },
     {
-      delivery: "a retry of another user's failed job",
-      retried: true,
-      stored: { ...failedJob('ai_invalid_output'), userId: BOHDAN_ID },
+      delivery: "a delivery of another user's unsettled failed job",
+      stored: { ...unsettledFailure('ai_invalid_output'), userId: BOHDAN_ID },
     },
-  ])('settles nothing and skips $delivery', async ({ retried, stored }) => {
+  ])('settles nothing and skips $delivery', async ({ stored }) => {
     const { repository, service } = await serviceWithFakes();
     const settledJobs = new SettledAiJobs();
     repository.jobs.set(AI_JOB_ID, stored);
 
-    await expect(
-      service.complete(attemptOf({ retried, settled: settledJobs.record })),
-    ).resolves.toBeNull();
+    await expect(service.complete(attemptOf({ settled: settledJobs.record }))).resolves.toBeNull();
 
     expect(settledJobs.outcomes).toEqual([]);
+    expect(repository.jobs.get(AI_JOB_ID)).toEqual(stored);
     expect(log.parsed()).toEqual([
       expect.objectContaining({ msg: 'ai job skipped', aiJobId: AI_JOB_ID, requestId: 'req-ai-7' }),
+    ]);
+  });
+
+  it('settles a first delivery of a failed job whose hook never ran, marks it settled and reports nothing', async () => {
+    const { repository, ai, service } = await serviceWithFakes();
+    const { seen, progressed } = progressOf(repository);
+    const settledJobs = new SettledAiJobs();
+    repository.jobs.set(AI_JOB_ID, unsettledFailure('ai_invalid_output'));
+
+    await expect(
+      service.complete(attemptOf({ settled: settledJobs.record, progressed })),
+    ).resolves.toBeNull();
+
+    expect(settledJobs.outcomes).toEqual([
+      { job: VACANCY_JOB, status: 'failed', errorType: 'ai_invalid_output' },
+    ]);
+    expect(repository.jobs.get(AI_JOB_ID)).toEqual(failedJob('ai_invalid_output'));
+    expect(seen).toEqual([]);
+    expect(ai.calls).toEqual([]);
+  });
+
+  it('leaves a failure unsettled when its hook throws on the last attempt, settles it on the next delivery and on none after', async () => {
+    const { repository, ai, service } = await serviceWithFakes();
+    const { seen, progressed } = progressOf(repository);
+    const settledJobs = new SettledAiJobs();
+    const refused = new Error('connect ECONNREFUSED 127.0.0.1:5432');
+    ai.answer = () => Promise.reject(NOT_READY);
+    const deliver = () => service.complete(attemptOf({ settled: settledJobs.record, progressed }));
+
+    await expect(
+      service.complete(
+        attemptOf({ finalAttempt: true, settled: () => Promise.reject(refused), progressed }),
+      ),
+    ).rejects.toBe(refused);
+    const afterThrow = repository.jobs.get(AI_JOB_ID);
+    const outcomes = [await deliver(), await deliver()];
+
+    expect(afterThrow).toEqual(unsettledFailure('not_ready'));
+    expect(outcomes).toEqual([null, null]);
+    expect(settledJobs.outcomes).toEqual([
+      { job: VACANCY_JOB, status: 'failed', errorType: 'not_ready' },
+    ]);
+    expect(repository.jobs.get(AI_JOB_ID)).toEqual(failedJob('not_ready'));
+    expect(seen.map(({ update }) => update.status)).toEqual(['processing', 'failed']);
+    expect(log.parsed().map(({ msg }) => msg)).toEqual([
+      'ai failed job settled again',
+      'ai job skipped',
     ]);
   });
 
@@ -783,7 +833,7 @@ describe('AiService.createJob', () => {
 });
 
 describe('AiService.failJob', () => {
-  it("fails the user's queued job with the error type at the clock's now and leaves it for another user", async () => {
+  it("fails the user's queued job with the error type at the clock's now, settled since it owes no hook, and leaves it for another user", async () => {
     const { repository, service } = await serviceWithFakes();
 
     const foreign = await service.failJob(BOHDAN_ID, { id: AI_JOB_ID, errorType: 'needs_text' });
@@ -796,6 +846,7 @@ describe('AiService.failJob', () => {
       step: 1,
       errorType: 'needs_text',
       finishedAt: NOW,
+      failureSettledAt: NOW,
     });
   });
 });

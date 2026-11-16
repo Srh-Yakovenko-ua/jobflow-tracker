@@ -9,6 +9,7 @@ import { MaintenanceController } from './maintenance.controller.js';
 import { MaintenanceProcessor } from './maintenance.processor.js';
 import { MaintenanceScheduler } from './maintenance.scheduler.js';
 import { MaintenanceService } from './maintenance.service.js';
+import { ScheduledSweepsService } from './scheduled-sweeps.service.js';
 
 @Module({
   controllers: [MaintenanceController],
@@ -18,6 +19,11 @@ export class MaintenanceModule {}
 
 @Module({
   imports: [OutboxWorkerModule, ScheduledJobsModule, SummariesModule, RhythmModule],
-  providers: [MaintenanceProcessor, MaintenanceScheduler, LocalHourRequestsService],
+  providers: [
+    MaintenanceProcessor,
+    MaintenanceScheduler,
+    LocalHourRequestsService,
+    ScheduledSweepsService,
+  ],
 })
 export class MaintenanceWorkerModule {}

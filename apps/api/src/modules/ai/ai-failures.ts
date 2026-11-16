@@ -7,8 +7,8 @@ import {
   vacancyParseOutputSchema,
 } from '@jobflow/shared';
 
-import type { SaveAiFailure } from './ai.repository.js';
 import type { AiCallRecord } from './ai-call-row.js';
+import type { SaveAiFailure } from './ai-result-row.js';
 import type { AiRun } from './ai-run.js';
 import type { AiServiceError } from './ai-service-error.js';
 

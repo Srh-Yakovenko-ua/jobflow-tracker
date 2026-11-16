@@ -393,6 +393,7 @@ failed failed
     String period_month "❓"
     DateTime started_at "❓"
     DateTime finished_at "❓"
+    DateTime failure_settled_at "❓"
     DateTime created_at 
     DateTime updated_at 
     }
