@@ -53,6 +53,7 @@ import {
   type ScheduledEventRoutesOptions,
   type ScheduledEventStore,
 } from './scheduled-event-fixtures';
+import { finishSearchRoutes, type FinishSearchRoutesOptions } from './search-fixtures';
 import { server } from './server';
 import { meRoute } from './session-fixtures';
 import { EMPTY_TIMELINE, timelineRoute } from './timeline-fixtures';
@@ -72,6 +73,8 @@ export type ApplicationPageSetup = Partial<Pick<ApplicationRouteOptions, 'reply'
   cvHints?: CvHintsResponse;
   interviewPrep?: InterviewPrepResponse;
   resumes?: ResumeRoutesOptions;
+  searches?: FinishSearchRoutesOptions;
+  alongside?: ReactNode;
   inShell?: boolean;
   live?: boolean;
 };
@@ -144,6 +147,8 @@ export function renderApplicationPage({
   cvHints: cvHintsResponse,
   interviewPrep: interviewPrepResponse,
   resumes,
+  searches,
+  alongside,
   inShell = false,
   live,
 }: ApplicationPageSetup = {}) {
@@ -161,6 +166,7 @@ export function renderApplicationPage({
   const followup = followupRoutes({ response: followupResponse });
   const cvHints = cvHintsRoutes(cvHintsResponse);
   const interviewPrep = interviewPrepRoutes(interviewPrepResponse);
+  const finish = finishSearchRoutes(searches);
   server.use(
     meRoute(),
     page.handler,
@@ -179,8 +185,16 @@ export function renderApplicationPage({
     ...followup.handlers,
     ...cvHints.handlers,
     ...interviewPrep.handlers,
+    ...finish.handlers,
   );
-  const ui = shownPage({ id, mode, inShell, live, wrap: beside.wrap });
+  const wrap = (page: ReactNode) =>
+    beside.wrap(
+      <>
+        {alongside}
+        {page}
+      </>,
+    );
+  const ui = shownPage({ id, mode, inShell, live, wrap });
   const { user, view } = renderViewInApp(ui);
   return {
     user,
@@ -202,6 +216,7 @@ export function renderApplicationPage({
     cvHints,
     interviewPrep,
     resumes: versions.sent,
+    finish,
   };
 }
 

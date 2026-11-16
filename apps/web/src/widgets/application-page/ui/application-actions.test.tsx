@@ -1,16 +1,23 @@
 import type { Stage } from '@jobflow/shared';
+import { useQuery } from '@tanstack/react-query';
 import { screen, waitFor, within } from '@testing-library/react';
 import { http } from 'msw/http';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
+import { calendarQueryOptions } from '@/entities/scheduled-event';
+import { searchKeys } from '@/entities/search';
+import { ACTIVE_SEARCH, ARCHIVED_SEARCH } from '@/test/analytics-fixtures';
 import { apiUrl, errorReply } from '@/test/api-handlers';
 import { ACME_APPLICATION } from '@/test/application-fixtures';
-import { back, replace } from '@/test/navigation';
+import { calendarRoute, KYIV_WEEK } from '@/test/calendar-fixtures';
+import { back, push, replace } from '@/test/navigation';
+import { QueryProbe, waitForQuery } from '@/test/query-status';
 import {
   type ApplicationPageSetup,
   findApplicationTitle,
   renderApplicationPage,
 } from '@/test/render-application-page';
+import { OFFER_APPLICATION } from '@/test/search-fixtures';
 import { server } from '@/test/server';
 import { stageMoveOf, timelineItemOf } from '@/test/timeline-fixtures';
 
@@ -19,6 +26,7 @@ vi.mock('next/link', () => import('@/test/link'));
 
 afterEach(() => {
   back.mockClear();
+  push.mockClear();
   replace.mockClear();
 });
 
@@ -40,6 +48,24 @@ const GHOSTED_FROM_SCREENING: ApplicationPageSetup = {
 };
 
 const REVIVE = 'Компанія відповіла: повернути в скринінг';
+
+const ACCEPTED = { name: 'Офер прийнято' } as const;
+
+const ARCHIVE = { name: 'Заархівувати пошук' } as const;
+
+const CONFLICT = 'Цей пошук уже завершено';
+
+function CalendarWatch() {
+  useQuery(calendarQueryOptions(KYIV_WEEK));
+  return null;
+}
+
+async function openFinishDialog(setup: ApplicationPageSetup = {}) {
+  const rendered = renderApplicationPage({ application: OFFER_APPLICATION, ...setup });
+  await rendered.user.click(await screen.findByRole('button', ACCEPTED));
+  const dialog = await screen.findByRole('dialog', ACCEPTED);
+  return { ...rendered, dialog };
+}
 
 const SCHEDULE_OFFERED: readonly { stage: Stage; offered: boolean }[] = [
   { stage: 'applied', offered: true },
@@ -233,6 +259,76 @@ describe('ApplicationActions', () => {
     });
     expect(screen.queryByRole('alertdialog')).toBeNull();
     expect(deletes).toEqual([]);
+  });
+
+  it('Офер прийнято in the board sheet archives the search once, refetches the board and the calendar and lands on the board', async () => {
+    const calendar = calendarRoute();
+    server.use(calendar.handler);
+    const { user, dialog, finish, board } = await openFinishDialog({
+      mode: 'sheet',
+      board: { counts: { offer: 1 } },
+      alongside: <CalendarWatch />,
+    });
+    expect(within(dialog).getByText('Пошук завершено')).toBeDefined();
+    const [boardReads, calendarReads] = [board.length, calendar.sent.length];
+
+    await user.click(within(dialog).getByRole('button', ARCHIVE));
+
+    await waitFor(() => {
+      expect(push).toHaveBeenCalledWith('/board');
+    });
+    expect(finish.sent).toEqual([
+      { searchId: ACTIVE_SEARCH.id, outcome: 'offer_accepted', openApplications: 'withdraw' },
+    ]);
+    expect(board.length).toBeGreaterThan(boardReads);
+    expect(calendar.sent.length).toBeGreaterThan(calendarReads);
+  });
+
+  it('Скасувати in the finish dialog sends nothing and leaves the page', async () => {
+    const { user, dialog, finish } = await openFinishDialog();
+
+    await user.click(within(dialog).getByRole('button', { name: 'Скасувати' }));
+
+    await waitFor(() => {
+      expect(screen.queryByRole('dialog', ACCEPTED)).toBeNull();
+    });
+    expect(finish.sent).toEqual([]);
+    expect(push).not.toHaveBeenCalled();
+  });
+
+  it.each(['No active search', 'The search is already finished'])(
+    'a 409 "%s" on the finish says once that the search is already finished',
+    async (detail) => {
+      const { user, dialog } = await openFinishDialog({
+        searches: { reply: () => errorReply({ status: 409, type: 'conflict', detail }) },
+      });
+
+      await user.click(within(dialog).getByRole('button', ARCHIVE));
+
+      expect(await screen.findByText(CONFLICT)).toBeDefined();
+      expect(screen.getAllByText(CONFLICT)).toHaveLength(1);
+      expect(screen.queryByText('Не вдалося зберегти')).toBeNull();
+      expect(push).not.toHaveBeenCalled();
+    },
+  );
+
+  it('a card short of the offer stage offers no search finish', async () => {
+    const { finish } = renderApplicationPage();
+
+    await findApplicationTitle();
+    expect(screen.queryByRole('button', ACCEPTED)).toBeNull();
+    expect(finish.listed).toEqual([]);
+  });
+
+  it('an offer from an archived search offers no search finish', async () => {
+    renderApplicationPage({
+      application: { ...OFFER_APPLICATION, searchId: ARCHIVED_SEARCH.id },
+      alongside: <QueryProbe queryKey={searchKeys.list()} />,
+    });
+
+    await waitForQuery({ queryKey: searchKeys.list(), status: 'success' });
+    await findApplicationTitle();
+    expect(screen.queryByRole('button', ACCEPTED)).toBeNull();
   });
 
   it('Enter on Ще дії opens the menu with Редагувати and Видалити', async () => {
