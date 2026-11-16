@@ -24,13 +24,17 @@ const oauthStateSchema = z.object({
 
 export type OAuthState = z.infer<typeof oauthStateSchema>;
 
+const oauthStateTokenSchema = oauthStateSchema.extend({ returnTo: z.string().min(1) });
+
+export type OAuthStateToken = z.infer<typeof oauthStateTokenSchema>;
+
 const invalidState = (): AppError => errorFor(400, 'OAuth state is missing or invalid');
 
 @Injectable()
 export class OAuthStates {
   constructor(private readonly keys: JwtKeys) {}
 
-  sign(state: OAuthState, issuedAt = new Date()): Promise<string> {
+  sign(state: OAuthStateToken, issuedAt = new Date()): Promise<string> {
     return signWithKeys({
       keys: this.keys,
       claims: state,
@@ -40,12 +44,12 @@ export class OAuthStates {
     });
   }
 
-  verify(token: string | undefined): Promise<OAuthState> {
+  verify(token: string | undefined): Promise<OAuthStateToken> {
     return verifyWithKeys({
       keys: this.keys,
       token: token ?? '',
       options: VERIFY_OPTIONS,
-      schema: oauthStateSchema,
+      schema: oauthStateTokenSchema,
       refusal: invalidState,
     });
   }

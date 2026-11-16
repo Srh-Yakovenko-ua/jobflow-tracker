@@ -1,7 +1,7 @@
+import { AUTH_ROUTES, isAuthPage, loginHref, safeReturnTo } from '@jobflow/shared';
 import { type NextRequest, NextResponse } from 'next/server';
 
 import { contentSecurityPolicy } from '@/shared/config';
-import { AUTH_ROUTES, isAuthPage, loginHref, safeReturnTo } from '@/shared/lib/return-to';
 import { SESSION_COOKIE } from '@/shared/lib/session-cookie';
 
 const CSP_HEADER = 'Content-Security-Policy';

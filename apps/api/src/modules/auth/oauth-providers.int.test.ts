@@ -13,7 +13,7 @@ const UNAVAILABLE_URLS: Record<OAuthProvider, string> = {
 };
 
 async function expectUnavailableStart(app: NestExpressApplication, provider: OAuthProvider) {
-  const { response, stateCookie } = await startOAuth(app, provider);
+  const { response, stateCookie } = await startOAuth(app, { provider });
 
   expect([response.status, response.get('location')]).toEqual([302, UNAVAILABLE_URLS[provider]]);
   expect(stateCookie).toBeUndefined();
@@ -52,7 +52,7 @@ describe('OAuth providers with only GitHub set up', () => {
     expectUnavailableStart(testApp.app, 'google'));
 
   it('redirects GitHub start to the provider with the oauth_state cookie', async () => {
-    const { response, stateCookie } = await startOAuth(testApp.app, 'github');
+    const { response, stateCookie } = await startOAuth(testApp.app, { provider: 'github' });
 
     expect([response.status, response.get('location')]).toEqual([
       302,

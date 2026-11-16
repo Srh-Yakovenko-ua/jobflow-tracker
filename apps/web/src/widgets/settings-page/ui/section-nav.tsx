@@ -1,9 +1,8 @@
 'use client';
 
-import { useSyncExternalStore } from 'react';
-
 import { uk } from '@/shared/i18n';
 import { cn } from '@/shared/lib/cn';
+import { usePageHash } from '@/shared/lib/use-page-hash';
 import { TOUCH_HEIGHT } from '@/shared/ui/touch-height';
 
 import { sectionOfHash, SETTINGS_SECTIONS, type SettingsItems } from '../model/settings-items';
@@ -17,20 +16,8 @@ const ACTIVE = 'bg-line-soft font-semibold text-ink';
 
 const IDLE = 'text-ink-3 hover:bg-surface-3 active:bg-surface-3 hover:text-ink active:text-ink';
 
-function subscribe(onChange: () => void) {
-  window.addEventListener('hashchange', onChange);
-  return () => {
-    window.removeEventListener('hashchange', onChange);
-  };
-}
-
-const hashOf = () => window.location.hash.slice(1);
-
-const noHash = () => '';
-
 export function SectionNav({ items }: SectionNavProps) {
-  const hash = useSyncExternalStore(subscribe, hashOf, noHash);
-  const active = sectionOfHash(hash);
+  const active = sectionOfHash(usePageHash().slice(1));
   const sections = SETTINGS_SECTIONS.filter(
     (section) => section !== 'rhythm' || items.weeklyRhythm,
   );

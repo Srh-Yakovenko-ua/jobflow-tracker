@@ -1,11 +1,10 @@
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
-import type { LoginInput } from '@jobflow/shared';
+import { AUTH_ROUTES, type LoginInput } from '@jobflow/shared';
 import { useForm, type UseFormReturn, useFormState } from 'react-hook-form';
 
 import { uk } from '@/shared/i18n';
-import { AUTH_ROUTES } from '@/shared/lib/return-to';
 import { useCountdown } from '@/shared/lib/use-countdown';
 import { Banner } from '@/shared/ui/banner';
 import { Button } from '@/shared/ui/button';
@@ -128,7 +127,7 @@ export function AuthForm({ mode, notice, returnTo = AUTH_ROUTES.home }: AuthForm
           {spec.copy.submit}
         </Button>
       </form>
-      <OAuthLinks />
+      <OAuthLinks returnTo={returnTo} />
       <p className="text-[12.5px] leading-[1.55] text-ink-3">{COPY.privacy}</p>
     </div>
   );

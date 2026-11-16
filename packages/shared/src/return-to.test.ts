@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { loginHref, safeReturnTo, withPageHash } from './return-to';
+import { loginHref, safeReturnTo, withPageHash } from './return-to.js';
 
 const LINK_ONLY = '/add?url=https%3A%2F%2Fdjinni.co%2Fjobs%2F1';
 

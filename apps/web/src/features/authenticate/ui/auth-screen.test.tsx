@@ -52,6 +52,11 @@ const PROVIDER_ROWS: readonly ProvidersRow[] = [
 
 const MODE_PROVIDER_ROWS = MODES.flatMap((mode) => PROVIDER_ROWS.map((row) => ({ mode, ...row })));
 
+const RETURN_ROWS = [
+  { returnTo: '/settings', start: '/start?next=%2Fsettings%23bookmarklet' },
+  { returnTo: '/settings#account', start: '/start?next=%2Fsettings%23account' },
+] as const;
+
 function rateLimitedLogin(headers: Record<string, string>) {
   server.use(authRoute({ path: '/auth/login', reply: () => rateLimitedReply(headers) }));
 }
@@ -77,6 +82,7 @@ describe('the sign-in and sign-up screen', () => {
   afterEach(() => {
     resetSignIn();
     vi.useRealTimers();
+    window.location.hash = '';
   });
 
   it('the tabs link to /register then /login and mark the open mode as the current page', () => {
@@ -104,6 +110,21 @@ describe('the sign-in and sign-up screen', () => {
       expect(oauthLinks()).toEqual(links);
       expect(screen.queryByText('АБО') !== null).toBe(divider);
       expect(screen.getByText(PRIVACY)).toBeDefined();
+    },
+  );
+
+  it.each(RETURN_ROWS)(
+    'login with returnTo $returnTo on page hash #bookmarklet sends both providers the return path $start',
+    async ({ returnTo, start }) => {
+      window.location.hash = '#bookmarklet';
+      server.use(oauthProvidersRoute(['google', 'github']));
+      renderAuthForm({ mode: 'login', returnTo }, <QueryProbe queryKey={PROVIDERS_KEY} />);
+      await waitForQuery({ queryKey: PROVIDERS_KEY, status: 'success' });
+
+      expect(oauthLinks().map((link) => link.href)).toEqual([
+        `http://localhost:4000/api/v1/auth/oauth/google${start}`,
+        `http://localhost:4000/api/v1/auth/oauth/github${start}`,
+      ]);
     },
   );
 

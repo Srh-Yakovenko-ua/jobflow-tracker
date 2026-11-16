@@ -3,14 +3,15 @@ import { describe, expect, it } from 'vitest';
 
 import { testJwtKeys, withPayload } from '../../test/auth.js';
 import { AccessTokens, signAccessToken } from './access-tokens.js';
-import { type OAuthState, OAuthStates } from './oauth-state.js';
+import { OAuthStates, type OAuthStateToken } from './oauth-state.js';
 
 const ISSUED_AT = new Date('2026-10-21T10:00:00.000Z');
 
-const GITHUB_STATE: OAuthState = {
+const GITHUB_STATE: OAuthStateToken = {
   provider: 'github',
   state: 'state-from-the-start-route',
   codeVerifier: 'verifier-from-the-start-route',
+  returnTo: '/settings#bookmarklet',
 };
 
 const states = new OAuthStates(testJwtKeys);
@@ -45,7 +46,7 @@ describe('OAuthStates', () => {
     expect(payload).toEqual({ ...GITHUB_STATE, iat: 1_792_576_800, exp: 1_792_577_400 });
   });
 
-  it('reads back the provider, state and code verifier it signed', async () => {
+  it('reads back the provider, state, code verifier and return path it signed', async () => {
     expect(await states.verify(await states.sign(GITHUB_STATE))).toEqual(GITHUB_STATE);
   });
 

@@ -7,6 +7,7 @@ import {
   loginInputSchema,
   oauthCallbackQuerySchema,
   oauthProvidersResponseSchema,
+  oauthStartQuerySchema,
   publicJwkSchema,
   refreshTokenBodySchema,
   registerInputSchema,
@@ -170,6 +171,16 @@ describe('oauthCallbackQuerySchema', () => {
       code: 'c'.repeat(512),
       state,
     });
+  });
+});
+
+describe('oauthStartQuerySchema', () => {
+  it('parses a start without a return path to an empty query', () => {
+    expect(oauthStartQuerySchema.parse({})).toEqual({});
+  });
+
+  it('keeps the return path as given and leaves its safety to the service', () => {
+    expect(oauthStartQuerySchema.parse({ next: '//evil.test' })).toEqual({ next: '//evil.test' });
   });
 });
 

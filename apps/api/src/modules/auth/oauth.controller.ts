@@ -4,6 +4,8 @@ import {
   type OAuthProvider,
   oauthProviderSchema,
   type OAuthProvidersResponse,
+  type OAuthStartQuery,
+  oauthStartQuerySchema,
 } from '@jobflow/shared';
 import { Controller, Get, Param, Query, Redirect, Req, Res } from '@nestjs/common';
 import type { Request, Response } from 'express';
@@ -33,9 +35,10 @@ export class OAuthController {
   @Redirect()
   async start(
     @Param('provider', { schema: oauthProviderSchema }) provider: OAuthProvider,
+    @Query({ schema: oauthStartQuerySchema }) { next }: OAuthStartQuery,
     @Res({ passthrough: true }) res: Response,
   ): Promise<RedirectTarget> {
-    const { url, stateToken } = await this.oauthService.start(provider);
+    const { url, stateToken } = await this.oauthService.start(provider, next);
     if (stateToken !== undefined) {
       oauthStateCookie.set(res, stateToken);
     }
@@ -52,13 +55,13 @@ export class OAuthController {
     @Res({ passthrough: true }) res: Response,
   ): Promise<RedirectTarget> {
     oauthStateCookie.clear(res);
-    if ('error' in query) {
-      return { url: this.oauthService.deniedUrl };
-    }
     const stateToken = oauthStateCookie.read(req);
-    const user = await this.oauthService.finish({ provider, query, stateToken });
+    if ('error' in query) {
+      return { url: await this.oauthService.declinedUrl(stateToken) };
+    }
+    const { user, landingUrl } = await this.oauthService.finish({ provider, query, stateToken });
     const session = await this.sessions.start(user.id);
     sendSession({ req, res, session });
-    return { url: this.oauthService.landingUrl };
+    return { url: landingUrl };
   }
 }

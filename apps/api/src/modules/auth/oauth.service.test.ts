@@ -66,6 +66,7 @@ describe('OAuthService.start', () => {
       provider: 'github',
       state: 'state-github',
       codeVerifier: 'verifier-github',
+      returnTo: '/board',
     });
   });
 
@@ -77,13 +78,31 @@ describe('OAuthService.start', () => {
     });
   });
 
+  it('keeps the return path as next on the sign-in page when the provider is not set up', async () => {
+    const { service } = await oauthServiceWith(['github']);
+
+    expect(await service.start('google', '/settings')).toStrictEqual({
+      url: 'http://localhost:3000/login?oauth=unavailable&provider=google&next=%2Fsettings',
+    });
+  });
+
   it('lands on the board of WEB_ORIGIN, and on its sign-in page when the user declined', async () => {
     const { service } = await oauthServiceWith();
 
-    expect([service.landingUrl, service.deniedUrl]).toEqual([
+    const { landingUrl } = await finishGitHub(service, { startWith: 'github' });
+
+    expect([landingUrl, await service.declinedUrl(undefined)]).toEqual([
       'http://localhost:3000/board',
       'http://localhost:3000/login?oauth=denied',
     ]);
+  });
+});
+
+describe('OAuthService.declinedUrl', () => {
+  it('sends a decline with a state cookie that is not a JWT to the plain sign-in page instead of a 400', async () => {
+    const { service } = await oauthServiceWith();
+
+    expect(await service.declinedUrl('not-a-jwt')).toBe('http://localhost:3000/login?oauth=denied');
   });
 });
 
@@ -99,7 +118,7 @@ describe('OAuthService.finish', () => {
   it('signs in with the GitHub account the code belongs to', async () => {
     const { accounts, service } = await oauthServiceWith();
 
-    const user = await finishGitHub(service, { startWith: 'github' });
+    const { user } = await finishGitHub(service, { startWith: 'github' });
 
     expect(user).toEqual(OLENA_USER);
     expect(accounts.signIns).toEqual([{ ...GITHUB_OLENA, provider: 'github' }]);
