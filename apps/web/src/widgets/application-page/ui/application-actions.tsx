@@ -120,7 +120,7 @@ export function ApplicationActions({
       <FinishSearchAction application={application} />
       {next !== null && (
         <Button
-          loading={move.isPending}
+          loading={move.isPending && move.variables.toStage === next}
           onClick={() => {
             move.mutate({ application, toStage: next });
           }}
