@@ -42,7 +42,7 @@ describe('CvHintsPanel', () => {
   it('before any hints says what the AI does and asks for them once', async () => {
     const { user, routes } = renderPanel(NO_CV_HINTS);
 
-    expect(screen.getByText(/Нового досвіду він не додає/)).toBeDefined();
+    expect(screen.getByText(/Нового досвіду не додає/)).toBeDefined();
     await user.click(screen.getByRole('button', { name: 'Підказати' }));
 
     await expect.poll(() => routes.requested).toEqual([ACME_APPLICATION.id]);

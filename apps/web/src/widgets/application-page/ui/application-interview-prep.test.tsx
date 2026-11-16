@@ -21,7 +21,7 @@ const TITLE = 'Підготовка';
 const REQUEST = { name: 'Підготувати до інтервʼю' } as const;
 
 const NOTHING_TO_BUILD_FROM =
-  'Підготовку не скласти: потрібна запланована співбесіда, а у вакансії мають бути вимоги або Match Score.';
+  'Для підготовки потрібна запланована співбесіда і вимоги або Match Score у вакансії.';
 
 const PLANNED_TOMORROW = scheduledEventOf({ startsAt: '2026-11-15T09:00:00.000Z' });
 

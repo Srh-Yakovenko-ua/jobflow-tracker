@@ -3,6 +3,8 @@ import { join } from 'node:path';
 
 import { describe, expect, it } from 'vitest';
 
+import { uk } from './uk';
+
 const COPY_RULES = {
   spacedDash: /\s\u2014|\u2014\s/,
   russianStem: /[кК]арточ|[зЗ]аметк|[зЗ]аметц/,
@@ -24,6 +26,20 @@ const linesBreaking = (pattern: RegExp) =>
       .flatMap((line, index) => (pattern.test(line) ? [`${file}:${String(index + 1)}`] : [])),
   );
 
+const MAX_COPY_LENGTH = 120;
+const SHOWCASE_KEYS = new Set(['devUi', 'designSystem']);
+
+const longLeaves = (node: unknown, path: string): string[] => {
+  if (typeof node === 'string') return node.length > MAX_COPY_LENGTH ? [path] : [];
+  if (typeof node !== 'object' || node === null) return [];
+  return Object.entries(node).flatMap(([key, child]) => longLeaves(child, `${path}.${key}`));
+};
+
+const longCopyIn = (copy: object) =>
+  Object.entries(copy)
+    .filter(([key]) => !SHOWCASE_KEYS.has(key))
+    .flatMap(([key, child]) => longLeaves(child, key));
+
 describe('Ukrainian UI copy', () => {
   it.each(Object.entries(COPY_RULES))('no i18n line breaks the %s rule', (_name, pattern) => {
     expect(linesBreaking(pattern)).toEqual([]);
@@ -41,5 +57,20 @@ describe('Ukrainian UI copy', () => {
     { line: "title: 'Нотатка до відмови',", broken: [] },
   ])('reads $line as breaking $broken', ({ line, broken }) => {
     expect(rulesBrokenBy(line)).toEqual(broken);
+  });
+
+  it('no uk string outside the showcase copy runs over 120 characters', () => {
+    expect(longCopyIn(uk)).toEqual([]);
+  });
+
+  it.each([
+    { name: 'a 121-character leaf', copy: { a: { b: 'х'.repeat(121) } }, long: ['a.b'] },
+    { name: 'a 120-character leaf', copy: { a: { b: 'х'.repeat(120) } }, long: [] },
+    { name: 'a devUi leaf', copy: { devUi: { b: 'х'.repeat(121) } }, long: [] },
+    { name: 'a designSystem leaf', copy: { designSystem: { b: 'х'.repeat(121) } }, long: [] },
+    { name: 'an array item', copy: { a: ['ок', 'х'.repeat(121)] }, long: ['a.1'] },
+    { name: 'a template', copy: { a: () => 'х'.repeat(121) }, long: [] },
+  ])('lists $name as $long', ({ copy, long }) => {
+    expect(longCopyIn(copy)).toEqual(long);
   });
 });

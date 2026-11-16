@@ -37,7 +37,7 @@ const LINK_BEHIND_DIALOG = { ...LINK, hidden: true } as const;
 
 const CANCEL = { name: 'Скасувати' } as const;
 
-const SHOWN_ONCE = /Кнопку видно лише одразу після створення/;
+const SHOWN_ONCE = /Кнопку видно лише зараз/;
 
 const HELD_MUTATION_DATA = 'mutation data held in the cache';
 
@@ -291,7 +291,7 @@ describe('InstallBookmarklet', () => {
 
     const { warning, open } = await cancelConfirm(user, REGENERATE);
 
-    expect(warning).toContain('Закладка, що вже стоїть на панелі, перестане працювати');
+    expect(warning).toContain('Стара закладка перестане працювати');
     expect(open).toBeNull();
     expect(sent).toEqual(['POST']);
   });
@@ -566,27 +566,17 @@ describe('InstallBookmarklet', () => {
         'Букмарклет надсилає лише ту сторінку, яку ти бачиш, і лише тоді, коли ти на нього тиснеш.',
       ),
     ).toBeDefined();
+    expect(screen.getByText(/Скрипти сторінки можуть прочитати токен/)).toBeDefined();
+    expect(screen.getByText(/Токен міг витекти\? Створи нову кнопку\./)).toBeDefined();
     expect(
-      screen.getByText(/скрипти самої сторінки вакансії можуть прочитати його токен/),
-    ).toBeDefined();
-    expect(
-      screen.getByText(/створи нову кнопку: старий токен одразу перестане діяти/),
-    ).toBeDefined();
-    expect(
-      screen.getByText(
-        /Цей токен уміє створювати чернетки, а у відповідь показує, чи вакансія з такою адресою вже є у твоїй воронці: компанію, посаду, етап і дату відгуку\./,
-      ),
+      screen.getByText(/він створює чернетки й віддає компанію, посаду, етап і дату відгуку\./),
     ).toBeDefined();
     expect(
       screen.getByText(/Зміна пароля і «Вийти на всіх пристроях» теж вимикають букмарклет\./),
     ).toBeDefined();
     expect(
-      screen.getByText(/браузер може спитати дозвіл на доступ до локальної мережі/),
+      screen.getByText(/Браузер може спитати про локальну мережу: дозволь, інакше букмарклет/),
     ).toBeDefined();
-    expect(
-      screen.getByText(
-        /Дозвіл отримує весь цей сайт, а не лише букмарклет\. Забрати його можна в налаштуваннях сайту в браузері\./,
-      ),
-    ).toBeDefined();
+    expect(screen.getByText(/Дозвіл діє на весь сайт\./)).toBeDefined();
   });
 });

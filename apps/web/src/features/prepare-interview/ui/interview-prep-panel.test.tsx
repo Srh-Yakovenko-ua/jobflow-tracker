@@ -26,7 +26,7 @@ const PROCESSING: AiJob = { status: 'processing', step: 2, steps: 3 };
 const REQUEST = { name: 'Підготувати до інтервʼю' } as const;
 
 const NOTHING_TO_BUILD_FROM =
-  'Підготовку не скласти: потрібна запланована співбесіда, а у вакансії мають бути вимоги або Match Score.';
+  'Для підготовки потрібна запланована співбесіда і вимоги або Match Score у вакансії.';
 
 const SHOW_QUESTIONS = { name: 'Показати питання для практики' } as const;
 

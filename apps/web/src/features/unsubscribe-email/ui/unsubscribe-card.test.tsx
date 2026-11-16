@@ -61,7 +61,7 @@ describe('UnsubscribeCard', () => {
 
     expect(
       await screen.findByText(
-        'Листи «Місячне AI-саммарі» більше не приходитимуть. Увімкнути їх знову можна в налаштуваннях, розділ «Повідомлення».',
+        'Листи «Місячне AI-саммарі» більше не приходитимуть. Увімкнути знову можна в налаштуваннях.',
       ),
     ).toBeDefined();
     const expected: EmailUnsubscribeInput[] = [{ token: TOKEN }];

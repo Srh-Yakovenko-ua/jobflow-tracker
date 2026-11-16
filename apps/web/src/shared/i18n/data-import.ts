@@ -19,7 +19,7 @@ type PreviewSummary = Readonly<{ shown: number; total: number; invalid: number }
 
 export const dataImport = {
   title: 'Імпорт з таблиці',
-  lead: 'Перенеси відгуки з Google Sheets чи Excel. Збережи таблицю як CSV, зістав стовпці й перевір перші рядки.',
+  lead: 'Перенеси відгуки з Google Sheets чи Excel: збережи таблицю як CSV і зістав стовпці.',
   step: (current: number, total: number) => `Крок ${String(current)} з ${String(total)}`,
   upload: {
     title: 'Файл CSV',

@@ -10,8 +10,7 @@ import { regionOf, renderLoadedSettings, SUGGESTIONS_KEY } from '@/test/render-s
 vi.mock('next/navigation', () => import('@/test/navigation'));
 vi.mock('next/link', () => import('@/test/link'));
 
-const FINAL_STAGE =
-  'На етапі «фінал» поріг автоматично подвоюється: там 24 дні є нормою, і нагадування були б хибними.';
+const FINAL_STAGE = 'На етапі «фінал» поріг подвоюється: 24 дні.';
 
 const searchRegion = () => within(regionOf('Пошук і тиша'));
 
@@ -51,16 +50,14 @@ describe('SearchSection', () => {
     const saved = await searchRegion().findByText('Збережено');
     expect(saved.className).toBe('animate-fade-in');
     expect(routes.patches).toEqual([{ silenceDays: 14 }]);
-    expect(hint()).toContain('там 28 днів є нормою');
+    expect(hint()).toContain('подвоюється: 28 днів');
   });
 
   it('the hint recommends the preset that covers the suggestion and names the final-stage doubling', async () => {
     await renderLoadedSettings();
     await waitForQuery({ queryKey: SUGGESTIONS_KEY, status: 'success' });
 
-    expect(hint()).toBe(
-      `Твоя медіана відповіді становить 6 днів, тому 14 буде розумним порогом. ${FINAL_STAGE}`,
-    );
+    expect(hint()).toBe(`Твоя медіана відповіді 6 днів, тож раджу 14. ${FINAL_STAGE}`);
   });
 
   it('with too few answers the hint gives the starting value instead of a median', async () => {
@@ -70,9 +67,7 @@ describe('SearchSection', () => {
     });
     await waitForQuery({ queryKey: SUGGESTIONS_KEY, status: 'success' });
 
-    expect(hint()).toBe(
-      `Поки замало відповідей, щоб порадити поріг. Стартове значення: 7 днів. ${FINAL_STAGE}`,
-    );
+    expect(hint()).toBe(`Поки замало відповідей: стартово 7 днів. ${FINAL_STAGE}`);
   });
 
   it.each(OUTAGES)(

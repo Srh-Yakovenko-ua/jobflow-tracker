@@ -39,7 +39,7 @@ describe('DeleteAccountDialog', () => {
     const { dialog } = await openDialog();
 
     expect(dialog.textContent).toContain(
-      'Зникнуть усі вакансії, історія етапів, контакти, нотатки, резюме з файлами, нагадування й AI-результати. Відновити їх не вийде.',
+      'Зникнуть вакансії, контакти, нотатки, резюме, нагадування й AI-результати. Відновити їх не вийде.',
     );
     expect(dialog.textContent).toContain('Спершу збережи архів зі своїми даними.');
     expect(screen.getByText('export offer slot')).toBeDefined();

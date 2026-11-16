@@ -366,7 +366,7 @@ describe('ApplicationsTable bulk actions', () => {
     const dialog = await screen.findByRole('alertdialog', {
       name: 'Відкликати 2 картки?',
       description:
-        'Етап «відкликав» остаточний, повернути картку з нього не вийде. Картки, які вже закриті, лишаться як є.',
+        'Етап «відкликав» остаточний: повернути картку не вийде. Закриті картки лишаться як є.',
     });
     expect(moves).toEqual([]);
 
