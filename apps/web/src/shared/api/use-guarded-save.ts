@@ -12,7 +12,7 @@ type GuardedSaveOptions<Body, Values extends FieldValues, Result> = Readonly<{
   request: (body: Body) => Promise<Result>;
   form: Omit<ApplyFieldErrorsOptions<Values>, 'error'>;
   onSuccess: (result: Result) => unknown;
-  onSaved?: () => void;
+  onSaved?: (result: Result) => void;
   errorToast?: (error: Error) => ErrorToastContent;
 }>;
 
@@ -53,8 +53,8 @@ export function useGuardedSave<Body, Values extends FieldValues, Result>({
     save: (body) => {
       if (queryClient.isMutating({ mutationKey }) > 0) return;
       mutation.mutate(body, {
-        onSuccess: () => {
-          onSaved?.();
+        onSuccess: (result) => {
+          onSaved?.(result);
         },
       });
     },

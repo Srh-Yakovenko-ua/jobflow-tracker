@@ -43,11 +43,13 @@ export function useConfirmDraft({
       }
     },
     form: { fields: EDIT_FIELDS, setError },
-    onSuccess: (outcome) => {
+    onSuccess: () => {
       refresh(applicationKeys.detail(applicationId));
       refresh(applicationKeys.boards());
       refresh(applicationKeys.lists());
       refresh(timelineKeys.detail(applicationId));
+    },
+    onSaved: (outcome) => {
       if (outcome === 'confirmed') actions.onConfirmed();
     },
   });

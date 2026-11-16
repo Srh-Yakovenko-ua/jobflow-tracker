@@ -73,17 +73,27 @@ def holds_value(quote: str, *, name: str, value: Any) -> bool:
     return all(collapsed(item).casefold() in folded for item in items)
 
 
+def without_blanks(value: Any) -> Any:
+    if isinstance(value, str):
+        return value if collapsed(value) else None
+    if isinstance(value, list):
+        return [item for item in value if collapsed(item)]
+    return value
+
+
 def checked_field(field: dict[str, Any], *, name: str, seen: str) -> dict[str, Any]:
-    value, evidence = field["value"], field["evidence"]
+    value, evidence = without_blanks(field["value"]), field["evidence"]
     empty = value in (None, [])
-    if field["confidence"] == "missing" or (empty and evidence is None):
+    blanked = empty and field["value"] not in (None, [])
+    if field["confidence"] == "missing" or blanked or (empty and evidence is None):
         cleared: list[str] | None = [] if isinstance(value, list) else None
         return {"value": cleared, "confidence": "missing", "evidence": None}
+    kept = {**field, "value": value}
     quote = collapsed(evidence or "")
     quoted = bool(quote) and quote in seen
     if empty or not quoted or not holds_value(quote, name=name, value=value):
-        return {**field, "confidence": "check"}
-    return field
+        return {**kept, "confidence": "check"}
+    return kept
 
 
 def checked(

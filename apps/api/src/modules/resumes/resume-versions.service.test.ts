@@ -4,7 +4,7 @@ import { FileStorage } from '../../storage/file-storage.js';
 import { AI_JOB_ID } from '../../test/ai.js';
 import { FAKE_TRANSACTION, fakeTransactionModule } from '../../test/fake-prisma.js';
 import { FAKE_STORAGE_URL, FakeFileStorage } from '../../test/file-storage.js';
-import { type ByUser } from '../../test/recorded-events.js';
+import { type ByUser, RecordedEvents } from '../../test/recorded-events.js';
 import { ActiveVersions } from '../../test/resumes.js';
 import {
   BOHDAN_ID,
@@ -15,6 +15,7 @@ import {
 } from '../../test/service-fixtures.js';
 import { daysBefore, NOW } from '../../test/time.js';
 import {
+  type RecordResumeEvent,
   type ResumeVersionById,
   type ResumeVersionRow,
   ResumeVersionsRepository,
@@ -51,7 +52,7 @@ const LINKED_CONFLICT = {
   },
 };
 
-class FakeResumeVersionsRepository {
+class FakeResumeVersionsRepository extends RecordedEvents<RecordResumeEvent> {
   readonly updates: ByUser<UpdateResumeVersion>[] = [];
   readonly deletedIds: string[] = [];
   readonly locked: string[] = [];
@@ -201,6 +202,23 @@ describe('ResumeVersionsService.update', () => {
     expect([version.title, repository.active.get(OLENA_ID)]).toEqual([
       'для продуктових',
       RESUME_VERSION_ID,
+    ]);
+  });
+
+  it('a CV rename shows the new title in resume A/B', async () => {
+    const { repository, service } = await serviceWithFakes();
+
+    await service.update(OLENA_ID, { id: RESUME_VERSION_ID, input: { title: 'для продуктових' } });
+    await expect(
+      service.update(BOHDAN_ID, { id: RESUME_VERSION_ID, input: { title: 'чужа' } }),
+    ).rejects.toMatchObject(VERSION_NOT_FOUND);
+
+    expect(repository.events).toEqual([
+      {
+        userId: OLENA_ID,
+        event: { eventType: 'resume.version_updated', resumeVersionId: RESUME_VERSION_ID },
+        tx: FAKE_TRANSACTION,
+      },
     ]);
   });
 

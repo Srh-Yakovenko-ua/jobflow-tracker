@@ -7,6 +7,7 @@ export const RESUME_EVENTS = {
   versionUploaded: 'resume.version_uploaded',
   attached: 'resume.attached',
   versionProfiled: 'resume.version_profiled',
+  versionUpdated: 'resume.version_updated',
 } as const;
 
 const resumeVersionEventSchema = z.object({
@@ -15,6 +16,8 @@ const resumeVersionEventSchema = z.object({
 });
 
 export const resumeVersionProfiledPayloadSchema = resumeVersionEventSchema;
+
+export const resumeVersionUpdatedPayloadSchema = resumeVersionEventSchema;
 
 export const resumeVersionUploadedPayloadSchema = resumeVersionEventSchema.extend({
   aiJobId: z.uuid(),
@@ -36,10 +39,9 @@ export type ResumeEvent =
       'userId'
     >)
   | ({ eventType: typeof RESUME_EVENTS.attached } & Omit<ResumeAttachedPayload, 'userId'>)
-  | ({ eventType: typeof RESUME_EVENTS.versionProfiled } & Omit<
-      ResumeVersionProfiledPayload,
-      'userId'
-    >);
+  | ({
+      eventType: typeof RESUME_EVENTS.versionProfiled | typeof RESUME_EVENTS.versionUpdated;
+    } & Omit<ResumeVersionProfiledPayload, 'userId'>);
 
 export function resumeEvent(
   userId: string,

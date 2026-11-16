@@ -5,6 +5,7 @@ import { withoutUndefined } from '../../common/without-undefined.js';
 import type { Prisma } from '../../generated/prisma/client.js';
 import type { InTransaction } from '../../prisma/in-transaction.js';
 import { PrismaService } from '../../prisma/prisma.service.js';
+import { searchFinishedEvent } from './searches.events.js';
 
 export type ActiveSearch = { id: string };
 
@@ -13,6 +14,8 @@ export type SearchById = InTransaction & { id: string };
 export type ArchiveSearch = SearchById & { outcome: SearchOutcome; finishedAt: Date };
 
 export type CreateActiveSearch = InTransaction & { startedAt: Date; createdAt?: Date };
+
+export type RecordSearchFinished = InTransaction & { searchId: string };
 
 export const SEARCH_SELECT = {
   id: true,
@@ -58,6 +61,16 @@ export class SearchesRepository {
     return tx.search.create({
       data: withoutUndefined({ userId, title: DEFAULT_SEARCH_TITLE, startedAt, createdAt }),
       select: SEARCH_SELECT,
+    });
+  }
+
+  async recordFinished(
+    userId: string,
+    { searchId, tx = this.prisma }: RecordSearchFinished,
+  ): Promise<void> {
+    await tx.outboxEvent.create({
+      data: searchFinishedEvent(userId, searchId),
+      select: { id: true },
     });
   }
 

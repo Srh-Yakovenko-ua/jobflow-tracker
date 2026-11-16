@@ -6,6 +6,7 @@ export const LIVE_EVENTS = {
   jobUpdated: 'job.updated',
   applicationUpdated: 'application.updated',
   notificationCreated: 'notification.created',
+  analyticsChanged: 'analytics.changed',
 } as const;
 
 export const LIVE_LIMITS = {
@@ -22,6 +23,8 @@ export const liveApplicationUpdatedSchema = z.object({
 
 export const liveNotificationCreatedSchema = z.object({ notificationId: z.uuid() });
 
+export const liveAnalyticsChangedSchema = z.object({});
+
 const liveEventBaseSchema = z.object({ id: z.uuid() });
 
 export const liveEventSchema = z.discriminatedUnion('type', [
@@ -37,6 +40,10 @@ export const liveEventSchema = z.discriminatedUnion('type', [
     type: z.literal(LIVE_EVENTS.notificationCreated),
     data: liveNotificationCreatedSchema,
   }),
+  liveEventBaseSchema.extend({
+    type: z.literal(LIVE_EVENTS.analyticsChanged),
+    data: liveAnalyticsChangedSchema,
+  }),
 ]);
 
 export const liveTicketSchema = z.object({ ticket: z.string().min(1), expiresInSeconds: z.int() });
@@ -45,6 +52,7 @@ export const liveStreamQuerySchema = z.object({ ticket: z.string().max(128).defa
 
 export type LiveApplicationUpdated = z.infer<typeof liveApplicationUpdatedSchema>;
 export type LiveNotificationCreated = z.infer<typeof liveNotificationCreatedSchema>;
+export type LiveAnalyticsChanged = z.infer<typeof liveAnalyticsChangedSchema>;
 export type LiveEvent = z.infer<typeof liveEventSchema>;
 export type LiveTicket = z.infer<typeof liveTicketSchema>;
 export type LiveStreamQuery = z.infer<typeof liveStreamQuerySchema>;
