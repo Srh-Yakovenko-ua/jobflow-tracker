@@ -9,6 +9,7 @@ import {
   DUPLICATE,
   type FetchReply,
   stubFetch,
+  UNAUTHORIZED_HTML_REPLY,
 } from './test/api.js';
 import { DJINNI_PAGE } from './test/fixtures/pages.js';
 import { elementOf, mountPage } from './test/page.js';
@@ -142,7 +143,7 @@ describe('sendCapture', () => {
     { name: 'a revoked token', reply: { status: 401 }, outcome: { kind: 'unauthorized' } },
     {
       name: 'a revoked token behind an html error page',
-      reply: { status: 401, text: '<html>Unauthorized</html>' },
+      reply: UNAUTHORIZED_HTML_REPLY,
       outcome: { kind: 'unauthorized' },
     },
     { name: 'a conflict without a type', reply: { status: 409 }, outcome: { kind: 'conflict' } },

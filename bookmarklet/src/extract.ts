@@ -2,15 +2,17 @@ const VACANCY_BLOCKS = ['.b-vacancy', '.l-vacancy', '.job-post-page', 'article',
 const PAGE_CHROME = 'nav,footer';
 const NOT_VACANCY_TEXT = `${PAGE_CHROME},noscript`;
 
+function isRendered(element: Element | null): boolean {
+  return (
+    !element || (getComputedStyle(element).display !== 'none' && isRendered(element.parentElement))
+  );
+}
+
 function textOutsideChrome(node: Node | null): string {
   if (node instanceof Text) {
     return node.data.trim();
   }
-  if (
-    !(node instanceof HTMLElement) ||
-    node.matches(NOT_VACANCY_TEXT) ||
-    getComputedStyle(node).display === 'none'
-  ) {
+  if (!(node instanceof HTMLElement) || node.matches(NOT_VACANCY_TEXT) || !isRendered(node)) {
     return '';
   }
   if (!node.querySelector(PAGE_CHROME)) {

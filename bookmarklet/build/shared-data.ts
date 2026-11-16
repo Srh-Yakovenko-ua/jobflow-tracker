@@ -31,7 +31,7 @@ function cssVariablesOf(colours: ThemeColours): string {
 }
 
 function compactCss(value: string): string {
-  return value.replaceAll(' / ', '/').replaceAll(', ', ',');
+  return value.replaceAll(' / ', '/').replaceAll(', ', ',').replaceAll(/\b0\./g, '.');
 }
 
 function packedTextsOf<Key extends string>(keys: readonly Key[], textOf: (key: Key) => string) {
@@ -51,7 +51,7 @@ const shared = {
     font: CHART_THEME.font.ui,
     radius: `${String(tokens.radius['2xl'])}px`,
     shadow: compactCss(tokens.elevation.e3.web),
-    spring: `${String(motion.spring)}ms cubic-bezier(${motion.springEasing.join()})`,
+    spring: compactCss(`${String(motion.spring)}ms cubic-bezier(${motion.springEasing.join()})`),
     hover: `${String(motion.instant)}ms`,
   },
 } satisfies SharedData;

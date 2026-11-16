@@ -9,7 +9,6 @@ export async function bundleBookmarklet(): Promise<string> {
     minify: true,
     format: 'iife',
     target: 'es2022',
-    charset: 'utf8',
     legalComments: 'none',
     write: false,
     define: SHARED_DEFINE,

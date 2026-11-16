@@ -8,6 +8,7 @@ import {
   DUPLICATE,
   type FetchReply,
   stubFetch,
+  UNAUTHORIZED_HTML_REPLY,
 } from './test/api.js';
 import { LINKEDIN_PAGE } from './test/fixtures/pages.js';
 import { mountPage, shownToast, toastHosts, toastLinkHref } from './test/page.js';
@@ -142,7 +143,7 @@ describe('run', () => {
   it.each<{ name: string; reply: FetchReply; text: string; href?: string }>([
     {
       name: 'a revoked token behind an html error page',
-      reply: { status: 401, text: '<html>Unauthorized</html>' },
+      reply: UNAUTHORIZED_HTML_REPLY,
       text: 'Букмарклет вимкненоСтворити новий',
       href: 'http://localhost:3000/settings#bookmarklet',
     },
