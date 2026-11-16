@@ -14,6 +14,15 @@ export type ToastContent = {
 const HOST_TAG = 'jobflow-toast';
 const BUSY = 'busy';
 const SVG = 'http://www.w3.org/2000/svg';
+const newElement = <Tag extends keyof HTMLElementTagNameMap>(
+  tag: Tag,
+): HTMLElementTagNameMap[Tag] => document.createElement(tag);
+
+declare global {
+  interface HTMLElementTagNameMap {
+    'jobflow-toast': HTMLElement;
+  }
+}
 
 function hostOf(): Element | null {
   return document.querySelector(HOST_TAG);
@@ -29,9 +38,9 @@ export function toastIsBusy(): boolean {
 
 function mountRegion(): Element {
   hideToast();
-  const host = document.createElement(HOST_TAG);
+  const host = newElement(HOST_TAG);
   const sheet = new CSSStyleSheet();
-  const region = document.createElement('div');
+  const region = newElement('div');
   const root = host.attachShadow({ mode: 'open' });
   sheet.replaceSync(TOAST_STYLES);
   root.adoptedStyleSheets = [sheet];
@@ -42,7 +51,7 @@ function mountRegion(): Element {
 }
 
 function textElement<Tag extends 'p' | 'a'>(tag: Tag, text: string): HTMLElementTagNameMap[Tag] {
-  const element = document.createElement(tag);
+  const element = newElement(tag);
   element.textContent = text;
   return element;
 }
@@ -56,7 +65,7 @@ function linkElement({ label, href }: ToastLink): HTMLAnchorElement {
 }
 
 function closeButton(): HTMLButtonElement {
-  const button = document.createElement('button');
+  const button = newElement('button');
   const icon = document.createElementNS(SVG, 'svg');
   const cross = document.createElementNS(SVG, 'path');
   cross.setAttribute('d', 'M18,6,6,18M6,6l12,12');
@@ -85,7 +94,7 @@ function hideLater(shown: Element, hideAfterMs: number): void {
 export function showToast({ title, note, link, hideAfterMs, busy }: ToastContent): void {
   const region = hostOf()?.shadowRoot?.firstElementChild ?? mountRegion();
   const heading = textElement('p', title);
-  const body = document.createElement('div');
+  const body = newElement('div');
   body.append(heading);
   if (note) {
     body.append(textElement('p', note));

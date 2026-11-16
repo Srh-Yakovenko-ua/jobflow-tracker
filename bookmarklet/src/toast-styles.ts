@@ -14,6 +14,6 @@ export const TOAST_STYLES =
   ':is(a,button):hover{background:var(--t)}' +
   ':focus-visible{outline:2px solid var(--a);outline-offset:2px}' +
   'svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round}' +
-  '@keyframes t{from{transform:translateY(-14px) scale(.96)}}' +
+  '@keyframes t{from{transform:translateY(-14px)scale(.96)}}' +
   `@media(prefers-color-scheme:dark){[role]{${look.dark}}}` +
   `@media(prefers-reduced-motion:no-preference){[role]{animation:t ${look.spring}}a,button{transition:background ${look.hover}}}`;

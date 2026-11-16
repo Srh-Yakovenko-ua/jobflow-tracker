@@ -37,6 +37,11 @@ export function conflictReply(type: ErrorResponse['type']): FetchReply {
   return { status: 409, body };
 }
 
+export const UNAUTHORIZED_HTML_REPLY: FetchReply = {
+  status: 401,
+  text: '<html>Unauthorized</html>',
+};
+
 function replyTo(behaviour: FetchBehaviour) {
   if (behaviour === 'silent') {
     return new Promise<never>(() => undefined);
