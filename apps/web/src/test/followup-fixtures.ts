@@ -7,8 +7,11 @@ import { apiUrl } from './api-handlers';
 
 export type FollowupRoutesOptions = Readonly<{
   response?: FollowupResponse | undefined;
-  generateReply?: HttpResponseResolver | undefined;
+  responseOf?: ((applicationId: string) => FollowupResponse | undefined) | undefined;
+  generateReply?: HttpResponseResolver<{ id: string }> | undefined;
 }>;
+
+export type PostedFollowup = Readonly<{ id: string; idempotencyKey: string | null }>;
 
 type FollowupJob = NonNullable<FollowupResponse['job']>;
 
@@ -41,18 +44,29 @@ export function followupJob(
   return { ...NO_FOLLOWUP, job: { id: FOLLOWUP_JOB_ID, status, errorType } };
 }
 
-export function followupRoutes({ response = NO_FOLLOWUP, generateReply }: FollowupRoutesOptions) {
+export function acceptedFollowup() {
+  return HttpResponse.json<CaptureRetryResponse>({ jobId: FOLLOWUP_JOB_ID }, { status: 202 });
+}
+
+export function followupRoutes({
+  response = NO_FOLLOWUP,
+  responseOf = () => undefined,
+  generateReply,
+}: FollowupRoutesOptions) {
   const state = { response };
   const requested: unknown[] = [];
   const marked: string[] = [];
-  const sent = { requested, marked };
-  const accepted = () =>
-    HttpResponse.json<CaptureRetryResponse>({ jobId: FOLLOWUP_JOB_ID }, { status: 202 });
+  const posted: PostedFollowup[] = [];
+  const sent = { requested, marked, posted };
   const handlers = [
-    http.get(apiUrl('/applications/:id/followup'), () => HttpResponse.json(state.response)),
-    http.post(apiUrl('/applications/:id/followup'), async (info) => {
+    http.get<{ id: string }>(apiUrl('/applications/:id/followup'), ({ params }) =>
+      HttpResponse.json(responseOf(params.id) ?? state.response),
+    ),
+    http.post<{ id: string }>(apiUrl('/applications/:id/followup'), async (info) => {
       sent.requested.push(await info.request.json());
-      return generateReply === undefined ? accepted() : generateReply(info);
+      const idempotencyKey = info.request.headers.get('Idempotency-Key');
+      sent.posted.push({ id: info.params.id, idempotencyKey });
+      return generateReply === undefined ? acceptedFollowup() : generateReply(info);
     }),
     http.post<{ id: string }>(apiUrl('/applications/:id/followup/sent'), ({ params }) => {
       sent.marked.push(params.id);

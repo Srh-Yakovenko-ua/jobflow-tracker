@@ -6,7 +6,7 @@ import { FAILED_MARK } from '@/shared/ui/async-state';
 import { Button } from '@/shared/ui/button';
 import { TOUCH_HEIGHT } from '@/shared/ui/touch-height';
 
-import type { FollowupFailed } from '../lib/followup-view';
+import type { FollowupFailed, FollowupFailureReason } from '../lib/followup-view';
 import type { FollowupMethods } from './followup-choices';
 import { FollowupRequestShell } from './followup-request-shell';
 
@@ -22,11 +22,17 @@ const COPY = uk.followup.failed;
 
 const ACTION = cn('h-9', TOUCH_HEIGHT);
 
-function FailureLine({ timeout }: FollowupFailed) {
+const LINES: Record<FollowupFailureReason, string> = {
+  timeout: COPY.timeout,
+  budget: COPY.budget,
+  other: COPY.other,
+};
+
+function FailureLine({ reason }: FollowupFailed) {
   return (
     <p role="alert" className="flex items-start gap-2.25 text-[13.5px] leading-normal text-danger">
       <span className="mt-0.5">{FAILED_MARK}</span>
-      <span>{timeout ? COPY.timeout : COPY.other}</span>
+      <span>{LINES[reason]}</span>
     </p>
   );
 }
@@ -47,8 +53,8 @@ function FailureButtons({ failure, actions }: FollowupFailureAlertProps) {
 export function FollowupFailureAlert(props: FollowupFailureAlertProps) {
   return (
     <div className="flex flex-col gap-3">
-      <FailureLine timeout={props.failure.timeout} />
-      <FailureButtons {...props} />
+      <FailureLine reason={props.failure.reason} />
+      {props.failure.reason !== 'budget' && <FailureButtons {...props} />}
     </div>
   );
 }
@@ -59,7 +65,7 @@ export function FollowupFailure({ methods, ...alert }: FollowupFailureProps) {
       methods={methods}
       onSubmit={alert.actions.onRetry}
       view={{
-        lead: <FailureLine timeout={alert.failure.timeout} />,
+        lead: <FailureLine reason={alert.failure.reason} />,
         actions: <FailureButtons {...alert} />,
       }}
     />

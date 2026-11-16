@@ -1,10 +1,18 @@
 import type { Stage } from '@jobflow/shared';
 import { screen, waitFor, within } from '@testing-library/react';
+import { http } from 'msw/http';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
+import { apiUrl, errorReply } from '@/test/api-handlers';
 import { ACME_APPLICATION } from '@/test/application-fixtures';
 import { back, replace } from '@/test/navigation';
-import { findApplicationTitle, renderApplicationPage } from '@/test/render-application-page';
+import {
+  type ApplicationPageSetup,
+  findApplicationTitle,
+  renderApplicationPage,
+} from '@/test/render-application-page';
+import { server } from '@/test/server';
+import { stageMoveOf, timelineItemOf } from '@/test/timeline-fixtures';
 
 vi.mock('next/navigation', () => import('@/test/navigation'));
 vi.mock('next/link', () => import('@/test/link'));
@@ -15,6 +23,23 @@ afterEach(() => {
 });
 
 const SETTLED_STAGES: readonly Stage[] = ['offer', 'rejected', 'ghosted', 'withdrawn'];
+
+const GHOSTED_FROM_SCREENING: ApplicationPageSetup = {
+  application: { ...ACME_APPLICATION, currentStage: 'ghosted' },
+  timeline: {
+    items: [
+      timelineItemOf({
+        serial: 402,
+        type: 'stage_changed',
+        occurredAt: '2026-10-20T09:00:00Z',
+        title: 'скринінг → ghosted',
+        meta: stageMoveOf({ fromStage: 'screening', toStage: 'ghosted', daysInPreviousStage: 30 }),
+      }),
+    ],
+  },
+};
+
+const REVIVE = 'Компанія відповіла: повернути в скринінг';
 
 const SCHEDULE_OFFERED: readonly { stage: Stage; offered: boolean }[] = [
   { stage: 'applied', offered: true },
@@ -63,6 +88,47 @@ describe('ApplicationActions', () => {
       await findApplicationTitle();
       expect(screen.queryByRole('button', { name: /^Перенести у/ })).toBeNull();
       expect(screen.queryByRole('button', { name: 'Відмова' })).toBeNull();
+    },
+  );
+
+  it('a ghosted application whose company replied returns to the stage before the ghost move', async () => {
+    const { user, moves } = renderApplicationPage(GHOSTED_FROM_SCREENING);
+
+    await user.click(await screen.findByRole('button', { name: REVIVE }));
+
+    await waitFor(() => {
+      expect(moves).toEqual([{ fromStage: 'ghosted', toStage: 'screening' }]);
+    });
+    await waitFor(() => {
+      expect(screen.queryByRole('button', { name: REVIVE })).toBeNull();
+    });
+  });
+
+  it('a refused revive rolls back, says why and keeps the button', async () => {
+    const { user, moves } = renderApplicationPage(GHOSTED_FROM_SCREENING);
+    server.use(
+      http.post(apiUrl('/applications/:id/events'), () =>
+        errorReply({ status: 409, type: 'illegal_transition' }),
+      ),
+    );
+
+    await user.click(await screen.findByRole('button', { name: REVIVE }));
+
+    expect(await screen.findByText('Такий перехід неможливий')).toBeDefined();
+    expect(screen.getByRole('button', { name: REVIVE })).toBeDefined();
+    expect(moves).toEqual([]);
+  });
+
+  it.each(['applied', 'rejected'] as const)(
+    'an application in %s offers no revive',
+    async (stage) => {
+      renderApplicationPage({
+        ...GHOSTED_FROM_SCREENING,
+        application: { ...ACME_APPLICATION, currentStage: stage },
+      });
+
+      await findApplicationTitle();
+      expect(screen.queryByRole('button', { name: /Компанія відповіла/ })).toBeNull();
     },
   );
 

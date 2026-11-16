@@ -2,9 +2,8 @@ import type { ApplicationResponse } from '@jobflow/shared';
 import { useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
 
+import { sectionLoadOf } from '@/entities/application';
 import { contactsQueryOptions } from '@/entities/contact';
-
-import { sectionLoadOf } from './section-load';
 
 export function useApplicationRecruiter(application: ApplicationResponse) {
   const contacts = useQuery(contactsQueryOptions(application.id));

@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react';
 
-import type { AiSection, AiSectionReady } from '../model/ai-poll';
-import { AiSectionBody } from './ai-section-body';
+import { type AiSection, AiSectionBody, type AiSectionReady } from '@/entities/application';
+
 import { ApplicationSection } from './application-section';
 
 export type AiPageSectionProps<Data> = Readonly<{

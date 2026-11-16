@@ -12,7 +12,9 @@ import {
   type SearchSnippet,
   type Stage,
   STAGES,
+  type TimingsResponse,
 } from '@jobflow/shared';
+import { buildDesignTimings } from '@jobflow/shared/testing';
 import type { HttpResponseResolver } from 'msw';
 import { http, HttpResponse } from 'msw/http';
 
@@ -113,6 +115,28 @@ export const DESIGN_BOARD: BoardRouteOptions = {
     cardIn({ serial: 106, stage: 'rejected', position: 'Middle QA Engineer' }),
   ],
 };
+
+export type GhostSeed = { serial: number; days: number; isDraft?: boolean };
+
+export function ghostIn({ serial, days, isDraft = false }: GhostSeed): BoardCard {
+  const position = `Ghosted ${String(days)} days`;
+  return { ...cardIn({ serial, stage: 'ghosted', position }), daysSinceLastEvent: days, isDraft };
+}
+
+export const GHOSTED_CARDS: readonly BoardCard[] = [
+  ghostIn({ serial: 201, days: 10 }),
+  ghostIn({ serial: 202, days: 44 }),
+  ghostIn({ serial: 203, days: 45 }),
+  ghostIn({ serial: 204, days: 60 }),
+  ghostIn({ serial: 205, days: 3, isDraft: true }),
+];
+
+export type GhostGap = TimingsResponse['ghostRate']['gap'];
+
+export function ghostTimingsOf(gap: GhostGap): TimingsResponse {
+  const timings = buildDesignTimings();
+  return { ...timings, ghostRate: { ...timings.ghostRate, gap } };
+}
 
 export const DESIGN_BOARD_HEADINGS: readonly string[] = [
   'відгук 2',

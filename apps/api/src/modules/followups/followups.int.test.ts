@@ -127,9 +127,32 @@ describe('the follow-up API', () => {
     ).toHaveLength(1);
   });
 
+  it('answers 202 to a ghosted application with one followup job and one request event', async () => {
+    const olena = await owner({ stage: 'ghosted' });
+
+    const response = await generate(olena);
+
+    expect(response.status).toBe(202);
+    const { jobId } = captureRetryResponseSchema.parse(response.body);
+    const requested = await outboxRows(testApp.prisma, {
+      eventType: 'application.followup_requested',
+    });
+    expect(requested).toHaveLength(1);
+    expect(requested).toMatchObject([
+      {
+        aggregateId: olena.applicationId,
+        payload: { aiJobId: jobId, input: { stage: 'ghosted' } },
+      },
+    ]);
+    expect(await testApp.prisma.aiJob.findMany({ select: { id: true, kind: true } })).toEqual([
+      { id: jobId, kind: 'followup' },
+    ]);
+  });
+
   it.each([
     { case: 'a draft', stage: 'applied', isDraft: true },
     { case: 'a rejected application', stage: 'rejected', isDraft: false },
+    { case: 'a withdrawn application', stage: 'withdrawn', isDraft: false },
   ] as const)(
     'answers 409 to a request for $case and stores no job',
     async ({ stage, isDraft }) => {

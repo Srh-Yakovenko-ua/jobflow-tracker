@@ -1,11 +1,11 @@
 import { type ApplicationResponse, countedUk, DAY_FORMS_UK } from '@jobflow/shared';
 import { useEffect } from 'react';
 
+import { AiSectionBody } from '@/entities/application';
 import { FollowupPanel } from '@/features/generate-followup';
 import { uk } from '@/shared/i18n';
 
 import { useApplicationFollowup } from '../model/use-application-followup';
-import { AiSectionBody } from './ai-section-body';
 import { ApplicationSection } from './application-section';
 
 export type ApplicationFollowupProps = Readonly<{ application: ApplicationResponse }>;
@@ -44,7 +44,9 @@ export function ApplicationFollowup({ application }: ApplicationFollowupProps) {
       }}
     >
       <AiSectionBody section={followup}>
-        {(ready) => <FollowupPanel application={application} followup={ready} />}
+        {(ready) => (
+          <FollowupPanel application={application} followup={{ ...ready, queueRefused: false }} />
+        )}
       </AiSectionBody>
     </ApplicationSection>
   );

@@ -2,9 +2,7 @@
 
 import { type ApplicationResponse, isActiveStage } from '@jobflow/shared';
 
-import { applicationFollowupQueryOptions } from '@/entities/application';
-
-import { useAiSection } from './ai-poll';
+import { applicationFollowupQueryOptions, useAiSection } from '@/entities/application';
 
 function followupShown(application: ApplicationResponse): boolean {
   return !application.isDraft && isActiveStage(application.currentStage);

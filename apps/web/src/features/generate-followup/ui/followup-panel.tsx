@@ -26,8 +26,8 @@ import { FollowupQueued } from './followup-queued';
 import { FollowupRequestForm } from './followup-request-form';
 
 export type FollowupPanelProps = Readonly<{
-  application: ApplicationResponse;
-  followup: Readonly<{ response: FollowupResponse; job: AiJob }>;
+  application: Pick<ApplicationResponse, 'id'>;
+  followup: Readonly<{ response: FollowupResponse; job: AiJob; queueRefused: boolean }>;
 }>;
 
 type Ask = Readonly<{ variant: boolean }>;
@@ -59,7 +59,12 @@ function usePanelControls({ application, followup }: FollowupPanelProps) {
       });
     })();
   };
-  const view = followupViewOf({ response: followup.response, manual, refused: generation.refused });
+  const view = followupViewOf({
+    response: followup.response,
+    manual,
+    refused: generation.refused,
+    limited: followup.queueRefused,
+  });
   const actions = {
     onGenerate: () => {
       ask({ variant: false });
@@ -122,7 +127,7 @@ function PanelState({ controls, job }: Readonly<{ controls: PanelControls; job: 
     return (
       <FollowupFailure
         methods={controls.methods}
-        failure={{ timeout: view.timeout, retrying: generation.isPending }}
+        failure={{ reason: view.reason, retrying: generation.isPending }}
         actions={{ onRetry: actions.onGenerate, onManual: actions.onManual }}
       />
     );

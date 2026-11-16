@@ -2,12 +2,11 @@ import type { ApplicationResponse, Note } from '@jobflow/shared';
 import { useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
 
-import { timelineQueryOptions } from '@/entities/application';
+import { sectionLoadOf, timelineQueryOptions } from '@/entities/application';
 import { notesQueryOptions } from '@/entities/note';
 import { useUserTimeZone } from '@/entities/user';
 
 import { noteContextOf } from '../lib/note-context';
-import { sectionLoadOf } from './section-load';
 
 export function useApplicationNotes(application: ApplicationResponse) {
   const notes = useQuery(notesQueryOptions(application.id));

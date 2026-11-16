@@ -149,10 +149,24 @@ describe('FollowupsService.request', () => {
     expect([ai.jobs.size, repository.requested.length]).toEqual([0, 0]);
   });
 
+  it('creates a followup job for a ghosted application with the ghosted stage in its input', async () => {
+    const { repository, ai, generate } = await serviceWithFake();
+    repository.source = { ...FOLLOWUP_SOURCE_ROW, currentStage: 'ghosted' };
+
+    await expect(generate()).resolves.toEqual({ jobId: AI_JOB_ID });
+
+    expect([ai.jobs.size, repository.requested.length]).toEqual([1, 1]);
+    expect(repository.requested[0]?.[1].requested.input).toEqual({
+      ...BUILT_INPUT,
+      stage: 'ghosted',
+    });
+  });
+
   it.each([
     { case: 'a draft', source: { isDraft: true } },
     { case: 'a rejected application', source: { currentStage: 'rejected' } },
     { case: 'an offer', source: { currentStage: 'offer' } },
+    { case: 'a withdrawn application', source: { currentStage: 'withdrawn' } },
   ] as const)('answers 409 for $case and creates no job', async ({ source }) => {
     const { repository, ai, generate } = await serviceWithFake();
     repository.source = { ...FOLLOWUP_SOURCE_ROW, ...source };

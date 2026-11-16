@@ -31,6 +31,9 @@ const TIMEOUT_COPY =
 
 const OTHER_COPY = 'Генерація не вдалася. Твої дані нікуди не зникли.';
 
+const BUDGET_COPY =
+  'Ліміт AI на сьогодні вичерпано, тож цей лист пишеш сам. Твої дані нікуди не зникли.';
+
 afterEach(() => {
   toast.dismiss();
   sessionStorage.clear();
@@ -42,7 +45,12 @@ function renderPanel(
 ) {
   const routes = followupRoutes({ response, generateReply });
   server.use(...routes.handlers);
-  const ui = <FollowupPanel application={ACME_APPLICATION} followup={{ response, job }} />;
+  const ui = (
+    <FollowupPanel
+      application={ACME_APPLICATION}
+      followup={{ response, job, queueRefused: false }}
+    />
+  );
   const { user, view } = renderViewInApp(ui);
   const reopen = () => {
     view.rerender(null);
@@ -149,7 +157,7 @@ describe('FollowupPanel', () => {
     view.rerender(
       <FollowupPanel
         application={ACME_APPLICATION}
-        followup={{ response: followupJob('processing'), job: PROCESSING }}
+        followup={{ response: followupJob('processing'), job: PROCESSING, queueRefused: false }}
       />,
     );
     expect(screen.getByText('крок 2 з 3 · обробляється')).toBeDefined();
@@ -219,6 +227,16 @@ describe('FollowupPanel', () => {
     expect(copy.disabled).toBe(false);
     expect(markSent.disabled).toBe(false);
     expect(sent.marked).toEqual([]);
+  });
+
+  it('a draft failed on the daily AI budget opens the own text with the budget line and no retry', () => {
+    renderPanel(followupJob('failed', 'budget_exceeded'));
+
+    expect(screen.getByRole('alert').textContent).toContain(BUDGET_COPY);
+    expect(screen.getByText('свій текст · пиши тут')).toBeDefined();
+    expect(draftFields().body.value).toBe('');
+    expect(screen.queryByRole('button', { name: 'Спробувати ще' })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Ще варіант' })).toBeNull();
   });
 
   it('any other failed draft shows the plain error and «Спробувати ще» asks again', async () => {

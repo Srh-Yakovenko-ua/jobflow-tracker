@@ -2,13 +2,12 @@ import type { ApplicationResponse } from '@jobflow/shared';
 import { useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
 
-import { timelineQueryOptions } from '@/entities/application';
+import { sectionLoadOf, timelineQueryOptions } from '@/entities/application';
 import { notesQueryOptions } from '@/entities/note';
 import { useSilenceDays, useUserTimeZone } from '@/entities/user';
 
 import { timelineRowsOf } from '../lib/timeline-rows';
 import { waitingRowOf } from '../lib/waiting-row';
-import { sectionLoadOf } from './section-load';
 import { useLinkedVersion } from './use-linked-version';
 
 export function useApplicationTimeline(application: ApplicationResponse) {

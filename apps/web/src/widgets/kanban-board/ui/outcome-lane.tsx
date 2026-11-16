@@ -16,6 +16,7 @@ import { ColumnCards } from './column-cards';
 import { COLUMN_FRAME, STRIP_LOOK } from './column-frame';
 import { type ColumnHead, ColumnTitle } from './column-title';
 import { DropPlaceholder } from './drop-placeholder';
+import { GhostedIntro } from './ghosted-intro';
 
 export type OutcomeColumn = ApplicationBoardResponse['columns'][OutcomeStage] & {
   stage: OutcomeStage;
@@ -60,7 +61,12 @@ function StripFace({ stage, count }: Readonly<ColumnHead<OutcomeStage>>) {
 
 function LaneBody({ column, context, load }: Omit<OutcomeLaneProps, 'disclosure'>) {
   if (column.items !== null) {
-    return <ColumnCards stage={column.stage} items={column.items} context={context} />;
+    return (
+      <>
+        {column.stage === 'ghosted' && <GhostedIntro column={column} />}
+        <ColumnCards stage={column.stage} items={column.items} context={context} />
+      </>
+    );
   }
   if (load.filtersFailed) {
     return null;
