@@ -15,7 +15,7 @@ const COLUMN =
   'flex h-full min-w-0 flex-col gap-4 rounded-2xl bg-surface bg-linear-180 from-offer/8 to-surface to-40% p-3.5 shadow-e1 print:break-inside-avoid print:shadow-none print:inset-ring print:inset-ring-line-soft';
 
 const COMPANY_LINK =
-  'touch-target text-ink transition-colors duration-(--duration-instant) ease-standard hover:text-link';
+  'touch-target text-ink transition-colors duration-(--duration-instant) ease-standard hover:text-link active:text-link';
 
 export type RankedOffer = ScoredOffer & Readonly<{ rank: number }>;
 
