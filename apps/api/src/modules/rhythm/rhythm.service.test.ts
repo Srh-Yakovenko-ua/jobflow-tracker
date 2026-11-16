@@ -4,10 +4,17 @@ import type { UserSettingsRow } from '../../prisma/user-settings-row.js';
 import { NEW_USER_SETTINGS_ROW } from '../../test/factories.js';
 import { fakeTransactionModule } from '../../test/fake-prisma.js';
 import { BOHDAN_ID, OLENA_ID } from '../../test/service-fixtures.js';
+import {
+  type OccurrencesSinceQuery,
+  type TimelineOccurrence,
+  TimelineService,
+} from '../events/index.js';
 import { type RhythmEventRow, RhythmRepository } from './rhythm.repository.js';
 import { RhythmService } from './rhythm.service.js';
 
 const WEDNESDAY_IN_KYIV = new Date('2026-11-11T10:00:00.000Z');
+
+const FOLLOWED_UP_ID = '0190a000-0000-7000-8000-00000000f001';
 
 const dateColumn = (date: string) => new Date(`${date}T00:00:00.000Z`);
 
@@ -40,16 +47,32 @@ class FakeRhythmRepository {
     );
   }
 
-  eventsSince(_userId: string, since: Date): Promise<RhythmEventRow[]> {
+  stageEventsSince(_userId: string, since: Date): Promise<RhythmEventRow[]> {
     this.since.push(since);
-    return Promise.resolve(this.rows);
+    return Promise.resolve(this.rows.filter(({ kind }) => kind !== 'followups'));
+  }
+
+  occurrencesSince(
+    _userId: string,
+    { kind, since }: OccurrencesSinceQuery,
+  ): Promise<TimelineOccurrence[]> {
+    this.since.push(since);
+    const followups =
+      kind === 'followup_sent' ? this.rows.filter((row) => row.kind === 'followups') : [];
+    return Promise.resolve(
+      followups.map(({ occurredAt }) => ({ applicationId: FOLLOWED_UP_ID, occurredAt })),
+    );
   }
 }
 
 async function rhythmOf(settings: Partial<UserSettingsRow>, rows: RhythmEventRow[] = []) {
   const repository = new FakeRhythmRepository(settings, rows);
   const moduleRef = await fakeTransactionModule({
-    providers: [RhythmService, { provide: RhythmRepository, useValue: repository }],
+    providers: [
+      RhythmService,
+      { provide: RhythmRepository, useValue: repository },
+      { provide: TimelineService, useValue: repository },
+    ],
     now: WEDNESDAY_IN_KYIV,
   }).compile();
   return { repository, service: moduleRef.get(RhythmService) };
@@ -61,7 +84,10 @@ describe('RhythmService.get', () => {
 
     const rhythm = await service.get(OLENA_ID, { weeks: 3 });
 
-    expect(repository.since).toEqual([new Date('2026-10-25T22:00:00.000Z')]);
+    expect(repository.since).toEqual([
+      new Date('2026-10-25T22:00:00.000Z'),
+      new Date('2026-10-25T22:00:00.000Z'),
+    ]);
     expect(rhythm).toEqual({
       goal: { applications: 2, followups: null },
       suggestedGoal: null,

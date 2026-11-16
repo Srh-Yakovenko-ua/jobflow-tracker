@@ -39,6 +39,8 @@ export type TimelineOccurrence = Prisma.TimelineEventGetPayload<{
 
 export type OccurrencesQuery = { applicationIds: string[]; kinds: TimelineEventKind[] };
 
+export type OccurrencesSinceQuery = { kind: TimelineEventKind; since: Date };
+
 export type TimelineOfApplication = { applicationId: string };
 
 export type TimelineWrite = TimelineOfApplication & InTransaction & { occurredAt: Date };
@@ -70,6 +72,20 @@ export class TimelineRepository {
         applicationId: { in: applicationIds },
         kind: { in: kinds },
         application: { userId, deletedAt: null },
+      },
+      select: OCCURRENCE_SELECT,
+    });
+  }
+
+  findOccurrencesSince(
+    userId: string,
+    { kind, since }: OccurrencesSinceQuery,
+  ): Promise<TimelineOccurrence[]> {
+    return this.prisma.timelineEvent.findMany({
+      where: {
+        kind,
+        occurredAt: { gte: since },
+        application: { userId, deletedAt: null, isDraft: false },
       },
       select: OCCURRENCE_SELECT,
     });

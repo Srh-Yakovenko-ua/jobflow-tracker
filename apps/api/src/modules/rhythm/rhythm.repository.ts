@@ -31,7 +31,7 @@ export class RhythmRepository {
     return search?.id ?? null;
   }
 
-  eventsSince(userId: string, since: Date): Promise<RhythmEventRow[]> {
+  stageEventsSince(userId: string, since: Date): Promise<RhythmEventRow[]> {
     return this.prisma.$queryRaw<RhythmEventRow[]>`
       SELECT CASE
           WHEN e.from_stage IS NULL THEN 'applications'
@@ -47,16 +47,7 @@ export class RhythmRepository {
         AND e.occurred_at >= ${since}
         AND ${EFFECTIVE_STAGE_EVENT_AS_E_SQL}
         AND (e.from_stage IS NULL
-          OR e.to_stage = ANY(${[...INTERVIEW_STAGES, 'offer']}::stage[]))
-      UNION ALL
-      SELECT 'followups', t.occurred_at
-      FROM timeline_events t
-      JOIN applications a ON a.id = t.application_id
-      WHERE a.user_id = ${userId}::uuid
-        AND a.deleted_at IS NULL
-        AND a.is_draft = false
-        AND t.kind = 'followup_sent'
-        AND t.occurred_at >= ${since}`;
+          OR e.to_stage = ANY(${[...INTERVIEW_STAGES, 'offer']}::stage[]))`;
   }
 
   async updateSuggestion(

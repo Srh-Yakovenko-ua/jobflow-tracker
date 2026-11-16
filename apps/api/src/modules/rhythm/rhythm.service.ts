@@ -17,6 +17,7 @@ import { addWeeks, startOfISOWeek, subWeeks } from 'date-fns';
 import { unauthorized } from '../../common/app-error.js';
 import { Clock } from '../../common/clock.js';
 import { toUserSettings } from '../../prisma/user-settings-row.js';
+import { TimelineService } from '../events/index.js';
 import { type RhythmEventRow, RhythmRepository } from './rhythm.repository.js';
 
 type WeekContext = { settings: UserSettings; goal: RhythmGoal; currentWeek: string };
@@ -62,8 +63,20 @@ function rhythmWeekOf(
 export class RhythmService {
   constructor(
     private readonly repository: RhythmRepository,
+    private readonly timeline: TimelineService,
     private readonly clock: Clock,
   ) {}
+
+  private async eventsSince(userId: string, since: Date): Promise<RhythmEventRow[]> {
+    const [stageEvents, followups] = await Promise.all([
+      this.repository.stageEventsSince(userId, since),
+      this.timeline.occurrencesSince(userId, { kind: 'followup_sent', since }),
+    ]);
+    return [
+      ...stageEvents,
+      ...followups.map(({ occurredAt }) => ({ kind: 'followups' as const, occurredAt })),
+    ];
+  }
 
   async get(userId: string, { weeks }: RhythmQuery): Promise<RhythmResponse> {
     const now = this.clock.now();
@@ -71,7 +84,7 @@ export class RhythmService {
     if (row === null) throw unauthorized();
     const settings = toUserSettings(row);
     const oldest = startOfISOWeek(subWeeks(userNow(settings, now), weeks - 1));
-    const counts = countsByWeek(await this.repository.eventsSince(userId, oldest), settings);
+    const counts = countsByWeek(await this.eventsSince(userId, oldest), settings);
     const goal = {
       applications: settings.weeklyGoalApplications,
       followups: settings.weeklyGoalFollowups,

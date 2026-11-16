@@ -28,7 +28,7 @@ describe('a ping job added from the API', () => {
       .toMatchObject({ requestId: 'it-ping-1', jobId, queue: 'maintenance', jobName: 'ping' });
   });
 
-  it('schedules every maintenance job once the worker starts, the monthly summary at each UTC hour', async () => {
+  it('schedules every maintenance job once the worker starts, the monthly summary and the week close at each UTC hour', async () => {
     const maintenance = stack.worker.get<Queue>(getQueueToken(QUEUES.maintenance.name));
 
     const schedulers = await maintenance.getJobSchedulers();
@@ -43,6 +43,7 @@ describe('a ping job added from the API', () => {
       { key: 'cleanup', name: 'maintenance.cleanup', every: 86_400_000 },
       { key: 'monthly-summary', name: 'monthly-summary.pick', pattern: '0 * * * *', tz: 'UTC' },
       { key: 'outbox-relay', name: 'outbox.relay', every: 500 },
+      { key: 'rhythm-week-close', name: 'rhythm.week-close.pick', pattern: '0 * * * *', tz: 'UTC' },
       { key: 'scheduled-event-reminders', name: 'event-reminders.scan', every: 300_000 },
       { key: 'silence-scan', name: 'silence.scan', every: 900_000 },
     ]);
