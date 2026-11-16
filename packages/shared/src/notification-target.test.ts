@@ -10,6 +10,7 @@ import {
   INTERVIEW_SOON,
   MONTHLY_SUMMARY_READY,
   NOTIFICATION_ROW,
+  RHYTHM_WEEK_CLOSED,
   SILENCE,
   SILENCE_ITEM,
 } from './test/notification-fixtures.js';
@@ -117,6 +118,15 @@ describe('notificationTargetOf', () => {
         payload: INTERVIEW_PREP_READY,
       },
       target: `/applications/${APPLICATION_ID}`,
+    },
+    {
+      name: 'rhythm_week_closed opens the analytics',
+      notification: {
+        ...NOTIFICATION_ROW,
+        type: 'rhythm_week_closed',
+        payload: RHYTHM_WEEK_CLOSED,
+      },
+      target: '/analytics',
     },
   ])('$name', ({ notification, target }) => {
     expect(notificationTargetOf(notification)).toBe(target);

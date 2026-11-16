@@ -8,9 +8,14 @@ import { PrismaService } from '../../prisma/prisma.service.js';
 import { USER_SETTINGS_SELECT, type UserSettingsRow } from '../../prisma/user-settings-row.js';
 import { settingsChangedEvent, type SettingsEvent } from './settings.events.js';
 
-export type SettingsChanges = Omit<UpdateUserSettingsInput, 'quietHoursStart' | 'quietHoursEnd'> & {
+export type SettingsChanges = Omit<
+  UpdateUserSettingsInput,
+  'quietHoursStart' | 'quietHoursEnd' | 'pausedUntil'
+> & {
   quietHoursStart?: Date;
   quietHoursEnd?: Date;
+  pausedFrom?: Date | null;
+  pausedUntil?: Date | null;
 };
 
 export type UpdateSettings = InTransaction & { data: SettingsChanges };
@@ -25,8 +30,8 @@ const NO_RESPONSES: ResponseTimes = { answered: 0, medianDays: null };
 export class SettingsRepository {
   constructor(private readonly prisma: PrismaService) {}
 
-  find(userId: string): Promise<UserSettingsRow | null> {
-    return this.prisma.userSettings.findUnique({ where: { userId }, select: USER_SETTINGS_SELECT });
+  find(userId: string, { tx = this.prisma }: InTransaction = {}): Promise<UserSettingsRow | null> {
+    return tx.userSettings.findUnique({ where: { userId }, select: USER_SETTINGS_SELECT });
   }
 
   async update(

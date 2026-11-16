@@ -4,9 +4,23 @@ import {
   DAY_FORMS_UK,
   type NotifiedAiKind,
   type PluralForms,
+  pluralUk,
 } from '@jobflow/shared';
 
+import { FORMS } from './analytics-forms';
 import { shell } from './shell';
+
+const FOLLOWUPS = {
+  one: 'фоллоу-ап',
+  few: 'фоллоу-апи',
+  other: 'фоллоу-апів',
+} as const satisfies PluralForms;
+
+const BRING_CLOSER = { one: 'наблизить', other: 'наблизять' } as const satisfies PluralForms;
+
+type RhythmWeekCounts = Readonly<{ applications: number; followups: number }>;
+
+type RhythmSuggestion = Readonly<{ goal: number; weeksSooner: number }>;
 
 const SILENT_CARDS = {
   one: 'картка в тиші',
@@ -120,5 +134,14 @@ export const notifications = {
     title: 'Архів з даними готовий',
     text: (format: string) => `Архів ${format} чекає в налаштуваннях акаунта.`,
     action: 'Завантажити архів',
+  },
+  rhythmWeekClosed: {
+    title: ({ applications, followups }: RhythmWeekCounts) =>
+      `Тиждень закрито: ${countedUk(applications, APPLICATION_FORMS_UK)} і ${countedUk(followups, FOLLOWUPS)}`,
+    inRhythm: 'Ти у ритмі.',
+    nextWeek: 'Наступний тиждень, новий старт.',
+    suggestion: ({ goal, weeksSooner }: RhythmSuggestion) =>
+      `${countedUk(goal, APPLICATION_FORMS_UK)} на тиждень ${pluralUk(goal, BRING_CLOSER)} офер приблизно на ${countedUk(weeksSooner, FORMS.week)}.`,
+    action: shell.palette.actions.analytics,
   },
 } as const;

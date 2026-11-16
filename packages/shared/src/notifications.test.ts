@@ -18,6 +18,7 @@ import {
   MONTHLY_SUMMARY_READY,
   NOTIFICATION_ID,
   NOTIFICATION_ROW as ROW,
+  RHYTHM_WEEK_CLOSED,
   SILENCE,
   SILENCE_ITEM,
 } from './test/notification-fixtures.js';
@@ -106,6 +107,15 @@ describe('notificationSchema', () => {
       'an interview prep ready',
       { ...ROW, type: 'interview_prep_ready', payload: INTERVIEW_PREP_READY },
     ],
+    ['a rhythm week closed', { ...ROW, type: 'rhythm_week_closed', payload: RHYTHM_WEEK_CLOSED }],
+    [
+      'a rhythm week closed below the goal with no suggestion',
+      {
+        ...ROW,
+        type: 'rhythm_week_closed',
+        payload: { ...RHYTHM_WEEK_CLOSED, inRhythm: false, suggestedGoal: null, weeksSooner: null },
+      },
+    ],
   ])('keeps %s notification as sent', (_label, notification) => {
     expect(notificationSchema.parse(notification)).toStrictEqual(notification);
   });
@@ -169,6 +179,22 @@ describe('notificationSchema', () => {
         payload: { ...INTERVIEW_PREP_READY, aiJobId: undefined },
       },
       path: 'payload.aiJobId',
+    },
+    {
+      label: 'a rhythm week closed whose week start carries a time',
+      notification: {
+        type: 'rhythm_week_closed',
+        payload: { ...RHYTHM_WEEK_CLOSED, weekStart: '2026-11-09T00:00:00Z' },
+      },
+      path: 'payload.weekStart',
+    },
+    {
+      label: 'a rhythm week closed that brings the offer zero weeks sooner',
+      notification: {
+        type: 'rhythm_week_closed',
+        payload: { ...RHYTHM_WEEK_CLOSED, weeksSooner: 0 },
+      },
+      path: 'payload.weeksSooner',
     },
   ])('refuses $label', ({ notification, path }) => {
     expect(issuePathsOf(notificationSchema.safeParse({ ...ROW, ...notification }))).toEqual([path]);

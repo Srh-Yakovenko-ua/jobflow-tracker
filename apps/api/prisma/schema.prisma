@@ -141,6 +141,7 @@ enum NotificationType {
   auto_ghosted
   export_ready
   interview_prep_ready
+  rhythm_week_closed
 
   @@map("notification_type")
 }
@@ -208,10 +209,15 @@ model UserSettings {
   analyticsOptOut      Boolean        @default(false) @map("analytics_opt_out")
   singleKeyShortcuts    Boolean        @default(true) @map("single_key_shortcuts")
   activeResumeVersionId String?        @map("active_resume_version_id") @db.Uuid
+  weeklyGoalApplications Int?          @map("weekly_goal_applications")
+  weeklyGoalFollowups   Int?           @map("weekly_goal_followups")
+  pausedFrom            DateTime?      @map("paused_from") @db.Date
+  pausedUntil           DateTime?      @map("paused_until") @db.Date
+  suggestedWeeklyGoal   Int?           @map("suggested_weekly_goal")
   createdAt             DateTime       @default(now()) @map("created_at") @db.Timestamptz
   updatedAt             DateTime       @default(now()) @updatedAt @map("updated_at") @db.Timestamptz
   user                  User           @relation(fields: [userId], references: [id], onDelete: Cascade)
-  activeResumeVersion   ResumeVersion? @relation(fields: [activeResumeVersionId, userId], references: [id, userId], onDelete: SetNull)
+  activeResumeVersion  ResumeVersion? @relation(fields: [activeResumeVersionId, userId], references: [id, userId], onDelete: SetNull)
 
   @@index([activeResumeVersionId, userId])
   @@map("user_settings")

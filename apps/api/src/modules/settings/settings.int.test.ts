@@ -22,6 +22,7 @@ import {
 } from '../../test/factories.js';
 import { callRoute, errorPathsOf, type RouteCall } from '../../test/http.js';
 import { outboxRows } from '../../test/outbox.js';
+import { rhythmOf } from '../../test/rhythm.js';
 import { daysBefore } from '../../test/time.js';
 
 type Answer = { toStage: Stage; waitDays: number; reasonCode?: RejectionReasonCode };
@@ -90,6 +91,22 @@ const INVALID_CHANGES = [
     path: 'timezone',
   },
   { case: 'the offset +03:00', body: { timezone: '+03:00' }, path: 'timezone' },
+  {
+    case: 'weeklyGoalApplications 0',
+    body: { weeklyGoalApplications: 0 },
+    path: 'weeklyGoalApplications',
+  },
+  {
+    case: 'weeklyGoalApplications 31',
+    body: { weeklyGoalApplications: 31 },
+    path: 'weeklyGoalApplications',
+  },
+  {
+    case: 'weeklyGoalFollowups 31',
+    body: { weeklyGoalFollowups: 31 },
+    path: 'weeklyGoalFollowups',
+  },
+  { case: 'the pausedUntil 2026-13-01', body: { pausedUntil: '2026-13-01' }, path: 'pausedUntil' },
   { case: 'an empty body', body: {}, path: '' },
 ];
 
@@ -211,6 +228,41 @@ describe('the settings routes', () => {
       expect(await settingsChangedRows()).toEqual([]);
     },
   );
+
+  it('PATCH keeps a weekly goal set by hand below the forecast threshold, with no suggestion', async () => {
+    const olena = await signedInWithSearch(testApp.prisma);
+    await createAnsweredAll(olena, ANSWERED_FOUR.slice(0, 3));
+
+    const response = await patchSettings(olena, { weeklyGoalApplications: 5 });
+
+    expect(response.status).toBe(200);
+    expect(await rhythmOf(testApp.app, olena)).toMatchObject({
+      goal: { applications: 5, followups: null },
+      suggestedGoal: null,
+    });
+  });
+
+  it('PATCH starts a pause with a date it stores as a calendar day and ignores a sent pausedFrom and suggestedWeeklyGoal', async () => {
+    const olena = await signedInWithSearch(testApp.prisma);
+
+    const response = await patchSettings(olena, {
+      pausedUntil: '2099-01-01',
+      pausedFrom: '2000-01-01',
+      suggestedWeeklyGoal: 9,
+    });
+
+    const settings = userSettingsSchema.parse(response.body);
+    expect([response.status, settings.pausedUntil, settings.suggestedWeeklyGoal]).toEqual([
+      200,
+      '2099-01-01',
+      null,
+    ]);
+    expect(settings.pausedFrom).not.toBe('2000-01-01');
+    expect(await storedRow(olena)).toMatchObject({
+      pausedUntil: new Date('2099-01-01T00:00:00.000Z'),
+      suggestedWeeklyGoal: null,
+    });
+  });
 
   it("BOHDAN's PATCH changes only his own row and OLENA still reads hers", async () => {
     const olena = await signedInWithSearch(testApp.prisma);

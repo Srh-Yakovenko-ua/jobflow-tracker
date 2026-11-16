@@ -3,6 +3,7 @@ import {
   interviewPrepTitleOf,
   type InterviewSoonNotificationPayload,
   type Notification,
+  type RhythmWeekClosedNotificationPayload,
   type SilenceNotificationPayload,
 } from '@jobflow/shared';
 
@@ -44,18 +45,34 @@ function interviewSoonCopy(
   };
 }
 
-export function notificationCopyOf(notification: Notification, timeZone: string): NotificationCopy {
+function rhythmWeekClosedCopy(payload: RhythmWeekClosedNotificationPayload): NotificationCopy {
+  const { rhythmWeekClosed } = COPY;
+  const { suggestedGoal, weeksSooner } = payload;
+  const verdict = payload.inRhythm ? rhythmWeekClosed.inRhythm : rhythmWeekClosed.nextWeek;
+  const suggestion =
+    suggestedGoal === null || weeksSooner === null
+      ? []
+      : [rhythmWeekClosed.suggestion({ goal: suggestedGoal, weeksSooner })];
+  return {
+    title: rhythmWeekClosed.title(payload),
+    text: [verdict, ...suggestion].join(' '),
+    action: rhythmWeekClosed.action,
+  };
+}
+
+type ZonelessNotification = Exclude<
+  Notification,
+  { type: 'interview_soon' | 'interview_prep_ready' }
+>;
+
+function zonelessCopyOf(notification: ZonelessNotification): NotificationCopy {
   switch (notification.type) {
     case 'silence':
       return silenceCopy(notification.payload);
     case 'auto_ghosted':
       return autoGhostedCopy(notification.payload);
-    case 'interview_soon':
-      return interviewSoonCopy(notification.payload, timeZone);
-    case 'interview_prep_ready': {
-      const title = interviewPrepTitleOf(notification, { timezone: timeZone });
-      return { title, ...COPY.interviewPrepReady };
-    }
+    case 'rhythm_week_closed':
+      return rhythmWeekClosedCopy(notification.payload);
     case 'ai_done':
       return COPY.aiDone[notification.payload.kind];
     case 'ai_failed':
@@ -77,5 +94,18 @@ export function notificationCopyOf(notification: Notification, timeZone: string)
       const unhandled: never = notification;
       throw new Error(`Unhandled notification: ${JSON.stringify(unhandled)}`);
     }
+  }
+}
+
+export function notificationCopyOf(notification: Notification, timeZone: string): NotificationCopy {
+  switch (notification.type) {
+    case 'interview_soon':
+      return interviewSoonCopy(notification.payload, timeZone);
+    case 'interview_prep_ready': {
+      const title = interviewPrepTitleOf(notification, { timezone: timeZone });
+      return { title, ...COPY.interviewPrepReady };
+    }
+    default:
+      return zonelessCopyOf(notification);
   }
 }

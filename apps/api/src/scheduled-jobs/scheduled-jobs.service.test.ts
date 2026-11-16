@@ -5,7 +5,7 @@ import { InterviewAlertsService, SilenceScanService } from '../modules/reminders
 import { memoryLog } from '../test/memory-log.js';
 import { compileProcessorModule } from '../test/processor.js';
 import { NOW, settableClock } from '../test/time.js';
-import type { MonthlySummaryCandidate, StaleAiJobs } from './scheduled-jobs.repository.js';
+import type { LocalTimeCandidate, StaleAiJobs } from './scheduled-jobs.repository.js';
 import { ScheduledJobsRepository } from './scheduled-jobs.repository.js';
 import { ScheduledJobsService } from './scheduled-jobs.service.js';
 
@@ -16,7 +16,7 @@ type RepositoryCall = { method: string; at: Date } | { method: string; sweep: St
 class FakeScheduledJobsRepository {
   readonly calls: RepositoryCall[] = [];
 
-  candidates: MonthlySummaryCandidate[] = [];
+  candidates: LocalTimeCandidate[] = [];
 
   deleteIdempotencyKeysBefore(at: Date): Promise<number> {
     return this.counted({ method: 'deleteIdempotencyKeysBefore', at }, 2);
@@ -34,7 +34,11 @@ class FakeScheduledJobsRepository {
     return this.counted({ method: 'failStaleAiJobs', sweep }, 5);
   }
 
-  monthlySummaryCandidates(): Promise<MonthlySummaryCandidate[]> {
+  monthlySummaryCandidates(): Promise<LocalTimeCandidate[]> {
+    return Promise.resolve(this.candidates);
+  }
+
+  weekCloseCandidates(): Promise<LocalTimeCandidate[]> {
     return Promise.resolve(this.candidates);
   }
 
@@ -153,6 +157,25 @@ describe('ScheduledJobsService', () => {
       await expect(service.monthlySummaryUsers()).resolves.toEqual(userIds);
       expect(log.parsed()).toEqual([
         expect.objectContaining({ count: userIds.length, msg: 'monthly summary users picked' }),
+      ]);
+    },
+  );
+
+  it.each([
+    ['2026-11-16T06:00:00.000Z', ['user-kyiv']],
+    ['2026-11-16T06:59:59.999Z', ['user-kyiv']],
+    ['2026-11-16T05:59:59.999Z', []],
+    ['2026-11-17T06:00:00.000Z', []],
+    ['2026-11-16T08:00:00.000Z', ['user-utc']],
+    ['2026-11-16T02:30:00.000Z', ['user-kolkata']],
+  ])(
+    'picks for the week close at %s only the users whose local time is Monday 08:xx',
+    async (instant, userIds) => {
+      clock.at(new Date(instant));
+
+      await expect(service.weekCloseUsers()).resolves.toEqual(userIds);
+      expect(log.parsed()).toEqual([
+        expect.objectContaining({ count: userIds.length, msg: 'week close users picked' }),
       ]);
     },
   );

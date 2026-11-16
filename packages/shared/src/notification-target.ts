@@ -1,6 +1,7 @@
 import type {
   AiDoneNotificationPayload,
   Notification,
+  NotificationType,
   NotifiedAiKind,
   SilenceItem,
   SilenceNotificationPayload,
@@ -36,7 +37,19 @@ const AI_TARGETS: Record<NotifiedAiKind, (payload: AiDoneNotificationPayload) =>
   followup: ({ applicationId }) => (applicationId === undefined ? null : followUpOf(applicationId)),
 };
 
+const FIXED_TARGETS = {
+  auto_ghosted: '/board',
+  insight_unlocked: '/analytics',
+  rhythm_week_closed: '/analytics',
+} as const satisfies Partial<Record<NotificationType, string>>;
+
+type FixedTargetNotification = Extract<Notification, { type: keyof typeof FIXED_TARGETS }>;
+
+const hasFixedTarget = (notification: Notification): notification is FixedTargetNotification =>
+  Object.hasOwn(FIXED_TARGETS, notification.type);
+
 export function notificationTargetOf(notification: Notification): string | null {
+  if (hasFixedTarget(notification)) return FIXED_TARGETS[notification.type];
   switch (notification.type) {
     case 'silence':
       return longestSilentOf(notification.payload);
@@ -46,10 +59,6 @@ export function notificationTargetOf(notification: Notification): string | null 
     case 'ai_done':
     case 'ai_failed':
       return AI_TARGETS[notification.payload.kind](notification.payload);
-    case 'auto_ghosted':
-      return '/board';
-    case 'insight_unlocked':
-      return '/analytics';
     case 'monthly_summary_ready':
       return `/analytics/summary/${notification.payload.month}`;
     case 'export_ready':

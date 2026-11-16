@@ -28,7 +28,7 @@ const CHANGE: UpdateUserSettingsInput = {
 class FakeSettingsRepository extends RecordedEvents<RecordSettingsEvent> {
   readonly updates: ByUser<UpdateSettings>[] = [];
   responses: ResponseTimes = { answered: 0, medianDays: null };
-  private stored: UserSettingsRow = NEW_USER_SETTINGS_ROW;
+  stored: UserSettingsRow = NEW_USER_SETTINGS_ROW;
 
   find(userId: string): Promise<UserSettingsRow | null> {
     return Promise.resolve(userId === OLENA_ID ? this.stored : null);
@@ -60,6 +60,14 @@ async function serviceWithFakes() {
     .useValue(repository)
     .compile();
   return { repository, service: moduleRef.get(SettingsService) };
+}
+
+const dateColumn = (date: string) => new Date(`${date}T00:00:00.000Z`);
+
+async function pausedWith(stored: Pick<UserSettingsRow, 'pausedFrom' | 'pausedUntil'>) {
+  const fakes = await serviceWithFakes();
+  fakes.repository.stored = { ...NEW_USER_SETTINGS_ROW, ...stored };
+  return fakes;
 }
 
 async function suggestionsFor(responses: ResponseTimes): Promise<SettingsSuggestions> {
@@ -118,6 +126,60 @@ describe('SettingsService.update', () => {
 
     await expect(service.update(BOHDAN_ID, CHANGE)).rejects.toMatchObject(UNAUTHORIZED);
     expect(repository.events).toEqual([]);
+  });
+});
+
+describe('SettingsService.update of the pause', () => {
+  it('starts a pause on the local today when none runs', async () => {
+    const { repository, service } = await pausedWith({ pausedFrom: null, pausedUntil: null });
+
+    const settings = await service.update(OLENA_ID, { pausedUntil: '2026-11-05' });
+
+    expect(repository.updates.map(({ data }) => data)).toStrictEqual([
+      { pausedUntil: dateColumn('2026-11-05'), pausedFrom: dateColumn('2026-10-22') },
+    ]);
+    expect([settings.pausedFrom, settings.pausedUntil]).toEqual(['2026-10-22', '2026-11-05']);
+  });
+
+  it('keeps the start of a running pause when its end moves', async () => {
+    const { repository, service } = await pausedWith({
+      pausedFrom: dateColumn('2026-10-20'),
+      pausedUntil: dateColumn('2026-10-22'),
+    });
+
+    const settings = await service.update(OLENA_ID, { pausedUntil: '2026-11-01' });
+
+    expect(repository.updates.map(({ data }) => data)).toStrictEqual([
+      { pausedUntil: dateColumn('2026-11-01') },
+    ]);
+    expect([settings.pausedFrom, settings.pausedUntil]).toEqual(['2026-10-20', '2026-11-01']);
+  });
+
+  it('starts a new pause on the local today when the last one has ended', async () => {
+    const { repository, service } = await pausedWith({
+      pausedFrom: dateColumn('2026-10-01'),
+      pausedUntil: dateColumn('2026-10-21'),
+    });
+
+    await service.update(OLENA_ID, { pausedUntil: '2026-10-22' });
+
+    expect(repository.updates.map(({ data }) => data)).toStrictEqual([
+      { pausedUntil: dateColumn('2026-10-22'), pausedFrom: dateColumn('2026-10-22') },
+    ]);
+  });
+
+  it('ends the pause with null and clears its start', async () => {
+    const { repository, service } = await pausedWith({
+      pausedFrom: dateColumn('2026-10-20'),
+      pausedUntil: dateColumn('2026-11-01'),
+    });
+
+    const settings = await service.update(OLENA_ID, { pausedUntil: null });
+
+    expect(repository.updates.map(({ data }) => data)).toStrictEqual([
+      { pausedUntil: null, pausedFrom: null },
+    ]);
+    expect([settings.pausedFrom, settings.pausedUntil]).toEqual([null, null]);
   });
 });
 

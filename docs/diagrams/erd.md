@@ -126,6 +126,7 @@ plan_item_due plan_item_due
 auto_ghosted auto_ghosted
 export_ready export_ready
 interview_prep_ready interview_prep_ready
+rhythm_week_closed rhythm_week_closed
         }
     
 
@@ -175,6 +176,11 @@ failed failed
     Boolean analytics_opt_out 
     Boolean single_key_shortcuts 
     String active_resume_version_id "❓"
+    Int weekly_goal_applications "❓"
+    Int weekly_goal_followups "❓"
+    DateTime paused_from "❓"
+    DateTime paused_until "❓"
+    Int suggested_weekly_goal "❓"
     DateTime created_at 
     DateTime updated_at 
     }

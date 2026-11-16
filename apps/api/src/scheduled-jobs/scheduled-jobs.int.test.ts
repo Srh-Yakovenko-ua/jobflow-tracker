@@ -6,7 +6,12 @@ import { Clock } from '../common/clock.js';
 import { InterviewAlertsService, SilenceScanService } from '../modules/reminders/index.js';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { useTestDatabase } from '../test/database.js';
-import { createActiveVersionOwner, createAiJob, createUser } from '../test/factories.js';
+import {
+  createActiveVersionOwner,
+  createAiJob,
+  createSearch,
+  createUser,
+} from '../test/factories.js';
 import { memoryLog } from '../test/memory-log.js';
 import { compileProcessorModule } from '../test/processor.js';
 import { daysBefore, fixedClock, NOW } from '../test/time.js';
@@ -166,6 +171,19 @@ describe('ScheduledJobsService on the database', () => {
 
     await expect(repository.monthlySummaryCandidates()).resolves.toEqual([
       { userId: subscribed.id, timezone: 'Europe/Kyiv' },
+    ]);
+  });
+
+  it('lists only users with an active search as week close candidates', async () => {
+    const { prisma } = database;
+    const searching = await createUser(prisma);
+    const archived = await createUser(prisma);
+    await createUser(prisma);
+    await createSearch(prisma, { userId: searching.id });
+    await createSearch(prisma, { userId: archived.id, status: 'archived' });
+
+    await expect(repository.weekCloseCandidates()).resolves.toEqual([
+      { userId: searching.id, timezone: 'Europe/Kyiv' },
     ]);
   });
 

@@ -23,6 +23,7 @@ import { NotificationsWorkerModule } from './modules/notifications/index.js';
 import { PushWorkerModule } from './modules/push/index.js';
 import { RemindersWorkerModule } from './modules/reminders/index.js';
 import { ResumesWorkerModule } from './modules/resumes/index.js';
+import { RhythmWorkerModule } from './modules/rhythm/index.js';
 import { SummariesWorkerModule } from './modules/summaries/index.js';
 import { PrismaModule } from './prisma/prisma.module.js';
 import { QueuesModule } from './queues/queues.module.js';
@@ -46,6 +47,7 @@ import { QueuesModule } from './queues/queues.module.js';
     FollowupsWorkerModule,
     CvHintsWorkerModule,
     InterviewPrepWorkerModule,
+    RhythmWorkerModule,
     SummariesWorkerModule,
     AccountWorkerModule,
     RemindersWorkerModule,

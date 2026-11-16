@@ -31,6 +31,7 @@ import { PlansModule } from './modules/plans/index.js';
 import { PushModule } from './modules/push/index.js';
 import { RemindersModule } from './modules/reminders/index.js';
 import { ResumesModule } from './modules/resumes/index.js';
+import { RhythmModule } from './modules/rhythm/index.js';
 import { ScheduleModule } from './modules/schedule/index.js';
 import { SearchesModule } from './modules/searches/index.js';
 import { SettingsModule } from './modules/settings/index.js';
@@ -74,6 +75,7 @@ import { RedisModule } from './redis/redis.module.js';
     CvHintsModule,
     InterviewPrepModule,
     PlansModule,
+    RhythmModule,
     SummariesModule,
     JobsModule,
     LiveStreamModule,

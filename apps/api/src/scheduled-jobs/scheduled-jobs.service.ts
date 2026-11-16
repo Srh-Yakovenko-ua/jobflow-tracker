@@ -9,7 +9,7 @@ import {
   type SilenceScanCounts,
   SilenceScanService,
 } from '../modules/reminders/index.js';
-import { ScheduledJobsRepository } from './scheduled-jobs.repository.js';
+import { type LocalTimeCandidate, ScheduledJobsRepository } from './scheduled-jobs.repository.js';
 
 export const SCHEDULED_JOB_LIMITS = {
   idempotencyKeyMinutes: IDEMPOTENCY_LIMITS.replayWindowMinutes,
@@ -18,6 +18,8 @@ export const SCHEDULED_JOB_LIMITS = {
 } as const;
 
 const MONTHLY_SUMMARY_LOCAL_TIME = { day: 1, hour: 7 } as const;
+
+const WEEK_CLOSE_LOCAL_TIME = { weekday: 1, hour: 8 } as const;
 
 export type CleanupCounts = {
   idempotencyKeys: number;
@@ -32,6 +34,16 @@ export type InterviewReminderTotals = { users: number; alerted: number };
 export const isMonthlySummaryHour = (local: Date): boolean =>
   local.getDate() === MONTHLY_SUMMARY_LOCAL_TIME.day &&
   local.getHours() === MONTHLY_SUMMARY_LOCAL_TIME.hour;
+
+export const isWeekCloseHour = (local: Date): boolean =>
+  local.getDay() === WEEK_CLOSE_LOCAL_TIME.weekday &&
+  local.getHours() === WEEK_CLOSE_LOCAL_TIME.hour;
+
+type LocalTimePick = {
+  candidates: LocalTimeCandidate[];
+  isLocalHour: (local: Date) => boolean;
+  label: string;
+};
 
 const before = (now: Date, duration: Duration) => subMilliseconds(now, milliseconds(duration));
 
@@ -73,12 +85,27 @@ export class ScheduledJobsService {
   }
 
   async monthlySummaryUsers(): Promise<string[]> {
+    return this.usersAtLocalHour({
+      candidates: await this.repository.monthlySummaryCandidates(),
+      isLocalHour: isMonthlySummaryHour,
+      label: 'monthly summary users picked',
+    });
+  }
+
+  async weekCloseUsers(): Promise<string[]> {
+    return this.usersAtLocalHour({
+      candidates: await this.repository.weekCloseCandidates(),
+      isLocalHour: isWeekCloseHour,
+      label: 'week close users picked',
+    });
+  }
+
+  private usersAtLocalHour({ candidates, isLocalHour, label }: LocalTimePick): string[] {
     const now = this.clock.now();
-    const candidates = await this.repository.monthlySummaryCandidates();
     const userIds = candidates
-      .filter((settings) => isMonthlySummaryHour(userNow(settings, now)))
+      .filter((settings) => isLocalHour(userNow(settings, now)))
       .map(({ userId }) => userId);
-    this.logger.log({ count: userIds.length }, 'monthly summary users picked');
+    this.logger.log({ count: userIds.length }, label);
     return userIds;
   }
 

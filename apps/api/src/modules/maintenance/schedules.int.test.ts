@@ -17,6 +17,7 @@ const SCHEDULER_IDS = [
   'cleanup',
   'monthly-summary',
   'outbox-relay',
+  'rhythm-week-close',
   'scheduled-event-reminders',
   'silence-scan',
 ];
@@ -26,6 +27,7 @@ const ONE_DELAYED_JOB_EACH = {
   'auto-ghost-scan': 1,
   cleanup: 1,
   'monthly-summary': 1,
+  'rhythm-week-close': 1,
   'scheduled-event-reminders': 1,
   'silence-scan': 1,
 };

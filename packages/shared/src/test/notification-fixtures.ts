@@ -4,6 +4,7 @@ import type {
   InterviewPrepReadyNotificationPayload,
   InterviewSoonNotificationPayload,
   MonthlySummaryReadyNotificationPayload,
+  RhythmWeekClosedNotificationPayload,
   SilenceItem,
   SilenceNotificationPayload,
 } from '../notifications.js';
@@ -49,6 +50,15 @@ export const INTERVIEW_PREP_READY: InterviewPrepReadyNotificationPayload = {
   company: 'Acme',
   eventKind: 'tech_interview',
   startsAt: '2026-11-14T09:00:00.000Z',
+};
+
+export const RHYTHM_WEEK_CLOSED: RhythmWeekClosedNotificationPayload = {
+  weekStart: '2026-11-09',
+  applications: 6,
+  followups: 2,
+  inRhythm: true,
+  suggestedGoal: 8,
+  weeksSooner: 2,
 };
 
 export const NOTIFICATION_ROW = {

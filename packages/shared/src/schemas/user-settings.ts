@@ -8,6 +8,7 @@ const clockTimeSchema = z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/);
 export const USER_SETTINGS_LIMITS = {
   silenceDays: { min: 3, max: 30 },
   autoGhostDays: { min: 14, max: 90 },
+  weeklyGoal: { min: 1, max: 30 },
 } as const;
 
 const isKnownTimeZone = (timeZone: string) => {
@@ -43,16 +44,25 @@ export const userSettingsSchema = z.object({
   analyticsOptOut: z.boolean(),
   singleKeyShortcuts: z.boolean(),
   activeResumeVersionId: z.uuid().nullable(),
+  weeklyGoalApplications: z.int().nullable(),
+  weeklyGoalFollowups: z.int().nullable(),
+  pausedFrom: z.iso.date().nullable(),
+  pausedUntil: z.iso.date().nullable(),
+  suggestedWeeklyGoal: z.int().nullable(),
 });
 
-const { silenceDays, autoGhostDays } = USER_SETTINGS_LIMITS;
+const { silenceDays, autoGhostDays, weeklyGoal } = USER_SETTINGS_LIMITS;
+
+const weeklyGoalSchema = z.int().min(weeklyGoal.min).max(weeklyGoal.max).nullable();
 
 export const userSettingsPatchSchema = userSettingsSchema
-  .omit({ activeResumeVersionId: true })
+  .omit({ activeResumeVersionId: true, pausedFrom: true, suggestedWeeklyGoal: true })
   .extend({
     silenceDays: z.int().min(silenceDays.min).max(silenceDays.max),
     autoGhostDays: z.int().min(autoGhostDays.min).max(autoGhostDays.max).nullable(),
     timezone: timezoneSchema,
+    weeklyGoalApplications: weeklyGoalSchema,
+    weeklyGoalFollowups: weeklyGoalSchema,
   })
   .partial();
 

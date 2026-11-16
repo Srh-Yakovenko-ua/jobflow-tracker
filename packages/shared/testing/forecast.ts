@@ -15,6 +15,19 @@ export function buildForecast(): Extract<ForecastResponse, { status: 'ok' }> {
   };
 }
 
+type OkForecast = Extract<ForecastResponse, { status: 'ok' }>;
+
+export type ForecastPace = Pick<OkForecast, 'applicationsPerWeek' | 'medianWeeks'>;
+
+export const DESIGN_STORY_PACE = {
+  applicationsPerWeek: 4.0,
+  medianWeeks: 7.57,
+} as const satisfies ForecastPace;
+
+export function buildForecastAt(pace: ForecastPace): OkForecast {
+  return { ...buildForecast(), applications: 54, offers: 1, ...pace };
+}
+
 export function buildInsufficientForecast(): Extract<
   ForecastResponse,
   { status: 'insufficient_data' }

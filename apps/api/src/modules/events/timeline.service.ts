@@ -9,6 +9,7 @@ import { notFound } from '../../common/app-error.js';
 import { APPLICATION_NOT_FOUND, owned } from '../../common/owned.js';
 import {
   type OccurrencesQuery,
+  type OccurrencesSinceQuery,
   type TimelineOccurrence,
   TimelineRepository,
   type TimelineWrite,
@@ -28,6 +29,10 @@ export class TimelineService {
 
   occurrences(userId: string, query: OccurrencesQuery): Promise<TimelineOccurrence[]> {
     return this.repository.findOccurrences(userId, query);
+  }
+
+  occurrencesSince(userId: string, query: OccurrencesSinceQuery): Promise<TimelineOccurrence[]> {
+    return this.repository.findOccurrencesSince(userId, query);
   }
 
   async record(userId: string, { kind, payload, ...write }: TimelineEntry): Promise<void> {

@@ -4,7 +4,7 @@ import { startOfMonth } from 'date-fns';
 
 import { conflict } from '../../common/app-error.js';
 import { Clock } from '../../common/clock.js';
-import { errorMessageOf } from '../../common/error-message.js';
+import { requestEach, type RequestTotals } from '../../common/request-each.js';
 import { previousLocalMonthOf } from '../../common/year-month.js';
 import type { Prisma } from '../../generated/prisma/client.js';
 import { PrismaService } from '../../prisma/prisma.service.js';
@@ -13,8 +13,6 @@ import type { SummaryRequested } from './summaries.events.js';
 import { SummariesRepository } from './summaries.repository.js';
 
 type SummaryJobStart = Omit<SummaryRequested, 'aiJobId'> & { tx: Prisma.TransactionClient };
-
-export type MonthlySummaryTotals = { picked: number; requested: number };
 
 const NO_ACTIVE_SEARCH = 'No active search';
 
@@ -46,17 +44,12 @@ export class SummaryRequestsService {
     });
   }
 
-  async requestScheduledFor(userIds: string[]): Promise<MonthlySummaryTotals> {
-    const totals = { picked: userIds.length, requested: 0 };
-    for (const userId of userIds) {
-      try {
-        totals.requested += Number(await this.requestScheduled(userId));
-      } catch (error) {
-        this.logger.warn({ userId, err: errorMessageOf(error) }, 'scheduled summary failed');
-      }
-    }
-    this.logger.log(totals, 'monthly summaries requested');
-    return totals;
+  requestScheduledFor(userIds: string[]): Promise<RequestTotals> {
+    return requestEach(userIds, {
+      request: (userId) => this.requestScheduled(userId),
+      logger: this.logger,
+      labels: { failed: 'scheduled summary failed', done: 'monthly summaries requested' },
+    });
   }
 
   private requestScheduled(userId: string): Promise<boolean> {

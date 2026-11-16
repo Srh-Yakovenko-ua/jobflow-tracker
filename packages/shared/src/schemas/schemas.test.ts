@@ -199,6 +199,11 @@ describe('userSettingsSchema', () => {
     analyticsOptOut: false,
     singleKeyShortcuts: true,
     activeResumeVersionId: null,
+    weeklyGoalApplications: null,
+    weeklyGoalFollowups: null,
+    pausedFrom: null,
+    pausedUntil: null,
+    suggestedWeeklyGoal: null,
   };
 
   it('accepts the settings a new user starts with', () => {

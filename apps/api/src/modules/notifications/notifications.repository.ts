@@ -13,7 +13,7 @@ export type InsertNotification = Transaction & {
   payload: Prisma.InputJsonValue;
 };
 
-export type OnceKey = { field: 'aiJobId' | 'exportId'; id: string };
+export type OnceKey = { field: 'aiJobId' | 'exportId' | 'weekStart'; id: string };
 
 export type ExistingNotification = Transaction & { type: NotificationType; once?: OnceKey };
 

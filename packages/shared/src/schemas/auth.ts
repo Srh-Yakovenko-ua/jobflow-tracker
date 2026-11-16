@@ -1,6 +1,7 @@
 import { z } from 'zod';
 
 import { oauthProviderSchema } from '../oauth-providers.js';
+import { plainTextSchema } from './text.js';
 import { userSettingsSchema } from './user-settings.js';
 
 export const PASSWORD_MIN_LENGTH = 10;
@@ -14,7 +15,7 @@ export const givenPasswordSchema = z.string().min(1).max(PASSWORD_MAX_LENGTH);
 export const registerInputSchema = z.object({
   email: emailSchema,
   password: newPasswordSchema,
-  displayName: z.string().trim().min(1).max(100).optional(),
+  displayName: plainTextSchema(100).optional(),
 });
 
 export const loginInputSchema = z.object({

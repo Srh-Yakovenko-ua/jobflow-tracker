@@ -284,4 +284,29 @@ describe('NotificationsService.recordOnce', () => {
 
     expect(repository.rows.map(({ userId }) => userId)).toEqual([OLENA_ID, BOHDAN_ID]);
   });
+
+  it('writes rhythm_week_closed once per week and once more for the next week', async () => {
+    const { repository, service } = await serviceWith();
+    const closed = {
+      type: 'rhythm_week_closed',
+      payload: {
+        weekStart: '2026-11-09',
+        applications: 6,
+        followups: 2,
+        inRhythm: true,
+        suggestedGoal: null,
+        weeksSooner: null,
+      },
+    } as const;
+    const nextWeek = { ...closed, payload: { ...closed.payload, weekStart: '2026-11-16' } };
+
+    await service.recordOnce(OLENA_ID, closed);
+    await service.recordOnce(OLENA_ID, closed);
+    await service.recordOnce(OLENA_ID, nextWeek);
+
+    expect(repository.rows.map(({ payload }) => payload)).toEqual([
+      closed.payload,
+      nextWeek.payload,
+    ]);
+  });
 });

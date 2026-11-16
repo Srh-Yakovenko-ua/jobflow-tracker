@@ -119,6 +119,19 @@ export const INTERVIEW_PREP_READY_NOTIFICATION = buildNotification({
   },
 });
 
+export const RHYTHM_WEEK_CLOSED_NOTIFICATION = buildNotification({
+  serial: 11,
+  type: 'rhythm_week_closed',
+  payload: {
+    weekStart: '2026-11-09',
+    applications: 8,
+    followups: 3,
+    inRhythm: true,
+    suggestedGoal: 10,
+    weeksSooner: 2,
+  },
+});
+
 export const DESIGN_FEED: NotificationListResponse = {
   items: [INTERVIEW_NOTIFICATION, SILENCE_NOTIFICATION, AI_DONE_NOTIFICATION],
   nextCursor: null,

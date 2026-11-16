@@ -44,6 +44,11 @@ export const ME_RESPONSE: MeResponse = {
     analyticsOptOut: false,
     singleKeyShortcuts: true,
     activeResumeVersionId: null,
+    weeklyGoalApplications: null,
+    weeklyGoalFollowups: null,
+    pausedFrom: null,
+    pausedUntil: null,
+    suggestedWeeklyGoal: null,
   },
   unreadNotifications: 0,
 };

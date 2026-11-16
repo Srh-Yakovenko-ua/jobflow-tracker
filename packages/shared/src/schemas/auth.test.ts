@@ -40,6 +40,13 @@ describe('registerInputSchema', () => {
       displayName: 'Олена',
     });
   });
+
+  it('refuses a displayName with a NUL character, which Postgres text cannot store', () => {
+    expect(
+      registerInputSchema.safeParse({ email, password: 'a'.repeat(10), displayName: 'Ол\u0000ена' })
+        .success,
+    ).toBe(false);
+  });
 });
 
 describe('loginInputSchema', () => {

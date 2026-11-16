@@ -6,6 +6,7 @@ import {
   buildNotification,
   EXPORT_READY_NOTIFICATION,
   INTERVIEW_PREP_READY_NOTIFICATION,
+  RHYTHM_WEEK_CLOSED_NOTIFICATION,
 } from '@/test/notification-fixtures';
 
 import { notificationCopyOf } from './notification-copy';
@@ -35,6 +36,37 @@ describe('notificationCopyOf', () => {
       text: 'Підготовка готова',
       action: 'Відкрити картку',
     });
+  });
+
+  it('rhythm_week_closed in rhythm counts the week and adds the suggested pace', () => {
+    expect(notificationCopyOf(RHYTHM_WEEK_CLOSED_NOTIFICATION, TIME_ZONE)).toEqual({
+      title: 'Тиждень закрито: 8 відгуків і 3 фоллоу-апи',
+      text: 'Ти у ритмі. 10 відгуків на тиждень наблизять офер приблизно на 2 тижні.',
+      action: 'Відкрити аналітику',
+    });
+  });
+
+  it.each([
+    {
+      name: 'below the goal and without a suggestion only offers a new start',
+      payload: { applications: 1, followups: 1, inRhythm: false, suggestedGoal: null },
+      title: 'Тиждень закрито: 1 відгук і 1 фоллоу-ап',
+      text: 'Наступний тиждень, новий старт.',
+    },
+    {
+      name: 'below the goal agrees the suggestion with one application and one week',
+      payload: { applications: 0, followups: 5, inRhythm: false, suggestedGoal: 1, weeksSooner: 1 },
+      title: 'Тиждень закрито: 0 відгуків і 5 фоллоу-апів',
+      text: 'Наступний тиждень, новий старт. 1 відгук на тиждень наблизить офер приблизно на 1 тиждень.',
+    },
+  ])('rhythm_week_closed $name', ({ payload, title, text }) => {
+    const notification = buildNotification({
+      serial: 12,
+      type: 'rhythm_week_closed',
+      payload: { ...RHYTHM_WEEK_CLOSED_NOTIFICATION.payload, ...payload },
+    });
+
+    expect(notificationCopyOf(notification, TIME_ZONE)).toMatchObject({ title, text });
   });
 
   it('auto_ghosted agrees the verb with one company and reads the days from the setting', () => {
