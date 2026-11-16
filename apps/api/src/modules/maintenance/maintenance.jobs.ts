@@ -12,6 +12,7 @@ export const MAINTENANCE_JOBS = {
   monthlySummaryPick: 'monthly-summary.pick',
   rhythmWeekClosePick: 'rhythm.week-close.pick',
   aiJobsSweep: 'ai-jobs.sweep',
+  uptimePush: 'uptime.push',
 } as const;
 
 export type MaintenanceJobName = (typeof MAINTENANCE_JOBS)[keyof typeof MAINTENANCE_JOBS];
@@ -89,6 +90,14 @@ export const MAINTENANCE_SCHEDULES: MaintenanceSchedule[] = [
     template: { name: MAINTENANCE_JOBS.aiJobsSweep, opts: TICK_JOB_OPTIONS },
   },
 ];
+
+export const UPTIME_PUSH_SCHEDULE = {
+  id: 'uptime-push',
+  repeat: { every: milliseconds({ minutes: 1 }) },
+  template: { name: MAINTENANCE_JOBS.uptimePush, opts: TICK_JOB_OPTIONS },
+} satisfies Omit<MaintenanceSchedule, 'id'> & { id: string };
+
+export const uptimePushJobSchema = z.object({ url: z.url({ protocol: /^https?$/ }) });
 
 export const maintenanceJobNameSchema = z.enum(MAINTENANCE_JOBS);
 

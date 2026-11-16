@@ -87,6 +87,7 @@ const envFields = z.object({
   OAUTH_GOOGLE_CLIENT_ID: z.string().optional(),
   OAUTH_GOOGLE_CLIENT_SECRET: z.string().optional(),
   OTEL_EXPORTER_OTLP_ENDPOINT: httpUrl.optional(),
+  UPTIME_KUMA_PUSH_URL: httpUrl.optional(),
 });
 
 export const envSchema = envFields.superRefine(requireWholeCredentialPairs);

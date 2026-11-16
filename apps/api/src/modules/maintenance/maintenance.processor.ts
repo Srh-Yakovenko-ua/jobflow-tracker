@@ -21,6 +21,7 @@ import {
   maintenanceJobNameSchema,
   pingJobSchema,
 } from './maintenance.jobs.js';
+import { pushUptime } from './uptime-push.js';
 
 type MaintenanceHandler = (job: ProcessedJob) => Promise<unknown>;
 
@@ -44,6 +45,7 @@ export class MaintenanceProcessor extends WorkerHost {
     [MAINTENANCE_JOBS.autoGhostScan]: (job) => this.ran(job, () => this.autoGhost.scan()),
     [MAINTENANCE_JOBS.eventRemindersScan]: (job) =>
       this.ran(job, () => this.scheduledJobs.interviewReminders()),
+    [MAINTENANCE_JOBS.uptimePush]: (job) => pushUptime({ job, logger: this.logger }),
   };
 
   constructor(

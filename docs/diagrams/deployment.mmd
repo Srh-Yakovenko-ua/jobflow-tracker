@@ -26,6 +26,8 @@ flowchart LR
     glitchtip["glitchtip<br/>помилки, сумісний із Sentry, :8003"]
     glitchtip_db["glitchtip-db<br/>створює базу glitchtip"]
     glitchtip_bootstrap["glitchtip-bootstrap<br/>адмін, проєкт і DSN"]
+    uptime_kuma["uptime-kuma<br/>аптайм і сторінка статусу, :3002"]
+    uptime_kuma_bootstrap["uptime-kuma-bootstrap<br/>монітори, Telegram і сторінка статусу"]
   end
 
   subgraph volumes["Іменовані томи"]
@@ -34,6 +36,7 @@ flowchart LR
     miniodata[("miniodata")]
     lokidata[("lokidata")]
     prometheusdata[("prometheusdata")]
+    uptimekumadata[("uptimekumadata")]
   end
 
   browser --> web
@@ -80,3 +83,8 @@ flowchart LR
   worker -->|Sentry| glitchtip
   analytics -->|Sentry| glitchtip
   browser -->|"Sentry з web, UI :8003"| glitchtip
+  uptime_kuma -->|"HTTP і TCP перевірки"| compose
+  worker -->|"heartbeat щохвилини"| uptime_kuma
+  uptime_kuma_bootstrap --> uptime_kuma
+  uptime_kuma --- uptimekumadata
+  browser -->|"сторінка статусу :3002"| uptime_kuma
