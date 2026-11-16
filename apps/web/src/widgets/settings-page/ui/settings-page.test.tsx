@@ -23,7 +23,14 @@ import { SettingsPage } from './settings-page';
 vi.mock('next/navigation', () => import('@/test/navigation'));
 vi.mock('next/link', () => import('@/test/link'));
 
-const SECTIONS = ['Пошук і тиша', 'Повідомлення', 'AI та приватність', 'Вигляд і тема', 'Акаунт'];
+const SECTIONS = [
+  'Пошук і тиша',
+  'Ритм пошуку',
+  'Повідомлення',
+  'AI та приватність',
+  'Вигляд і тема',
+  'Акаунт',
+];
 
 const REVOKE_BOOKMARKLET = { name: 'Вимкнути букмарклет' } as const;
 
@@ -55,11 +62,12 @@ describe('SettingsPage', () => {
     expect(await screen.findByRole('region', { name: 'Акаунт' })).toBeDefined();
   });
 
-  it('lays the page out in five named sections with a nav that marks the first one', async () => {
+  it('lays the page out in six named sections with a nav that marks the first one', async () => {
     await renderLoadedSettings();
 
     expect(SECTIONS.map((name) => regionOf(name).id)).toEqual([
       'search',
+      'rhythm',
       'notifications',
       'aiPrivacy',
       'appearance',

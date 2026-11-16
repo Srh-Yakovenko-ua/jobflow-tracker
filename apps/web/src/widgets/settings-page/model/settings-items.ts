@@ -7,6 +7,7 @@ export const AUTO_GHOST_DEFAULT_DAYS = 30;
 
 export const SETTINGS_SECTIONS = [
   'search',
+  'rhythm',
   'notifications',
   'aiPrivacy',
   'appearance',
@@ -18,6 +19,7 @@ export type SettingsSectionId = (typeof SETTINGS_SECTIONS)[number];
 const ANCHOR_SECTIONS = {
   bookmarklet: 'aiPrivacy',
   notifications: 'notifications',
+  rhythm: 'rhythm',
 } as const satisfies Record<SettingsAnchor, SettingsSectionId>;
 
 export function sectionOfHash(hash: string): SettingsSectionId {
@@ -34,6 +36,7 @@ const GATED_ITEMS = {
   captureToken: 'captureToken',
   aiDataDeletion: 'aiDataDeletion',
   accountDeletion: 'accountDeletion',
+  weeklyRhythm: 'weeklyRhythm',
 } as const;
 
 export type GatedSettingsItem = keyof typeof GATED_ITEMS;
@@ -47,6 +50,7 @@ export function visibleSettingsItems(flags: FeatureFlags): SettingsItems {
     captureToken: flags[GATED_ITEMS.captureToken],
     aiDataDeletion: flags[GATED_ITEMS.aiDataDeletion],
     accountDeletion: flags[GATED_ITEMS.accountDeletion],
+    weeklyRhythm: flags[GATED_ITEMS.weeklyRhythm],
   };
 }
 

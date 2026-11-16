@@ -77,6 +77,7 @@ export function useUpdateSettingsMutation(): SettingsSave {
     },
     onSuccess: (settings, change) => {
       settle(queryClient, { source: settings, change });
+      void queryClient.invalidateQueries({ queryKey: userKeys.rhythm() });
       if ('silenceDays' in change.patch) {
         void queryClient.invalidateQueries({ queryKey: applicationKeys.all });
       }

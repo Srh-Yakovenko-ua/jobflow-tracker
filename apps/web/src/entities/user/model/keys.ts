@@ -4,4 +4,5 @@ export const userKeys = {
   session: () => [...userKeys.all, 'session'] as const,
   cookieSession: () => [...userKeys.all, 'cookie-session'] as const,
   settingsSuggestions: () => [...userKeys.all, 'settings-suggestions'] as const,
+  rhythm: () => [...userKeys.all, 'rhythm'] as const,
 };

@@ -10,12 +10,6 @@ import {
 import { FORMS } from './analytics-forms';
 import { shell } from './shell';
 
-const FOLLOWUPS = {
-  one: 'фоллоу-ап',
-  few: 'фоллоу-апи',
-  other: 'фоллоу-апів',
-} as const satisfies PluralForms;
-
 const BRING_CLOSER = { one: 'наблизить', other: 'наблизять' } as const satisfies PluralForms;
 
 type RhythmWeekCounts = Readonly<{ applications: number; followups: number }>;
@@ -137,7 +131,7 @@ export const notifications = {
   },
   rhythmWeekClosed: {
     title: ({ applications, followups }: RhythmWeekCounts) =>
-      `Тиждень закрито: ${countedUk(applications, APPLICATION_FORMS_UK)} і ${countedUk(followups, FOLLOWUPS)}`,
+      `Тиждень закрито: ${countedUk(applications, APPLICATION_FORMS_UK)} і ${countedUk(followups, FORMS.followup)}`,
     inRhythm: 'Ти у ритмі.',
     nextWeek: 'Наступний тиждень, новий старт.',
     suggestion: ({ goal, weeksSooner }: RhythmSuggestion) =>

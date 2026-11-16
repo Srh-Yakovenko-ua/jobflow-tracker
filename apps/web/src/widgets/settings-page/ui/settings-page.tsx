@@ -14,6 +14,7 @@ import { AccountSection } from './account-section';
 import { AiPrivacySection } from './ai-privacy-section';
 import { AppearanceSection } from './appearance-section';
 import { NotificationsSection } from './notifications-section';
+import { RhythmSection } from './rhythm-section';
 import { SearchSection } from './search-section';
 import { SectionNav } from './section-nav';
 
@@ -25,9 +26,10 @@ function SettingsContent({ me }: Readonly<{ me: MeResponse }>) {
   }, []);
   return (
     <div className="grid animate-fade-in items-start gap-6 md:grid-cols-[minmax(0,200px)_minmax(0,1fr)] md:gap-8">
-      <SectionNav />
+      <SectionNav items={ITEMS} />
       <div className="flex min-w-0 flex-col gap-14">
         <SearchSection settings={me.settings} />
+        {ITEMS.weeklyRhythm && <RhythmSection settings={me.settings} />}
         <NotificationsSection settings={me.settings} items={ITEMS} />
         <AiPrivacySection items={ITEMS} />
         <AppearanceSection settings={me.settings} />

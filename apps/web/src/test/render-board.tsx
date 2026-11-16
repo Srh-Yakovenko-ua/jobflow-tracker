@@ -1,4 +1,5 @@
 import type { ApplicationFilters, MeResponse } from '@jobflow/shared';
+import type { QueryKey } from '@tanstack/react-query';
 import { screen } from '@testing-library/react';
 
 import { userKeys } from '@/entities/user';
@@ -31,6 +32,7 @@ export type BoardRenderOptions = {
   settings?: BoardSettings | undefined;
   filters?: ApplicationFilters;
   url?: string;
+  probes?: readonly QueryKey[];
 };
 
 export function renderBoard(
@@ -39,6 +41,7 @@ export function renderBoard(
     settings,
     filters = {},
     url = withSearchParams(window.location.pathname, filters),
+    probes = [],
   }: BoardRenderOptions = {},
 ) {
   const board = boardRoute(route);
@@ -52,7 +55,9 @@ export function renderBoard(
   const user = renderInApp(
     <>
       <KanbanBoard initial={{ density: 'full', filters }} />
-      <QueryProbe queryKey={userKeys.me()} />
+      {[userKeys.me(), ...probes].map((queryKey) => (
+        <QueryProbe key={JSON.stringify(queryKey)} queryKey={queryKey} />
+      ))}
     </>,
   );
   return { user, sent: board.sent };

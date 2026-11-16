@@ -1,4 +1,5 @@
 export { meQueryOptions } from './api/me';
+export { rhythmQueryOptions } from './api/rhythm';
 export { sessionQueryOptions } from './api/session';
 export { settingsSuggestionsQueryOptions } from './api/settings-suggestions';
 export { initialsOf } from './lib/initials';
