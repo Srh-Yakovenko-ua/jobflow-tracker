@@ -177,6 +177,7 @@ async function countUserOwnedRows(prisma: PrismaService, userId: string): Promis
     prisma.resume.count({ where }),
     prisma.resumeVersion.count({ where }),
     prisma.aiResult.count({ where }),
+    prisma.aiCall.count({ where }),
     prisma.aiJob.count({ where }),
     prisma.reminder.count({ where }),
     prisma.notification.count({ where }),
@@ -219,7 +220,9 @@ describe('the supporting tables in Postgres', () => {
 
     await prisma.user.delete({ where: { id: owned.userId } });
 
-    expect(await countUserOwnedRows(prisma, owned.userId)).toEqual([0, 0, 0, 0, 0, 0, 0, 0, 0, 0]);
+    expect(await countUserOwnedRows(prisma, owned.userId)).toEqual([
+      0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    ]);
   });
 
   it('deleting a resume version detaches it from the application and the settings', async () => {

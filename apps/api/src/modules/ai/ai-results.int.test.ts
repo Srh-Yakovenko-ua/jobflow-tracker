@@ -6,6 +6,7 @@ import { AI_RESULTS_PATH } from '../../test/ai.js';
 import { useTestApp } from '../../test/app.js';
 import { applicationPath, signedInWithSearch } from '../../test/applications.js';
 import {
+  createAiCall,
   createAiJob,
   createAiResult,
   createApplicationRows,
@@ -54,6 +55,7 @@ describe('DELETE /ai-results', () => {
     });
     const aiResultId = await createAiResult(prisma, { userId });
     await createAiResult(prisma, { userId, kind: 'match' });
+    await createAiCall(prisma, { userId, createdAt: EARLIER });
     const aiJobId = await createAiJob(prisma, {
       userId,
       applicationId: scoredId,
@@ -64,10 +66,10 @@ describe('DELETE /ai-results', () => {
   }
 
   async function aiDataOf(userId: string) {
-    const { aiResult, application, resumeVersion, aiJob } = testApp.prisma;
+    const { aiResult, application, resumeVersion, aiJob, aiCall } = testApp.prisma;
     const where = { userId };
     const orderBy = { id: 'asc' } as const;
-    const [results, applications, resumeVersions, jobs] = await Promise.all([
+    const [results, applications, resumeVersions, jobs, calls] = await Promise.all([
       aiResult.findMany({ where, orderBy, select: { id: true, kind: true } }),
       application.findMany({
         where,
@@ -76,14 +78,15 @@ describe('DELETE /ai-results', () => {
       }),
       resumeVersion.findMany({ where, select: { aiProfile: true } }),
       aiJob.findMany({ where, select: { id: true, aiResultId: true } }),
+      aiCall.findMany({ where, select: { kind: true, status: true, createdAt: true } }),
     ]);
-    return { results, applications, resumeVersions, jobs };
+    return { results, applications, resumeVersions, jobs, calls };
   }
 
   const deleteAiResults = (accessToken?: string) =>
     callRoute(testApp.app, { method: 'delete', path: AI_RESULTS_PATH, accessToken });
 
-  it("answers 204, deletes the user's AI results, clears the scores, parses and profiles and keeps the AI jobs", async () => {
+  it("answers 204, deletes the user's AI results, clears the scores, parses and profiles and keeps the AI jobs and the usage rows", async () => {
     const olena = await ownerOfAiData();
 
     const response = await deleteAiResults(olena.accessToken);
@@ -97,6 +100,7 @@ describe('DELETE /ai-results', () => {
       ],
       resumeVersions: [{ aiProfile: null }],
       jobs: [{ id: olena.aiJobId, aiResultId: null }],
+      calls: [{ kind: 'vacancy_parse', status: 'succeeded', createdAt: EARLIER }],
     });
   });
 

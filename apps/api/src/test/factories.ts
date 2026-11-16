@@ -63,6 +63,9 @@ export type NewAiJob = {
 export type NewAiResult = Pick<Prisma.AiResultUncheckedCreateInput, 'userId'> &
   Partial<Prisma.AiResultUncheckedCreateInput>;
 
+export type NewAiCall = Pick<Prisma.AiCallUncheckedCreateInput, 'userId'> &
+  Partial<Prisma.AiCallUncheckedCreateInput>;
+
 export type NewNote = { applicationId: string; body: string };
 
 export type LoadedBoardRow = ApplicationRowInput & {
@@ -216,6 +219,22 @@ export async function createAiResult(prisma: PrismaService, fields: NewAiResult)
     },
   });
   return created.id;
+}
+
+export async function createAiCall(prisma: PrismaService, fields: NewAiCall): Promise<void> {
+  const { model, tokensIn, tokensOut, latencyMs } = buildVacancyCompletion();
+  await prisma.aiCall.create({
+    data: {
+      kind: 'vacancy_parse',
+      status: 'succeeded',
+      model,
+      tokensIn,
+      tokensOut,
+      latencyMs,
+      ...fields,
+    },
+    select: { id: true },
+  });
 }
 
 const BOARD_STAGE_WEIGHTS: Record<Stage, number> = {

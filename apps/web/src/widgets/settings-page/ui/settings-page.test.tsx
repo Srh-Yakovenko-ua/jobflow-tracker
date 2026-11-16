@@ -204,6 +204,16 @@ describe('SettingsPage', () => {
     ).toBeDefined();
   });
 
+  it('the delete note in AI та приватність says the usage count of AI calls stays', async () => {
+    await renderLoadedSettings();
+
+    expect(
+      within(regionOf('AI та приватність')).getByText(
+        /Облік AI-викликів лишиться: скільки викликів було й скільки токенів вони витратили, без жодного тексту\. Денний ліміт і місячний бюджет і далі їх рахують\.$/,
+      ),
+    ).toBeDefined();
+  });
+
   it('holds the bookmarklet block with the state of the active capture token and its controls', async () => {
     await renderLoadedSettings();
     const aiPrivacy = within(regionOf('AI та приватність'));

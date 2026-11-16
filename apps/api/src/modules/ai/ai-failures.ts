@@ -1,4 +1,5 @@
 import {
+  AI_PROMPT_VERSIONS,
   type AiKind,
   matchFailure,
   matchOutputSchema,
@@ -6,6 +7,9 @@ import {
   vacancyParseOutputSchema,
 } from '@jobflow/shared';
 
+import type { SaveAiFailure } from './ai.repository.js';
+import type { AiCallRecord } from './ai-call-row.js';
+import type { AiRun } from './ai-run.js';
 import type { AiServiceError } from './ai-service-error.js';
 
 export const OUTPUT_FAILURES: Record<AiKind, (output: unknown) => string | null> = {
@@ -26,6 +30,15 @@ export const FAILED_CALL = {
   tokensOut: 0,
   latencyMs: 0,
 } as const;
+
+export function failedCallOf({ job, now }: AiRun, errorType: string): AiCallRecord {
+  return { kind: job.kind, status: 'failed', errorType, now, ...FAILED_CALL };
+}
+
+export function failedResultOf({ job, inputHash, now }: AiRun, errorType: string): SaveAiFailure {
+  const promptVersion = AI_PROMPT_VERSIONS[job.kind];
+  return { kind: job.kind, inputHash, promptVersion, error: errorType, now, ...FAILED_CALL };
+}
 
 const FAILS_AT_ONCE: ReadonlySet<AiKind> = new Set(['followup', 'cv_hints']);
 

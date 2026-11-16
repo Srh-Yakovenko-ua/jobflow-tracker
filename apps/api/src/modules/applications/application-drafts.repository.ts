@@ -63,11 +63,11 @@ export class ApplicationDraftsRepository {
     if (draft === undefined) {
       return null;
     }
-    const parses = await tx.application.findFirst({
+    const application = await tx.application.findFirst({
       where: { id, userId },
       select: { aiJobs: { where: RUNNING_PARSE, ...LATEST_AI_JOB_SELECT } },
     });
-    return { ...draft, runningJobId: parses?.aiJobs[0]?.id ?? null };
+    return { ...draft, runningJobId: application?.aiJobs[0]?.id ?? null };
   }
 
   async confirmDraft(userId: string, { id, tx = this.prisma }: ApplicationById): Promise<number> {

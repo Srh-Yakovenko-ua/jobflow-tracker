@@ -398,6 +398,21 @@ failed failed
     }
   
 
+  "ai_calls" {
+    String id "🗝️"
+    String user_id 
+    String kind 
+    String model 
+    AiResultStatus status 
+    String error_type "❓"
+    Int tokens_in 
+    Int tokens_out 
+    Int latency_ms 
+    DateTime created_at 
+    DateTime updated_at 
+    }
+  
+
   "reminders" {
     String id "🗝️"
     String user_id 
@@ -525,6 +540,8 @@ failed failed
     "ai_jobs" }o--|o "ai_results" : "aiResult"
     "ai_jobs" }o--|o "applications" : "application"
     "ai_jobs" }o--|o "resume_versions" : "resumeVersion"
+    "ai_calls" |o--|| "ai_result_status" : "enum:status"
+    "ai_calls" }o--|| "users" : "user"
     "reminders" |o--|| "reminder_type" : "enum:type"
     "reminders" |o--|| "reminder_status" : "enum:status"
     "reminders" }o--|| "users" : "user"

@@ -10,6 +10,7 @@ import {
 } from '../../prisma/latest-ai-job.js';
 import { PrismaService } from '../../prisma/prisma.service.js';
 import { AI_BUDGET } from './ai-budget.js';
+import { type AiCallRecord, callRow } from './ai-call-row.js';
 import { AI_QUEUE_ESTIMATE } from './ai-queue-estimate.js';
 import { resultChange, resultRow } from './ai-result-row.js';
 
@@ -166,25 +167,25 @@ export class AiRepository {
     }
   }
 
+  async recordCall(userId: string, call: AiCallRecord): Promise<void> {
+    await this.prisma.aiCall.create({ data: callRow(userId, call), select: { id: true } });
+  }
+
   async budgetUsage(userId: string, { dayStart, monthStart }: BudgetWindow): Promise<BudgetUsage> {
-    const [succeeded, failed, { _sum: spent }] = await Promise.all([
-      this.prisma.aiResult.count({
-        where: { userId, status: 'succeeded', updatedAt: { gte: dayStart } },
-      }),
-      this.prisma.aiJob.count({
+    const [calls, { _sum: spent }] = await Promise.all([
+      this.prisma.aiCall.count({
         where: {
           userId,
-          status: 'failed',
-          errorType: { in: [...AI_BUDGET.countedFailures] },
-          finishedAt: { gte: dayStart },
+          createdAt: { gte: dayStart },
+          OR: [{ status: 'succeeded' }, { errorType: { in: [...AI_BUDGET.countedFailures] } }],
         },
       }),
-      this.prisma.aiResult.aggregate({
-        where: { updatedAt: { gte: monthStart } },
+      this.prisma.aiCall.aggregate({
+        where: { createdAt: { gte: monthStart } },
         _sum: { tokensIn: true, tokensOut: true },
       }),
     ]);
-    return { calls: succeeded + failed, tokens: (spent.tokensIn ?? 0) + (spent.tokensOut ?? 0) };
+    return { calls, tokens: (spent.tokensIn ?? 0) + (spent.tokensOut ?? 0) };
   }
 
   async queueSample(userId: string, id: string): Promise<QueueSample | null> {

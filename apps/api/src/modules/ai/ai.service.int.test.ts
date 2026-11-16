@@ -21,6 +21,7 @@ import {
 import { useTestDatabase } from '../../test/database.js';
 import { exampleEnv } from '../../test/example-env.js';
 import {
+  createAiCall,
   createAiJob,
   createAiResult,
   createOwnedApplication,
@@ -36,6 +37,7 @@ import { AI_JOBS, type AiCompleteJob } from './ai.jobs.js';
 import { AiProcessor } from './ai.processor.js';
 import { AiRepository } from './ai.repository.js';
 import { AiService } from './ai.service.js';
+import { budgetWindow } from './ai-budget.js';
 import { AiClient } from './ai-client.js';
 import { aiInputHash } from './ai-input-hash.js';
 import { AiJobRouter } from './ai-job-router.js';
@@ -343,11 +345,11 @@ describe('AiService on Postgres', () => {
 
   it('fails a call with budget_exceeded once all users together reached the monthly token cap', async () => {
     const bohdan = await createOwnedApplication(database.prisma);
-    await createAiResult(database.prisma, {
+    await createAiCall(database.prisma, {
       userId: bohdan.userId,
       tokensIn: 600,
       tokensOut: 400,
-      updatedAt: minutesBefore(60),
+      createdAt: minutesBefore(60),
     });
     const olena = await createOwnedApplication(database.prisma);
     const job = await queuedJob(olena, VACANCY_TEXT);
@@ -361,20 +363,46 @@ describe('AiService on Postgres', () => {
   it("leaves yesterday's calls and last month's tokens out of the budget", async () => {
     const olena = await createOwnedApplication(database.prisma);
     const bohdan = await createOwnedApplication(database.prisma);
-    await createAiResult(database.prisma, {
+    await createAiCall(database.prisma, {
       userId: olena.userId,
-      updatedAt: new Date('2026-10-21T23:59:00.000Z'),
+      createdAt: new Date('2026-10-21T23:59:00.000Z'),
     });
-    await createAiResult(database.prisma, {
+    await createAiCall(database.prisma, {
       userId: bohdan.userId,
       tokensIn: 1000,
-      updatedAt: new Date('2026-09-30T23:59:00.000Z'),
+      createdAt: new Date('2026-09-30T23:59:00.000Z'),
     });
 
     await expect(run(await queuedJob(olena, OTHER_VACANCY))).resolves.toMatchObject({
       cached: false,
     });
     expect(ai.calls).toHaveLength(1);
+  });
+
+  it('refuses the next vacancy with the daily limit error after the user deletes all AI results', async () => {
+    const olena = await createOwnedApplication(database.prisma);
+    await run(await queuedJob(olena, VACANCY_TEXT));
+    await moduleRef.get(AiService).deleteResults(olena.userId);
+
+    await expect(run(await queuedJob(olena, OTHER_VACANCY))).rejects.toThrow(
+      new UnrecoverableError('budget_exceeded'),
+    );
+    expect(ai.calls).toHaveLength(1);
+  });
+
+  it("adds only this call's tokens to this month when a vacancy that succeeded last month succeeds again", async () => {
+    const olena = await createOwnedApplication(database.prisma);
+    clock.at(new Date('2026-09-30T12:00:00.000Z'));
+    await run(await queuedJob(olena, VACANCY_TEXT));
+    clock.at(NOW);
+
+    await run({ ...(await queuedJob(olena, VACANCY_TEXT)), fresh: true });
+
+    expect(ai.calls).toHaveLength(2);
+    expect(await moduleRef.get(AiRepository).budgetUsage(olena.userId, budgetWindow(NOW))).toEqual({
+      calls: 1,
+      tokens: 160,
+    });
   });
 
   it("asks services/ai again for another user's identical vacancy and counts only that user's calls", async () => {

@@ -26,6 +26,7 @@ import type { VacancyEvalCaseFile, VacancyExpected } from '../ai-eval/vacancy-ca
 import type { AiUsageRow } from '../ai-usage/ai-usage.repository.js';
 import { Prisma } from '../generated/prisma/client.js';
 import type {
+  AiCallRecord,
   AiCompleteCall,
   AiCompleteJob,
   AiJobChange,
@@ -276,6 +277,8 @@ type JobMove = { id: string; from: AiJobStatus[]; to: Partial<FakeAiJob> };
 
 type BudgetQuery = BudgetWindow & { userId: string };
 
+type RecordedAiCall = AiCallRecord & { userId: string };
+
 const resultKey = (userId: string, { kind, inputHash }: AiResultKey) =>
   `${userId}/${kind}/${inputHash}`;
 
@@ -285,6 +288,8 @@ export class FakeAiRepository {
   readonly results = new Map<string, StoredAiResult>();
 
   readonly budgetQueries: BudgetQuery[] = [];
+
+  readonly calls: RecordedAiCall[] = [];
 
   usage: BudgetUsage = { calls: 0, tokens: 0 };
 
@@ -355,6 +360,12 @@ export class FakeAiRepository {
   async failJobWithResult(userId: string, { result, job }: FailAiJobWithResult): Promise<number> {
     await this.saveFailure(userId, result);
     return this.failJob(userId, job);
+  }
+
+  recordCall(userId: string, call: AiCallRecord): Promise<void> {
+    return this.reached(() => {
+      this.calls.push({ userId, ...call });
+    });
   }
 
   budgetUsage(userId: string, window: BudgetWindow): Promise<BudgetUsage> {

@@ -181,6 +181,7 @@ model User {
   resumeVersions    ResumeVersion[]
   aiResults         AiResult[]
   aiJobs            AiJob[]
+  aiCalls           AiCall[]
   reminders         Reminder[]
   notifications     Notification[]
   pushSubscriptions PushSubscription[]
@@ -525,6 +526,25 @@ model AiJob {
   @@index([applicationId, userId])
   @@index([resumeVersionId, userId])
   @@map("ai_jobs")
+}
+
+model AiCall {
+  id        String         @id @default(dbgenerated("uuidv7()")) @db.Uuid
+  userId    String         @map("user_id") @db.Uuid
+  kind      String
+  model     String
+  status    AiResultStatus
+  errorType String?        @map("error_type")
+  tokensIn  Int            @map("tokens_in")
+  tokensOut Int            @map("tokens_out")
+  latencyMs Int            @map("latency_ms")
+  createdAt DateTime       @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime       @default(now()) @updatedAt @map("updated_at") @db.Timestamptz
+  user      User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@index([createdAt])
+  @@map("ai_calls")
 }
 
 model Reminder {
