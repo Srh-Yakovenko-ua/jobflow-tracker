@@ -2,8 +2,11 @@ import { analytics } from './analytics';
 import { board } from './board';
 import { ghosted } from './ghosted';
 import { resumes } from './resumes';
+import { searches } from './searches';
 
 const { emptySearch, filters } = board;
+
+const { finish } = searches;
 
 export const devUiStates = {
   firstRun: { index: '01', title: 'Перший вхід · дошка на нулі' },
@@ -30,11 +33,11 @@ export const devUiStates = {
     },
     finished: {
       content: {
-        eyebrow: 'Пошук завершено',
-        title: 'Офер прийнято',
-        hint: '41 день, 54 відгуки, 9 співбесід. Дошку можна заархівувати. Аналітика залишиться, вона знадобиться наступного разу.',
+        eyebrow: finish.eyebrow,
+        title: finish.title,
+        hint: finish.hint({ days: 41, applications: 54, interviews: 9 }),
       },
-      action: 'Заархівувати пошук',
+      action: finish.confirm,
     },
   },
   skeletons: {

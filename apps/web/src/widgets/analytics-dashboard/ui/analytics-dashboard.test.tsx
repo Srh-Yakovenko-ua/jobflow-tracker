@@ -22,7 +22,7 @@ import { server } from '@/test/server';
 import { meRoute } from '@/test/session-fixtures';
 import { NO_SUMMARY, READY_SUMMARY, summaryRoutes } from '@/test/summary-fixtures';
 
-import { AnalyticsDashboard } from './analytics-dashboard';
+import { AnalyticsDashboard, type AnalyticsDashboardProps } from './analytics-dashboard';
 
 vi.mock('next/navigation', () => import('@/test/navigation'));
 vi.mock('react-chartjs-2', () => import('@/test/recorded-chart'));
@@ -84,6 +84,11 @@ const SHARE = { name: 'Поділитися' } as const;
 
 const REPORT = { name: 'Звіт для друку' } as const;
 
+const HISTORY = { name: 'Історія пошуків' } as const;
+
+const COMPARISON =
+  'Минулий пошук: 70 днів, 31 відгук, 9 співбесід, без оферу · зараз: 84 дні, 54 відгуки, 9 співбесід';
+
 const AFFECTED: Record<Exclude<DashboardRoute, 'insights'>, readonly Block[]> = {
   searches: ['sankey', 'sent', 'screening'],
   funnel: ['sent', 'screening'],
@@ -105,10 +110,15 @@ const OUTAGE_CASES = DASHBOARD_ROUTES.flatMap((route) =>
   route === 'insights' ? [] : OUTAGES.map((outage) => ({ route, blocks: AFFECTED[route], outage })),
 );
 
-function renderDashboard(options: DashboardRoutesOptions = {}, latest = NO_SUMMARY) {
+type DashboardSetup = Readonly<{ latest?: typeof NO_SUMMARY; props?: AnalyticsDashboardProps }>;
+
+function renderDashboard(
+  options: DashboardRoutesOptions = {},
+  { latest = NO_SUMMARY, props = {} }: DashboardSetup = {},
+) {
   const routes = dashboardRoutes(options);
   server.use(meRoute(), ...summaryRoutes({ latest }).handlers, ...routes.handlers);
-  const user = renderInApp(<AnalyticsDashboard />);
+  const user = renderInApp(<AnalyticsDashboard {...props} />);
   return { user, sent: routes.sent };
 }
 
@@ -227,7 +237,7 @@ describe('AnalyticsDashboard', () => {
   });
 
   it('a done monthly summary takes the place of the insight actions', async () => {
-    renderDashboard({}, READY_SUMMARY);
+    renderDashboard({}, { latest: READY_SUMMARY });
     await screen.findByRole('heading', { name: HERO_TITLE });
 
     await waitFor(() => {
@@ -270,6 +280,39 @@ describe('AnalyticsDashboard', () => {
         `/analytics/report?period=${ARCHIVED_SEARCH.id}`,
       );
     });
+  });
+
+  it('a period opens that archived search: the select shows it and the funnel asks for it', async () => {
+    const { sent } = renderDashboard({}, { props: { period: ARCHIVED_SEARCH.id } });
+    const archived = `?searchId=${ARCHIVED_SEARCH.id}`;
+
+    await waitFor(() => {
+      expect(queriesOf(sent)).toMatchObject({ funnel: archived, sankey: archived });
+    });
+    expect(screen.getByRole('combobox', { name: 'Пошук' }).textContent).toContain(
+      ARCHIVED_SEARCH.title,
+    );
+    expect(sent.filter(({ url }) => url.search.includes(ACTIVE_SEARCH.id))).toEqual([]);
+    expect(screen.queryByText(COMPARISON)).toBeNull();
+  });
+
+  it('the current search is compared with the previous one, and an archived selection drops the line', async () => {
+    const { user } = renderDashboard();
+
+    expect(await screen.findByText(COMPARISON)).toBeDefined();
+    await selectArchivedSearch(user);
+
+    await waitFor(() => {
+      expect(screen.queryByText(COMPARISON)).toBeNull();
+    });
+  });
+
+  it('the search history link opens the archive of past searches', async () => {
+    renderDashboard();
+
+    expect((await screen.findByRole('link', HISTORY)).getAttribute('href')).toBe(
+      '/analytics/searches',
+    );
   });
 
   it('four applications turn the whole dashboard into its low data state with one useful action', async () => {

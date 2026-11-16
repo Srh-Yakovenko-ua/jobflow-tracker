@@ -9,13 +9,13 @@ import { Dialog, DialogContent } from './dialog';
 
 const COPY = uk.applicationPage.deletion;
 
-function renderFooter({ pending }: Readonly<{ pending: boolean }>) {
+function renderFooter({ pending, tone }: Readonly<{ pending: boolean; tone?: 'primary' }>) {
   const onConfirm = vi.fn<() => void>();
   const user = userEvent.setup();
   render(
     <Dialog defaultOpen>
       <DialogContent header={{ title: COPY.title }}>
-        <ConfirmFooter copy={COPY} action={{ pending, onConfirm }} />
+        <ConfirmFooter copy={COPY} action={{ pending, onConfirm, ...(tone && { tone }) }} />
       </DialogContent>
     </Dialog>,
   );
@@ -62,6 +62,18 @@ describe('ConfirmFooter', () => {
         confirm.classList.contains(name),
       ),
     ).toEqual([true, true]);
+  });
+
+  it('a confirm that destroys nothing takes the accent look instead of the danger tint', () => {
+    renderFooter({ pending: false, tone: 'primary' });
+
+    const confirm = screen.getByRole('button', { name: COPY.confirm });
+
+    expect(
+      ['bg-accent', 'text-danger', 'dark:bg-transparent'].map((name) =>
+        confirm.classList.contains(name),
+      ),
+    ).toEqual([true, false, false]);
   });
 
   it('while the action runs the confirm button is busy and refuses a second click', async () => {

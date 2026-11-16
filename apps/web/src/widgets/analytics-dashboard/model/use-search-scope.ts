@@ -3,12 +3,12 @@
 import { useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
 
-import { searchesQueryOptions } from '@/entities/search';
+import { activeSearchOf, searchesQueryOptions } from '@/entities/search';
 
 export function useSearchScope(initialId?: string) {
   const searches = useQuery(searchesQueryOptions());
   const [selectedId, setSelectedId] = useState<string | undefined>(initialId);
-  const activeId = searches.data?.items.find((search) => search.status === 'active')?.id;
+  const activeId = activeSearchOf(searches.data?.items ?? [])?.id;
   return {
     searches,
     activeId,

@@ -86,6 +86,18 @@ export const ARCHIVED_SEARCH: SearchSummary = {
   applications: 31,
 };
 
+export const FIRST_SEARCH: SearchSummary = {
+  ...ARCHIVED_SEARCH,
+  id: '0b6f3c1e-5d2a-4c8e-9f10-0000000005a4',
+  title: 'Перший пошук',
+  outcome: 'paused',
+  startedAt: '2024-03-04T09:00:00.000Z',
+  finishedAt: '2024-05-13T09:00:00.000Z',
+  applications: 22,
+  interviews: 3,
+  offers: 0,
+};
+
 export const DESIGN_FUNNEL_ROWS = [
   {
     stage: 'відгук 54',
@@ -112,7 +124,7 @@ export const DESIGN_FUNNEL_ROWS = [
 
 export const DESIGN_ENDINGS = ['офер 1', 'відкликав 4', 'ghosted 17', 'відмова 32'];
 
-const SEARCHES: SearchListResponse = { items: [ACTIVE_SEARCH, ARCHIVED_SEARCH] };
+export const SEARCHES: SearchListResponse = { items: [ACTIVE_SEARCH, ARCHIVED_SEARCH] };
 
 export function lowDataFunnel(): FunnelResponse {
   const funnel = buildDesignFunnel();

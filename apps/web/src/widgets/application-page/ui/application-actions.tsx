@@ -12,6 +12,7 @@ import { CalendarPlus, Ellipsis, Pencil, Trash2 } from 'lucide-react';
 import type { RefObject } from 'react';
 
 import { timelineQueryOptions } from '@/entities/application';
+import { FinishSearchAction } from '@/features/finish-search';
 import {
   nextStageOf,
   reviveTargetOf,
@@ -120,6 +121,7 @@ export function ApplicationActions({
   return (
     <div className="flex flex-wrap gap-2.5 pt-1">
       <ReviveButton application={application} move={move} />
+      <FinishSearchAction application={application} />
       {next !== null && (
         <Button
           loading={move.isPending}

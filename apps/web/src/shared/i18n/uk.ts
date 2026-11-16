@@ -22,6 +22,7 @@ import { offerCompare } from './offer-compare';
 import { push } from './push';
 import { reminders } from './reminders';
 import { resumes } from './resumes';
+import { searches } from './searches';
 import { settings } from './settings';
 import { shareCard } from './share-card';
 import { shell } from './shell';
@@ -98,6 +99,7 @@ export const uk = {
   settings,
   dataImport,
   analytics,
+  searches,
   offerCompare,
   shareCard,
   summary,
