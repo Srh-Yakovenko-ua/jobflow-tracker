@@ -1,4 +1,5 @@
 import {
+  ACTIVE_STAGES,
   type CreateScheduledEventInput,
   OPEN_STAGES,
   type ScheduledEventStatus,
@@ -58,6 +59,14 @@ export type CalendarEventRow = Omit<
 > & {
   company: string;
   currentStage: Stage;
+};
+
+export type AutoGhostDateRow = {
+  applicationId: string;
+  company: string;
+  currentStage: Stage;
+  autoGhostDays: number;
+  ghostAt: Date;
 };
 
 export type ScheduledEventsOfApplication = { applicationId: string };
@@ -162,6 +171,23 @@ export class ScheduledEventsRepository {
         AND e.starts_at < ${to.toISOString()}::timestamptz
         AND e.starts_at + make_interval(mins => e.duration_min) > ${from.toISOString()}::timestamptz
       ORDER BY e.starts_at, e.id`;
+  }
+
+  findAutoGhostDates(userId: string, { from, to }: DateRange): Promise<AutoGhostDateRow[]> {
+    return this.prisma.$queryRaw<AutoGhostDateRow[]>`
+      SELECT a.id AS "applicationId", a.company, a.current_stage AS "currentStage",
+        s.auto_ghost_days AS "autoGhostDays", ghost.at AS "ghostAt"
+      FROM applications a
+      JOIN user_settings s ON s.user_id = a.user_id
+      CROSS JOIN LATERAL (
+        SELECT a.last_event_at + make_interval(hours => 24 * s.auto_ghost_days) AS at
+      ) ghost
+      WHERE a.user_id = ${userId}::uuid AND s.auto_ghost_days IS NOT NULL
+        AND a.deleted_at IS NULL AND a.is_draft = false
+        AND a.current_stage = ANY(${[...ACTIVE_STAGES]}::stage[])
+        AND ghost.at >= ${from.toISOString()}::timestamptz
+        AND ghost.at < ${to.toISOString()}::timestamptz
+      ORDER BY ghost.at, a.id`;
   }
 
   async findTimeZone(userId: string): Promise<string> {

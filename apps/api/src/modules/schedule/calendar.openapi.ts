@@ -1,5 +1,6 @@
 import type { RouteConfig } from '@asteasolutions/zod-to-openapi';
 import {
+  ACTIVE_STAGES,
   CALENDAR_LIMITS,
   calendarQuerySchema,
   type CalendarResponse,
@@ -14,6 +15,14 @@ const APPLICATION_PROPS = { applicationId: EXAMPLE_APPLICATION_ID, company: 'Acm
 
 const CALENDAR = {
   items: [
+    {
+      id: EXAMPLE_APPLICATION_ID,
+      title: 'Ghost за 30 днів · Acme',
+      start: '2026-11-03',
+      end: null,
+      allDay: true,
+      extendedProps: { ...APPLICATION_PROPS, type: 'auto_ghost', stage: 'applied' },
+    },
     {
       id: '0199f2b0-1a2b-7c3d-8e4f-5a6b7c8d9e0f',
       title: 'Фоллоу-ап · Acme',
@@ -50,8 +59,9 @@ export const CALENDAR_OPENAPI_PATHS: RouteConfig[] = [
     method: 'get',
     path: '/calendar',
     tags: ['calendar'],
-    summary: 'The scheduled events and follow-up reminders in a range, shaped for FullCalendar',
-    description: `from and to carry Z or an offset, to is later than from and at most ${String(CALENDAR_LIMITS.rangeMaxDays)} days on. An event is included when it overlaps [from, to) and is planned or done; start and end are UTC. A follow-up is an all-day item dated in the time zone of the user's settings. A planned event and a follow-up are left out while their application's stage is one of ${OUTCOME_STAGES.join(', ')} and come back when it reopens (an undo, a late reply); a done event always stays.`,
+    summary:
+      'The scheduled events, follow-up reminders and auto ghost dates in a range, shaped for FullCalendar',
+    description: `from and to carry Z or an offset, to is later than from and at most ${String(CALENDAR_LIMITS.rangeMaxDays)} days on. An event is included when it overlaps [from, to) and is planned or done; start and end are UTC. A follow-up is an all-day item dated in the time zone of the user's settings. An auto ghost date is one all-day item per live application in one of ${ACTIVE_STAGES.join(', ')}, at last_event_at plus autoGhostDays days of 24 hours (when the hourly scan becomes due to move it to ghosted), included when that moment falls in [from, to) and dated in the settings time zone; its id is the application id, and there is none while autoGhostDays is null. A planned event and a follow-up are left out while their application's stage is one of ${OUTCOME_STAGES.join(', ')} and come back when it reopens (an undo, a late reply); a done event always stays.`,
     request: { query: calendarQuerySchema },
     responses: {
       200: {

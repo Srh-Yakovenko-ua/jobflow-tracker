@@ -74,11 +74,22 @@ export function followupItemOf({
   });
 }
 
+export function autoGhostItemOf(seed: FollowupItemSeed): CalendarItem {
+  const followup = followupItemOf(seed);
+  return calendarItemSchema.parse({
+    ...followup,
+    title: `Ghost за 30 днів · ${ACME.company}`,
+    extendedProps: { ...ACME, type: 'auto_ghost', stage: followup.extendedProps.stage },
+  });
+}
+
 export const ITEM_PER_KIND: readonly CalendarItem[] = SCHEDULED_EVENT_KINDS.map((kind, day) =>
   scheduledItemOf({ serial: 601 + day, kind, start: `2026-11-0${String(2 + day)}T09:00:00.000Z` }),
 );
 
 export const FOLLOWUP_ITEM = followupItemOf({ serial: 701, date: '2026-11-04' });
+
+export const AUTO_GHOST_ITEM = autoGhostItemOf({ serial: 801, date: '2026-11-05' });
 
 export type DropSeed = { item: CalendarItem; start: string; allDay?: boolean };
 

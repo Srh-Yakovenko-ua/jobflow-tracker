@@ -1,14 +1,18 @@
 import type { EventApi } from '@fullcalendar/react';
 import type { ScheduledEventKind } from '@jobflow/shared';
-import { AlarmClock, type LucideIcon } from 'lucide-react';
+import { AlarmClock, Ghost, type LucideIcon } from 'lucide-react';
 
 import { SCHEDULED_EVENT_ICON } from '@/entities/application';
 
 import { eventPropsOf } from '../lib/event-props';
 
-type ShownKind = ScheduledEventKind | 'followup';
+type ShownKind = ScheduledEventKind | 'followup' | 'auto_ghost';
 
-const ICON_OF: Record<ShownKind, LucideIcon> = { ...SCHEDULED_EVENT_ICON, followup: AlarmClock };
+const ICON_OF: Record<ShownKind, LucideIcon> = {
+  ...SCHEDULED_EVENT_ICON,
+  followup: AlarmClock,
+  auto_ghost: Ghost,
+};
 
 export type ShownEvent = Readonly<{
   event: Pick<EventApi, 'title' | 'extendedProps'>;
@@ -19,7 +23,7 @@ export type CalendarEventContentProps = Readonly<{ shown: ShownEvent }>;
 
 function kindOf(extendedProps: unknown): ShownKind {
   const props = eventPropsOf(extendedProps);
-  return props?.type === 'scheduled_event' ? props.eventKind : 'followup';
+  return props?.type === 'scheduled_event' ? props.eventKind : (props?.type ?? 'followup');
 }
 
 export function CalendarEventContent({ shown }: CalendarEventContentProps) {

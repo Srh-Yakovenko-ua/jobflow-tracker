@@ -1,6 +1,11 @@
 import { describe, expect, it } from 'vitest';
 
-import { FOLLOWUP_ITEM, scheduledItemOf, type ScheduledItemSeed } from '@/test/calendar-fixtures';
+import {
+  autoGhostItemOf,
+  FOLLOWUP_ITEM,
+  scheduledItemOf,
+  type ScheduledItemSeed,
+} from '@/test/calendar-fixtures';
 
 import { eventInputOf } from './calendar-events';
 
@@ -43,6 +48,22 @@ describe('eventInputOf', () => {
       color: 'var(--color-accent-tint)',
       contrastColor: 'var(--color-accent-ink)',
       extendedProps: FOLLOWUP_ITEM.extendedProps,
+    });
+  });
+
+  it('pins an auto ghost date to its day as a fixed all-day item in the ghosted tint, with no end', () => {
+    const item = autoGhostItemOf({ serial: 802, date: '2026-11-05', stage: 'tech_interview' });
+
+    expect(eventInputOf(item)).toEqual({
+      id: item.id,
+      title: 'Ghost за 30 днів · Acme Technologies',
+      start: '2026-11-05',
+      allDay: true,
+      startEditable: false,
+      durationEditable: false,
+      color: 'color-mix(in oklab, var(--color-ghosted) 30%, var(--color-surface))',
+      contrastColor: 'var(--color-ink)',
+      extendedProps: item.extendedProps,
     });
   });
 });

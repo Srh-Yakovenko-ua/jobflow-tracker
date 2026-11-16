@@ -25,13 +25,15 @@ import { createReminder, createScheduledEvent, type NewReminder } from '../../te
 import { callRoute, errorPathsOf } from '../../test/http.js';
 import { finishSearch } from '../../test/searches.js';
 import { TO_SCREENING } from '../../test/service-fixtures.js';
-import { NOW, settableClock } from '../../test/time.js';
+import { daysBefore, NOW, settableClock } from '../../test/time.js';
 
 type CalendarRange = { from: string; to: string };
 
 type EdgeEvent = { name: string; startsAt: string; durationMin: number };
 
 type ReminderInput = Omit<NewReminder, 'userId' | 'applicationId'>;
+
+type ApplicationFlags = { isDraft?: boolean; deletedAt?: Date };
 
 type FollowupCase = {
   case: string;
@@ -42,6 +44,8 @@ type FollowupCase = {
 const KYIV_WEEK = { from: '2026-10-19T00:00:00+03:00', to: '2026-10-26T00:00:00+02:00' };
 
 const NEW_YORK_WEEK = { from: '2026-10-26T00:00:00-04:00', to: '2026-11-02T00:00:00-05:00' };
+
+const KYIV_GHOST_WEEK = { from: '2026-10-26T00:00:00+02:00', to: '2026-11-02T00:00:00+02:00' };
 
 const NOVEMBER_FORTNIGHT = { from: '2026-11-02T00:00:00+02:00', to: '2026-11-16T00:00:00+02:00' };
 
@@ -60,6 +64,8 @@ const TO_REJECTED: MoveApplicationInput = {
   toStage: 'rejected',
   reasonCode: 'skills_gap',
 };
+
+const TO_WITHDRAWN: MoveApplicationInput = { fromStage: 'applied', toStage: 'withdrawn' };
 
 const OFFER_MOVES: MoveApplicationInput[] = [
   TO_SCREENING,
@@ -148,8 +154,15 @@ describe('GET /calendar', () => {
       startsAt: PLANNED_CALL_AT,
     });
 
-  const idsInKyivWeek = async (accessToken: string) =>
-    (await itemsOf(accessToken, KYIV_WEEK)).map(({ id }) => id);
+  const idsIn = async (accessToken: string, range: CalendarRange = KYIV_WEEK) =>
+    (await itemsOf(accessToken, range)).map(({ id }) => id);
+
+  async function silentFor25Days({ id }: SignedInApplication, flags: ApplicationFlags = {}) {
+    await testApp.prisma.application.update({
+      where: { id },
+      data: { lastEventAt: daysBefore(25), ...flags },
+    });
+  }
 
   async function offerCallOf(accessToken: string) {
     const id = await createMovedApplication(testApp.app, {
@@ -167,7 +180,7 @@ describe('GET /calendar', () => {
       await reminderOf(snoozing, SNOOZED_INTO_KYIV_WEEK),
       await plannedCallOf(application.id),
     ];
-    expect(await idsInKyivWeek(application.accessToken)).toEqual(ids);
+    expect(await idsIn(application.accessToken)).toEqual(ids);
     return { ids, applications: [application, snoozing] };
   }
 
@@ -181,7 +194,7 @@ describe('GET /calendar', () => {
   it.each<MoveApplicationInput>([
     TO_REJECTED,
     { fromStage: 'applied', toStage: 'ghosted' },
-    { fromStage: 'applied', toStage: 'withdrawn' },
+    TO_WITHDRAWN,
   ])(
     'leaves out the planned event and the pending and snoozed follow-ups of applications moved to $toStage',
     async (input) => {
@@ -190,7 +203,7 @@ describe('GET /calendar', () => {
 
       await allMovedTo(applications, input);
 
-      expect(await idsInKyivWeek(application.accessToken)).toEqual([]);
+      expect(await idsIn(application.accessToken)).toEqual([]);
     },
   );
 
@@ -240,7 +253,7 @@ describe('GET /calendar', () => {
     const finish = { searchId, outcome: 'offer_accepted', openApplications: 'withdraw' };
     expect((await finishSearch(testApp.app, { accessToken, input: finish })).status).toBe(200);
 
-    expect(await idsInKyivWeek(accessToken)).toEqual([offerCall]);
+    expect(await idsIn(accessToken)).toEqual([offerCall]);
   });
 
   it.each([
@@ -414,6 +427,69 @@ describe('GET /calendar', () => {
     expect(await itemsOf(application.accessToken, KYIV_WEEK)).toEqual([]);
   });
 
+  it('answers an application silent for 25 days as an all-day auto ghost date 5 days ahead by the default 30 days', async () => {
+    const application = await signUpWithApplication(testApp.app);
+    await silentFor25Days(application);
+
+    const items = await itemsOf(application.accessToken, KYIV_GHOST_WEEK);
+
+    expect(items).toEqual([
+      {
+        id: application.id,
+        title: 'Ghost за 30 днів · Ромашка',
+        start: '2026-10-27',
+        end: null,
+        allDay: true,
+        extendedProps: {
+          type: 'auto_ghost',
+          applicationId: application.id,
+          company: 'Ромашка',
+          stage: 'applied',
+        },
+      },
+    ]);
+  });
+
+  it('leaves out the auto ghost date while auto ghost is off in the settings', async () => {
+    const application = await signUpWithApplication(testApp.app);
+    await silentFor25Days(application);
+    const userId = await userIdOf(application);
+    await testApp.prisma.userSettings.update({ where: { userId }, data: { autoGhostDays: null } });
+
+    expect(await idsIn(application.accessToken, KYIV_GHOST_WEEK)).toEqual([]);
+  });
+
+  it.each([
+    { toStage: 'rejected', moves: [TO_REJECTED] },
+    { toStage: 'withdrawn', moves: [TO_WITHDRAWN] },
+    { toStage: 'offer', moves: OFFER_MOVES },
+  ])('leaves out the auto ghost date of an application moved to $toStage', async ({ moves }) => {
+    const { accessToken } = await signUpWithApplication(testApp.app);
+    const id = await createMovedApplication(testApp.app, { clock, accessToken, moves });
+    await silentFor25Days({ accessToken, id });
+
+    expect(await idsIn(accessToken, KYIV_GHOST_WEEK)).toEqual([]);
+  });
+
+  it.each<{ case: string; flags: ApplicationFlags }>([
+    { case: 'a draft', flags: { isDraft: true } },
+    { case: 'a soft-deleted application', flags: { deletedAt: NOW } },
+  ])('leaves out the auto ghost date of $case', async ({ flags }) => {
+    const application = await signUpWithApplication(testApp.app);
+    await silentFor25Days(application, flags);
+
+    expect(await idsIn(application.accessToken, KYIV_GHOST_WEEK)).toEqual([]);
+  });
+
+  it("answers BOHDAN's calendar with his own auto ghost date and without OLENA's", async () => {
+    const olena = await signUpWithApplication(testApp.app);
+    const bohdan = await signUpWithApplication(testApp.app, BOHDAN);
+    await silentFor25Days(olena);
+    await silentFor25Days(bohdan);
+
+    expect(await idsIn(bohdan.accessToken, KYIV_GHOST_WEEK)).toEqual([bohdan.id]);
+  });
+
   it('answers 401 without a token', async () => {
     const response = await getWithQuery(testApp.app, { path: CALENDAR_PATH, query: KYIV_WEEK });
 
@@ -442,9 +518,9 @@ describe('GET /calendar', () => {
   });
 
   it('accepts a range of exactly 62 days', async () => {
-    const { accessToken } = await signUpWithApplication(testApp.app);
+    const { accessToken, id } = await signUpWithApplication(testApp.app);
     const range = { from: '2026-10-01T00:00:00Z', to: '2026-12-02T00:00:00Z' };
 
-    expect(await itemsOf(accessToken, range)).toEqual([]);
+    expect(await idsIn(accessToken, range)).toEqual([id]);
   });
 });
