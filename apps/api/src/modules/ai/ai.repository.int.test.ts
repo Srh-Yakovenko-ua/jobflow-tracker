@@ -13,6 +13,7 @@ import {
 import { daysBefore, minutesBefore, NOW } from '../../test/time.js';
 import { AiRepository, type SaveAiFailure, type SaveAiResult } from './ai.repository.js';
 import { budgetWindow } from './ai-budget.js';
+import { AI_SERVICE_ERRORS } from './ai-service-error.js';
 
 type JobTarget = { userId: string; id: string; aiResultId: string };
 
@@ -102,22 +103,35 @@ const failedJob =
 const othersFailedJob = async () =>
   failedJob({ errorType: 'ai_timeout' })(await createOwnedApplication(database.prisma));
 
+const COUNTED_TYPES = ['ai_invalid_output', 'ai_timeout'];
+
+const UNCOUNTED_TYPES = [
+  'not_ready',
+  'unauthorized',
+  'validation_error',
+  'rate_limited',
+  'ai_provider_error',
+  'forbidden',
+  'not_found',
+  'internal_error',
+  'not_implemented',
+  'unexpected_response',
+];
+
 const DAILY_CALLS = [
   { verdict: 'counts', row: 'a succeeded result from today', seed: succeededResult, calls: 1 },
-  ...['ai_invalid_output', 'ai_timeout'].map((errorType) => ({
+  ...COUNTED_TYPES.map((errorType) => ({
     verdict: 'counts',
     row: `a job failed today with ${errorType}`,
     seed: failedJob({ errorType }),
     calls: 1,
   })),
-  ...['not_ready', 'unauthorized', 'validation_error', 'rate_limited', 'ai_provider_error'].map(
-    (errorType) => ({
-      verdict: 'leaves out',
-      row: `a job failed today with ${errorType}`,
-      seed: failedJob({ errorType }),
-      calls: 0,
-    }),
-  ),
+  ...UNCOUNTED_TYPES.map((errorType) => ({
+    verdict: 'leaves out',
+    row: `a job failed today with ${errorType}`,
+    seed: failedJob({ errorType }),
+    calls: 0,
+  })),
   {
     verdict: 'leaves out',
     row: 'a job failed yesterday with ai_timeout',
@@ -274,6 +288,40 @@ describe('AiRepository.saveFailure on Postgres', () => {
   });
 });
 
+describe('AiRepository.failJobWithResult on Postgres', () => {
+  it('stores the failed result and fails the processing job together, answering 1', async () => {
+    const { userId, applicationId } = await createOwnedApplication(database.prisma);
+    const id = await createAiJob(database.prisma, { userId, applicationId, status: 'processing' });
+
+    const failed = await aiRepository().failJobWithResult(userId, {
+      result: FAILURE,
+      job: { id, errorType: 'ai_invalid_output', now: NOW },
+    });
+
+    expect(failed).toBe(1);
+    expect(await storedAiJob(database.prisma, id)).toMatchObject({
+      status: 'failed',
+      errorType: 'ai_invalid_output',
+    });
+    expect(await storedResults({ userId })).toEqual([
+      expect.objectContaining({ status: 'failed', error: 'ai_invalid_output' }),
+    ]);
+  });
+
+  it('stores no failed result when failing the job is refused', async () => {
+    const { id: userId } = await createUser(database.prisma);
+
+    await expect(
+      aiRepository().failJobWithResult(userId, {
+        result: FAILURE,
+        job: { id: 'not-a-uuid', errorType: 'ai_invalid_output', now: NOW },
+      }),
+    ).rejects.toThrow();
+
+    expect(await storedResults({ userId })).toEqual([]);
+  });
+});
+
 describe('AiRepository.budgetUsage on Postgres', () => {
   it('starts the budget day and month at UTC midnight on the Kyiv clock change', () => {
     const { dayStart, monthStart } = budgetWindow(new Date('2026-10-25T01:30:00.000Z'));
@@ -282,6 +330,12 @@ describe('AiRepository.budgetUsage on Postgres', () => {
       '2026-10-25T00:00:00.000Z',
       '2026-10-01T00:00:00.000Z',
     ]);
+  });
+
+  it('has a daily calls row for every AI service error type', () => {
+    expect([...COUNTED_TYPES, ...UNCOUNTED_TYPES].sort()).toEqual(
+      Object.values(AI_SERVICE_ERRORS).sort(),
+    );
   });
 
   it.each(DAILY_CALLS)('$verdict $row in the daily calls', async ({ seed, calls }) => {

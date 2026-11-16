@@ -12,6 +12,7 @@ import {
   FAILED_AI_RESULT,
   FakeAiClient,
   NAMELESS_VACANCY_COMPLETION,
+  NUL_VACANCY_COMPLETION,
   SettledAiJobs,
   storedAiJob,
   VACANCY_COMPLETION,
@@ -47,6 +48,17 @@ const OTHER_VACANCY = 'Middle Node.js developer, Globex, Kyiv, 3000 USD';
 const NOT_READY = { status: 503, type: 'not_ready' };
 
 const INVALID_OUTPUT = { status: 422, type: 'ai_invalid_output' };
+
+const LAST_ATTEMPT = { attemptsMade: DEFAULT_JOB_OPTIONS.attempts - 1 };
+
+const UNTYPED_REFUSAL = { name: 'AiServiceError', status: 500, type: 'internal_error' };
+
+const PROCESSING_JOB = {
+  status: 'processing',
+  errorType: null,
+  aiResultId: null,
+  finishedAt: null,
+};
 
 const FINAL_FAILURES = [
   {
@@ -266,13 +278,50 @@ describe('AiService on Postgres', () => {
 
     await expect(run(job)).rejects.toBeInstanceOf(AiServiceError);
 
-    expect(await storedJob(job.aiJobId)).toEqual({
-      status: 'processing',
-      errorType: null,
-      aiResultId: null,
-      finishedAt: null,
-    });
+    expect(await storedJob(job.aiJobId)).toEqual(PROCESSING_JOB);
     expect(await database.prisma.aiResult.findMany()).toEqual([]);
+  });
+
+  it.each([
+    {
+      attempt: 'before the last attempt',
+      outcome: 'processing for BullMQ to retry',
+      attemptsMade: 0,
+      stored: PROCESSING_JOB,
+      results: [],
+    },
+    {
+      attempt: 'on the last attempt',
+      outcome: 'failed with a stored failed result',
+      attemptsMade: LAST_ATTEMPT.attemptsMade,
+      stored: failedWith('internal_error'),
+      results: [{ status: 'failed', error: 'internal_error' }],
+    },
+  ])(
+    'turns an untyped client error $attempt into a 500 internal_error and leaves the job $outcome',
+    async ({ attemptsMade, stored, results }) => {
+      const olena = await createOwnedApplication(database.prisma);
+      const job = await queuedJob(olena, VACANCY_TEXT);
+      ai.answer = () => Promise.reject(new SyntaxError('Unexpected token <'));
+
+      await expect(run(job, { attemptsMade })).rejects.toMatchObject(UNTYPED_REFUSAL);
+
+      expect(await storedJob(job.aiJobId)).toEqual(stored);
+      expect(
+        await database.prisma.aiResult.findMany({ select: { status: true, error: true } }),
+      ).toEqual(results);
+    },
+  );
+
+  it('fails the job with internal_error when Postgres refuses a NUL in the output on the last attempt', async () => {
+    const olena = await createOwnedApplication(database.prisma);
+    const job = await queuedJob(olena, VACANCY_TEXT);
+    ai.answer = () => Promise.resolve(NUL_VACANCY_COMPLETION);
+
+    await expect(run(job, LAST_ATTEMPT)).rejects.toThrow();
+
+    expect(await storedJob(job.aiJobId)).toEqual(failedWith('internal_error'));
+    expect(settledJobs.outcomes).toEqual([{ job, status: 'failed', errorType: 'internal_error' }]);
   });
 
   it('fails a second vacancy over the daily limit with budget_exceeded and still serves a cached one', async () => {

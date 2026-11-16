@@ -17,7 +17,13 @@ describe('AiUsageRepository.dailyUsage', () => {
     const results: NewAiResult[] = [
       { userId: olena.id, tokensIn: 100, tokensOut: 40, latencyMs: 1000, updatedAt: early },
       { userId: bohdan.id, tokensIn: 300, tokensOut: 60, latencyMs: 2000, updatedAt: late },
-      { userId: olena.id, ...FAILED_AI_RESULT, error: 'ai_invalid_output', updatedAt: late },
+      {
+        userId: olena.id,
+        ...FAILED_AI_RESULT,
+        model: 'fake',
+        error: 'ai_invalid_output',
+        updatedAt: late,
+      },
       {
         userId: olena.id,
         kind: 'match',

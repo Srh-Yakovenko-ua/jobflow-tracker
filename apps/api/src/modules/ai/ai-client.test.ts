@@ -43,6 +43,15 @@ function bearerOf(call: FetchCall | undefined): string {
 
 const aiServiceError = (status: number, type: string) => ({ name: 'AiServiceError', status, type });
 
+const bodyTimingOut = () =>
+  new Response(
+    new ReadableStream({
+      start(controller) {
+        controller.error(new DOMException('The operation timed out.', 'TimeoutError'));
+      },
+    }),
+  );
+
 afterEach(() => {
   vi.unstubAllGlobals();
   vi.restoreAllMocks();
@@ -111,6 +120,16 @@ describe('AiClient.complete', () => {
       answer: 'a refused connection',
       reply: () => Promise.reject(refusedConnection),
       error: aiServiceError(503, 'not_ready'),
+    },
+    {
+      answer: 'a 200 whose body is not JSON',
+      reply: () => new Response('<html>oops</html>', { status: 200 }),
+      error: aiServiceError(422, 'ai_invalid_output'),
+    },
+    {
+      answer: 'a 200 whose body read times out',
+      reply: bodyTimingOut,
+      error: aiServiceError(504, 'ai_timeout'),
     },
   ])('turns $answer into an AiServiceError', async ({ reply, error }) => {
     replyWith(reply);
