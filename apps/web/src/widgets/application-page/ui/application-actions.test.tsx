@@ -9,7 +9,9 @@ import { searchKeys } from '@/entities/search';
 import { ACTIVE_SEARCH, ARCHIVED_SEARCH } from '@/test/analytics-fixtures';
 import { apiUrl, errorReply } from '@/test/api-handlers';
 import { ACME_APPLICATION } from '@/test/application-fixtures';
+import { moveRoute } from '@/test/board-fixtures';
 import { calendarRoute, KYIV_WEEK } from '@/test/calendar-fixtures';
+import { latch } from '@/test/latch';
 import { back, push, replace } from '@/test/navigation';
 import { QueryProbe, waitForQuery } from '@/test/query-status';
 import {
@@ -45,6 +47,14 @@ const ARCHIVE = { name: 'Заархівувати пошук' } as const;
 
 const CONFLICT = 'Цей пошук уже завершено';
 
+const NEXT_STAGE = 'Перенести у «фінал»';
+
+function holdMoves() {
+  const moves = moveRoute({ latch: latch() });
+  server.use(moves.handler);
+  return moves;
+}
+
 function CalendarWatch() {
   useQuery(calendarQueryOptions(KYIV_WEEK));
   return null;
@@ -75,6 +85,34 @@ describe('ApplicationActions', () => {
     expect(await screen.findByText('фінал')).toBeDefined();
     expect(screen.getByRole('button', { name: 'Перенести у «офер»' })).toBeDefined();
     expect(moves).toEqual([{ fromStage: 'tech_interview', toStage: 'final' }]);
+  });
+
+  it('a held rejection leaves the next stage button neither busy nor disabled', async () => {
+    const { user } = renderApplicationPage();
+    const moves = holdMoves();
+
+    await user.click(await screen.findByRole('button', { name: 'Відмова' }));
+    await user.click(await screen.findByRole('button', { name: 'не вистачає скілів' }));
+    await waitFor(() => {
+      expect(moves.sent).toHaveLength(1);
+    });
+
+    const next = screen.getByRole('button', { name: NEXT_STAGE, hidden: true });
+    expect(next.getAttribute('aria-busy')).toBeNull();
+    expect(next.hasAttribute('disabled')).toBe(false);
+  });
+
+  it('a held move from the next stage button shows its own loading', async () => {
+    const { user } = renderApplicationPage();
+    const moves = holdMoves();
+
+    const next = await screen.findByRole('button', { name: NEXT_STAGE });
+    await user.click(next);
+
+    await waitFor(() => {
+      expect(moves.sent).toEqual([{ fromStage: 'tech_interview', toStage: 'final' }]);
+    });
+    expect(next.getAttribute('aria-busy')).toBe('true');
   });
 
   it('Відмова asks the reason, records it, and the undo returns focus to the title', async () => {

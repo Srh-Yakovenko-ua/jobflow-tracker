@@ -34,6 +34,8 @@ const VERSIONS = [
 
 const V2_LABEL = 'CV v2 · акцент на продукті';
 
+const RETRY_WAIT = { timeout: 2500 } as const;
+
 afterEach(() => {
   window.history.replaceState(null, '', '/');
 });
@@ -82,7 +84,9 @@ describe('KanbanBoard filter by CV version', () => {
     const { user } = renderBoard(DESIGN_BOARD);
     await user.click(await screen.findByRole('button', { name: 'CV: усі' }));
 
-    expect((await screen.findByRole('alert')).textContent).toContain('Не вдалося завантажити');
+    const alert = await screen.findByRole('alert', {}, RETRY_WAIT);
+
+    expect(alert.textContent).toContain('Не вдалося завантажити');
     expect(screen.getByRole('heading', { name: 'відгук 2' })).toBeDefined();
     server.use(resumeVersionsRoute(VERSIONS));
     await user.click(screen.getByRole('button', { name: 'Спробувати ще раз' }));
