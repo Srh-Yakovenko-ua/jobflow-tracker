@@ -2,10 +2,9 @@
 
 import type { ApplicationResponse } from '@jobflow/shared';
 
-import { applicationCvHintsQueryOptions } from '@/entities/application';
+import { applicationCvHintsQueryOptions, useAiSection } from '@/entities/application';
 
 import type { MatchView } from '../lib/match-view';
-import { useAiSection } from './ai-poll';
 
 export type ApplicationCvHintsInput = Readonly<{
   application: ApplicationResponse;

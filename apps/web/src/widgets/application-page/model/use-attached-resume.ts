@@ -1,9 +1,9 @@
 import type { ApplicationResponse } from '@jobflow/shared';
 import { useQuery } from '@tanstack/react-query';
 
+import { sectionLoadOf } from '@/entities/application';
 import { resumeVersionsQueryOptions } from '@/entities/resume';
 
-import { sectionLoadOf } from './section-load';
 import { useDayLabel } from './use-day-label';
 import { useLinkedVersion } from './use-linked-version';
 

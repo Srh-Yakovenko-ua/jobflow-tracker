@@ -3,10 +3,11 @@
 import type { JobStatus } from '@jobflow/shared';
 import { type QueryKey, useQuery, type UseQueryOptions } from '@tanstack/react-query';
 
-import { aiJobOf, jobQueryOptions, jobWaiting } from '@/entities/application';
 import { useLivePollMs } from '@/shared/api';
 import type { AiJob } from '@/shared/ui/async-state';
 
+import { jobQueryOptions } from '../api/job';
+import { aiJobOf, jobWaiting } from '../lib/ai-job';
 import { type SectionLoad, sectionLoadOf } from './section-load';
 
 type AiResponse = Readonly<{ job: Pick<JobStatus, 'id' | 'status'> | null }>;

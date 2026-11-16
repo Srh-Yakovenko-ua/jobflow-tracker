@@ -4,11 +4,15 @@ import type { ApplicationMatchResponse, ApplicationResponse, ResumeVersion } fro
 import { useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
 
-import { aiJobOf, applicationMatchQueryOptions, jobQueryOptions } from '@/entities/application';
+import {
+  aiJobOf,
+  applicationMatchQueryOptions,
+  jobQueryOptions,
+  sectionLoadOf,
+} from '@/entities/application';
 import { useLivePollMs } from '@/shared/api';
 
 import { type MatchView, matchViewOf } from '../lib/match-view';
-import { sectionLoadOf } from './section-load';
 import { useDayLabel } from './use-day-label';
 import { useLinkedVersion } from './use-linked-version';
 

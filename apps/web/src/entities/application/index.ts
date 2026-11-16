@@ -1,7 +1,7 @@
 export { applicationQueryOptions } from './api/application';
 export { boardQueryOptions } from './api/board';
 export { applicationCvHintsQueryOptions } from './api/cv-hints';
-export { applicationFollowupQueryOptions } from './api/followup';
+export { applicationFollowupQueryOptions, fetchApplicationFollowup } from './api/followup';
 export { applicationInterviewPrepQueryOptions } from './api/interview-prep';
 export { jobQueryOptions } from './api/job';
 export { applicationListQueryOptions } from './api/list';
@@ -28,12 +28,14 @@ export { formatAmount, formatSalaryRange, usdNetPerMonthOf, type UsdNetSource } 
 export { isSearchable, SEARCH_LIMITS } from './lib/search-limits';
 export { SILENT_ONLY, silentCountOf } from './lib/silent-count';
 export { formatTimelineDate, type TimelineDateInput } from './lib/timeline-date';
+export { type AiSection, type AiSectionReady, useAiSection } from './model/ai-poll';
 export type { ApplicationMove, MovingApplication } from './model/application-move';
 export type { ApplicationCardContext } from './model/card-context';
 export { CARD_DENSITIES, type CardDensity } from './model/card-density';
 export { FULL_APPLICATION, FULL_CARD } from './model/card-specimens';
 export { applicationKeys, jobKeys, timelineKeys } from './model/keys';
 export { OFFER_COMPARE } from './model/offer-compare';
+export { type SectionLoad, sectionLoadOf } from './model/section-load';
 export { useApplicationAiRequest } from './model/use-application-ai-request';
 export {
   AI_LEAD,
@@ -42,6 +44,7 @@ export {
   AiRequestState,
   type AiRequestStateProps,
 } from './ui/ai-request-state';
+export { AiSectionBody, type AiSectionBodyProps } from './ui/ai-section-body';
 export { ApplicationCard, type ApplicationCardProps } from './ui/application-card';
 export { SCHEDULED_EVENT_ICON } from './ui/event-icon';
 export { FirstRunState } from './ui/first-run-state';

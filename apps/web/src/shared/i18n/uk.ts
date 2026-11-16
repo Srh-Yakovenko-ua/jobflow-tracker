@@ -15,6 +15,7 @@ import { cvHints } from './cv-hints';
 import { dataImport } from './data-import';
 import { devUi } from './dev-ui';
 import { followup } from './followup';
+import { ghosted } from './ghosted';
 import { interviewPrep } from './interview-prep';
 import { notifications } from './notifications';
 import { offerCompare } from './offer-compare';
@@ -89,6 +90,7 @@ export const uk = {
   auth,
   add,
   board,
+  ghosted,
   bookmarklet,
   applicationsTable,
   calendarPage,

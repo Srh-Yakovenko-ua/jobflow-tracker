@@ -95,14 +95,16 @@ export function FollowupEditor({ draft, methods, actions, status }: FollowupEdit
         >
           {COPY.copy}
         </Button>
-        <Button
-          variant="outline"
-          className={ACTION}
-          loading={status.generating}
-          onClick={actions.onVariant}
-        >
-          {COPY.variant}
-        </Button>
+        {ready.failure?.reason !== 'budget' && (
+          <Button
+            variant="outline"
+            className={ACTION}
+            loading={status.generating}
+            onClick={actions.onVariant}
+          >
+            {COPY.variant}
+          </Button>
+        )}
         <Button
           variant="ghost"
           className={ACTION}

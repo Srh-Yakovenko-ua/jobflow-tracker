@@ -1,5 +1,6 @@
 import { analytics } from './analytics';
 import { board } from './board';
+import { ghosted } from './ghosted';
 import { resumes } from './resumes';
 
 const { emptySearch, filters } = board;
@@ -21,11 +22,11 @@ export const devUiStates = {
     },
     ghosted: {
       content: {
-        eyebrow: 'Ghosted · 17 карток',
-        title: '17 компаній не відповіли',
-        hint: 'Це 31% твоїх відгуків, на 7 п.п. менше за ринок. Ці картки не впливають на конверсії й нічого не кажуть про тебе.',
+        eyebrow: ghosted.eyebrow(17),
+        title: ghosted.title(17),
+        hint: ghosted.hint({ percent: 31, points: 7, position: 'below' }),
       },
-      action: 'Спробувати фоллоу-ап по 4 свіжих',
+      action: ghosted.action(4),
     },
     finished: {
       content: {

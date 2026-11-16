@@ -6,11 +6,11 @@ import { useQuery } from '@tanstack/react-query';
 import {
   applicationInterviewPrepQueryOptions,
   applicationMatchQueryOptions,
+  sectionLoadOf,
+  useAiSection,
 } from '@/entities/application';
 
 import { interviewPrepGateOf } from '../lib/interview-prep-gate';
-import { useAiSection } from './ai-poll';
-import { sectionLoadOf } from './section-load';
 import { useApplicationSchedule } from './use-application-schedule';
 
 export function useApplicationInterviewPrep(application: ApplicationResponse) {

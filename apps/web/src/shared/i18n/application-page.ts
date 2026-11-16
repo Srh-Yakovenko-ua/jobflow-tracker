@@ -5,6 +5,7 @@ export const applicationPage = {
   back: 'Дошка',
   created: (date: string) => `створено ${date}`,
   moveTo: (stage: string) => `Перенести у «${stage}»`,
+  revive: (stage: string) => `Компанія відповіла: повернути в ${stage}`,
   stack: 'Стек',
   openVacancy: 'Відкрити вакансію',
   reject: 'Відмова',

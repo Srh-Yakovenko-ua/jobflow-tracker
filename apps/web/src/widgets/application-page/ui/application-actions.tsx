@@ -7,11 +7,14 @@ import {
   STAGE_LABELS,
   TERMINAL_STAGES,
 } from '@jobflow/shared';
+import { useQuery } from '@tanstack/react-query';
 import { CalendarPlus, Ellipsis, Pencil, Trash2 } from 'lucide-react';
 import type { RefObject } from 'react';
 
+import { timelineQueryOptions } from '@/entities/application';
 import {
   nextStageOf,
+  reviveTargetOf,
   useMoveApplicationMutation,
   useUndoMoveMutation,
 } from '@/features/move-application';
@@ -41,7 +44,30 @@ type MoreMenuProps = Readonly<{
   triggerRef: ApplicationFocusTargets['more'];
 }>;
 
+type ReviveButtonProps = Readonly<{
+  application: ApplicationResponse;
+  move: ReturnType<typeof useMoveApplicationMutation>;
+}>;
+
 const COPY = uk.applicationPage;
+
+function ReviveButton({ application, move }: ReviveButtonProps) {
+  const ghosted = application.currentStage === 'ghosted';
+  const timeline = useQuery({ ...timelineQueryOptions(application.id), enabled: ghosted });
+  const target = ghosted && timeline.data ? reviveTargetOf(timeline.data.items) : null;
+  if (target === null) return null;
+  return (
+    <Button
+      className="animate-fade-in"
+      loading={move.isPending}
+      onClick={() => {
+        move.mutate({ application, toStage: target });
+      }}
+    >
+      {COPY.revive(STAGE_LABELS[target].labelUk)}
+    </Button>
+  );
+}
 
 function MoreMenu({ actions, triggerRef }: MoreMenuProps) {
   const edit = useMenuChoice(() => {
@@ -93,6 +119,7 @@ export function ApplicationActions({
   const next = suggestion === null ? nextStageOf(application.currentStage) : null;
   return (
     <div className="flex flex-wrap gap-2.5 pt-1">
+      <ReviveButton application={application} move={move} />
       {next !== null && (
         <Button
           loading={move.isPending}

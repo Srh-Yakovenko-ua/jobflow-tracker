@@ -31,7 +31,11 @@ export type FollowupGeneration = {
 
 type SourceContext = Pick<FollowupSource, 'request' | 'now'>;
 
-const NOT_ACTIVE = 'A follow-up is drafted only for an application in an active stage';
+const NOT_ACTIVE =
+  'A follow-up is drafted only for an application in an active stage or ghosted, not for a draft';
+
+const awaitsReply = ({ isDraft, currentStage }: FollowupSourceRow) =>
+  !isDraft && (isActiveStage(currentStage) || currentStage === 'ghosted');
 
 function followupSourceOf(row: FollowupSourceRow, context: SourceContext): FollowupSource {
   const { contacts, scheduledEvents, user, ...application } = row;
@@ -83,7 +87,7 @@ export class FollowupsService {
   ): Promise<CaptureRetryResponse> {
     const now = this.clock.now();
     const row = owned(await this.repository.findSource(userId, { applicationId, now }));
-    if (row.isDraft || !isActiveStage(row.currentStage)) {
+    if (!awaitsReply(row)) {
       throw conflict(NOT_ACTIVE);
     }
     const parsed = followupInputSchema.safeParse(
