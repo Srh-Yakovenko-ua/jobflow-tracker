@@ -2657,7 +2657,7 @@
           "account"
         ],
         "summary": "Delete my account and all of my data",
-        "description": "Confirms the account with its password; an account signed up through Google or GitHub, which has no password, types its own email into the same field. Removes every file of the user from the file storage first, so a 503 leaves the account whole for a retry, then deletes the user with every row it owns and its outbox events in one transaction. Every refresh token goes with it, so a refresh answers 401; an access token stays valid until it expires and finds nothing.",
+        "description": "Confirms the account with its password; an account signed up through Google or GitHub, which has no password, types its own email into the same field. Removes every file of the user from the file storage first, so a 503 leaves the account whole for a retry, then deletes the user with every row it owns and its outbox events in one transaction. The exports are purged again after the commit; a failure there is logged and still answers 204, since the account is gone. Every refresh token goes with it, so a refresh answers 401; an access token stays valid until it expires and finds nothing.",
         "requestBody": {
           "required": true,
           "description": "The password, or the email of an account without one.",
@@ -3502,7 +3502,7 @@
           "settings"
         ],
         "summary": "Change some of the settings",
-        "description": "Writes only the sent fields and records settings.changed with their names in the same transaction. activeResumeVersionId is not changed here. pausedFrom and suggestedWeeklyGoal are written by the server: a pausedUntil on or after the local today starts a pause on that day unless one is still running, null clears both.",
+        "description": "Writes only the sent fields and records settings.changed with their names in the same transaction. activeResumeVersionId is not changed here. pausedFrom and suggestedWeeklyGoal are written by the server: a pausedUntil on or after the local today starts a pause on that day unless one is still running, null clears both. A pausedUntil before the local today answers 422 on pausedUntil and writes nothing.",
         "requestBody": {
           "required": true,
           "description": "At least one field. silenceDays 3 to 30, autoGhostDays 14 to 90 or null (off), weeklyGoalApplications and weeklyGoalFollowups 1 to 30 or null (off), pausedUntil a date or null (ends the pause), timezone an IANA name, quiet hours as HH:MM.",

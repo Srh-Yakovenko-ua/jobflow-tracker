@@ -6,7 +6,8 @@ export const report = {
   hideSalary: 'Приховати зарплати',
   today: 'сьогодні',
   hidden: 'приховано',
-  currencyWords: /долар\p{L}*|грн/u,
+  currencyWords: /грн\.?|гривн\p{L}*|гривен\p{L}*|долар\p{L}*|євро/u,
+  scaleWords: /к|тис\.?|тисяч\p{L}*/u,
   insights: {
     eyebrow: 'висновки',
     title: 'Що показують дані',

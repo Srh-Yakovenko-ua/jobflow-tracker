@@ -21,12 +21,15 @@ import {
   type RemindersRouteOptions,
   remindersRoutes,
   SILENT_CARDS,
+  silentCardOf,
 } from '@/test/reminder-fixtures';
 import { renderInApp } from '@/test/render-in-app';
 import { server } from '@/test/server';
 import { meRoute } from '@/test/session-fixtures';
+import { GHOSTED_FROM_SCREENING_TIMELINE, timelineRoute } from '@/test/timeline-fixtures';
 
 import { RemindersPage } from './reminders-page';
+import { ReplyMenu } from './reply-menu';
 
 vi.mock('next/navigation', () => import('@/test/navigation'));
 vi.mock('next/link', () => import('@/test/link'));
@@ -185,6 +188,22 @@ describe('RemindersPage', () => {
     await waitFor(() => {
       expect(sent.moves).toEqual([{ fromStage: 'applied', toStage: 'screening' }]);
     });
+  });
+
+  it("a ghosted application's reply menu offers only the stage before ghosted", async () => {
+    server.use(timelineRoute({ timeline: GHOSTED_FROM_SCREENING_TIMELINE }));
+    const ghost = silentCardOf({ serial: 804, company: 'Mriia Labs', days: 30, stage: 'ghosted' });
+    const user = renderInApp(
+      <ReplyMenu
+        application={ghost}
+        actions={{ moveTo: () => 'sent', onMoved: () => undefined }}
+      />,
+    );
+
+    await user.click(await screen.findByRole('button', { name: COPY.actions.reply }));
+
+    const moves = await screen.findAllByRole('menuitem');
+    expect(moves.map((move) => move.textContent)).toEqual(['скринінг']);
   });
 
   it('with no silent card shows the drawn empty panel with the user threshold', async () => {

@@ -9,5 +9,6 @@ export const metadata: Metadata = { title: uk.analytics.report.title };
 export default async function AnalyticsReportRoute({
   searchParams,
 }: PageProps<'/analytics/report'>) {
-  return <AnalyticsReport period={searchPeriodOf((await searchParams).period)} />;
+  const period = searchPeriodOf((await searchParams).period);
+  return <AnalyticsReport key={period ?? 'all'} period={period} />;
 }

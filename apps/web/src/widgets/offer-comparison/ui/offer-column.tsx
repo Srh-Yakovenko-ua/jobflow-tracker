@@ -54,7 +54,7 @@ function OfferFacts({ ranked }: Readonly<{ ranked: RankedOffer }>) {
       <dd className="wrap-break-word text-ink">{offer.location ?? COPY.unknown}</dd>
       <dt className="text-ink-3">{COPY.matchScore}</dt>
       <dd>
-        <ScoreBadge application={{ matchScore: offer.matchScore, aiStatus: null }} />
+        <ScoreBadge application={offer} />
       </dd>
     </dl>
   );

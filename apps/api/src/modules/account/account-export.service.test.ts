@@ -2,6 +2,7 @@ import { Test } from '@nestjs/testing';
 import { describe, expect, it } from 'vitest';
 
 import { FileStorage, type PutObject } from '../../storage/file-storage.js';
+import { storageDown } from '../../storage/s3-outcomes.js';
 import { zipFilesOf } from '../../test/account.js';
 import { DownFileStorage, FakeFileStorage } from '../../test/file-storage.js';
 import { RecordingNotifications } from '../../test/notifications.js';
@@ -108,6 +109,18 @@ class DeletedDuringPutStorage extends FakeFileStorage {
   override async put(object: PutObject): Promise<void> {
     this.deleteAccount();
     await super.put(object);
+  }
+}
+
+class DeleteFailsOnceStorage extends DeletedDuringPutStorage {
+  private failed = false;
+
+  override delete(key: string): Promise<void> {
+    if (this.failed) {
+      return super.delete(key);
+    }
+    this.failed = true;
+    return Promise.reject(storageDown(new Error('connect ECONNREFUSED')));
   }
 }
 
@@ -256,6 +269,17 @@ describe('AccountExportService.build', () => {
       [],
       [],
     ]);
+  });
+
+  it('an export whose cleanup failed after the deletion leaves no object after its retry', async () => {
+    const repository = new FakeAccountExportRepository();
+    const storage = new DeleteFailsOnceStorage(() => repository.data.delete(OLENA_ID));
+    const { service } = await exportService({ storage, repository });
+
+    await expect(service.build(requested('csv'))).rejects.toMatchObject({ status: 503 });
+    await service.build(requested('csv'));
+
+    expect(storage.keysUnder(`users/${OLENA_ID}/`)).toEqual([]);
   });
 
   it('fails for a retry and records no notification while the file storage is down', async () => {

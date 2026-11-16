@@ -25,6 +25,7 @@ const ACTION = cn('h-9', TOUCH_HEIGHT);
 const LINES: Record<FollowupFailureReason, string> = {
   timeout: COPY.timeout,
   budget: COPY.budget,
+  rateLimited: COPY.rateLimited,
   other: COPY.other,
 };
 

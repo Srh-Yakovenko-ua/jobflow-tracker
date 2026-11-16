@@ -11,4 +11,5 @@ export {
   useBulkMoveMutation,
 } from './model/use-bulk-move-mutation';
 export { useMoveApplicationMutation } from './model/use-move-application-mutation';
+export { useReviveTarget } from './model/use-revive-target';
 export { useUndoMoveMutation } from './model/use-undo-move-mutation';

@@ -80,9 +80,18 @@ describe('shareCardSceneOf', () => {
 
     expect(scene.texts.map(({ text }) => text)).not.toContain(HEADLINE);
     expect(scene.alt).toBe(
-      "Картка пошуку роботи. 54 відгуки, 9 техінтерв'ю, 1 офер. за 12 тижнів.",
+      "Картка пошуку роботи. 54 відгуки, 9 техінтерв'ю, 1 офер. За 12 тижнів.",
     );
   });
+
+  it.each([false, true])(
+    'no sentence in the alt text starts lowercase, numbers hidden %s',
+    (hideNumbers) => {
+      const { alt } = shareCardSceneOf({ story: DESIGN_STORY, scheme: 'light', hideNumbers });
+
+      expect(alt.split('. ').filter((sentence) => /^\p{Ll}/u.test(sentence))).toEqual([]);
+    },
+  );
 
   it('labels the folded nodes too, so no raw node id reaches the image', () => {
     const graph = buildFoldedSankey().merged;

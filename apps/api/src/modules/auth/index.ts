@@ -2,6 +2,8 @@ export { ACCESS_TOKEN_TTL_SECONDS, type AccessUser, signAccessToken } from './ac
 export { AuthModule } from './auth.module.js';
 export { AUTH_OPENAPI_PATHS } from './auth.openapi.js';
 export { type AccountConfirmation, AuthService } from './auth.service.js';
+export { bearerBeforeBody } from './bearer-before-body.middleware.js';
+export { CredentialsService } from './credentials.service.js';
 export { CurrentUser } from './current-user.decorator.js';
 export { JwtKeys, jwtKeysFrom, signWithKeys, verifyWithKeys } from './jwt-keys.js';
 export { JwtKeysModule } from './jwt-keys.module.js';

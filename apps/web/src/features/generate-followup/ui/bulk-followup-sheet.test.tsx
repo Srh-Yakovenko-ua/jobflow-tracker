@@ -2,6 +2,7 @@ import type { BoardCard, FollowupResponse } from '@jobflow/shared';
 import { screen, waitFor, within } from '@testing-library/react';
 import { afterEach, describe, expect, it } from 'vitest';
 
+import { rateLimitedReply } from '@/test/api-handlers';
 import { ghostIn } from '@/test/board-fixtures';
 import {
   acceptedFollowup,
@@ -29,11 +30,15 @@ const GHOSTS: readonly BoardCard[] = [FIRST, SECOND, THIRD];
 const BUDGET_COPY =
   'Ліміт AI на сьогодні вичерпано, тож цей лист пишеш сам. Твої дані нікуди не зникли.';
 
+const RATE_LIMITED_COPY =
+  'Забагато запитів до AI за короткий час. Спробуй трохи пізніше. Твої дані нікуди не зникли.';
+
 const AFTER_ONE_POLL = { timeout: 3500 } as const;
 
 type SheetSetup = Readonly<{
   afterPost: (id: string) => FollowupResponse;
   held?: ReturnType<typeof latch>;
+  limitedId?: string;
 }>;
 
 function BulkHarness() {
@@ -57,12 +62,13 @@ afterEach(() => {
   sessionStorage.clear();
 });
 
-async function renderSheet({ afterPost, held }: SheetSetup) {
+async function renderSheet({ afterPost, held, limitedId }: SheetSetup) {
   const answered = new Map<string, FollowupResponse>();
   const routes = followupRoutes({
     responseOf: (id) => answered.get(id),
     generateReply: async ({ params }) => {
       if (answered.size === 0) await held?.reached;
+      if (params.id === limitedId) return rateLimitedReply({ 'Retry-After': '60' });
       answered.set(params.id, afterPost(params.id));
       return acceptedFollowup();
     },
@@ -120,6 +126,18 @@ describe('BulkFollowupSheet', () => {
       expect((await within(row).findByRole('alert')).textContent).toContain(BUDGET_COPY);
       expect(within(row).getByText('свій текст · пиши тут')).toBeDefined();
       expect(within(row).queryByRole('button', { name: 'Спробувати ще' })).toBeNull();
+    }
+  });
+
+  it('rows the queue stopped on a 429 say to try later, not that the daily limit is spent, and keep the retry', async () => {
+    const { rowOf } = await renderSheet({ afterPost: () => READY_FOLLOWUP, limitedId: SECOND.id });
+
+    for (const card of [SECOND, THIRD]) {
+      const row = rowOf(card);
+      expect((await within(row).findByRole('alert')).textContent).toContain(RATE_LIMITED_COPY);
+      expect(row.textContent).not.toContain(BUDGET_COPY);
+      expect(within(row).getByRole('button', { name: 'Спробувати ще' })).toBeDefined();
+      expect(within(row).getByRole('button', { name: 'Написати самому' })).toBeDefined();
     }
   });
 });

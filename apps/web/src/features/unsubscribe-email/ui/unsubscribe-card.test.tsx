@@ -5,9 +5,11 @@ import { http, HttpResponse } from 'msw/http';
 import { toast } from 'sonner';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
+import { useUserId } from '@/entities/user';
 import { apiUrl, errorReply } from '@/test/api-handlers';
 import { renderInApp } from '@/test/render-in-app';
 import { server } from '@/test/server';
+import { ME_RESPONSE, meRoute } from '@/test/session-fixtures';
 
 import { UnsubscribeCard } from './unsubscribe-card';
 
@@ -21,6 +23,10 @@ const CONFIRM = { name: 'Відписатися' } as const;
 const UNSUBSCRIBED: EmailUnsubscribeResponse = { type: 'monthly_summary_ready' };
 
 const INVALID_LINK = 'Посилання для відписки не працює';
+
+function SignedIn() {
+  return <output aria-label="signed in">{useUserId()}</output>;
+}
 
 function unsubscribeRoute(reply: HttpResponseResolver = () => HttpResponse.json(UNSUBSCRIBED)) {
   const sent: unknown[] = [];
@@ -64,6 +70,28 @@ describe('UnsubscribeCard', () => {
     expect(screen.getByRole('link', { name: 'Відкрити налаштування' }).getAttribute('href')).toBe(
       '/settings#notifications',
     );
+  });
+
+  it('a signed-in unsubscribe refetches the me settings', async () => {
+    unsubscribeRoute();
+    const meReads: string[] = [];
+    server.use(
+      meRoute(() => {
+        meReads.push('GET');
+        return HttpResponse.json(ME_RESPONSE);
+      }),
+    );
+    const user = renderInApp(
+      <>
+        <UnsubscribeCard token={TOKEN} />
+        <SignedIn />
+      </>,
+    );
+    await expect.poll(() => meReads).toHaveLength(1);
+
+    await user.click(screen.getByRole('button', CONFIRM));
+
+    await expect.poll(() => meReads).toHaveLength(2);
   });
 
   it('a link the API refuses with 401 shows the invalid-link state and no save-failed toast', async () => {

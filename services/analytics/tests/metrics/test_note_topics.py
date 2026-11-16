@@ -203,9 +203,9 @@ def test_the_signal_needs_three_mentions_of_one_topic() -> None:
     two = note_topics(design_frame(), notes=design_notes(DESIGN_NOTES[:2]))
     three = note_topics(design_frame(), notes=design_notes())
 
-    signal = topic_signal(three, stage="tech_interview")
+    signal = topic_signal(three, stage="tech_interview", reason="skills_gap")
 
-    assert topic_signal(two, stage="tech_interview") is None
+    assert topic_signal(two, stage="tech_interview", reason="skills_gap") is None
     assert signal is not None
     assert (signal[0].notes, signal[1].topic, signal[1].mentions) == (
         3,
@@ -218,7 +218,7 @@ def test_tied_topics_signal_the_first_in_dictionary_order() -> None:
     both = ("SQL і алгоритми",) * 3
     stages = note_topics(design_frame(), notes=design_notes(both))
 
-    signal = topic_signal(stages, stage="tech_interview")
+    signal = topic_signal(stages, stage="tech_interview", reason="skills_gap")
 
     assert signal is not None
     assert signal[1].topic == "algorithms"
@@ -227,7 +227,7 @@ def test_tied_topics_signal_the_first_in_dictionary_order() -> None:
 def test_a_stage_without_rejections_gives_no_signal() -> None:
     stages = note_topics(design_frame(), notes=design_notes())
 
-    assert topic_signal(stages, stage="offer") is None
+    assert topic_signal(stages, stage="offer", reason="skills_gap") is None
 
 
 def test_finds_note_topics_without_a_network_call(

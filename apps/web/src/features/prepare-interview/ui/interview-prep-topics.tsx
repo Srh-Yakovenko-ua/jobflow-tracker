@@ -62,7 +62,7 @@ export function InterviewPrepTopics({ application, result }: InterviewPrepTopics
     >
       {result.topics.map((topic, index) => (
         <motion.li
-          key={topic.name}
+          key={`${String(index)}-${topic.name}`}
           variants={ROW}
           className="flex flex-wrap items-center justify-between gap-x-3 pb-1 shadow-[inset_0_-1px_0_var(--line-soft)] last:pb-0 last:shadow-none"
         >

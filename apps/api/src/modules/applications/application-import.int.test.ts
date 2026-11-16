@@ -3,6 +3,7 @@ import {
   importApplicationsResponseSchema,
   type ImportRowInput,
 } from '@jobflow/shared';
+import request from 'supertest';
 import { describe, expect, it } from 'vitest';
 
 import { useTestApp } from '../../test/app.js';
@@ -197,5 +198,18 @@ describe('POST /applications/import', () => {
 
   it('answers 401 without a token', async () => {
     expect((await postImport(undefined, [VELA])).status).toBe(401);
+  });
+
+  it('an import body without a token is refused before parsing', async () => {
+    const response = await request(testApp.app.getHttpServer())
+      .post(APPLICATIONS_IMPORT_PATH)
+      .set('content-type', 'application/json')
+      .send('{');
+
+    expect([...statusAndType(response), response.headers['www-authenticate']]).toEqual([
+      401,
+      'unauthorized',
+      'Bearer',
+    ]);
   });
 });

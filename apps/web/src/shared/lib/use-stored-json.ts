@@ -13,7 +13,10 @@ export type StoredJsonInput<Schema extends z.ZodType> = Readonly<{
 
 type StoredRead<Value> = Readonly<{ key: string | undefined; value: Value }>;
 
-export type StoredJson<Value> = Readonly<{ value: Value; store: (value: Value) => void }>;
+export type StoredJson<Value> = Readonly<{
+  value: Value;
+  store: (update: (latest: Value) => Value) => void;
+}>;
 
 export function useStoredJson<Schema extends z.ZodType>({
   key,
@@ -34,8 +37,13 @@ export function useStoredJson<Schema extends z.ZodType>({
   }
   return {
     value: current.value,
-    store: (value) => {
-      if (key !== undefined) writeStoredJson(key, value);
+    store: (update) => {
+      if (key === undefined) {
+        setRead({ key, value: update(current.value) });
+        return;
+      }
+      const value = update(readStoredJson(key, schema) ?? fallback);
+      writeStoredJson(key, value);
       setRead({ key, value });
     },
   };

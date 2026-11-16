@@ -1,5 +1,7 @@
 import { z } from 'zod';
 
+import type { RejectionReasonCode } from './rejection-reasons.js';
+
 export const NOTE_TOPICS = [
   'algorithms',
   'dp',
@@ -24,4 +26,15 @@ export const NOTE_TOPIC_LABELS: Record<NoteTopic, { labelUk: string }> = {
   react_internals: { labelUk: 'React internals' },
   sql: { labelUk: 'SQL' },
   behavioural: { labelUk: 'Поведінкові питання' },
+};
+
+export const NOTE_TOPIC_REASONS: Record<NoteTopic, RejectionReasonCode> = {
+  algorithms: 'skills_gap',
+  dp: 'skills_gap',
+  system_design: 'skills_gap',
+  english: 'english_level',
+  take_home: 'skills_gap',
+  react_internals: 'skills_gap',
+  sql: 'skills_gap',
+  behavioural: 'skills_gap',
 };

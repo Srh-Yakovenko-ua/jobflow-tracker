@@ -9,9 +9,11 @@ import { apiUrl, errorReply, rateLimitedReply } from '@/test/api-handlers';
 import { fixtureIdOf, ghostIn } from '@/test/board-fixtures';
 import {
   acceptedFollowup,
+  followupJob,
   followupRoutes,
   type FollowupRoutesOptions,
   NO_FOLLOWUP,
+  READY_FOLLOWUP,
 } from '@/test/followup-fixtures';
 import { latch } from '@/test/latch';
 import { renderHookInApp } from '@/test/render-in-app';
@@ -25,7 +27,7 @@ const GHOSTS: readonly BoardCard[] = [
   ghostIn({ serial: 203, days: 30 }),
 ];
 
-function renderQueue(options: Pick<FollowupRoutesOptions, 'generateReply'> = {}) {
+function renderQueue(options: Pick<FollowupRoutesOptions, 'generateReply' | 'responseOf'> = {}) {
   const routes = followupRoutes({ response: { ...NO_FOLLOWUP, language: 'en' }, ...options });
   server.use(...routes.handlers);
   const view = renderHookInApp(() => useBulkFollowups());
@@ -34,6 +36,15 @@ function renderQueue(options: Pick<FollowupRoutesOptions, 'generateReply'> = {})
   });
   const states = () => view.result.current.rows.map((row) => row.state);
   return { view, sent: routes.sent, states };
+}
+
+type SettledQueue = Pick<ReturnType<typeof renderQueue>, 'sent' | 'states'>;
+
+async function postedOnceAllSent({ sent, states }: SettledQueue) {
+  await waitFor(() => {
+    expect(states()).toEqual(['sent', 'sent', 'sent']);
+  });
+  return sent.posted.map((request) => request.id);
 }
 
 function heldLanguageRoute() {
@@ -70,10 +81,7 @@ describe('useBulkFollowups', () => {
     expect(states()).toEqual(['queued', 'queued', 'queued']);
     held.release();
 
-    await waitFor(() => {
-      expect(states()).toEqual(['sent', 'sent', 'sent']);
-    });
-    expect(sent.posted.map((request) => request.id)).toEqual(GHOSTS.map((card) => card.id));
+    expect(await postedOnceAllSent({ sent, states })).toEqual(GHOSTS.map((card) => card.id));
     expect(sent.requested).toEqual(
       Array.from({ length: 3 }, () => ({ tone: 'neutral', language: 'en', variant: false })),
     );
@@ -94,6 +102,17 @@ describe('useBulkFollowups', () => {
     });
     expect(sent.posted.map((request) => request.id)).toEqual([fixtureIdOf(201), fixtureIdOf(202)]);
     expect(view.result.current.running).toBe(false);
+  });
+
+  it.each([
+    ['a draft', READY_FOLLOWUP],
+    ['a running job', followupJob('processing')],
+  ])('re-expanding the lane queues no ghost that has %s', async (_held, response) => {
+    const queue = renderQueue({
+      responseOf: (id) => (id === fixtureIdOf(202) ? response : undefined),
+    });
+
+    expect(await postedOnceAllSent(queue)).toEqual([fixtureIdOf(201), fixtureIdOf(203)]);
   });
 
   it('a skipped ghost is never posted and leaves the list', async () => {

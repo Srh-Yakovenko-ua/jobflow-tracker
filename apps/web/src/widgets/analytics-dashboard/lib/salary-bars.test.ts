@@ -80,8 +80,16 @@ describe('salaryBarsOf', () => {
       status: 'empty',
       content: {
         title: 'Вилок ще немає',
-        hint: "Тут з'явиться, на якій вилці приходить офер, а на якій відмовляють через зарплату.",
+        hint: "Тут з'явиться, на якій вилці приходить офер, а на якій відмовляють через зарплату. 3 відгуки без вилки не входять у розрахунок.",
       },
     });
+  });
+
+  it('an empty salary block still names the missing and unconverted counts', () => {
+    const view = salaryBarsOf({ ...buildNoSalary(), missing: 4, unconverted: 1 });
+
+    expect(view.status === 'empty' && view.content.hint).toBe(
+      "Тут з'явиться, на якій вилці приходить офер, а на якій відмовляють через зарплату. 4 відгуки без вилки не входять у розрахунок. 1 відгук у валюті без курсу не входить у розрахунок.",
+    );
   });
 });

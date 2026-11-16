@@ -7,16 +7,14 @@ import {
   STAGE_LABELS,
   TERMINAL_STAGES,
 } from '@jobflow/shared';
-import { useQuery } from '@tanstack/react-query';
 import { CalendarPlus, Ellipsis, Pencil, Trash2 } from 'lucide-react';
 import type { RefObject } from 'react';
 
-import { timelineQueryOptions } from '@/entities/application';
 import { FinishSearchAction } from '@/features/finish-search';
 import {
   nextStageOf,
-  reviveTargetOf,
   useMoveApplicationMutation,
+  useReviveTarget,
   useUndoMoveMutation,
 } from '@/features/move-application';
 import { RejectionReasonDialog, useRejectionPrompt } from '@/features/reject-with-reason';
@@ -53,9 +51,7 @@ type ReviveButtonProps = Readonly<{
 const COPY = uk.applicationPage;
 
 function ReviveButton({ application, move }: ReviveButtonProps) {
-  const ghosted = application.currentStage === 'ghosted';
-  const timeline = useQuery({ ...timelineQueryOptions(application.id), enabled: ghosted });
-  const target = ghosted && timeline.data ? reviveTargetOf(timeline.data.items) : null;
+  const target = useReviveTarget(application);
   if (target === null) return null;
   return (
     <Button

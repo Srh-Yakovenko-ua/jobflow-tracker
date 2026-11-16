@@ -1,9 +1,9 @@
 'use client';
 
-import { STAGE_LABELS } from '@jobflow/shared';
+import { type Stage, STAGE_LABELS } from '@jobflow/shared';
 
 import { type ApplicationMove, type MovingApplication, StageMarker } from '@/entities/application';
-import { legalMovesFrom } from '@/features/move-application';
+import { legalMovesFrom, useReviveTarget } from '@/features/move-application';
 import { uk } from '@/shared/i18n';
 import { useMenuChoice } from '@/shared/lib/use-menu-choice';
 import { Button } from '@/shared/ui/button';
@@ -20,9 +20,18 @@ export type ReplyMenuProps = Readonly<{
   actions: ReplyMenuActions;
 }>;
 
+function useReplyStages(application: MovingApplication): readonly Stage[] {
+  const reviveTarget = useReviveTarget(application);
+  if (application.currentStage !== 'ghosted') {
+    return legalMovesFrom(application.currentStage).filter((stage) => stage !== 'ghosted');
+  }
+  return reviveTarget === null ? [] : [reviveTarget];
+}
+
 export function ReplyMenu({ application, actions }: ReplyMenuProps) {
   const choice = useMenuChoice(actions.onMoved);
-  const stages = legalMovesFrom(application.currentStage).filter((stage) => stage !== 'ghosted');
+  const stages = useReplyStages(application);
+  if (stages.length === 0) return null;
   const moveTo = (move: ApplicationMove) => {
     if (actions.moveTo(move) === 'sent') choice.choose();
   };

@@ -168,6 +168,21 @@ describe('SettingsService.update of the pause', () => {
     ]);
   });
 
+  it('a pausedUntil in the past is refused with 422 and writes nothing', async () => {
+    const { repository, service } = await pausedWith({
+      pausedFrom: dateColumn('2026-10-01'),
+      pausedUntil: dateColumn('2026-10-05'),
+    });
+
+    await expect(service.update(OLENA_ID, { pausedUntil: '2026-10-21' })).rejects.toMatchObject({
+      body: {
+        status: 422,
+        errors: [{ path: 'pausedUntil', message: 'pausedUntil is before the local today' }],
+      },
+    });
+    expect([repository.updates, repository.events]).toEqual([[], []]);
+  });
+
   it('ends the pause with null and clears its start', async () => {
     const { repository, service } = await pausedWith({
       pausedFrom: dateColumn('2026-10-20'),

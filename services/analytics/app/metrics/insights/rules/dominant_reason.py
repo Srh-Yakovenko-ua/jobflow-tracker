@@ -58,7 +58,7 @@ def dominant_reason(metrics: InsightMetrics) -> Insight | None:
             "of": top.of,
         },
     )
-    signal = topic_signal(metrics.note_topics, stage=top.stage)
+    signal = topic_signal(metrics.note_topics, stage=top.stage, reason=top.code)
     if signal is None or reason.side == CANDIDATE_SIDE:
         return said
     return with_topic(said, signal=signal, at=at)

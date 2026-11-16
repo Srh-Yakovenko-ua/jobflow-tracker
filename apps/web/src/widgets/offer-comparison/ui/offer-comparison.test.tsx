@@ -45,10 +45,14 @@ const STABILITY_FIRST = {
 type ComparisonRender = Readonly<{
   offers: readonly ApplicationResponse[];
   view?: OfferComparisonProps['view'];
+  queuedId?: string;
 }>;
 
-function renderComparison({ offers, view = { mode: 'screen' } }: ComparisonRender) {
-  const list = pagedListRoute({ items: buildOfferList(offers).items });
+function renderComparison({ offers, view = { mode: 'screen' }, queuedId }: ComparisonRender) {
+  const items = buildOfferList(offers).items.map((item) =>
+    item.id === queuedId ? { ...item, aiStatus: 'queued' as const } : item,
+  );
+  const list = pagedListRoute({ items });
   const reads = offers.map((application) => applicationRoute({ application }).handler);
   server.use(meRoute(), list.handler, ...reads);
   return renderViewInApp(<OfferComparison view={view} />);
@@ -97,6 +101,15 @@ describe('OfferComparison', () => {
     expect(columnOf(LUMEN).getByRole('img', { name: 'без CV' })).toBeDefined();
     expect(columnOf(TRIDENT).getByText('56')).toBeDefined();
     expect(screen.getByText('Перше місце: Trident Systems')).toBeDefined();
+  });
+
+  it('a queued match reads its status, not без CV', async () => {
+    renderComparison({ offers: buildDesignOffers(3), queuedId: idOf(2) });
+    await rankedCompanies();
+
+    const lumen = columnOf(LUMEN);
+    expect(lumen.getByRole('img', { name: 'Match Score у черзі' })).toBeDefined();
+    expect(lumen.queryByRole('img', { name: 'без CV' })).toBeNull();
   });
 
   it('changing the weights reorders the offers at once: no money, all stack and no format puts Northwind first', async () => {
