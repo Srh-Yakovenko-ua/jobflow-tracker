@@ -18,6 +18,7 @@ export * from './application-csv.js';
 export * from './application-csv-cells.js';
 export * from './csv.js';
 export * from './demo-user.js';
+export * from './email.js';
 export * from './error-event-scrub.js';
 export * from './interview-prep-title.js';
 export * from './labels.js';

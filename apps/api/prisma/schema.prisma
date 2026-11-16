@@ -202,7 +202,10 @@ model UserSettings {
   notifyInApp           Boolean        @default(true) @map("notify_in_app")
   notifyPush            Boolean        @default(false) @map("notify_push")
   notifyEmail           Boolean        @default(true) @map("notify_email")
-  analyticsOptOut       Boolean        @default(false) @map("analytics_opt_out")
+  emailMonthlySummary   Boolean        @default(true) @map("email_monthly_summary")
+  emailSilence          Boolean        @default(true) @map("email_silence")
+  emailInterviewPrep    Boolean        @default(true) @map("email_interview_prep")
+  analyticsOptOut      Boolean        @default(false) @map("analytics_opt_out")
   singleKeyShortcuts    Boolean        @default(true) @map("single_key_shortcuts")
   activeResumeVersionId String?        @map("active_resume_version_id") @db.Uuid
   createdAt             DateTime       @default(now()) @map("created_at") @db.Timestamptz

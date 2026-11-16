@@ -89,6 +89,36 @@ describe('NotificationsSection, browser push', () => {
   });
 });
 
+const EMAIL_TYPE_SWITCHES = [/Місячне AI-саммарі/, /Тиша на картках/, /Співбесіда завтра/];
+
+describe('NotificationsSection, email', () => {
+  it('with email off shows the email switch and no switch per email type', async () => {
+    await renderLoadedSettings({ settings: { notifyEmail: false } });
+
+    expect(notifications().getByRole('switch', { name: /Листи на пошту/ })).toBeDefined();
+    for (const name of EMAIL_TYPE_SWITCHES) {
+      expect(notifications().queryByRole('switch', { name })).toBeNull();
+    }
+  });
+
+  it('with email on a click on one email type saves only that type', async () => {
+    const { user, routes } = await renderLoadedSettings({ settings: { notifyEmail: true } });
+    const silence = notifications().getByRole('switch', { name: /Тиша на картках/ });
+
+    expect(
+      EMAIL_TYPE_SWITCHES.map((name) =>
+        notifications().getByRole('switch', { name }).getAttribute('aria-checked'),
+      ),
+    ).toEqual(['true', 'true', 'true']);
+    await user.click(silence);
+
+    await waitFor(() => {
+      expect(routes.patches).toEqual([{ emailSilence: false }]);
+    });
+    expect(silence.getAttribute('aria-checked')).toBe('false');
+  });
+});
+
 describe('NotificationsSection', () => {
   it('the in-app switch saves only its own field', async () => {
     const { user, routes } = await renderLoadedSettings();

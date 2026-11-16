@@ -16,6 +16,7 @@ import { AuthModule } from './modules/auth/index.js';
 import { CaptureModule } from './modules/capture/index.js';
 import { ContactsModule } from './modules/contacts/index.js';
 import { CvHintsModule } from './modules/cv-hints/index.js';
+import { EmailModule } from './modules/email/index.js';
 import { EventsModule } from './modules/events/index.js';
 import { FollowupsModule } from './modules/followups/index.js';
 import { HealthModule } from './modules/health/index.js';
@@ -62,6 +63,7 @@ import { RedisModule } from './redis/redis.module.js';
     RemindersModule,
     NotificationsModule,
     PushModule,
+    EmailModule,
     SettingsModule,
     SearchesModule,
     AiModule,

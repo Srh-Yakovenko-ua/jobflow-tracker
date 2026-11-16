@@ -27,6 +27,7 @@ import { shell } from './shell';
 import { states } from './states';
 import { summary } from './summary';
 import { timeline } from './timeline';
+import { unsubscribe } from './unsubscribe';
 
 export const uk = {
   locale: 'uk-UA',
@@ -98,6 +99,7 @@ export const uk = {
   offerCompare,
   shareCard,
   summary,
+  unsubscribe,
   designSystem: {
     pageTitle: 'Дизайн-система',
     typography: {

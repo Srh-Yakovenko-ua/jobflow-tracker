@@ -169,6 +169,9 @@ failed failed
     Boolean notify_in_app 
     Boolean notify_push 
     Boolean notify_email 
+    Boolean email_monthly_summary 
+    Boolean email_silence 
+    Boolean email_interview_prep 
     Boolean analytics_opt_out 
     Boolean single_key_shortcuts 
     String active_resume_version_id "❓"

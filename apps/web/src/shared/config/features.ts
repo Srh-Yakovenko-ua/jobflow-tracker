@@ -26,7 +26,7 @@ export const FEATURE_FLAGS: FeatureFlags = {
   addApplication: true,
   followUp: true,
   browserPush: true,
-  emailNotifications: false,
+  emailNotifications: true,
   captureToken: true,
   aiDataDeletion: true,
   accountDeletion: true,

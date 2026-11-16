@@ -15,6 +15,7 @@ import {
 import { JwtKeys } from './modules/auth/index.js';
 import { CaptureSubscriber } from './modules/capture/index.js';
 import { CvHintsSubscriber } from './modules/cv-hints/index.js';
+import { EmailProcessor, EmailSubscriber } from './modules/email/index.js';
 import { FollowupsSubscriber } from './modules/followups/index.js';
 import {
   InterviewPrepReadySubscriber,
@@ -78,6 +79,8 @@ describe('WorkerModule', () => {
       InsightSubscriber,
       PushSubscriber,
       PushProcessor,
+      EmailSubscriber,
+      EmailProcessor,
       AnalyticsCacheSubscriber,
       ApplicationMetricsSubscriber,
       AiMetricsSubscriber,

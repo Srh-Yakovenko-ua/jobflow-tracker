@@ -2,7 +2,13 @@ import { generateKeyPair, SignJWT } from 'jose';
 import { describe, expect, it } from 'vitest';
 import { z } from 'zod';
 
-import { TEST_KEY_HEADER, testJwtKeys, verifyWithTestKey } from '../../test/auth.js';
+import {
+  encodePart,
+  TEST_KEY_HEADER,
+  testJwtKeys,
+  unsubscribeTokenFor,
+  verifyWithTestKey,
+} from '../../test/auth.js';
 import { AccessTokens, signAccessToken } from './access-tokens.js';
 import { jwtKeysFrom } from './jwt-keys.js';
 
@@ -13,8 +19,6 @@ const ISSUED_AT = new Date('2026-10-21T10:00:00.000Z');
 const accessTokens = new AccessTokens(testJwtKeys);
 
 const otherKeys = await jwtKeysFrom(await generateKeyPair('RS256'));
-
-const encodePart = (part: object) => Buffer.from(JSON.stringify(part)).toString('base64url');
 
 const ACCESS_TOKEN_ROUTING = {
   iss: 'jobflow-api',
@@ -62,6 +66,7 @@ const forgedTokens: [string, () => Promise<string>][] = [
   ['without an iat claim', () => signedByTestKey(new SignJWT(claims).setExpirationTime('15m'))],
   ['with another issuer', () => signedWithClaims({ iss: 'jobflow-ai' })],
   ['with the ai audience', () => signedWithClaims({ aud: 'jobflow-ai' })],
+  ['that is an email unsubscribe token', () => unsubscribeTokenFor(USER_ID)],
 ];
 
 describe('signAccessToken', () => {

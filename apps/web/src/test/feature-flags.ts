@@ -1,20 +1,11 @@
 import type * as SharedConfig from '@/shared/config';
 import type { FeatureFlag, FeatureFlags } from '@/shared/config';
+import { FEATURE_FLAGS, FEATURES } from '@/shared/config/features';
 
-export const EVERY_FLAG_ON: FeatureFlags = {
-  analytics: true,
-  calendar: true,
-  resumes: true,
-  reminders: true,
-  settings: true,
-  addApplication: true,
-  followUp: true,
-  browserPush: true,
-  emailNotifications: true,
-  captureToken: true,
-  aiDataDeletion: true,
-  accountDeletion: true,
-};
+export const EVERY_FLAG_ON: FeatureFlags = FEATURES.reduce<Record<FeatureFlag, boolean>>(
+  (flags, flag) => ({ ...flags, [flag]: true }),
+  { ...FEATURE_FLAGS },
+);
 
 export const flagSwitch: { everyFlagOn: boolean; overrides: Partial<FeatureFlags> } = {
   everyFlagOn: false,

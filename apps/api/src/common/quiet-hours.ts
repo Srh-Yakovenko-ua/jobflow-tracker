@@ -44,6 +44,13 @@ function quietEndAfter(settings: QuietHoursSettings, now: Date): Date | undefine
   return new Date((endToday > local ? endToday : addDays(endToday, 1)).getTime());
 }
 
+export type ScheduledDelivery = { deliverAt: Date; delayMs: number };
+
 export function quietHoursDeliveryAt({ settings, notification, now }: QuietHoursDelivery): Date {
   return isUrgent(notification, now) ? now : (quietEndAfter(settings, now) ?? now);
+}
+
+export function scheduledDelivery(delivery: QuietHoursDelivery): ScheduledDelivery {
+  const deliverAt = quietHoursDeliveryAt(delivery);
+  return { deliverAt, delayMs: deliverAt.getTime() - delivery.now.getTime() };
 }

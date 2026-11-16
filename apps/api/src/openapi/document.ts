@@ -8,6 +8,7 @@ import { AUTH_OPENAPI_PATHS, REFRESH_COOKIE } from '../modules/auth/index.js';
 import { CAPTURE_OPENAPI_PATHS } from '../modules/capture/index.js';
 import { CONTACTS_OPENAPI_PATHS } from '../modules/contacts/index.js';
 import { CV_HINTS_OPENAPI_PATHS } from '../modules/cv-hints/index.js';
+import { EMAIL_OPENAPI_PATHS } from '../modules/email/index.js';
 import { TIMELINE_OPENAPI_PATHS } from '../modules/events/index.js';
 import { FOLLOWUPS_OPENAPI_PATHS } from '../modules/followups/index.js';
 import { HEALTH_OPENAPI_PATHS } from '../modules/health/index.js';
@@ -49,6 +50,7 @@ export const API_OPENAPI_PATHS = [
   ...REMINDERS_OPENAPI_PATHS,
   ...NOTIFICATIONS_OPENAPI_PATHS,
   ...PUSH_OPENAPI_PATHS,
+  ...EMAIL_OPENAPI_PATHS,
   ...RESUMES_OPENAPI_PATHS,
   ...AI_OPENAPI_PATHS,
   ...CAPTURE_OPENAPI_PATHS,
@@ -68,6 +70,7 @@ const TAGS = [
   { name: 'reminders', description: 'Follow-up and interview reminders of the signed-in user' },
   { name: 'notifications', description: 'The in-app notification feed of the signed-in user' },
   { name: 'push', description: 'Web Push subscriptions of the signed-in user and the VAPID key' },
+  { name: 'email', description: 'Email notifications: the unsubscribe link, without sign-in' },
   {
     name: 'resumes',
     description: 'Resume files of the signed-in user, uploaded straight to storage',

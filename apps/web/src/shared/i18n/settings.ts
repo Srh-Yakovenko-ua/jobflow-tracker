@@ -8,6 +8,7 @@ import {
 } from '@jobflow/shared';
 
 import { settingsAccount } from './settings-account';
+import { emailTypes } from './settings-email';
 
 const DAY_GENITIVE_FORMS = {
   one: 'дня',
@@ -80,6 +81,7 @@ export const settings = {
     email: {
       title: 'Листи на пошту',
       description: 'Нагадування й підсумки приходять ще й листом.',
+      types: emailTypes,
     },
     quietHours: {
       title: 'Тихі години',

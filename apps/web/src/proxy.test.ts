@@ -54,6 +54,18 @@ const CASES: ProxyCase[] = [
     location: `${ORIGIN}/board`,
   },
   { name: 'lets a signed-out login through', path: '/login', signedIn: false, location: null },
+  {
+    name: 'lets a signed-out unsubscribe link through without a login redirect',
+    path: '/unsubscribe?token=header.payload.signature',
+    signedIn: false,
+    location: null,
+  },
+  {
+    name: 'lets a signed-in unsubscribe link through without a redirect',
+    path: '/unsubscribe?token=header.payload.signature',
+    signedIn: true,
+    location: null,
+  },
 ];
 
 describe('proxy', () => {
