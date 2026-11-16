@@ -14,6 +14,7 @@ const MY_KEYS = [
   `jobflow.recent-applications.${USER_ID}`,
   `jobflow.interview-prep.${USER_ID}`,
   `jobflow.asked-topics.${USER_ID}`,
+  `jobflow.offer-compare.${USER_ID}`,
 ];
 
 const OTHER_KEY = `jobflow.interview-prep.${OTHER_USER_ID}`;
@@ -36,7 +37,7 @@ describe('user storage', () => {
 
     forgetUserStorage(USER_ID);
 
-    expect(MY_KEYS.map((key) => localStorage.getItem(key))).toEqual([null, null, null]);
+    expect(MY_KEYS.map((key) => localStorage.getItem(key))).toEqual([null, null, null, null]);
     expect(localStorage.getItem(OTHER_KEY)).toBe('[]');
   });
 

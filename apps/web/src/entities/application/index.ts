@@ -24,7 +24,7 @@ export {
   REVIEW_ANCHOR,
 } from './lib/draft-state';
 export { jobFinished } from './lib/job-finished';
-export { formatAmount, formatSalaryRange } from './lib/salary';
+export { formatAmount, formatSalaryRange, usdNetPerMonthOf, type UsdNetSource } from './lib/salary';
 export { isSearchable, SEARCH_LIMITS } from './lib/search-limits';
 export { SILENT_ONLY, silentCountOf } from './lib/silent-count';
 export { formatTimelineDate, type TimelineDateInput } from './lib/timeline-date';
@@ -33,6 +33,7 @@ export type { ApplicationCardContext } from './model/card-context';
 export { CARD_DENSITIES, type CardDensity } from './model/card-density';
 export { FULL_APPLICATION, FULL_CARD } from './model/card-specimens';
 export { applicationKeys, jobKeys, timelineKeys } from './model/keys';
+export { OFFER_COMPARE } from './model/offer-compare';
 export { useApplicationAiRequest } from './model/use-application-ai-request';
 export {
   AI_LEAD,

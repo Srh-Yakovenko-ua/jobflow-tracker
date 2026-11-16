@@ -1,4 +1,10 @@
-import type { ApplicationCard } from '@jobflow/shared';
+import {
+  type ApplicationCard,
+  type ApplicationResponse,
+  SALARY_NORMALISATION,
+  vacancyCurrencySchema,
+  vacancyParseOutputSchema,
+} from '@jobflow/shared';
 
 import { uk } from '@/shared/i18n';
 
@@ -22,6 +28,30 @@ function currencySymbolOf(currency: string | null): string {
     currencyDisplay: 'narrowSymbol',
   }).formatToParts(0);
   return parts.find((part) => part.type === 'currency')?.value ?? currency;
+}
+
+export type UsdNetSource = Pick<
+  ApplicationResponse,
+  'salaryMin' | 'salaryMax' | 'currency' | 'aiParsed'
+>;
+
+function netShareOf(aiParsed: UsdNetSource['aiParsed']): number {
+  const tax = vacancyParseOutputSchema.shape.salaryTax.safeParse(aiParsed?.salaryTax);
+  return tax.success && tax.data.value === 'gross' ? SALARY_NORMALISATION.netShareOfGross : 1;
+}
+
+export function usdNetPerMonthOf({
+  salaryMin,
+  salaryMax,
+  currency,
+  aiParsed,
+}: UsdNetSource): number | null {
+  const low = salaryMin ?? salaryMax;
+  const high = salaryMax ?? salaryMin;
+  const rate = vacancyCurrencySchema.safeParse(currency);
+  if (low === null || high === null || !rate.success) return null;
+  const perUsd = SALARY_NORMALISATION.perUsd[rate.data];
+  return Math.round((((low + high) / 2) * netShareOf(aiParsed)) / perUsd);
 }
 
 export function formatSalaryRange({ salaryMin, salaryMax, currency }: SalarySource): string | null {

@@ -17,6 +17,7 @@ import { devUi } from './dev-ui';
 import { followup } from './followup';
 import { interviewPrep } from './interview-prep';
 import { notifications } from './notifications';
+import { offerCompare } from './offer-compare';
 import { push } from './push';
 import { reminders } from './reminders';
 import { resumes } from './resumes';
@@ -94,6 +95,7 @@ export const uk = {
   settings,
   dataImport,
   analytics,
+  offerCompare,
   shareCard,
   summary,
   designSystem: {

@@ -1,6 +1,11 @@
 import { logger } from '@/shared/lib/logger';
 
-const USER_STORAGE_NAMES = ['recent-applications', 'interview-prep', 'asked-topics'] as const;
+const USER_STORAGE_NAMES = [
+  'recent-applications',
+  'interview-prep',
+  'asked-topics',
+  'offer-compare',
+] as const;
 
 export type UserStorageName = (typeof USER_STORAGE_NAMES)[number];
 
