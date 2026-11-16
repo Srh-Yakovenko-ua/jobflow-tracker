@@ -5,8 +5,10 @@ import { type QueryKey, useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
 import { useEffect, useEffectEvent } from 'react';
 
+import { analyticsKeys } from '@/entities/analytics';
 import { applicationKeys, jobKeys, timelineKeys } from '@/entities/application';
 import { notificationKeys } from '@/entities/notification';
+import { resumeKeys } from '@/entities/resume';
 import { userKeys } from '@/entities/user';
 import { isMovePending } from '@/features/move-application';
 import { openLiveStream } from '@/shared/api';
@@ -38,6 +40,8 @@ function staleKeysOf(event: LiveEvent): readonly QueryKey[] {
     }
     case LIVE_EVENTS.notificationCreated:
       return [userKeys.me(), notificationKeys.all];
+    case LIVE_EVENTS.analyticsChanged:
+      return [analyticsKeys.summary(), resumeKeys.ab()];
     default: {
       const unhandled: never = event;
       throw new Error(`Unhandled live event: ${JSON.stringify(unhandled)}`);

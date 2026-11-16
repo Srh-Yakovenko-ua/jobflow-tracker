@@ -67,8 +67,24 @@ describe('redactMoney', () => {
       hidden: 'Вилка приховано нетто',
     },
     { form: 'a range', text: 'Вилка $3,800–4,200 нетто', hidden: 'Вилка приховано нетто' },
+    {
+      form: 'an uppercase K before USD',
+      text: 'Офер на 4K USD прийшов',
+      hidden: 'Офер на приховано прийшов',
+    },
+    {
+      form: 'a Cyrillic capital К before грн',
+      text: 'Вилка 4 К грн нетто',
+      hidden: 'Вилка приховано нетто',
+    },
   ])('hides $form', ({ text, hidden }) => {
     expect(redactMoney(text)).toBe(hidden);
+  });
+
+  it('$4K, 4000 usd and the lower end of від 3000 до 4000 грн are hidden', () => {
+    expect(redactMoney('Офер $4K, потім 4000 usd, вилка від 3000 до 4000 грн')).toBe(
+      'Офер приховано, потім приховано, вилка від приховано',
+    );
   });
 
   it('$4,000 and 4 тис. грн are hidden', () => {

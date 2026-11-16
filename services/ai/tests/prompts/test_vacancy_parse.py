@@ -206,6 +206,42 @@ def test_checked_turns_an_empty_field_without_a_quote_into_missing() -> None:
     )
 
 
+def test_a_blank_company_comes_back_missing_and_the_parse_succeeds() -> None:
+    fields = checked_fields(
+        VACANCY_TEXT,
+        company={"value": " \n ", "confidence": "exact", "evidence": "Acme"},
+    )
+
+    assert fields["company"] == {
+        "value": None,
+        "confidence": "missing",
+        "evidence": None,
+    }
+    assert VacancyParseOutput.model_validate(fields).company.value is None
+
+
+def test_a_blank_stack_item_is_dropped_and_the_rest_kept() -> None:
+    fields = checked_fields(
+        VACANCY_TEXT,
+        stack={"value": ["React", " "], "confidence": "exact", "evidence": "React"},
+    )
+
+    assert fields["stack"] == {
+        "value": ["React"],
+        "confidence": "exact",
+        "evidence": "React",
+    }
+
+
+def test_a_stack_of_only_blank_items_comes_back_missing() -> None:
+    fields = checked_fields(
+        VACANCY_TEXT,
+        stack={"value": [" ", "\t"], "confidence": "exact", "evidence": "React"},
+    )
+
+    assert fields["stack"] == {"value": [], "confidence": "missing", "evidence": None}
+
+
 @pytest.mark.parametrize(
     ("evidence", "confidence"),
     [

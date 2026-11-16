@@ -20,6 +20,7 @@ import {
   type ResumeVersionRow,
   ResumeVersionsRepository,
 } from './resume-versions.repository.js';
+import { RESUME_EVENTS } from './resumes.events.js';
 
 export type EditResumeVersion = { id: string; input: UpdateResumeVersionInput };
 
@@ -49,6 +50,8 @@ export class ResumeVersionsService {
         await this.repository.update(userId, { id, data: { ...input, updatedAt }, tx }),
         RESUME_VERSION_NOT_FOUND,
       );
+      const event = { eventType: RESUME_EVENTS.versionUpdated, resumeVersionId: id };
+      await this.repository.recordEvent(userId, { event, tx });
       if (input.isArchived === true) {
         await this.repository.setActive(userId, { from: id, to: null, tx });
       }

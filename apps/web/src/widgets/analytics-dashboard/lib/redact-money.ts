@@ -14,13 +14,15 @@ const SIGN = '[$€₴]';
 
 const RANGE = `${AMOUNT}(?:${SPACE}?[-–—]${SPACE}?${SIGN}?${AMOUNT})?`;
 
+const RANGE_TO = `${AMOUNT}${SPACE}+(?:${COPY.rangeWords.source})${SPACE}+${AMOUNT}`;
+
 const BEFORE = `(?:${SIGN}|(?:USD|EUR|UAH)${SPACE})`;
 
 const AFTER = `(?:${SIGN}|USD|EUR|UAH|${COPY.currencyWords.source})`;
 
 const MONEY = new RegExp(
-  `(?<![\\p{L}\\p{N}])(?:${BEFORE}${SPACE}?${RANGE}|${RANGE}${SPACE}?${AFTER})(?![\\p{L}\\p{N}])`,
-  'gu',
+  `(?<![\\p{L}\\p{N}])(?:${BEFORE}${SPACE}?${RANGE}|(?:${RANGE_TO}|${RANGE})${SPACE}?${AFTER})(?![\\p{L}\\p{N}])`,
+  'giu',
 );
 
 export function redactMoney(text: string): string {

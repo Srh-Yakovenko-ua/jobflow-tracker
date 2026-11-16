@@ -82,6 +82,7 @@ export class SearchesService {
       now,
       tx,
     });
+    await this.repository.recordFinished(userId, { searchId: finished.id, tx });
     return { finished, current };
   }
 

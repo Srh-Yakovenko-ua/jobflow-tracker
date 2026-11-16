@@ -2,7 +2,7 @@ import { getQueueToken } from '@nestjs/bullmq';
 import { UnrecoverableError } from 'bullmq';
 import { beforeEach, describe, expect, it } from 'vitest';
 
-import { AI_JOB_ID, VACANCY_TEXT } from '../../test/ai.js';
+import { AI_JOB_ID, FakeAiRepository, VACANCY_TEXT } from '../../test/ai.js';
 import { FakeApplicationDrafts } from '../../test/capture.js';
 import { memoryLog } from '../../test/memory-log.js';
 import { compileProcessorModule } from '../../test/processor.js';
@@ -12,7 +12,8 @@ import {
   CREATION_EVENT_ID,
   OLENA_ID,
 } from '../../test/service-fixtures.js';
-import { SilentQueue, StubQueue } from '../../test/stub-queues.js';
+import { RefusingQueue, SilentQueue, StubQueue } from '../../test/stub-queues.js';
+import { AiService } from '../ai/index.js';
 import { ApplicationDraftsService } from '../applications/index.js';
 import { CaptureQueueService } from './capture-queue.service.js';
 
@@ -32,12 +33,15 @@ const eventWith = (payload: unknown) => ({
 });
 
 async function serviceWith(queue: StubQueue = new StubQueue('ai')) {
+  const ai = new FakeAiRepository();
+  ai.queueJob(OLENA_ID);
   const moduleRef = await compileProcessorModule(log.sink, [
     CaptureQueueService,
     { provide: ApplicationDraftsService, useValue: new FakeApplicationDrafts() },
+    { provide: AiService, useValue: ai },
     { provide: getQueueToken('ai'), useValue: queue },
   ]);
-  return { queue, service: moduleRef.get(CaptureQueueService) };
+  return { queue, ai, service: moduleRef.get(CaptureQueueService) };
 }
 
 describe('CaptureQueueService.enqueue', () => {
@@ -97,5 +101,34 @@ describe('CaptureQueueService.enqueue', () => {
     const { service } = await serviceWith(new SilentQueue('ai'));
 
     await expect(service.enqueue(eventWith(PAYLOAD))).rejects.toThrow('timed out after 2000 ms');
+  });
+
+  it.each([
+    {
+      attempt: 'a capture whose enqueue fails every attempt ends failed, not queued',
+      finalAttempt: true,
+      job: { status: 'failed', errorType: 'not_ready' },
+      warnings: ['vacancy_parse job not queued'],
+    },
+    {
+      attempt: 'keeps the job queued on an earlier failed attempt so the event retries',
+      finalAttempt: false,
+      job: { status: 'queued', step: 1 },
+      warnings: [],
+    },
+  ])('$attempt', async ({ finalAttempt, job, warnings }) => {
+    const { ai, service } = await serviceWith(new RefusingQueue('ai'));
+
+    await expect(service.enqueue({ ...eventWith(PAYLOAD), finalAttempt })).rejects.toThrow(
+      'Connection is closed.',
+    );
+
+    expect(ai.jobs.get(AI_JOB_ID)).toEqual(expect.objectContaining(job));
+    expect(
+      log
+        .parsed()
+        .filter(({ level }) => level === 40)
+        .map(({ msg }) => msg),
+    ).toEqual(warnings);
   });
 });

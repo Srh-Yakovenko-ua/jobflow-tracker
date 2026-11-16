@@ -1,3 +1,4 @@
+export { SEARCH_EVENTS, searchFinishedPayloadSchema } from './searches.events.js';
 export { SearchesModule } from './searches.module.js';
 export { SEARCHES_OPENAPI_PATHS } from './searches.openapi.js';
 export { SearchesRepository } from './searches.repository.js';

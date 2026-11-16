@@ -5,6 +5,7 @@ import { act, screen, waitFor } from '@testing-library/react';
 import type { ReactNode } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
+import { analyticsKeys } from '@/entities/analytics';
 import {
   applicationKeys,
   type ApplicationMove,
@@ -12,6 +13,7 @@ import {
   timelineKeys,
 } from '@/entities/application';
 import { notificationKeys } from '@/entities/notification';
+import { resumeKeys } from '@/entities/resume';
 import { userKeys } from '@/entities/user';
 import { useMoveApplicationMutation } from '@/features/move-application';
 import {
@@ -72,6 +74,9 @@ const OPEN = {
   reasons: applicationKeys.reasonsSummary('rejected'),
   me: userKeys.me(),
   notifications: notificationKeys.latest(),
+  funnel: analyticsKeys.funnel(),
+  norms: analyticsKeys.norms(),
+  resumeAb: resumeKeys.ab(),
 } satisfies Record<string, QueryKey>;
 
 type OpenName = keyof typeof OPEN;
@@ -79,14 +84,17 @@ type OpenName = keyof typeof OPEN;
 const OPEN_NAMES: OpenName[] = [
   'board',
   'detail',
+  'funnel',
   'job',
   'list',
   'me',
+  'norms',
   'notifications',
   'otherDetail',
   'otherJob',
   'otherTimeline',
   'reasons',
+  'resumeAb',
   'table',
   'timeline',
 ];
@@ -221,6 +229,16 @@ describe('LiveUpdates', () => {
         source.send(event);
       }),
     ).toEqual(refetched);
+  });
+
+  it('a move shows the new dashboard numbers once the worker has counted it', async () => {
+    const { source } = await pageWithOpenStream();
+
+    expect(
+      refetchedAfter(() => {
+        source.send({ id: EVENT_ID, type: LIVE_EVENTS.analyticsChanged, data: {} });
+      }),
+    ).toEqual(['funnel', 'resumeAb']);
   });
 
   it('an application.updated frame for matchScore rereads the board and the card shows the new score', async () => {

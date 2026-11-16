@@ -24,6 +24,7 @@ import {
   type ActiveSearch,
   type ArchiveSearch,
   type CreateActiveSearch,
+  type RecordSearchFinished,
   SearchesRepository,
   type SearchRow,
 } from './searches.repository.js';
@@ -88,6 +89,8 @@ class FakeSearchesRepository {
 
   readonly created: ByUser<CreateActiveSearch>[] = [];
 
+  readonly finishedEvents: ByUser<RecordSearchFinished>[] = [];
+
   constructor(private readonly searches: StoredSearch[]) {}
 
   lockActive(userId: string, inTransaction: InTransaction): Promise<ActiveSearch | null> {
@@ -108,6 +111,11 @@ class FakeSearchesRepository {
   createActive(userId: string, input: CreateActiveSearch): Promise<SearchRow> {
     this.created.push({ userId, ...input });
     return Promise.resolve({ ...activeRow(CURRENT_SEARCH_ID), startedAt: input.startedAt });
+  }
+
+  recordFinished(userId: string, input: RecordSearchFinished): Promise<void> {
+    this.finishedEvents.push({ userId, ...input });
+    return Promise.resolve();
   }
 
   findAll(userId: string): Promise<SearchRow[]> {
@@ -183,6 +191,16 @@ describe('SearchesService.finish', () => {
         now: NOW,
         tx: FAKE_TRANSACTION,
       },
+    ]);
+  });
+
+  it('finishing a search with no open cards changes the dashboard numbers', async () => {
+    const { repository, service } = await serviceWith();
+
+    await service.finish(OLENA_ID, { ...FINISH, openApplications: 'withdraw' });
+
+    expect(repository.finishedEvents).toEqual([
+      { userId: OLENA_ID, searchId: SEARCH_ID, tx: FAKE_TRANSACTION },
     ]);
   });
 
@@ -275,11 +293,12 @@ describe('SearchesService.finish', () => {
       await expect(service.finish(OLENA_ID, { ...FINISH, searchId })).rejects.toMatchObject({
         body: error,
       });
-      expect([repository.archived, repository.created, searchApplications.handOvers]).toEqual([
-        [],
-        [],
-        [],
-      ]);
+      expect([
+        repository.archived,
+        repository.created,
+        repository.finishedEvents,
+        searchApplications.handOvers,
+      ]).toEqual([[], [], [], []]);
     },
   );
 });

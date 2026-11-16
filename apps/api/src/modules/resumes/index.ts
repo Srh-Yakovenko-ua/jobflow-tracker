@@ -17,6 +17,7 @@ export {
   resumeAttachedPayloadSchema,
   type ResumeVersionProfiledPayload,
   resumeVersionProfiledPayloadSchema,
+  resumeVersionUpdatedPayloadSchema,
   type ResumeVersionUploadedPayload,
   resumeVersionUploadedPayloadSchema,
 } from './resumes.events.js';

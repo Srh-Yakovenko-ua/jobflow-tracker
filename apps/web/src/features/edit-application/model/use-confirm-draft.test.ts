@@ -6,10 +6,22 @@ import { applicationKeys, timelineKeys } from '@/entities/application';
 import { errorReply } from '@/test/api-handlers';
 import { confirmRoute, REVIEW_DRAFT, updateRoute } from '@/test/application-fixtures';
 import type { MoveRouteOptions } from '@/test/board-fixtures';
+import { latch } from '@/test/latch';
 import { renderHookInApp } from '@/test/render-in-app';
 import { server } from '@/test/server';
 
 import { useConfirmDraft } from './use-confirm-draft';
+
+function renderConfirmDraft(onConfirmed: () => void) {
+  return renderHookInApp(() => ({
+    draft: useConfirmDraft({
+      applicationId: REVIEW_DRAFT.id,
+      setError: () => undefined,
+      actions: { onConfirmed },
+    }),
+    queryClient: useQueryClient(),
+  }));
+}
 
 type StaleStep = {
   step: string;
@@ -38,14 +50,7 @@ describe('useConfirmDraft', () => {
       const confirms = confirmRoute(confirm);
       server.use(updateRoute({ application: REVIEW_DRAFT, ...update }).handler, confirms.handler);
       const onConfirmed = vi.fn<() => void>();
-      const { result } = renderHookInApp(() => ({
-        draft: useConfirmDraft({
-          applicationId: REVIEW_DRAFT.id,
-          setError: () => undefined,
-          actions: { onConfirmed },
-        }),
-        queryClient: useQueryClient(),
-      }));
+      const { result } = renderConfirmDraft(onConfirmed);
       act(() => {
         result.current.queryClient.setQueryData(TABLE_KEY, []);
         result.current.queryClient.setQueryData(TIMELINE_KEY, []);
@@ -63,4 +68,30 @@ describe('useConfirmDraft', () => {
       expect(onConfirmed).not.toHaveBeenCalled();
     },
   );
+
+  it('a late draft confirm leaves the newer page open', async () => {
+    const held = latch();
+    const confirms = confirmRoute({ latch: held });
+    server.use(confirms.handler);
+    const onConfirmed = vi.fn<() => void>();
+    const { result, unmount } = renderConfirmDraft(onConfirmed);
+    const { queryClient } = result.current;
+    act(() => {
+      queryClient.setQueryData(TABLE_KEY, []);
+    });
+    act(() => {
+      result.current.draft.save(null);
+    });
+    await waitFor(() => {
+      expect(confirms.sent).toEqual([REVIEW_DRAFT.id]);
+    });
+
+    unmount();
+    held.release();
+
+    await waitFor(() => {
+      expect(queryClient.getQueryState(TABLE_KEY)?.isInvalidated).toBe(true);
+    });
+    expect(onConfirmed).not.toHaveBeenCalled();
+  });
 });

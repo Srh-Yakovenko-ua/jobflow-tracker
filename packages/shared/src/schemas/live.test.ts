@@ -17,11 +17,12 @@ const applicationUpdate = { applicationId, fields: ['company', 'position'] };
 const notification = { notificationId: '0199f1a0-3c4d-7e5f-8a6b-7c8d9e0f1a2e' };
 
 describe('live contract constants', () => {
-  it('names the three events the stream pushes', () => {
+  it('names the four events the stream pushes', () => {
     expect(LIVE_EVENTS).toEqual({
       jobUpdated: 'job.updated',
       applicationUpdated: 'application.updated',
       notificationCreated: 'notification.created',
+      analyticsChanged: 'analytics.changed',
     });
   });
 
@@ -40,6 +41,7 @@ describe('liveEventSchema', () => {
     { type: 'job.updated', data: jobUpdate },
     { type: 'application.updated', data: applicationUpdate },
     { type: 'notification.created', data: notification },
+    { type: 'analytics.changed', data: {} },
   ])('accepts $type with its id and payload unchanged', (event) => {
     expect(liveEventSchema.parse({ id, ...event })).toEqual({ id, ...event });
   });
