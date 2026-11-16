@@ -10,6 +10,7 @@ import { meQueryOptions, userKeys } from '@/entities/user';
 import { errorReply } from '@/test/api-handlers';
 import { latch } from '@/test/latch';
 import { renderHookInApp } from '@/test/render-in-app';
+import { buildRhythm } from '@/test/rhythm-fixtures';
 import { server } from '@/test/server';
 import { ME_RESPONSE } from '@/test/session-fixtures';
 import { SETTINGS_URL, settingsRoutes, type SettingsRoutesOptions } from '@/test/settings-fixtures';
@@ -171,5 +172,19 @@ describe('useUpdateSettingsMutation', () => {
       expect(result.current.settings.status).toBe('success');
     });
     expect(result.current.queryClient.getQueryState(BOARD_KEY)?.isInvalidated).toBe(stale);
+  });
+
+  it('a saved weekly goal leaves the weekly rhythm stale, so the board widget reads it again', async () => {
+    const { result, save } = renderSave();
+    act(() => {
+      result.current.queryClient.setQueryData(userKeys.rhythm(), buildRhythm());
+    });
+
+    save({ weeklyGoalApplications: 8 });
+
+    await waitFor(() => {
+      expect(result.current.settings.status).toBe('success');
+    });
+    expect(result.current.queryClient.getQueryState(userKeys.rhythm())?.isInvalidated).toBe(true);
   });
 });

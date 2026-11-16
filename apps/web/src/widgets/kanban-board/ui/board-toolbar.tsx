@@ -6,6 +6,7 @@ import {
   FilterSearch,
   ViewSwitch,
 } from '@/features/filter-applications';
+import { FEATURE_FLAGS } from '@/shared/config';
 import { uk } from '@/shared/i18n';
 import { useRegisterPageCommand } from '@/shared/lib/page-commands';
 import { LoadFailedAlert } from '@/shared/ui/banner';
@@ -15,6 +16,7 @@ import { useBoardDensity } from '../model/board-density-store';
 import { BOARD_DENSITY_OPTIONS } from '../model/density-options';
 import type { BoardLoad } from '../model/use-kanban-board';
 import { BOARD_FRAME } from './column-frame';
+import { RhythmWidget } from './rhythm-widget';
 
 export type BoardToolbarProps = Readonly<{
   board: ApplicationBoardResponse;
@@ -50,7 +52,10 @@ export function BoardToolbar({ board, load, view }: BoardToolbarProps) {
   return (
     <div className={BOARD_FRAME.width}>
       <div className={BOARD_FRAME.toolbar}>
-        <p className="eyebrow text-ink-3 tabular-nums">{uk.board.eyebrow(inWork)}</p>
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
+          <p className="eyebrow text-ink-3 tabular-nums">{uk.board.eyebrow(inWork)}</p>
+          {FEATURE_FLAGS.weeklyRhythm && <RhythmWidget />}
+        </div>
         <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto">
           <FilterSearch copy={uk.board.filters.search} />
           <FilterMenus />

@@ -29,6 +29,7 @@ export const settings = {
   navLabel: 'Розділи налаштувань',
   sections: {
     search: 'Пошук і тиша',
+    rhythm: 'Ритм пошуку',
     notifications: 'Повідомлення',
     aiPrivacy: 'AI та приватність',
     appearance: 'Вигляд і тема',

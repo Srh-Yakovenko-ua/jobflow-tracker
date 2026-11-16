@@ -11,6 +11,7 @@ export const FORMS = {
   excluded: { one: 'Вона не входить', other: 'Вони не входять' },
   sample: { one: 'замір', few: 'заміри', other: 'замірів' },
   leftOut: { one: 'не входить', other: 'не входять' },
+  followup: { one: 'фоллоу-ап', few: 'фоллоу-апи', other: 'фоллоу-апів' },
 } as const satisfies Record<string, PluralForms>;
 
 export type SourceCounts = Readonly<{ applied: number; screened: number }>;

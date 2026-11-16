@@ -1,6 +1,7 @@
 export const SETTINGS_ANCHORS = {
   bookmarklet: 'bookmarklet',
   notifications: 'notifications',
+  rhythm: 'rhythm',
 } as const;
 
 export type SettingsAnchor = (typeof SETTINGS_ANCHORS)[keyof typeof SETTINGS_ANCHORS];

@@ -6,13 +6,14 @@ import { EVERY_FLAG_ON } from '@/test/feature-flags';
 import { recommendedPreset, visibleSettingsItems } from './settings-items';
 
 describe('visibleSettingsItems', () => {
-  it('shows browser push, email, the AI results deletion, the capture token and the account deletion as shipped', () => {
+  it('shows browser push, email, the AI results deletion, the capture token, the account deletion and the weekly rhythm as shipped', () => {
     expect(visibleSettingsItems(FEATURE_FLAGS)).toEqual({
       notifyPush: true,
       notifyEmail: true,
       captureToken: true,
       aiDataDeletion: true,
       accountDeletion: true,
+      weeklyRhythm: true,
     });
   });
 
@@ -23,8 +24,10 @@ describe('visibleSettingsItems', () => {
       captureToken: true,
       aiDataDeletion: true,
       accountDeletion: true,
+      weeklyRhythm: true,
     });
     expect(Object.values(visibleSettingsItems(EVERY_FLAG_ON))).toEqual([
+      true,
       true,
       true,
       true,

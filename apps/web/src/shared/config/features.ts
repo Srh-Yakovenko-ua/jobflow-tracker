@@ -11,6 +11,7 @@ export const FEATURES = [
   'captureToken',
   'aiDataDeletion',
   'accountDeletion',
+  'weeklyRhythm',
 ] as const;
 
 export type FeatureFlag = (typeof FEATURES)[number];
@@ -30,4 +31,5 @@ export const FEATURE_FLAGS: FeatureFlags = {
   captureToken: true,
   aiDataDeletion: true,
   accountDeletion: true,
+  weeklyRhythm: true,
 };
