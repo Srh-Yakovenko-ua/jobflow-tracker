@@ -16,11 +16,14 @@ export function useCreateCaptureTokenMutation() {
   return useMutation({
     mutationFn: createCaptureToken,
     gcTime: 0,
-    onSuccess: () => {
+    onSuccess: (created) => {
       const replaced = queryClient.getQueryData(LIST_KEY)?.items ?? [];
       showToast({
         tone: 'success',
         ...(replaced.length > 0 ? COPY.regenerate.done : COPY.created),
+      });
+      queryClient.setQueryData(LIST_KEY, {
+        items: [{ id: created.id, createdAt: created.createdAt, lastUsedAt: null }],
       });
       return queryClient.invalidateQueries({ queryKey: captureTokenKeys.all });
     },

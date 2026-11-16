@@ -63,7 +63,9 @@ const REVOKE_FAILED = 'Не вдалося вимкнути букмарклет
 
 const SERVER_ERROR = () => errorReply({ status: 500, type: 'internal_error' });
 
-const RETRY_BEHIND_DIALOG = { name: 'Спробувати ще раз', hidden: true } as const;
+const RETRY = { name: 'Спробувати ще раз' } as const;
+
+const RETRY_BEHIND_DIALOG = { ...RETRY, hidden: true } as const;
 
 const SLOW_DELETE_MS = 1_000;
 
@@ -148,6 +150,19 @@ function listOutage() {
   return { outage, list };
 }
 
+async function revokeThenCreate({ listReadFails }: Readonly<{ listReadFails: boolean }>) {
+  const { outage, list } = listOutage();
+  const view = renderSection({ items: [USED_TOKEN], replies: { list } });
+  await screen.findByText(USED_AT_IN_KYIV);
+  outage.on = listReadFails;
+  await confirm(view.user, REVOKE);
+  await waitForQuery({ queryKey: LIST_KEY, status: listReadFails ? 'error' : 'success' });
+  outage.on = false;
+  await view.user.click(await screen.findByRole('button', CREATE));
+  await screen.findByRole('link', LINK);
+  return view;
+}
+
 afterEach(() => {
   vi.useRealTimers();
   toast.dismiss();
@@ -183,7 +198,7 @@ describe('InstallBookmarklet', () => {
     await advancePastQueryRetries();
 
     expect(await screen.findByRole('alert')).toBeDefined();
-    expect(screen.getByRole('button', { name: 'Спробувати ще раз' })).toBeDefined();
+    expect(screen.getByRole('button', RETRY)).toBeDefined();
   });
 
   it('a retry after a failed list load brings the create button', async () => {
@@ -193,7 +208,7 @@ describe('InstallBookmarklet', () => {
     });
     await waitForQuery({ queryKey: LIST_KEY, status: 'error' });
 
-    await user.click(screen.getByRole('button', { name: 'Спробувати ще раз' }));
+    await user.click(screen.getByRole('button', RETRY));
 
     expect(await screen.findByRole('button', CREATE)).toBeDefined();
   });
@@ -362,6 +377,33 @@ describe('InstallBookmarklet', () => {
     expect(screen.queryByRole('button', RETRY_BEHIND_DIALOG)).toBeNull();
   });
 
+  it('a Вимкнути the server accepted shows no link and the create button even when the list read after it fails', async () => {
+    const { outage, list } = listOutage();
+    const { user } = await renderWithButton({ replies: { list } });
+    outage.on = true;
+
+    await confirm(user, REVOKE);
+    await waitForQuery({ queryKey: LIST_KEY, status: 'error' });
+
+    expect(await screen.findByRole('button', CREATE)).toBeDefined();
+    expect(screen.queryByRole('link', LINK)).toBeNull();
+    expect(screen.queryByRole('link', LINK_BEHIND_DIALOG)).toBeNull();
+  });
+
+  it('a Створити нову the server accepted shows the new link even when the list read after it fails', async () => {
+    const { outage, list } = listOutage();
+    const { user } = await renderWithButton({ replies: { list } });
+    outage.on = true;
+
+    await confirm(user, REGENERATE);
+    await waitForQuery({ queryKey: LIST_KEY, status: 'error' });
+
+    expect((await screen.findByRole('link', LINK)).getAttribute('href')).toBe(
+      hrefOf('capture-token-two'),
+    );
+    expect(screen.queryByText(SHOWN_ONCE)).toBeNull();
+  });
+
   it('the installed state has no accessibility violations', async () => {
     await renderWithButton();
     await screen.findByText(NEVER_USED);
@@ -413,46 +455,36 @@ describe('InstallBookmarklet', () => {
     });
   });
 
-  it('a create button that a background refetch brings after a failed Вимкнути takes no focus', async () => {
-    const view = renderSection({ items: [USED_TOKEN], replies: { revoke: SERVER_ERROR } });
-    await confirm(view.user, REVOKE);
-    await screen.findByRole('button', { name: REVOKE.press, busy: false });
-    await view.user.click(screen.getByRole('button', CANCEL));
+  it.each([
+    {
+      name: 'a failed Вимкнути',
+      run: async () => {
+        const view = renderSection({ items: [USED_TOKEN], replies: { revoke: SERVER_ERROR } });
+        await confirm(view.user, REVOKE);
+        await screen.findByRole('button', { name: REVOKE.press, busy: false });
+        await view.user.click(screen.getByRole('button', CANCEL));
+        return view;
+      },
+    },
+    {
+      name: 'Вимкнути and a new button',
+      run: () => revokeThenCreate({ listReadFails: false }),
+    },
+    {
+      name: 'Вимкнути, a failed list read and a new button',
+      run: () => revokeThenCreate({ listReadFails: true }),
+    },
+  ])(
+    'a create button that a background refetch brings after $name takes no focus',
+    async ({ run }) => {
+      const view = await run();
 
-    const create = await createButtonOnceListEmpties(view);
+      const create = await createButtonOnceListEmpties(view);
 
-    expect(create.isConnected).toBe(true);
-    expect(document.activeElement).toBe(document.body);
-  });
-
-  it('a create button that a background refetch brings after Вимкнути and a new button takes no focus', async () => {
-    const view = renderSection({ items: [USED_TOKEN] });
-    await confirm(view.user, REVOKE);
-    await view.user.click(await screen.findByRole('button', CREATE));
-    await screen.findByRole('link', LINK);
-
-    const create = await createButtonOnceListEmpties(view);
-
-    expect(create.isConnected).toBe(true);
-    expect(document.activeElement).toBe(document.body);
-  });
-
-  it('a create button that a background refetch brings after Вимкнути, a failed list read and Створити нову takes no focus', async () => {
-    const { outage, list } = listOutage();
-    const view = renderSection({ items: [USED_TOKEN], replies: { list } });
-    await screen.findByText(USED_AT_IN_KYIV);
-    outage.on = true;
-    await confirm(view.user, REVOKE);
-    await waitForQuery({ queryKey: LIST_KEY, status: 'error' });
-    outage.on = false;
-    await confirm(view.user, REGENERATE);
-    await screen.findByRole('link', LINK);
-
-    const create = await createButtonOnceListEmpties(view);
-
-    expect(document.activeElement).toBe(document.body);
-    expect(create.isConnected).toBe(true);
-  });
+      expect(create.isConnected).toBe(true);
+      expect(document.activeElement).toBe(document.body);
+    },
+  );
 
   it('a capture token the server already revoked counts as switched off', async () => {
     const { user } = renderSection({

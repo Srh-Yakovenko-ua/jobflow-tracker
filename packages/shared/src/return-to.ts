@@ -64,11 +64,16 @@ function withoutVacancyText(returnTo: string): string {
   return addressOf(url);
 }
 
+function pathOnlyLoginHref(returnTo: string): string {
+  const pathOnly = loginHrefFor(returnTo.replace(/[?#].*$/s, ''));
+  return fitsRequestHeader(pathOnly) ? pathOnly : AUTH_ROUTES.login;
+}
+
 export function loginHref(returnTo: string): string {
   const whole = loginHrefFor(returnTo);
   if (fitsRequestHeader(whole)) {
     return whole;
   }
   const textless = loginHrefFor(withoutVacancyText(returnTo));
-  return fitsRequestHeader(textless) ? textless : loginHrefFor(returnTo.replace(/\?.*$/s, ''));
+  return fitsRequestHeader(textless) ? textless : pathOnlyLoginHref(returnTo);
 }

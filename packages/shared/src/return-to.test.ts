@@ -58,6 +58,12 @@ describe('withPageHash', () => {
       hash: '',
       landing: '/settings?tab=ai',
     },
+    {
+      name: 'keeps a hash that looks like another host as a hash on the page',
+      returnTo: '/board',
+      hash: '#//evil.test/board',
+      landing: '/board#//evil.test/board',
+    },
   ])('$name', ({ returnTo, hash, landing }) => {
     expect(withPageHash(returnTo, hash)).toBe(landing);
   });
@@ -95,6 +101,16 @@ describe('loginHref', () => {
       name: 'cuts a long address of another host to its path without reading it as ours',
       returnTo: `//evil.test/add?text=${'a'.repeat(4_100)}`,
       href: '/login?next=%2F%2Fevil.test%2Fadd',
+    },
+    {
+      name: 'cuts a long hash and keeps the path when the address has no query',
+      returnTo: `/settings#${'a'.repeat(5_000)}`,
+      href: '/login?next=%2Fsettings',
+    },
+    {
+      name: 'sends no next when the path alone is too long',
+      returnTo: `/${'a'.repeat(5_000)}`,
+      href: '/login',
     },
   ])('$name', ({ returnTo, href }) => {
     expect(loginHref(returnTo)).toBe(href);
