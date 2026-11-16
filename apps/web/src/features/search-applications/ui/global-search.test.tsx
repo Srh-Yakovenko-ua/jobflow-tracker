@@ -7,6 +7,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { FULL_CARD } from '@/entities/application';
 import { uk } from '@/shared/i18n';
 import { apiUrl, validationReply } from '@/test/api-handlers';
+import { heldSearchRoute } from '@/test/list-fixtures';
 import { push } from '@/test/navigation';
 import { renderInApp } from '@/test/render-in-app';
 import { server } from '@/test/server';
@@ -112,6 +113,29 @@ describe('GlobalSearch', () => {
     expect(push).toHaveBeenCalledWith(`/applications/${REJECTED_HIT.id}`);
     expect(field).toHaveProperty('value', '');
     expect(screen.queryByRole('listbox')).toBeNull();
+  });
+
+  it('Enter on a new query while its request is held opens nothing, then opens the first row of its answer', async () => {
+    answerWith({ items: [TRIDENT_HIT], nextCursor: null });
+    const { user } = await typeQuery('tri');
+    await screen.findByRole('option', { name: /Trident Systems/ });
+    const { held, sent } = heldSearchRoute([REJECTED_HIT]);
+
+    await user.keyboard('{Backspace>3/}kaf');
+    await waitFor(() => {
+      expect(sent).toHaveLength(1);
+    });
+    await user.keyboard('{Enter}');
+    expect(push).not.toHaveBeenCalled();
+    held.release();
+    await waitFor(() => {
+      expect(
+        screen.getByRole('option', { name: /Kvit Software/ }).getAttribute('aria-disabled'),
+      ).toBe('false');
+    });
+    await user.keyboard('{Enter}');
+
+    expect(push.mock.calls).toEqual([[`/applications/${REJECTED_HIT.id}`]]);
   });
 
   it('names the stage of every hit as text', async () => {

@@ -7,6 +7,8 @@ import { http, HttpResponse } from 'msw/http';
 
 import { apiUrl } from './api-handlers';
 import { type CardRun, cardsIn, heldReply, type MoveRouteOptions } from './board-fixtures';
+import { latch } from './latch';
+import { server } from './server';
 
 type ListItems = readonly ApplicationListItem[];
 
@@ -43,4 +45,11 @@ export function pagedListRoute({
     return heldReply({ ...control, info, fallback: () => HttpResponse.json(page) });
   });
   return { handler, sent };
+}
+
+export function heldSearchRoute(items: PagedListRouteOptions['items']) {
+  const held = latch();
+  const { handler, sent } = pagedListRoute({ items, latch: held });
+  server.use(handler);
+  return { held, sent };
 }

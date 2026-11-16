@@ -16,7 +16,7 @@ import {
 import { isSearchable } from '@/entities/application';
 import {
   ApplicationOptionContent,
-  ApplicationResultItem,
+  ApplicationResults,
   SearchRetryItem,
 } from '@/features/search-applications';
 import { uk } from '@/shared/i18n';
@@ -49,7 +49,9 @@ function foundBy(view: PaletteRootView) {
 }
 
 function RecentGroup({ view, actions }: PaletteRootPageProps) {
-  const found = new Set(foundBy(view)?.data?.items.map((application) => application.id));
+  const search = foundBy(view);
+  const fresh = search?.isPlaceholderData === true ? [] : search?.data?.items;
+  const found = new Set(fresh?.map((application) => application.id));
   const recents = view.recents.filter((recent) => !found.has(recent.id));
   if (recents.length === 0) return null;
   return (
@@ -78,17 +80,9 @@ function FoundGroup({ view, actions }: PaletteRootPageProps) {
   const search = foundBy(view);
   const items = search?.data?.items ?? [];
   if (search === undefined || (items.length === 0 && !search.isError)) return null;
-  const stale = search.isPlaceholderData;
   return (
     <PaletteGroup label={PALETTE.groups.applications} forceMount={items.length === 0}>
-      {items.map((application) => (
-        <ApplicationResultItem
-          key={`${application.id}:${stale ? 'stale' : 'fresh'}`}
-          application={application}
-          onPick={actions.onOpenApplication}
-          disabled={stale}
-        />
-      ))}
+      <ApplicationResults search={search} onPick={actions.onOpenApplication} />
       <SearchRetryItem search={search} forceMount />
     </PaletteGroup>
   );
