@@ -4,7 +4,7 @@ import { Queue } from 'bullmq';
 
 import { Clock } from '../../common/clock.js';
 import { withinLimit } from '../../common/probe.js';
-import { quietHoursDeliveryAt } from '../../common/quiet-hours.js';
+import { scheduledDelivery } from '../../common/quiet-hours.js';
 import { OUTBOX_LIMITS } from '../../outbox/outbox-relay.service.js';
 import { QUEUES } from '../../queues/queues.js';
 import { type NotificationCreatedPayload, NotificationsService } from '../notifications/index.js';
@@ -28,10 +28,10 @@ export class PushDeliveryService {
     const settings = await this.settings.get(userId);
     if (!settings.notifyPush) return;
     const now = this.clock.now();
-    const deliverAt = quietHoursDeliveryAt({ settings, notification, now });
+    const { deliverAt, delayMs } = scheduledDelivery({ settings, notification, now });
     const message = pushMessageOf(notification, { settings, deliverAt });
     const job: PushSendJob = { userId, message };
-    const options = { jobId: notificationId, delay: deliverAt.getTime() - now.getTime() };
+    const options = { jobId: notificationId, delay: delayMs };
     await withinLimit(this.queue.add(PUSH_JOBS.send, job, options), OUTBOX_LIMITS.publishTimeoutMs);
   }
 }

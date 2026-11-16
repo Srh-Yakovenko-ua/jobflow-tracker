@@ -14,6 +14,7 @@ import { AnalyticsCacheWorkerModule } from './modules/analytics-cache/index.js';
 import { ApplicationsWorkerModule } from './modules/applications/index.js';
 import { CaptureWorkerModule } from './modules/capture/index.js';
 import { CvHintsWorkerModule } from './modules/cv-hints/index.js';
+import { EmailWorkerModule } from './modules/email/index.js';
 import { FollowupsWorkerModule } from './modules/followups/index.js';
 import { InterviewPrepWorkerModule } from './modules/interview-prep/index.js';
 import { MaintenanceWorkerModule } from './modules/maintenance/index.js';
@@ -50,6 +51,7 @@ import { QueuesModule } from './queues/queues.module.js';
     RemindersWorkerModule,
     NotificationsWorkerModule,
     PushWorkerModule,
+    EmailWorkerModule,
     AnalyticsCacheWorkerModule,
   ],
   providers: [JobFailureReporter],

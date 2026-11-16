@@ -83,6 +83,10 @@ export class SummariesService {
     return { summary: viewOrNull(row)?.summary ?? null, job };
   }
 
+  async find(userId: string, aiJobId: string): Promise<Summary | null> {
+    return viewOrNull(await this.repository.findSummary(userId, aiJobId))?.summary ?? null;
+  }
+
   async saveAsPlan(userId: string, aiJobId: string): Promise<Plan> {
     const view = viewOrNull(await this.repository.findSummary(userId, aiJobId));
     if (view === null) {

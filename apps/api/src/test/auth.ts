@@ -1,6 +1,7 @@
 import {
   type AuthResponse,
   authResponseSchema,
+  type EmailedType,
   type LoginInput,
   publicJwkSchema,
   type RefreshToken,
@@ -15,6 +16,7 @@ import { z } from 'zod';
 
 import type { User } from '../generated/prisma/client.js';
 import { jwtKeysFrom, signAccessToken, signServiceToken } from '../modules/auth/index.js';
+import { UnsubscribeTokens } from '../modules/email/index.js';
 
 export const OLENA = {
   email: 'olena@example.test',
@@ -70,6 +72,29 @@ export function analyticsServiceTokenFor(userId: string): Promise<string> {
     userId,
     issuedAt: new Date(),
   });
+}
+
+export type UnsubscribeTokenOptions = { type?: EmailedType; issuedAt?: Date };
+
+export function unsubscribeTokenFor(
+  userId: string,
+  { type = 'monthly_summary_ready', issuedAt = new Date() }: UnsubscribeTokenOptions = {},
+): Promise<string> {
+  return new UnsubscribeTokens(testJwtKeys).sign({ userId, type, issuedAt });
+}
+
+export const encodePart = (part: object) => Buffer.from(JSON.stringify(part)).toString('base64url');
+
+export function withPayload(token: string, claims: object): string {
+  const [header = '', , signature = ''] = token.split('.');
+  return [header, encodePart(claims), signature].join('.');
+}
+
+export function withFlippedSignatureByte(token: string): string {
+  const [header = '', payload = '', signature = ''] = token.split('.');
+  const bytes = Buffer.from(signature, 'base64url');
+  bytes.writeUInt8(bytes.readUInt8(10) ^ 0x01, 10);
+  return [header, payload, bytes.toString('base64url')].join('.');
 }
 
 export const TEST_KEY_HEADER = { alg: 'RS256', kid: testJwtKeys.jwk.kid };

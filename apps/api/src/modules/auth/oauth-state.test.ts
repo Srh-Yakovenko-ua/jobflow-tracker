@@ -1,7 +1,7 @@
 import { jwtVerify } from 'jose';
 import { describe, expect, it } from 'vitest';
 
-import { testJwtKeys } from '../../test/auth.js';
+import { testJwtKeys, withPayload } from '../../test/auth.js';
 import { AccessTokens, signAccessToken } from './access-tokens.js';
 import { type OAuthState, OAuthStates } from './oauth-state.js';
 
@@ -14,13 +14,6 @@ const GITHUB_STATE: OAuthState = {
 };
 
 const states = new OAuthStates(testJwtKeys);
-
-const encodePart = (part: object) => Buffer.from(JSON.stringify(part)).toString('base64url');
-
-function withPayload(token: string, claims: object): string {
-  const [header = '', , signature = ''] = token.split('.');
-  return [header, encodePart(claims), signature].join('.');
-}
 
 const refusedStates: [string, () => Promise<string | undefined>][] = [
   [

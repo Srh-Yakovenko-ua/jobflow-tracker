@@ -25,8 +25,6 @@ vi.mock('next/link', () => import('@/test/link'));
 
 const SECTIONS = ['Пошук і тиша', 'Повідомлення', 'AI та приватність', 'Вигляд і тема', 'Акаунт'];
 
-const HIDDEN_ITEMS = ['Листи на пошту'];
-
 const REVOKE_BOOKMARKLET = { name: 'Вимкнути букмарклет' } as const;
 
 afterEach(() => {
@@ -123,19 +121,19 @@ describe('SettingsPage', () => {
     expect(heading.closest('[id]')?.id).toBe('bookmarklet');
   });
 
-  it('leaves out every control whose delivery is not built yet', async () => {
-    await renderLoadedSettings();
-
-    for (const name of HIDDEN_ITEMS) {
-      expect(screen.queryByText(name)).toBeNull();
-    }
-  });
-
   it('shows the browser push switch in Повідомлення', async () => {
     await renderLoadedSettings();
 
     expect(
       within(regionOf('Повідомлення')).getByRole('switch', { name: /Пуші в браузері/ }),
+    ).toBeDefined();
+  });
+
+  it('shows the email switch in Повідомлення', async () => {
+    await renderLoadedSettings();
+
+    expect(
+      within(regionOf('Повідомлення')).getByRole('switch', { name: /Листи на пошту/ }),
     ).toBeDefined();
   });
 

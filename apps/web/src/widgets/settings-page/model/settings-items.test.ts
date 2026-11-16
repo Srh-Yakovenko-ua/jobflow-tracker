@@ -6,20 +6,20 @@ import { EVERY_FLAG_ON } from '@/test/feature-flags';
 import { recommendedPreset, visibleSettingsItems } from './settings-items';
 
 describe('visibleSettingsItems', () => {
-  it('shows browser push, the AI results deletion, the capture token and the account deletion and hides email while its backend is missing', () => {
+  it('shows browser push, email, the AI results deletion, the capture token and the account deletion as shipped', () => {
     expect(visibleSettingsItems(FEATURE_FLAGS)).toEqual({
       notifyPush: true,
-      notifyEmail: false,
+      notifyEmail: true,
       captureToken: true,
       aiDataDeletion: true,
       accountDeletion: true,
     });
   });
 
-  it('shows each item once its own flag is on', () => {
-    expect(visibleSettingsItems({ ...FEATURE_FLAGS, emailNotifications: true })).toEqual({
+  it('hides an item whose own flag is off and shows each item once its flag is on', () => {
+    expect(visibleSettingsItems({ ...FEATURE_FLAGS, emailNotifications: false })).toEqual({
       notifyPush: true,
-      notifyEmail: true,
+      notifyEmail: false,
       captureToken: true,
       aiDataDeletion: true,
       accountDeletion: true,

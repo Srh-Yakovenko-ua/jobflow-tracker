@@ -57,6 +57,10 @@
       "description": "Web Push subscriptions of the signed-in user and the VAPID key"
     },
     {
+      "name": "email",
+      "description": "Email notifications: the unsubscribe link, without sign-in"
+    },
+    {
       "name": "resumes",
       "description": "Resume files of the signed-in user, uploaded straight to storage"
     },
@@ -1848,7 +1852,10 @@
                     "quietHoursEnd": "07:30",
                     "notifyInApp": true,
                     "notifyPush": true,
-                    "notifyEmail": false,
+                    "notifyEmail": true,
+                    "emailMonthlySummary": false,
+                    "emailSilence": true,
+                    "emailInterviewPrep": true,
                     "analyticsOptOut": true,
                     "singleKeyShortcuts": false,
                     "activeResumeVersionId": "0199f0b3-2b3c-7d4e-9f50-6b7c8d9e0f1a"
@@ -1935,6 +1942,15 @@
                         "notifyEmail": {
                           "type": "boolean"
                         },
+                        "emailMonthlySummary": {
+                          "type": "boolean"
+                        },
+                        "emailSilence": {
+                          "type": "boolean"
+                        },
+                        "emailInterviewPrep": {
+                          "type": "boolean"
+                        },
                         "analyticsOptOut": {
                           "type": "boolean"
                         },
@@ -1961,6 +1977,9 @@
                         "notifyInApp",
                         "notifyPush",
                         "notifyEmail",
+                        "emailMonthlySummary",
+                        "emailSilence",
+                        "emailInterviewPrep",
                         "analyticsOptOut",
                         "singleKeyShortcuts",
                         "activeResumeVersionId"
@@ -3212,7 +3231,10 @@
                   "quietHoursEnd": "07:30",
                   "notifyInApp": true,
                   "notifyPush": true,
-                  "notifyEmail": false,
+                  "notifyEmail": true,
+                  "emailMonthlySummary": false,
+                  "emailSilence": true,
+                  "emailInterviewPrep": true,
                   "analyticsOptOut": true,
                   "singleKeyShortcuts": false,
                   "activeResumeVersionId": "0199f0b3-2b3c-7d4e-9f50-6b7c8d9e0f1a"
@@ -3264,6 +3286,15 @@
                     "notifyEmail": {
                       "type": "boolean"
                     },
+                    "emailMonthlySummary": {
+                      "type": "boolean"
+                    },
+                    "emailSilence": {
+                      "type": "boolean"
+                    },
+                    "emailInterviewPrep": {
+                      "type": "boolean"
+                    },
                     "analyticsOptOut": {
                       "type": "boolean"
                     },
@@ -3290,6 +3321,9 @@
                     "notifyInApp",
                     "notifyPush",
                     "notifyEmail",
+                    "emailMonthlySummary",
+                    "emailSilence",
+                    "emailInterviewPrep",
                     "analyticsOptOut",
                     "singleKeyShortcuts",
                     "activeResumeVersionId"
@@ -3443,6 +3477,15 @@
                   "notifyEmail": {
                     "type": "boolean"
                   },
+                  "emailMonthlySummary": {
+                    "type": "boolean"
+                  },
+                  "emailSilence": {
+                    "type": "boolean"
+                  },
+                  "emailInterviewPrep": {
+                    "type": "boolean"
+                  },
                   "analyticsOptOut": {
                     "type": "boolean"
                   },
@@ -3470,7 +3513,10 @@
                   "quietHoursEnd": "07:30",
                   "notifyInApp": true,
                   "notifyPush": true,
-                  "notifyEmail": false,
+                  "notifyEmail": true,
+                  "emailMonthlySummary": false,
+                  "emailSilence": true,
+                  "emailInterviewPrep": true,
                   "analyticsOptOut": true,
                   "singleKeyShortcuts": false,
                   "activeResumeVersionId": "0199f0b3-2b3c-7d4e-9f50-6b7c8d9e0f1a"
@@ -3522,6 +3568,15 @@
                     "notifyEmail": {
                       "type": "boolean"
                     },
+                    "emailMonthlySummary": {
+                      "type": "boolean"
+                    },
+                    "emailSilence": {
+                      "type": "boolean"
+                    },
+                    "emailInterviewPrep": {
+                      "type": "boolean"
+                    },
                     "analyticsOptOut": {
                       "type": "boolean"
                     },
@@ -3548,6 +3603,9 @@
                     "notifyInApp",
                     "notifyPush",
                     "notifyEmail",
+                    "emailMonthlySummary",
+                    "emailSilence",
+                    "emailInterviewPrep",
                     "analyticsOptOut",
                     "singleKeyShortcuts",
                     "activeResumeVersionId"
@@ -19248,6 +19306,165 @@
                   "type": "not_found",
                   "title": "Not found",
                   "status": 404,
+                  "requestId": "0199f0c4-5d2e-7b31-8c4f-6a7b8c9d0e1f"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Invalid request",
+            "content": {
+              "application/json": {
+                "example": {
+                  "type": "validation_error",
+                  "title": "Invalid request",
+                  "status": 422,
+                  "errors": [
+                    {
+                      "path": "email",
+                      "message": "Invalid input: expected string, received undefined"
+                    }
+                  ],
+                  "requestId": "0199f0c4-5d2e-7b31-8c4f-6a7b8c9d0e1f"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too many requests: 300 per 60 s by default (RATE_LIMIT_API_PER_MINUTE)",
+            "headers": {
+              "Retry-After": {
+                "schema": {
+                  "type": "integer",
+                  "exclusiveMinimum": 0,
+                  "description": "Seconds until the limit window resets"
+                },
+                "required": true,
+                "description": "Seconds until the limit window resets"
+              }
+            },
+            "content": {
+              "application/json": {
+                "example": {
+                  "type": "rate_limited",
+                  "title": "Too many requests",
+                  "status": 429,
+                  "requestId": "0199f0c4-5d2e-7b31-8c4f-6a7b8c9d0e1f"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal error",
+            "content": {
+              "application/json": {
+                "example": {
+                  "type": "internal_error",
+                  "title": "Internal error",
+                  "status": 500,
+                  "requestId": "0199f0c4-5d2e-7b31-8c4f-6a7b8c9d0e1f"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/email/unsubscribe": {
+      "post": {
+        "tags": [
+          "email"
+        ],
+        "summary": "Turn off one email type from the link in an email",
+        "description": "No sign-in: the token from the email link names the user and the email type, signed by the API for the jobflow-email audience and valid for 365 days. The type's setting turns off and settings.changed is recorded. A bad, tampered, expired or foreign token answers 401.",
+        "security": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "example": {
+                "token": "eyJhbGciOiJSUzI1NiJ9.eyJlbWFpbCI6Im1vbnRobHlfc3VtbWFyeV9yZWFkeSJ9.c2lnbmF0dXJl"
+              },
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "token": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 2048
+                  }
+                },
+                "required": [
+                  "token"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The email type that was turned off",
+            "content": {
+              "application/json": {
+                "example": {
+                  "type": "monthly_summary_ready"
+                },
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "type": {
+                      "type": "string",
+                      "enum": [
+                        "monthly_summary_ready",
+                        "silence",
+                        "interview_prep_ready"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "type"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "example": {
+                  "type": "bad_request",
+                  "title": "Bad request",
+                  "status": 400,
+                  "detail": "Unexpected end of JSON input",
+                  "requestId": "0199f0c4-5d2e-7b31-8c4f-6a7b8c9d0e1f"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "example": {
+                  "type": "unauthorized",
+                  "title": "Unauthorized",
+                  "status": 401,
                   "requestId": "0199f0c4-5d2e-7b31-8c4f-6a7b8c9d0e1f"
                 },
                 "schema": {

@@ -2,13 +2,14 @@ import { createECDH, randomBytes } from 'node:crypto';
 
 import { ConfigService } from '@nestjs/config';
 import { Test } from '@nestjs/testing';
-import { afterEach, describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { generateRequestDetails, generateVAPIDKeys, WebPushError } from 'web-push';
 
 import { DEPENDENCY_LIMITS } from '../../common/probe.js';
 import { validateEnv } from '../../config/env.js';
 import { exampleEnv } from '../../test/example-env.js';
 import { SILENCE_PUSH } from '../../test/push.js';
+import { useSilentServers } from '../../test/silent-servers.js';
 import { startSilentServer } from '../../test/tcp-proxy.js';
 import { pushOptionsOf, pushOutcomeOf, PushSender } from './push-sender.js';
 
@@ -19,11 +20,7 @@ const browserKeys = () => ({
   auth: randomBytes(16).toString('base64url'),
 });
 
-const closers: (() => Promise<void>)[] = [];
-
-afterEach(async () => {
-  await Promise.all(closers.splice(0).map((close) => close()));
-});
+const startClosedAfterTest = useSilentServers();
 
 async function senderWith(keys: Partial<typeof VAPID> = VAPID) {
   const env = validateEnv({
@@ -81,8 +78,7 @@ describe('PushSender', () => {
   it(
     'answers failed within the provider limit when the push service accepts and never answers',
     async () => {
-      const silent = await startSilentServer();
-      closers.push(silent.close);
+      const silent = await startClosedAfterTest();
       const sender = await senderWith();
       const startedAt = Date.now();
 

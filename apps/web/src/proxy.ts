@@ -6,7 +6,7 @@ import { SESSION_COOKIE } from '@/shared/lib/session-cookie';
 
 const CSP_HEADER = 'Content-Security-Policy';
 
-const PUBLIC_PREFIXES = ['/design-system', '/dev/'] as const;
+const PUBLIC_PREFIXES = ['/design-system', '/dev/', '/unsubscribe'] as const;
 
 function redirectTo(path: string, request: NextRequest): NextResponse {
   return NextResponse.redirect(new URL(path, request.url));

@@ -1,28 +1,19 @@
 import type { Notification } from '@jobflow/shared';
-import { getQueueToken } from '@nestjs/bullmq';
-import { Test } from '@nestjs/testing';
 import { describe, expect, it } from 'vitest';
 
-import { Clock } from '../../common/clock.js';
-import { NEW_USER_SETTINGS } from '../../test/factories.js';
+import { deliveryOf, NOTIFICATION_CREATED as CREATED } from '../../test/delivery.js';
 import {
   interviewPrepReadyFor,
   interviewSoonAt,
   NOTIFICATION_ID,
   notificationOf,
-  SILENCE_NOTIFICATION,
 } from '../../test/notifications.js';
 import { SILENCE_PUSH } from '../../test/push.js';
 import { BOHDAN_ID, MISSING_ID, OLENA_ID } from '../../test/service-fixtures.js';
 import { RefusingQueue, SilentQueue, StubQueue } from '../../test/stub-queues.js';
-import { fixedClock } from '../../test/time.js';
-import { NotificationsService } from '../notifications/index.js';
-import { SettingsService } from '../settings/index.js';
 import { PushDeliveryService } from './push-delivery.service.js';
 
 const AT_23_KYIV = new Date('2026-11-14T21:00:00.000Z');
-
-const CREATED = { userId: OLENA_ID, notificationId: NOTIFICATION_ID, type: 'silence' } as const;
 
 type Delivery = {
   notification?: Notification;
@@ -31,25 +22,17 @@ type Delivery = {
 };
 
 async function deliveryWith({
-  notification = SILENCE_NOTIFICATION,
+  notification,
   notifyPush = true,
   queue = new StubQueue('push'),
 }: Delivery = {}) {
-  const settings = { get: () => Promise.resolve({ ...NEW_USER_SETTINGS, notifyPush }) };
-  const notifications = {
-    find: (userId: string, id: string) =>
-      Promise.resolve(userId === OLENA_ID && id === NOTIFICATION_ID ? notification : undefined),
-  };
-  const moduleRef = await Test.createTestingModule({
-    providers: [
-      PushDeliveryService,
-      { provide: SettingsService, useValue: settings },
-      { provide: NotificationsService, useValue: notifications },
-      { provide: getQueueToken('push'), useValue: queue },
-      { provide: Clock, useValue: fixedClock(AT_23_KYIV) },
-    ],
-  }).compile();
-  return { queue, delivery: moduleRef.get(PushDeliveryService) };
+  const delivery = await deliveryOf(PushDeliveryService, {
+    queue,
+    now: AT_23_KYIV,
+    notification,
+    settings: { notifyPush },
+  });
+  return { queue, delivery };
 }
 
 describe('PushDeliveryService.schedule', () => {

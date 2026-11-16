@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import { NEW_USER_SETTINGS } from '../test/factories.js';
 import { interviewSoonAt, SILENCE_NOTIFICATION } from '../test/notifications.js';
-import { quietHoursDeliveryAt } from './quiet-hours.js';
+import { quietHoursDeliveryAt, scheduledDelivery } from './quiet-hours.js';
 
 const NIGHT = {
   timezone: NEW_USER_SETTINGS.timezone,
@@ -75,5 +75,20 @@ describe('quietHoursDeliveryAt', () => {
     const deliverAt = quietHoursDeliveryAt({ settings: NIGHT, notification, now });
 
     expect(deliverAt.toISOString()).toBe('2026-11-14T21:00:00.000Z');
+  });
+});
+
+describe('scheduledDelivery', () => {
+  it.each([
+    { local: '23:00 Kyiv', now: '2026-11-14T21:00:00.000Z', delayMs: 32_400_000 },
+    { local: '12:00 Kyiv', now: '2026-11-14T10:00:00.000Z', delayMs: 0 },
+  ])('holds a silence reminder of $local for $delayMs ms', ({ now, delayMs }) => {
+    const { deliverAt, delayMs: delay } = scheduledDelivery({
+      settings: NIGHT,
+      notification: SILENCE_NOTIFICATION,
+      now: new Date(now),
+    });
+
+    expect([deliverAt.getTime() - Date.parse(now), delay]).toEqual([delayMs, delayMs]);
   });
 });

@@ -16,7 +16,7 @@ import { SummaryRequestsService } from './summary-requests.service.js';
   imports: [AiModule, PlansModule],
   controllers: [SummariesController],
   providers: [Clock, SummariesRepository, SummariesService, SummaryRequestsService],
-  exports: [SummaryRequestsService],
+  exports: [SummaryRequestsService, SummariesService],
 })
 export class SummariesModule {}
 

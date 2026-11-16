@@ -300,6 +300,27 @@ describe('SummariesService.latest', () => {
   });
 });
 
+describe('SummariesService.find', () => {
+  it("answers the user's done summary by its job id and null for another user's id", async () => {
+    const { repository, service } = await summariesWithFakes();
+    repository.summaries = [{ ...SUMMARY_ROW, userId: OLENA_ID }];
+
+    await expect(service.find(OLENA_ID, AI_JOB_ID)).resolves.toMatchObject({
+      aiJobId: AI_JOB_ID,
+      month: '2026-09',
+      text: OUTPUT.summary,
+    });
+    await expect(service.find(BOHDAN_ID, AI_JOB_ID)).resolves.toBeNull();
+  });
+
+  it('answers null for a summary job that has not finished', async () => {
+    const { repository, service } = await summariesWithFakes();
+    repository.summaries = [{ ...SUMMARY_ROW, finishedAt: null, userId: OLENA_ID }];
+
+    await expect(service.find(OLENA_ID, AI_JOB_ID)).resolves.toBeNull();
+  });
+});
+
 describe('SummariesService.archive', () => {
   const ofOlena = (rows: SummaryJobRow[]) => rows.map((row) => ({ ...row, userId: OLENA_ID }));
 

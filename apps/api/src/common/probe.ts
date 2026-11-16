@@ -8,6 +8,7 @@ export const DEPENDENCY_LIMITS = {
   queryTimeoutMs: 3000,
   storageTimeoutMs: 3000,
   providerTimeoutMs: 5000,
+  smtpTimeoutMs: 5000,
   aiServiceTimeoutMs: 65_000,
   documentsTimeoutMs: 10_000,
   analyticsTimeoutMs: 10_000,

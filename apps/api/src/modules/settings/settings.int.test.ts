@@ -41,6 +41,7 @@ const CHANGE = {
   autoGhostDays: null,
   timezone: 'America/New_York',
   quietHoursStart: '21:15',
+  emailSilence: false,
   singleKeyShortcuts: false,
 };
 
@@ -49,6 +50,7 @@ const CHANGED_FIELDS = [
   'autoGhostDays',
   'timezone',
   'quietHoursStart',
+  'emailSilence',
   'singleKeyShortcuts',
 ];
 
