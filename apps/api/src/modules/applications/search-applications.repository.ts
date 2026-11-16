@@ -48,16 +48,20 @@ export class SearchApplicationsRepository {
     userId: string,
     { events, lastEventAt, tx = this.prisma }: Withdrawal,
   ): Promise<number> {
-    await tx.stageEvent.createMany({ data: [...events] });
-    const { count } = await tx.application.updateMany({
+    const withdrawn = await tx.application.updateManyAndReturn({
       where: {
         id: { in: events.map(({ applicationId }) => applicationId) },
         userId,
         currentStage: { in: [...ACTIVE_STAGES] },
       },
       data: { currentStage: 'withdrawn', lastEventAt },
+      select: { id: true },
     });
-    return count;
+    const withdrawnIds = new Set(withdrawn.map(({ id }) => id));
+    await tx.stageEvent.createMany({
+      data: events.filter(({ applicationId }) => withdrawnIds.has(applicationId)),
+    });
+    return withdrawn.length;
   }
 
   async moveTo(

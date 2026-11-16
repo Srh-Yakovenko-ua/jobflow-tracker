@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import { useTestDatabase } from '../../test/database.js';
 import { createOwnedApplication, createSearch } from '../../test/factories.js';
-import { WITHDRAWAL } from '../../test/service-fixtures.js';
+import { WITHDRAWN_STAGE_EVENT } from '../../test/service-fixtures.js';
 import { NOW } from '../../test/time.js';
 import { SearchApplicationsRepository, type Withdrawal } from './search-applications.repository.js';
 
@@ -16,7 +16,7 @@ const owners = async () => ({
 });
 
 const withdrawalOf = (applicationId: string): Withdrawal => ({
-  events: [{ ...WITHDRAWAL, applicationId, fromStage: 'applied' }],
+  events: [{ ...WITHDRAWN_STAGE_EVENT, applicationId, fromStage: 'applied' }],
   lastEventAt: NOW,
 });
 
@@ -24,6 +24,12 @@ const storedApplication = (id: string) =>
   database.prisma.application.findUniqueOrThrow({
     where: { id },
     select: { currentStage: true, searchId: true },
+  });
+
+const storedMoves = (applicationId: string) =>
+  database.prisma.stageEvent.findMany({
+    where: { applicationId },
+    select: { fromStage: true, toStage: true },
   });
 
 describe("SearchApplicationsRepository on another user's search", () => {
@@ -47,7 +53,7 @@ describe("SearchApplicationsRepository on another user's search", () => {
     ]);
   });
 
-  it("withdraw by OLENA leaves BOHDAN's application in applied", async () => {
+  it("withdraw by OLENA leaves BOHDAN's application in applied and adds no row to his stage_events", async () => {
     const { olena, bohdan } = await owners();
 
     await expect(
@@ -57,9 +63,13 @@ describe("SearchApplicationsRepository on another user's search", () => {
       currentStage: 'applied',
       searchId: bohdan.searchId,
     });
+    expect(await storedMoves(bohdan.applicationId)).toEqual([]);
     await expect(
       repository().withdraw(bohdan.userId, withdrawalOf(bohdan.applicationId)),
     ).resolves.toBe(1);
+    expect(await storedMoves(bohdan.applicationId)).toEqual([
+      { fromStage: 'applied', toStage: 'withdrawn' },
+    ]);
   });
 
   it("moveTo by OLENA leaves BOHDAN's application in his search", async () => {

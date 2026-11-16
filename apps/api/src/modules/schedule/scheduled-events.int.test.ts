@@ -26,6 +26,7 @@ import { queuedBehindRowLock } from '../../test/database.js';
 import { callRoute, errorPathsOf, type RouteCall, statusAndDetail } from '../../test/http.js';
 import { icsEventFieldsOf } from '../../test/ics.js';
 import { expectReplayedCreate } from '../../test/idempotency.js';
+import { TO_TECH_INTERVIEW } from '../../test/service-fixtures.js';
 import { minutesAfter, NOW, settableClock } from '../../test/time.js';
 
 type SignedInEvent = SignedInApplication & ScheduledEventTarget;
@@ -121,8 +122,8 @@ describe('the scheduled events routes', () => {
 
   async function eventAtTechInterview(): Promise<SignedInEvent> {
     const event = await olenaWithEvent();
-    const input = { fromStage: 'applied', toStage: 'tech_interview' };
-    expect((await postStageMove(testApp.app, { ...event, input })).status).toBe(201);
+    const moved = await postStageMove(testApp.app, { ...event, input: TO_TECH_INTERVIEW });
+    expect(moved.status).toBe(201);
     return event;
   }
 

@@ -5,6 +5,7 @@ import {
   ACTIVE_STAGES,
   canTransition,
   INACTIVE_STAGES,
+  INTERVIEW_STAGES,
   isActiveStage,
   isReplyStage,
   OPEN_STAGES,
@@ -159,6 +160,12 @@ describe('isActiveStage', () => {
       'final',
     ]);
     expect(INACTIVE_STAGES).toEqual(['offer', 'rejected', 'ghosted', 'withdrawn']);
+  });
+});
+
+describe('INTERVIEW_STAGES', () => {
+  it('names tech_interview and final as the interview stages', () => {
+    expect(INTERVIEW_STAGES).toEqual(['tech_interview', 'final']);
   });
 });
 

@@ -2,12 +2,15 @@ import { ConfigService } from '@nestjs/config';
 import { Test, type TestingModule } from '@nestjs/testing';
 import { afterAll, beforeAll, beforeEach, expect } from 'vitest';
 
+import { DEPENDENCY_LIMITS } from '../common/probe.js';
 import { type AppConfig, configModule } from '../config/app-config.js';
 import type { Prisma } from '../generated/prisma/client.js';
 import { PrismaModule } from '../prisma/prisma.module.js';
 import { PrismaService } from '../prisma/prisma.service.js';
 
 const TEST_DATABASE_NAME = /^jobflow_(test|[a-z]+_\d+)$/;
+
+const ROW_LOCK_WAIT_MS = DEPENDENCY_LIMITS.queryTimeoutMs - 1000;
 
 export type TestDatabase = { readonly prisma: PrismaService };
 
@@ -53,7 +56,12 @@ export async function queuedBehindRowLock<T>(
     await prisma.$transaction(async (tx) => {
       await tx.$queryRaw(lock);
       queued = Promise.all(calls.map((call) => call()));
-      await expect.poll(() => countLockWaiters(prisma), { timeout: 5000 }).toBe(calls.length);
+      await expect
+        .poll(() => countLockWaiters(prisma), {
+          timeout: ROW_LOCK_WAIT_MS,
+          message: 'the calls did not queue behind the row lock',
+        })
+        .toBe(calls.length);
     });
   } catch (error) {
     await queued.catch(() => undefined);
