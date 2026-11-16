@@ -1,4 +1,4 @@
-const UNBLOCK_STEPS = 'Натисни значок зліва від адреси сайту, дозволь сповіщення й онови сторінку.';
+const UNBLOCK_STEPS = 'Натисни значок зліва від адреси, дозволь сповіщення й онови сторінку.';
 
 export const push = {
   test: {
@@ -17,7 +17,7 @@ export const push = {
   notes: {
     unsupported: 'Цей браузер не вміє показувати пуші. Спробуй Chrome або Firefox.',
     serverOff: 'Пуші зараз вимкнені на сервері JobFlow.',
-    denied: `Сповіщення для цього сайту заблоковані в браузері. ${UNBLOCK_STEPS}`,
+    denied: `Сповіщення заблоковані. ${UNBLOCK_STEPS}`,
   },
   offer: {
     title: 'Увімкнути пуші в браузері?',

@@ -29,17 +29,16 @@ describe('DeleteAiResultsDialog', () => {
 
     expect(screen.getByRole('alertdialog', { description: /^Розбори/ })).toBe(dialog);
     expect(dialog.textContent).toContain(
-      'Розбори вакансій, Match Score, профілі резюме, місячне AI-саммарі, драфти фоллоу-апів і підготовки до співбесід зникнуть назавжди. Самі вакансії й резюме лишаться. Збережені плани теж лишаться разом із текстом, який написала модель.',
+      'Розбори, Match Score, саммарі, драфти й підготовки зникнуть назавжди. Вакансії, резюме й збережені плани лишаться.',
     );
   });
 
-  it('the alert description says the usage count of AI calls stays and the limits keep counting it', async () => {
+  it('the alert description says the deletion cannot be undone', async () => {
     await openDialog();
 
     expect(
       screen.getByRole('alertdialog', {
-        description:
-          /Облік AI-викликів лишиться: скільки викликів було й скільки токенів вони витратили, без жодного тексту\. Денний ліміт і місячний бюджет і далі їх рахують\.$/,
+        description: /зникнуть назавжди\./,
       }),
     ).toBeDefined();
   });

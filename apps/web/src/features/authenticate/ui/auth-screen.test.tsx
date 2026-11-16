@@ -25,7 +25,7 @@ type ProvidersRow = {
 const MODES: readonly AuthMode[] = ['login', 'register'];
 
 const PRIVACY =
-  'Твої відгуки, нотатки й резюме видно тільки тобі. Тексти вакансій ідуть у модель для розбору, нотатки туди не потрапляють.';
+  'Твої дані бачиш лише ти. У модель ідуть тексти вакансій, нотатки туди не потрапляють.';
 
 const PROVIDERS_KEY = authKeys.oauthProviders();
 

@@ -45,11 +45,11 @@ describe('NotificationsSection, browser push', () => {
       notifyPush: false,
     });
 
-    const note = await notifications().findByText(/Сповіщення для цього сайту заблоковані/);
+    const note = await notifications().findByText(/Сповіщення заблоковані\./);
     await user.click(pushSwitch());
 
     expect(note.textContent).toBe(
-      'Сповіщення для цього сайту заблоковані в браузері. Натисни значок зліва від адреси сайту, дозволь сповіщення й онови сторінку.',
+      'Сповіщення заблоковані. Натисни значок зліва від адреси, дозволь сповіщення й онови сторінку.',
     );
     expect(pushSwitch().getAttribute('aria-describedby')).toBe(note.id);
     expect(pushSwitch().hasAttribute('disabled')).toBe(true);

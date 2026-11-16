@@ -8,12 +8,20 @@ type PayloadFields = { [Kind in AiKind]: readonly AiPayloadField<Kind>[] };
 
 const FIELDS: PayloadFields = AI_PAYLOAD_FIELDS;
 
-const COPY: ModelDataCopy = uk.settings.aiPrivacy.modelData.fields;
+const MODEL_DATA = uk.settings.aiPrivacy.modelData;
 
-function kindItems<Kind extends AiKind>(kind: Kind, copy: ModelDataCopy[Kind]): ModelDataItem[] {
-  return FIELDS[kind].map((field) => ({ id: `${kind}.${field}`, text: copy[field] }));
+const COPY: ModelDataCopy = MODEL_DATA.fields;
+
+function kindLabels<Kind extends AiKind>(kind: Kind, copy: ModelDataCopy[Kind]): string[] {
+  return [...new Set(FIELDS[kind].map((field) => copy[field]))];
 }
 
 export function modelDataItems(): readonly ModelDataItem[] {
-  return AI_KINDS.flatMap((kind) => kindItems(kind, COPY[kind]));
+  return [
+    ...AI_KINDS.map((kind) => ({
+      id: kind,
+      text: MODEL_DATA.line(MODEL_DATA.features[kind], kindLabels(kind, COPY[kind])),
+    })),
+    { id: 'notes', text: MODEL_DATA.notes },
+  ];
 }

@@ -124,9 +124,7 @@ describe('usePushOffer', () => {
 
     expect(await screen.findByText('Сповіщення заблоковані')).toBeDefined();
     expect(
-      screen.getByText(
-        'Натисни значок зліва від адреси сайту, дозволь сповіщення й онови сторінку.',
-      ),
+      screen.getByText('Натисни значок зліва від адреси, дозволь сповіщення й онови сторінку.'),
     ).toBeDefined();
     expect(push.sent).toEqual([]);
     expect(actions.onEnabled).not.toHaveBeenCalled();
