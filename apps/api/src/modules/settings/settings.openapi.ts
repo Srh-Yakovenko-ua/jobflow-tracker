@@ -28,9 +28,9 @@ const SUGGESTIONS = {
   answeredApplications: 12,
 } satisfies SettingsSuggestions;
 
-const { silenceDays, autoGhostDays } = USER_SETTINGS_LIMITS;
+const { silenceDays, autoGhostDays, weeklyGoal } = USER_SETTINGS_LIMITS;
 
-const LIMITS = `silenceDays ${String(silenceDays.min)} to ${String(silenceDays.max)}, autoGhostDays ${String(autoGhostDays.min)} to ${String(autoGhostDays.max)} or null (off), timezone an IANA name, quiet hours as HH:MM`;
+const LIMITS = `silenceDays ${String(silenceDays.min)} to ${String(silenceDays.max)}, autoGhostDays ${String(autoGhostDays.min)} to ${String(autoGhostDays.max)} or null (off), weeklyGoalApplications and weeklyGoalFollowups ${String(weeklyGoal.min)} to ${String(weeklyGoal.max)} or null (off), pausedUntil a date or null (ends the pause), timezone an IANA name, quiet hours as HH:MM`;
 
 const signedInErrors = errorResponses([401, 403]);
 
@@ -54,7 +54,7 @@ export const SETTINGS_OPENAPI_PATHS: RouteConfig[] = [
     tags: TAGS,
     summary: 'Change some of the settings',
     description:
-      'Writes only the sent fields and records settings.changed with their names in the same transaction. activeResumeVersionId is not changed here.',
+      'Writes only the sent fields and records settings.changed with their names in the same transaction. activeResumeVersionId is not changed here. pausedFrom and suggestedWeeklyGoal are written by the server: a pausedUntil on or after the local today starts a pause on that day unless one is still running, null clears both.',
     request: {
       body: {
         required: true,

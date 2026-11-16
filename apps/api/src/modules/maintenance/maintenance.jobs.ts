@@ -10,6 +10,7 @@ export const MAINTENANCE_JOBS = {
   autoGhostScan: 'auto-ghost.scan',
   eventRemindersScan: 'event-reminders.scan',
   monthlySummaryPick: 'monthly-summary.pick',
+  rhythmWeekClosePick: 'rhythm.week-close.pick',
   aiJobsSweep: 'ai-jobs.sweep',
 } as const;
 
@@ -22,6 +23,7 @@ export const MAINTENANCE_SCHEDULE_IDS = {
   autoGhostScan: 'auto-ghost-scan',
   eventReminders: 'scheduled-event-reminders',
   monthlySummary: 'monthly-summary',
+  rhythmWeekClose: 'rhythm-week-close',
   aiJobsSweep: 'ai-jobs-sweep',
 } as const;
 
@@ -75,6 +77,11 @@ export const MAINTENANCE_SCHEDULES: MaintenanceSchedule[] = [
     id: MAINTENANCE_SCHEDULE_IDS.monthlySummary,
     repeat: { pattern: '0 * * * *', tz: 'UTC' },
     template: { name: MAINTENANCE_JOBS.monthlySummaryPick, opts: TICK_JOB_OPTIONS },
+  },
+  {
+    id: MAINTENANCE_SCHEDULE_IDS.rhythmWeekClose,
+    repeat: { pattern: '0 * * * *', tz: 'UTC' },
+    template: { name: MAINTENANCE_JOBS.rhythmWeekClosePick, opts: TICK_JOB_OPTIONS },
   },
   {
     id: MAINTENANCE_SCHEDULE_IDS.aiJobsSweep,

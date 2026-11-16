@@ -7,7 +7,9 @@ import { ScheduledJobsService } from '../../scheduled-jobs/scheduled-jobs.servic
 import { memoryLog } from '../../test/memory-log.js';
 import { processedJob } from '../../test/processed-job.js';
 import { compileProcessorModule } from '../../test/processor.js';
+import { RhythmRequestsService } from '../rhythm/index.js';
 import { SummaryRequestsService } from '../summaries/index.js';
+import { LocalHourRequestsService } from './local-hour-requests.service.js';
 import { MaintenanceProcessor } from './maintenance.processor.js';
 
 const log = memoryLog();
@@ -42,6 +44,11 @@ class FakeScheduledJobs {
     return PICKED_USER_IDS;
   }
 
+  async weekCloseUsers(): Promise<string[]> {
+    await this.called('weekCloseUsers');
+    return PICKED_USER_IDS;
+  }
+
   silenceScan(): Promise<void> {
     return this.called('silenceScan');
   }
@@ -67,11 +74,19 @@ class RecordingAutoGhostScan {
   }
 }
 
-class RecordingSummaryRequests {
-  readonly requested: string[][] = [];
+class RecordingLocalHourRequests {
+  readonly requested: [string, string[]][] = [];
 
   requestScheduledFor(userIds: string[]) {
-    this.requested.push(userIds);
+    return this.record('monthlySummary', userIds);
+  }
+
+  requestWeekClose(userIds: string[]) {
+    return this.record('weekClose', userIds);
+  }
+
+  private record(kind: string, userIds: string[]) {
+    this.requested.push([kind, userIds]);
     return Promise.resolve({ picked: userIds.length, requested: userIds.length });
   }
 }
@@ -87,7 +102,7 @@ function tickJob(name: string) {
 describe('MaintenanceProcessor', () => {
   const outbox = new FakeOutboxRelay();
   const scheduledJobs = new FakeScheduledJobs();
-  const summaries = new RecordingSummaryRequests();
+  const requests = new RecordingLocalHourRequests();
   const autoGhost = new RecordingAutoGhostScan();
   let processor: MaintenanceProcessor;
   let close: () => Promise<void>;
@@ -95,10 +110,12 @@ describe('MaintenanceProcessor', () => {
   beforeAll(async () => {
     const moduleRef = await compileProcessorModule(log.sink, [
       MaintenanceProcessor,
+      LocalHourRequestsService,
       { provide: OutboxRelayService, useValue: outbox },
       { provide: ScheduledJobsService, useValue: scheduledJobs },
-      { provide: SummaryRequestsService, useValue: summaries },
+      { provide: SummaryRequestsService, useValue: requests },
       { provide: AutoGhostScanService, useValue: autoGhost },
+      { provide: RhythmRequestsService, useValue: requests },
     ]);
     processor = moduleRef.get(MaintenanceProcessor);
     close = () => moduleRef.close();
@@ -108,7 +125,7 @@ describe('MaintenanceProcessor', () => {
     log.lines.length = 0;
     outbox.calls.length = 0;
     scheduledJobs.calls.length = 0;
-    summaries.requested.length = 0;
+    requests.requested.length = 0;
     autoGhost.scans = 0;
   });
 
@@ -173,6 +190,7 @@ describe('MaintenanceProcessor', () => {
   it.each([
     ['ai-jobs.sweep', 'sweepStaleAiJobs'],
     ['monthly-summary.pick', 'monthlySummaryUsers'],
+    ['rhythm.week-close.pick', 'weekCloseUsers'],
     ['silence.scan', 'silenceScan'],
     ['event-reminders.scan', 'interviewReminders'],
   ])('runs the scheduled jobs step for a %s job', async (name, method) => {
@@ -185,7 +203,13 @@ describe('MaintenanceProcessor', () => {
   it('requests the monthly summaries of the users picked for a monthly-summary.pick job', async () => {
     await processor.process(tickJob('monthly-summary.pick'));
 
-    expect(summaries.requested).toEqual([['user-kyiv', 'user-kolkata']]);
+    expect(requests.requested).toEqual([['monthlySummary', ['user-kyiv', 'user-kolkata']]]);
+  });
+
+  it('requests the week close of the users picked for a rhythm.week-close.pick job', async () => {
+    await processor.process(tickJob('rhythm.week-close.pick'));
+
+    expect(requests.requested).toEqual([['weekClose', ['user-kyiv', 'user-kolkata']]]);
   });
 
   it('runs the auto ghost scan for an auto-ghost.scan job', async () => {

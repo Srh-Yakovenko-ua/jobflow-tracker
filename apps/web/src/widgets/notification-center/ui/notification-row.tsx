@@ -2,6 +2,7 @@
 
 import type { Notification } from '@jobflow/shared';
 import {
+  CalendarCheck,
   CircleAlert,
   CircleDashed,
   Download,
@@ -34,6 +35,7 @@ const ICONS: Record<Notification['type'], LucideIcon> = {
   auto_ghosted: Ghost,
   export_ready: Download,
   interview_prep_ready: ListChecks,
+  rhythm_week_closed: CalendarCheck,
 };
 
 const FADE = 'transition-[background-color,color,opacity] duration-(--duration-base) ease-standard';

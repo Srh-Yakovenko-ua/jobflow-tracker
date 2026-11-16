@@ -3,6 +3,7 @@ import { z } from 'zod';
 import type { AiKind } from './ai/kinds.js';
 import { scheduledEventKindSchema } from './scheduled-events.js';
 import { exportFormatSchema } from './schemas/account.js';
+import { countSchema } from './schemas/analytics-funnel.js';
 import { paginatedSchema, paginationQuerySchema } from './schemas/pagination.js';
 import { yearMonthSchema } from './schemas/year-month.js';
 
@@ -17,6 +18,7 @@ export const NOTIFICATION_TYPES = [
   'auto_ghosted',
   'export_ready',
   'interview_prep_ready',
+  'rhythm_week_closed',
 ] as const;
 
 export const NOTIFIED_AI_KINDS = [
@@ -86,6 +88,15 @@ export const interviewPrepReadyNotificationPayloadSchema = z.object({
   startsAt: z.iso.datetime(),
 });
 
+export const rhythmWeekClosedNotificationPayloadSchema = z.object({
+  weekStart: z.iso.date(),
+  applications: countSchema,
+  followups: countSchema,
+  inRhythm: z.boolean(),
+  suggestedGoal: z.int().positive().nullable(),
+  weeksSooner: z.int().positive().nullable(),
+});
+
 const notificationBaseSchema = z.object({
   id: z.uuid(),
   readAt: z.iso.datetime().nullable(),
@@ -109,6 +120,7 @@ export const notificationSchema = z.discriminatedUnion('type', [
   notificationOf('auto_ghosted', autoGhostedNotificationPayloadSchema),
   notificationOf('export_ready', exportReadyNotificationPayloadSchema),
   notificationOf('interview_prep_ready', interviewPrepReadyNotificationPayloadSchema),
+  notificationOf('rhythm_week_closed', rhythmWeekClosedNotificationPayloadSchema),
 ]);
 
 export const notificationListQuerySchema = paginationQuerySchema.extend({
@@ -145,6 +157,9 @@ export type MonthlySummaryReadyNotificationPayload = z.infer<
 export type ExportReadyNotificationPayload = z.infer<typeof exportReadyNotificationPayloadSchema>;
 export type InterviewPrepReadyNotificationPayload = z.infer<
   typeof interviewPrepReadyNotificationPayloadSchema
+>;
+export type RhythmWeekClosedNotificationPayload = z.infer<
+  typeof rhythmWeekClosedNotificationPayloadSchema
 >;
 export type Notification = z.infer<typeof notificationSchema>;
 export type NotificationListQuery = z.infer<typeof notificationListQuerySchema>;

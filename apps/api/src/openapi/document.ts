@@ -23,6 +23,7 @@ import { PLANS_OPENAPI_PATHS } from '../modules/plans/index.js';
 import { PUSH_OPENAPI_PATHS } from '../modules/push/index.js';
 import { REMINDERS_OPENAPI_PATHS } from '../modules/reminders/index.js';
 import { RESUMES_OPENAPI_PATHS } from '../modules/resumes/index.js';
+import { RHYTHM_OPENAPI_PATHS } from '../modules/rhythm/index.js';
 import { SCHEDULE_OPENAPI_PATHS } from '../modules/schedule/index.js';
 import { SEARCHES_OPENAPI_PATHS } from '../modules/searches/index.js';
 import { SETTINGS_OPENAPI_PATHS } from '../modules/settings/index.js';
@@ -44,6 +45,7 @@ export const API_OPENAPI_PATHS = [
   ...INTERVIEW_PREP_OPENAPI_PATHS,
   ...SUMMARIES_OPENAPI_PATHS,
   ...PLANS_OPENAPI_PATHS,
+  ...RHYTHM_OPENAPI_PATHS,
   ...NOTES_OPENAPI_PATHS,
   ...CONTACTS_OPENAPI_PATHS,
   ...SCHEDULE_OPENAPI_PATHS,
@@ -78,6 +80,7 @@ const TAGS = [
   { name: 'ai', description: 'The AI results of the signed-in user' },
   { name: 'summaries', description: 'The monthly AI summary of the signed-in user' },
   { name: 'plans', description: 'The action plans saved from monthly summaries' },
+  { name: 'rhythm', description: 'The weekly pace of the signed-in user against a soft goal' },
   { name: 'capture', description: 'Draft Applications captured from a vacancy and parsed by AI' },
   { name: 'jobs', description: 'The status of background jobs of the signed-in user' },
   { name: 'live', description: 'Live updates over Server-Sent Events and their one-time ticket' },

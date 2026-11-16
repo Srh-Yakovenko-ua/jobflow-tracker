@@ -36,13 +36,15 @@ export type OnceNotification = Extract<
       | 'insight_unlocked'
       | 'monthly_summary_ready'
       | 'export_ready'
-      | 'interview_prep_ready';
+      | 'interview_prep_ready'
+      | 'rhythm_week_closed';
   }
 >;
 
 export function onceKeyOf({ payload }: NewNotification): OnceKey | undefined {
   if ('aiJobId' in payload) return { field: 'aiJobId', id: payload.aiJobId };
   if ('exportId' in payload) return { field: 'exportId', id: payload.exportId };
+  if ('weekStart' in payload) return { field: 'weekStart', id: payload.weekStart };
   return undefined;
 }
 

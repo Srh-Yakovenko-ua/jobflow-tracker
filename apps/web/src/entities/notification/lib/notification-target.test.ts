@@ -10,6 +10,7 @@ import {
   INTERVIEW_NOTIFICATION,
   MONTHLY_SUMMARY_NOTIFICATION,
   type NotificationSeed,
+  RHYTHM_WEEK_CLOSED_NOTIFICATION,
   SILENCE_NOTIFICATION,
 } from '@/test/notification-fixtures';
 
@@ -110,6 +111,11 @@ describe('notificationTargetOf', () => {
       name: 'export_ready opens the account section with its export',
       notification: EXPORT_READY_NOTIFICATION,
       target: `/settings?export=${fixtureIdOf(81)}#account`,
+    },
+    {
+      name: 'rhythm_week_closed opens the analytics',
+      notification: RHYTHM_WEEK_CLOSED_NOTIFICATION,
+      target: '/analytics',
     },
   ])('$name', ({ notification, target }) => {
     expect(notificationTargetOf(notification)).toBe(target);

@@ -44,6 +44,33 @@ describe('updateUserSettingsInputSchema', () => {
     expect(updateUserSettingsInputSchema.safeParse(patch).error?.issues).toMatchObject(EMPTY_PATCH);
   });
 
+  it.for([
+    { weeklyGoalApplications: 1 },
+    { weeklyGoalApplications: 30 },
+    { weeklyGoalApplications: null },
+    { weeklyGoalFollowups: 3 },
+    { pausedUntil: '2026-12-01' },
+    { pausedUntil: null },
+  ])('accepts the weekly rhythm patch %o', (patch) => {
+    expect(updateUserSettingsInputSchema.parse(patch)).toEqual(patch);
+  });
+
+  it.for([
+    { weeklyGoalApplications: 0 },
+    { weeklyGoalApplications: 31 },
+    { weeklyGoalFollowups: 2.5 },
+    { pausedUntil: '2026-12-01T00:00:00Z' },
+  ])('refuses the weekly rhythm patch %o', (patch) => {
+    expect(issuePathsOf(updateUserSettingsInputSchema.safeParse(patch))).toEqual(
+      Object.keys(patch),
+    );
+  });
+
+  it('refuses the server-written pause start and suggested goal as an empty patch', () => {
+    const patch = { pausedFrom: '2026-11-16', suggestedWeeklyGoal: 8 };
+    expect(updateUserSettingsInputSchema.safeParse(patch).error?.issues).toMatchObject(EMPTY_PATCH);
+  });
+
   it('refuses a theme outside light, dark and system', () => {
     expect(issuePathsOf(updateUserSettingsInputSchema.safeParse({ theme: 'blue' }))).toEqual([
       'theme',

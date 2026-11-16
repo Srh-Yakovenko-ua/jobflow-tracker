@@ -77,6 +77,10 @@
       "description": "The action plans saved from monthly summaries"
     },
     {
+      "name": "rhythm",
+      "description": "The weekly pace of the signed-in user against a soft goal"
+    },
+    {
       "name": "capture",
       "description": "Draft Applications captured from a vacancy and parsed by AI"
     },
@@ -1858,7 +1862,12 @@
                     "emailInterviewPrep": true,
                     "analyticsOptOut": true,
                     "singleKeyShortcuts": false,
-                    "activeResumeVersionId": "0199f0b3-2b3c-7d4e-9f50-6b7c8d9e0f1a"
+                    "activeResumeVersionId": "0199f0b3-2b3c-7d4e-9f50-6b7c8d9e0f1a",
+                    "weeklyGoalApplications": 8,
+                    "weeklyGoalFollowups": 3,
+                    "pausedFrom": null,
+                    "pausedUntil": null,
+                    "suggestedWeeklyGoal": 8
                   },
                   "unreadNotifications": 3
                 },
@@ -1963,6 +1972,38 @@
                             "null"
                           ],
                           "format": "uuid"
+                        },
+                        "weeklyGoalApplications": {
+                          "type": [
+                            "integer",
+                            "null"
+                          ]
+                        },
+                        "weeklyGoalFollowups": {
+                          "type": [
+                            "integer",
+                            "null"
+                          ]
+                        },
+                        "pausedFrom": {
+                          "type": [
+                            "string",
+                            "null"
+                          ],
+                          "format": "date"
+                        },
+                        "pausedUntil": {
+                          "type": [
+                            "string",
+                            "null"
+                          ],
+                          "format": "date"
+                        },
+                        "suggestedWeeklyGoal": {
+                          "type": [
+                            "integer",
+                            "null"
+                          ]
                         }
                       },
                       "required": [
@@ -1982,7 +2023,12 @@
                         "emailInterviewPrep",
                         "analyticsOptOut",
                         "singleKeyShortcuts",
-                        "activeResumeVersionId"
+                        "activeResumeVersionId",
+                        "weeklyGoalApplications",
+                        "weeklyGoalFollowups",
+                        "pausedFrom",
+                        "pausedUntil",
+                        "suggestedWeeklyGoal"
                       ]
                     },
                     "unreadNotifications": {
@@ -3237,7 +3283,12 @@
                   "emailInterviewPrep": true,
                   "analyticsOptOut": true,
                   "singleKeyShortcuts": false,
-                  "activeResumeVersionId": "0199f0b3-2b3c-7d4e-9f50-6b7c8d9e0f1a"
+                  "activeResumeVersionId": "0199f0b3-2b3c-7d4e-9f50-6b7c8d9e0f1a",
+                  "weeklyGoalApplications": 8,
+                  "weeklyGoalFollowups": 3,
+                  "pausedFrom": null,
+                  "pausedUntil": null,
+                  "suggestedWeeklyGoal": 8
                 },
                 "schema": {
                   "type": "object",
@@ -3307,6 +3358,38 @@
                         "null"
                       ],
                       "format": "uuid"
+                    },
+                    "weeklyGoalApplications": {
+                      "type": [
+                        "integer",
+                        "null"
+                      ]
+                    },
+                    "weeklyGoalFollowups": {
+                      "type": [
+                        "integer",
+                        "null"
+                      ]
+                    },
+                    "pausedFrom": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "format": "date"
+                    },
+                    "pausedUntil": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "format": "date"
+                    },
+                    "suggestedWeeklyGoal": {
+                      "type": [
+                        "integer",
+                        "null"
+                      ]
                     }
                   },
                   "required": [
@@ -3326,7 +3409,12 @@
                     "emailInterviewPrep",
                     "analyticsOptOut",
                     "singleKeyShortcuts",
-                    "activeResumeVersionId"
+                    "activeResumeVersionId",
+                    "weeklyGoalApplications",
+                    "weeklyGoalFollowups",
+                    "pausedFrom",
+                    "pausedUntil",
+                    "suggestedWeeklyGoal"
                   ]
                 }
               }
@@ -3414,10 +3502,10 @@
           "settings"
         ],
         "summary": "Change some of the settings",
-        "description": "Writes only the sent fields and records settings.changed with their names in the same transaction. activeResumeVersionId is not changed here.",
+        "description": "Writes only the sent fields and records settings.changed with their names in the same transaction. activeResumeVersionId is not changed here. pausedFrom and suggestedWeeklyGoal are written by the server: a pausedUntil on or after the local today starts a pause on that day unless one is still running, null clears both.",
         "requestBody": {
           "required": true,
-          "description": "At least one field. silenceDays 3 to 30, autoGhostDays 14 to 90 or null (off), timezone an IANA name, quiet hours as HH:MM.",
+          "description": "At least one field. silenceDays 3 to 30, autoGhostDays 14 to 90 or null (off), weeklyGoalApplications and weeklyGoalFollowups 1 to 30 or null (off), pausedUntil a date or null (ends the pause), timezone an IANA name, quiet hours as HH:MM.",
           "content": {
             "application/json": {
               "example": {
@@ -3491,6 +3579,29 @@
                   },
                   "singleKeyShortcuts": {
                     "type": "boolean"
+                  },
+                  "weeklyGoalApplications": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ],
+                    "minimum": 1,
+                    "maximum": 30
+                  },
+                  "weeklyGoalFollowups": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ],
+                    "minimum": 1,
+                    "maximum": 30
+                  },
+                  "pausedUntil": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "format": "date"
                   }
                 }
               }
@@ -3519,7 +3630,12 @@
                   "emailInterviewPrep": true,
                   "analyticsOptOut": true,
                   "singleKeyShortcuts": false,
-                  "activeResumeVersionId": "0199f0b3-2b3c-7d4e-9f50-6b7c8d9e0f1a"
+                  "activeResumeVersionId": "0199f0b3-2b3c-7d4e-9f50-6b7c8d9e0f1a",
+                  "weeklyGoalApplications": 8,
+                  "weeklyGoalFollowups": 3,
+                  "pausedFrom": null,
+                  "pausedUntil": null,
+                  "suggestedWeeklyGoal": 8
                 },
                 "schema": {
                   "type": "object",
@@ -3589,6 +3705,38 @@
                         "null"
                       ],
                       "format": "uuid"
+                    },
+                    "weeklyGoalApplications": {
+                      "type": [
+                        "integer",
+                        "null"
+                      ]
+                    },
+                    "weeklyGoalFollowups": {
+                      "type": [
+                        "integer",
+                        "null"
+                      ]
+                    },
+                    "pausedFrom": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "format": "date"
+                    },
+                    "pausedUntil": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "format": "date"
+                    },
+                    "suggestedWeeklyGoal": {
+                      "type": [
+                        "integer",
+                        "null"
+                      ]
                     }
                   },
                   "required": [
@@ -3608,7 +3756,12 @@
                     "emailInterviewPrep",
                     "analyticsOptOut",
                     "singleKeyShortcuts",
-                    "activeResumeVersionId"
+                    "activeResumeVersionId",
+                    "weeklyGoalApplications",
+                    "weeklyGoalFollowups",
+                    "pausedFrom",
+                    "pausedUntil",
+                    "suggestedWeeklyGoal"
                   ]
                 }
               }
@@ -13523,6 +13676,302 @@
         }
       }
     },
+    "/rhythm": {
+      "get": {
+        "tags": [
+          "rhythm"
+        ],
+        "summary": "Read the weekly rhythm",
+        "description": "The last weeks (default 8, at most 26) as ISO weeks in the user time zone, oldest first, the current week last, across every search of the signed-in user. applications counts the first stage events of the applications, leaving out drafts and deleted ones; followups counts the followup_sent timeline rows; interviews counts the moves into tech_interview or final and offers the moves into offer, undone moves left out. Status: no_goal while weeklyGoalApplications is null; paused for a week that overlaps pausedFrom..pausedUntil; in_rhythm at the goal (and the follow up goal when set), or with any interview or offer that week; in_progress for the current week below the goal; next_week otherwise. streak counts the weeks in rhythm back from the newest inside the window, skipping paused weeks and the current week while in progress. bestWeek is the week with the most applications, the newest on a tie, or null when there were none. suggestedGoal is the weekly number the worker computed from the forecast on Monday, or null. Read only.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 26,
+              "default": 8
+            },
+            "required": false,
+            "name": "weeks",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The weeks, the goal, the streak and the best week",
+            "content": {
+              "application/json": {
+                "example": {
+                  "goal": {
+                    "applications": 5,
+                    "followups": 2
+                  },
+                  "suggestedGoal": 8,
+                  "pausedFrom": null,
+                  "pausedUntil": null,
+                  "weeks": [
+                    {
+                      "weekStart": "2026-11-02",
+                      "applications": 3,
+                      "followups": 1,
+                      "interviews": 1,
+                      "offers": 0,
+                      "status": "in_rhythm"
+                    },
+                    {
+                      "weekStart": "2026-11-09",
+                      "applications": 6,
+                      "followups": 2,
+                      "interviews": 0,
+                      "offers": 0,
+                      "status": "in_rhythm"
+                    },
+                    {
+                      "weekStart": "2026-11-16",
+                      "applications": 1,
+                      "followups": 0,
+                      "interviews": 0,
+                      "offers": 0,
+                      "status": "in_progress"
+                    }
+                  ],
+                  "streak": 2,
+                  "bestWeek": {
+                    "weekStart": "2026-11-09",
+                    "applications": 6
+                  }
+                },
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "goal": {
+                      "type": "object",
+                      "properties": {
+                        "applications": {
+                          "type": [
+                            "integer",
+                            "null"
+                          ],
+                          "exclusiveMinimum": 0
+                        },
+                        "followups": {
+                          "type": [
+                            "integer",
+                            "null"
+                          ],
+                          "exclusiveMinimum": 0
+                        }
+                      },
+                      "required": [
+                        "applications",
+                        "followups"
+                      ]
+                    },
+                    "suggestedGoal": {
+                      "type": [
+                        "integer",
+                        "null"
+                      ],
+                      "exclusiveMinimum": 0
+                    },
+                    "pausedFrom": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "format": "date"
+                    },
+                    "pausedUntil": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "format": "date"
+                    },
+                    "weeks": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "applications": {
+                            "type": "integer",
+                            "minimum": 0
+                          },
+                          "followups": {
+                            "type": "integer",
+                            "minimum": 0
+                          },
+                          "interviews": {
+                            "type": "integer",
+                            "minimum": 0
+                          },
+                          "offers": {
+                            "type": "integer",
+                            "minimum": 0
+                          },
+                          "weekStart": {
+                            "type": "string",
+                            "format": "date"
+                          },
+                          "status": {
+                            "type": "string",
+                            "enum": [
+                              "in_rhythm",
+                              "next_week",
+                              "paused",
+                              "in_progress",
+                              "no_goal"
+                            ]
+                          }
+                        },
+                        "required": [
+                          "applications",
+                          "followups",
+                          "interviews",
+                          "offers",
+                          "weekStart",
+                          "status"
+                        ]
+                      }
+                    },
+                    "streak": {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    "bestWeek": {
+                      "type": [
+                        "object",
+                        "null"
+                      ],
+                      "properties": {
+                        "weekStart": {
+                          "type": "string",
+                          "format": "date"
+                        },
+                        "applications": {
+                          "type": "integer",
+                          "minimum": 0
+                        }
+                      },
+                      "required": [
+                        "weekStart",
+                        "applications"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "goal",
+                    "suggestedGoal",
+                    "pausedFrom",
+                    "pausedUntil",
+                    "weeks",
+                    "streak",
+                    "bestWeek"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "example": {
+                  "type": "unauthorized",
+                  "title": "Unauthorized",
+                  "status": 401,
+                  "requestId": "0199f0c4-5d2e-7b31-8c4f-6a7b8c9d0e1f"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "example": {
+                  "type": "forbidden",
+                  "title": "Forbidden",
+                  "status": 403,
+                  "requestId": "0199f0c4-5d2e-7b31-8c4f-6a7b8c9d0e1f"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Invalid request",
+            "content": {
+              "application/json": {
+                "example": {
+                  "type": "validation_error",
+                  "title": "Invalid request",
+                  "status": 422,
+                  "errors": [
+                    {
+                      "path": "email",
+                      "message": "Invalid input: expected string, received undefined"
+                    }
+                  ],
+                  "requestId": "0199f0c4-5d2e-7b31-8c4f-6a7b8c9d0e1f"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too many requests: 300 per 60 s by default (RATE_LIMIT_API_PER_MINUTE)",
+            "headers": {
+              "Retry-After": {
+                "schema": {
+                  "type": "integer",
+                  "exclusiveMinimum": 0,
+                  "description": "Seconds until the limit window resets"
+                },
+                "required": true,
+                "description": "Seconds until the limit window resets"
+              }
+            },
+            "content": {
+              "application/json": {
+                "example": {
+                  "type": "rate_limited",
+                  "title": "Too many requests",
+                  "status": 429,
+                  "requestId": "0199f0c4-5d2e-7b31-8c4f-6a7b8c9d0e1f"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal error",
+            "content": {
+              "application/json": {
+                "example": {
+                  "type": "internal_error",
+                  "title": "Internal error",
+                  "status": 500,
+                  "requestId": "0199f0c4-5d2e-7b31-8c4f-6a7b8c9d0e1f"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/applications/{id}/notes": {
       "post": {
         "tags": [
@@ -18624,6 +19073,81 @@
                               "type",
                               "payload"
                             ]
+                          },
+                          {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string",
+                                "format": "uuid"
+                              },
+                              "readAt": {
+                                "type": [
+                                  "string",
+                                  "null"
+                                ],
+                                "format": "date-time"
+                              },
+                              "createdAt": {
+                                "type": "string",
+                                "format": "date-time"
+                              },
+                              "type": {
+                                "type": "string",
+                                "enum": [
+                                  "rhythm_week_closed"
+                                ]
+                              },
+                              "payload": {
+                                "type": "object",
+                                "properties": {
+                                  "weekStart": {
+                                    "type": "string",
+                                    "format": "date"
+                                  },
+                                  "applications": {
+                                    "type": "integer",
+                                    "minimum": 0
+                                  },
+                                  "followups": {
+                                    "type": "integer",
+                                    "minimum": 0
+                                  },
+                                  "inRhythm": {
+                                    "type": "boolean"
+                                  },
+                                  "suggestedGoal": {
+                                    "type": [
+                                      "integer",
+                                      "null"
+                                    ],
+                                    "exclusiveMinimum": 0
+                                  },
+                                  "weeksSooner": {
+                                    "type": [
+                                      "integer",
+                                      "null"
+                                    ],
+                                    "exclusiveMinimum": 0
+                                  }
+                                },
+                                "required": [
+                                  "weekStart",
+                                  "applications",
+                                  "followups",
+                                  "inRhythm",
+                                  "suggestedGoal",
+                                  "weeksSooner"
+                                ]
+                              }
+                            },
+                            "required": [
+                              "id",
+                              "readAt",
+                              "createdAt",
+                              "type",
+                              "payload"
+                            ]
                           }
                         ]
                       }
@@ -23142,6 +23666,7 @@
                 "auto-ghost-scan",
                 "scheduled-event-reminders",
                 "monthly-summary",
+                "rhythm-week-close",
                 "ai-jobs-sweep"
               ],
               "example": "silence-scan"

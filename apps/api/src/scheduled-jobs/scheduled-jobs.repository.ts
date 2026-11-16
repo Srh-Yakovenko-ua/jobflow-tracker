@@ -12,11 +12,11 @@ import { silenceWindowWhere } from '../prisma/silence-window-where.js';
 
 export type StaleAiJobs = FailedAiJobChange & { createdBefore: Date };
 
-export type MonthlySummaryCandidate = { userId: string; timezone: string };
+export type LocalTimeCandidate = { userId: string; timezone: string };
 
 export type AutoGhostCandidate = { userId: string; autoGhostDays: number };
 
-const MONTHLY_SUMMARY_CANDIDATE_SELECT = {
+const LOCAL_TIME_CANDIDATE_SELECT = {
   userId: true,
   timezone: true,
 } satisfies Prisma.UserSettingsSelect;
@@ -72,10 +72,17 @@ export class ScheduledJobsRepository {
     );
   }
 
-  monthlySummaryCandidates(): Promise<MonthlySummaryCandidate[]> {
+  monthlySummaryCandidates(): Promise<LocalTimeCandidate[]> {
     return this.prisma.userSettings.findMany({
       where: { monthlySummaryEnabled: true },
-      select: MONTHLY_SUMMARY_CANDIDATE_SELECT,
+      select: LOCAL_TIME_CANDIDATE_SELECT,
+    });
+  }
+
+  weekCloseCandidates(): Promise<LocalTimeCandidate[]> {
+    return this.prisma.userSettings.findMany({
+      where: { user: { searches: { some: { status: 'active' } } } },
+      select: LOCAL_TIME_CANDIDATE_SELECT,
     });
   }
 

@@ -65,6 +65,11 @@ export const EXAMPLE_USER_SETTINGS = {
   analyticsOptOut: true,
   singleKeyShortcuts: false,
   activeResumeVersionId: EXAMPLE_RESUME_VERSION_ID,
+  weeklyGoalApplications: 8,
+  weeklyGoalFollowups: 3,
+  pausedFrom: null,
+  pausedUntil: null,
+  suggestedWeeklyGoal: 8,
 } satisfies UserSettings;
 
 export const applicationIdParams = z.object({
