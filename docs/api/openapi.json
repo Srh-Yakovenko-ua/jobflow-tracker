@@ -923,7 +923,7 @@
           "auth"
         ],
         "summary": "Start a sign-in with Google or GitHub",
-        "description": "Redirects to the provider with state and a PKCE challenge; when the provider has no credentials, redirects to the sign-in page of the web app with oauth=unavailable and the provider.",
+        "description": "Redirects to the provider with state and a PKCE challenge; when the provider has no credentials, redirects to the sign-in page of the web app with oauth=unavailable and the provider. The optional next is kept only when it is a same-origin path that is not /login or /register, up to 2048 characters; it travels in the oauth_state cookie and also rides on the unavailable redirect as next.",
         "security": [],
         "parameters": [
           {
@@ -938,6 +938,17 @@
             "required": true,
             "name": "provider",
             "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "description": "The web page to land on after sign-in: a same-origin path that is not /login or /register, up to 2048 characters, else the board. It travels in the oauth_state cookie",
+              "example": "/settings#bookmarklet"
+            },
+            "required": false,
+            "description": "The web page to land on after sign-in: a same-origin path that is not /login or /register, up to 2048 characters, else the board. It travels in the oauth_state cookie",
+            "name": "next",
+            "in": "query"
           }
         ],
         "responses": {
@@ -947,10 +958,10 @@
               "Location": {
                 "schema": {
                   "type": "string",
-                  "description": "The provider's authorization URL, or the web sign-in page with oauth=unavailable&provider=<provider>"
+                  "description": "The provider's authorization URL, or the web sign-in page with oauth=unavailable&provider=<provider>, plus next when a return path was kept"
                 },
                 "required": true,
-                "description": "The provider's authorization URL, or the web sign-in page with oauth=unavailable&provider=<provider>"
+                "description": "The provider's authorization URL, or the web sign-in page with oauth=unavailable&provider=<provider>, plus next when a return path was kept"
               },
               "Set-Cookie": {
                 "schema": {
@@ -1036,7 +1047,7 @@
           "auth"
         ],
         "summary": "Finish a sign-in with Google or GitHub",
-        "description": "Takes code and state, or the provider's error when the user declined. Links the provider account by verified email, dropping a password, the sessions it opened and its capture token, or creates a user without a password. 400 when state does not match the oauth_state cookie, 409 when the user already has another account of the provider, 422 without code and state or error, 503 when the provider is not reachable.",
+        "description": "Takes code and state, or the provider's error when the user declined. Signed in, redirects to the next path kept in the oauth_state cookie on the web origin, else to the board; a declined sign-in goes to /login?oauth=denied with next kept. Links the provider account by verified email, dropping a password, the sessions it opened and its capture token, or creates a user without a password. 400 when state does not match the oauth_state cookie, 409 when the user already has another account of the provider, 422 without code and state or error, 503 when the provider is not reachable.",
         "security": [],
         "parameters": [
           {
@@ -1085,15 +1096,15 @@
         ],
         "responses": {
           "302": {
-            "description": "Signed in, redirect to the board; declined at the provider, redirect to sign-in",
+            "description": "Signed in, redirect to the next path on the web origin, else the board; declined at the provider, redirect to sign-in with next kept",
             "headers": {
               "Location": {
                 "schema": {
                   "type": "string",
-                  "description": "The board of the web app, or its sign-in page with oauth=denied"
+                  "description": "The next path on the web origin, else its board; or its sign-in page with oauth=denied and next when a return path was kept"
                 },
                 "required": true,
-                "description": "The board of the web app, or its sign-in page with oauth=denied"
+                "description": "The next path on the web origin, else its board; or its sign-in page with oauth=denied and next when a return path was kept"
               },
               "Set-Cookie": {
                 "schema": {

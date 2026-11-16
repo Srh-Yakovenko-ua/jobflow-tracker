@@ -1,10 +1,12 @@
 'use client';
 
+import { AUTH_ROUTES, withPageHash } from '@jobflow/shared';
 import { useQuery } from '@tanstack/react-query';
 
 import { config } from '@/shared/config';
 import { uk } from '@/shared/i18n';
 import { cn } from '@/shared/lib/cn';
+import { usePageHash } from '@/shared/lib/use-page-hash';
 import { buttonLinkClasses } from '@/shared/ui/button';
 import { Reveal } from '@/shared/ui/reveal';
 
@@ -24,9 +26,19 @@ function OrDivider() {
   );
 }
 
-export function OAuthLinks() {
+export type OAuthLinksProps = Readonly<{ returnTo: string }>;
+
+function returnQueryOf(address: string): string {
+  if (address === AUTH_ROUTES.home) {
+    return '';
+  }
+  return `?${new URLSearchParams({ [AUTH_ROUTES.returnParam]: address }).toString()}`;
+}
+
+export function OAuthLinks({ returnTo }: OAuthLinksProps) {
   const { data } = useQuery(oauthProvidersQueryOptions());
   const providers = data?.items ?? [];
+  const returnQuery = returnQueryOf(withPageHash(returnTo, usePageHash()));
   return (
     <Reveal shown={providers.length > 0} className="-mt-5.5">
       <div className="flex flex-col gap-5.5 pt-5.5">
@@ -35,7 +47,7 @@ export function OAuthLinks() {
           {providers.map((provider) => (
             <a
               key={provider}
-              href={`${config.apiBaseUrl}/auth/oauth/${provider}/start`}
+              href={`${config.apiBaseUrl}/auth/oauth/${provider}/start${returnQuery}`}
               className={LINK_LOOK}
             >
               {COPY.oauth[provider]}

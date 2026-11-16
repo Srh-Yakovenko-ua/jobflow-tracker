@@ -1,11 +1,10 @@
-import type { LoginInput } from '@jobflow/shared';
+import { type LoginInput, withPageHash } from '@jobflow/shared';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
 import type { UseFormSetError } from 'react-hook-form';
 
 import { ApiError, applyFieldErrors, setAccessToken } from '@/shared/api';
 import { uk } from '@/shared/i18n';
-import { withPageHash } from '@/shared/lib/return-to';
 
 import { authenticate } from '../api/authenticate';
 import { AUTH_MODES, type AuthMode, type AuthModeSpec, CREDENTIAL_FIELDS } from './auth-modes';

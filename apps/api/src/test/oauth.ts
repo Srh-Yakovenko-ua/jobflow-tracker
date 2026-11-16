@@ -22,7 +22,9 @@ export type OAuthCallbackCall = {
   stateCookie?: string | undefined;
 };
 
-export type OAuthSignIn = { provider: OAuthProvider; code: string; state?: string };
+export type OAuthStartCall = { provider: OAuthProvider; next?: string | undefined };
+
+export type OAuthSignIn = { provider: OAuthProvider; code: string; state?: string; next?: string };
 
 export const GITHUB_OLENA: OAuthProfile = {
   providerUserId: '1001',
@@ -63,9 +65,10 @@ export function listOAuthProviders(app: NestExpressApplication) {
 
 export async function startOAuth(
   app: NestExpressApplication,
-  provider: OAuthProvider,
+  { provider, next }: OAuthStartCall,
 ): Promise<OAuthStarted> {
-  const response = await request(app.getHttpServer()).get(`/api/v1/auth/oauth/${provider}/start`);
+  const call = request(app.getHttpServer()).get(`/api/v1/auth/oauth/${provider}/start`);
+  const response = await (next === undefined ? call : call.query({ next }));
   const stateCookie = cookieOf(response, OAUTH_STATE_COOKIE)?.value;
   return { response, state: stateOf(response.get('location') ?? ''), stateCookie };
 }
@@ -84,9 +87,9 @@ export function callOAuthCallback(
 
 export async function signInWithOAuth(
   app: NestExpressApplication,
-  { provider, code, state }: OAuthSignIn,
+  { provider, code, state, next }: OAuthSignIn,
 ): Promise<Response> {
-  const started = await startOAuth(app, provider);
+  const started = await startOAuth(app, { provider, next });
   return callOAuthCallback(app, {
     provider,
     code,

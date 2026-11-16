@@ -1,10 +1,9 @@
-import type { MeResponse } from '@jobflow/shared';
+import { AUTH_ROUTES, type MeResponse } from '@jobflow/shared';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
 
 import { clearAccessToken } from '@/shared/api';
 import { uk } from '@/shared/i18n';
-import { AUTH_ROUTES } from '@/shared/lib/return-to';
 import { showErrorToast } from '@/shared/ui/error-toast';
 
 import { logout } from '../api/logout';

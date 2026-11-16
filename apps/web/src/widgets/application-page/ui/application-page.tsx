@@ -1,13 +1,17 @@
 'use client';
 
-import type { Application, ApplicationResponse, Stage } from '@jobflow/shared';
+import {
+  type Application,
+  type ApplicationResponse,
+  AUTH_ROUTES,
+  type Stage,
+} from '@jobflow/shared';
 import { useRouter } from 'next/navigation';
 import { useRef } from 'react';
 
 import { DeleteApplicationDialog } from '@/features/delete-application';
 import { ApplicationEditForm, type EditField } from '@/features/edit-application';
 import { ScheduleEventDialog, type SchedulePlan } from '@/features/schedule-event';
-import { AUTH_ROUTES } from '@/shared/lib/return-to';
 import { LoadFailedPanel } from '@/shared/ui/error-panel';
 import { NotFoundState } from '@/shared/ui/not-found-state';
 import { Reveal } from '@/shared/ui/reveal';

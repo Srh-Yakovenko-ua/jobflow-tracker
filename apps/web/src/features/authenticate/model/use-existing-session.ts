@@ -1,10 +1,10 @@
+import { withPageHash } from '@jobflow/shared';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 
 import { userKeys } from '@/entities/user';
 import { refreshAccessToken } from '@/shared/api';
-import { withPageHash } from '@/shared/lib/return-to';
 import { hasSessionCookie } from '@/shared/lib/session-cookie';
 
 export type UseExistingSessionOptions = { returnTo: string; enabled: boolean };

@@ -82,6 +82,8 @@ export const oauthCallbackQuerySchema = z.union([oauthErrorQuerySchema, oauthCod
   error: 'Expected code and state, or error',
 });
 
+export const oauthStartQuerySchema = z.object({ next: z.string().optional() });
+
 export const oauthProvidersResponseSchema = z.object({ items: z.array(oauthProviderSchema) });
 
 export type RegisterInput = z.infer<typeof registerInputSchema>;
@@ -97,4 +99,5 @@ export type PublicJwk = z.infer<typeof publicJwkSchema>;
 export type JwksResponse = z.infer<typeof jwksResponseSchema>;
 export type OAuthCodeQuery = z.infer<typeof oauthCodeQuerySchema>;
 export type OAuthCallbackQuery = z.infer<typeof oauthCallbackQuerySchema>;
+export type OAuthStartQuery = z.infer<typeof oauthStartQuerySchema>;
 export type OAuthProvidersResponse = z.infer<typeof oauthProvidersResponseSchema>;

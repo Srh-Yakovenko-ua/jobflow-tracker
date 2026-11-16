@@ -45,12 +45,32 @@ const OAUTH_STATE_PATH = '/api/v1/auth/oauth';
 
 const BOARD_URL = 'http://localhost:3000/board';
 
+const SETTINGS_RETURN_TO = '/settings#bookmarklet';
+
+const UNSAFE_RETURN_PATHS: [string, string][] = [
+  ['//evil.test', '//evil.test'],
+  ['https://evil.test/board', 'https://evil.test/board'],
+  ['/login', '/login'],
+  ['of 2049 characters', `/${'a'.repeat(2048)}`],
+  ['of 2048 characters that double when signed', `/#${'\\'.repeat(2046)}`],
+];
+
 describe('sign in with Google and GitHub', () => {
   const testApp = useTestApp(() =>
     appTestingModule().overrideProvider(OAuthClient).useValue(fakeOAuthClient(PROFILES_BY_CODE)),
   );
 
   const githubSignIn = (code: string) => signInWithOAuth(testApp.app, { provider: 'github', code });
+
+  async function declineAtGitHub(next?: string) {
+    const github = await startOAuth(testApp.app, { provider: 'github', next });
+    return callOAuthCallback(testApp.app, {
+      provider: 'github',
+      error: 'access_denied',
+      state: github.state,
+      stateCookie: github.stateCookie,
+    });
+  }
 
   async function accessTokenOf(signedIn: Response): Promise<string> {
     const refreshToken = refreshTokenFromCookie(signedIn);
@@ -79,7 +99,7 @@ describe('sign in with Google and GitHub', () => {
   });
 
   it('redirects start to the provider with a ten minute oauth_state cookie on the OAuth path and no-store', async () => {
-    const { response } = await startOAuth(testApp.app, 'github');
+    const { response } = await startOAuth(testApp.app, { provider: 'github' });
 
     expect(response.status).toBe(302);
     expect(response.get('location')).toBe(
@@ -218,7 +238,7 @@ describe('sign in with Google and GitHub', () => {
   });
 
   it('refuses a callback without the oauth_state cookie with 400', async () => {
-    await startOAuth(testApp.app, 'github');
+    await startOAuth(testApp.app, { provider: 'github' });
 
     const response = await callOAuthCallback(testApp.app, {
       provider: 'github',
@@ -234,7 +254,7 @@ describe('sign in with Google and GitHub', () => {
   });
 
   it('refuses the Google state cookie on the GitHub callback with 400', async () => {
-    const google = await startOAuth(testApp.app, 'google');
+    const google = await startOAuth(testApp.app, { provider: 'google' });
 
     const response = await callOAuthCallback(testApp.app, {
       provider: 'github',
@@ -248,15 +268,43 @@ describe('sign in with Google and GitHub', () => {
     expect(await testApp.prisma.user.count()).toBe(0);
   });
 
-  it('sends a sign-in the user declined at the provider back to the login page without a session', async () => {
-    const github = await startOAuth(testApp.app, 'github');
-
-    const response = await callOAuthCallback(testApp.app, {
+  it('lands a sign-in started from /settings#bookmarklet back on that page of the web app', async () => {
+    const response = await signInWithOAuth(testApp.app, {
       provider: 'github',
-      error: 'access_denied',
-      state: github.state,
-      stateCookie: github.stateCookie,
+      code: 'olena-code',
+      next: SETTINGS_RETURN_TO,
     });
+
+    expect([response.status, response.get('location')]).toEqual([
+      302,
+      'http://localhost:3000/settings#bookmarklet',
+    ]);
+  });
+
+  it.each(UNSAFE_RETURN_PATHS)(
+    'lands a sign-in started with the return path %s on the board',
+    async (_shown, next) => {
+      const response = await signInWithOAuth(testApp.app, {
+        provider: 'github',
+        code: 'olena-code',
+        next,
+      });
+
+      expect([response.status, response.get('location')]).toEqual([302, BOARD_URL]);
+    },
+  );
+
+  it('keeps the return path as next when the user declined at the provider', async () => {
+    const response = await declineAtGitHub(SETTINGS_RETURN_TO);
+
+    expect([response.status, response.get('location')]).toEqual([
+      302,
+      'http://localhost:3000/login?oauth=denied&next=%2Fsettings%23bookmarklet',
+    ]);
+  });
+
+  it('sends a sign-in the user declined at the provider back to the login page without a session', async () => {
+    const response = await declineAtGitHub();
 
     expect(response.status).toBe(302);
     expect(response.get('location')).toBe('http://localhost:3000/login?oauth=denied');
@@ -266,7 +314,7 @@ describe('sign in with Google and GitHub', () => {
   });
 
   it('refuses a callback with neither a code nor a provider error with 422', async () => {
-    const github = await startOAuth(testApp.app, 'github');
+    const github = await startOAuth(testApp.app, { provider: 'github' });
 
     const response = await callOAuthCallback(testApp.app, {
       provider: 'github',
