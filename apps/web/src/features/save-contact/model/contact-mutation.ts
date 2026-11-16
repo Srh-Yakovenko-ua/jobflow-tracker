@@ -33,7 +33,7 @@ export function useContactMutation<Body>({
     form: { fields, setError },
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: contactKeys.all });
-      onDone();
     },
+    onSaved: onDone,
   });
 }

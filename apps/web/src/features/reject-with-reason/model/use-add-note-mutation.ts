@@ -5,6 +5,7 @@ import type { UseFormSetError } from 'react-hook-form';
 import { timelineKeys } from '@/entities/application';
 import { addNote, noteKeys } from '@/entities/note';
 import { type GuardedSave, useGuardedSave, useSubmitKey } from '@/shared/api';
+import { uk } from '@/shared/i18n';
 
 export type UseAddNoteMutationOptions = Readonly<{
   applicationId: ApplicationCard['id'];
@@ -29,14 +30,14 @@ export function useAddNoteMutation({
     mutationKey: noteKeyOf(applicationId),
     request: (body: NoteInput) =>
       addNote({ applicationId, body, idempotencyKey: submitKey.keyFor(body) }),
-    form: { fields: NOTE_FIELDS, setError },
+    form: { fields: NOTE_FIELDS, setError, messages: { body: uk.board.reject.note.refused } },
     onSuccess: async () => {
       submitKey.reset();
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: timelineKeys.detail(applicationId) }),
         queryClient.invalidateQueries({ queryKey: noteKeys.list(applicationId) }),
       ]);
-      onSaved();
     },
+    onSaved,
   });
 }

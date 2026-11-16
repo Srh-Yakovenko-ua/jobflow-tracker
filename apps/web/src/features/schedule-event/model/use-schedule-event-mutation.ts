@@ -75,7 +75,7 @@ export function useScheduleEventMutation({
     onSuccess: () => {
       submitKey.reset();
       void invalidateAfterSchedule({ queryClient, applicationId: target.applicationId });
-      onSaved();
     },
+    onSaved,
   });
 }

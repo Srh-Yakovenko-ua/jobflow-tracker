@@ -66,7 +66,7 @@ export function useRenameVersionMutation({
     form: { fields: VERSION_TITLE_FIELDS, setError },
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: resumeKeys.all });
-      onSaved();
     },
+    onSaved,
   });
 }
