@@ -112,14 +112,14 @@ export const UNDO_OF_SCREENING_PLAN: StageEventPlan = {
   lastEventAt: daysBefore(3),
 };
 
-export const WITHDRAWN = {
+export const WITHDRAWN_FIELDS = {
   toStage: 'withdrawn',
   reasonCode: null,
   compensatesEventId: null,
 } satisfies Partial<StageEventPlan['event']>;
 
-export const WITHDRAWAL = {
-  ...WITHDRAWN,
+export const WITHDRAWN_STAGE_EVENT = {
+  ...WITHDRAWN_FIELDS,
   comment: null,
   occurredAt: NOW,
   createdAt: NOW,

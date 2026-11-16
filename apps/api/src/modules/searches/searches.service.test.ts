@@ -65,6 +65,16 @@ const OLENA_ARCHIVED: StoredSearch = {
 
 const BOHDAN_ACTIVE: StoredSearch = { userId: BOHDAN_ID, row: activeRow(BOHDAN_SEARCH_ID) };
 
+const NO_ACTIVE_SEARCH = [OLENA_ARCHIVED, BOHDAN_ACTIVE];
+
+const ALREADY_FINISHED = {
+  status: 409,
+  type: 'conflict',
+  detail: 'The search is already finished',
+};
+
+const SEARCH_NOT_FOUND = { status: 404, type: 'not_found', detail: 'Search not found' };
+
 const FINISH: FinishSearchInput = {
   searchId: SEARCH_ID,
   outcome: 'offer_accepted',
@@ -221,27 +231,39 @@ describe('SearchesService.finish', () => {
   it.each([
     {
       case: 'no active search',
-      searches: [OLENA_ARCHIVED, BOHDAN_ACTIVE],
+      searches: NO_ACTIVE_SEARCH,
       searchId: ARCHIVED_ID,
-      error: { status: 409, type: 'conflict', detail: 'The search is already finished' },
+      error: ALREADY_FINISHED,
+    },
+    {
+      case: "BOHDAN's active search without an active search of her own",
+      searches: NO_ACTIVE_SEARCH,
+      searchId: BOHDAN_SEARCH_ID,
+      error: SEARCH_NOT_FOUND,
+    },
+    {
+      case: 'a missing search without an active search of her own',
+      searches: NO_ACTIVE_SEARCH,
+      searchId: MISSING_ID,
+      error: SEARCH_NOT_FOUND,
     },
     {
       case: 'her already finished search',
       searches: undefined,
       searchId: ARCHIVED_ID,
-      error: { status: 409, type: 'conflict', detail: 'The search is already finished' },
+      error: ALREADY_FINISHED,
     },
     {
       case: "BOHDAN's active search",
       searches: undefined,
       searchId: BOHDAN_SEARCH_ID,
-      error: { status: 404, type: 'not_found', detail: 'Search not found' },
+      error: SEARCH_NOT_FOUND,
     },
     {
       case: 'a missing search',
       searches: undefined,
       searchId: MISSING_ID,
-      error: { status: 404, type: 'not_found', detail: 'Search not found' },
+      error: SEARCH_NOT_FOUND,
     },
   ])(
     'answers $case with $error.status and archives, starts and hands over nothing',

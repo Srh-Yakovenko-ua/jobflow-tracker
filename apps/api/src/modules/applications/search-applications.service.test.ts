@@ -9,8 +9,8 @@ import {
   CURRENT_SEARCH_ID,
   OLENA_ID,
   SEARCH_ID,
-  WITHDRAWAL,
-  WITHDRAWN,
+  WITHDRAWN_FIELDS,
+  WITHDRAWN_STAGE_EVENT,
 } from '../../test/service-fixtures.js';
 import { daysBefore, NOW } from '../../test/time.js';
 import { ApplicationListRepository } from './application-list.repository.js';
@@ -36,7 +36,7 @@ const OPEN: OpenApplication[] = [
   { id: FINAL_ID, currentStage: 'final' },
 ];
 
-const WITHDRAWN_CHANGE = { ...WITHDRAWN, eventType: 'application.stage_changed' };
+const WITHDRAWN_OUTBOX_EVENT = { ...WITHDRAWN_FIELDS, eventType: 'application.stage_changed' };
 
 class FakeSearchApplicationsRepository {
   readonly locks: ByUser<InSearch>[] = [];
@@ -79,6 +79,12 @@ class FakeApplicationsRepository {
   }
 }
 
+class FakeApplicationListRepository {
+  searchExists(userId: string, { searchId }: InSearch): Promise<boolean> {
+    return Promise.resolve(userId === OLENA_ID && searchId === SEARCH_ID);
+  }
+}
+
 async function serviceWith({ open = OPEN, totals = [] }: FakeData = {}) {
   const repository = new FakeSearchApplicationsRepository({ open, totals });
   const moduleRef = await fakeTransactionModule({
@@ -95,7 +101,7 @@ async function serviceWith({ open = OPEN, totals = [] }: FakeData = {}) {
     .overrideProvider(ApplicationsRepository)
     .useValue(new FakeApplicationsRepository(repository.writes))
     .overrideProvider(ApplicationListRepository)
-    .useValue({})
+    .useValue(new FakeApplicationListRepository())
     .compile();
   const service = moduleRef.get(SearchApplicationsService);
   const prisma = moduleRef.get(PrismaService);
@@ -134,8 +140,8 @@ describe('SearchApplicationsService.handOver', () => {
         method: 'withdraw',
         input: {
           events: [
-            { ...WITHDRAWAL, applicationId: APPLICATION_ID, fromStage: 'screening' },
-            { ...WITHDRAWAL, applicationId: FINAL_ID, fromStage: 'final' },
+            { ...WITHDRAWN_STAGE_EVENT, applicationId: APPLICATION_ID, fromStage: 'screening' },
+            { ...WITHDRAWN_STAGE_EVENT, applicationId: FINAL_ID, fromStage: 'final' },
           ],
           lastEventAt: NOW,
           tx: FAKE_TRANSACTION,
@@ -146,8 +152,8 @@ describe('SearchApplicationsService.handOver', () => {
         method: 'recordEvents',
         input: {
           events: [
-            { ...WITHDRAWN_CHANGE, applicationId: APPLICATION_ID, fromStage: 'screening' },
-            { ...WITHDRAWN_CHANGE, applicationId: FINAL_ID, fromStage: 'final' },
+            { ...WITHDRAWN_OUTBOX_EVENT, applicationId: APPLICATION_ID, fromStage: 'screening' },
+            { ...WITHDRAWN_OUTBOX_EVENT, applicationId: FINAL_ID, fromStage: 'final' },
           ],
           tx: FAKE_TRANSACTION,
         },
