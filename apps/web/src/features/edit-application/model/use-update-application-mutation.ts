@@ -32,7 +32,7 @@ export function useUpdateApplicationMutation({
       queryClient.setQueryData(applicationKeys.detail(applicationId), response);
       void queryClient.invalidateQueries({ queryKey: applicationKeys.boards() });
       void queryClient.invalidateQueries({ queryKey: applicationKeys.lists() });
-      onSaved();
     },
+    onSaved,
   });
 }

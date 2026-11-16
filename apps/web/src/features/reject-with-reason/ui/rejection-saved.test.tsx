@@ -3,7 +3,7 @@ import {
   type RejectionReasonsSummary,
   STAGE_MOVE_LIMITS,
 } from '@jobflow/shared';
-import { useQuery } from '@tanstack/react-query';
+import { useIsMutating, useQuery } from '@tanstack/react-query';
 import { screen, waitFor, within } from '@testing-library/react';
 import type { ReactNode } from 'react';
 import { toast } from 'sonner';
@@ -24,13 +24,14 @@ import {
   type ReasonsSummaryRouteOptions,
 } from '@/test/board-fixtures';
 import { descriptionOf } from '@/test/field-description';
+import { latch } from '@/test/latch';
 import { noteRoute, notesRoute } from '@/test/note-fixtures';
 import { QueryProbe, StaleQuery, waitForQuery } from '@/test/query-status';
 import { ACME_TECH_INTERVIEW, recordedRejectionActions } from '@/test/rejection-fixtures';
-import { renderInApp } from '@/test/render-in-app';
+import { renderInApp, renderViewInApp } from '@/test/render-in-app';
 import { server } from '@/test/server';
 
-import type { RejectionStep } from '../model/rejection-step';
+import type { RejectionPrompt, RejectionStep } from '../model/rejection-step';
 import { RejectionReasonDialog } from './rejection-reason-dialog';
 
 const SUMMARY_KEY = applicationKeys.reasonsSummary('tech_interview');
@@ -107,6 +108,14 @@ const INSIGHT_CASES: readonly InsightCase[] = [
     bar: ['обрали іншого2', 'не вистачає скілів2', 'низька вилка1'],
   },
 ];
+
+const NOTE_PROMPT = { application: ACME_TECH_INTERVIEW } as const;
+
+const SAVES_IN_FLIGHT = 'saves in flight';
+
+function SavesInFlight() {
+  return <output aria-label={SAVES_IN_FLIGHT}>{useIsMutating()}</output>;
+}
 
 function ShownNotes() {
   useQuery(notesQueryOptions(ACME_TECH_INTERVIEW.id));
@@ -302,10 +311,45 @@ describe('RejectionReasonDialog, note step', () => {
     await waitFor(() => {
       expect(note.getAttribute('aria-invalid')).toBe('true');
     });
-    expect(descriptionOf(note)).toBe('Note must not be blank');
+    expect(descriptionOf(note)).toBe('Цей текст не вдалося зберегти, зміни його й спробуй ще раз');
     expect(screen.getByRole('dialog')).toBeDefined();
     expect(sent).toEqual([LIVE_CODING_NOTE]);
     expect(finished).toEqual([]);
+  });
+
+  it('a note saved after its prompt closed leaves the newer prompt open, with focus in it', async () => {
+    const held = latch();
+    const notes = noteRoute({ latch: held });
+    server.use(notes.handler);
+    const { actions, finished } = recordedRejectionActions();
+    const dialogFor = (prompt: RejectionPrompt | null) => (
+      <>
+        <RejectionReasonDialog prompt={prompt} actions={actions} />
+        <SavesInFlight />
+      </>
+    );
+    const { user, view } = renderViewInApp(dialogFor({ ...NOTE_PROMPT, step: { kind: 'note' } }));
+    await user.type(screen.getByLabelText("Що варто запам'ятати"), 'Попросили live coding 3');
+    await user.click(screen.getByRole('button', { name: 'Зберегти' }));
+    await waitFor(() => {
+      expect(notes.sent).toEqual([LIVE_CODING_NOTE]);
+    });
+    await user.keyboard('{Escape}');
+    view.rerender(dialogFor(null));
+    await waitFor(() => {
+      expect(screen.queryByRole('dialog')).toBeNull();
+    });
+    view.rerender(dialogFor({ ...NOTE_PROMPT, step: { kind: 'choose' } }));
+    const newer = await screen.findByRole('dialog', { name: 'Що сталося?' });
+
+    held.release();
+
+    await waitFor(() => {
+      expect(screen.getByLabelText(SAVES_IN_FLIGHT).textContent).toBe('0');
+    });
+    expect(finished).toEqual(['done']);
+    expect(screen.getByRole('dialog', { name: 'Що сталося?' })).toBe(newer);
+    expect(newer.contains(document.activeElement)).toBe(true);
   });
 
   it('a saved note reloads the notes list the application page shows', async () => {

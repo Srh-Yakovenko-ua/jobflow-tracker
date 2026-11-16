@@ -22,6 +22,12 @@ const STAFF = 'Staff React Developer';
 
 const SAVE = 'Зберегти';
 
+const CANCEL = 'Скасувати';
+
+const SCHEDULE = 'Запланувати';
+
+const SCHEDULE_TITLE = 'Запланувати подію';
+
 const SAVE_FAILED_TOAST = 'Це збій на нашому боці, збережені дані на місці. Спробуй ще раз.';
 
 const FIELDS_BANNER = 'Перевір поля й спробуй ще раз.';
@@ -37,6 +43,21 @@ function saveButton(): HTMLButtonElement {
 
 async function findStaffTitle(): Promise<HTMLElement> {
   return screen.findByRole('heading', { level: 1, name: STAFF });
+}
+
+async function typeWhileSaveHeld(typed: string) {
+  const held = latch();
+  const page = renderApplicationPage({ update: { latch: held } });
+  const position = await editPosition(page.user);
+  await page.user.clear(position);
+  await page.user.type(position, typed);
+  return { ...page, held };
+}
+
+async function waitForOneUpdate(updates: readonly unknown[]): Promise<void> {
+  await waitFor(() => {
+    expect(updates).toHaveLength(1);
+  });
 }
 
 describe('ApplicationEditForm', () => {
@@ -79,11 +100,7 @@ describe('ApplicationEditForm', () => {
   });
 
   it('a double click while the first save is on its way sends one update and keeps Зберегти disabled', async () => {
-    const held = latch();
-    const { user, updates } = renderApplicationPage({ update: { latch: held } });
-    const position = await editPosition(user);
-    await user.clear(position);
-    await user.type(position, STAFF);
+    const { user, updates, held } = await typeWhileSaveHeld(STAFF);
 
     await doubleClickWhileHeld({
       user,
@@ -95,6 +112,34 @@ describe('ApplicationEditForm', () => {
 
     expect(await findStaffTitle()).toBeDefined();
     expect(updates).toEqual([{ position: STAFF }]);
+  });
+
+  it('Enter then a click on Зберегти while the save is on its way sends one update', async () => {
+    const { user, updates, held } = await typeWhileSaveHeld(`${STAFF}{Enter}`);
+    await waitForOneUpdate(updates);
+
+    await user.click(saveButton());
+    held.release();
+
+    expect(await findStaffTitle()).toBeDefined();
+    expect(updates).toEqual([{ position: STAFF }]);
+  });
+
+  it('a save that lands after Скасувати leaves the newer schedule dialog open with focus in it', async () => {
+    const { user, updates, held } = await typeWhileSaveHeld(STAFF);
+    await user.click(saveButton());
+    await waitForOneUpdate(updates);
+    await user.click(screen.getByRole('button', { name: CANCEL }));
+    await user.click(await screen.findByRole('button', { name: SCHEDULE }));
+    const dialog = await screen.findByRole('dialog', { name: SCHEDULE_TITLE });
+
+    held.release();
+
+    expect(
+      await screen.findByRole('heading', { level: 1, name: STAFF, hidden: true }),
+    ).toBeDefined();
+    expect(screen.getByRole('dialog', { name: SCHEDULE_TITLE })).toBe(dialog);
+    expect(dialog.contains(document.activeElement)).toBe(true);
   });
 
   it('a save the server fails shows the save failed toast and keeps the editor open', async () => {
