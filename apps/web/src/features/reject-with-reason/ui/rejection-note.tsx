@@ -11,6 +11,7 @@ import { DialogFooter } from '@/shared/ui/dialog';
 import { Field } from '@/shared/ui/field';
 import { Textarea } from '@/shared/ui/textarea';
 import { showToast } from '@/shared/ui/toast';
+import { TOUCH_HEIGHT } from '@/shared/ui/touch-height';
 
 import type { RejectionActions } from '../model/rejection-step';
 import { useAddNoteMutation } from '../model/use-add-note-mutation';
@@ -57,7 +58,7 @@ export function RejectionNote({ application, actions }: RejectionNoteProps) {
         <Textarea autoFocus {...form.register('body')} />
       </Field>
       <DialogFooter className="justify-end">
-        <Button type="submit" loading={mutation.isPending}>
+        <Button type="submit" loading={mutation.isPending} className={TOUCH_HEIGHT}>
           {COPY.save}
         </Button>
       </DialogFooter>

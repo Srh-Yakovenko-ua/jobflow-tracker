@@ -9,6 +9,7 @@ import { cn } from '@/shared/lib/cn';
 import { Button } from './button';
 import { FormServerError } from './form-server-error';
 import { OWNS_ESCAPE } from './sheet';
+import { TOUCH_HEIGHT } from './touch-height';
 
 export type InlineEditorFormProps<Values extends FieldValues, Output> = Readonly<{
   form: Readonly<{
@@ -47,10 +48,10 @@ export function InlineEditorForm<Values extends FieldValues, Output>({
       <FormServerError control={form.control} />
       {children}
       <div className="flex flex-wrap gap-2.5">
-        <Button type="submit" loading={form.pending}>
+        <Button type="submit" loading={form.pending} className={TOUCH_HEIGHT}>
           {COPY.save}
         </Button>
-        <Button variant="outline" onClick={actions.onCancel}>
+        <Button variant="outline" onClick={actions.onCancel} className={TOUCH_HEIGHT}>
           {COPY.cancel}
         </Button>
       </div>

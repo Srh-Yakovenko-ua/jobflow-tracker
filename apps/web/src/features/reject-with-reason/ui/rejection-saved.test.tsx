@@ -11,6 +11,7 @@ import { afterEach, describe, expect, it } from 'vitest';
 
 import { applicationKeys } from '@/entities/application';
 import { notesQueryOptions } from '@/entities/note';
+import { TOUCH_HEIGHT } from '@/shared/ui/touch-height';
 import {
   ANY_IDEMPOTENCY_KEY,
   errorReply,
@@ -379,6 +380,7 @@ describe('RejectionReasonDialog, note step', () => {
     expect(await screen.findByText('Напиши хоча б кілька слів')).toBeDefined();
     expect(notes.sent).toEqual([]);
     expect(finished).toEqual([]);
+    expect(screen.getByRole('button', { name: 'Зберегти' }).classList).toContain(TOUCH_HEIGHT);
   });
 
   it('Escape closes the note without saving', async () => {
