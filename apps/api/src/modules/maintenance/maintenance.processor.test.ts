@@ -238,6 +238,15 @@ describe('MaintenanceProcessor', () => {
     },
   );
 
+  it('hands an uptime.push job to the uptime push, which refuses a payload without a URL', async () => {
+    await expect(processor.process(tickJob('uptime.push'))).rejects.toBeInstanceOf(
+      UnrecoverableError,
+    );
+    expect(log.parsed()).toEqual([
+      expect.objectContaining({ level: 50, msg: 'uptime push payload invalid' }),
+    ]);
+  });
+
   it('fails a job with an unknown name as unrecoverable and runs nothing', async () => {
     await expect(processor.process(tickJob('outbox.replay'))).rejects.toBeInstanceOf(
       UnrecoverableError,

@@ -155,6 +155,7 @@ services:
     environment:
       <<: *api-environment
       HOST: 0.0.0.0
+      UPTIME_KUMA_PUSH_URL: ${UPTIME_KUMA_PUSH_URL:+http://uptime-kuma:3001/api/push/${UPTIME_KUMA_PUSH_TOKEN:-f6c2a9e04b7d4e1a8c3f5b902d6e7a14}}
     volumes:
       - ../../.secrets:/app/.secrets:ro
     depends_on:
@@ -487,6 +488,47 @@ services:
     networks:
       - jobflow
 
+  uptime-kuma:
+    image: louislam/uptime-kuma:2.5.11-slim
+    profiles: [observability]
+    environment:
+      UPTIME_KUMA_DB_TYPE: sqlite
+    volumes:
+      - uptimekumadata:/app/data
+    ports:
+      - '127.0.0.1:3002:3001'
+    healthcheck:
+      test: ['CMD', 'extra/healthcheck']
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 30s
+    mem_limit: 256m
+    networks:
+      - jobflow
+
+  uptime-kuma-bootstrap:
+    image: louislam/uptime-kuma:2.5.11-slim
+    profiles: [observability]
+    entrypoint: ['node']
+    command: ['/app/jobflow-bootstrap.mjs']
+    environment:
+      UPTIME_KUMA_URL: http://uptime-kuma:3001
+      UPTIME_KUMA_ADMIN_USER: ${UPTIME_KUMA_ADMIN_USER:-admin}
+      UPTIME_KUMA_ADMIN_PASSWORD: ${UPTIME_KUMA_ADMIN_PASSWORD:-JobFlow-kuma-2026}
+      UPTIME_KUMA_PUSH_TOKEN: ${UPTIME_KUMA_PUSH_TOKEN:-f6c2a9e04b7d4e1a8c3f5b902d6e7a14}
+      UPTIME_KUMA_TELEGRAM_BOT_TOKEN: ${UPTIME_KUMA_TELEGRAM_BOT_TOKEN:-}
+      UPTIME_KUMA_TELEGRAM_CHAT_ID: ${UPTIME_KUMA_TELEGRAM_CHAT_ID:-}
+      UPTIME_KUMA_TELEGRAM_SERVER_URL: ${UPTIME_KUMA_TELEGRAM_SERVER_URL:-https://api.telegram.org}
+    volumes:
+      - ./observability/uptime-kuma/bootstrap.mjs:/app/jobflow-bootstrap.mjs:ro
+    depends_on:
+      uptime-kuma:
+        condition: service_healthy
+    mem_limit: 128m
+    networks:
+      - jobflow
+
 networks:
   jobflow:
     name: jobflow
@@ -497,3 +539,4 @@ volumes:
   miniodata:
   lokidata:
   prometheusdata:
+  uptimekumadata:

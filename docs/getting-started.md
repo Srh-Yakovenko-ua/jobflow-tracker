@@ -59,7 +59,7 @@ docker compose up -d
 docker compose up -d --build --wait api worker
 ```
 
-Команда збирає образ api (ціль `dev`, `apps/api/src` змонтовано в контейнер) і повертає керування, коли healthcheck api стане `healthy`, а worker запуститься. Worker використовує той самий образ з іншою командою, порту не має і healthcheck-а теж, тому в `docker compose ps` у колонці `STATUS` у нього лише `Up`, без `(healthy)`. `--build` потрібен, щоб після pull образ підхопив нові залежності. Health відповідає на http://localhost:4000/api/v1/health. Контейнер api займає той самий порт 4000, що й `pnpm dev`, тому одночасно працює щось одне. Контейнер ai описано в розділі [AI](#ai), analytics і documents нижче. Моніторинг (Loki, Alloy, Jaeger, Prometheus, node-exporter, cAdvisor, Grafana і GlitchTip) вмикається профілем: `docker compose --profile observability up -d`.
+Команда збирає образ api (ціль `dev`, `apps/api/src` змонтовано в контейнер) і повертає керування, коли healthcheck api стане `healthy`, а worker запуститься. Worker використовує той самий образ з іншою командою, порту не має і healthcheck-а теж, тому в `docker compose ps` у колонці `STATUS` у нього лише `Up`, без `(healthy)`. `--build` потрібен, щоб після pull образ підхопив нові залежності. Health відповідає на http://localhost:4000/api/v1/health. Контейнер api займає той самий порт 4000, що й `pnpm dev`, тому одночасно працює щось одне. Контейнер ai описано в розділі [AI](#ai), analytics і documents нижче. Моніторинг (Loki, Alloy, Jaeger, Prometheus, node-exporter, cAdvisor, Grafana, GlitchTip і Uptime Kuma) вмикається профілем: `docker compose --profile observability up -d`.
 
 Лише web:
 
@@ -106,27 +106,27 @@ docker compose down
 
 Усі порти слухають лише 127.0.0.1.
 
-| Сервіс        | Порт                           | Стан                                                 |
-| ------------- | ------------------------------ | ---------------------------------------------------- |
-| Postgres      | 5432                           | працює                                               |
-| Redis         | 6379                           | працює                                               |
-| MinIO         | 9000 (API), 9001 (консоль)     | працює                                               |
-| Mailpit       | 1025 (SMTP), 8025 (UI)         | працює                                               |
-| api           | 4000                           | працює                                               |
-| worker        | без порту                      | працює                                               |
-| web (Next.js) | 3000                           | працює                                               |
-| analytics     | 8000                           | працює                                               |
-| ai            | 8001                           | працює                                               |
-| documents     | 8002                           | працює                                               |
-| Prometheus    | 9090                           | профіль `observability`                              |
-| Grafana       | 3001                           | профіль `observability`, без логіну                  |
-| Loki          | 3100                           | профіль `observability`                              |
-| Alloy         | 4317 і 4318 (OTLP), 12345 (UI) | профіль `observability`                              |
-| Jaeger        | 16686                          | профіль `observability`                              |
-| GlitchTip     | 8003                           | профіль `observability`, логін з `GLITCHTIP_ADMIN_*` |
-| Uptime Kuma   | 3002                           | з'явиться в OBS-05                                   |
+| Сервіс        | Порт                           | Стан                                                   |
+| ------------- | ------------------------------ | ------------------------------------------------------ |
+| Postgres      | 5432                           | працює                                                 |
+| Redis         | 6379                           | працює                                                 |
+| MinIO         | 9000 (API), 9001 (консоль)     | працює                                                 |
+| Mailpit       | 1025 (SMTP), 8025 (UI)         | працює                                                 |
+| api           | 4000                           | працює                                                 |
+| worker        | без порту                      | працює                                                 |
+| web (Next.js) | 3000                           | працює                                                 |
+| analytics     | 8000                           | працює                                                 |
+| ai            | 8001                           | працює                                                 |
+| documents     | 8002                           | працює                                                 |
+| Prometheus    | 9090                           | профіль `observability`                                |
+| Grafana       | 3001                           | профіль `observability`, без логіну                    |
+| Loki          | 3100                           | профіль `observability`                                |
+| Alloy         | 4317 і 4318 (OTLP), 12345 (UI) | профіль `observability`                                |
+| Jaeger        | 16686                          | профіль `observability`                                |
+| GlitchTip     | 8003                           | профіль `observability`, логін з `GLITCHTIP_ADMIN_*`   |
+| Uptime Kuma   | 3002                           | профіль `observability`, логін з `UPTIME_KUMA_ADMIN_*` |
 
-Сервіси моніторингу запускаються лише з профілем `observability`, як описано в розділах [Логи](#логи), [Метрики](#метрики) і [Помилки](#помилки).
+Сервіси моніторингу запускаються лише з профілем `observability`, як описано в розділах [Логи](#логи), [Метрики](#метрики), [Помилки](#помилки) і [Аптайм](#аптайм).
 
 ## Логи
 
@@ -200,6 +200,33 @@ SENTRY_AUTH_TOKEN=<SENTRY_AUTH_TOKEN> pnpm --filter @jobflow/web sourcemaps:uplo
 ```
 
 Тоді панель «Щось зламалось у нас, не в тебе» показує рядок «Ми вже отримали звіт.», а `код` на ній збігається з першими 8 символами id події в GlitchTip. Подію можна знайти пошуком `code:<код>`, а її стек для web показує рядки TypeScript. Email, тексти нотаток і вакансій у події не потрапляють: перед відправкою з події прибираються текст помилки, тіло, заголовки і параметри запиту, дані користувача і breadcrumbs.
+
+## Аптайм
+
+Uptime Kuma у профілі `observability` перевіряє кожен сервіс стеку і показує публічну сторінку статусу «JobFlow status»:
+
+```bash
+docker compose --profile observability up -d --wait uptime-kuma
+docker compose --profile observability run --rm uptime-kuma-bootstrap
+```
+
+Сервіс `uptime-kuma-bootstrap` створює адміністратора з `UPTIME_KUMA_ADMIN_USER` і `UPTIME_KUMA_ADMIN_PASSWORD` (`admin` і `JobFlow-kuma-2026` з `.env.example`), дев'ять моніторів і сторінку статусу http://localhost:3002/status/jobflow, тож у UI нічого клацати не треба. Монітори: web (`/login`), api (`/api/v1/ready`), analytics, ai і documents (`/health`), minio (`/minio/health/live`), postgres і redis (TCP) і heartbeat worker. Усі дев'ять стоять на сторінці статусу в групі «Сервіси». Канал Telegram він створює, лише коли задано обидві змінні `UPTIME_KUMA_TELEGRAM_BOT_TOKEN` і `UPTIME_KUMA_TELEGRAM_CHAT_ID`. Повторний запуск додає лише те, чого бракує. Наприкінці він друкує:
+
+```text
+Monitors: 9, Telegram alerts: off
+Status page: http://localhost:3002/status/jobflow
+UPTIME_KUMA_PUSH_URL=http://localhost:3002/api/push/<UPTIME_KUMA_PUSH_TOKEN>
+```
+
+Поки `UPTIME_KUMA_PUSH_URL` порожній, як у `.env.example`, worker heartbeat не надсилає. Вставте останній надрукований рядок у `.env` і перестворіть worker, щоб він прочитав нове значення: `docker compose up -d worker` (для `pnpm --filter @jobflow/api dev:worker` досить перезапустити процес). У контейнері compose сам замінює адресу на `http://uptime-kuma:3001`. Worker щохвилини надсилає heartbeat через чергу maintenance, тому монітор `worker` падає і тоді, коли процес живий, але задачі не виконує. Kuma чекає heartbeat 90 секунд: якщо worker зупинився, сповіщення приходить не пізніше ніж через 90 секунд після останнього heartbeat, а коли worker знову запуститься, приходить повідомлення про відновлення.
+
+Сповіщення йдуть в особистого Telegram-бота. Це окремий бот, не продуктовий з `TELEGRAM_BOT_TOKEN` (BE-39), і змінні в нього свої. Щоб його створити:
+
+1. Напишіть `/newbot` боту [@BotFather](https://t.me/BotFather), дайте ім'я і username. У відповіді буде токен вигляду `123456789:AA...`, це `UPTIME_KUMA_TELEGRAM_BOT_TOKEN`.
+2. Надішліть своєму новому боту будь-яке повідомлення і відкрийте `https://api.telegram.org/bot<токен>/getUpdates`. Число з `message.chat.id` у відповіді і є `UPTIME_KUMA_TELEGRAM_CHAT_ID`.
+3. Задайте обидві змінні в `.env` і запустіть `uptime-kuma-bootstrap` ще раз. Він створить канал «JobFlow Telegram» і ввімкне його для всіх моніторів, а в першому рядку виводу буде `Telegram alerts: on`.
+
+Поки обидві змінні порожні, сповіщень немає. Токен бота bootstrap не друкує.
 
 ## Команди
 

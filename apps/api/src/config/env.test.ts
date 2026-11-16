@@ -123,6 +123,7 @@ describe('validateEnv', () => {
     { key: 'S3_PUBLIC_ENDPOINT', given: 'http://localhost:9000' },
     { key: 'OTEL_EXPORTER_OTLP_ENDPOINT', given: 'http://alloy:4318' },
     { key: 'SENTRY_RELEASE', given: '59dbb20a6f1c4e2b8d3a7f9e0c1b2d3e4f5a6b7c' },
+    { key: 'UPTIME_KUMA_PUSH_URL', given: 'http://uptime-kuma:3001/api/push/f6c2a9e04b7d' },
   ] as const)('leaves $key unset when it is empty and reads it when given', ({ key, given }) => {
     const unset = validateEnv({ ...exampleEnv, [key]: '' });
     const configured = validateEnv({ ...exampleEnv, [key]: given });
@@ -175,7 +176,7 @@ describe('parseEnv', () => {
     ]);
   });
 
-  it.each(['S3_PUBLIC_ENDPOINT', 'OTEL_EXPORTER_OTLP_ENDPOINT'] as const)(
+  it.each(['S3_PUBLIC_ENDPOINT', 'OTEL_EXPORTER_OTLP_ENDPOINT', 'UPTIME_KUMA_PUSH_URL'] as const)(
     'refuses an %s with a scheme other than http or https',
     (key) => {
       expect(failedPaths({ ...exampleEnv, [key]: 'ftp://localhost:9000' })).toEqual([key]);

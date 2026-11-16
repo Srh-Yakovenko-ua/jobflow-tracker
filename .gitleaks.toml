@@ -10,6 +10,10 @@ regexes = [
 ]
 
 [[allowlists]]
+description = "Local Uptime Kuma placeholder in .env.example and compose: the worker push token that uptime-kuma-bootstrap gives the heartbeat monitor on the developer's machine (OBS-05)"
+regexes = ['''^f6c2a9e04b7d4e1a8c3f5b902d6e7a14$''']
+
+[[allowlists]]
 description = "UUID ids in tests and OpenAPI examples (idempotency keys, capture token ids) are identifiers, not keys"
 targetRules = ["generic-api-key"]
 regexes = ['''^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$''']
