@@ -1,4 +1,5 @@
 import {
+  AUTH_ROUTES,
   type ReasonsResponse,
   REJECTION_REASON_CODES,
   REJECTION_REASONS,
@@ -16,7 +17,9 @@ import { rateLabelOf } from './rate-label';
 
 const COPY = uk.analytics.blocks.reasons;
 
-export const REJECTED_BOARD_HREF = withSearchParams('/board', { stage: ['rejected'] });
+export const REJECTED_BOARD_HREF = withSearchParams(AUTH_ROUTES.home, {
+  stage: ['rejected'],
+});
 
 export type StatedSide = Exclude<RejectionSide, 'system'>;
 

@@ -17,10 +17,13 @@ export {
 } from './lib/ai-result-view';
 export { daysInFunnelOf } from './lib/days-in-funnel';
 export {
+  applicationHrefOf,
   cardHrefOf,
+  cardLinkOf,
   type DraftSource,
   type DraftState,
   draftStateOf,
+  FOLLOW_UP_ANCHOR,
   REVIEW_ANCHOR,
 } from './lib/draft-state';
 export { jobFinished } from './lib/job-finished';

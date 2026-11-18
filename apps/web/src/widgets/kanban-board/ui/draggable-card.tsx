@@ -1,12 +1,7 @@
 import { useDraggable } from '@dnd-kit/core';
 import Link from 'next/link';
 
-import {
-  ApplicationCard,
-  type ApplicationCardProps,
-  cardHrefOf,
-  REVIEW_ANCHOR,
-} from '@/entities/application';
+import { ApplicationCard, type ApplicationCardProps, cardLinkOf } from '@/entities/application';
 import { canDragFrom } from '@/features/move-application';
 import { uk } from '@/shared/i18n';
 import { cn } from '@/shared/lib/cn';
@@ -19,11 +14,6 @@ const CARD_LINK = 'block rounded-xl focus-visible:focus-ring';
 
 const HANDLE =
   'cursor-grab touch-manipulation select-none [-webkit-touch-callout:none] active:cursor-grabbing';
-
-function cardLinkOf(application: DraggableCardProps['application']) {
-  const href = cardHrefOf(application);
-  return { href, scroll: href.endsWith(REVIEW_ANCHOR), prefetch: false } as const;
-}
 
 function DragHandle(card: DraggableCardProps) {
   const { application } = card;

@@ -1,3 +1,4 @@
+import { AUTH_ROUTES } from '@jobflow/shared';
 import {
   AlarmClock,
   CalendarDays,
@@ -35,7 +36,7 @@ export type ShellNav = Readonly<{
 export const NAV_ITEMS: readonly NavItem[] = [
   {
     id: 'board',
-    href: '/board',
+    href: AUTH_ROUTES.home,
     icon: SquareKanban,
     badge: 'silent',
     aliases: [{ href: '/applications', title: uk.applicationsTable.title }],

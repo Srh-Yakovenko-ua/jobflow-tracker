@@ -1,4 +1,5 @@
 import {
+  AUTH_ROUTES,
   type Source,
   SOURCE_LABELS,
   type SourcePerformance,
@@ -41,7 +42,7 @@ type MeasuredSource = Readonly<{ row: SourcePerformance; rate: MeasuredRate }>;
 
 const nameOf = (source: Source) => SOURCE_LABELS[source].labelUk;
 
-const boardHrefOf = (source: Source) => withSearchParams('/board', { source: [source] });
+const boardHrefOf = (source: Source) => withSearchParams(AUTH_ROUTES.home, { source: [source] });
 
 const countsOf = ({ applications, screenings }: SourcePerformance) => ({
   applied: applications,

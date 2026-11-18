@@ -1,5 +1,7 @@
+import type { ApplicationCard } from '@jobflow/shared';
 import { useRouter } from 'next/navigation';
 
+import { applicationHrefOf, cardHrefOf } from '@/entities/application';
 import { useUserId } from '@/entities/user';
 import type { PageCommand } from '@/shared/lib/page-commands';
 
@@ -12,7 +14,8 @@ export type PalettePageId = 'root' | 'move';
 
 export type PaletteRootActions = Readonly<{
   onRun: (run: PaletteRun) => void;
-  onOpenApplication: (application: RecentApplication) => void;
+  onOpenApplication: (application: ApplicationCard) => void;
+  onOpenRecent: (application: RecentApplication) => void;
   onCommand: (command: PageCommand) => void;
 }>;
 
@@ -58,13 +61,19 @@ export function usePaletteRuns({ surfaces, goTo }: PaletteRunsInput): PaletteRoo
   const push = (href: string) => {
     router.push(href);
   };
+  const open = (application: RecentApplication, href: string) => {
+    if (userId !== undefined) rememberRecentApplication({ userId, application });
+    surfaces.closeThen(() => {
+      push(href);
+    });
+  };
   return {
     onRun: runnerOf({ surfaces, goTo, push, flipTheme }),
     onOpenApplication: (application) => {
-      if (userId !== undefined) rememberRecentApplication({ userId, application });
-      surfaces.closeThen(() => {
-        push(`/applications/${application.id}`);
-      });
+      open(application, cardHrefOf(application));
+    },
+    onOpenRecent: (application) => {
+      open(application, applicationHrefOf(application.id));
     },
     onCommand: (command) => {
       surfaces.closeThen(command.run);

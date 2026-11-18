@@ -1,5 +1,6 @@
 'use client';
 
+import { AUTH_ROUTES } from '@jobflow/shared';
 import Link from 'next/link';
 
 import { OFFER_COMPARE } from '@/entities/application';
@@ -30,7 +31,10 @@ function MissingOffers({ count }: Readonly<{ count: number }>) {
       progress={{ count, goal: minOffers, label: EMPTY.meter }}
       slots={{
         action: (
-          <Link href="/board" className={buttonLinkClasses({ variant: 'primary', size: 'md' })}>
+          <Link
+            href={AUTH_ROUTES.home}
+            className={buttonLinkClasses({ variant: 'primary', size: 'md' })}
+          >
             {EMPTY.toBoard}
           </Link>
         ),

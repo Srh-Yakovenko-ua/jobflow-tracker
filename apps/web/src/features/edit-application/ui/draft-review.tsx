@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { type ReactNode, useState } from 'react';
 import { useForm } from 'react-hook-form';
 
-import { ScoreBadge } from '@/entities/application';
+import { applicationHrefOf, ScoreBadge } from '@/entities/application';
 import { uk } from '@/shared/i18n';
 import { cn } from '@/shared/lib/cn';
 import { Button, buttonLinkClasses } from '@/shared/ui/button';
@@ -104,7 +104,7 @@ export function DraftReview({ application, actions, heading, view = {} }: DraftR
           {COPY.confirm}
         </Button>
         <Link
-          href={`/applications/${application.id}`}
+          href={applicationHrefOf(application.id)}
           className={cn(buttonLinkClasses({ variant: 'outline', size: 'lg' }), TOUCH_HEIGHT)}
         >
           {COPY.open}

@@ -19,7 +19,12 @@ import {
   reasonsSummaryRoute,
 } from '@/test/board-fixtures';
 import { flagSwitch } from '@/test/feature-flags';
-import { heldSearchRoute, listItemsIn, pagedListRoute } from '@/test/list-fixtures';
+import {
+  heldSearchRoute,
+  listItemsIn,
+  pagedListRoute,
+  reviewDraftItemOf,
+} from '@/test/list-fixtures';
 import { push, route } from '@/test/navigation';
 import { QueryProbe, waitForQuery } from '@/test/query-status';
 import { refuseStorage } from '@/test/refusing-storage';
@@ -375,6 +380,16 @@ describe('CommandPalette', () => {
     expect(within(groupNamed('Недавні')).getByRole('option').textContent).toBe(
       'Mobile EngineerRoku',
     );
+  });
+
+  it('a draft found in the palette search opens its review form', async () => {
+    const { user } = await findRoku({ Roku: [{ ...reviewDraftItemOf(301), ...ROKU }] });
+
+    await user.keyboard('{Enter}');
+
+    await waitFor(() => {
+      expect(push).toHaveBeenCalledWith(`/add?review=${ROKU.id}#review`);
+    });
   });
 
   it('an application opened on its page shows up under «Недавні»', async () => {

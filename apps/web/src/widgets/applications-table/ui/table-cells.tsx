@@ -3,6 +3,7 @@ import Link from 'next/link';
 import type { ReactNode } from 'react';
 
 import {
+  cardLinkOf,
   formatSalaryRange,
   ScoreBadge,
   SilenceIndicator,
@@ -44,9 +45,7 @@ function VacancyCell({ application }: CellSource) {
       )}
     >
       <Link
-        href={`/applications/${application.id}`}
-        scroll={false}
-        prefetch={false}
+        {...cardLinkOf(application)}
         data-row-link
         className="col-start-1 row-start-2 block w-fit max-w-full touch-target rounded-xs font-medium text-ink focus-visible:focus-ring"
       >

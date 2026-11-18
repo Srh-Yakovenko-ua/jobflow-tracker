@@ -49,6 +49,7 @@ export const APPLICATION_COLUMNS = column.columns([
   column.display({ id: SELECT_COLUMN_ID, enableSorting: false, enableHiding: false }),
   column.accessor('company', {
     id: 'vacancy',
+    enableHiding: false,
     sortFn: (left, right) => COMPANY_ORDER.compare(left.original.company, right.original.company),
   }),
   column.accessor((application) => STAGES.indexOf(application.currentStage), {

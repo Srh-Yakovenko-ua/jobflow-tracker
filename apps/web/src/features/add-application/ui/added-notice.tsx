@@ -1,11 +1,11 @@
 'use client';
 
-import { type PossibleDuplicate, STAGE_LABELS } from '@jobflow/shared';
+import { AUTH_ROUTES, type PossibleDuplicate, STAGE_LABELS } from '@jobflow/shared';
 import { Check } from 'lucide-react';
 import Link from 'next/link';
 import { useState } from 'react';
 
-import { formatTimelineDate } from '@/entities/application';
+import { applicationHrefOf, formatTimelineDate } from '@/entities/application';
 import { useUserTimeZone } from '@/entities/user';
 import { uk } from '@/shared/i18n';
 import { cn } from '@/shared/lib/cn';
@@ -49,7 +49,7 @@ function DuplicateWarning({ duplicates }: DuplicateWarningProps) {
             {duplicates.map((duplicate) => (
               <span key={duplicate.id} className="flex flex-wrap items-center gap-x-2">
                 <Link
-                  href={`/applications/${duplicate.id}`}
+                  href={applicationHrefOf(duplicate.id)}
                   className={cn(
                     'inline-flex items-center wrap-anywhere text-link underline underline-offset-4',
                     TOUCH_HEIGHT,
@@ -82,7 +82,7 @@ export function AddedNotice({ added, actions }: AddedNoticeProps) {
           {COPY.another}
         </Button>
         <Link
-          href="/board"
+          href={AUTH_ROUTES.home}
           className={cn(buttonLinkClasses({ variant: 'outline', size: 'lg' }), TOUCH_HEIGHT)}
         >
           {COPY.toBoard}

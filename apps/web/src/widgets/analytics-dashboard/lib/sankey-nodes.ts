@@ -1,5 +1,6 @@
 import {
   ACTIVE_STAGES,
+  AUTH_ROUTES,
   type FunnelStage,
   type RateResult,
   type SankeyGraph,
@@ -165,5 +166,5 @@ export function firstRevealedNode({ detailed, merged }: SankeyResponse): SankeyN
 
 export function boardHrefOf({ id, kind }: SankeyNode): string | null {
   const stage = BOARD_STAGES[kind](id);
-  return stage === null ? null : withSearchParams('/board', { stage });
+  return stage === null ? null : withSearchParams(AUTH_ROUTES.home, { stage });
 }

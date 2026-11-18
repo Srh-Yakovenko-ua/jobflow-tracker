@@ -6,6 +6,7 @@ import { uk } from '@/shared/i18n';
 import { errorReply, NEVER_ANSWERS, REFUSED_CONNECTION } from '@/test/api-handlers';
 import { headingProblems } from '@/test/axe';
 import { boardRoute } from '@/test/board-fixtures';
+import { latch } from '@/test/latch';
 import { route } from '@/test/navigation';
 import {
   buildNotification,
@@ -83,6 +84,19 @@ async function renderUnread(items: Notification[]) {
     expect(screen.getAllByRole('button', { name: COPY.markRead })).toHaveLength(items.length);
   });
   return { user };
+}
+
+const NEXT_PAGES = {
+  feed: { ...DESIGN_FEED, nextCursor: notificationIdOf(3) },
+  more: { items: [OLDER], nextCursor: null },
+};
+
+async function failNextPage() {
+  const { user } = renderPage(NEXT_PAGES);
+  const more = await screen.findByRole('button', { name: COPY.more });
+  server.use(...notificationRoutes({ listReply: SERVER_ERROR }).handlers);
+  await user.click(more);
+  return { user, retry: await findRetryAfterQueryRetries() };
 }
 
 function listsSent(sent: { lists: URLSearchParams[] }) {
@@ -183,23 +197,32 @@ describe('NotificationsPage', () => {
   });
 
   it('a failed next page shows the retry alert and its retry adds the rows', async () => {
-    const pages = {
-      feed: { ...DESIGN_FEED, nextCursor: notificationIdOf(3) },
-      more: { items: [OLDER], nextCursor: null },
-    };
-    const { user } = renderPage(pages);
-    const more = await screen.findByRole('button', { name: COPY.more });
-    server.use(...notificationRoutes({ listReply: SERVER_ERROR }).handlers);
-
-    await user.click(more);
-    const retry = await findRetryAfterQueryRetries();
+    const { user, retry } = await failNextPage();
 
     expect(screen.getByRole('alert')).toBeDefined();
     expect(screen.queryByRole('button', { name: COPY.more })).toBeNull();
-    server.use(...notificationRoutes(pages).handlers);
+    server.use(...notificationRoutes(NEXT_PAGES).handlers);
     await user.click(retry);
     expect(await screen.findByRole('heading', { name: '02.11' })).toBeDefined();
     expect(screen.queryByRole('alert')).toBeNull();
+  });
+
+  it('the next-page retry shows its loading state', async () => {
+    const { user, retry } = await failNextPage();
+    const held = latch();
+    const heldReply = async () => {
+      await held.reached;
+      return SERVER_ERROR();
+    };
+    server.use(...notificationRoutes({ listReply: heldReply }).handlers);
+
+    await user.click(retry);
+
+    await waitFor(() => {
+      expect(retry.getAttribute('aria-busy')).toBe('true');
+    });
+    expect(screen.getByRole('alert')).toBeDefined();
+    held.release();
   });
 
   it('Прочитати все marks every notification read', async () => {

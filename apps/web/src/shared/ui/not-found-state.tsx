@@ -1,3 +1,4 @@
+import { AUTH_ROUTES } from '@jobflow/shared';
 import Link from 'next/link';
 
 import { uk } from '@/shared/i18n';
@@ -16,7 +17,7 @@ export function NotFoundState() {
         slots={{
           action: (
             <Link
-              href="/board"
+              href={AUTH_ROUTES.home}
               className="inline-flex min-h-11 items-center text-link underline underline-offset-4"
             >
               {COPY.action}

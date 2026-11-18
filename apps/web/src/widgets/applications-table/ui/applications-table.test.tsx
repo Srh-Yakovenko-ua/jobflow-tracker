@@ -16,7 +16,12 @@ import { fixtureIdOf, moveRoute } from '@/test/board-fixtures';
 import { fakeTimeouts, refocusTabOnceStale } from '@/test/fake-timeouts';
 import { stubFileDownload } from '@/test/file-download';
 import { latch } from '@/test/latch';
-import { listItemsIn, pagedListRoute, type PagedListRouteOptions } from '@/test/list-fixtures';
+import {
+  listItemsIn,
+  pagedListRoute,
+  type PagedListRouteOptions,
+  reviewDraftItemOf,
+} from '@/test/list-fixtures';
 import { push } from '@/test/navigation';
 import { QueryProbe, waitForQuery } from '@/test/query-status';
 import { renderInApp } from '@/test/render-in-app';
@@ -192,6 +197,16 @@ describe('ApplicationsTable rows', () => {
     expect(document.activeElement).toBe(screen.getByRole('link', { name: 'Альфа' }));
   });
 
+  it('a draft row in the table links to its review form', async () => {
+    const draft = reviewDraftItemOf(1);
+    const { user } = await tableReady({ items: [draft] });
+    const review = `/add?review=${fixtureIdOf(1)}#review`;
+
+    expect(screen.getByRole('link', { name: draft.company }).getAttribute('href')).toBe(review);
+    await user.click(screen.getByText('Vacancy 1'));
+    expect(push).toHaveBeenCalledExactlyOnceWith(review);
+  });
+
   it('a held list shows the loading status and no table yet', async () => {
     renderTable({ items: SCORED, latch: latch() });
 
@@ -258,7 +273,7 @@ describe('ApplicationsTable sorting and columns', () => {
     ).toBe('ascending');
   });
 
-  it('hiding Джерело drops its header and cells, and the last shown column cannot be hidden', async () => {
+  it('hiding Джерело drops its header and cells, and the vacancy column cannot be hidden', async () => {
     const { user } = await tableReady({ items: SCORED });
     expect(screen.getAllByRole('cell', { name: 'Djinni' })).toHaveLength(5);
 
@@ -273,7 +288,7 @@ describe('ApplicationsTable sorting and columns', () => {
     await user.click(screen.getByRole('button', { name: 'Колонки' }));
 
     expect(screen.getByRole('columnheader', { name: 'компанія' })).toBeDefined();
-    expect(checkboxNamed('Компанія').hasAttribute('disabled')).toBe(true);
+    expect(screen.queryByRole('checkbox', { name: 'Компанія' })).toBeNull();
     expect(checkboxNamed('Етап').hasAttribute('disabled')).toBe(false);
   });
 

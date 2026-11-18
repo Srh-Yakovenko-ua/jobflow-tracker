@@ -6,7 +6,7 @@ import { Search } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 
-import { isSearchable, SEARCH_LIMITS } from '@/entities/application';
+import { cardHrefOf, isSearchable, SEARCH_LIMITS } from '@/entities/application';
 import { useSingleKeyShortcuts } from '@/entities/user';
 import { uk } from '@/shared/i18n';
 import { cn } from '@/shared/lib/cn';
@@ -48,7 +48,7 @@ export function GlobalSearch() {
     setOpen(true);
   };
   const pick = (application: ApplicationCard) => {
-    router.push(`/applications/${application.id}`);
+    router.push(cardHrefOf(application));
     setText('');
     setOpen(false);
   };

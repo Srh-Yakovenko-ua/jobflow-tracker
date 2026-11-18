@@ -16,13 +16,12 @@ export type ColumnsMenuProps = Readonly<{ table: ApplicationsTableInstance }>;
 function hideableColumnsOf(table: ApplicationsTableInstance) {
   return DATA_COLUMN_IDS.flatMap((id) => {
     const column = table.getColumn(id);
-    return column === undefined ? [] : [{ id, column, visible: column.getIsVisible() }];
+    return column?.getCanHide() === true ? [{ id, column, visible: column.getIsVisible() }] : [];
   });
 }
 
 export function ColumnsMenu({ table }: ColumnsMenuProps) {
   const columns = hideableColumnsOf(table);
-  const lastVisible = columns.filter((entry) => entry.visible).length === 1;
   return (
     <Popover>
       <PopoverTrigger asChild>
@@ -39,7 +38,6 @@ export function ColumnsMenu({ table }: ColumnsMenuProps) {
           <Checkbox
             key={id}
             checked={visible}
-            disabled={visible && lastVisible}
             onCheckedChange={(next) => {
               column.toggleVisibility(next === true);
             }}
