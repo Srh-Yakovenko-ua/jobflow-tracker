@@ -37,7 +37,7 @@ function useCalendarView(controller: CalendarController) {
   useEffect(() => {
     controller.changeView(view);
   }, [controller, view]);
-  return { view, onView: setPicked };
+  return { view, narrow, onView: setPicked };
 }
 
 function useCalendarItems(period: ShownPeriod | null) {
@@ -77,7 +77,7 @@ function useGridActions(onPeriod: (period: ShownPeriod) => void): GridActions {
 
 export function useCalendarPage(): CalendarPageModel {
   const controller = useCalendarController();
-  const { view, onView } = useCalendarView(controller);
+  const { view, narrow, onView } = useCalendarView(controller);
   const [period, setPeriod] = useState<ShownPeriod | null>(null);
   const { shown, fresh, load } = useCalendarItems(period);
   const timeZone = useSettledTimeZone();
@@ -88,7 +88,7 @@ export function useCalendarPage(): CalendarPageModel {
     grid:
       timeZone === null
         ? null
-        : { calendar: { controller, initialView: view, items: shown, timeZone }, actions },
+        : { calendar: { controller, initialView: view, items: shown, timeZone, narrow }, actions },
     toolbar: {
       period: { title: period?.title ?? '', view, current: period?.current === true },
       actions: {
@@ -96,7 +96,7 @@ export function useCalendarPage(): CalendarPageModel {
           controller.prev();
         },
         onToday: () => {
-          controller.today();
+          if (period?.current !== true) controller.today();
         },
         onNext: () => {
           controller.next();

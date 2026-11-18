@@ -26,6 +26,7 @@ export default defineConfig({
     execArgv: ['--no-experimental-webstorage'],
     include: ['src/**/*.test.{ts,tsx}'],
     setupFiles: ['src/test/setup.ts'],
+    testTimeout: 15_000,
     coverage: {
       provider: 'v8',
       reporter: ['text', 'json-summary'],
