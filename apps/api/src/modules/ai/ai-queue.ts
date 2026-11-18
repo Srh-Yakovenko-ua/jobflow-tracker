@@ -9,22 +9,27 @@ export type GuardedCompletion = {
   queue: Queue;
   ai: Pick<AiService, 'failJob'>;
   logger: Logger;
-  finalAttempt?: boolean;
+  finalAttempt: boolean;
 };
 
+export type AiJobBuilder = Omit<AiCompleteJob, 'input'> & { buildInput: () => unknown };
+
 export async function queueOrFailAiJob(
-  { queue, ai, logger, finalAttempt = true }: GuardedCompletion,
-  job: AiCompleteJob,
+  { queue, ai, logger, finalAttempt }: GuardedCompletion,
+  { buildInput, ...head }: AiJobBuilder,
 ): Promise<void> {
   try {
-    await queueAiCompletion(queue, job);
+    await queueAiCompletion(queue, { ...head, input: await buildInput() });
   } catch (error) {
     if (!finalAttempt) {
       throw error;
     }
     const errorType = AI_JOB_FAILURES.notReady;
-    await ai.failJob(job.userId, { id: job.aiJobId, errorType });
-    logger.warn({ aiJobId: job.aiJobId, kind: job.kind, errorType }, `${job.kind} job not queued`);
+    await ai.failJob(head.userId, { id: head.aiJobId, errorType });
+    logger.warn(
+      { aiJobId: head.aiJobId, kind: head.kind, errorType },
+      `${head.kind} job not queued`,
+    );
     throw error;
   }
 }

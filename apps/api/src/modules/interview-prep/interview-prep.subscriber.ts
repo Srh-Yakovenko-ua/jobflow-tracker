@@ -19,7 +19,7 @@ export class InterviewPrepSubscriber implements OnModuleInit {
       type: INTERVIEW_PREP_EVENTS.requested,
       schema: interviewPrepRequestedPayloadSchema,
       label: 'interview prep event',
-      handle: (requested) => this.queue.enqueue(requested),
+      handle: (requested, delivery) => this.queue.enqueue(requested, delivery),
     });
   }
 }

@@ -5,7 +5,7 @@ import { Queue } from 'bullmq';
 import { QUEUES } from '../../queues/queues.js';
 import {
   AI_PAYLOAD_BUILDERS,
-  type AiCompleteJob,
+  type AiJobBuilder,
   AiService,
   queueOrFailAiJob,
 } from '../ai/index.js';
@@ -40,12 +40,13 @@ export class MatchQueueService {
     const input = AI_PAYLOAD_BUILDERS.match({ ...source, profile });
     const target = { applicationId, resumeVersionId };
     const aiJobId = await this.ai.createJob(userId, { kind: 'match', ...target });
-    await this.queued({ aiJobId, userId, kind: 'match', input, ...target });
+    await this.queued({ aiJobId, userId, kind: 'match', buildInput: () => input, ...target });
     return aiJobId;
   }
 
-  private async queued(job: AiCompleteJob): Promise<void> {
-    await queueOrFailAiJob({ queue: this.queue, ai: this.ai, logger: this.logger }, job);
+  private async queued(job: AiJobBuilder): Promise<void> {
+    const guarded = { queue: this.queue, ai: this.ai, logger: this.logger, finalAttempt: true };
+    await queueOrFailAiJob(guarded, job);
     this.logger.log({ aiJobId: job.aiJobId, applicationId: job.applicationId }, 'match queued');
   }
 }

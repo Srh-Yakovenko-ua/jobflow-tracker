@@ -97,6 +97,18 @@ describe('AiClient.complete', () => {
     expect(calls).toEqual([]);
   });
 
+  it('marks a request its schema refuses as never reaching services/ai, and a refused completion as reaching it', async () => {
+    replyWith(() => Response.json({ ...VACANCY_COMPLETION, output: { company: 'Acme' } }));
+
+    await expect(
+      aiClient.complete({ kind: 'vacancy_parse', input: { text: ' ' } }),
+    ).rejects.toMatchObject({ ...aiServiceError(422, 'validation_error'), reachedService: false });
+    await expect(aiClient.complete(VACANCY_CALL)).rejects.toMatchObject({
+      ...aiServiceError(422, 'ai_invalid_output'),
+      reachedService: true,
+    });
+  });
+
   it('refuses a 200 whose body is not a vacancy_parse completion with a final 422 ai_invalid_output', async () => {
     replyWith(() => Response.json({ ...VACANCY_COMPLETION, output: { company: 'Acme' } }));
 

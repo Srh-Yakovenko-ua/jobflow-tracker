@@ -21,6 +21,7 @@ import {
   VACANCY_JOB,
   VACANCY_TEXT,
 } from '../../test/ai.js';
+import { testJwtKeys } from '../../test/auth.js';
 import { exampleEnv } from '../../test/example-env.js';
 import { memoryLog } from '../../test/memory-log.js';
 import { compileProcessorModule } from '../../test/processor.js';
@@ -321,6 +322,19 @@ describe('AiService.complete', () => {
     },
   );
 
+  it('a refused payload ends the job at once', async () => {
+    const { repository, service } = await serviceWithFakes();
+    const { seen, progressed } = progressOf(repository);
+
+    await expect(
+      service.complete(attemptOf({ job: NOTE_JOB, finalAttempt: false, progressed })),
+    ).rejects.toBeInstanceOf(AiPayloadError);
+
+    expect(repository.jobs.get(AI_JOB_ID)).toEqual(failedJob('internal_error'));
+    expect(seen.map(({ update }) => update.status)).toEqual(['processing', 'failed']);
+    expect(repository.results.size).toBe(0);
+  });
+
   it('logs a security warning under production config with the paths and no note text, and the call goes on', async () => {
     const { ai, service } = await serviceWithFakes('production');
 
@@ -425,6 +439,17 @@ describe('AiService.complete recording calls', () => {
     );
 
     expect([overBudget.repository.calls, privatePayload.repository.calls]).toEqual([[], []]);
+  });
+
+  it('a local schema refusal writes no ai_calls row', async () => {
+    const { repository, ai, service } = await serviceWithFakes();
+    const realClient = new AiClient(new ConfigService(validateEnv(exampleEnv)), testJwtKeys);
+    ai.answer = () => realClient.complete({ kind: 'vacancy_parse', input: { text: ' ' } });
+
+    await expect(service.complete(attemptOf())).rejects.toBeInstanceOf(UnrecoverableError);
+
+    expect(repository.calls).toEqual([]);
+    expect(repository.jobs.get(AI_JOB_ID)).toEqual(failedJob('validation_error'));
   });
 
   it('records no call for the same vacancy served from the cache', async () => {

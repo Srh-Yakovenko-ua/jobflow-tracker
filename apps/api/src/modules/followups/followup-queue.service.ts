@@ -3,8 +3,9 @@ import { InjectQueue } from '@nestjs/bullmq';
 import { Injectable, Logger } from '@nestjs/common';
 import { Queue } from 'bullmq';
 
+import type { EventDelivery } from '../../outbox/domain-event-router.js';
 import { QUEUES } from '../../queues/queues.js';
-import { type AiCompleteJob, AiService, queueOrFailAiJob } from '../ai/index.js';
+import { type AiJobBuilder, AiService, queueOrFailAiJob } from '../ai/index.js';
 import type { FollowupRequestedPayload } from './followups.events.js';
 
 const VARIANT = {
@@ -21,9 +22,18 @@ export class FollowupQueueService {
     @InjectQueue(QUEUES.ai.name) private readonly queue: Queue,
   ) {}
 
-  async enqueue({ fresh, ...requested }: FollowupRequestedPayload): Promise<void> {
-    const job: AiCompleteJob = { kind: 'followup', ...requested, ...(fresh && VARIANT) };
-    await queueOrFailAiJob({ queue: this.queue, ai: this.ai, logger: this.logger }, job);
+  async enqueue(
+    { fresh, input, ...requested }: FollowupRequestedPayload,
+    { finalAttempt }: EventDelivery,
+  ): Promise<void> {
+    const job: AiJobBuilder = {
+      kind: 'followup',
+      ...requested,
+      ...(fresh && VARIANT),
+      buildInput: () => input,
+    };
+    const guarded = { queue: this.queue, ai: this.ai, logger: this.logger, finalAttempt };
+    await queueOrFailAiJob(guarded, job);
     const { aiJobId, applicationId, requestId } = requested;
     this.logger.log({ requestId, aiJobId, applicationId }, 'followup queued');
   }

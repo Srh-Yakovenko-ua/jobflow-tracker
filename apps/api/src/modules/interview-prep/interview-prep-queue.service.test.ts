@@ -8,7 +8,12 @@ import { recordFetch, refusedConnection, stalled, timeOutAtOnce } from '../../te
 import { DESIGN_WEAK_SPOTS, INTERVIEW_PREP_VACANCY } from '../../test/interview-prep.js';
 import { memoryLog } from '../../test/memory-log.js';
 import { compileProcessorModule } from '../../test/processor.js';
-import { APPLICATION_ID, OLENA_ID } from '../../test/service-fixtures.js';
+import {
+  APPLICATION_ID,
+  FINAL_DELIVERY,
+  FIRST_DELIVERY,
+  OLENA_ID,
+} from '../../test/service-fixtures.js';
 import { StubQueue, unreachableQueues } from '../../test/stub-queues.js';
 import { AiService } from '../ai/index.js';
 import type { InterviewPrepRequestedPayload } from './interview-prep.events.js';
@@ -50,8 +55,15 @@ async function queueing(queue: StubQueue = new StubQueue('ai')) {
     { provide: AiService, useValue: ai },
     { provide: getQueueToken('ai'), useValue: queue },
   ]);
-  const enqueue = () => moduleRef.get(InterviewPrepQueueService).enqueue(REQUESTED);
+  const service = moduleRef.get(InterviewPrepQueueService);
+  const enqueue = (delivery = FIRST_DELIVERY) => service.enqueue(REQUESTED, delivery);
   return { ai, queue, enqueue };
+}
+
+function crashedWeakSpotsRead(): Error {
+  const crashed = new Error('weak spots read crashed');
+  recordFetch({ replies: () => Promise.reject(crashed), decodeBody: () => null });
+  return crashed;
 }
 
 beforeEach(() => {
@@ -122,13 +134,32 @@ describe('InterviewPrepQueueService.enqueue', () => {
     },
   );
 
+  it('interview prep whose weak spots read fails on the final attempt ends failed', async () => {
+    const crashed = crashedWeakSpotsRead();
+    const { ai, queue, enqueue } = await queueing();
+
+    await expect(enqueue(FINAL_DELIVERY)).rejects.toBe(crashed);
+
+    expect(ai.jobs.get(AI_JOB_ID)).toMatchObject({ status: 'failed', errorType: 'not_ready' });
+    expect(queue.jobs).toEqual([]);
+  });
+
+  it('rethrows a crashed weak spots read before the final attempt and keeps the job queued', async () => {
+    const crashed = crashedWeakSpotsRead();
+    const { ai, enqueue } = await queueing();
+
+    await expect(enqueue()).rejects.toBe(crashed);
+
+    expect(ai.jobs.get(AI_JOB_ID)).toMatchObject({ status: 'queued' });
+  });
+
   it.each(unreachableQueues('ai'))(
-    'fails the job as not_ready and rethrows when the queue $case',
+    'fails the job as not_ready and rethrows when the queue $case on the final attempt',
     async ({ queue, error }) => {
       recordFetch({ replies: analyticsReplies, decodeBody: () => null });
       const { ai, enqueue } = await queueing(queue);
 
-      await expect(enqueue()).rejects.toThrow(error);
+      await expect(enqueue(FINAL_DELIVERY)).rejects.toThrow(error);
 
       expect(ai.jobs.get(AI_JOB_ID)).toMatchObject({ status: 'failed', errorType: 'not_ready' });
     },
