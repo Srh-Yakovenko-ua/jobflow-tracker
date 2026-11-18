@@ -4,6 +4,7 @@ import { useSilenceDays } from '@/entities/user';
 import { useSilentCount } from '@/features/snooze-reminder';
 import { uk } from '@/shared/i18n';
 import { cn } from '@/shared/lib/cn';
+import { LoadFailedAlert } from '@/shared/ui/banner';
 import { Button } from '@/shared/ui/button';
 import { EmptyState } from '@/shared/ui/empty-state';
 import { LoadFailedPanel } from '@/shared/ui/error-panel';
@@ -31,6 +32,24 @@ function EverybodyAnswered() {
   );
 }
 
+function FeedMore({ query }: Readonly<Pick<NotificationFeed, 'query'>>) {
+  const onMore = () => void query.fetchNextPage();
+  if (query.isFetchNextPageError) {
+    return <LoadFailedAlert onRetry={onMore} className="animate-fade-in self-center" />;
+  }
+  if (!query.hasNextPage) return null;
+  return (
+    <Button
+      variant="secondary"
+      loading={query.isFetchingNextPage}
+      className={cn(TOUCH_HEIGHT, 'self-center')}
+      onClick={onMore}
+    >
+      {COPY.more}
+    </Button>
+  );
+}
+
 export type FeedBodyProps = Readonly<{
   feed: NotificationFeed;
   context: Omit<NotificationRowContext, 'timeZone'>;
@@ -52,18 +71,7 @@ export function FeedBody({ feed, context }: FeedBodyProps) {
         context={{ ...context, timeZone }}
         className="rounded-lg bg-surface p-2 shadow-e1"
       />
-      {query.hasNextPage && (
-        <Button
-          variant="secondary"
-          loading={query.isFetchingNextPage}
-          className={cn(TOUCH_HEIGHT, 'self-center')}
-          onClick={() => {
-            void query.fetchNextPage();
-          }}
-        >
-          {COPY.more}
-        </Button>
-      )}
+      <FeedMore query={query} />
     </div>
   );
 }

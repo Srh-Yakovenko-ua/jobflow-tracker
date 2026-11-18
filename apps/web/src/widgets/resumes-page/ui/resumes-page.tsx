@@ -1,16 +1,20 @@
 'use client';
 
 import { useQuery } from '@tanstack/react-query';
+import { AnimatePresence } from 'motion/react';
 import { useState } from 'react';
 
+import { type SectionLoad, sectionLoadOf } from '@/entities/application';
 import { resumeAbQueryOptions, resumeVersionsQueryOptions } from '@/entities/resume';
 import { useSession, useUserTimeZone } from '@/entities/user';
 import { ResumeUpload } from '@/features/upload-resume';
 import { uk } from '@/shared/i18n';
+import { LoadFailedAlert } from '@/shared/ui/banner';
 import { Button } from '@/shared/ui/button';
 import { type FilePicker, useFilePicker } from '@/shared/ui/drop-zone';
 import { EmptyState } from '@/shared/ui/empty-state';
 import { LoadFailedPanel } from '@/shared/ui/error-panel';
+import { Fade } from '@/shared/ui/fade';
 import { LoadingRegion } from '@/shared/ui/loading-region';
 import { PAGE_TITLE } from '@/shared/ui/page-title';
 import { TableSkeleton } from '@/shared/ui/skeleton';
@@ -26,8 +30,21 @@ function useResumeVersions() {
   const activeId = useSession().settings?.activeResumeVersionId ?? null;
   const timeZone = useUserTimeZone();
   const [now] = useState(() => new Date());
-  const conversions = conversionsById(useQuery(resumeAbQueryOptions()).data?.versions ?? []);
-  return { query, activeId, view: { now, timeZone, conversions } };
+  const abQuery = useQuery(resumeAbQueryOptions());
+  const abVersions = abQuery.data?.versions;
+  return { query, activeId, abLoad: sectionLoadOf(abQuery), view: { now, timeZone, abVersions } };
+}
+
+function AbFailedAlert({ load }: Readonly<{ load: SectionLoad }>) {
+  return (
+    <AnimatePresence initial={false}>
+      {load.failed && (
+        <Fade key="resume-ab-failed">
+          <LoadFailedAlert onRetry={load.onRetry} />
+        </Fade>
+      )}
+    </AnimatePresence>
+  );
 }
 
 function PageHeading({ picker }: Readonly<{ picker: FilePicker | null }>) {
@@ -47,7 +64,7 @@ function PageHeading({ picker }: Readonly<{ picker: FilePicker | null }>) {
 }
 
 function VersionsBody({ picker }: Readonly<{ picker: FilePicker }>) {
-  const { query, activeId, view } = useResumeVersions();
+  const { query, activeId, abLoad, view } = useResumeVersions();
   if (query.data === undefined) {
     if (query.isError) {
       return (
@@ -75,11 +92,12 @@ function VersionsBody({ picker }: Readonly<{ picker: FilePicker }>) {
   }
   return (
     <div className="flex min-w-0 flex-col gap-6">
+      <AbFailedAlert load={abLoad} />
       <VersionsTable
         split={splitVersions({
           versions: query.data.items,
           activeId,
-          conversions: view.conversions,
+          conversions: conversionsById(view.abVersions ?? []),
         })}
         view={view}
       />

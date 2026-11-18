@@ -1,6 +1,9 @@
 import type { ApplicationResponse } from '@jobflow/shared';
+import { AnimatePresence } from 'motion/react';
 
 import { uk } from '@/shared/i18n';
+import { LoadFailedAlert } from '@/shared/ui/banner';
+import { Fade } from '@/shared/ui/fade';
 
 import type { ContextRow } from '../lib/context-rows';
 import { useApplicationContext } from '../model/use-application-context';
@@ -34,7 +37,7 @@ function ContextValue({ row }: ContextValueProps) {
 }
 
 export function ApplicationContext({ application }: ApplicationContextProps) {
-  const rows = useApplicationContext(application);
+  const { rows, load } = useApplicationContext(application);
   return (
     <ApplicationSection
       title={{ text: COPY.kicker, look: 'eyebrow' }}
@@ -51,6 +54,13 @@ export function ApplicationContext({ application }: ApplicationContextProps) {
           </div>
         ))}
       </dl>
+      <AnimatePresence initial={false}>
+        {load.failed && (
+          <Fade key="norms-failed">
+            <LoadFailedAlert onRetry={load.onRetry} />
+          </Fade>
+        )}
+      </AnimatePresence>
     </ApplicationSection>
   );
 }

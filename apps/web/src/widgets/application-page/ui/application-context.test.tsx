@@ -2,7 +2,7 @@ import type { ApplicationResponse } from '@jobflow/shared';
 import { screen, waitFor, within } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
-import { OUTAGES } from '@/test/api-handlers';
+import { NEVER_ANSWERS, OUTAGES } from '@/test/api-handlers';
 import { ACME_APPLICATION } from '@/test/application-fixtures';
 import { DESIGN_NORMS, NORMS_URL, normsRoute } from '@/test/norms-fixtures';
 import { pinClockInEachTest } from '@/test/pinned-clock';
@@ -20,8 +20,19 @@ const FINAL_APPLICATION: ApplicationResponse = {
   daysInStage: 13,
 };
 
+const CONTEXT = { name: 'Контекст' } as const;
+
+const RETRY = { name: 'Спробувати ще раз' } as const;
+
+const RETRY_WAIT = { timeout: 2500 } as const;
+
+const UNREAD_ROWS = [
+  ['твоя медіана до офера', '—'],
+  ['на етапі', '13 днів'],
+];
+
 async function contextRows(): Promise<[string | null, string | null][]> {
-  const section = await screen.findByRole('region', { name: 'Контекст' });
+  const section = await screen.findByRole('region', CONTEXT);
   const values = within(section).getAllByRole('definition');
   return within(section)
     .getAllByRole('term')
@@ -34,12 +45,14 @@ describe('ApplicationContext', () => {
   it('reads the source and the days in the funnel, and says мало даних where no norm is known yet', async () => {
     renderApplicationPage();
 
-    expect(await contextRows()).toEqual([
-      ['джерело', 'Djinni'],
-      ['у воронці', '26 днів'],
-      ['твоя медіана до офера', 'мало даних'],
-      ['на етапі', '9 днів · мало даних'],
-    ]);
+    await waitFor(async () => {
+      expect(await contextRows()).toEqual([
+        ['джерело', 'Djinni'],
+        ['у воронці', '26 днів'],
+        ['твоя медіана до офера', 'мало даних'],
+        ['на етапі', '9 днів · мало даних'],
+      ]);
+    });
   });
 
   it('reads the median to offer and the stage norm from the fetched norms: 13 днів · норма 17', async () => {
@@ -54,12 +67,38 @@ describe('ApplicationContext', () => {
     });
   });
 
-  it.each(OUTAGES)('while the norms request $name the rows say мало даних', async (outage) => {
+  it.each(OUTAGES.filter(({ settled }) => settled === 'error'))(
+    'when the norms request $name the rows show the neutral mark and a retry that reads them again',
+    async (outage) => {
+      const down = { on: true };
+      server.use(
+        normsRoute((info) => (down.on ? outage.reply(info) : Response.json(DESIGN_NORMS))),
+      );
+      const { user } = renderApplicationPage({ application: FINAL_APPLICATION });
+
+      const section = await screen.findByRole('region', CONTEXT);
+      const retry = await within(section).findByRole('button', RETRY, RETRY_WAIT);
+
+      expect((await contextRows()).slice(2)).toEqual(UNREAD_ROWS);
+      expect(within(section).queryByText(/мало даних/)).toBeNull();
+      down.on = false;
+      await user.click(retry);
+      await waitFor(async () => {
+        expect((await contextRows()).slice(2)).toEqual([
+          ['твоя медіана до офера', '37 днів'],
+          ['на етапі', '13 днів · норма 17'],
+        ]);
+      });
+      expect(within(section).queryByRole('button', RETRY)).toBeNull();
+    },
+  );
+
+  it('while the norms request never answers the rows show the neutral mark and no retry', async () => {
     const asked: string[] = [];
     server.use(
       normsRoute((info) => {
         asked.push(info.request.url);
-        return outage.reply(info);
+        return NEVER_ANSWERS.reply(info);
       }),
     );
     renderApplicationPage({ application: FINAL_APPLICATION });
@@ -67,10 +106,8 @@ describe('ApplicationContext', () => {
       expect(asked).toContain(NORMS_URL);
     });
 
-    expect((await contextRows()).slice(2)).toEqual([
-      ['твоя медіана до офера', 'мало даних'],
-      ['на етапі', '13 днів · мало даних'],
-    ]);
+    expect((await contextRows()).slice(2)).toEqual(UNREAD_ROWS);
+    expect(screen.queryByRole('button', RETRY)).toBeNull();
   });
 
   it('a rejected application has no row for days on the stage', async () => {

@@ -1,6 +1,7 @@
 import type { YearMonth } from '@jobflow/shared';
 import { useQuery } from '@tanstack/react-query';
 import { screen, waitFor, within } from '@testing-library/react';
+import { toast } from 'sonner';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { latestPlanQueryOptions } from '@/entities/plan';
@@ -32,6 +33,7 @@ vi.mock('next/navigation', () => import('@/test/navigation'));
 vi.mock('next/link', () => import('@/test/link'));
 
 afterEach(() => {
+  toast.dismiss();
   route.pathname = '/board';
 });
 
@@ -197,9 +199,24 @@ describe('SummaryPage', () => {
       await user.click(await screen.findByRole('button', { name: REGENERATE }));
 
       expect((await screen.findByRole('alert')).textContent).toBe(line);
+      expect(toast.getToasts()).toEqual([]);
       expect(screen.getByRole('heading', { name: 'Як пройшов серпень' })).toBeDefined();
     },
   );
+
+  it('a failed plan save shows its one line and no toast', async () => {
+    const { user } = renderPage({
+      planReply: () => errorReply({ status: 500, type: 'internal_error' }),
+    });
+
+    await user.click(await screen.findByRole('button', { name: SAVE }));
+
+    expect((await screen.findByRole('alert')).textContent).toBe(
+      'Не вдалося зберегти план. Спробуй ще раз.',
+    );
+    expect(toast.getToasts()).toEqual([]);
+    expect(screen.getByRole('button', { name: SAVE })).toBeDefined();
+  });
 
   it('an archive month shows its summary and saved plan but offers no Перегенерувати', async () => {
     renderPage({ month: '2026-07' });

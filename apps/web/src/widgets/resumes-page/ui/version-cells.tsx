@@ -5,7 +5,13 @@ import { motion } from 'motion/react';
 import type { ReactNode } from 'react';
 
 import { formatTimelineDate } from '@/entities/application';
-import { AiProfileStatus, missingForPercent } from '@/entities/resume';
+import {
+  AiProfileStatus,
+  conversionLabelOf,
+  missingForPercent,
+  percentOf,
+  type VersionConversion,
+} from '@/entities/resume';
 import { VersionActions } from '@/features/edit-resume-version';
 import { uk } from '@/shared/i18n';
 import { cn } from '@/shared/lib/cn';
@@ -20,7 +26,7 @@ export type VersionRowView = Readonly<{
   active: boolean;
   now: Date;
   timeZone: string;
-  conversion: RateResult | null;
+  conversion: VersionConversion;
 }>;
 
 export type VersionCellProps = Readonly<{ version: ResumeVersion; view: VersionRowView }>;
@@ -32,10 +38,6 @@ const PERCENT = 100;
 type Rated = Extract<RateResult, { status: 'ok' }>;
 
 type RatedCellProps = Readonly<{ rate: Rated; active: boolean }>;
-
-function percentOf(rate: Rated): number {
-  return Math.round(rate.value * PERCENT);
-}
 
 type MetaItemProps = Readonly<{ children: ReactNode; className?: string }>;
 
@@ -109,25 +111,25 @@ function ScreeningBar({ rate, active }: RatedCellProps) {
 
 function ScreeningCell({ version, view }: VersionCellProps) {
   const { conversion } = view;
-  if (conversion?.status === 'ok') return <ScreeningBar rate={conversion} active={view.active} />;
-  if (conversion === null)
+  if (typeof conversion === 'string') {
     return <NeedMore missing={missingForPercent(version.applicationsCount)} />;
+  }
+  if (conversion.status === 'ok') return <ScreeningBar rate={conversion} active={view.active} />;
   return <NeedMore missing={conversion.need} />;
 }
 
 function ConversionCell({ view }: VersionCellProps) {
   const { conversion } = view;
-  if (conversion?.status !== 'ok') {
-    return <span className="text-[12px] font-semibold text-ink-3">{COPY.lowData}</span>;
-  }
+  const rated = typeof conversion !== 'string' && conversion.status === 'ok';
   return (
     <span
       className={cn(
-        'text-[15px] font-semibold tabular-nums',
-        view.active ? 'text-ink' : 'text-ink-3',
+        rated
+          ? ['text-[15px] font-semibold tabular-nums', view.active ? 'text-ink' : 'text-ink-3']
+          : 'text-[12px] font-semibold text-ink-3',
       )}
     >
-      {COPY.percent(percentOf(conversion))}
+      {conversionLabelOf(conversion)}
     </span>
   );
 }

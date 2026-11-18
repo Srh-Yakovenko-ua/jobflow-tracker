@@ -1,11 +1,12 @@
 'use client';
 
-import type { ResumeVersion } from '@jobflow/shared';
+import type { ResumeAbVersion, ResumeVersion } from '@jobflow/shared';
 import { useTable } from '@tanstack/react-table';
 import { ChevronDown } from 'lucide-react';
 import { motion } from 'motion/react';
 import { useState } from 'react';
 
+import { conversionOf } from '@/entities/resume';
 import { uk } from '@/shared/i18n';
 import { cn } from '@/shared/lib/cn';
 import { Button } from '@/shared/ui/button';
@@ -17,7 +18,7 @@ import {
   type VersionColumnId,
   versionTableFeatures,
 } from '../model/columns';
-import type { ConversionsById, VersionSplit } from '../model/split-versions';
+import type { VersionSplit } from '../model/split-versions';
 import { END_ALIGNED, VERSION_CELLS } from './version-cells';
 
 const COPY = uk.resumes;
@@ -28,7 +29,7 @@ const GRID =
 export type VersionsTableView = Readonly<{
   now: Date;
   timeZone: string;
-  conversions: ConversionsById;
+  abVersions: readonly ResumeAbVersion[] | undefined;
 }>;
 
 export type VersionsTableProps = Readonly<{ split: VersionSplit; view: VersionsTableView }>;
@@ -91,7 +92,7 @@ function VersionRows({ versions, view, heading }: VersionRowsProps) {
       <div role="rowgroup">
         {table.getRowModel().rows.map((row) => {
           const active = row.id === view.activeId;
-          const conversion = view.conversions.get(row.id) ?? null;
+          const conversion = conversionOf({ versions: view.abVersions, versionId: row.id });
           const rowView = { active, now: view.now, timeZone: view.timeZone, conversion };
           return (
             <motion.div

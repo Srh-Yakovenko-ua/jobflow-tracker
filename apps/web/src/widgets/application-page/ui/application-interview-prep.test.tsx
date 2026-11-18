@@ -98,7 +98,7 @@ describe('ApplicationInterviewPrep', () => {
     const section = await screen.findByRole('region', { name: TITLE });
 
     expect(await within(section).findByRole('button', REQUEST)).toBeDefined();
-    expect(within(section).getByText(/Нотатки в модель не йдуть/)).toBeDefined();
+    expect(within(section).getByText(/лише слова-теми зі словника/)).toBeDefined();
   });
 
   it('at screening with a schedule that fails to load offers the button, never says an interview is missing', async () => {

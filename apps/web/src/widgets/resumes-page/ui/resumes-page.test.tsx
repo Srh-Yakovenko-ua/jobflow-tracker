@@ -7,7 +7,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { apiUrl, errorReply } from '@/test/api-handlers';
 import { advancePastQueryRetries, fakeTimeoutsAndClock } from '@/test/fake-timeouts';
 import { renderInApp } from '@/test/render-in-app';
-import { DESIGN_RESUME_AB, resumeAbRoute } from '@/test/resume-ab-fixtures';
+import { DESIGN_RESUME_AB } from '@/test/resume-ab-fixtures';
+import { resumeAbRoute } from '@/test/resume-ab-route';
 import {
   buildResumeVersion,
   buildResumeVersions,
@@ -121,7 +122,7 @@ describe('ResumesPage', () => {
     if (row === undefined) throw new Error('one row expected');
 
     expect(within(row).getByText('потрібно ще 1')).toBeDefined();
-    expect(within(row).getByText('мало даних')).toBeDefined();
+    expect(await within(row).findByText('мало даних')).toBeDefined();
     expect(within(row).getByText('4')).toBeDefined();
     expect(screen.getByRole('table', TABLE).textContent).not.toContain('%');
   });
@@ -205,15 +206,27 @@ describe('ResumesPage', () => {
     ]);
   });
 
-  it('an analytics outage keeps the table with the sample counts and no percent', async () => {
-    renderPage(designPage(() => errorReply({ status: 503, type: 'dependency_unavailable' })));
+  it('a failed A/B read shows the retry alert, not мало даних', async () => {
+    const outage = { on: true };
+    const { user } = renderPage(
+      designPage(() =>
+        outage.on
+          ? errorReply({ status: 503, type: 'dependency_unavailable' })
+          : Response.json(DESIGN_RESUME_AB),
+      ),
+    );
     await advancePastQueryRetries();
 
     const rows = await dataRowsOf(TABLE.name);
+    const retry = await screen.findByRole('button', { name: 'Спробувати ще раз' });
 
     expect(within(rowOf(rows, 'CV v3 · версія 3')).getByText('потрібно ще 2')).toBeDefined();
-    expect(screen.getAllByText('мало даних')).toHaveLength(3);
+    expect(screen.queryAllByText('мало даних')).toHaveLength(0);
     expect(screen.getByRole('table', TABLE).textContent).not.toContain('%');
+    outage.on = false;
+    await user.click(retry);
+
+    expect(await screen.findByText('41%')).toBeDefined();
     expect(screen.queryByRole('button', { name: 'Спробувати ще раз' })).toBeNull();
   });
 });

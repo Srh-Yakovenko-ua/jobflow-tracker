@@ -5,6 +5,13 @@ export {
   resumeVersionPath,
   resumeVersionsQueryOptions,
 } from './api/resume-versions';
+export {
+  conversionLabelOf,
+  conversionOf,
+  type ConversionQuery,
+  percentOf,
+  type VersionConversion,
+} from './lib/conversion';
 export { fileExtensionOf } from './lib/file-extension';
 export { missingForPercent } from './lib/sample';
 export { resumeKeys } from './model/keys';
