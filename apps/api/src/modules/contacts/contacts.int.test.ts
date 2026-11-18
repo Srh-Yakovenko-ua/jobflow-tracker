@@ -91,6 +91,22 @@ describe('the contacts routes', () => {
   const olenaWithContact = async (): Promise<SignedInContact> =>
     addContact(await signUpWithApplication(testApp.app), OKSANA);
 
+  async function companyApplication(accessToken: string, company: string) {
+    const { id } = await createApplication(testApp.app, {
+      accessToken,
+      input: { ...ROMASHKA, company },
+    });
+    return { accessToken, id };
+  }
+
+  const oksanaSuggestedFrom = ({ id, contactId }: SignedInContact) => ({
+    ...OKSANA,
+    id: contactId,
+    applicationId: id,
+    createdAt: NOW_ISO,
+    updatedAt: NOW_ISO,
+  });
+
   async function moveAt(application: SignedInApplication, { hours, input }: TimedMove) {
     clock.at(hoursLater(hours));
     const response = await postStageMove(testApp.app, { ...application, input });
@@ -316,11 +332,8 @@ describe('the contacts routes', () => {
     const olena = await olenaWithContact();
     const { accessToken } = olena;
     await addContact(olena, { name: 'Марта Коваль', email: 'marta@romashka.ua' });
-    const acme = await createApplication(testApp.app, {
-      accessToken,
-      input: { ...ROMASHKA, company: 'Acme' },
-    });
-    await addContact({ accessToken, id: acme.id }, { name: 'Ірина', email: 'hr@acme.io' });
+    const acme = await companyApplication(accessToken, 'Acme');
+    await addContact(acme, { name: 'Ірина', email: 'hr@acme.io' });
     const deleted = await addContact(
       {
         accessToken,
@@ -333,23 +346,34 @@ describe('the contacts routes', () => {
       name: 'Тарас',
       email: 'taras@romashka.ua',
     });
-    const fresh = await createApplication(testApp.app, {
-      accessToken,
-      input: { ...ROMASHKA, company: 'ромашка' },
-    });
-    await addContact({ accessToken, id: fresh.id }, { name: 'Марта', email: 'Marta@Romashka.ua' });
+    const fresh = await companyApplication(accessToken, 'ромашка');
+    await addContact(fresh, { name: 'Марта', email: 'Marta@Romashka.ua' });
 
-    const { items, suggestions } = await contactsOf({ accessToken, id: fresh.id });
+    const { items, suggestions } = await contactsOf(fresh);
 
     expect(items.map(({ name }) => name)).toEqual(['Марта']);
-    expect(suggestions).toEqual([
-      {
-        ...OKSANA,
-        id: olena.contactId,
-        applicationId: olena.id,
-        createdAt: NOW_ISO,
-        updatedAt: NOW_ISO,
-      },
-    ]);
+    expect(suggestions).toEqual([oksanaSuggestedFrom(olena)]);
+  });
+
+  it('a contact on ТОВ Ромашка shows on Ромашка', async () => {
+    const olena = await olenaWithContact();
+
+    const legalName = await companyApplication(olena.accessToken, 'ТОВ «Ромашка»');
+
+    expect(await contactsOf(legalName)).toEqual({
+      items: [],
+      suggestions: [oksanaSuggestedFrom(olena)],
+    });
+  });
+
+  it('lists the own contact of a company named only by a legal form and suggests nothing from another such company', async () => {
+    const { accessToken } = await signUpWithApplication(testApp.app);
+    const legalFormOnly = await companyApplication(accessToken, 'ТОВ');
+    await addContact(legalFormOnly, { name: 'Марта', email: 'marta@tov.ua' });
+    await addContact(await companyApplication(accessToken, 'ТОВ'), OKSANA);
+
+    const { items, suggestions } = await contactsOf(legalFormOnly);
+
+    expect([items.map(({ name }) => name), suggestions]).toEqual([['Марта'], []]);
   });
 });

@@ -1,7 +1,6 @@
-import { Body, Controller, HttpCode, Param, Post, Req } from '@nestjs/common';
-import type { Request } from 'express';
+import { Body, Controller, HttpCode, Param, Post } from '@nestjs/common';
 
-import { readRequestId } from '../../common/request-id.middleware.js';
+import { RequestId } from '../../common/request-id.decorator.js';
 import {
   type JobAccepted,
   type MaintenanceScheduleId,
@@ -19,17 +18,17 @@ export class MaintenanceController {
   @HttpCode(202)
   ping(
     @Body({ schema: pingBodySchema }) body: PingBody,
-    @Req() req: Request,
+    @RequestId() requestId: string,
   ): Promise<JobAccepted> {
-    return this.maintenanceService.enqueuePing({ requestId: readRequestId(req), ...body });
+    return this.maintenanceService.enqueuePing({ requestId, ...body });
   }
 
   @Post(':schedule')
   @HttpCode(202)
   runNow(
     @Param('schedule', { schema: maintenanceScheduleIdSchema }) schedule: MaintenanceScheduleId,
-    @Req() req: Request,
+    @RequestId() requestId: string,
   ): Promise<JobAccepted> {
-    return this.maintenanceService.runNow({ schedule, requestId: readRequestId(req) });
+    return this.maintenanceService.runNow({ schedule, requestId });
   }
 }

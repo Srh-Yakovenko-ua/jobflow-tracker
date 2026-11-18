@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto';
 
-import { type TokenScope, USER_TOKEN_SCOPES } from '@jobflow/shared';
+import { type TokenScope, tokenScopeSchema, USER_TOKEN_SCOPES } from '@jobflow/shared';
 import { Injectable } from '@nestjs/common';
 import { fromUnixTime } from 'date-fns';
 import { errors, type JWTPayload, type JWTVerifyOptions } from 'jose';
@@ -15,7 +15,7 @@ export type AccessTokenLifetime = { issuedAt: Date; expiresAt: Date };
 
 export type AccessUser = {
   id: string;
-  scope: string[];
+  scope: TokenScope[];
   captureTokenId?: string;
   token?: AccessTokenLifetime;
 };
@@ -23,7 +23,7 @@ export type AccessUser = {
 export type SignAccessTokenInput = {
   keys: JwtKeys;
   userId: string;
-  issuedAt?: Date | undefined;
+  issuedAt: Date;
   scope?: readonly TokenScope[] | undefined;
 };
 
@@ -41,7 +41,10 @@ const VERIFY_OPTIONS: JWTVerifyOptions = {
 
 const accessClaimsSchema = z.object({
   sub: z.uuid(),
-  scope: z.string(),
+  scope: z
+    .string()
+    .transform((scope) => scope.split(' '))
+    .pipe(z.array(tokenScopeSchema)),
   iat: z.int(),
   exp: z.int(),
 });
@@ -53,7 +56,7 @@ function toAccessTokenError(error: unknown): AppError {
 export function signAccessToken({
   keys,
   userId,
-  issuedAt = new Date(),
+  issuedAt,
   scope = USER_TOKEN_SCOPES,
 }: SignAccessTokenInput): Promise<string> {
   return signWithKeys({
@@ -73,8 +76,8 @@ export function signAccessToken({
 export class AccessTokens {
   constructor(private readonly keys: JwtKeys) {}
 
-  sign(userId: string): Promise<string> {
-    return signAccessToken({ keys: this.keys, userId });
+  sign(userId: string, issuedAt: Date): Promise<string> {
+    return signAccessToken({ keys: this.keys, userId, issuedAt });
   }
 
   async verify(token: string): Promise<AccessUser> {
@@ -86,6 +89,6 @@ export class AccessTokens {
       refusal: toAccessTokenError,
     });
     const lifetime = { issuedAt: fromUnixTime(iat), expiresAt: fromUnixTime(exp) };
-    return { id: sub, scope: scope.split(' '), token: lifetime };
+    return { id: sub, scope, token: lifetime };
   }
 }

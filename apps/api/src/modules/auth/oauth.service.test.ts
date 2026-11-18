@@ -8,6 +8,7 @@ import { testJwtKeys } from '../../test/auth.js';
 import { exampleEnv } from '../../test/example-env.js';
 import { fakeOAuthClient, GITHUB_OLENA, stateOf } from '../../test/oauth.js';
 import { AuthService, type OAuthIdentity } from './auth.service.js';
+import { AuthClock } from './auth-clock.js';
 import { JwtKeys } from './jwt-keys.js';
 import { OAuthService } from './oauth.service.js';
 import { OAuthClient } from './oauth-client.js';
@@ -37,6 +38,7 @@ async function oauthServiceWith(enabled?: readonly OAuthProvider[]) {
     providers: [
       OAuthService,
       OAuthStates,
+      AuthClock,
       { provide: JwtKeys, useValue: testJwtKeys },
       { provide: ConfigService, useValue: new ConfigService(validateEnv(exampleEnv)) },
       { provide: OAuthClient, useValue: fakeOAuthClient({ 'olena-code': GITHUB_OLENA }, enabled) },
@@ -62,7 +64,7 @@ describe('OAuthService.start', () => {
     const { url, stateToken } = await service.start('github');
 
     expect(url).toBe('https://github.com/login/oauth/authorize?state=state-github');
-    expect(await new OAuthStates(testJwtKeys).verify(stateToken)).toEqual({
+    expect(await new OAuthStates(testJwtKeys, new AuthClock()).verify(stateToken)).toEqual({
       provider: 'github',
       state: 'state-github',
       codeVerifier: 'verifier-github',

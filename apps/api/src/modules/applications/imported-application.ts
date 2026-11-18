@@ -1,5 +1,6 @@
 import {
   canTransition,
+  FIRST_STAGE,
   type ImportedStageEvent,
   type ImportRow,
   type ImportRowError,
@@ -33,8 +34,6 @@ export type ImportedApplication = {
 export type RowIssue = Omit<ImportRowError, 'row'>;
 
 export type RowOutcome = { application: ImportedApplication } | { issues: RowIssue[] };
-
-const FIRST_STAGE = 'applied' satisfies Stage;
 
 function shortestPathTo(target: Stage): Stage[] {
   const paths = new Map<Stage, Stage[]>([[FIRST_STAGE, [FIRST_STAGE]]]);

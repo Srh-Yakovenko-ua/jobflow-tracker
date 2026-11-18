@@ -5,11 +5,10 @@ import {
   followupRequestSchema,
   type FollowupResponse,
 } from '@jobflow/shared';
-import { Body, Controller, Get, HttpCode, Param, Post, Req } from '@nestjs/common';
-import type { Request } from 'express';
+import { Body, Controller, Get, HttpCode, Param, Post } from '@nestjs/common';
 
 import { Idempotent } from '../../common/idempotency/idempotent.decorator.js';
-import { readRequestId } from '../../common/request-id.middleware.js';
+import { RequestId } from '../../common/request-id.decorator.js';
 import { AcceptsAiJob } from '../../rate-limit/rate-limit.decorator.js';
 import { type AccessUser, CurrentUser } from '../auth/index.js';
 import { FollowupSentService } from './followup-sent.service.js';
@@ -36,9 +35,9 @@ export class FollowupsController {
     @CurrentUser() user: AccessUser,
     @Param('id', { schema: applicationIdSchema }) id: string,
     @Body({ schema: followupRequestSchema }) request: FollowupRequest,
-    @Req() req: Request,
+    @RequestId() requestId: string,
   ): Promise<CaptureRetryResponse> {
-    const generation = { applicationId: id, request, requestId: readRequestId(req) };
+    const generation = { applicationId: id, request, requestId };
     return this.followups.request(user.id, generation);
   }
 

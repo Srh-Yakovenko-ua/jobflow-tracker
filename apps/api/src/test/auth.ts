@@ -58,7 +58,12 @@ export function accessTokenFor(
   user: Pick<User, 'id'>,
   { issuedAt, scope }: AccessTokenOptions = {},
 ): Promise<string> {
-  return signAccessToken({ keys: testJwtKeys, userId: user.id, issuedAt, scope });
+  return signAccessToken({
+    keys: testJwtKeys,
+    userId: user.id,
+    issuedAt: issuedAt ?? new Date(),
+    scope,
+  });
 }
 
 export function serviceTokenFor(issuedAt = new Date()): Promise<string> {

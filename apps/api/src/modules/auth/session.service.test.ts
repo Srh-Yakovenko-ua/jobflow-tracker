@@ -1,13 +1,16 @@
 import { refreshTokenSchema } from '@jobflow/shared';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { z } from 'zod';
 
+import type { Clock } from '../../common/clock.js';
 import {
   FAKE_TRANSACTION,
   fakeTransactionModule,
   RevokeAllRecorder,
 } from '../../test/fake-prisma.js';
+import { fixedClock, tickingClock } from '../../test/time.js';
 import { AccessTokens } from './access-tokens.js';
+import { AuthClock } from './auth-clock.js';
 import { CaptureTokensRepository } from './capture-tokens.repository.js';
 import { hashRefreshToken } from './refresh-tokens.js';
 import {
@@ -19,7 +22,7 @@ import {
   SessionRepository,
 } from './session.repository.js';
 import { SessionService } from './session.service.js';
-import { UserTokens } from './user-tokens.js';
+import { UserTokens } from './user-tokens.service.js';
 
 const USER_ID = '0199f0a0-0000-7000-8000-000000000001';
 const FAMILY_ID = '0199f0a0-0000-7000-8000-0000000000f1';
@@ -58,14 +61,18 @@ class FakeSessionRepository extends RevokeAllRecorder<RevokeAllInput> {
 }
 
 class FakeAccessTokens {
-  sign(userId: string): Promise<string> {
+  readonly issued: Date[] = [];
+
+  sign(userId: string, issuedAt: Date): Promise<string> {
+    this.issued.push(issuedAt);
     return Promise.resolve(`access-for:${userId}`);
   }
 }
 
-async function sessionServiceWith() {
+async function sessionServiceWith(clock: Pick<Clock, 'now'> = fixedClock(NOW)) {
   const repository = new FakeSessionRepository();
   const captureTokens = new RevokeAllRecorder<RevokeAllInput>();
+  const accessTokens = new FakeAccessTokens();
   const moduleRef = await fakeTransactionModule({
     providers: [
       SessionService,
@@ -73,6 +80,7 @@ async function sessionServiceWith() {
       AccessTokens,
       UserTokens,
       CaptureTokensRepository,
+      AuthClock,
     ],
     now: NOW,
   })
@@ -81,18 +89,12 @@ async function sessionServiceWith() {
     .overrideProvider(CaptureTokensRepository)
     .useValue(captureTokens)
     .overrideProvider(AccessTokens)
-    .useValue(new FakeAccessTokens())
+    .useValue(accessTokens)
+    .overrideProvider(AuthClock)
+    .useValue(clock)
     .compile();
-  return { repository, captureTokens, service: moduleRef.get(SessionService) };
+  return { repository, captureTokens, accessTokens, service: moduleRef.get(SessionService) };
 }
-
-beforeEach(() => {
-  vi.useFakeTimers({ toFake: ['Date'], now: NOW });
-});
-
-afterEach(() => {
-  vi.useRealTimers();
-});
 
 describe('SessionService.start', () => {
   it('opens a new family with a 30-day refresh token stored only as its hash', async () => {
@@ -135,6 +137,16 @@ describe('SessionService.refresh', () => {
         now: NOW,
       },
     ]);
+  });
+
+  it('one refresh stamps one instant', async () => {
+    const { repository, accessTokens, service } = await sessionServiceWith(tickingClock(NOW, 1));
+    repository.outcome = { status: 'rotated', userId: USER_ID };
+
+    await service.refresh('presented-refresh-token');
+
+    expect(repository.rotations).toMatchObject([{ next: { expiresAt: IN_30_DAYS }, now: NOW }]);
+    expect(accessTokens.issued).toEqual([NOW]);
   });
 
   it.each([

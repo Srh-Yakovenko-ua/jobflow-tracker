@@ -2,20 +2,22 @@ import type { NotificationListQuery, NotificationType } from '@jobflow/shared';
 import { Injectable } from '@nestjs/common';
 
 import type { Prisma } from '../../generated/prisma/client.js';
+import type { InTransaction } from '../../prisma/in-transaction.js';
 import { lockUser } from '../../prisma/lock-user.js';
 import { PrismaService } from '../../prisma/prisma.service.js';
 import { notificationCreatedEvent } from './notifications.events.js';
 
-export type Transaction = { tx: Prisma.TransactionClient };
-
-export type InsertNotification = Transaction & {
+export type InsertNotification = Required<InTransaction> & {
   type: NotificationType;
   payload: Prisma.InputJsonValue;
 };
 
 export type OnceKey = { field: 'aiJobId' | 'exportId' | 'weekStart'; id: string };
 
-export type ExistingNotification = Transaction & { type: NotificationType; once?: OnceKey };
+export type ExistingNotification = Required<InTransaction> & {
+  type: NotificationType;
+  once?: OnceKey;
+};
 
 export type NotificationPage = Pick<NotificationListQuery, 'unread' | 'cursor' | 'limit'>;
 
@@ -47,7 +49,7 @@ export class NotificationsRepository {
     return id;
   }
 
-  async lockUser(userId: string, { tx }: Transaction): Promise<void> {
+  async lockUser(userId: string, { tx }: Required<InTransaction>): Promise<void> {
     await lockUser(tx, userId);
   }
 

@@ -20,7 +20,7 @@ export class MaintenanceScheduler implements OnApplicationBootstrap {
 
   async onApplicationBootstrap(): Promise<void> {
     await Promise.all(
-      MAINTENANCE_SCHEDULES.map(({ id, repeat, template }) =>
+      Object.entries(MAINTENANCE_SCHEDULES).map(([id, { repeat, template }]) =>
         this.queue.upsertJobScheduler(id, repeat, template),
       ),
     );

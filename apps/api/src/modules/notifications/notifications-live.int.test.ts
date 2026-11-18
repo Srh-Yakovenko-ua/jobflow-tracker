@@ -15,8 +15,7 @@ import { NotificationsService } from './notifications.service.js';
 const BELL_LIMIT_MS = 1000;
 
 const RELAY_EVERY_MS =
-  MAINTENANCE_SCHEDULES.find(({ id }) => id === MAINTENANCE_SCHEDULE_IDS.outboxRelay)?.repeat
-    .every ?? BELL_LIMIT_MS;
+  MAINTENANCE_SCHEDULES[MAINTENANCE_SCHEDULE_IDS.outboxRelay].repeat.every ?? BELL_LIMIT_MS;
 
 const DELIVERY_LIMIT_MS = BELL_LIMIT_MS - RELAY_EVERY_MS;
 

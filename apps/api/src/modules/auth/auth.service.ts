@@ -14,7 +14,7 @@ import { toUserSettings } from '../../prisma/user-settings-row.js';
 import { AuthRepository, type OAuthAccountKey, type UserCredentials } from './auth.repository.js';
 import type { OAuthProfile } from './oauth-profiles.js';
 import { PasswordHasher } from './password-hasher.js';
-import { UserTokens } from './user-tokens.js';
+import { UserTokens } from './user-tokens.service.js';
 
 export type ChangePassword = {
   userId: string;
@@ -64,10 +64,9 @@ export class AuthService {
       throw validation([{ path: 'currentPassword', message: 'Current password is wrong' }]);
     }
     const passwordHash = await this.hasher.hash(input.newPassword);
-    const now = new Date();
     await this.prisma.$transaction(async (tx) => {
       await this.repository.replacePassword({ userId, passwordHash }, tx);
-      await this.tokens.revokeAll({ userId, now, keepFamilyId }, tx);
+      await this.tokens.revokeAll({ userId, keepFamilyId }, tx);
     });
   }
 
@@ -96,8 +95,8 @@ export class AuthService {
     if (linked !== null) {
       return linked;
     }
-    const sameEmail = await this.repository.findCredentialsByEmail(email);
-    if (sameEmail === null) {
+    const emailOwner = await this.repository.findCredentialsByEmail(email);
+    if (emailOwner === null) {
       return this.repository.createUserWithDefaults({
         email,
         displayName,
@@ -105,8 +104,8 @@ export class AuthService {
         oauthAccount,
       });
     }
-    await this.linkByVerifiedEmail({ user: sameEmail, oauthAccount });
-    return toAuthUser(sameEmail);
+    await this.linkByVerifiedEmail({ user: emailOwner, oauthAccount });
+    return toAuthUser(emailOwner);
   }
 
   async me(userId: string): Promise<MeResponse> {
@@ -136,11 +135,10 @@ export class AuthService {
       await this.repository.linkOAuthAccount({ userId, ...oauthAccount });
       return;
     }
-    const now = new Date();
     await this.prisma.$transaction(async (tx) => {
       await this.repository.linkOAuthAccount({ userId, ...oauthAccount }, tx);
       await this.repository.replacePassword({ userId, passwordHash: null }, tx);
-      await this.tokens.revokeAll({ userId, now }, tx);
+      await this.tokens.revokeAll({ userId }, tx);
     });
   }
 }

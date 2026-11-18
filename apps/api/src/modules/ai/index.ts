@@ -8,7 +8,6 @@ export type {
   AiJobRow,
   AiJobTarget,
   BudgetUsage,
-  BudgetWindow,
   CachedAiResult,
   CreateAiJob,
   FailAiJob,
@@ -18,6 +17,7 @@ export type {
 } from './ai.repository.js';
 export { AiRepository } from './ai.repository.js';
 export { type AiJobOfUser, type AiOutcome, AiService } from './ai.service.js';
+export type { BudgetWindow } from './ai-budget.js';
 export type { AiCallRecord } from './ai-call-row.js';
 export { AiClient, type AiCompleteCall } from './ai-client.js';
 export { isFinal } from './ai-failures.js';

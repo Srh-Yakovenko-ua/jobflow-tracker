@@ -9,7 +9,7 @@ import { Injectable } from '@nestjs/common';
 import { conflict } from '../../common/app-error.js';
 import { Clock } from '../../common/clock.js';
 import { owned } from '../../common/owned.js';
-import type { Prisma } from '../../generated/prisma/client.js';
+import type { InTransaction } from '../../prisma/in-transaction.js';
 import { DRAFT_BLANK, draftFieldsOf, untouchedDraftFields } from './application-draft-fields.js';
 import { ApplicationDraftsRepository, type LockedDraft } from './application-drafts.repository.js';
 import {
@@ -19,20 +19,21 @@ import {
 import { ApplicationsRepository } from './applications.repository.js';
 import { ApplicationsService } from './applications.service.js';
 
-type InDraftTransaction = { tx: Prisma.TransactionClient };
-
-export type OpenDraft = InDraftTransaction & { input: CapturePasteInput };
+export type OpenDraft = Required<InTransaction> & { input: CapturePasteInput };
 
 export type OpenedDraft = { applicationId: string; createdAt: Date };
 
-export type AnnouncedCapture = InDraftTransaction &
+export type AnnouncedCapture = Required<InTransaction> &
   Omit<ApplicationCaptureRequestedPayload, 'userId'>;
 
-export type DraftFill = InDraftTransaction & { applicationId: string; output: VacancyParseOutput };
+export type DraftFill = Required<InTransaction> & {
+  applicationId: string;
+  output: VacancyParseOutput;
+};
 
 export type FilledDraft = { createdAt: Date; filledAt: Date };
 
-export type DraftConfirm = InDraftTransaction & { applicationId: string };
+export type DraftConfirm = Required<InTransaction> & { applicationId: string };
 
 export type DraftRetry = DraftConfirm;
 

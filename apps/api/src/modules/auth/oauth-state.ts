@@ -4,6 +4,7 @@ import type { JWTVerifyOptions } from 'jose';
 import { z } from 'zod';
 
 import { type AppError, errorFor } from '../../common/app-error.js';
+import { AuthClock } from './auth-clock.js';
 import { JwtKeys, signWithKeys, verifyWithKeys } from './jwt-keys.js';
 
 export const OAUTH_STATE_TTL_SECONDS = 10 * 60;
@@ -32,14 +33,17 @@ const invalidState = (): AppError => errorFor(400, 'OAuth state is missing or in
 
 @Injectable()
 export class OAuthStates {
-  constructor(private readonly keys: JwtKeys) {}
+  constructor(
+    private readonly keys: JwtKeys,
+    private readonly clock: AuthClock,
+  ) {}
 
-  sign(state: OAuthStateToken, issuedAt = new Date()): Promise<string> {
+  sign(state: OAuthStateToken): Promise<string> {
     return signWithKeys({
       keys: this.keys,
       claims: state,
       ttlSeconds: OAUTH_STATE_TTL_SECONDS,
-      issuedAt,
+      issuedAt: this.clock.now(),
       header: { typ: OAUTH_STATE_TYPE },
     });
   }

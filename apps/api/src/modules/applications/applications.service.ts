@@ -1,9 +1,9 @@
-import type {
-  ApplicationResponse,
-  CreateApplicationInput,
-  CreateApplicationResponse,
-  PossibleDuplicate,
-  Stage,
+import {
+  type ApplicationResponse,
+  type CreateApplicationInput,
+  type CreateApplicationResponse,
+  FIRST_STAGE,
+  type PossibleDuplicate,
 } from '@jobflow/shared';
 import { Injectable } from '@nestjs/common';
 import { milliseconds, subMilliseconds } from 'date-fns';
@@ -43,8 +43,6 @@ type RecordedChange = {
 };
 
 type DuplicateCheck = { probe: DuplicateProbe; now: Date };
-
-const FIRST_STAGE = 'applied' satisfies Stage;
 
 @Injectable()
 export class ApplicationsService {

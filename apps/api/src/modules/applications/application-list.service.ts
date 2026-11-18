@@ -69,7 +69,16 @@ function listFilterOf(
 }
 
 function columnsOf(columnOf: (stage: Stage) => BoardColumns[Stage]): BoardColumns {
-  return Object.fromEntries(STAGES.map((stage) => [stage, columnOf(stage)])) as BoardColumns;
+  return {
+    applied: columnOf('applied'),
+    screening: columnOf('screening'),
+    tech_interview: columnOf('tech_interview'),
+    final: columnOf('final'),
+    offer: columnOf('offer'),
+    rejected: columnOf('rejected'),
+    ghosted: columnOf('ghosted'),
+    withdrawn: columnOf('withdrawn'),
+  } satisfies BoardColumns;
 }
 
 @Injectable()

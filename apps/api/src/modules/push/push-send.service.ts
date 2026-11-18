@@ -1,4 +1,4 @@
-import { pushMessageSchema } from '@jobflow/shared';
+import { PUSH_LIMITS, pushMessageSchema } from '@jobflow/shared';
 import { Injectable, Logger } from '@nestjs/common';
 import { z } from 'zod';
 
@@ -47,7 +47,7 @@ export class PushSendService {
     const settled: Record<PushOutcome, () => Promise<unknown>> = {
       sent: () => this.repository.markDelivered(userId, { id, now: this.clock.now() }),
       gone: () => this.repository.remove(userId, id),
-      failed: () => this.repository.countFailure(userId, id),
+      failed: () => this.repository.countFailure(userId, { id, limit: PUSH_LIMITS.failedSendsMax }),
     };
     await settled[outcome]();
   }

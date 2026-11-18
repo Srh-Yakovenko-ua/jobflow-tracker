@@ -39,7 +39,10 @@ const signedWithClaims = (change: object) =>
   signedByTestKey(new SignJWT({ ...claims, ...change }).setIssuedAt().setExpirationTime('15m'));
 
 const forgedTokens: [string, () => Promise<string>][] = [
-  ['signed by another key', () => signAccessToken({ keys: otherKeys, userId: USER_ID })],
+  [
+    'signed by another key',
+    () => signAccessToken({ keys: otherKeys, userId: USER_ID, issuedAt: new Date() }),
+  ],
   ['that is not a JWT', () => Promise.resolve('not-a-jwt')],
   ['with alg none', () => Promise.resolve(`${encodePart({ alg: 'none' })}.${encodePart(claims)}.`)],
   [
@@ -64,6 +67,7 @@ const forgedTokens: [string, () => Promise<string>][] = [
   ],
   ['without an exp claim', () => signedByTestKey(new SignJWT(claims).setIssuedAt())],
   ['without an iat claim', () => signedByTestKey(new SignJWT(claims).setExpirationTime('15m'))],
+  ['with a scope the API never signs', () => signedWithClaims({ scope: 'user admin' })],
   ['with another issuer', () => signedWithClaims({ iss: 'jobflow-ai' })],
   ['with the ai audience', () => signedWithClaims({ aud: 'jobflow-ai' })],
   ['that is an email unsubscribe token', () => unsubscribeTokenFor(USER_ID)],

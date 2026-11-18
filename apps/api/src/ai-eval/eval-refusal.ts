@@ -1,11 +1,12 @@
 import { AI_JOB_FAILURES } from '@jobflow/shared';
 
 import { ServiceCallError } from '../common/service-call-error.js';
+import { DOCUMENTS_ERRORS } from '../modules/resumes/index.js';
 
 const RUN_STOPPERS = new Set<string>([
   AI_JOB_FAILURES.notReady,
   AI_JOB_FAILURES.timeout,
-  'documents_timeout',
+  DOCUMENTS_ERRORS.timeout,
 ]);
 
 export type Stopped = { stoppedBy: string };

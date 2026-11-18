@@ -4,11 +4,11 @@ import type { RefreshToken, SessionTokens } from '@jobflow/shared';
 import { Injectable, Logger } from '@nestjs/common';
 
 import { unauthorized } from '../../common/app-error.js';
-import { PrismaService } from '../../prisma/prisma.service.js';
 import { AccessTokens } from './access-tokens.js';
+import { AuthClock } from './auth-clock.js';
 import { hashRefreshToken, newRefreshToken, refreshExpiryFrom } from './refresh-tokens.js';
 import { SessionRepository } from './session.repository.js';
-import { UserTokens } from './user-tokens.js';
+import { UserTokens } from './user-tokens.service.js';
 
 export type IssuedSession = SessionTokens & { refreshToken: RefreshToken };
 
@@ -22,25 +22,26 @@ export class SessionService {
     private readonly repository: SessionRepository,
     private readonly accessTokens: AccessTokens,
     private readonly tokens: UserTokens,
-    private readonly prisma: PrismaService,
+    private readonly clock: AuthClock,
   ) {}
 
   async start(userId: string): Promise<IssuedSession> {
+    const now = this.clock.now();
     const refreshToken = newRefreshToken();
     await this.repository.insert({
       userId,
       familyId: randomUUID(),
       tokenHash: hashRefreshToken(refreshToken),
-      expiresAt: refreshExpiryFrom(new Date()),
+      expiresAt: refreshExpiryFrom(now),
     });
-    return { accessToken: await this.accessTokens.sign(userId), refreshToken };
+    return { accessToken: await this.accessTokens.sign(userId, now), refreshToken };
   }
 
   async refresh(presented: string | undefined): Promise<IssuedSession> {
     if (presented === undefined) {
       throw unauthorized('Invalid refresh token');
     }
-    const now = new Date();
+    const now = this.clock.now();
     const refreshToken = newRefreshToken();
     const outcome = await this.repository.rotate({
       tokenHash: hashRefreshToken(presented),
@@ -54,18 +55,17 @@ export class SessionService {
     if (outcome.status !== 'rotated') {
       throw unauthorized('Invalid refresh token');
     }
-    return { accessToken: await this.accessTokens.sign(outcome.userId), refreshToken };
+    return { accessToken: await this.accessTokens.sign(outcome.userId, now), refreshToken };
   }
 
   async logout(presented: string | undefined): Promise<void> {
     if (presented !== undefined) {
-      await this.repository.revokeFamilyOf(hashRefreshToken(presented), new Date());
+      await this.repository.revokeFamilyOf(hashRefreshToken(presented), this.clock.now());
     }
   }
 
   async logoutAll(userId: string): Promise<void> {
-    const now = new Date();
-    await this.prisma.$transaction((tx) => this.tokens.revokeAll({ userId, now }, tx));
+    await this.tokens.revokeEverywhere(userId);
   }
 
   async familyOf({ userId, refreshToken }: PresentedToken): Promise<string | undefined> {
