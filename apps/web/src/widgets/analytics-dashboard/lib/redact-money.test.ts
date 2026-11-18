@@ -87,6 +87,15 @@ describe('redactMoney', () => {
     );
   });
 
+  it('hides both ends of від 3000 до $4000 and від 3000 до USD 4000', () => {
+    expect(redactMoney('вилка від 3000 до $4000')).toBe('вилка від приховано');
+    expect(redactMoney('вилка від 3000 до USD 4000')).toBe('вилка від приховано');
+  });
+
+  it('hides 5000 PLN and £4000', () => {
+    expect(redactMoney('Офер 5000 PLN, раніше £4000')).toBe('Офер приховано, раніше приховано');
+  });
+
   it('$4,000 and 4 тис. грн are hidden', () => {
     expect(redactMoney('Від $4,000 до 4 тис. грн на місяць')).toBe(
       'Від приховано до приховано на місяць',

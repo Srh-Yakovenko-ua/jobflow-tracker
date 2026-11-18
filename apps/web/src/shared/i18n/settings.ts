@@ -110,7 +110,7 @@ export const settings = {
         interview_prep: 'Підготовка до співбесіди',
       } satisfies Record<AiKind, string>,
       line: (feature: string, labels: readonly string[]) => `${feature}: ${labels.join(', ')}.`,
-      notes: 'Нотатки в модель не йдуть.',
+      notes: 'Текст нотаток у модель не йде, лише слова-теми зі словника.',
       fields: {
         vacancy_parse: { text: 'текст вакансії' },
         resume_parse: { text: 'текст резюме без контактів', pages: 'скан, якщо немає тексту' },
