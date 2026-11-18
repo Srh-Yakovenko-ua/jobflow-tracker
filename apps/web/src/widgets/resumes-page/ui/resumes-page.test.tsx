@@ -7,7 +7,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { apiUrl, errorReply } from '@/test/api-handlers';
 import { advancePastQueryRetries, fakeTimeoutsAndClock } from '@/test/fake-timeouts';
 import { renderInApp } from '@/test/render-in-app';
-import { DESIGN_RESUME_AB, resumeAbRoute } from '@/test/resume-ab-fixtures';
+import { DESIGN_RESUME_AB } from '@/test/resume-ab-fixtures';
+import { resumeAbRoute } from '@/test/resume-ab-route';
 import {
   buildResumeVersion,
   buildResumeVersions,

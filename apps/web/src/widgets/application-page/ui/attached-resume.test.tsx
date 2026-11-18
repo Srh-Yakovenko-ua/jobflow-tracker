@@ -21,7 +21,8 @@ import {
 } from '@/test/match-fixtures';
 import { pinClockInEachTest } from '@/test/pinned-clock';
 import { type ApplicationPageSetup, renderApplicationPage } from '@/test/render-application-page';
-import { DESIGN_RESUME_AB, resumeAbRoute } from '@/test/resume-ab-fixtures';
+import { DESIGN_RESUME_AB } from '@/test/resume-ab-fixtures';
+import { resumeAbRoute } from '@/test/resume-ab-route';
 import { server } from '@/test/server';
 
 vi.mock('next/navigation', () => import('@/test/navigation'));
