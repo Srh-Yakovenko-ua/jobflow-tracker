@@ -20,6 +20,9 @@ const MISSED_WHILE_AWAY: readonly QueryKey[] = [
   timelineKeys.all,
   userKeys.me(),
   notificationKeys.all,
+  analyticsKeys.all,
+  resumeKeys.ab(),
+  userKeys.rhythm(),
 ];
 
 function staleKeysOf(event: LiveEvent): readonly QueryKey[] {
@@ -41,7 +44,7 @@ function staleKeysOf(event: LiveEvent): readonly QueryKey[] {
     case LIVE_EVENTS.notificationCreated:
       return [userKeys.me(), notificationKeys.all];
     case LIVE_EVENTS.analyticsChanged:
-      return [analyticsKeys.summary(), resumeKeys.ab()];
+      return [analyticsKeys.summary(), resumeKeys.ab(), userKeys.rhythm()];
     default: {
       const unhandled: never = event;
       throw new Error(`Unhandled live event: ${JSON.stringify(unhandled)}`);

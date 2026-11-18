@@ -20,7 +20,7 @@ function searchScoped<Block extends string>(block: Block) {
 export const analyticsKeys = {
   all: ANALYTICS,
   summary: () => SUMMARY,
-  norms: () => [...ANALYTICS, 'norms'] as const,
+  norms: () => [...SUMMARY, 'norms'] as const,
   funnel: searchScoped('funnel'),
   sankey: ({ searchId, split }: SankeyScope) =>
     [...SUMMARY, 'sankey', { searchId, split }] as const,
