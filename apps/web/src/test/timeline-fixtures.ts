@@ -62,6 +62,12 @@ export function noteAddedOf({
   };
 }
 
+export function noteTimelineOf(
+  note: Pick<Note, 'id' | 'body' | 'createdAt'>,
+): ApplicationTimelineResponse {
+  return { items: [noteAddedOf(note)] };
+}
+
 export function interviewDoneOf({
   serial,
   occurredAt,

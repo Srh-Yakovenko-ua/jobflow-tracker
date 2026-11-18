@@ -16,7 +16,9 @@ import { type DraftRecord, type DraftSaved, notesAfter, saveDraft } from './save
 
 export type NoteDraftStatus = 'idle' | 'saving' | 'saved' | 'failed';
 
-export type DraftSaveCause = 'autosave' | 'finish' | 'leave';
+export type DraftSaveCause = 'autosave' | 'finish' | 'hide' | 'leave';
+
+export const DRAFT_KEEPALIVE = { shareBytes: 32_768 } as const;
 
 export type DraftMutationOptions = Readonly<{
   applicationId: Note['applicationId'];
@@ -24,7 +26,7 @@ export type DraftMutationOptions = Readonly<{
   latest: RefObject<string>;
   onDraftChange: (noteId: Note['id'] | null) => void;
   onFinished: () => void;
-  onFailed: () => void;
+  onFailed: (error: Error) => void;
   onBehind: () => void;
 }>;
 
@@ -35,6 +37,12 @@ type DraftEnd = Readonly<{ sent: DraftSent; cause: DraftSaveCause; draft: DraftR
 type DraftIdChange = Readonly<{ noteId: Note['id'] | null }> | null;
 
 type DraftOptionsInput = DraftMutationOptions & Readonly<{ queryClient: QueryClient }>;
+
+type DraftRequest = Readonly<{ cause: DraftSaveCause; body: string }>;
+
+const LEAVING_CAUSES: ReadonlySet<DraftSaveCause> = new Set(['hide', 'leave']);
+
+const UTF8 = new TextEncoder();
 
 const STATUS_OF: Record<MutationStatus, NoteDraftStatus> = {
   idle: 'idle',
@@ -52,6 +60,11 @@ function endsOpenDraft({ sent, cause, draft }: DraftEnd): boolean {
   return sent.saved.kind === 'deleted' || (cause === 'leave' && draft.noteId !== null);
 }
 
+function keepaliveOf({ cause, body }: DraftRequest): boolean {
+  if (LEAVING_CAUSES.has(cause)) return true;
+  return UTF8.encode(JSON.stringify({ body })).byteLength <= DRAFT_KEEPALIVE.shareBytes;
+}
+
 function draftKeyOf(applicationId: Note['applicationId']) {
   return ['note-draft', applicationId] as const;
 }
@@ -62,9 +75,10 @@ function draftOptionsOf(
   const { applicationId, draft, latest, queryClient, ...handlers } = input;
   return {
     networkMode: 'always',
-    mutationFn: async () => {
+    mutationFn: async (cause) => {
       const body = latest.current;
-      return { body, saved: await saveDraft({ applicationId, draft, body }) };
+      const keepalive = keepaliveOf({ cause, body });
+      return { body, saved: await saveDraft({ applicationId, draft, body, keepalive }) };
     },
     onSuccess: (sent, cause) => {
       queryClient.setQueryData<NoteListResponse>(
@@ -94,8 +108,10 @@ export function useDraftMutations(options: DraftMutationOptions) {
     scope: { id: `note-draft-${options.applicationId}` },
   });
   const direct = useMutation(shared);
+  const shown =
+    direct.submittedAt >= serial.submittedAt && direct.status !== 'idle' ? direct : serial;
   return {
-    status: STATUS_OF[serial.status],
+    status: STATUS_OF[shown.status],
     serial: serial.mutate,
     direct: direct.mutate,
     inFlight: () => queryClient.isMutating({ mutationKey }) > 0,

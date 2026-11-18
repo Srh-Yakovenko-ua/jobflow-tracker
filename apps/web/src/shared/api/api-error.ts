@@ -35,6 +35,15 @@ export function isIdempotencyConflict(error: Error): boolean {
   );
 }
 
+const TRANSIENT_ERROR_NAMES = new Set(['TypeError', 'TimeoutError']);
+
+export function isTransient(error: Error): boolean {
+  if (error instanceof ApiError) {
+    return error.status >= 500;
+  }
+  return TRANSIENT_ERROR_NAMES.has(error.name);
+}
+
 export function isNotFound(error: unknown): boolean {
   return error instanceof ApiError && error.status === 404;
 }

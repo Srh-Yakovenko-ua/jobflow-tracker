@@ -1,14 +1,16 @@
 import { type RefObject, useEffect, useRef, useState } from 'react';
 
+import { isTransient } from '@/shared/api';
+
 import { type DraftRecord, EMPTY_DRAFT } from './save-draft';
 import {
   type DraftMutationOptions,
   type DraftSaveCause,
   useDraftMutations,
-} from './use-draft-mutation';
+} from './use-draft-mutations';
 import { useSaveOnLeave } from './use-save-on-leave';
 
-export type { NoteDraftStatus } from './use-draft-mutation';
+export type { NoteDraftStatus } from './use-draft-mutations';
 
 export const NOTE_DRAFT_LIMITS = { saveAfterMs: 1000 } as const;
 
@@ -70,7 +72,10 @@ function useDraftSaves(options: NoteDraftOptions) {
     ...options,
     draft: draftRef,
     latest: latest.latestRef,
-    onFailed: markUnsaved,
+    onFailed: (error) => {
+      unsavedRef.current = true;
+      if (isTransient(error)) timer.start(autosave);
+    },
     onBehind: markUnsaved,
     onFinished: () => {
       draftRef.current = EMPTY_DRAFT;
@@ -98,7 +103,7 @@ export function useNoteDraft(options: NoteDraftOptions) {
     onHide: () => {
       if (!unsavedRef.current) return;
       const beside = draftRef.current.noteId !== null && saves.inFlight();
-      send(beside ? saves.direct : saves.serial, 'autosave');
+      send(beside ? saves.direct : saves.serial, 'hide');
     },
     onUnmount: () => {
       if (unsavedRef.current || hasSomethingToFinish()) send(saves.serial, 'leave');

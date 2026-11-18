@@ -51,6 +51,7 @@ function useSaveAskedTopics({
         applicationId: application.id,
         body,
         idempotencyKey: submitKey.keyFor(body),
+        keepalive: true,
       });
     },
     onSuccess: () => {

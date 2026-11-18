@@ -7,12 +7,17 @@ import type { AddNoteRequest } from './add-note';
 export type UpdateNoteRequest = Omit<AddNoteRequest, 'idempotencyKey'> &
   Readonly<{ noteId: Note['id'] }>;
 
-export function updateNote({ applicationId, noteId, body }: UpdateNoteRequest): Promise<Note> {
+export function updateNote({
+  applicationId,
+  noteId,
+  body,
+  keepalive,
+}: UpdateNoteRequest): Promise<Note> {
   return apiClient.request({
     path: `/applications/${applicationId}/notes/${noteId}`,
     method: 'PATCH',
     body,
     schema: noteSchema,
-    keepalive: true,
+    keepalive,
   });
 }
