@@ -1,10 +1,13 @@
+import { LIVE_LIMITS } from '@jobflow/shared';
 import { buildJobStatus } from '@jobflow/shared/testing';
 import { act, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
+import { LIVE_CLIENT_LIMITS } from '@/shared/api';
 import { errorReply, recordSentRequests } from '@/test/api-handlers';
 import { fakeTimeoutsAndIntervals } from '@/test/fake-timeouts';
 import { JOB_ID, jobRoute, PROCESSING_JOB } from '@/test/job-fixtures';
+import { bringLiveStreamUp, closeLiveStreams } from '@/test/live-stream';
 import { QueryProbe, waitForQuery } from '@/test/query-status';
 import { renderViewInApp } from '@/test/render-in-app';
 import { server } from '@/test/server';
@@ -41,6 +44,7 @@ function cardLine(): HTMLElement | null {
 }
 
 afterEach(() => {
+  closeLiveStreams();
   vi.useRealTimers();
   vi.restoreAllMocks();
 });
@@ -81,8 +85,18 @@ describe('ParsingCard', () => {
     expect(jobs.sent).toEqual([JOB_ID]);
   });
 
-  it('a queued draft asks for its wait again every 10 s', async () => {
+  it.each([
+    [
+      'a queued draft asks for its wait again every 10 s while the stream is up',
+      { bringUp: true, everyMs: LIVE_CLIENT_LIMITS.slowPollMs },
+    ],
+    [
+      'a queued card polls at the live fallback rate when the stream is down',
+      { bringUp: false, everyMs: LIVE_LIMITS.pollFallbackMs },
+    ],
+  ])('%s', async (_title, { bringUp, everyMs }) => {
     fakeTimeoutsAndIntervals();
+    if (bringUp) await bringLiveStreamUp();
     const waits = [120, 45];
     const jobs = jobRoute({
       job: () => buildJobStatus({ queue: { ahead: 1, etaSeconds: waits.shift() ?? 0 } }),
@@ -91,7 +105,7 @@ describe('ParsingCard', () => {
     renderViewInApp(<ParsingCard parse={QUEUED} />);
     await screen.findByText('у черзі · ~2 хв');
 
-    await act(() => vi.advanceTimersByTimeAsync(10_000));
+    await act(() => vi.advanceTimersByTimeAsync(everyMs));
 
     expect(await screen.findByText('у черзі · ~45 с')).toBeDefined();
     expect(jobs.sent).toEqual([JOB_ID, JOB_ID]);

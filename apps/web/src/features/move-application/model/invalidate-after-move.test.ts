@@ -61,4 +61,13 @@ describe('invalidateAfterMove', () => {
       ['scheduled-events', 'calendar', KYIV_WEEK],
     ]);
   });
+
+  it('a move refreshes the board norms', async () => {
+    const queryClient = new QueryClient();
+    queryClient.setQueryData(analyticsKeys.norms(), {});
+
+    await invalidateAfterMove(queryClient);
+
+    expect(queryClient.getQueryState(analyticsKeys.norms())?.isInvalidated).toBe(true);
+  });
 });

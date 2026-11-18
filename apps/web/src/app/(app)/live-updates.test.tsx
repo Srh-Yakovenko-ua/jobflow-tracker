@@ -77,6 +77,7 @@ const OPEN = {
   funnel: analyticsKeys.funnel(),
   norms: analyticsKeys.norms(),
   resumeAb: resumeKeys.ab(),
+  rhythm: userKeys.rhythm(),
 } satisfies Record<string, QueryKey>;
 
 type OpenName = keyof typeof OPEN;
@@ -95,6 +96,7 @@ const OPEN_NAMES: OpenName[] = [
   'otherTimeline',
   'reasons',
   'resumeAb',
+  'rhythm',
   'table',
   'timeline',
 ];
@@ -102,14 +104,18 @@ const OPEN_NAMES: OpenName[] = [
 const REFETCHED_ON_RECONNECT: OpenName[] = [
   'board',
   'detail',
+  'funnel',
   'job',
   'list',
   'me',
+  'norms',
   'notifications',
   'otherDetail',
   'otherJob',
   'otherTimeline',
   'reasons',
+  'resumeAb',
+  'rhythm',
   'table',
   'timeline',
 ];
@@ -231,14 +237,14 @@ describe('LiveUpdates', () => {
     ).toEqual(refetched);
   });
 
-  it('a move shows the new dashboard numbers once the worker has counted it', async () => {
+  it('a new application refreshes the rhythm widget, the board norms and the dashboard numbers once the worker has counted it', async () => {
     const { source } = await pageWithOpenStream();
 
     expect(
       refetchedAfter(() => {
         source.send({ id: EVENT_ID, type: LIVE_EVENTS.analyticsChanged, data: {} });
       }),
-    ).toEqual(['funnel', 'resumeAb']);
+    ).toEqual(['funnel', 'norms', 'resumeAb', 'rhythm']);
   });
 
   it('an application.updated frame for matchScore rereads the board and the card shows the new score', async () => {
@@ -306,7 +312,7 @@ describe('LiveUpdates', () => {
     expect(fetched.filter((name) => name === 'board')).toEqual(['board']);
   });
 
-  it('a reconnect refetches nothing on open, and every open application, job, timeline, me and notification query and nothing else once it has stayed open 10 s', async () => {
+  it('a reconnect refetches nothing on open, and once it has stayed open 10 s every open query, the analytics blocks, CV A/B and rhythm included', async () => {
     fakeTimeouts();
     const { stream, source } = await pageWithOpenStream();
     act(() => {

@@ -4,7 +4,7 @@ import { AI_JOB_STEPS, type ApplicationCard, type JobStatus } from '@jobflow/sha
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useEffect } from 'react';
 
-import { LIVE_CLIENT_LIMITS } from '@/shared/api';
+import { useLivePollMs } from '@/shared/api';
 import { uk } from '@/shared/i18n';
 import { cn } from '@/shared/lib/cn';
 import { formatDuration } from '@/shared/lib/state-format';
@@ -27,10 +27,10 @@ export type ParsingCardProps = Readonly<{
 
 function QueueWait({ jobId }: Readonly<{ jobId: JobStatus['id'] }>) {
   const queryClient = useQueryClient();
+  const pollMs = useLivePollMs();
   const job = useQuery({
     ...jobQueryOptions(jobId),
-    refetchInterval: ({ state }) =>
-      jobFinished(state.data) ? false : LIVE_CLIENT_LIMITS.slowPollMs,
+    refetchInterval: ({ state }) => (jobFinished(state.data) ? false : pollMs),
   });
   const finished = jobFinished(job.data);
   useEffect(() => {
