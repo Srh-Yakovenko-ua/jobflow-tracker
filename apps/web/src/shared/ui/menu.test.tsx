@@ -16,6 +16,7 @@ import {
   MenuSeparator,
   MenuTrigger,
 } from './menu';
+import { TOUCH_HEIGHT } from './touch-height';
 
 const NAV = uk.shell.nav;
 
@@ -78,7 +79,7 @@ describe('Menu', () => {
       (item) => item.className.split(' '),
     );
 
-    expect(items.filter((classes) => classes.includes('max-md:min-h-11'))).toHaveLength(3);
+    expect(items.filter((classes) => classes.includes(TOUCH_HEIGHT))).toHaveLength(3);
   });
 
   it('marks the picked radio item checked and the other one unchecked', async () => {

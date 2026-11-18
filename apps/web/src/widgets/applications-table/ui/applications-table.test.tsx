@@ -9,10 +9,11 @@ import { userKeys } from '@/entities/user';
 import { applicationFiltersOf } from '@/features/filter-applications';
 import { withSearchParams } from '@/shared/api';
 import { uk } from '@/shared/i18n';
+import { TOUCH_HEIGHT } from '@/shared/ui/touch-height';
 import { apiUrl, errorReply, NEVER_ANSWERS } from '@/test/api-handlers';
 import { layOutColumns } from '@/test/board-drag';
 import { fixtureIdOf, moveRoute } from '@/test/board-fixtures';
-import { fakeTimeouts } from '@/test/fake-timeouts';
+import { fakeTimeouts, refocusTabOnceStale } from '@/test/fake-timeouts';
 import { stubFileDownload } from '@/test/file-download';
 import { latch } from '@/test/latch';
 import { listItemsIn, pagedListRoute, type PagedListRouteOptions } from '@/test/list-fixtures';
@@ -73,8 +74,6 @@ const TOOLBAR_CONTROLS = [
   { name: 'Колонки', desktop: 'h-control-sm' },
   { name: 'Завантажити CSV з поточним поданням', desktop: 'h-control-sm' },
 ] as const;
-
-const TOUCH_BOX = 'max-md:min-h-11';
 
 const RETRY_WAIT = { timeout: 2500 } as const;
 
@@ -286,25 +285,34 @@ describe('ApplicationsTable sorting and columns', () => {
 
     for (const { name, desktop } of TOOLBAR_CONTROLS) {
       expect(classesOf(screen.getByRole('button', { name })), name).toEqual(
-        expect.arrayContaining([desktop, TOUCH_BOX]),
+        expect.arrayContaining([desktop, TOUCH_HEIGHT]),
       );
     }
     expect(sortButtons).toHaveLength(8);
     for (const button of sortButtons) {
-      expect(classesOf(button), button.textContent).toContain(TOUCH_BOX);
+      expect(classesOf(button), button.textContent).toContain(TOUCH_HEIGHT);
     }
   });
 
-  it('below md every company link spans a 44 px box that is at least 44 px wide, inside the drawn row height', async () => {
+  it('every company link covers only the company line with a 44 px touch target, inside the drawn row height', async () => {
     await tableReady({ items: SCORED });
 
     for (const link of screen.getAllByRole('link')) {
       const box = link.parentElement;
-      expect(box === null ? [] : classesOf(box), link.textContent).toContain(TOUCH_BOX);
+      expect(box === null ? [] : classesOf(box), link.textContent).toContain(TOUCH_HEIGHT);
       expect(classesOf(link), link.textContent).toEqual(
-        expect.arrayContaining(['row-span-full', 'max-md:min-w-11']),
+        expect.arrayContaining(['row-start-2', 'touch-target']),
       );
+      expect(classesOf(link), link.textContent).not.toContain('row-span-full');
     }
+  });
+
+  it('the search box hints what it searches', async () => {
+    await tableReady({ items: SCORED });
+
+    expect(
+      screen.getByRole('textbox', { name: 'Пошук у таблиці' }).getAttribute('placeholder'),
+    ).toBe('компанія, роль, стек…');
   });
 
   it('CSV saves a UTF-8 file with a BOM, named by the day, with the shown columns in the shown order', async () => {
@@ -420,6 +428,45 @@ describe('ApplicationsTable bulk actions', () => {
     expect(await screen.findByRole('link', { name: 'Бета' })).toBeDefined();
     expect(checkboxNamed('Обрати «Альфа»').getAttribute('aria-checked')).toBe('false');
     expect(checkboxNamed('Обрати «Бета»').getAttribute('aria-checked')).toBe('false');
+    expect(checkboxNamed('Обрати всі картки').getAttribute('aria-checked')).toBe('false');
+    expect(screen.queryByRole('group', { name: 'Дії з обраними картками' })).toBeNull();
+  });
+
+  it('a typed query keeps the picks through the pause, and they drop once the query goes out', async () => {
+    fakeTimeouts();
+    const { user } = await tableReady({ items: SCORED });
+    await user.click(checkboxNamed('Обрати «Альфа»'));
+    await user.click(checkboxNamed('Обрати «Бета»'));
+
+    await user.type(screen.getByRole('textbox', { name: 'Пошук у таблиці' }), 'ал');
+    await act(() => vi.advanceTimersByTimeAsync(150));
+
+    expect(checkboxNamed('Обрати «Альфа»').getAttribute('aria-checked')).toBe('true');
+    expect(checkboxNamed('Обрати «Бета»').getAttribute('aria-checked')).toBe('true');
+    expect(screen.getByText('2 картки обрано')).toBeDefined();
+    await act(() => vi.advanceTimersByTimeAsync(100));
+    await waitFor(() => {
+      expect(checkboxNamed('Обрати «Альфа»').getAttribute('aria-checked')).toBe('false');
+    });
+    expect(checkboxNamed('Обрати «Бета»').getAttribute('aria-checked')).toBe('false');
+  });
+
+  it('a picked row another tab removed leaves the pick after the refetch, so the header and the bar count only the rows shown', async () => {
+    vi.useFakeTimers({ toFake: ['Date'] });
+    const listed = [...SCORED];
+    const { user } = await tableReady({ items: () => listed });
+    await user.click(checkboxNamed('Обрати «Альфа»'));
+    await user.click(checkboxNamed('Обрати «Бета»'));
+
+    listed.splice(1, 1);
+    refocusTabOnceStale();
+    await waitFor(() => {
+      expect(screen.queryByRole('link', { name: 'Бета' })).toBeNull();
+    });
+
+    expect(screen.getByText('1 картку обрано')).toBeDefined();
+    expect(checkboxNamed('Обрати всі картки').getAttribute('aria-checked')).toBe('mixed');
+    await user.click(checkboxNamed('Обрати «Альфа»'));
     expect(checkboxNamed('Обрати всі картки').getAttribute('aria-checked')).toBe('false');
     expect(screen.queryByRole('group', { name: 'Дії з обраними картками' })).toBeNull();
   });

@@ -26,11 +26,28 @@ type FiltersSelection = Readonly<{ filtersHash: string; rows: RowSelectionState 
 
 const NO_ROWS: ApplicationListItem[] = [];
 
-function useSelectionPerFilters(sent: ApplicationFilters) {
+type SelectionSource = Readonly<{
+  sent: ApplicationFilters;
+  loaded: readonly ApplicationListItem[] | undefined;
+}>;
+
+function loadedPicksOf(
+  picks: RowSelectionState,
+  loaded: readonly ApplicationListItem[],
+): RowSelectionState | undefined {
+  const loadedIds = new Set(loaded.map((application) => application.id));
+  const kept = Object.entries(picks).filter(([id]) => loadedIds.has(id));
+  return kept.length === Object.keys(picks).length ? undefined : Object.fromEntries(kept);
+}
+
+function useSelectionPerFilters({ sent, loaded }: SelectionSource) {
   const filtersHash = hashKey(applicationKeys.table(sent));
   const [selection, setSelection] = useState<FiltersSelection>({ filtersHash, rows: {} });
   if (selection.filtersHash !== filtersHash) {
     setSelection({ filtersHash, rows: {} });
+  } else if (loaded !== undefined) {
+    const pruned = loadedPicksOf(selection.rows, loaded);
+    if (pruned !== undefined) setSelection({ filtersHash, rows: pruned });
   }
   const onChange: OnChangeFn<RowSelectionState> = (updater) => {
     setSelection((prev) => ({ ...prev, rows: functionalUpdate(updater, prev.rows) }));
@@ -60,7 +77,7 @@ export function useApplicationsTable() {
     placeholderData: keepPreviousData,
   });
   const stageCounts = useStageCounts({ sent, listFailed: query.isError });
-  const selection = useSelectionPerFilters(sent);
+  const selection = useSelectionPerFilters({ sent, loaded: query.data });
   const table = useTable({
     features: applicationTableFeatures,
     columns: APPLICATION_COLUMNS,

@@ -4,10 +4,10 @@ import { uk } from '@/shared/i18n';
 import { Button } from '@/shared/ui/button';
 import { Checkbox } from '@/shared/ui/checkbox';
 import { Popover, PopoverContent, PopoverTrigger } from '@/shared/ui/popover';
+import { TOOLBAR_BUTTON } from '@/shared/ui/toolbar-button';
 
 import { DATA_COLUMN_IDS } from '../model/columns';
 import type { ApplicationsTableInstance } from '../model/use-applications-table';
-import { TOOLBAR_BUTTON } from './table-look';
 
 const COPY = uk.applicationsTable;
 

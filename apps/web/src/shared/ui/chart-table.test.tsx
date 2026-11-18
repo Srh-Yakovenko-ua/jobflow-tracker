@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
 
 import { ChartTable, type ChartTableProps } from './chart-table';
+import { TOUCH_HEIGHT } from './touch-height';
 
 const TABLE: ChartTableProps = {
   caption: 'Причини відмов',
@@ -59,9 +60,7 @@ describe('ChartTable', () => {
     render(<ChartTable {...TABLE} />);
 
     expect(
-      screen
-        .getByRole('button', { name: 'Показати таблицю' })
-        .classList.contains('max-md:min-h-11'),
+      screen.getByRole('button', { name: 'Показати таблицю' }).classList.contains(TOUCH_HEIGHT),
     ).toBe(true);
   });
 

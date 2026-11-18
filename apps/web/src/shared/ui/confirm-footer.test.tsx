@@ -6,6 +6,7 @@ import { uk } from '@/shared/i18n';
 
 import { ConfirmFooter } from './confirm-footer';
 import { Dialog, DialogContent } from './dialog';
+import { TOUCH_HEIGHT } from './touch-height';
 
 const COPY = uk.applicationPage.deletion;
 
@@ -46,10 +47,7 @@ describe('ConfirmFooter', () => {
 
     const buttons = [COPY.cancel, COPY.confirm].map((name) => screen.getByRole('button', { name }));
 
-    expect(buttons.map((button) => button.classList.contains('max-md:min-h-11'))).toEqual([
-      true,
-      true,
-    ]);
+    expect(buttons.map((button) => button.classList.contains(TOUCH_HEIGHT))).toEqual([true, true]);
   });
 
   it('in dark the confirm button leaves the danger tint off the surface-2 footer', () => {

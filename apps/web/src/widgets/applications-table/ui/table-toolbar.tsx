@@ -13,12 +13,12 @@ import { saveTextFile } from '@/shared/lib/save-text-file';
 import { LoadFailedAlert } from '@/shared/ui/banner';
 import { Button } from '@/shared/ui/button';
 import { Fade } from '@/shared/ui/fade';
+import { TOOLBAR_BUTTON } from '@/shared/ui/toolbar-button';
 
 import { tableCsvFileOf } from '../lib/table-csv';
 import { dataColumnIdsOf } from '../model/columns';
 import type { ApplicationsTableInstance, StageCounts } from '../model/use-applications-table';
 import { ColumnsMenu } from './columns-menu';
-import { TOOLBAR_BUTTON } from './table-look';
 
 const COPY = uk.applicationsTable.csv;
 

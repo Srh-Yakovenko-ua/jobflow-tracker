@@ -3,6 +3,7 @@ import { toast } from 'sonner';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { uk } from '@/shared/i18n';
+import { TOUCH_HEIGHT } from '@/shared/ui/touch-height';
 import { axeViolations } from '@/test/axe';
 import { findLiveToaster, renderGallery, sectionTitled, specimenOf } from '@/test/dev-ui';
 import { quietLogs } from '@/test/quiet-logs';
@@ -108,7 +109,7 @@ describe('/dev/ui states from the empty states screen', () => {
     const actions = STATE_ACTIONS.flatMap((name) => screen.getAllByRole('button', { name }));
     expect(actions).toHaveLength(11);
     for (const action of actions) {
-      expect(action.className).toContain('max-md:min-h-11');
+      expect(action.className).toContain(TOUCH_HEIGHT);
       expect(action.className).toMatch(/\bh-control-(md|lg)\b/);
     }
   });

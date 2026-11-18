@@ -7,6 +7,7 @@ import { uk } from '@/shared/i18n';
 import { THEME_OPTIONS } from '@/shared/lib/theme';
 
 import { SegmentedControl } from './segmented-control';
+import { TOUCH_HEIGHT } from './touch-height';
 
 function renderThemes(value: Theme) {
   const onValueChange = vi.fn();
@@ -50,7 +51,7 @@ describe('SegmentedControl', () => {
     expect(
       segments.map(({ classList }) => [
         classList.contains('touch-target'),
-        classList.contains('max-md:min-h-11'),
+        classList.contains(TOUCH_HEIGHT),
       ]),
     ).toEqual([
       [true, true],
