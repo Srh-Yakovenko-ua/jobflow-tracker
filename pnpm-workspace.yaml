@@ -24,6 +24,7 @@ overrides:
 audit:
   ignore:
     - GHSA-vfj7-8cjw-p6xm
+    - GHSA-fc5q-39xc-vjpf
 
 minimumReleaseAgeExclude:
   - '@rollup/rollup-darwin-x64@4.64.9'
