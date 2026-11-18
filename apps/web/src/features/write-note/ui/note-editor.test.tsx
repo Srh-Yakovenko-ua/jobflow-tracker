@@ -1,15 +1,22 @@
 import { NOTE_LIMITS } from '@jobflow/shared';
-import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { HttpResponse } from 'msw/http';
 import { toast } from 'sonner';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { API_CLIENT_LIMITS } from '@/shared/api';
-import { ANY_IDEMPOTENCY_KEY, OUTAGES, recordSentRequests } from '@/test/api-handlers';
+import {
+  ANY_IDEMPOTENCY_KEY,
+  errorReply,
+  everyFetchSettled,
+  OUTAGES,
+  recordSentRequests,
+  settleSentRequests,
+} from '@/test/api-handlers';
 import { ACME_APPLICATION } from '@/test/application-fixtures';
-import type { MoveRouteOptions } from '@/test/board-fixtures';
+import { fixtureIdOf, type MoveRouteOptions } from '@/test/board-fixtures';
 import { fakeTimeouts } from '@/test/fake-timeouts';
-import { latch } from '@/test/latch';
+import { latch, releaseHeldLatches } from '@/test/latch';
 import { NOTE_ID, noteDeleteRoute, noteRoute, noteUpdateRoute } from '@/test/note-fixtures';
 import { InApp, renderViewInApp } from '@/test/render-in-app';
 import { server } from '@/test/server';
@@ -25,9 +32,19 @@ const SECOND_SAVE = 'Друга задача, здався';
 
 const LATER_TEXT = 'Друга задача, здався на 20 хв';
 
+const SECOND_ID = fixtureIdOf(702);
+
+const LONG_NOTE = 'ж'.repeat(19_000);
+
+const LONG_NOTE_LATEST = `${LONG_NOTE} кінець`;
+
+const SERVER_FAILURE = { status: 500, type: 'internal_error' } as const;
+
 const BEFORE_THE_TIMER = { timeout: NOTE_DRAFT_LIMITS.saveAfterMs / 2 } as const;
 
 type EditorRoutes = Readonly<{ added?: MoveRouteOptions; updated?: MoveRouteOptions }>;
+
+type Editor = ReturnType<typeof renderEditor>;
 
 function renderEditor({ added, updated }: EditorRoutes = {}) {
   const post = noteRoute(added);
@@ -83,9 +100,8 @@ async function afterRefusedFirstSave() {
   return { ...editor, retried };
 }
 
-async function whileSecondSaveIsHeld() {
-  const held = latch();
-  const editor = renderEditor({ updated: { latch: held } });
+async function afterSecondSave(updated: MoveRouteOptions) {
+  const editor = renderEditor({ updated });
   await editor.user.type(editor.field, 'Друга задача');
   pass(1000);
   await waitFor(() => {
@@ -96,12 +112,41 @@ async function whileSecondSaveIsHeld() {
   await waitFor(() => {
     expect(editor.updated).toEqual([patchOf(SECOND_SAVE)]);
   });
-  return { ...editor, held };
+  return editor;
 }
+
+async function whileSecondSaveIsHeld() {
+  const held = latch();
+  return { ...(await afterSecondSave({ latch: held })), held };
+}
+
+function hideTab() {
+  vi.spyOn(document, 'visibilityState', 'get').mockReturnValue('hidden');
+  document.dispatchEvent(new Event('visibilitychange'));
+}
+
+const LEAVES: readonly { name: string; leave: (editor: Editor) => void }[] = [
+  {
+    name: 'pagehide',
+    leave: () => {
+      window.dispatchEvent(new Event('pagehide'));
+    },
+  },
+  { name: 'the tab going hidden', leave: hideTab },
+  {
+    name: 'closing the editor',
+    leave: ({ unmount }) => {
+      unmount();
+    },
+  },
+];
 
 beforeEach(fakeTimeouts);
 
-afterEach(() => {
+afterEach(async () => {
+  cleanup();
+  releaseHeldLatches();
+  await settleSentRequests();
   toast.dismiss();
   vi.restoreAllMocks();
   vi.useRealTimers();
@@ -124,17 +169,20 @@ describe('NoteEditor autosave', () => {
     expect(statusText()).toBe('збережено');
   });
 
-  it('pagehide sends the text not yet saved at once, with keepalive, long before the timer', async () => {
-    const { field, added, sentKinds } = renderEditor();
-    fireEvent.change(field, { target: { value: 'Друга задача' } });
+  it.each(LEAVES)(
+    '$name sends the text not yet saved at once, with keepalive, long before the timer',
+    async ({ leave }) => {
+      const editor = renderEditor();
+      fireEvent.change(editor.field, { target: { value: 'Друга задача' } });
 
-    window.dispatchEvent(new Event('pagehide'));
+      leave(editor);
 
-    await waitFor(() => {
-      expect(added).toEqual([postOf('Друга задача')]);
-    }, BEFORE_THE_TIMER);
-    expect(sentKinds()).toEqual(['POST true']);
-  });
+      await waitFor(() => {
+        expect(editor.added).toEqual([postOf('Друга задача')]);
+      }, BEFORE_THE_TIMER);
+      expect(editor.sentKinds()).toEqual(['POST true']);
+    },
+  );
 
   it('pagehide while a PATCH is held sends the later text at once beside it, with keepalive', async () => {
     const { user, field, updated, sentKinds, held } = await whileSecondSaveIsHeld();
@@ -169,17 +217,58 @@ describe('NoteEditor autosave', () => {
     });
   });
 
-  it('the tab going hidden sends the text not yet saved at once, with keepalive, long before the timer', async () => {
-    const { field, added, sentKinds } = renderEditor();
+  it('a 19,000 character note autosaves without keepalive, so a pagehide beside that held PATCH still sends the latest text with keepalive', async () => {
+    const held = latch();
+    const { field, updated, drafts, sentKinds } = renderEditor({ updated: { latch: held } });
     fireEvent.change(field, { target: { value: 'Друга задача' } });
-    vi.spyOn(document, 'visibilityState', 'get').mockReturnValue('hidden');
+    pass(1000);
+    await waitFor(() => {
+      expect(drafts).toEqual([NOTE_ID]);
+    });
+    fireEvent.change(field, { target: { value: LONG_NOTE } });
+    pass(1000);
+    await waitFor(() => {
+      expect(updated).toEqual([patchOf(LONG_NOTE)]);
+    });
+    fireEvent.change(field, { target: { value: LONG_NOTE_LATEST } });
 
-    document.dispatchEvent(new Event('visibilitychange'));
+    window.dispatchEvent(new Event('pagehide'));
 
     await waitFor(() => {
-      expect(sentKinds()).toEqual(['POST true']);
+      expect(updated).toEqual([patchOf(LONG_NOTE), patchOf(LONG_NOTE_LATEST)]);
     }, BEFORE_THE_TIMER);
-    expect(added).toEqual([postOf('Друга задача')]);
+    expect(sentKinds()).toEqual(['POST true', 'PATCH false', 'PATCH true']);
+  });
+
+  it('a pagehide save that fails beside a held PATCH reads as not saved after the held one answers, until the timer saves again', async () => {
+    const { user, field, held } = await whileSecondSaveIsHeld();
+    const refused = noteUpdateRoute({ reply: () => errorReply(SERVER_FAILURE) });
+    server.use(refused.handler);
+    await user.type(field, ' на 20 хв');
+    window.dispatchEvent(new Event('pagehide'));
+    await waitFor(() => {
+      expect(refused.sent).toEqual([patchOf(LATER_TEXT)]);
+    });
+    server.use(noteUpdateRoute().handler);
+
+    held.release();
+    await everyFetchSettled();
+
+    expect(await screen.findByText(FAILED)).toBeDefined();
+    pass(NOTE_DRAFT_LIMITS.saveAfterMs);
+    expect(await screen.findByText('збережено')).toBeDefined();
+  });
+
+  it('a PATCH answered 404 is sent once and not again after two timer periods, and the status says it was not saved', async () => {
+    const { updated } = await afterSecondSave({
+      reply: () => errorReply({ status: 404, type: 'not_found' }),
+    });
+    expect(await screen.findByText(FAILED)).toBeDefined();
+
+    await act(() => vi.advanceTimersByTimeAsync(2 * NOTE_DRAFT_LIMITS.saveAfterMs));
+
+    expect(updated).toEqual([patchOf(SECOND_SAVE)]);
+    expect(statusText()).toBe(FAILED);
   });
 
   it('the tab coming back into view sends nothing before the timer', async () => {
@@ -193,18 +282,6 @@ describe('NoteEditor autosave', () => {
     expect(sentKinds()).toEqual([]);
     pass(NOTE_DRAFT_LIMITS.saveAfterMs);
     expect(await screen.findByText('збережено')).toBeDefined();
-  });
-
-  it('closing the editor sends the text not yet saved at once, with keepalive, long before the timer', async () => {
-    const { field, added, sentKinds, unmount } = renderEditor();
-    fireEvent.change(field, { target: { value: 'Друга задача' } });
-
-    unmount();
-
-    await waitFor(() => {
-      expect(added).toEqual([postOf('Друга задача')]);
-    }, BEFORE_THE_TIMER);
-    expect(sentKinds()).toEqual(['POST true']);
   });
 
   it('an untouched editor mounted twice by StrictMode says nothing about saving and sends nothing', async () => {
@@ -264,6 +341,23 @@ describe('NoteEditor autosave', () => {
       });
     },
   );
+
+  it('closing the editor while the API answers 500 resends that POST once and schedules no save after it', async () => {
+    const refused = { reply: () => errorReply(SERVER_FAILURE) };
+    const { user, field, added, unmount } = renderEditor({ added: refused });
+    await user.type(field, 'Друга задача');
+    pass(1000);
+    await screen.findByText(FAILED);
+
+    unmount();
+    await waitFor(() => {
+      expect(added).toHaveLength(2);
+    });
+    await everyFetchSettled();
+    await act(() => vi.advanceTimersByTimeAsync(2 * NOTE_DRAFT_LIMITS.saveAfterMs));
+
+    expect(added).toEqual([postOf('Друга задача'), added[0]]);
+  });
 
   it('after a refused first save and no more typing, the save timer resends that POST with its key and text', async () => {
     const { added, retried } = await afterRefusedFirstSave();
@@ -380,13 +474,13 @@ describe('NoteEditor finish', () => {
     const beside = noteUpdateRoute({ latch: besideHeld });
     server.use(beside.handler);
     await user.type(field, ' на 20 хв');
-    vi.spyOn(document, 'visibilityState', 'get').mockReturnValue('hidden');
-    document.dispatchEvent(new Event('visibilitychange'));
+    hideTab();
     await waitFor(() => {
       expect(beside.sent).toEqual([patchOf(LATER_TEXT)]);
     }, BEFORE_THE_TIMER);
     const finished = noteUpdateRoute();
-    server.use(finished.handler);
+    const next = noteRoute({ noteId: SECOND_ID });
+    server.use(finished.handler, next.handler);
 
     await user.keyboard('{Control>}{Enter}{/Control}');
     held.release();
@@ -399,11 +493,12 @@ describe('NoteEditor finish', () => {
     await user.keyboard('{Control>}{Enter}{/Control}');
 
     await waitFor(() => {
-      expect(added).toEqual([postOf('Друга задача'), postOf('Тимлід норм')]);
+      expect(next.sent).toEqual([postOf('Тимлід норм')]);
     });
+    expect(added).toEqual([postOf('Друга задача')]);
     expect(finished.sent).toEqual([patchOf(LATER_TEXT)]);
     expect(deleted).toEqual([]);
-    expect(drafts).toEqual([NOTE_ID, null, NOTE_ID, null]);
+    expect(drafts).toEqual([NOTE_ID, null, SECOND_ID, null]);
   });
 });
 

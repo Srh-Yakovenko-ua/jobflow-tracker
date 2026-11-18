@@ -29,7 +29,7 @@ export function useAddNoteMutation({
   return useGuardedSave({
     mutationKey: noteKeyOf(applicationId),
     request: (body: NoteInput) =>
-      addNote({ applicationId, body, idempotencyKey: submitKey.keyFor(body) }),
+      addNote({ applicationId, body, idempotencyKey: submitKey.keyFor(body), keepalive: true }),
     form: { fields: NOTE_FIELDS, setError, messages: { body: uk.board.reject.note.refused } },
     onSuccess: async () => {
       submitKey.reset();

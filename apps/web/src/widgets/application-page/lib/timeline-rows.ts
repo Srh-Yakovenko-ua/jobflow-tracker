@@ -56,6 +56,7 @@ type RowLook = {
   marker: (meta: Meta) => TimelineMarker;
   tone: TimelineTone;
   meta: (context: MetaContext) => string | null;
+  metaFormat?: TimelineMetaFormat;
 };
 
 const COPY = uk.timeline;
@@ -146,6 +147,7 @@ const LOOKS: Record<TimelineItemType, RowLook> = {
     marker: ringed,
     tone: 'strong',
     meta: ({ meta, note }) => textOf(note?.body ?? meta.body),
+    metaFormat: 'note',
   },
   resume_attached: { marker: ringed, tone: 'strong', meta: noMeta },
   draft_confirmed: { marker: ringed, tone: 'muted', meta: noMeta },
@@ -186,14 +188,14 @@ export function timelineRowsOf(input: TimelineRowsInput): TimelineRow[] {
   return items
     .filter((item) => item !== folded.parsed && item !== folded.confirmed)
     .map((item): TimelineRow => {
-      const { id, type, occurredAt, meta } = item;
-      const look = LOOKS[type];
+      const { id, occurredAt, meta } = item;
+      const look = LOOKS[item.type];
       return {
         id,
         at: new Date(occurredAt),
         title: titleOf(item, sentVersion),
         meta: look.meta({ ...folded, meta, application, note: notesById.get(id) }),
-        metaFormat: type === 'note_added' ? 'note' : 'text',
+        metaFormat: look.metaFormat ?? 'text',
         marker: look.marker(meta),
         tone: look.tone,
       };

@@ -6,15 +6,21 @@ export type AddNoteRequest = Readonly<{
   applicationId: ApplicationCard['id'];
   body: NoteInput;
   idempotencyKey: string;
+  keepalive: boolean;
 }>;
 
-export function addNote({ applicationId, body, idempotencyKey }: AddNoteRequest): Promise<Note> {
+export function addNote({
+  applicationId,
+  body,
+  idempotencyKey,
+  keepalive,
+}: AddNoteRequest): Promise<Note> {
   return apiClient.request({
     path: `/applications/${applicationId}/notes`,
     method: 'POST',
     body,
     schema: noteSchema,
-    keepalive: true,
+    keepalive,
     idempotencyKey,
   });
 }

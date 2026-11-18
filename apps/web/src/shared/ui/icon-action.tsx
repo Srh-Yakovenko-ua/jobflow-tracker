@@ -8,14 +8,16 @@ import { cn } from '@/shared/lib/cn';
 import { ICON_ACTION } from './field-surface';
 import { Tooltip } from './tooltip';
 
-export type IconActionProps = Readonly<
+export type IconButtonProps = Readonly<
   Omit<ComponentProps<'button'>, 'aria-label' | 'children' | 'type'> & {
     label: string;
     icon: LucideIcon;
   }
 >;
 
-export function IconButton({ label, icon: Icon, className, ...props }: IconActionProps) {
+export type IconActionProps = IconButtonProps;
+
+export function IconButton({ label, icon: Icon, className, ...props }: IconButtonProps) {
   return (
     <button
       type="button"

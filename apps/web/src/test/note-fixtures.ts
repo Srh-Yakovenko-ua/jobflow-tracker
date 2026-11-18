@@ -16,6 +16,8 @@ export type NoteSeed = Pick<Note, 'applicationId' | 'body'> & Partial<Note>;
 
 export type NotesRouteOptions = MoveRouteOptions & { items?: readonly Note[] };
 
+export type NoteRouteOptions = MoveRouteOptions & { noteId?: Note['id'] };
+
 type NoteParams = { id: string; noteId: string };
 
 const NOTE_PATH = '/applications/:id/notes/:noteId';
@@ -27,12 +29,12 @@ export function noteOf(seed: NoteSeed): Note {
   return noteSchema.parse({ id: NOTE_ID, createdAt: at, updatedAt: at, ...seed });
 }
 
-export function noteRoute(control: MoveRouteOptions = {}) {
+export function noteRoute({ noteId = NOTE_ID, ...control }: NoteRouteOptions = {}) {
   const sent: SentCreate<NoteInput>[] = [];
   const handler = http.post<{ id: string }>(apiUrl('/applications/:id/notes'), async (info) => {
     const body = noteInputSchema.parse(await info.request.json());
     sent.push({ id: info.params.id, body, idempotencyKey: idempotencyKeyOf(info.request.headers) });
-    const note = noteOf({ applicationId: info.params.id, body: body.body });
+    const note = noteOf({ id: noteId, applicationId: info.params.id, body: body.body });
     return heldReply({
       ...control,
       info,

@@ -17,7 +17,7 @@ import {
   EMPTY_TIMELINE,
   interviewDoneOf,
   LONG_COMMENT,
-  noteAddedOf,
+  noteTimelineOf,
   timelineRoute,
 } from '@/test/timeline-fixtures';
 
@@ -49,11 +49,7 @@ const DESIGN_ROWS = [
   ['12.08', 'Картку створено букмарклетом', 'AI розібрав опис за 6 секунд'],
 ] as const;
 
-function noteTimelineOf(body: string) {
-  return {
-    items: [noteAddedOf({ id: fixtureIdOf(401), body, createdAt: '2026-09-06T09:00:00Z' })],
-  };
-}
+const TIMELINE_NOTE = { id: fixtureIdOf(401), createdAt: '2026-09-06T09:00:00Z' } as const;
 
 const NOT_FOUND = () => errorReply({ status: 404, type: 'not_found' });
 
@@ -154,7 +150,9 @@ describe('ApplicationTimeline', () => {
   });
 
   it('keeps a long unbroken comment whole and lets its text column wrap it', async () => {
-    renderTimeline({ route: timelineRoute({ timeline: noteTimelineOf(LONG_COMMENT) }) });
+    renderTimeline({
+      route: timelineRoute({ timeline: noteTimelineOf({ ...TIMELINE_NOTE, body: LONG_COMMENT }) }),
+    });
 
     const comment = await screen.findByText(LONG_COMMENT);
 
@@ -165,7 +163,9 @@ describe('ApplicationTimeline', () => {
 
   it('a note with **bold** shows no asterisks in the timeline', async () => {
     const { section } = renderTimeline({
-      route: timelineRoute({ timeline: noteTimelineOf('Треба **повторити DP**') }),
+      route: timelineRoute({
+        timeline: noteTimelineOf({ ...TIMELINE_NOTE, body: 'Треба **повторити DP**' }),
+      }),
     });
 
     const row = (await within(section).findByText('Нотатка')).closest('li');

@@ -7,15 +7,15 @@ import { errorReply } from '@/test/api-handlers';
 import { ACME_APPLICATION } from '@/test/application-fixtures';
 import { fixtureIdOf } from '@/test/board-fixtures';
 import { fakeTimeouts } from '@/test/fake-timeouts';
-import { latch } from '@/test/latch';
-import { NOTE_ID, noteOf, notesRoute } from '@/test/note-fixtures';
+import { type Latch, latch } from '@/test/latch';
+import { NOTE_ID, noteOf, notesRoute, noteUpdateRoute } from '@/test/note-fixtures';
 import { renderApplicationPage } from '@/test/render-application-page';
 import { server } from '@/test/server';
 import {
   DESIGN_NOTE,
   DESIGN_TIMELINE,
   EMPTY_TIMELINE,
-  noteAddedOf,
+  noteTimelineOf,
   timelineRoute,
 } from '@/test/timeline-fixtures';
 
@@ -35,6 +35,12 @@ const MODES = ['page', 'sheet'] as const;
 const FIRST_SECOND = 'Друга з';
 
 const SAVED_BODY = 'Друга задача';
+
+const HIDDEN_TAIL = ' на 20 хв';
+
+const HIDDEN_BODY = `${SAVED_BODY}, здався${HIDDEN_TAIL}`;
+
+const FINISHED_BODY = `${HIDDEN_BODY}, тимлід норм`;
 
 type PageNotes = ReturnType<typeof renderApplicationPage>['notes'];
 
@@ -86,15 +92,13 @@ function saveNow() {
   });
 }
 
-function draftTimelineOf(body: string) {
-  return { items: [noteAddedOf({ id: NOTE_ID, body, createdAt: DRAFT_AT })] };
-}
+const DRAFT = { id: NOTE_ID, createdAt: DRAFT_AT } as const;
 
 function storedNoteTimeline({ added, updated }: PageNotes) {
   return () => {
     const stored = [...added, ...updated].at(-1);
     if (stored === undefined) return HttpResponse.json(EMPTY_TIMELINE);
-    return HttpResponse.json(draftTimelineOf(stored.body.body));
+    return HttpResponse.json(noteTimelineOf({ ...DRAFT, body: stored.body.body }));
   };
 }
 
@@ -103,6 +107,37 @@ async function renderWithStoredTimeline() {
   const page = renderApplicationPage();
   server.use(timelineRoute({ reply: storedNoteTimeline(page.notes) }));
   return { ...page, editor: editorIn(await findNotesSection()) };
+}
+
+async function whilePagehideSaveIsHeld() {
+  const page = await renderWithStoredTimeline();
+  const { user, editor } = page;
+  await user.type(editor, SAVED_BODY);
+  saveNow();
+  await screen.findByText('збережено');
+  const serialHeld = latch();
+  const serial = noteUpdateRoute({ latch: serialHeld });
+  server.use(serial.handler);
+  await user.type(editor, ', здався');
+  saveNow();
+  await waitFor(() => {
+    expect(serial.sent).toHaveLength(1);
+  });
+  const hideHeld = latch();
+  const hide = noteUpdateRoute({ latch: hideHeld });
+  server.use(hide.handler);
+  await user.type(editor, HIDDEN_TAIL);
+  window.dispatchEvent(new Event('pagehide'));
+  await waitFor(() => {
+    expect(hide.sent).toHaveLength(1);
+  });
+  server.use(noteUpdateRoute().handler);
+  return { ...page, section: await findNotesSection(), serialHeld, hideHeld };
+}
+
+function answerLate(held: Latch) {
+  held.release();
+  return act(() => vi.advanceTimersByTimeAsync(1000));
 }
 
 async function autosaveTwice({ user, editor, notes, between }: AutosaveSetup) {
@@ -198,7 +233,7 @@ describe('ApplicationNotes', () => {
     const moveOnce = async () => {
       await user.click(screen.getByRole('button', { name: 'Перенести у «фінал»' }));
       expect(await within(timelineSection()).findByText(FIRST_SECOND)).toBeDefined();
-      server.use(timelineRoute({ timeline: draftTimelineOf(FIRST_SECOND) }));
+      server.use(timelineRoute({ timeline: noteTimelineOf({ ...DRAFT, body: FIRST_SECOND }) }));
     };
 
     await autosaveTwice({ user, editor, notes, between: moveOnce });
@@ -215,6 +250,36 @@ describe('ApplicationNotes', () => {
 
     expect(await within(timelineSection()).findByText(SAVED_BODY)).toBeDefined();
     expect(within(timelineSection()).queryByText(FIRST_SECOND)).toBeNull();
+  });
+
+  it('a pagehide save that answers after Ctrl+Enter leaves the finished text in the list and the timeline', async () => {
+    const { user, editor, section, serialHeld, hideHeld } = await whilePagehideSaveIsHeld();
+    await user.type(editor, ', тимлід норм');
+    await user.keyboard('{Control>}{Enter}{/Control}');
+    serialHeld.release();
+    await waitFor(() => {
+      expect(noteRows(section)).toEqual([`20.10${FINISHED_BODY}`]);
+    });
+
+    await answerLate(hideHeld);
+
+    expect(noteRows(section)).toEqual([`20.10${FINISHED_BODY}`]);
+    expect(await within(timelineSection()).findByText(FINISHED_BODY)).toBeDefined();
+    expect(within(timelineSection()).queryByText(HIDDEN_BODY)).toBeNull();
+  });
+
+  it('a pagehide save that answers after the cleared draft is deleted does not bring the note back', async () => {
+    const { user, editor, notes, section, serialHeld, hideHeld } = await whilePagehideSaveIsHeld();
+    await user.clear(editor);
+    saveNow();
+    serialHeld.release();
+    await waitFor(() => {
+      expect(notes.deleted).toEqual([NOTE_ID]);
+    });
+
+    await answerLate(hideHeld);
+
+    expect(noteRows(section)).toEqual([]);
   });
 
   it('while the list loads the section is busy and the editor already takes text', async () => {

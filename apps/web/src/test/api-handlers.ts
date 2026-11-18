@@ -5,12 +5,13 @@ import {
   type SettingsSuggestions,
   settingsSuggestionsSchema,
 } from '@jobflow/shared';
+import { act, waitFor } from '@testing-library/react';
 import type { DelayMode, HttpResponseResolver, JsonBodyType } from 'msw';
 import { http, HttpResponse } from 'msw/http';
 import { delay } from 'msw/utils/delay';
 import { expect, vi } from 'vitest';
 
-import { ApiError } from '@/shared/api';
+import { API_CLIENT_LIMITS, ApiError } from '@/shared/api';
 import { config } from '@/shared/config';
 
 export type ErrorBodyOptions = Pick<ErrorResponse, 'status' | 'type'> &
@@ -143,6 +144,20 @@ export function recordSentRequests() {
       idempotencyKey: idempotencyKeyOf(new Headers(init?.headers)) ?? undefined,
       body: typeof init?.body === 'string' ? (JSON.parse(init.body) as unknown) : init?.body,
     }));
+}
+
+export function everyFetchSettled() {
+  return waitFor(() => {
+    const settled = vi.mocked(fetch).mock.settledResults;
+    if (settled.some(({ type }) => type === 'incomplete')) {
+      throw new Error('a sent request is still in flight');
+    }
+  });
+}
+
+export async function settleSentRequests() {
+  await act(() => vi.advanceTimersByTimeAsync(API_CLIENT_LIMITS.requestTimeoutMs));
+  await everyFetchSettled();
 }
 
 export function refreshRoute({ token, onCall, hold }: RefreshRouteOptions) {
