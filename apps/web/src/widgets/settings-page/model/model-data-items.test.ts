@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { modelDataItems } from './model-data-items';
 
 describe('modelDataItems', () => {
-  it('lists one line for each AI feature with what it sends to the model, then says notes never go', () => {
+  it('lists one line for each AI feature with what it sends to the model, then says only dictionary theme words from notes reach the model', () => {
     expect(modelDataItems()).toEqual([
       { id: 'vacancy_parse', text: 'Розбір вакансії: текст вакансії.' },
       {
@@ -27,7 +27,7 @@ describe('modelDataItems', () => {
         id: 'interview_prep',
         text: 'Підготовка до співбесіди: посада, тип співбесіди, вимоги вакансії, прогалини резюме, слабкі місця.',
       },
-      { id: 'notes', text: 'Нотатки в модель не йдуть.' },
+      { id: 'notes', text: 'Текст нотаток у модель не йде, лише слова-теми зі словника.' },
     ]);
   });
 });
