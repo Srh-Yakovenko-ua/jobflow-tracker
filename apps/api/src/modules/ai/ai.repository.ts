@@ -10,7 +10,7 @@ import {
   UNSETTLED_FAILURE_WHERE,
 } from '../../prisma/latest-ai-job.js';
 import { PrismaService } from '../../prisma/prisma.service.js';
-import { AI_BUDGET } from './ai-budget.js';
+import { AI_BUDGET, type BudgetWindow } from './ai-budget.js';
 import { type AiCallRecord, callRow } from './ai-call-row.js';
 import { AI_QUEUE_ESTIMATE } from './ai-queue-estimate.js';
 import {
@@ -56,8 +56,6 @@ export type CreateAiJob = InTransaction &
   );
 
 export type FailAiJobWithResult = { result: SaveAiFailure; job: FailAiJob };
-
-export type BudgetWindow = { dayStart: Date; monthStart: Date };
 
 export type BudgetUsage = { calls: number; tokens: number };
 

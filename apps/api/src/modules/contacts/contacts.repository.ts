@@ -77,7 +77,7 @@ export class ContactsRepository {
       SELECT b.id
       FROM applications a
       JOIN applications b ON b.user_id = a.user_id AND b.deleted_at IS NULL
-        AND lower(b.company) = lower(a.company)
+        AND (b.id = a.id OR jobflow_company_key(b.company) = jobflow_company_key(a.company))
       WHERE a.id = ${applicationId}::uuid AND a.user_id = ${userId}::uuid AND a.deleted_at IS NULL`;
     return rows.map(({ id }) => id);
   }

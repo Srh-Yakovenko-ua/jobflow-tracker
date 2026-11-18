@@ -8,6 +8,8 @@ export type SavePushSubscription = PushSubscriptionInput & { userAgent: string |
 
 export type DeliveredPush = { id: string; now: Date };
 
+export type FailedPush = { id: string; limit: number };
+
 export const PUSH_TARGET_SELECT = {
   id: true,
   endpoint: true,
@@ -66,7 +68,11 @@ export class PushRepository {
     });
   }
 
-  async countFailure(userId: string, id: string): Promise<void> {
+  async countFailure(userId: string, { id, limit }: FailedPush): Promise<void> {
+    const { count } = await this.prisma.pushSubscription.deleteMany({
+      where: { id, userId, failedCount: { gte: limit - 1 } },
+    });
+    if (count > 0) return;
     await this.prisma.pushSubscription.updateMany({
       where: { id, userId },
       data: { failedCount: { increment: 1 } },

@@ -7,11 +7,10 @@ import {
   type CapturePasteResponse,
   type CaptureRetryResponse,
 } from '@jobflow/shared';
-import { Body, Controller, HttpCode, Param, Post, Req } from '@nestjs/common';
-import type { Request } from 'express';
+import { Body, Controller, HttpCode, Param, Post } from '@nestjs/common';
 
 import { Idempotent } from '../../common/idempotency/idempotent.decorator.js';
-import { readRequestId } from '../../common/request-id.middleware.js';
+import { RequestId } from '../../common/request-id.decorator.js';
 import { AcceptsAiJob, RateLimit } from '../../rate-limit/rate-limit.decorator.js';
 import { type AccessUser, CurrentUser, RequireScope } from '../auth/index.js';
 import { CaptureService } from './capture.service.js';
@@ -25,9 +24,9 @@ export class CaptureController {
   paste(
     @CurrentUser() user: AccessUser,
     @Body({ schema: capturePasteInputSchema }) input: CapturePasteInput,
-    @Req() req: Request,
+    @RequestId() requestId: string,
   ): Promise<CapturePasteResponse> {
-    return this.capture.paste(user.id, { input, requestId: readRequestId(req) });
+    return this.capture.paste(user.id, { input, requestId });
   }
 
   @Post('bookmarklet')
@@ -38,9 +37,9 @@ export class CaptureController {
   bookmarklet(
     @CurrentUser() user: AccessUser,
     @Body({ schema: captureBookmarkletInputSchema }) input: CaptureBookmarkletInput,
-    @Req() req: Request,
+    @RequestId() requestId: string,
   ): Promise<CapturePasteResponse> {
-    return this.capture.bookmarklet(user.id, { input, requestId: readRequestId(req) });
+    return this.capture.bookmarklet(user.id, { input, requestId });
   }
 
   @Post('drafts/:id/confirm')
@@ -58,8 +57,8 @@ export class CaptureController {
   retry(
     @CurrentUser() user: AccessUser,
     @Param('id', { schema: applicationIdSchema }) id: string,
-    @Req() req: Request,
+    @RequestId() requestId: string,
   ): Promise<CaptureRetryResponse> {
-    return this.capture.retry(user.id, { applicationId: id, requestId: readRequestId(req) });
+    return this.capture.retry(user.id, { applicationId: id, requestId });
   }
 }

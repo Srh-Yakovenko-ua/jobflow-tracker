@@ -5,6 +5,7 @@ import { AccessTokens } from './access-tokens.js';
 import { AuthController } from './auth.controller.js';
 import { AuthRepository } from './auth.repository.js';
 import { AuthService } from './auth.service.js';
+import { AuthClock } from './auth-clock.js';
 import { CaptureTokensController } from './capture-tokens.controller.js';
 import { CaptureTokensRepository } from './capture-tokens.repository.js';
 import { CaptureTokensService } from './capture-tokens.service.js';
@@ -19,7 +20,7 @@ import { OAuthStates } from './oauth-state.js';
 import { PasswordHasher } from './password-hasher.js';
 import { SessionRepository } from './session.repository.js';
 import { SessionService } from './session.service.js';
-import { UserTokens } from './user-tokens.js';
+import { UserTokens } from './user-tokens.service.js';
 
 @Module({
   imports: [JwtKeysModule],
@@ -38,6 +39,7 @@ import { UserTokens } from './user-tokens.js';
     SessionRepository,
     UserTokens,
     AccessTokens,
+    AuthClock,
     { provide: APP_GUARD, useClass: JwtAuthGuard },
   ],
   exports: [AuthService],

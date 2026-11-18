@@ -37,7 +37,6 @@ export const scheduleParamsSchema = z.object({
 export type MaintenanceScheduleId = z.infer<typeof maintenanceScheduleIdSchema>;
 
 export type MaintenanceSchedule = {
-  id: MaintenanceScheduleId;
   repeat: Omit<RepeatOptions, 'key'>;
   template: { name: MaintenanceJobName; opts: JobSchedulerTemplateOptions };
 };
@@ -48,54 +47,46 @@ const TICK_JOB_OPTIONS = {
   removeOnFail: { count: 100 },
 } satisfies JobSchedulerTemplateOptions;
 
-export const MAINTENANCE_SCHEDULES: MaintenanceSchedule[] = [
-  {
-    id: MAINTENANCE_SCHEDULE_IDS.outboxRelay,
+export const MAINTENANCE_SCHEDULES: Record<MaintenanceScheduleId, MaintenanceSchedule> = {
+  [MAINTENANCE_SCHEDULE_IDS.outboxRelay]: {
     repeat: { every: 500 },
     template: { name: MAINTENANCE_JOBS.outboxRelay, opts: TICK_JOB_OPTIONS },
   },
-  {
-    id: MAINTENANCE_SCHEDULE_IDS.cleanup,
+  [MAINTENANCE_SCHEDULE_IDS.cleanup]: {
     repeat: { every: milliseconds({ days: 1 }) },
     template: { name: MAINTENANCE_JOBS.cleanup, opts: TICK_JOB_OPTIONS },
   },
-  {
-    id: MAINTENANCE_SCHEDULE_IDS.silenceScan,
+  [MAINTENANCE_SCHEDULE_IDS.silenceScan]: {
     repeat: { every: milliseconds({ minutes: 15 }) },
     template: { name: MAINTENANCE_JOBS.silenceScan, opts: TICK_JOB_OPTIONS },
   },
-  {
-    id: MAINTENANCE_SCHEDULE_IDS.autoGhostScan,
+  [MAINTENANCE_SCHEDULE_IDS.autoGhostScan]: {
     repeat: { every: milliseconds({ hours: 1 }) },
     template: { name: MAINTENANCE_JOBS.autoGhostScan, opts: TICK_JOB_OPTIONS },
   },
-  {
-    id: MAINTENANCE_SCHEDULE_IDS.eventReminders,
+  [MAINTENANCE_SCHEDULE_IDS.eventReminders]: {
     repeat: { every: milliseconds({ minutes: 5 }) },
     template: { name: MAINTENANCE_JOBS.eventRemindersScan, opts: TICK_JOB_OPTIONS },
   },
-  {
-    id: MAINTENANCE_SCHEDULE_IDS.monthlySummary,
+  [MAINTENANCE_SCHEDULE_IDS.monthlySummary]: {
     repeat: { pattern: '0 * * * *', tz: 'UTC' },
     template: { name: MAINTENANCE_JOBS.monthlySummaryPick, opts: TICK_JOB_OPTIONS },
   },
-  {
-    id: MAINTENANCE_SCHEDULE_IDS.rhythmWeekClose,
+  [MAINTENANCE_SCHEDULE_IDS.rhythmWeekClose]: {
     repeat: { pattern: '0 * * * *', tz: 'UTC' },
     template: { name: MAINTENANCE_JOBS.rhythmWeekClosePick, opts: TICK_JOB_OPTIONS },
   },
-  {
-    id: MAINTENANCE_SCHEDULE_IDS.aiJobsSweep,
+  [MAINTENANCE_SCHEDULE_IDS.aiJobsSweep]: {
     repeat: { every: milliseconds({ minutes: 15 }) },
     template: { name: MAINTENANCE_JOBS.aiJobsSweep, opts: TICK_JOB_OPTIONS },
   },
-];
+};
 
 export const UPTIME_PUSH_SCHEDULE = {
   id: 'uptime-push',
   repeat: { every: milliseconds({ minutes: 1 }) },
   template: { name: MAINTENANCE_JOBS.uptimePush, opts: TICK_JOB_OPTIONS },
-} satisfies Omit<MaintenanceSchedule, 'id'> & { id: string };
+} satisfies MaintenanceSchedule & { id: string };
 
 export const uptimePushJobSchema = z.object({ url: z.url({ protocol: /^https?$/ }) });
 

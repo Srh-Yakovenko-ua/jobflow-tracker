@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { z } from 'zod';
 
 import type { Prisma } from '../../generated/prisma/client.js';
+import type { InTransaction } from '../../prisma/in-transaction.js';
 import { PrismaService } from '../../prisma/prisma.service.js';
 import { AI_JOB_ID } from '../../test/ai.js';
 import { FAKE_TRANSACTION, FakePrisma, fakeTransactionModule } from '../../test/fake-prisma.js';
@@ -16,13 +17,12 @@ import {
   type NotificationPage,
   type NotificationRow,
   NotificationsRepository,
-  type Transaction,
 } from './notifications.repository.js';
 import { NotificationsService } from './notifications.service.js';
 
 type StoredNotification = ByUser<NotificationRow>;
 
-type Written = ByUser<InsertNotification> | ByUser<Transaction>;
+type Written = ByUser<InsertNotification> | ByUser<Required<InTransaction>>;
 
 const idOf = (index: number) => `0199f0a0-0000-7000-8000-${String(index).padStart(12, '0')}`;
 
@@ -63,7 +63,7 @@ class FakeNotificationsRepository {
     return Promise.resolve(id);
   }
 
-  lockUser(userId: string, { tx }: Transaction): Promise<void> {
+  lockUser(userId: string, { tx }: Required<InTransaction>): Promise<void> {
     this.writes.push({ userId, tx });
     return Promise.resolve();
   }

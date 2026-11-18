@@ -311,6 +311,21 @@ describe('push subscriptions', () => {
       expect(await subscriptionOf(olena.userId)).toEqual([{ failedCount: 1, lastSuccessAt: null }]);
     });
 
+    it('a subscription that keeps failing is removed after the limit', async () => {
+      const { olena, bohdan } = await subscribedPair();
+      await testApp.prisma.pushSubscription.updateMany({
+        data: { failedCount: PUSH_LIMITS.failedSendsMax - 1 },
+      });
+      sender.answer = 'failed';
+
+      await pushSilenceTo(olena.userId);
+
+      expect(await subscriptionOf(olena.userId)).toEqual([]);
+      expect(await subscriptionOf(bohdan.userId)).toEqual([
+        { failedCount: PUSH_LIMITS.failedSendsMax - 1, lastSuccessAt: null },
+      ]);
+    });
+
     it('queues nothing while the user keeps push turned off', async () => {
       const { olena } = await subscribedPair();
       await testApp.app.get(NotificationsService).record(olena.userId, {

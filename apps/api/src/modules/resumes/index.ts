@@ -1,5 +1,5 @@
 export { DocumentsClient, type DocumentsExtract } from './documents-client.js';
-export { DocumentsError } from './documents-error.js';
+export { DOCUMENTS_ERRORS, DocumentsError } from './documents-error.js';
 export { detectResumeFormat } from './resume-file-format.js';
 export { ResumeProfileSubscriber } from './resume-profile-subscriber.service.js';
 export type {

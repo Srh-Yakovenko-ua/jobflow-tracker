@@ -7,7 +7,7 @@ import { CHROME_SUBSCRIPTION, ScriptedPushSender, SILENCE_PUSH } from '../../tes
 import { OLENA_ID } from '../../test/service-fixtures.js';
 import { fixedClock, NOW } from '../../test/time.js';
 import { SettingsService } from '../settings/index.js';
-import { PushRepository, type PushTargetRow } from './push.repository.js';
+import { type FailedPush, PushRepository, type PushTargetRow } from './push.repository.js';
 import { PushSendService } from './push-send.service.js';
 import { PushSender } from './push-sender.js';
 
@@ -40,7 +40,7 @@ class FakePushTargets {
     return this.unsaved.has(id) ? Promise.reject(new Error('write lost')) : Promise.resolve();
   }
 
-  countFailure(_userId: string, id: string): Promise<void> {
+  countFailure(_userId: string, { id }: FailedPush): Promise<void> {
     this.calls.push(`countFailure ${id}`);
     return Promise.resolve();
   }

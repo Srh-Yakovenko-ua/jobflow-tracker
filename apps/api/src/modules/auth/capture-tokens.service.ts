@@ -3,12 +3,16 @@ import { Injectable } from '@nestjs/common';
 
 import { notFound, tokenExpired, unauthorized } from '../../common/app-error.js';
 import type { AccessUser } from './access-tokens.js';
+import { AuthClock } from './auth-clock.js';
 import { CaptureTokensRepository } from './capture-tokens.repository.js';
 import { hashRefreshToken as hashToken, newRefreshToken as newToken } from './refresh-tokens.js';
 
 @Injectable()
 export class CaptureTokensService {
-  constructor(private readonly repository: CaptureTokensRepository) {}
+  constructor(
+    private readonly repository: CaptureTokensRepository,
+    private readonly clock: AuthClock,
+  ) {}
 
   async create({ id: userId, token: accessToken }: AccessUser): Promise<CaptureTokenCreated> {
     const token = newToken();
@@ -18,7 +22,7 @@ export class CaptureTokensService {
         : await this.repository.replace({
             userId,
             tokenHash: hashToken(token),
-            now: new Date(),
+            now: this.clock.now(),
             issuedAt: accessToken.issuedAt,
           });
     if (created === undefined) {
@@ -39,13 +43,13 @@ export class CaptureTokensService {
   }
 
   async revoke(userId: string, id: string): Promise<void> {
-    if ((await this.repository.revoke(userId, { id, now: new Date() })) === 0) {
+    if ((await this.repository.revoke(userId, { id, now: this.clock.now() })) === 0) {
       throw notFound('Capture token not found');
     }
   }
 
   async verify(token: string): Promise<AccessUser> {
-    const used = await this.repository.use({ tokenHash: hashToken(token), now: new Date() });
+    const used = await this.repository.use({ tokenHash: hashToken(token), now: this.clock.now() });
     if (used === undefined) {
       throw unauthorized('Invalid capture token');
     }

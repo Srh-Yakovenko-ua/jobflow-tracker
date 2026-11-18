@@ -1,6 +1,6 @@
 import type { AuthUser } from '@jobflow/shared';
 import { Test } from '@nestjs/testing';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { describe, expect, it } from 'vitest';
 
 import { conflict } from '../../common/app-error.js';
 import { PrismaService } from '../../prisma/prisma.service.js';
@@ -22,14 +22,11 @@ import {
 } from './auth.repository.js';
 import { AuthService, type OAuthIdentity } from './auth.service.js';
 import { PasswordHasher } from './password-hasher.js';
-import type { RevokeAllInput } from './session.repository.js';
-import { UserTokens } from './user-tokens.js';
+import { type RevokeUserTokens, UserTokens } from './user-tokens.service.js';
 
 type StoredUser = UserCredentials & { oauthAccounts?: OAuthAccountKey[] };
 
 const DUMMY_HASH = 'dummy-hash';
-
-const NOW = new Date('2026-10-21T10:00:00.000Z');
 
 const FAMILY_ID = '0199f0a0-0000-7000-8000-0000000000f1';
 
@@ -107,7 +104,7 @@ class FakeAuthRepository {
 
 async function authServiceWith(users: UserCredentials[] = [], profiles: UserProfile[] = []) {
   const repository = new FakeAuthRepository(users, profiles);
-  const tokens = new RevokeAllRecorder<RevokeAllInput>();
+  const tokens = new RevokeAllRecorder<RevokeUserTokens>();
   const hasher = new FakePasswordHasher();
   const moduleRef = await Test.createTestingModule({
     providers: [AuthService, AuthRepository, UserTokens, PasswordHasher, PrismaService],
@@ -193,14 +190,6 @@ describe('AuthService.login', () => {
 describe('AuthService.changePassword', () => {
   const input = { currentPassword: 'correct password', newPassword: 'a brand new secret' };
 
-  beforeEach(() => {
-    vi.useFakeTimers({ toFake: ['Date'], now: NOW });
-  });
-
-  afterEach(() => {
-    vi.useRealTimers();
-  });
-
   it('stores the new hash and revokes every family but the current one in one transaction', async () => {
     const { repository, tokens, service } = await authServiceWith([annaWithPassword]);
 
@@ -210,7 +199,7 @@ describe('AuthService.changePassword', () => {
       { userId: ANNA.id, passwordHash: 'hashed:a brand new secret', client: FAKE_TRANSACTION },
     ]);
     expect(tokens.revokedAll).toEqual([
-      { userId: ANNA.id, now: NOW, keepFamilyId: FAMILY_ID, client: FAKE_TRANSACTION },
+      { userId: ANNA.id, keepFamilyId: FAMILY_ID, client: FAKE_TRANSACTION },
     ]);
   });
 
@@ -313,14 +302,6 @@ describe('AuthService.signInWithOAuth', () => {
     oauthAccounts: [{ provider: 'github', providerUserId: '1002' }],
   };
 
-  beforeEach(() => {
-    vi.useFakeTimers({ toFake: ['Date'], now: NOW });
-  });
-
-  afterEach(() => {
-    vi.useRealTimers();
-  });
-
   it('signs into the user the GitHub account is linked to, never another user', async () => {
     const { repository, service } = await authServiceWith([
       bohdan,
@@ -358,7 +339,7 @@ describe('AuthService.signInWithOAuth', () => {
     expect(repository.passwords).toEqual([
       { userId: ANNA.id, passwordHash: null, client: FAKE_TRANSACTION },
     ]);
-    expect(tokens.revokedAll).toEqual([{ userId: ANNA.id, now: NOW, client: FAKE_TRANSACTION }]);
+    expect(tokens.revokedAll).toEqual([{ userId: ANNA.id, client: FAKE_TRANSACTION }]);
   });
 
   it('creates a user without a password for a new verified email', async () => {

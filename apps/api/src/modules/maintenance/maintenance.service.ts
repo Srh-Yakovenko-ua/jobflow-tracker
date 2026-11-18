@@ -32,11 +32,7 @@ export class MaintenanceService {
   }
 
   runNow({ schedule, requestId }: RunNow): Promise<JobAccepted> {
-    const scheduled = MAINTENANCE_SCHEDULES.find(({ id }) => id === schedule);
-    if (scheduled === undefined) {
-      throw new Error(`No maintenance schedule ${schedule}`);
-    }
-    const { name, opts } = scheduled.template;
+    const { name, opts } = MAINTENANCE_SCHEDULES[schedule].template;
     return this.add({ name, data: { requestId }, opts });
   }
 

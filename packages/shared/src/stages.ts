@@ -17,6 +17,8 @@ export const stageSchema = z.enum(STAGES);
 
 export type Stage = z.infer<typeof stageSchema>;
 
+export const FIRST_STAGE = 'applied' satisfies Stage;
+
 export const STAGE_LABELS: Record<Stage, LocalizedLabel> = {
   applied: { labelUk: 'відгук', labelEn: 'Applied' },
   screening: { labelUk: 'скринінг', labelEn: 'Screening' },
