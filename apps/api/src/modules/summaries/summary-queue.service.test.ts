@@ -28,7 +28,12 @@ import {
 } from '../../test/fetch.js';
 import { memoryLog } from '../../test/memory-log.js';
 import { compileProcessorModule } from '../../test/processor.js';
-import { OLENA_ID, SEARCH_ID } from '../../test/service-fixtures.js';
+import {
+  FINAL_DELIVERY,
+  FIRST_DELIVERY,
+  OLENA_ID,
+  SEARCH_ID,
+} from '../../test/service-fixtures.js';
 import { StubQueue } from '../../test/stub-queues.js';
 import { AiService } from '../ai/index.js';
 import { PlansService } from '../plans/index.js';
@@ -36,8 +41,6 @@ import type { SummaryRequestedPayload } from './summaries.events.js';
 import { SummaryQueueService } from './summary-queue.service.js';
 
 const log = memoryLog();
-
-const FIRST_DELIVERY = { eventId: 'event-1', finalAttempt: false };
 
 const REQUESTED: SummaryRequestedPayload = {
   userId: OLENA_ID,
@@ -149,14 +152,14 @@ describe('SummaryQueueService.enqueue', () => {
     recordFetch({ replies: () => Promise.reject(refusedConnection), decodeBody: () => null });
     const { ai, enqueue } = await queueWithFakes();
 
-    await expect(enqueue({ ...FIRST_DELIVERY, finalAttempt: true })).rejects.toMatchObject({
+    await expect(enqueue(FINAL_DELIVERY)).rejects.toMatchObject({
       status: 503,
       type: 'not_ready',
     });
 
     expect(ai.jobs.get(AI_JOB_ID)).toMatchObject({ status: 'failed', errorType: 'not_ready' });
     expect(log.parsed()).toEqual([
-      expect.objectContaining({ aiJobId: AI_JOB_ID, msg: 'monthly summary failed' }),
+      expect.objectContaining({ aiJobId: AI_JOB_ID, msg: 'monthly_summary job not queued' }),
     ]);
   });
 });

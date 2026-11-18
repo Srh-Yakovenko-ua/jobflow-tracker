@@ -5,7 +5,12 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import { AI_JOB_ID, FakeAiRepository } from '../../test/ai.js';
 import { memoryLog } from '../../test/memory-log.js';
 import { compileProcessorModule } from '../../test/processor.js';
-import { APPLICATION_ID, OLENA_ID } from '../../test/service-fixtures.js';
+import {
+  APPLICATION_ID,
+  FINAL_DELIVERY,
+  FIRST_DELIVERY,
+  OLENA_ID,
+} from '../../test/service-fixtures.js';
 import { StubQueue, unreachableQueues } from '../../test/stub-queues.js';
 import { AiService } from '../ai/index.js';
 import { FollowupQueueService } from './followup-queue.service.js';
@@ -30,7 +35,11 @@ async function serviceWith(queue: StubQueue = new StubQueue('ai')) {
     { provide: getQueueToken('ai'), useValue: queue },
   ]);
   const service = moduleRef.get(FollowupQueueService);
-  return { queue, ai, enqueue: (payload = REQUESTED) => service.enqueue(payload) };
+  return {
+    queue,
+    ai,
+    enqueue: (payload = REQUESTED, delivery = FIRST_DELIVERY) => service.enqueue(payload, delivery),
+  };
 }
 
 describe('FollowupQueueService.enqueue', () => {
@@ -70,11 +79,11 @@ describe('FollowupQueueService.enqueue', () => {
   });
 
   it.each(unreachableQueues('ai'))(
-    'fails the job as not_ready and rethrows when the queue $case',
+    'fails the job as not_ready and rethrows when the queue $case on the final attempt',
     async ({ queue, error }) => {
       const { ai, enqueue } = await serviceWith(queue);
 
-      await expect(enqueue()).rejects.toThrow(error);
+      await expect(enqueue(REQUESTED, FINAL_DELIVERY)).rejects.toThrow(error);
 
       expect(ai.jobs.get(AI_JOB_ID)).toEqual(
         expect.objectContaining({ status: 'failed', errorType: 'not_ready' }),

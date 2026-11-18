@@ -16,7 +16,7 @@ export class FollowupsSubscriber implements OnModuleInit {
       type: FOLLOWUP_EVENTS.requested,
       schema: followupRequestedPayloadSchema,
       label: 'followup event',
-      handle: (requested) => this.queue.enqueue(requested),
+      handle: (requested, delivery) => this.queue.enqueue(requested, delivery),
     });
   }
 }

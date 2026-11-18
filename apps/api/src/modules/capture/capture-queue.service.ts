@@ -6,7 +6,7 @@ import type { DomainEvent } from '../../outbox/domain-event-router.js';
 import { QUEUES } from '../../queues/queues.js';
 import {
   AI_PAYLOAD_BUILDERS,
-  type AiCompleteJob,
+  type AiJobBuilder,
   AiService,
   queueOrFailAiJob,
 } from '../ai/index.js';
@@ -37,11 +37,11 @@ export class CaptureQueueService {
     if (rawText === null) {
       return;
     }
-    const job: AiCompleteJob = {
+    const job: AiJobBuilder = {
       aiJobId,
       userId,
       kind: 'vacancy_parse',
-      input: AI_PAYLOAD_BUILDERS.vacancy_parse({ rawText }),
+      buildInput: () => AI_PAYLOAD_BUILDERS.vacancy_parse({ rawText }),
       applicationId,
       requestId,
     };

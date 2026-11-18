@@ -93,6 +93,18 @@ export class RefusingQueue extends UnreachableQueue {
   }
 }
 
+export class RefusingOnceQueue extends StubQueue {
+  private refused = false;
+
+  override add(...job: StubAdd): Promise<StubJob> {
+    if (this.refused) {
+      return super.add(...job);
+    }
+    this.refused = true;
+    return Promise.reject(new Error('Connection is closed.'));
+  }
+}
+
 export const unreachableQueues = (name: string) => [
   { case: 'refuses it', queue: new RefusingQueue(name), error: 'Connection is closed.' },
   { case: 'never answers', queue: new SilentQueue(name), error: 'timed out after 2000 ms' },

@@ -24,8 +24,11 @@ export const AI_SERVICE_ERRORS = {
 export type AiServiceErrorType = (typeof AI_SERVICE_ERRORS)[keyof typeof AI_SERVICE_ERRORS];
 
 export class AiServiceError extends ServiceCallError {
-  constructor(failure: ServiceCallFailure) {
+  readonly reachedService: boolean;
+
+  constructor({ reachedService, ...failure }: ServiceCallFailure & { reachedService?: false }) {
     super(failure, 'AI call');
+    this.reachedService = reachedService ?? true;
   }
 }
 

@@ -1,4 +1,4 @@
-import { AI_JOB_FAILURES } from '@jobflow/shared';
+import { AI_JOB_FAILURES, MATCH_FAILURES, VACANCY_PARSE_FAILURES } from '@jobflow/shared';
 import { Injectable, type OnApplicationBootstrap } from '@nestjs/common';
 import { DiscoveryService } from '@nestjs/core';
 import type { Job } from 'bullmq';
@@ -8,8 +8,14 @@ import { ErrorReporter } from './error-reporter.js';
 
 type FailedJob = Pick<Job, 'name' | 'finishedOn'>;
 
+const EXPECTED_AI_OUTCOMES: ReadonlySet<string> = new Set([
+  AI_JOB_FAILURES.budgetExceeded,
+  ...VACANCY_PARSE_FAILURES,
+  ...MATCH_FAILURES,
+]);
+
 const isCrash = (job: FailedJob, error: Error): boolean =>
-  job.finishedOn !== undefined && error.message !== AI_JOB_FAILURES.budgetExceeded;
+  job.finishedOn !== undefined && !EXPECTED_AI_OUTCOMES.has(error.message);
 
 @Injectable()
 export class JobFailureReporter implements OnApplicationBootstrap {

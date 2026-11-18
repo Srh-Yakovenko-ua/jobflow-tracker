@@ -1,5 +1,4 @@
 import {
-  AI_JOB_FAILURES,
   forecastQuerySchema,
   type ForecastResponse,
   type FunnelResponse,
@@ -15,10 +14,9 @@ import type { EventDelivery } from '../../outbox/domain-event-router.js';
 import { QUEUES } from '../../queues/queues.js';
 import {
   AI_PAYLOAD_BUILDERS,
-  type AiCompleteJob,
   AiService,
   type MonthlySummarySource,
-  queueAiCompletion,
+  queueOrFailAiJob,
   type WhatIfSource,
 } from '../ai/index.js';
 import { PlansService } from '../plans/index.js';
@@ -57,24 +55,16 @@ export class SummaryQueueService {
 
   async enqueue(requested: SummaryRequestedPayload, delivery: EventDelivery): Promise<void> {
     const { userId, aiJobId, requestId, fresh } = requested;
-    try {
-      const input = AI_PAYLOAD_BUILDERS.monthly_summary(await this.sourceOf(requested));
-      const job: AiCompleteJob = {
-        aiJobId,
-        userId,
-        kind: 'monthly_summary',
-        input,
-        requestId,
-        fresh,
-      };
-      await queueAiCompletion(this.queue, job);
-    } catch (error) {
-      if (delivery.finalAttempt) {
-        await this.ai.failJob(userId, { id: aiJobId, errorType: AI_JOB_FAILURES.notReady });
-        this.logger.warn({ eventId: delivery.eventId, aiJobId }, 'monthly summary failed');
-      }
-      throw error;
-    }
+    const { finalAttempt } = delivery;
+    const guarded = { queue: this.queue, ai: this.ai, logger: this.logger, finalAttempt };
+    await queueOrFailAiJob(guarded, {
+      aiJobId,
+      userId,
+      kind: 'monthly_summary',
+      requestId,
+      fresh,
+      buildInput: async () => AI_PAYLOAD_BUILDERS.monthly_summary(await this.sourceOf(requested)),
+    });
     this.logger.log({ requestId, aiJobId, month: requested.month }, 'monthly summary queued');
   }
 

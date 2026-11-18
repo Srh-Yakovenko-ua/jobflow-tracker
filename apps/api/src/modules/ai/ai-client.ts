@@ -34,18 +34,19 @@ type AiServicePost = { path: string; body: unknown; requestId?: string | undefin
 type Checked = {
   value: unknown;
   refusal: AiServiceErrorType;
+  reachedService?: false;
 };
 
-function checked<Body>(schema: z.ZodType<Body>, { value, refusal }: Checked): Body {
+function checked<Body>(schema: z.ZodType<Body>, { value, refusal, ...reach }: Checked): Body {
   const parsed = schema.safeParse(value);
   if (!parsed.success) {
-    throw new AiServiceError({ status: 422, type: refusal, cause: parsed.error });
+    throw new AiServiceError({ status: 422, type: refusal, cause: parsed.error, ...reach });
   }
   return parsed.data;
 }
 
 function allowedBody<Body>(schema: z.ZodType<Body>, value: unknown): Body {
-  return checked(schema, { value, refusal: AI_SERVICE_ERRORS.validation });
+  return checked(schema, { value, refusal: AI_SERVICE_ERRORS.validation, reachedService: false });
 }
 
 function unparsedBody(error: unknown): undefined {

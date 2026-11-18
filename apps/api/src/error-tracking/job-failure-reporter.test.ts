@@ -84,8 +84,12 @@ describe('JobFailureReporter', () => {
     },
   );
 
-  it('reports nothing for a job failed for good because the AI budget is exceeded', () => {
-    const refusal = new UnrecoverableError('budget_exceeded');
+  it.each([
+    { failure: 'a job over the AI budget', code: 'budget_exceeded' },
+    { failure: 'a vacancy with no company', code: 'no_company_no_position' },
+    { failure: 'a match with no requirements', code: 'no_requirements' },
+  ])('$failure is not reported as a crash', ({ code }) => {
+    const refusal = new UnrecoverableError(code);
 
     worker.emit('failed', failedJob({ attemptsMade: 1, opts: {}, finishedOn: FAILED_AT }), refusal);
 

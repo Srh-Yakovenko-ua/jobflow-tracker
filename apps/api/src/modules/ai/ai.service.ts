@@ -114,7 +114,7 @@ export class AiService {
   private async call(run: AiRun): Promise<AiOutcome> {
     const { job, inputHash, now } = run;
     const { userId, kind, input, options, requestId } = job;
-    this.guardPayload(run);
+    await this.guardPayload(run);
     const { output, ...meta } = await this.ai
       .complete({ kind, input, options, requestId })
       .catch((error: unknown) => this.refuse(run, error));
@@ -181,12 +181,13 @@ export class AiService {
     });
   }
 
-  private guardPayload(run: AiRun): void {
+  private async guardPayload(run: AiRun): Promise<void> {
     const paths = privatePayloadPaths(run.job.input);
     if (paths.length === 0) {
       return;
     }
     if (!this.inProduction) {
+      await this.fail(run, AI_SERVICE_ERRORS.internal);
       throw new AiPayloadError(paths);
     }
     const warning = { ...traceOf(run), securityEvent: 'ai_payload_private_field', paths };
@@ -195,7 +196,9 @@ export class AiService {
 
   private async refuse(run: AiRun, error: unknown): Promise<never> {
     const typed = error instanceof AiServiceError ? error : untypedAiError(error);
-    await this.repository.recordCall(run.job.userId, failedCallOf(run, typed.type));
+    if (typed.reachedService) {
+      await this.repository.recordCall(run.job.userId, failedCallOf(run, typed.type));
+    }
     const final = isFinal({ error: typed, kind: run.job.kind });
     if (final || run.finalAttempt) {
       await this.recordFailure(run, typed.type);

@@ -16,7 +16,7 @@ export class CvHintsSubscriber implements OnModuleInit {
       type: CV_HINTS_EVENTS.requested,
       schema: cvHintsRequestedPayloadSchema,
       label: 'cv hints event',
-      handle: (requested) => this.queue.enqueue(requested),
+      handle: (requested, delivery) => this.queue.enqueue(requested, delivery),
     });
   }
 }
