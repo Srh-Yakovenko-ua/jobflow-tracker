@@ -18,7 +18,9 @@ const DJINNI_APPLICATION = applicationResponseOf({
 
 const KNOWN_NORMS: ContextNorms = { medianDaysToOffer: 41, stageNormDays: 17 };
 
-function rowsOf(application: ApplicationResponse, norms: ContextNorms = KNOWN_NORMS) {
+type RowsNorms = Readonly<{ norms: ContextNorms | undefined }>;
+
+function rowsOf(application: ApplicationResponse, { norms }: RowsNorms = { norms: KNOWN_NORMS }) {
   return contextRowsOf({ application, now: NOW, timeZone: 'Europe/Kyiv', norms }).map(
     ({ label, value, hint }) => [label, value, hint],
   );
@@ -41,9 +43,16 @@ describe('contextRowsOf', () => {
   });
 
   it('shows мало даних instead of a number while the norms are unknown', () => {
-    expect(rowsOf(DJINNI_APPLICATION, NO_NORMS).slice(2)).toEqual([
+    expect(rowsOf(DJINNI_APPLICATION, { norms: NO_NORMS }).slice(2)).toEqual([
       ['твоя медіана до офера', null, 'мало даних'],
       ['на етапі', '13 днів', 'мало даних'],
+    ]);
+  });
+
+  it('shows the neutral mark and no мало даних while the norms are not read', () => {
+    expect(rowsOf(DJINNI_APPLICATION, { norms: undefined }).slice(2)).toEqual([
+      ['твоя медіана до офера', '—', null],
+      ['на етапі', '13 днів', null],
     ]);
   });
 
@@ -64,8 +73,8 @@ describe('contextRowsOf', () => {
     },
   );
 
-  it('contextNormsOf falls back to NO_NORMS while the norms are pending or failed', () => {
-    expect(contextNormsOf({ norms: undefined, stage: 'final' })).toBe(NO_NORMS);
+  it('contextNormsOf gives no norms while the norms are pending or failed', () => {
+    expect(contextNormsOf({ norms: undefined, stage: 'final' })).toBeUndefined();
   });
 
   it('contextNormsOf keeps a stage norm the service cut below 5 data points as unknown', () => {

@@ -32,5 +32,6 @@ export function useApplicationAiRequest({ applicationId, segment }: ApplicationA
       submitKey.reset();
       return queryClient.invalidateQueries({ queryKey: RESULT_KEY_OF[segment](applicationId) });
     },
+    onError: () => undefined,
   });
 }

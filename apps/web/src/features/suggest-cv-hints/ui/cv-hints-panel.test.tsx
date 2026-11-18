@@ -131,5 +131,6 @@ describe('CvHintsPanel', () => {
 
     expect(await screen.findByText('Підказки не вийшли.')).toBeDefined();
     expect(screen.getByRole('button', { name: 'Спробувати ще раз' })).toBeDefined();
+    expect(toast.getToasts()).toEqual([]);
   });
 });

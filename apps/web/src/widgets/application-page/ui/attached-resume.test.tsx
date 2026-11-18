@@ -21,6 +21,7 @@ import {
 } from '@/test/match-fixtures';
 import { pinClockInEachTest } from '@/test/pinned-clock';
 import { type ApplicationPageSetup, renderApplicationPage } from '@/test/render-application-page';
+import { DESIGN_RESUME_AB, resumeAbRoute } from '@/test/resume-ab-fixtures';
 import { server } from '@/test/server';
 
 vi.mock('next/navigation', () => import('@/test/navigation'));
@@ -66,8 +67,22 @@ describe('AttachedResume', () => {
 
     expect(await within(section).findByText('CV v2 · акцент на продукті')).toBeDefined();
     expect(within(section).getByText(/завантажено 09\.08 · 27 відгуків/)).toBeDefined();
-    expect(within(section).getByText('мало даних')).toBeDefined();
+    expect(await within(section).findByText('мало даних')).toBeDefined();
     expect(within(section).getByRole('button', { name: 'Переглянути PDF' })).toBeDefined();
+  });
+
+  it('a version with a real conversion shows the percent on the application page', async () => {
+    server.use(resumeAbRoute(DESIGN_RESUME_AB));
+    renderApplicationPage({
+      application: MATCHED_APPLICATION,
+      match: DESIGN_MATCH,
+      resumes: { items: [...DESIGN_VERSIONS] },
+    });
+
+    const section = await screen.findByRole('region', KICKER);
+
+    expect(await within(section).findByText('41%')).toBeDefined();
+    expect(within(section).queryByText('мало даних')).toBeNull();
   });
 
   it('relinking to another version queues a new score and the live stream brings it in', async () => {

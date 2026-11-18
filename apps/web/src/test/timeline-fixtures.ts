@@ -163,6 +163,19 @@ export const DESIGN_TIMELINE = applicationTimelineResponseSchema.parse({
   ],
 });
 
+export const CAPTURED_DRAFT_TIMELINE: ApplicationTimelineResponse = {
+  items: [
+    timelineItemOf({
+      serial: 313,
+      type: 'draft_confirmed',
+      occurredAt: '2026-08-12T10:05:00Z',
+      title: 'Поля перевірено вручну',
+      meta: {},
+    }),
+    ...DESIGN_TIMELINE.items.slice(-2),
+  ],
+};
+
 export const GHOSTED_FROM_SCREENING_TIMELINE: ApplicationTimelineResponse = {
   items: [
     timelineItemOf({

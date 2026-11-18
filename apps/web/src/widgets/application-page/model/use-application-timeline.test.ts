@@ -8,7 +8,11 @@ import { notesRoute } from '@/test/note-fixtures';
 import { renderHookInApp } from '@/test/render-in-app';
 import { server } from '@/test/server';
 import { meRoute } from '@/test/session-fixtures';
-import { DESIGN_TIMELINE_APPLICATION, timelineRoute } from '@/test/timeline-fixtures';
+import {
+  CAPTURED_DRAFT_TIMELINE,
+  DESIGN_TIMELINE_APPLICATION,
+  timelineRoute,
+} from '@/test/timeline-fixtures';
 
 import { useApplicationTimeline } from './use-application-timeline';
 
@@ -16,17 +20,17 @@ const TIMELINE_KEY = timelineKeys.detail(DESIGN_TIMELINE_APPLICATION.id);
 
 const NOT_FOUND = () => errorReply({ status: 404, type: 'not_found' });
 
-function renderTimeline() {
+function renderTimeline(application = DESIGN_TIMELINE_APPLICATION) {
   server.use(notesRoute().handler);
   const { result } = renderHookInApp(() => ({
-    timeline: useApplicationTimeline(DESIGN_TIMELINE_APPLICATION),
+    timeline: useApplicationTimeline(application),
     status: useQueryClient().getQueryState(TIMELINE_KEY)?.status,
   }));
   return result;
 }
 
 describe('useApplicationTimeline', () => {
-  it('counts every item, folds the AI parse and waits by the user silence threshold', async () => {
+  it('counts every row shown, folds the AI parse and waits by the user silence threshold', async () => {
     server.use(meRoute({ silenceDays: 12 }), timelineRoute());
     const result = renderTimeline();
 
@@ -41,6 +45,17 @@ describe('useApplicationTimeline', () => {
     });
     expect(result.current.timeline.rows).toHaveLength(8);
     expect(result.current.timeline.load).toMatchObject({ pending: false, failed: false });
+  });
+
+  it('the timeline count equals the rows shown for a captured draft', async () => {
+    server.use(meRoute(), timelineRoute({ timeline: CAPTURED_DRAFT_TIMELINE }));
+    const result = renderTimeline({ ...DESIGN_TIMELINE_APPLICATION, isDraft: true });
+
+    await waitFor(() => {
+      expect(result.current.timeline.rows).toHaveLength(1);
+    });
+    expect(result.current.timeline.waiting).toBeNull();
+    expect(result.current.timeline.count).toBe(1);
   });
 
   it('a timeline that fails before any data arrives offers a retry', async () => {

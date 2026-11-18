@@ -66,10 +66,10 @@ function storedTopicBox(name: string) {
 }
 
 describe('InterviewPrepPanel', () => {
-  it('before any pack says what it holds and that notes stay out, then asks for it once', async () => {
+  it('before any pack says what it holds and names the dictionary theme words, then asks for it once', async () => {
     const { user, routes } = renderPanel({ response: NO_INTERVIEW_PREP });
 
-    expect(screen.getByText(/Нотатки в модель не йдуть/)).toBeDefined();
+    expect(screen.getByText(/лише слова-теми зі словника/)).toBeDefined();
     await user.click(screen.getByRole('button', REQUEST));
 
     await expect.poll(() => routes.requested).toEqual([ACME_APPLICATION.id]);
@@ -244,6 +244,7 @@ describe('InterviewPrepPanel', () => {
 
     expect(await screen.findByText('Підготовка не вийшла.')).toBeDefined();
     expect(screen.getByRole('button', { name: 'Спробувати ще раз' })).toBeDefined();
+    expect(toast.getToasts()).toEqual([]);
   });
 
   it('a 409 with nothing to build from explains what the pack needs and offers no retry', async () => {

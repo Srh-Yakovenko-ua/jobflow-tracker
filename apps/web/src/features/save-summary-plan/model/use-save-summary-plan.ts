@@ -29,6 +29,7 @@ export function useSaveSummaryPlan(summary: Summary): SaveSummaryPlan {
         queryClient.invalidateQueries({ queryKey: summaryKeys.all }),
       ]);
     },
+    onError: () => undefined,
   });
   return {
     saved: summary.planId !== null || mutation.isSuccess,

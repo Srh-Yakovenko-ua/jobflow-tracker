@@ -37,6 +37,7 @@ export function useRegenerateSummary(): RegenerateSummary {
       submitKey.reset();
       return queryClient.invalidateQueries({ queryKey: summaryKeys.latest() });
     },
+    onError: () => undefined,
   });
   return {
     isPending: mutation.isPending,

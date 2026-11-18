@@ -3,7 +3,7 @@ import { screen, waitFor } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { uk } from '@/shared/i18n';
-import { NEVER_ANSWERS, REFUSED_CONNECTION } from '@/test/api-handlers';
+import { errorReply, NEVER_ANSWERS, REFUSED_CONNECTION } from '@/test/api-handlers';
 import { headingProblems } from '@/test/axe';
 import { boardRoute } from '@/test/board-fixtures';
 import { route } from '@/test/navigation';
@@ -52,6 +52,8 @@ const NEXT_UNREAD = buildNotification({
   type: 'ai_failed',
   payload: { aiJobId: notificationIdOf(44), kind: 'vacancy_parse', errorType: 'ai_timeout' },
 });
+
+const SERVER_ERROR = () => errorReply({ status: 500, type: 'internal_error' });
 
 pinClockInEachTest(NOTIFICATION_NOW);
 
@@ -178,6 +180,26 @@ describe('NotificationsPage', () => {
     expect(await screen.findByRole('heading', { name: '02.11' })).toBeDefined();
     expect(listsSent(sent)).toEqual(['limit=50', `limit=50&cursor=${cursor}`]);
     expect(screen.queryByRole('button', { name: COPY.more })).toBeNull();
+  });
+
+  it('a failed next page shows the retry alert and its retry adds the rows', async () => {
+    const pages = {
+      feed: { ...DESIGN_FEED, nextCursor: notificationIdOf(3) },
+      more: { items: [OLDER], nextCursor: null },
+    };
+    const { user } = renderPage(pages);
+    const more = await screen.findByRole('button', { name: COPY.more });
+    server.use(...notificationRoutes({ listReply: SERVER_ERROR }).handlers);
+
+    await user.click(more);
+    const retry = await findRetryAfterQueryRetries();
+
+    expect(screen.getByRole('alert')).toBeDefined();
+    expect(screen.queryByRole('button', { name: COPY.more })).toBeNull();
+    server.use(...notificationRoutes(pages).handlers);
+    await user.click(retry);
+    expect(await screen.findByRole('heading', { name: '02.11' })).toBeDefined();
+    expect(screen.queryByRole('alert')).toBeNull();
   });
 
   it('Прочитати все marks every notification read', async () => {

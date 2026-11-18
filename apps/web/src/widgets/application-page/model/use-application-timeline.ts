@@ -19,10 +19,17 @@ export function useApplicationTimeline(application: ApplicationResponse) {
   const [mountedAt] = useState(Date.now);
   const items = timeline.data?.items ?? [];
   const load = sectionLoadOf(timeline);
+  const rows = timelineRowsOf({
+    items,
+    application,
+    notes: notes.data?.items ?? [],
+    linkedVersion,
+  });
+  const waiting = waitingRowOf({ application, silenceDays, timeZone });
   return {
-    rows: timelineRowsOf({ items, application, notes: notes.data?.items ?? [], linkedVersion }),
-    waiting: waitingRowOf({ application, silenceDays, timeZone }),
-    count: items.length,
+    rows,
+    waiting,
+    count: rows.length + (waiting === null ? 0 : 1),
     latestInterviewId: items.find((item) => item.type === 'interview_done')?.id,
     now: new Date(Math.max(timeline.dataUpdatedAt, mountedAt)),
     timeZone,

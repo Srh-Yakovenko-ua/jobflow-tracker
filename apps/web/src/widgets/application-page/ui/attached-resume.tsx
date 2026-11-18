@@ -4,6 +4,7 @@ import { type ApplicationResponse, type ResumeVersion, resumeVersionLabel } from
 import { Eye } from 'lucide-react';
 import Link from 'next/link';
 
+import { conversionLabelOf } from '@/entities/resume';
 import { fileFormatOf, usePreviewVersion } from '@/features/edit-resume-version';
 import { type RelinkActions, VersionPicker } from '@/features/relink-resume-version';
 import { uk } from '@/shared/i18n';
@@ -30,14 +31,18 @@ const RESUMES_HREF = '/resumes';
 
 function LinkedResume({ application, actions, linked, resume }: LinkedResumeProps) {
   const preview = usePreviewVersion();
+  const conversion = conversionLabelOf(resume.conversion);
   return (
     <>
       <div className="flex flex-col gap-1">
         <p className="text-[15px] font-semibold wrap-anywhere">{resumeVersionLabel(linked)}</p>
         <p className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[13px] text-ink-3 tabular-nums">
           {COPY.uploaded(resume.dayLabel(linked.uploadedAt), linked.applicationsCount)}
-          <span className="rounded-md px-1.75 py-0.5 text-[12px] font-semibold text-ink-2 inset-ring inset-ring-stage-screening">
-            {uk.resumes.lowData}
+          <span
+            key={conversion}
+            className="animate-fade-in rounded-md px-1.75 py-0.5 text-[12px] font-semibold text-ink-2 inset-ring inset-ring-stage-screening"
+          >
+            {conversion}
           </span>
         </p>
       </div>
