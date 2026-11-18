@@ -3,7 +3,7 @@ import { screen, waitFor } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
 import { TOUCH_HEIGHT } from '@/shared/ui/touch-height';
-import { validationReply } from '@/test/api-handlers';
+import { ANY_IDEMPOTENCY_KEY, errorReply, validationReply } from '@/test/api-handlers';
 import { ACME_APPLICATION } from '@/test/application-fixtures';
 import { fixtureIdOf } from '@/test/board-fixtures';
 import { contactOf, contactRoutes, type ContactRoutesOptions } from '@/test/contact-fixtures';
@@ -66,7 +66,31 @@ describe('AddContactForm', () => {
       expect(onDone).toHaveBeenCalledTimes(1);
     });
     expect(sent.created).toEqual([
-      { id: ACME_APPLICATION.id, body: { name: 'Оксана Левченко' }, idempotencyKey: null },
+      {
+        id: ACME_APPLICATION.id,
+        body: { name: 'Оксана Левченко' },
+        idempotencyKey: ANY_IDEMPOTENCY_KEY,
+      },
+    ]);
+  });
+
+  it('a resent contact create carries the same idempotency key', async () => {
+    const failed = () => errorReply({ status: 500, type: 'internal_error' });
+    const { user, sent, onDone } = renderAddForm({ create: { reply: failed } });
+    await user.type(screen.getByRole('textbox', { name: NAME }), 'Оксана Левченко');
+
+    await user.click(screen.getByRole('button', { name: ADD }));
+    expect(await screen.findByText('Не вдалося зберегти')).toBeDefined();
+    const resent = contactRoutes();
+    server.use(...resent.handlers);
+    await user.click(screen.getByRole('button', { name: ADD }));
+
+    await waitFor(() => {
+      expect(onDone).toHaveBeenCalledTimes(1);
+    });
+    expect(sent.created[0]?.idempotencyKey).toMatch(/^[\da-f-]{36}$/);
+    expect(resent.sent.created.map((created) => created.idempotencyKey)).toEqual([
+      sent.created[0]?.idempotencyKey,
     ]);
   });
 
@@ -122,7 +146,7 @@ describe('AddContactForm', () => {
       {
         id: ACME_APPLICATION.id,
         body: { name: 'Ігор Савчук', role: 'Engineering Manager', telegram: 'ihor_em' },
-        idempotencyKey: null,
+        idempotencyKey: ANY_IDEMPOTENCY_KEY,
       },
     ]);
   });

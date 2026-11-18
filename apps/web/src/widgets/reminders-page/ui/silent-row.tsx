@@ -4,7 +4,7 @@ import { STAGE_LABELS } from '@jobflow/shared';
 import Link from 'next/link';
 import { useId } from 'react';
 
-import { SilenceIndicator } from '@/entities/application';
+import { applicationHrefOf, FOLLOW_UP_ANCHOR, SilenceIndicator } from '@/entities/application';
 import { type SilentRow, SnoozeMenu } from '@/features/snooze-reminder';
 import { uk } from '@/shared/i18n';
 import { buttonLinkClasses } from '@/shared/ui/button';
@@ -41,7 +41,7 @@ export function SilentCardRow({ row, actions }: SilentCardRowProps) {
       </div>
       <div className="flex flex-none flex-wrap gap-2">
         <Link
-          href={`/applications/${card.id}#follow-up`}
+          href={applicationHrefOf(card.id, FOLLOW_UP_ANCHOR)}
           className={buttonLinkClasses({ variant: 'primary', size: 'sm' })}
         >
           {COPY.actions.followUp}

@@ -77,8 +77,12 @@ function VersionName({ version, view }: VersionCellProps) {
   );
 }
 
+function NoValue() {
+  return <span className="text-[13px] text-ink-3">{NO_VALUE}</span>;
+}
+
 function NeedMore({ missing }: Readonly<{ missing: number }>) {
-  if (missing === 0) return <span className="text-[13px] text-ink-3">{NO_VALUE}</span>;
+  if (missing === 0) return <NoValue />;
   return (
     <span className="inline-flex h-3 items-center rounded-pill border-[1.5px] border-dashed border-line bg-surface-2 px-1.5 text-[10px] whitespace-nowrap text-ink-3">
       {COPY.needMore(missing)}
@@ -111,7 +115,8 @@ function ScreeningBar({ rate, active }: RatedCellProps) {
 
 function ScreeningCell({ version, view }: VersionCellProps) {
   const { conversion } = view;
-  if (typeof conversion === 'string') {
+  if (conversion === 'unknown') return <NoValue />;
+  if (conversion === 'none') {
     return <NeedMore missing={missingForPercent(version.applicationsCount)} />;
   }
   if (conversion.status === 'ok') return <ScreeningBar rate={conversion} active={view.active} />;

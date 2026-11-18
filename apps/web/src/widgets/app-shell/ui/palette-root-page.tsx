@@ -66,7 +66,7 @@ function RecentGroup({ view, actions }: PaletteRootPageProps) {
             icon: History,
           }}
           onSelect={() => {
-            actions.onOpenApplication(recent);
+            actions.onOpenRecent(recent);
           }}
         >
           <ApplicationOptionContent application={recent} />

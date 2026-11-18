@@ -1,5 +1,6 @@
 import {
   type ActiveStage,
+  AUTH_ROUTES,
   STAGE_LABELS,
   type StageTiming,
   type TimingsResponse,
@@ -42,7 +43,7 @@ type ShortTiming = Exclude<StageTiming, MeasuredTiming>;
 
 const nameOf = (stage: ActiveStage) => STAGE_LABELS[stage].labelUk;
 
-const boardHrefOf = (stage: ActiveStage) => withSearchParams('/board', { stage: [stage] });
+const boardHrefOf = (stage: ActiveStage) => withSearchParams(AUTH_ROUTES.home, { stage: [stage] });
 
 const shown = (days: number) => DAYS.format(days);
 

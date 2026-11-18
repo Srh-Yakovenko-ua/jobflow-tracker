@@ -6,9 +6,10 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { apiUrl, errorReply } from '@/test/api-handlers';
 import { advancePastQueryRetries, fakeTimeoutsAndClock } from '@/test/fake-timeouts';
+import { latch } from '@/test/latch';
 import { renderInApp } from '@/test/render-in-app';
 import { DESIGN_RESUME_AB } from '@/test/resume-ab-fixtures';
-import { resumeAbRoute } from '@/test/resume-ab-route';
+import { EMPTY_RESUME_AB, resumeAbRoute } from '@/test/resume-ab-route';
 import {
   buildResumeVersion,
   buildResumeVersions,
@@ -121,10 +122,28 @@ describe('ResumesPage', () => {
     const [row] = await dataRowsOf(TABLE.name);
     if (row === undefined) throw new Error('one row expected');
 
-    expect(within(row).getByText('потрібно ще 1')).toBeDefined();
     expect(await within(row).findByText('мало даних')).toBeDefined();
+    expect(within(row).getByText('потрібно ще 1')).toBeDefined();
     expect(within(row).getByText('4')).toBeDefined();
     expect(screen.getByRole('table', TABLE).textContent).not.toContain('%');
+  });
+
+  it('the screening cell shows no count while the A/B read is pending', async () => {
+    const held = latch();
+    renderPage({
+      ...onlyVersion({ applicationsCount: 4 }),
+      resumeAb: async () => {
+        await held.reached;
+        return Response.json(EMPTY_RESUME_AB);
+      },
+    });
+
+    const [row] = await dataRowsOf(TABLE.name);
+    if (row === undefined) throw new Error('one row expected');
+
+    expect(within(row).queryByText(/потрібно ще/)).toBeNull();
+    expect(within(row).getAllByText('—')).toHaveLength(2);
+    held.release();
   });
 
   it('a long version name is cut on its line while the date and the size stay', async () => {
@@ -220,7 +239,7 @@ describe('ResumesPage', () => {
     const rows = await dataRowsOf(TABLE.name);
     const retry = await screen.findByRole('button', { name: 'Спробувати ще раз' });
 
-    expect(within(rowOf(rows, 'CV v3 · версія 3')).getByText('потрібно ще 2')).toBeDefined();
+    expect(within(rowOf(rows, 'CV v3 · версія 3')).queryByText('потрібно ще 2')).toBeNull();
     expect(screen.queryAllByText('мало даних')).toHaveLength(0);
     expect(screen.getByRole('table', TABLE).textContent).not.toContain('%');
     outage.on = false;

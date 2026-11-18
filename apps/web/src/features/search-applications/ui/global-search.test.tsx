@@ -7,7 +7,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { FULL_CARD } from '@/entities/application';
 import { uk } from '@/shared/i18n';
 import { apiUrl, validationReply } from '@/test/api-handlers';
-import { heldSearchRoute } from '@/test/list-fixtures';
+import { heldSearchRoute, reviewDraftItemOf } from '@/test/list-fixtures';
 import { push } from '@/test/navigation';
 import { renderInApp } from '@/test/render-in-app';
 import { server } from '@/test/server';
@@ -136,6 +136,17 @@ describe('GlobalSearch', () => {
     await user.keyboard('{Enter}');
 
     expect(push.mock.calls).toEqual([[`/applications/${REJECTED_HIT.id}`]]);
+  });
+
+  it('a draft found in search links to its review form', async () => {
+    const draft = reviewDraftItemOf(301);
+    answerWith({ items: [draft], nextCursor: null });
+    const { user } = await typeQuery('vac');
+
+    await screen.findByRole('option', { name: /Vacancy 301/ });
+    await user.keyboard('{Enter}');
+
+    expect(push).toHaveBeenCalledExactlyOnceWith(`/add?review=${draft.id}#review`);
   });
 
   it('names the stage of every hit as text', async () => {

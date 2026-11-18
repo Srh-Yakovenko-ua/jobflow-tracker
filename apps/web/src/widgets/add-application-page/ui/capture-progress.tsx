@@ -1,6 +1,11 @@
 'use client';
 
-import { AI_JOB_STEPS, type ApplicationResponse, type JobStatus } from '@jobflow/shared';
+import {
+  AI_JOB_STEPS,
+  type ApplicationResponse,
+  AUTH_ROUTES,
+  type JobStatus,
+} from '@jobflow/shared';
 import type { UseQueryResult } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
@@ -131,7 +136,7 @@ export function CaptureProgress({ capture, actions }: CaptureProgressProps) {
         setFill('open');
       },
       onConfirmed: () => {
-        router.push('/board');
+        router.push(AUTH_ROUTES.home);
       },
     },
   };

@@ -1,5 +1,7 @@
+import { AUTH_ROUTES } from '@jobflow/shared';
 import Link from 'next/link';
 
+import { withSearchParams } from '@/shared/api';
 import { FEATURE_FLAGS, type FeatureFlags } from '@/shared/config';
 import { uk } from '@/shared/i18n';
 import { buttonLinkClasses } from '@/shared/ui/button';
@@ -7,7 +9,7 @@ import { EmptyState } from '@/shared/ui/empty-state';
 
 const COPY = uk.calendarPage;
 
-const SILENT_CARDS_HREF = '/board?silence=silent';
+const SILENT_CARDS_HREF = withSearchParams(AUTH_ROUTES.home, { silence: ['silent'] });
 
 function nextStepOf(flags: FeatureFlags) {
   return flags.reminders

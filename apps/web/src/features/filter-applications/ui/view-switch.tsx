@@ -1,5 +1,6 @@
 'use client';
 
+import { AUTH_ROUTES } from '@jobflow/shared';
 import { useRouter } from 'next/navigation';
 
 import { withSearchParams } from '@/shared/api';
@@ -10,7 +11,7 @@ import { useApplicationFilters } from '../model/filters-store';
 
 const COPY = uk.board.views;
 
-const VIEW_PATHS = { board: '/board', table: '/applications' } as const;
+const VIEW_PATHS = { board: AUTH_ROUTES.home, table: '/applications' } as const;
 
 export type ApplicationsView = keyof typeof VIEW_PATHS;
 

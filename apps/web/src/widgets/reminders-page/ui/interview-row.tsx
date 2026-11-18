@@ -3,7 +3,11 @@
 import { STAGE_LABELS } from '@jobflow/shared';
 import Link from 'next/link';
 
-import { type ApplicationCardContext, NextEventChip } from '@/entities/application';
+import {
+  type ApplicationCardContext,
+  applicationHrefOf,
+  NextEventChip,
+} from '@/entities/application';
 import type { UpcomingInterview } from '@/entities/scheduled-event';
 
 export type InterviewRowProps = Readonly<{
@@ -15,7 +19,7 @@ export function InterviewRow({ interview, context }: InterviewRowProps) {
   const { applicationId, company, stage, eventKind } = interview.extendedProps;
   return (
     <Link
-      href={`/applications/${applicationId}`}
+      href={applicationHrefOf(applicationId)}
       className="flex flex-wrap items-center gap-x-3 gap-y-2 rounded-lg bg-surface p-4 shadow-e1 transition-[box-shadow,translate] duration-(--duration-fast) ease-standard hover:-translate-y-px hover:shadow-e2 active:translate-y-0"
     >
       <span className="min-w-0 flex-1 wrap-break-word">

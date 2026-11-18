@@ -3,7 +3,12 @@
 import Link from 'next/link';
 import { useId } from 'react';
 
-import { formatAmount, formatSalaryRange, ScoreBadge } from '@/entities/application';
+import {
+  applicationHrefOf,
+  formatAmount,
+  formatSalaryRange,
+  ScoreBadge,
+} from '@/entities/application';
 import { uk } from '@/shared/i18n';
 
 import type { ScoredOffer } from '../lib/offer-score';
@@ -77,7 +82,7 @@ function ColumnHead({ ranked, headingId }: Readonly<{ ranked: RankedOffer; headi
       </div>
       <div className="flex min-w-0 flex-col gap-0.5">
         <h3 id={headingId} className="text-[16px] leading-[1.3] font-semibold wrap-break-word">
-          <Link href={`/applications/${offer.id}`} className={COMPANY_LINK}>
+          <Link href={applicationHrefOf(offer.id)} className={COMPANY_LINK}>
             {offer.company}
           </Link>
         </h3>

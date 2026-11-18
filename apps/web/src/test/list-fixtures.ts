@@ -6,7 +6,7 @@ import {
 import { http, HttpResponse } from 'msw/http';
 
 import { apiUrl } from './api-handlers';
-import { type CardRun, cardsIn, heldReply, type MoveRouteOptions } from './board-fixtures';
+import { cardIn, type CardRun, cardsIn, heldReply, type MoveRouteOptions } from './board-fixtures';
 import { latch } from './latch';
 import { server } from './server';
 
@@ -21,6 +21,11 @@ type PageSlice = Readonly<{ items: ListItems; from: number; to: number }>;
 
 export function listItemsIn(run: CardRun): ApplicationListItem[] {
   return cardsIn(run).map((card) => ({ ...card, snippet: null }));
+}
+
+export function reviewDraftItemOf(serial: number): ApplicationListItem {
+  const card = cardIn({ serial, stage: 'applied', position: `Vacancy ${String(serial)}` });
+  return { ...card, snippet: null, isDraft: true, aiStatus: 'done', aiJobId: null };
 }
 
 function pageOf({ items, from, to }: PageSlice): ApplicationListResponse {

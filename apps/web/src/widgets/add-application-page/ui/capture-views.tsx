@@ -1,9 +1,10 @@
 'use client';
 
-import { AI_JOB_STEPS, type ApplicationResponse } from '@jobflow/shared';
+import { AI_JOB_STEPS, type ApplicationResponse, AUTH_ROUTES } from '@jobflow/shared';
 import Link from 'next/link';
 
 import {
+  applicationHrefOf,
   type DraftMark,
   ParsingCard,
   type ParsingCardProps,
@@ -151,10 +152,10 @@ export function readyView(application: ApplicationResponse): LiveView {
           <h3 className={LIVE_TITLE}>{COPY.ready.title}</h3>
         </div>
         <div className="flex flex-wrap gap-2.5">
-          <Link href="/board" className={linkClasses('primary')}>
+          <Link href={AUTH_ROUTES.home} className={linkClasses('primary')}>
             {COPY.added.toBoard}
           </Link>
-          <Link href={`/applications/${application.id}`} className={linkClasses('outline')}>
+          <Link href={applicationHrefOf(application.id)} className={linkClasses('outline')}>
             {COPY.ready.toCard}
           </Link>
         </div>

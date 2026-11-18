@@ -1,6 +1,6 @@
 'use client';
 
-import type { ImportApplicationsResponse } from '@jobflow/shared';
+import { AUTH_ROUTES, type ImportApplicationsResponse } from '@jobflow/shared';
 import Link from 'next/link';
 
 import { uk } from '@/shared/i18n';
@@ -50,7 +50,7 @@ export function ResultStep({ response, onRestart }: ResultStepProps) {
       )}
       <div className="flex flex-wrap items-center gap-3">
         <Link
-          href="/board"
+          href={AUTH_ROUTES.home}
           className={cn(buttonLinkClasses({ variant: 'primary', size: 'md' }), TOUCH_HEIGHT)}
         >
           {COPY.board}

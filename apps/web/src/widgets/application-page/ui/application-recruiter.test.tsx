@@ -1,7 +1,7 @@
 import { screen, waitFor, within } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { errorReply } from '@/test/api-handlers';
+import { ANY_IDEMPOTENCY_KEY, errorReply } from '@/test/api-handlers';
 import { ACME_APPLICATION } from '@/test/application-fixtures';
 import { fixtureIdOf } from '@/test/board-fixtures';
 import {
@@ -111,7 +111,7 @@ describe('ApplicationRecruiter', () => {
     expect(within(section).getByText('Оксана')).toBeDefined();
     expect(within(section).queryByText('Контакти з інших відгуків')).toBeNull();
     expect(contacts.created).toEqual([
-      { id: ACME_APPLICATION.id, body: { name: 'Оксана' }, idempotencyKey: null },
+      { id: ACME_APPLICATION.id, body: { name: 'Оксана' }, idempotencyKey: ANY_IDEMPOTENCY_KEY },
     ]);
   });
 

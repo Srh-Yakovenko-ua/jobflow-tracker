@@ -1,7 +1,11 @@
-import { isActiveStage } from '@jobflow/shared';
+import { AUTH_ROUTES, isActiveStage } from '@jobflow/shared';
 import { type LucideIcon, Table2 } from 'lucide-react';
 
-import type { MovingApplication } from '@/entities/application';
+import {
+  applicationHrefOf,
+  FOLLOW_UP_ANCHOR,
+  type MovingApplication,
+} from '@/entities/application';
 import { legalMovesFrom } from '@/features/move-application';
 import type { FeatureFlag, FeatureFlags } from '@/shared/config';
 import { uk } from '@/shared/i18n';
@@ -51,7 +55,7 @@ function letter(key: string): ShortcutKey {
 
 export const SHORTCUTS: readonly Shortcut[] = [
   { id: 'add', keys: [letter('n')], target: navigate('/add'), flag: 'addApplication' },
-  { id: 'board', keys: [letter('g'), letter('b')], target: navigate('/board') },
+  { id: 'board', keys: [letter('g'), letter('b')], target: navigate(AUTH_ROUTES.home) },
   {
     id: 'analytics',
     keys: [letter('g'), letter('a')],
@@ -84,7 +88,7 @@ const ACTION_ROWS: readonly ActionRow[] = [
     flag: 'followUp',
     runFor: (target) =>
       target && isActiveStage(target.currentStage)
-        ? navigate(`/applications/${target.id}#follow-up`)
+        ? navigate(applicationHrefOf(target.id, FOLLOW_UP_ANCHOR))
         : undefined,
   },
   { id: 'analytics', flag: 'analytics', runFor: () => navigate('/analytics') },

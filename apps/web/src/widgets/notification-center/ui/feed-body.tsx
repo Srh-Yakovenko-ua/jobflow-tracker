@@ -35,7 +35,13 @@ function EverybodyAnswered() {
 function FeedMore({ query }: Readonly<Pick<NotificationFeed, 'query'>>) {
   const onMore = () => void query.fetchNextPage();
   if (query.isFetchNextPageError) {
-    return <LoadFailedAlert onRetry={onMore} className="animate-fade-in self-center" />;
+    return (
+      <LoadFailedAlert
+        onRetry={onMore}
+        retrying={query.isFetchingNextPage}
+        className="animate-fade-in self-center"
+      />
+    );
   }
   if (!query.hasNextPage) return null;
   return (

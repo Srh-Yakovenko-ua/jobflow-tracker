@@ -1,6 +1,6 @@
 'use client';
 
-import type { ApplicationResponse } from '@jobflow/shared';
+import { type ApplicationResponse, AUTH_ROUTES } from '@jobflow/shared';
 import { ChevronLeft } from 'lucide-react';
 import Link from 'next/link';
 
@@ -37,7 +37,7 @@ function BackToBoard({ mode }: Readonly<{ mode: ApplicationPageMode }>) {
     );
   }
   return (
-    <Link href="/board" className={BACK}>
+    <Link href={AUTH_ROUTES.home} className={BACK}>
       {label}
     </Link>
   );

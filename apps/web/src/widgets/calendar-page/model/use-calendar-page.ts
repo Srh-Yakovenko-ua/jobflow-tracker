@@ -4,6 +4,7 @@ import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
+import { applicationHrefOf } from '@/entities/application';
 import { calendarQueryOptions } from '@/entities/scheduled-event';
 import { useSettledTimeZone } from '@/entities/user';
 import { useRescheduleEventMutation } from '@/features/schedule-event';
@@ -69,7 +70,7 @@ function useGridActions(onPeriod: (period: ShownPeriod) => void): GridActions {
   return {
     onPeriod,
     onOpen: (applicationId) => {
-      router.push(`/applications/${applicationId}`);
+      router.push(applicationHrefOf(applicationId));
     },
     onReschedule: reschedule,
   };

@@ -39,13 +39,17 @@ export function Banner({ tone, content }: BannerProps) {
   );
 }
 
-export type LoadFailedAlertProps = Readonly<{ onRetry: () => void; className?: string }>;
+export type LoadFailedAlertProps = Readonly<{
+  onRetry: () => void;
+  retrying?: boolean | undefined;
+  className?: string;
+}>;
 
-export function LoadFailedAlert({ onRetry, className }: LoadFailedAlertProps) {
+export function LoadFailedAlert({ onRetry, retrying, className }: LoadFailedAlertProps) {
   return (
     <div className={cn('flex flex-wrap items-center gap-2', className)}>
       <Banner tone="error" content={{ title: LOAD_FAILED.title, description: LOAD_FAILED.body }} />
-      <Button variant="secondary" size="sm" onClick={onRetry}>
+      <Button variant="secondary" size="sm" loading={retrying === true} onClick={onRetry}>
         {LOAD_FAILED.action}
       </Button>
     </div>

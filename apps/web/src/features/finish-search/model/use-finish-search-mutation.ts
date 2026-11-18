@@ -1,6 +1,6 @@
 'use client';
 
-import type { FinishSearchInput } from '@jobflow/shared';
+import { AUTH_ROUTES, type FinishSearchInput } from '@jobflow/shared';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
 
@@ -35,7 +35,7 @@ export function useFinishSearchMutation() {
           },
         },
       });
-      router.push('/board');
+      router.push(AUTH_ROUTES.home);
     },
     onError: (error) => {
       if (!isConflict(error)) {
