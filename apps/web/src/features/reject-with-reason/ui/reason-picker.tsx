@@ -28,7 +28,8 @@ const SIDE_LOOK: Record<PickedSide, SideLook> = {
   },
 };
 
-const CHIP = 'px-3.5 text-[13.5px] font-normal not-disabled:hover:-translate-y-px';
+const CHIP =
+  'px-3.5 text-[13.5px] font-normal not-aria-disabled:not-disabled:hover:-translate-y-px';
 
 const SKIP = '-mx-2 px-2 text-[13px] font-normal text-ink-2 underline underline-offset-3';
 

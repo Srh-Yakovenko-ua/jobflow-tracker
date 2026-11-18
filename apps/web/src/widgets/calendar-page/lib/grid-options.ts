@@ -14,6 +14,8 @@ const COPY = uk.calendarPage;
 
 const DAY_LABEL = 'text-[10.5px] font-semibold tracking-[.06em] text-ink-3 uppercase';
 
+export const EVENT_MAX_STACK = { wide: 1, narrow: 0 } as const;
+
 export const GRID_OPTIONS = {
   plugins: [classicTheme, dayGridPlugin, timeGridPlugin, listPlugin, interactionPlugin],
   locale: ukLocale,
@@ -51,10 +53,11 @@ export const GRID_OPTIONS = {
     dayGridMonth: { dayCellClass: 'min-h-19.5' },
     timeGrid: {
       slotEventOverlap: false,
-      eventMaxStack: 1,
       displayEventEnd: false,
-      dayLaneInnerClass: 'has-[[aria-haspopup=dialog]]:me-6.5',
-      columnMoreLinkClass: 'absolute inset-y-0 start-0.5 w-6 items-center',
+      dayLaneInnerClass:
+        'md:has-[[aria-haspopup=dialog]]:me-6.5 max-md:[&>:has([aria-haspopup=dialog])]:start-0',
+      columnMoreLinkClass:
+        'absolute inset-y-0 start-0.5 w-6 items-center max-md:inset-x-0.5 max-md:w-auto',
       columnMoreLinkInnerClass: 'px-0 text-[11px] tabular-nums whitespace-nowrap',
     },
   },

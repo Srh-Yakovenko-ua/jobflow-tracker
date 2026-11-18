@@ -1,3 +1,4 @@
+import { CalendarController } from '@fullcalendar/react';
 import { fireEvent, screen, waitFor, within } from '@testing-library/react';
 import type { HttpResponseResolver } from 'msw';
 import { HttpResponse } from 'msw/http';
@@ -85,6 +86,16 @@ async function renderWeekCalendar(setup: CalendarSetup = {}) {
   return rendered;
 }
 
+function interviewsAt(times: readonly string[]) {
+  return times.map((time, index) =>
+    scheduledItemOf({
+      serial: 620 + index,
+      kind: 'tech_interview',
+      start: `2026-11-06T${time}:00.000Z`,
+    }),
+  );
+}
+
 async function waitForAsked(range: { from: string; to: string }, sent: readonly object[]) {
   await waitFor(() => {
     expect(sent.at(-1)).toEqual(range);
@@ -98,6 +109,7 @@ beforeEach(() => {
 
 afterEach(() => {
   vi.useRealTimers();
+  vi.restoreAllMocks();
   push.mockClear();
 });
 
@@ -281,18 +293,40 @@ describe('CalendarPage', () => {
   });
 
   it('keeps one interview per hour on the week grid and folds the others into one more link', async () => {
-    const crowded = ['13:00', '13:00', '13:30'].map((time, index) =>
-      scheduledItemOf({
-        serial: 620 + index,
-        kind: 'tech_interview',
-        start: `2026-11-06T${time}:00.000Z`,
-      }),
-    );
-    await renderWeekCalendar({ items: crowded });
+    await renderWeekCalendar({ items: interviewsAt(['13:00', '13:00', '13:30']) });
 
     expect(await screen.findAllByText(INTERVIEW.title)).toHaveLength(1);
     expect(screen.getByTitle('ще 2').textContent).toBe('+2');
     expect(screen.getByRole('button', { name: 'ще 2' })).toBeDefined();
+  });
+
+  it('at phone width the week grid folds a crowded slot into one more link that opens all 13 events', async () => {
+    const { user } = await renderWeekCalendar({
+      items: interviewsAt(Array.from({ length: 13 }, () => '08:00')),
+      narrow: true,
+    });
+
+    const link = await screen.findByTitle('ще 13');
+    expect(screen.queryByText(INTERVIEW.title)).toBeNull();
+    expect(link.textContent).toBe('+13');
+    await user.click(link);
+
+    const popover = await screen.findByRole('dialog');
+    expect(within(popover).getAllByText(INTERVIEW.title)).toHaveLength(13);
+  });
+
+  it('a click on Сьогодні while this week is shown does not move the calendar', async () => {
+    const today = vi.spyOn(CalendarController.prototype, 'today');
+    const { user, sent } = await renderWeekCalendar();
+    await waitForAsked(KYIV_WEEK, sent);
+
+    await user.click(screen.getByRole('button', { name: 'Сьогодні' }));
+    expect(today).not.toHaveBeenCalled();
+
+    await user.click(screen.getByRole('button', { name: 'Наступний період' }));
+    await waitForAsked(NEXT_KYIV_WEEK, sent);
+    await user.click(screen.getByRole('button', { name: 'Сьогодні' }));
+    expect(today).toHaveBeenCalledOnce();
   });
 
   it('names the timed rows of the week grid in Ukrainian for a screen reader', async () => {
