@@ -1,6 +1,8 @@
 import { render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
+import { TOUCH_HEIGHT } from '@/shared/ui/touch-height';
+
 import { FirstRunState } from './first-run-state';
 
 vi.mock('next/link', () => import('@/test/link'));
@@ -29,7 +31,7 @@ describe('FirstRunState', () => {
     render(<FirstRunState />);
 
     for (const link of screen.getAllByRole('link')) {
-      expect(link.className).toContain('max-md:min-h-11');
+      expect(link.className).toContain(TOUCH_HEIGHT);
       expect(link.className).toMatch(/\bh-control-lg\b/);
     }
   });

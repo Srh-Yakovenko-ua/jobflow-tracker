@@ -13,6 +13,7 @@ import { PasswordInput } from './password-input';
 import { Select } from './select';
 import { SOURCE_OPTIONS } from './source-options';
 import { TagInput } from './tag-input';
+import { TOUCH_HEIGHT } from './touch-height';
 
 const SOURCE = uk.devUi.selects.source;
 
@@ -92,7 +93,7 @@ describe('field surface', () => {
       const control = container.querySelector('[data-focus="halo"]');
       const classes = (box === 'control' ? control : control?.parentElement)?.className.split(' ');
 
-      expect(classes).toContain('max-md:min-h-11');
+      expect(classes).toContain(TOUCH_HEIGHT);
       expect(classes).toContain(desktop);
     },
   );

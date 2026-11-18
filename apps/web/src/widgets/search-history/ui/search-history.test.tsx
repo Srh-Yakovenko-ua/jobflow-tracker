@@ -2,6 +2,7 @@ import { screen, within } from '@testing-library/react';
 import { http, type HttpHandler } from 'msw/http';
 import { describe, expect, it, vi } from 'vitest';
 
+import { TOUCH_HEIGHT } from '@/shared/ui/touch-height';
 import { ACTIVE_SEARCH, ARCHIVED_SEARCH, FIRST_SEARCH } from '@/test/analytics-fixtures';
 import { apiUrl, errorReply } from '@/test/api-handlers';
 import { findRetryAfterQueryRetries } from '@/test/query-status';
@@ -40,7 +41,7 @@ describe('SearchHistory', () => {
     expect(row.getByText('31 відгук · 9 співбесід · 1 офер · без оферу · 70 днів')).toBeDefined();
     const dashboard = row.getByRole('link', { name: 'Дашборд' });
     expect(dashboard.getAttribute('href')).toBe(`/analytics?period=${ARCHIVED_SEARCH.id}`);
-    expect(dashboard.classList.contains('max-md:min-h-11')).toBe(true);
+    expect(dashboard.classList.contains(TOUCH_HEIGHT)).toBe(true);
     expect(within(first).getByRole('heading', { name: 'Перший пошук' })).toBeDefined();
     expect(within(first).getByText('04.03.2024–13.05.2024 · на паузі')).toBeDefined();
     expect(screen.getByRole('heading', { level: 1, ...HISTORY })).toBeDefined();

@@ -9,15 +9,10 @@ import {
   type OutcomeStage,
   type Stage,
 } from '@jobflow/shared';
-import { LayoutGroup, motion } from 'motion/react';
-import type { ReactNode } from 'react';
+import { LayoutGroup } from 'motion/react';
 
-import { type ApplicationCardContext, FirstRunState } from '@/entities/application';
-import {
-  ApplicationFiltersProvider,
-  useApplicationFilters,
-  ViewSwitch,
-} from '@/features/filter-applications';
+import type { ApplicationCardContext } from '@/entities/application';
+import { ApplicationFiltersProvider, useApplicationFilters } from '@/features/filter-applications';
 import { uk } from '@/shared/i18n';
 import { cn } from '@/shared/lib/cn';
 import { LoadFailedPanel } from '@/shared/ui/error-panel';
@@ -31,9 +26,11 @@ import { type BoardLoad, useKanbanBoard } from '../model/use-kanban-board';
 import { BoardColumn } from './board-column';
 import { BoardDnd } from './board-dnd';
 import { BoardEmptySearch } from './board-empty-search';
+import { BoardFrame } from './board-frame';
 import { BoardToolbar } from './board-toolbar';
 import { ColumnCards } from './column-cards';
 import { BOARD_FRAME, STRIP_LOOK } from './column-frame';
+import { FirstRunBoard } from './first-run-board';
 import { OutcomeLane } from './outcome-lane';
 import { ParsingStatus } from './parsing-status';
 
@@ -51,20 +48,6 @@ type BoardColumnsProps = Readonly<{
   };
   stages: readonly Stage[];
 }>;
-
-type BoardFrameProps = Readonly<{ children: ReactNode; busy?: boolean }>;
-
-function BoardFrame({ children, busy }: BoardFrameProps) {
-  return (
-    <motion.div
-      layoutScroll
-      aria-busy={busy}
-      className={cn(BOARD_FRAME.width, 'overflow-x-auto p-1')}
-    >
-      <div className="flex items-stretch gap-3">{children}</div>
-    </motion.div>
-  );
-}
 
 function BoardSkeleton() {
   return (
@@ -87,21 +70,6 @@ function BoardSkeleton() {
         ))}
       </BoardFrame>
     </LoadingRegion>
-  );
-}
-
-function FirstRunBoard() {
-  return (
-    <div className="animate-fade-in">
-      <div className={cn(BOARD_FRAME.width, BOARD_FRAME.toolbar, 'justify-end')}>
-        <ViewSwitch current="board" />
-      </div>
-      <BoardFrame>
-        <BoardColumn column={{ stage: 'applied', count: 0 }}>
-          <FirstRunState />
-        </BoardColumn>
-      </BoardFrame>
-    </div>
   );
 }
 

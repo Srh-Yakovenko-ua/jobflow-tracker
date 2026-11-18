@@ -4,16 +4,15 @@ import { uk } from '@/shared/i18n';
 import { cn } from '@/shared/lib/cn';
 import { Button } from '@/shared/ui/button';
 import { SegmentedControl } from '@/shared/ui/segmented-control';
-import { TOUCH_HEIGHT } from '@/shared/ui/touch-height';
+import { TOOLBAR_BUTTON } from '@/shared/ui/toolbar-button';
 
 import { CALENDAR_VIEW_OPTIONS, type CalendarView } from '../model/calendar-views';
 
 const COPY = uk.calendarPage;
 
 const NAV_LOOK = {
-  variant: 'secondary',
-  size: 'sm',
-  className: cn('rounded-md max-md:min-w-11', TOUCH_HEIGHT),
+  ...TOOLBAR_BUTTON,
+  className: cn(TOOLBAR_BUTTON.className, 'rounded-md max-md:min-w-11'),
 } as const;
 
 export type CalendarPeriod = Readonly<{ title: string; view: CalendarView; current: boolean }>;

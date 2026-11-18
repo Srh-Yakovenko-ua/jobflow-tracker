@@ -48,9 +48,9 @@ function VacancyCell({ application }: CellSource) {
         scroll={false}
         prefetch={false}
         data-row-link
-        className="col-start-1 row-span-full grid w-fit max-w-full grid-rows-subgrid rounded-xs font-medium text-ink focus-visible:focus-ring max-md:min-w-11"
+        className="col-start-1 row-start-2 block w-fit max-w-full touch-target rounded-xs font-medium text-ink focus-visible:focus-ring"
       >
-        <span className={cn(TRUNCATE, 'row-start-2')}>{application.company}</span>
+        <span className={TRUNCATE}>{application.company}</span>
       </Link>
       <span className={cn(TRUNCATE, 'col-start-1 row-start-3 text-[11.5px] text-ink-3')}>
         {application.position}

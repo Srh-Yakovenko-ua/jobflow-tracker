@@ -6,6 +6,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { userKeys } from '@/entities/user';
 import { API_CLIENT_LIMITS, setAccessToken } from '@/shared/api';
 import { uk } from '@/shared/i18n';
+import { TOUCH_HEIGHT } from '@/shared/ui/touch-height';
 import {
   apiUrl,
   errorReply,
@@ -110,7 +111,7 @@ describe('UserMenu', () => {
     await within(trigger).findByText('АК');
 
     expect([...trigger.classList]).toEqual(
-      expect.arrayContaining(['max-md:min-h-11', 'max-md:min-w-11']),
+      expect.arrayContaining([TOUCH_HEIGHT, 'max-md:min-w-11']),
     );
   });
 
