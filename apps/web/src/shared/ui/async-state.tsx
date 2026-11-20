@@ -4,6 +4,7 @@ import type { ReactNode } from 'react';
 
 import { uk } from '@/shared/i18n';
 import { cn } from '@/shared/lib/cn';
+import { PERCENT } from '@/shared/lib/percent';
 import { formatDuration } from '@/shared/lib/state-format';
 
 import { Button } from './button';
@@ -11,8 +12,6 @@ import { STATE_TEXT } from './state-text';
 import { TOUCH_HEIGHT } from './touch-height';
 
 const COPY = uk.states.async;
-
-const PERCENT = 100;
 
 type AiJobDetails = {
   queued: { ahead: number; etaSeconds: number };

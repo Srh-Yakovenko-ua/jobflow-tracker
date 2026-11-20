@@ -1,9 +1,45 @@
 import { HttpResponse } from 'msw/http';
 import { describe, expect, it } from 'vitest';
 
-import { errorBody, rateLimitedReply } from '@/test/api-handlers';
+import { apiErrorOf, errorBody, rateLimitedReply, STILL_RUNNING } from '@/test/api-handlers';
 
-import { toApiError } from './api-error';
+import {
+  apiStatusOf,
+  HTTP_STATUS,
+  isIdempotencyConflict,
+  isNotFound,
+  toApiError,
+} from './api-error';
+
+const NOT_FOUND = apiErrorOf({ status: 404, type: 'not_found' });
+
+describe('apiStatusOf', () => {
+  it('reads the status the API answered with', () => {
+    expect(apiStatusOf(NOT_FOUND)).toBe(404);
+  });
+
+  it.each([
+    ['a network failure', new TypeError('Failed to fetch')],
+    ['a thrown string', 'offline'],
+    ['nothing', undefined],
+  ])('has no status for %s', (_case, error) => {
+    expect(apiStatusOf(error)).toBeUndefined();
+  });
+
+  it('a missing record is not found, a network failure is not', () => {
+    expect(isNotFound(NOT_FOUND)).toBe(true);
+    expect(isNotFound(new TypeError('Failed to fetch'))).toBe(false);
+  });
+
+  it('only a 409 of the idempotency type is a request still running', () => {
+    const busy = apiErrorOf(STILL_RUNNING);
+    const stale = apiErrorOf({ status: HTTP_STATUS.conflict, type: 'conflict' });
+
+    expect(isIdempotencyConflict(busy)).toBe(true);
+    expect(isIdempotencyConflict(stale)).toBe(false);
+    expect(isIdempotencyConflict('offline')).toBe(false);
+  });
+});
 
 describe('toApiError', () => {
   it('keeps a DOC-04 body as the API sent it', async () => {

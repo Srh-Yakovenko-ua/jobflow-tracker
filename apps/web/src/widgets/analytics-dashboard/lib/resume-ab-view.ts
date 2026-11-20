@@ -1,6 +1,7 @@
 import type { ResumeAbComparison, ResumeAbResponse, ResumeAbVersion } from '@jobflow/shared';
 
 import { uk } from '@/shared/i18n';
+import { percentOf } from '@/shared/lib/percent';
 import { formatDayMonth } from '@/shared/lib/state-format';
 import type { ChartFrameHeader } from '@/shared/ui/chart-frame';
 
@@ -15,7 +16,6 @@ import {
   percentScaleOf,
   rangeTipOf,
 } from './interval-bars';
-import { percentOf } from './kpi-values';
 import { type MeasuredRate, percentAxisMaxOf, rateBarOf } from './rate-bar';
 import { rateLabelOf } from './rate-label';
 

@@ -1,4 +1,4 @@
-import type { CaptureRetryResponse, FollowupResponse, JobStatus } from '@jobflow/shared';
+import type { AiJobAccepted, FollowupResponse, JobStatus } from '@jobflow/shared';
 import { buildFollowupOutput } from '@jobflow/shared/testing';
 import type { HttpResponseResolver } from 'msw';
 import { http, HttpResponse } from 'msw/http';
@@ -45,7 +45,7 @@ export function followupJob(
 }
 
 export function acceptedFollowup() {
-  return HttpResponse.json<CaptureRetryResponse>({ jobId: FOLLOWUP_JOB_ID }, { status: 202 });
+  return HttpResponse.json<AiJobAccepted>({ jobId: FOLLOWUP_JOB_ID }, { status: 202 });
 }
 
 export function followupRoutes({

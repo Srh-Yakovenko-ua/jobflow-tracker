@@ -4,6 +4,7 @@ import { motion } from 'motion/react';
 
 import { uk } from '@/shared/i18n';
 import { cn } from '@/shared/lib/cn';
+import { PERCENT } from '@/shared/lib/percent';
 import { GrowBar } from '@/shared/ui/grow-bar';
 import { ROW } from '@/shared/ui/list-stagger';
 import { StaggeredList, type StaggeredListTitle } from '@/shared/ui/staggered-list';
@@ -20,8 +21,6 @@ type MatchListProps = Readonly<{
 }>;
 
 const COPY = uk.applicationPage.match;
-
-const PERCENT = 100;
 
 function MatchBar({ score }: Readonly<{ score: number }>) {
   return (

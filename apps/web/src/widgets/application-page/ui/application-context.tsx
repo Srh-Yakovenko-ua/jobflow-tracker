@@ -1,9 +1,7 @@
 import type { ApplicationResponse } from '@jobflow/shared';
-import { AnimatePresence } from 'motion/react';
 
 import { uk } from '@/shared/i18n';
-import { LoadFailedAlert } from '@/shared/ui/banner';
-import { Fade } from '@/shared/ui/fade';
+import { FailedReadAlert } from '@/shared/ui/failed-read-alert';
 
 import type { ContextRow } from '../lib/context-rows';
 import { useApplicationContext } from '../model/use-application-context';
@@ -54,13 +52,7 @@ export function ApplicationContext({ application }: ApplicationContextProps) {
           </div>
         ))}
       </dl>
-      <AnimatePresence initial={false}>
-        {load.failed && (
-          <Fade key="norms-failed">
-            <LoadFailedAlert onRetry={load.onRetry} />
-          </Fade>
-        )}
-      </AnimatePresence>
+      <FailedReadAlert load={load} />
     </ApplicationSection>
   );
 }

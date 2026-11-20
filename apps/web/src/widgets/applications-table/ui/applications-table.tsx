@@ -6,6 +6,7 @@ import type { ReactNode } from 'react';
 import { FirstRunState } from '@/entities/application';
 import { ApplicationFiltersProvider, FiltersEmptyState } from '@/features/filter-applications';
 import { uk } from '@/shared/i18n';
+import type { SectionLoad } from '@/shared/lib/section-load';
 import { LoadFailedAlert } from '@/shared/ui/banner';
 import { LoadFailedPanel } from '@/shared/ui/error-panel';
 import { LoadingRegion } from '@/shared/ui/loading-region';
@@ -23,11 +24,11 @@ function TableFrame({ children }: Readonly<{ children: ReactNode }>) {
   return <section className={TABLE_LOOK.frame}>{children}</section>;
 }
 
-function TableLoading({ failed, onRetry }: Readonly<{ failed: boolean; onRetry: () => void }>) {
-  if (failed) {
+function TableLoading({ load }: Readonly<{ load: SectionLoad }>) {
+  if (load.failed) {
     return (
       <div className="max-w-120 animate-fade-in p-4">
-        <LoadFailedPanel onRetry={onRetry} />
+        <LoadFailedPanel onRetry={load.onRetry} retrying={load.retrying} />
       </div>
     );
   }
@@ -49,7 +50,7 @@ function TableContent() {
           view={{ rows: false }}
           stageCounts={stageCounts}
         />
-        <TableLoading failed={load.failed} onRetry={load.onRetry} />
+        <TableLoading load={load} />
       </TableFrame>
     );
   }
@@ -70,7 +71,9 @@ function TableContent() {
         view={{ rows: rows.length > 0 }}
         stageCounts={stageCounts}
       />
-      {load.failed && <LoadFailedAlert className="px-4 py-2" onRetry={load.onRetry} />}
+      {load.stale && (
+        <LoadFailedAlert className="px-4 py-2" onRetry={load.onRetry} retrying={load.retrying} />
+      )}
       {picked.length > 0 && (
         <BulkBar
           picked={picked}

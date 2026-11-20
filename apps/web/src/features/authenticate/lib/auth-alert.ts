@@ -1,4 +1,4 @@
-import { ApiError } from '@/shared/api';
+import { ApiError, HTTP_STATUS } from '@/shared/api';
 
 import { credentialFieldOf } from '../model/auth-modes';
 
@@ -25,10 +25,10 @@ function rateLimited(error: ApiError, submittedAt: number): AuthAlert {
 }
 
 function alertForStatus(error: ApiError, submittedAt: number): AuthAlert | undefined {
-  if (error.status === 401) return { kind: 'invalidCredentials' };
-  if (error.status === 429) return rateLimited(error, submittedAt);
-  if (error.status === 409) return undefined;
-  if (error.status === 422 && namesCredentialField(error)) return undefined;
+  if (error.status === HTTP_STATUS.unauthorized) return { kind: 'invalidCredentials' };
+  if (error.status === HTTP_STATUS.tooManyRequests) return rateLimited(error, submittedAt);
+  if (error.status === HTTP_STATUS.conflict) return undefined;
+  if (error.status === HTTP_STATUS.unprocessable && namesCredentialField(error)) return undefined;
   return UNAVAILABLE;
 }
 

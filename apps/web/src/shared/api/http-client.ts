@@ -1,6 +1,6 @@
 import type { z } from 'zod';
 
-import { ApiError } from './api-error';
+import { ApiError, HTTP_STATUS } from './api-error';
 import { parseResponse } from './parse-response';
 import { getAccessToken, refreshAfter } from './session';
 import { type ResponseMode, send } from './transport';
@@ -35,7 +35,11 @@ const ACCEPTED_TYPE: Record<ResponseMode, string> = {
 };
 
 function isTokenExpired(error: unknown): boolean {
-  return error instanceof ApiError && error.status === 401 && error.body.type === 'token_expired';
+  return (
+    error instanceof ApiError &&
+    error.status === HTTP_STATUS.unauthorized &&
+    error.body.type === 'token_expired'
+  );
 }
 
 function headersFor(

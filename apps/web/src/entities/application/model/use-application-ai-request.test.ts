@@ -12,8 +12,8 @@ import { useApplicationAiRequest } from './use-application-ai-request';
 const ID = ACME_APPLICATION.id;
 
 const CACHED = [
-  { queryKey: applicationKeys.cvHints(ID), data: NO_CV_HINTS },
-  { queryKey: applicationKeys.interviewPrep(ID), data: NO_INTERVIEW_PREP },
+  { queryKey: applicationKeys.ai(ID, 'cv-hints'), data: NO_CV_HINTS },
+  { queryKey: applicationKeys.ai(ID, 'interview-prep'), data: NO_INTERVIEW_PREP },
 ];
 
 const REQUESTS = [

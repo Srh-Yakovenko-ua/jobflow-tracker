@@ -2,9 +2,10 @@ import type { ApplicationResponse, Note } from '@jobflow/shared';
 import { useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
 
-import { sectionLoadOf, timelineQueryOptions } from '@/entities/application';
+import { timelineQueryOptions } from '@/entities/application';
 import { notesQueryOptions } from '@/entities/note';
 import { useUserTimeZone } from '@/entities/user';
+import { sectionLoadOf } from '@/shared/lib/section-load';
 
 import { noteContextOf } from '../lib/note-context';
 

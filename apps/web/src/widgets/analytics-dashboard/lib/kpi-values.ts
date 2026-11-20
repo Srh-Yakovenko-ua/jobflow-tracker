@@ -9,13 +9,12 @@ import {
 } from '@jobflow/shared';
 
 import { uk } from '@/shared/i18n';
+import { percentOf } from '@/shared/lib/percent';
 import { DAYS_IN_WEEK } from '@/shared/lib/search-weeks';
 
 const COPY = uk.analytics;
 
 const KPI = COPY.kpi;
-
-const PERCENT = 100;
 
 const HOURS_IN_DAY = 24;
 
@@ -42,8 +41,6 @@ export type KpiContent = Readonly<{
 }>;
 
 export type ResponseKpiInput = Readonly<{ timings: TimingsResponse; silenceDays: number }>;
-
-export const percentOf = (fraction: number) => Math.round(fraction * PERCENT);
 
 export const oneDecimal = (value: number) => ONE_DECIMAL.format(value);
 

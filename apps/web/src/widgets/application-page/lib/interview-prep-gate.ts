@@ -7,7 +7,9 @@ import {
   type Stage,
 } from '@jobflow/shared';
 
-type GateLoad = Readonly<{ pending: boolean; failed: boolean }>;
+import type { SectionLoad } from '@/shared/lib/section-load';
+
+type GateLoad = Pick<SectionLoad, 'pending' | 'failed' | 'retrying'>;
 
 export type InterviewPrepGateInput = Readonly<{
   application: ApplicationResponse;
@@ -23,12 +25,16 @@ export type InterviewPrepGate = Readonly<{
 
 const PREP_STAGES: readonly Stage[] = ACTIVE_STAGES.filter((stage) => stage !== 'applied');
 
+function settlingOf(load: GateLoad): boolean {
+  return load.pending || load.retrying;
+}
+
 function materialOf({ application, match }: Omit<InterviewPrepGateInput, 'schedule'>) {
   if (interviewPrepRequirementsOf(application).length > 0) {
     return { settling: false, present: true };
   }
   const gaps = interviewPrepGapsOf(match.response?.match ?? null);
-  return { settling: match.load.pending, present: match.load.failed || gaps.length > 0 };
+  return { settling: settlingOf(match.load), present: match.load.failed || gaps.length > 0 };
 }
 
 export function interviewPrepGateOf({
@@ -39,7 +45,7 @@ export function interviewPrepGateOf({
   const material = materialOf({ application, match });
   return {
     shown: schedule.upcoming || PREP_STAGES.includes(application.currentStage),
-    settling: schedule.load.pending || material.settling,
+    settling: settlingOf(schedule.load) || material.settling,
     requestable: (schedule.upcoming || schedule.load.failed) && material.present,
   };
 }

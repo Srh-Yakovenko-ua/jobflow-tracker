@@ -1,6 +1,6 @@
 import type { RouteConfig } from '@asteasolutions/zod-to-openapi';
 import {
-  captureRetryResponseSchema,
+  aiJobAcceptedSchema,
   type SummaryArchive,
   summaryArchiveSchema,
   type SummaryResponse,
@@ -84,7 +84,7 @@ export const SUMMARIES_OPENAPI_PATHS: RouteConfig[] = [
     responses: {
       202: {
         description: 'The AI job to follow: the new one, or the one that is still running',
-        content: jsonContent(captureRetryResponseSchema, { jobId: JOB_ID }),
+        content: jsonContent(aiJobAcceptedSchema, { jobId: JOB_ID }),
       },
       ...errorResponses([401, 403, 409], 'ai'),
     },

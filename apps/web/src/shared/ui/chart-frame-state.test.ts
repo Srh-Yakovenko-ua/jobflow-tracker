@@ -1,6 +1,8 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import { chartFrameStateOf, type FrameQuery } from './chart-frame-state';
+import type { FrameQuery } from '@/shared/lib/section-load';
+
+import { chartFrameStateOf } from './chart-frame-state';
 
 const SETTLED: FrameQuery = {
   data: undefined,

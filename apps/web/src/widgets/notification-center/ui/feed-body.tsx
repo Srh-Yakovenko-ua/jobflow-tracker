@@ -4,6 +4,7 @@ import { useSilenceDays } from '@/entities/user';
 import { useSilentCount } from '@/features/snooze-reminder';
 import { uk } from '@/shared/i18n';
 import { cn } from '@/shared/lib/cn';
+import { sectionLoadOf } from '@/shared/lib/section-load';
 import { LoadFailedAlert } from '@/shared/ui/banner';
 import { Button } from '@/shared/ui/button';
 import { EmptyState } from '@/shared/ui/empty-state';
@@ -64,9 +65,9 @@ export type FeedBodyProps = Readonly<{
 export function FeedBody({ feed, context }: FeedBodyProps) {
   const { query, days, timeZone } = feed;
   if (days === undefined) {
-    if (!query.isError) return <PageSkeleton />;
-    const onRetry = () => void query.refetch();
-    return <LoadFailedPanel onRetry={onRetry} retrying={query.isFetching} />;
+    const load = sectionLoadOf(query);
+    if (!load.failed) return <PageSkeleton />;
+    return <LoadFailedPanel onRetry={load.onRetry} retrying={load.retrying} />;
   }
   if (days.length === 0) return <EverybodyAnswered />;
   return (

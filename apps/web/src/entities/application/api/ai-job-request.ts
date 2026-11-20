@@ -1,16 +1,14 @@
-import {
-  type ApplicationResponse,
-  type CaptureRetryResponse,
-  captureRetryResponseSchema,
-} from '@jobflow/shared';
+import { type AiJobAccepted, aiJobAcceptedSchema, type ApplicationResponse } from '@jobflow/shared';
 
 import { apiClient } from '@/shared/api';
 
-export type ApplicationAiSegment = 'cv-hints' | 'interview-prep';
+import type { ApplicationAiSegment } from './application-ai';
+
+export type ApplicationAiJobSegment = Extract<ApplicationAiSegment, 'cv-hints' | 'interview-prep'>;
 
 export type ApplicationAiJobRequest = Readonly<{
   applicationId: ApplicationResponse['id'];
-  segment: ApplicationAiSegment;
+  segment: ApplicationAiJobSegment;
   idempotencyKey: string;
 }>;
 
@@ -18,11 +16,11 @@ export function requestApplicationAiJob({
   applicationId,
   segment,
   idempotencyKey,
-}: ApplicationAiJobRequest): Promise<CaptureRetryResponse> {
+}: ApplicationAiJobRequest): Promise<AiJobAccepted> {
   return apiClient.request({
     path: `/applications/${applicationId}/${segment}`,
     method: 'POST',
-    schema: captureRetryResponseSchema,
+    schema: aiJobAcceptedSchema,
     idempotencyKey,
   });
 }

@@ -29,7 +29,7 @@ const COPY = uk.contact;
 function RecruiterBody({ application, recruiter, actions }: RecruiterBodyProps) {
   const { load, contact, editing } = recruiter;
   if (load.pending) return <TextSkeleton />;
-  if (load.failed) return <LoadFailedPanel onRetry={load.onRetry} />;
+  if (load.failed) return <LoadFailedPanel onRetry={load.onRetry} retrying={load.retrying} />;
   if (contact === null) {
     return (
       <AddContactForm

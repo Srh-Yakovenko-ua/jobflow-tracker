@@ -10,6 +10,8 @@ import {
   subDays,
 } from 'date-fns';
 
+import { MONTHS_PER_YEAR } from './year-month';
+
 export type CalendarMonth = { year: number; month: number };
 
 export type DayParts = CalendarMonth & { date: number };
@@ -20,11 +22,9 @@ export type MonthCell = { day: string; date: number; outside: boolean };
 
 const GRID = { short: 35, long: 42 } as const;
 
-const MONTHS_PER_YEAR = 12;
-
 const ISO_MONDAY = 1;
 
-function dayKeyOf(date: Date): string {
+function localDayKeyOf(date: Date): string {
   return format(date, 'yyyy-MM-dd');
 }
 
@@ -43,11 +43,11 @@ export function formatDay(day: string): string {
 }
 
 export function addDays(day: string, count: number): string {
-  return dayKeyOf(addCalendarDays(parseISO(day), count));
+  return localDayKeyOf(addCalendarDays(parseISO(day), count));
 }
 
 export function addMonths(day: string, count: number): string {
-  return dayKeyOf(addCalendarMonths(parseISO(day), count));
+  return localDayKeyOf(addCalendarMonths(parseISO(day), count));
 }
 
 export function inMonth(day: string, { year, month }: CalendarMonth): string {
@@ -82,7 +82,7 @@ export function monthGrid(month: CalendarMonth): MonthCell[] {
   const start = subDays(first, getISODay(first) - ISO_MONDAY);
   const end = addCalendarDays(start, GRID.long - 1);
   const cells = eachDayOfInterval({ start, end }).map((date) => ({
-    day: dayKeyOf(date),
+    day: localDayKeyOf(date),
     date: getDate(date),
     outside: !isSameMonth(date, first),
   }));

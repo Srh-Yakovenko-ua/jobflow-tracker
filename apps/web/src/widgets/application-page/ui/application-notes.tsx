@@ -19,7 +19,7 @@ const COPY = uk.applicationPage.notes;
 function NoteList({ notes }: NoteListProps) {
   const { load, entries } = notes;
   if (load.pending) return <TextSkeleton />;
-  if (load.failed) return <LoadFailedPanel onRetry={load.onRetry} />;
+  if (load.failed) return <LoadFailedPanel onRetry={load.onRetry} retrying={load.retrying} />;
   if (entries.length === 0) return null;
   return (
     <ul className="flex animate-fade-in flex-col gap-3">

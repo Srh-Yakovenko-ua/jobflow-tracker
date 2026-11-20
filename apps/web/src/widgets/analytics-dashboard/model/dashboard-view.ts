@@ -14,8 +14,9 @@ import {
 
 import type { FunnelStory } from '@/features/share-funnel';
 import { uk } from '@/shared/i18n';
+import type { FrameQuery } from '@/shared/lib/section-load';
 import type { ChartFrameHeader, ChartFrameState } from '@/shared/ui/chart-frame';
-import { chartFrameStateOf, type FrameQuery } from '@/shared/ui/chart-frame-state';
+import { chartFrameStateOf } from '@/shared/ui/chart-frame-state';
 
 import {
   blockHeaderOf,

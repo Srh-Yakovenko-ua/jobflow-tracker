@@ -192,7 +192,7 @@ function PageContent({ id, view }: ApplicationPageProps) {
   if (page.missing) return <NotFoundState />;
   if (application === undefined) {
     return page.load.failed ? (
-      <LoadFailedPanel onRetry={page.load.onRetry} />
+      <LoadFailedPanel onRetry={page.load.onRetry} retrying={page.load.retrying} />
     ) : (
       <PageSkeleton className="pt-14" />
     );

@@ -21,7 +21,7 @@ export function draftStateOf({ isDraft, aiStatus }: DraftSource): DraftState {
   return isDraft && aiStatus !== null ? DRAFT_STATE[aiStatus] : 'none';
 }
 
-export function applicationHrefOf(id: string, anchor?: string): string {
+export function applicationHrefOf(id: string, anchor?: typeof FOLLOW_UP_ANCHOR): string {
   const path = `/applications/${id}`;
   return anchor === undefined ? path : `${path}#${anchor}`;
 }

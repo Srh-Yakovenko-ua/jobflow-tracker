@@ -93,6 +93,23 @@ describe('ApplicationContext', () => {
     },
   );
 
+  it('a failed norms read keeps its alert while the retry runs, with the retry button busy', async () => {
+    const [outage] = OUTAGES.filter(({ settled }) => settled === 'error');
+    if (outage === undefined) throw new Error('no failing outage to read the norms through');
+    const held = { on: false };
+    server.use(normsRoute((info) => (held.on ? NEVER_ANSWERS.reply(info) : outage.reply(info))));
+    const { user } = renderApplicationPage({ application: FINAL_APPLICATION });
+
+    const section = await screen.findByRole('region', CONTEXT);
+    const retry = await within(section).findByRole('button', RETRY, RETRY_WAIT);
+    held.on = true;
+    await user.click(retry);
+
+    expect(
+      await within(section).findByRole('button', { ...RETRY, busy: true }, RETRY_WAIT),
+    ).toBeDefined();
+  });
+
   it('while the norms request never answers the rows show the neutral mark and no retry', async () => {
     const asked: string[] = [];
     server.use(

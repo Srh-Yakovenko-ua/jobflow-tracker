@@ -5,18 +5,13 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 
 import { useSubmitKey } from '@/shared/api';
 
-import { type ApplicationAiSegment, requestApplicationAiJob } from '../api/ai-job-request';
+import { type ApplicationAiJobSegment, requestApplicationAiJob } from '../api/ai-job-request';
 import { applicationKeys } from './keys';
 
 export type ApplicationAiRequestInput = Readonly<{
   applicationId: ApplicationResponse['id'];
-  segment: ApplicationAiSegment;
+  segment: ApplicationAiJobSegment;
 }>;
-
-const RESULT_KEY_OF = {
-  'cv-hints': applicationKeys.cvHints,
-  'interview-prep': applicationKeys.interviewPrep,
-} as const satisfies Record<ApplicationAiSegment, unknown>;
 
 export function useApplicationAiRequest({ applicationId, segment }: ApplicationAiRequestInput) {
   const queryClient = useQueryClient();
@@ -30,7 +25,9 @@ export function useApplicationAiRequest({ applicationId, segment }: ApplicationA
       }),
     onSuccess: () => {
       submitKey.reset();
-      return queryClient.invalidateQueries({ queryKey: RESULT_KEY_OF[segment](applicationId) });
+      return queryClient.invalidateQueries({
+        queryKey: applicationKeys.ai(applicationId, segment),
+      });
     },
     onError: () => undefined,
   });

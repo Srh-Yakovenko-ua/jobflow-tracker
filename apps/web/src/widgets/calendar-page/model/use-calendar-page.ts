@@ -9,6 +9,7 @@ import { calendarQueryOptions } from '@/entities/scheduled-event';
 import { useSettledTimeZone } from '@/entities/user';
 import { useRescheduleEventMutation } from '@/features/schedule-event';
 import { useSilentCount } from '@/features/snooze-reminder';
+import { type SectionLoad, sectionLoadOf } from '@/shared/lib/section-load';
 import { useMediaQuery } from '@/shared/lib/use-media-query';
 
 import type { GridActions, ShownPeriod } from '../lib/grid-handlers';
@@ -17,17 +18,10 @@ import type { CalendarGridProps } from '../ui/calendar-grid';
 import type { CalendarToolbarProps } from '../ui/calendar-toolbar';
 import { type CalendarView, NARROW_SCREEN_QUERY } from './calendar-views';
 
-export type CalendarLoad = Readonly<{
-  pending: boolean;
-  failed: boolean;
-  stale: boolean;
-  onRetry: () => void;
-}>;
-
 export type CalendarPageModel = Readonly<{
   grid: CalendarGridProps | null;
   toolbar: CalendarToolbarProps;
-  load: CalendarLoad;
+  load: SectionLoad;
   emptyWeek: EmptyWeek | null;
 }>;
 
@@ -46,18 +40,8 @@ function useCalendarItems(period: ShownPeriod | null) {
     ...calendarQueryOptions(period?.range ?? null),
     placeholderData: keepPreviousData,
   });
-  const onRetry = () => {
-    void items.refetch();
-  };
-  const { data, isError } = items;
-  const load: CalendarLoad = {
-    pending: data === undefined && !isError,
-    failed: data === undefined && isError,
-    stale: data !== undefined && isError,
-    onRetry,
-  };
   const fresh = items.isSuccess && !items.isPlaceholderData ? items.data : null;
-  return { shown: data?.items ?? [], fresh, load };
+  return { shown: items.data?.items ?? [], fresh, load: sectionLoadOf(items) };
 }
 
 function hasInterview(response: CalendarResponse): boolean {

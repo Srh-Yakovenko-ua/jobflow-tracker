@@ -1,9 +1,9 @@
 import {
+  type AiJobAccepted,
   type CaptureBookmarkletInput,
   type CaptureMethod,
   type CapturePasteInput,
   type CapturePasteResponse,
-  type CaptureRetryResponse,
   VACANCY_PARSE_LIMITS,
 } from '@jobflow/shared';
 import { Injectable } from '@nestjs/common';
@@ -61,10 +61,7 @@ export class CaptureService {
     });
   }
 
-  retry(
-    userId: string,
-    { applicationId, requestId }: DraftRetryRequest,
-  ): Promise<CaptureRetryResponse> {
+  retry(userId: string, { applicationId, requestId }: DraftRetryRequest): Promise<AiJobAccepted> {
     return this.prisma.$transaction(async (tx) => {
       const runningJobId = await this.drafts.lockForRetry(userId, { applicationId, tx });
       if (runningJobId !== null) {

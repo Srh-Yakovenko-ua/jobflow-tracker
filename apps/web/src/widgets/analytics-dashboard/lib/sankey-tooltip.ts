@@ -2,8 +2,7 @@ import type { FunnelStage, SankeyLink } from '@jobflow/shared';
 
 import { uk } from '@/shared/i18n';
 import { sankeyFlowLine, sankeyStepName } from '@/shared/lib/chart';
-
-import { percentOf } from './kpi-values';
+import { percentOf } from '@/shared/lib/percent';
 
 const TIP = uk.analytics.blocks.sankey.tooltip;
 

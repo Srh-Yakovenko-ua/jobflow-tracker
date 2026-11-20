@@ -67,7 +67,7 @@ function LinkedResume({ application, actions, linked, resume }: LinkedResumeProp
 function ResumeBody({ application, actions, resume }: ResumeBodyProps) {
   const { load, linked, versions } = resume;
   if (load.pending) return <TextSkeleton />;
-  if (load.failed) return <LoadFailedPanel onRetry={load.onRetry} />;
+  if (load.failed) return <LoadFailedPanel onRetry={load.onRetry} retrying={load.retrying} />;
   if (linked !== null) {
     return (
       <LinkedResume application={application} actions={actions} linked={linked} resume={resume} />

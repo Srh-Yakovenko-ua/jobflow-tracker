@@ -3,7 +3,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
 import type { UseFormSetError } from 'react-hook-form';
 
-import { ApiError, applyFieldErrors, setAccessToken } from '@/shared/api';
+import { ApiError, applyFieldErrors, HTTP_STATUS, setAccessToken } from '@/shared/api';
 import { uk } from '@/shared/i18n';
 
 import { authenticate } from '../api/authenticate';
@@ -19,10 +19,10 @@ type FieldErrorTarget = { spec: AuthModeSpec; setError: UseFormSetError<LoginInp
 
 function markFields(error: Error, { spec, setError }: FieldErrorTarget): void {
   if (!(error instanceof ApiError)) return;
-  if (error.status === 409) {
+  if (error.status === HTTP_STATUS.conflict) {
     setError('email', { type: 'server', message: uk.auth.email.taken }, { shouldFocus: true });
   }
-  if (error.status === 422) {
+  if (error.status === HTTP_STATUS.unprocessable) {
     applyFieldErrors({ error, fields: CREDENTIAL_FIELDS, setError, messages: spec.copy.fields });
   }
 }

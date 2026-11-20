@@ -1,5 +1,5 @@
 import {
-  type CaptureRetryResponse,
+  type AiJobAccepted,
   followupInputSchema,
   followupOutputSchema,
   type FollowupRequest,
@@ -85,7 +85,7 @@ export class FollowupsService {
   async request(
     userId: string,
     { applicationId, request, requestId }: FollowupGeneration,
-  ): Promise<CaptureRetryResponse> {
+  ): Promise<AiJobAccepted> {
     const now = this.clock.now();
     const row = owned(await this.repository.findSource(userId, { applicationId, now }));
     if (!awaitsReply(row)) {

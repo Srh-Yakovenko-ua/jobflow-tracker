@@ -3,7 +3,7 @@
 import type { ApplicationResponse } from '@jobflow/shared';
 
 import { useApplicationAiRequest } from '@/entities/application';
-import { ApiError, isIdempotencyConflict } from '@/shared/api';
+import { apiStatusOf, HTTP_STATUS, isIdempotencyConflict } from '@/shared/api';
 
 import type { InterviewPrepRefusal } from '../lib/interview-prep-view';
 
@@ -13,12 +13,9 @@ export type RequestedInterviewPrep = Readonly<{
   request: () => void;
 }>;
 
-const CONFLICT = 409;
-
 function refusalOf(error: Error | null): InterviewPrepRefusal {
   if (error === null) return 'none';
-  const unbuildable =
-    error instanceof ApiError && error.status === CONFLICT && !isIdempotencyConflict(error);
+  const unbuildable = apiStatusOf(error) === HTTP_STATUS.conflict && !isIdempotencyConflict(error);
   return unbuildable ? 'unbuildable' : 'other';
 }
 

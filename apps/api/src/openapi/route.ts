@@ -1,7 +1,7 @@
 import type { ResponseConfig, RouteConfig, ZodContentObject } from '@asteasolutions/zod-to-openapi';
 import {
+  aiJobAcceptedSchema,
   applicationIdSchema,
-  captureRetryResponseSchema,
   errorResponseSchema,
   type UserSettings,
 } from '@jobflow/shared';
@@ -156,7 +156,7 @@ export function aiJobAcceptedResponses(jobId: string): RouteResponses {
   return {
     202: {
       description: 'The AI job to follow: the new one, or the one that is still running',
-      content: jsonContent(captureRetryResponseSchema, { jobId }),
+      content: jsonContent(aiJobAcceptedSchema, { jobId }),
     },
     ...errorResponses([401, 403, 404, 409, 422], 'ai'),
   };

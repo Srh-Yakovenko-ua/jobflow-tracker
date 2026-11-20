@@ -1,6 +1,6 @@
 import {
+  type AiJobAccepted,
   applicationIdSchema,
-  type CaptureRetryResponse,
   type InterviewPrepResponse,
 } from '@jobflow/shared';
 import { Controller, Get, Param, Post } from '@nestjs/common';
@@ -28,7 +28,7 @@ export class InterviewPrepController {
     @CurrentUser() user: AccessUser,
     @Param('id', { schema: applicationIdSchema }) id: string,
     @RequestId() requestId: string,
-  ): Promise<CaptureRetryResponse> {
+  ): Promise<AiJobAccepted> {
     return this.interviewPrep.request(user.id, { applicationId: id, requestId });
   }
 }

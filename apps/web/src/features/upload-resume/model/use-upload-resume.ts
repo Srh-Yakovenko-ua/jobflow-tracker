@@ -8,6 +8,7 @@ import type { UseFormSetError } from 'react-hook-form';
 import { resumeKeys, VERSION_TITLE_FIELDS, type VersionTitleForm } from '@/entities/resume';
 import { userKeys } from '@/entities/user';
 import { applyFieldErrors, putFile, type UploadProgress, useSubmitKey } from '@/shared/api';
+import { PERCENT } from '@/shared/lib/percent';
 
 import { confirmUpload, createTicket, createVersion } from '../api/upload-resume';
 import { type UploadFailure, uploadFailureOf } from '../lib/upload-failure';
@@ -29,9 +30,7 @@ type StoreFileOptions = Readonly<{
   onPercent: (percent: number) => void;
 }>;
 
-const PERCENT = 100;
-
-function percentOf({ loaded, total }: UploadProgress): number {
+function uploadPercentOf({ loaded, total }: UploadProgress): number {
   return total > 0 ? Math.floor((loaded / total) * PERCENT) : 0;
 }
 
@@ -39,7 +38,7 @@ async function storeFile({ request: { file, input }, onPercent }: StoreFileOptio
   const ticket = await createTicket(input);
   onPercent(0);
   const onProgress = (progress: UploadProgress) => {
-    onPercent(percentOf(progress));
+    onPercent(uploadPercentOf(progress));
   };
   await putFile({ url: ticket.url, file, headers: ticket.headers, onProgress });
   await confirmUpload({ uploadId: ticket.uploadId, mime: input.mime });

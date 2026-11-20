@@ -1,5 +1,6 @@
 import type { RouteConfig } from '@asteasolutions/zod-to-openapi';
 import {
+  aiJobAcceptedSchema,
   CAPTURE_BOOKMARKLET_LIMITS,
   type CaptureBookmarkletInput,
   captureBookmarkletInputSchema,
@@ -7,7 +8,6 @@ import {
   capturePasteInputSchema,
   type CapturePasteResponse,
   capturePasteResponseSchema,
-  captureRetryResponseSchema,
   VACANCY_PARSE_LIMITS,
 } from '@jobflow/shared';
 
@@ -104,7 +104,7 @@ export const CAPTURE_OPENAPI_PATHS: RouteConfig[] = [
     responses: {
       202: {
         description: 'The AI job to follow: the new one, or the one that is still running',
-        content: jsonContent(captureRetryResponseSchema, { jobId: ACCEPTED.jobId }),
+        content: jsonContent(aiJobAcceptedSchema, { jobId: ACCEPTED.jobId }),
       },
       ...errorResponses([401, 403, 404, 409, 422], 'ai'),
     },

@@ -2,11 +2,7 @@
 
 import { motion } from 'motion/react';
 
-import {
-  AiSectionBody,
-  applicationFollowupQueryOptions,
-  useAiSection,
-} from '@/entities/application';
+import { AiSectionBody, applicationAiQueryOptions, useAiSection } from '@/entities/application';
 import { uk } from '@/shared/i18n';
 import { cn } from '@/shared/lib/cn';
 import { WAITING_DOT } from '@/shared/ui/async-state';
@@ -40,7 +36,7 @@ function QueuedLook({ ahead }: Readonly<{ ahead: number }>) {
 
 function RowBody({ row, ahead }: Readonly<{ row: BulkRow; ahead: number }>) {
   const section = useAiSection({
-    query: applicationFollowupQueryOptions(row.card.id),
+    query: applicationAiQueryOptions({ id: row.card.id, segment: 'followup' }),
     shown: true,
   });
   if (row.state === 'queued') return <QueuedLook ahead={ahead} />;

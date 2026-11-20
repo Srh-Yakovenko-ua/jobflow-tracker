@@ -42,7 +42,7 @@ export function Banner({ tone, content }: BannerProps) {
 export type LoadFailedAlertProps = Readonly<{
   onRetry: () => void;
   retrying?: boolean | undefined;
-  className?: string;
+  className?: string | undefined;
 }>;
 
 export function LoadFailedAlert({ onRetry, retrying, className }: LoadFailedAlertProps) {

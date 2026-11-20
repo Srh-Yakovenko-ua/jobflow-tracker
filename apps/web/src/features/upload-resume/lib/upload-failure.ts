@@ -1,6 +1,6 @@
 import { RESUME_UPLOAD_LIMITS } from '@jobflow/shared';
 
-import { ApiError } from '@/shared/api';
+import { ApiError, HTTP_STATUS } from '@/shared/api';
 
 import type { FileRefusal } from './resume-file';
 
@@ -27,7 +27,8 @@ const SENT_AGAIN_KINDS: ReadonlySet<UploadFailure['kind']> = new Set([
 ]);
 
 export function uploadFailureOf({ error, file }: FailedUpload): UploadFailure {
-  if (!(error instanceof ApiError) || error.status !== 422) return { kind: 'retry' };
+  if (!(error instanceof ApiError) || error.status !== HTTP_STATUS.unprocessable)
+    return { kind: 'retry' };
   for (const { path } of error.body.errors ?? []) {
     if (path === 'uploadId') return { kind: 'expired' };
     const refusal = REFUSED_PATHS[path];

@@ -5,6 +5,7 @@ import { useQuery, type UseQueryResult } from '@tanstack/react-query';
 import { type RefCallback, useRef } from 'react';
 
 import { uk } from '@/shared/i18n';
+import { sectionLoadOf } from '@/shared/lib/section-load';
 import { useLastPresent } from '@/shared/lib/use-last-present';
 import { LoadFailedAlert } from '@/shared/ui/banner';
 import { Button } from '@/shared/ui/button';
@@ -31,20 +32,13 @@ type ButtonSlotProps = Readonly<{
 }>;
 
 function ButtonSlot({ list, created, create, createButtonRef }: ButtonSlotProps) {
-  if (list.isPending) {
+  const load = sectionLoadOf(list);
+  if (load.failed) return <LoadFailedAlert onRetry={load.onRetry} retrying={load.retrying} />;
+  if (list.data === undefined) {
     return (
       <LoadingRegion className="w-full max-w-60">
         <TextSkeleton />
       </LoadingRegion>
-    );
-  }
-  if (list.isLoadingError) {
-    return (
-      <LoadFailedAlert
-        onRetry={() => {
-          void list.refetch();
-        }}
-      />
     );
   }
   if (created !== null) return <BookmarkletButton token={created.token} />;

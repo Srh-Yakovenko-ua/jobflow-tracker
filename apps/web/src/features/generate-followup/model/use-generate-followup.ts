@@ -4,7 +4,7 @@ import type { ApplicationResponse, FollowupRequest, FollowupRequestInput } from 
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import type { UseFormSetError } from 'react-hook-form';
 
-import { ApiError, applyFieldErrors, useSubmitKey } from '@/shared/api';
+import { ApiError, applyFieldErrors, HTTP_STATUS, useSubmitKey } from '@/shared/api';
 
 import { generateFollowup } from '../api/generate-followup';
 import { invalidateFollowup } from './invalidate-followup';
@@ -24,7 +24,7 @@ export type GenerateFollowup = Readonly<{
 const REQUEST_FIELDS = ['tone', 'language', 'hint'] as const;
 
 function isInvalid(error: Error | null): error is ApiError {
-  return error instanceof ApiError && error.status === 422;
+  return error instanceof ApiError && error.status === HTTP_STATUS.unprocessable;
 }
 
 export function useGenerateFollowup({

@@ -1,7 +1,7 @@
 import {
+  type AiJobAccepted,
   type ApplicationResponse,
   applicationResponseSchema,
-  type CaptureRetryResponse,
   DRAFT_PLACEHOLDERS,
   moveApplicationInputSchema,
   updateApplicationInputSchema,
@@ -27,7 +27,7 @@ export type UpdateRouteOptions = MoveRouteOptions & { application: ApplicationRe
 
 export type BoardCardRouteOptions = BoardRouteOptions & { cardRead?: HttpResponseResolver };
 
-export type RetryRouteOptions = MoveRouteOptions & { jobId: CaptureRetryResponse['jobId'] };
+export type RetryRouteOptions = MoveRouteOptions & { jobId: AiJobAccepted['jobId'] };
 
 type CardActionRoute = MoveRouteOptions & {
   method: 'delete' | 'post';
@@ -154,7 +154,7 @@ export function retryRoute({ jobId, ...control }: RetryRouteOptions) {
     ...control,
     method: 'post',
     path: '/capture/drafts/:id/retry',
-    fallback: () => HttpResponse.json<CaptureRetryResponse>({ jobId }, { status: 202 }),
+    fallback: () => HttpResponse.json<AiJobAccepted>({ jobId }, { status: 202 }),
   });
 }
 

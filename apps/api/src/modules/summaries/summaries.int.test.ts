@@ -1,5 +1,5 @@
 import {
-  captureRetryResponseSchema,
+  aiJobAcceptedSchema,
   planSchema,
   summaryArchiveSchema,
   summaryResponseSchema,
@@ -50,7 +50,7 @@ describe('the monthly summary API', () => {
     const response = await generate(olena);
 
     expect(response.status).toBe(202);
-    const { jobId } = captureRetryResponseSchema.parse(response.body);
+    const { jobId } = aiJobAcceptedSchema.parse(response.body);
     expect(
       await testApp.prisma.aiJob.findMany({
         select: { id: true, kind: true, status: true, periodMonth: true },

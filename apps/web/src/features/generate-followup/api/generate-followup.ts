@@ -1,7 +1,7 @@
 import {
+  type AiJobAccepted,
+  aiJobAcceptedSchema,
   type ApplicationResponse,
-  type CaptureRetryResponse,
-  captureRetryResponseSchema,
   type FollowupRequest,
 } from '@jobflow/shared';
 
@@ -17,12 +17,12 @@ export function generateFollowup({
   applicationId,
   body,
   idempotencyKey,
-}: GenerateFollowupRequest): Promise<CaptureRetryResponse> {
+}: GenerateFollowupRequest): Promise<AiJobAccepted> {
   return apiClient.request({
     path: `/applications/${applicationId}/followup`,
     method: 'POST',
     body,
-    schema: captureRetryResponseSchema,
+    schema: aiJobAcceptedSchema,
     idempotencyKey,
   });
 }

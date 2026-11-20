@@ -1,5 +1,5 @@
 import type {
-  CaptureRetryResponse,
+  AiJobAccepted,
   Plan,
   Summary,
   SummaryArchive,
@@ -65,7 +65,7 @@ export const DESIGN_ARCHIVE: SummaryArchive = {
 };
 
 function accepted(): Response {
-  return HttpResponse.json<CaptureRetryResponse>({ jobId: REGENERATED_JOB_ID }, { status: 202 });
+  return HttpResponse.json<AiJobAccepted>({ jobId: REGENERATED_JOB_ID }, { status: 202 });
 }
 
 export function summaryRoutes({

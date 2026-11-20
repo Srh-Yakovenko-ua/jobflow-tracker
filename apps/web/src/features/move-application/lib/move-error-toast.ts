@@ -1,6 +1,6 @@
 import { STAGE_LABELS } from '@jobflow/shared';
 
-import { ApiError } from '@/shared/api';
+import { ApiError, HTTP_STATUS } from '@/shared/api';
 import { uk } from '@/shared/i18n';
 import type { ErrorToastContent } from '@/shared/ui/error-toast';
 
@@ -11,7 +11,9 @@ export type MoveFailure = Readonly<{ error: Error; move: StagePair }>;
 const COPY = uk.board.move;
 
 export function conflictTypeOf(error: Error): string | undefined {
-  return error instanceof ApiError && error.status === 409 ? error.body.type : undefined;
+  return error instanceof ApiError && error.status === HTTP_STATUS.conflict
+    ? error.body.type
+    : undefined;
 }
 
 export function moveErrorMessage({ error, move }: MoveFailure): ErrorToastContent {

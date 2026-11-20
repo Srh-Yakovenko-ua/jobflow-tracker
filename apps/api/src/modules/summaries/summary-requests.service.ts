@@ -1,4 +1,4 @@
-import { type CaptureRetryResponse, userNow } from '@jobflow/shared';
+import { type AiJobAccepted, userNow } from '@jobflow/shared';
 import { Injectable, Logger } from '@nestjs/common';
 import { startOfMonth } from 'date-fns';
 
@@ -27,7 +27,7 @@ export class SummaryRequestsService {
     private readonly clock: Clock,
   ) {}
 
-  request(userId: string, requestId: string): Promise<CaptureRetryResponse> {
+  request(userId: string, requestId: string): Promise<AiJobAccepted> {
     const now = this.clock.now();
     return this.prisma.$transaction(async (tx) => {
       await this.repository.lockUser(userId, { tx });

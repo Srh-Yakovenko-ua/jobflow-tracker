@@ -1,11 +1,11 @@
 import {
+  type AiJobAccepted,
   applicationIdSchema,
   type CaptureBookmarkletInput,
   captureBookmarkletInputSchema,
   type CapturePasteInput,
   capturePasteInputSchema,
   type CapturePasteResponse,
-  type CaptureRetryResponse,
 } from '@jobflow/shared';
 import { Body, Controller, HttpCode, Param, Post } from '@nestjs/common';
 
@@ -58,7 +58,7 @@ export class CaptureController {
     @CurrentUser() user: AccessUser,
     @Param('id', { schema: applicationIdSchema }) id: string,
     @RequestId() requestId: string,
-  ): Promise<CaptureRetryResponse> {
+  ): Promise<AiJobAccepted> {
     return this.capture.retry(user.id, { applicationId: id, requestId });
   }
 }
