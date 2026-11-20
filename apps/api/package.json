@@ -107,7 +107,7 @@
     "prisma": "7.10.1",
     "prisma-erd-generator": "3.2.1",
     "supertest": "^7.3.2",
-    "typescript": "~6.0.3",
+    "typescript": "~7.0.2",
     "unplugin-swc": "^2.0.0",
     "vitest": "^4.1.12"
   }
