@@ -7,3 +7,4 @@ docs/api/openapi.json
 services/analytics/app/core/enums.json
 services/analytics/tests/golden/*.json
 packages/docs/test/fixtures/*.sarif
+services/documents/app/contracts/document_limits.json
