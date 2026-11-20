@@ -19,6 +19,11 @@
     "tech_interview",
     "final"
   ],
+  "outcomeStages": [
+    "rejected",
+    "ghosted",
+    "withdrawn"
+  ],
   "interviewStages": [
     "tech_interview",
     "final"

@@ -13,6 +13,8 @@ from app.prompts.base import (
     BuiltPrompt,
     collapsed,
     delimiter_tag,
+    fenced,
+    sampling,
     without_delimiter_tags,
 )
 
@@ -120,17 +122,15 @@ def checked(
 def built_user(request: ResumeParseRequest) -> str:
     if request.input.pages:
         return SCAN_USER
-    text = without_delimiter_tags(request.input.text, DELIMITER_TAG)
-    return f"{OPEN_TAG}\n{text}\n{CLOSE_TAG}"
+    return fenced(request.input.text, name="resume_text", strip=DELIMITER_TAG)
 
 
 def build(request: ResumeParseRequest) -> BuiltPrompt:
     return BuiltPrompt(
         system=SYSTEM,
         user=built_user(request),
-        temperature=DEFAULT_TEMPERATURE
-        if request.temperature is None
-        else request.temperature,
-        max_tokens=request.max_tokens or DEFAULT_MAX_TOKENS,
         images=tuple(page.root for page in request.input.pages),
+        **sampling(
+            request, temperature=DEFAULT_TEMPERATURE, max_tokens=DEFAULT_MAX_TOKENS
+        ),
     )

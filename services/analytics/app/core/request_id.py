@@ -1,5 +1,5 @@
-from contextlib import suppress
-from uuid import UUID, uuid4
+import re
+from uuid import uuid4
 
 from loguru import logger
 from starlette.datastructures import Headers, MutableHeaders
@@ -7,13 +7,13 @@ from starlette.requests import Request
 from starlette.types import ASGIApp, Message, Receive, Scope, Send
 
 REQUEST_ID_HEADER = "x-request-id"
+SAFE_REQUEST_ID = re.compile(r"[A-Za-z0-9._-]{1,128}")
 
 
 def accepted_request_id(incoming: str | None) -> str:
-    if incoming is not None:
-        with suppress(ValueError):
-            return str(UUID(incoming))
-    return str(uuid4())
+    return (
+        incoming if incoming and SAFE_REQUEST_ID.fullmatch(incoming) else str(uuid4())
+    )
 
 
 def request_id_from(request: Request) -> str:

@@ -9,6 +9,7 @@ from app.factory import create_app
 from tests.api_client import (
     WARM_CALLS,
     analytics_body,
+    entry_pattern,
     fresh_keys,
     register,
     rejected_at_screening,
@@ -70,7 +71,7 @@ def test_answers_the_stored_norms_while_nothing_changed(
 ) -> None:
     [key] = fresh_keys(
         cache,
-        pattern=f"analytics:{owned.user_id}:norms:*",
+        pattern=entry_pattern(owned.user_id, metric="norms"),
         answer=lambda: norms_over_http(settings, owned),
     )
     cache.set(key, json.dumps(MARKER_BODY), keepttl=True)

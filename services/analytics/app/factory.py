@@ -20,7 +20,7 @@ from app.api.routes import (
 )
 from app.core.auth import key_source_for
 from app.core.config import Settings
-from app.core.enums import check_stages, load_domain_enums
+from app.core.enums import load_domain_enums
 from app.core.error_tracking import install_error_tracking
 from app.core.errors import PROBLEM_RESPONSES, install_error_handlers
 from app.core.logging import configure_logging
@@ -47,7 +47,7 @@ ANALYTICS_ROUTES = (
 
 def create_app(settings: Settings) -> FastAPI:
     install_error_tracking(settings)
-    check_stages(load_domain_enums())
+    load_domain_enums()
     configure_logging(settings.log_level)
     engine = create_engine(settings)
     redis = create_redis(settings)

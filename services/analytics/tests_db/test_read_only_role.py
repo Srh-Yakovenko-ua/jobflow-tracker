@@ -5,10 +5,10 @@ from sqlalchemy import Table, select, text
 from sqlalchemy.exc import DBAPIError
 from sqlalchemy.ext.asyncio import AsyncEngine
 
-from app.repositories.applications import load_applications
+from app.repositories.applications import load_application_sources
 from app.repositories.events import load_events
 from app.repositories.resume_versions import load_version_links
-from app.repositories.searches import load_active_search_id, load_search
+from app.repositories.searches import load_search
 from app.repositories.tables import metadata
 
 pytestmark = [pytest.mark.anyio, pytest.mark.enable_socket]
@@ -29,29 +29,6 @@ EVENT_COLUMNS = [
     "to_stage",
     "reason_code",
     "occurred_at",
-]
-
-APPLICATION_COLUMNS = [
-    "id",
-    "user_id",
-    "search_id",
-    "resume_version_id",
-    "source",
-    "url",
-    "current_stage",
-    "work_mode",
-    "currency",
-    "salary_min",
-    "salary_max",
-    "match_score",
-    "is_draft",
-    "stack",
-    "ai_parsed",
-    "applied_at",
-    "last_event_at",
-    "deleted_at",
-    "created_at",
-    "updated_at",
 ]
 
 
@@ -77,9 +54,12 @@ async def test_loads_no_events_for_a_user_without_applications(
 async def test_loads_no_applications_for_a_user_without_applications(
     engine: AsyncEngine,
 ) -> None:
-    loaded = await load_applications(engine, user_id=uuid4(), search_id=uuid4())
+    loaded = await load_application_sources(engine, user_id=uuid4(), search_id=uuid4())
 
-    assert (len(loaded), list(loaded.columns)) == (0, APPLICATION_COLUMNS)
+    assert (len(loaded), list(loaded.columns)) == (
+        0,
+        ["application_id", "source", "url"],
+    )
 
 
 async def test_loads_no_version_links_for_a_user_without_applications(
@@ -96,13 +76,9 @@ async def test_loads_no_version_links_for_a_user_without_applications(
 async def test_reads_no_active_search_for_a_user_without_searches(
     engine: AsyncEngine,
 ) -> None:
-    user_id = uuid4()
-    events = await load_events(engine, user_id=user_id, search_id=None)
+    events = await load_events(engine, user_id=uuid4(), search_id=None)
 
-    assert (await load_active_search_id(engine, user_id=user_id), len(events)) == (
-        None,
-        0,
-    )
+    assert len(events) == 0
 
 
 async def test_loads_no_search_for_an_unknown_search_id(engine: AsyncEngine) -> None:

@@ -1,6 +1,6 @@
 import pandas as pd
 
-from app.core.enums import STAGE_ROLES, progress_stages
+from app.core.enums import load_domain_enums, progress_stages
 
 
 def journeys(clean: pd.DataFrame) -> pd.DataFrame:
@@ -18,7 +18,7 @@ def journeys(clean: pd.DataFrame) -> pd.DataFrame:
     )
     levels = pd.Series(range(1, len(stages) + 1), index=stages)
     depth = entries.notna().mul(levels).max(axis=1) - 1
-    is_outcome = last_stage.map(STAGE_ROLES) == "outcome"
+    is_outcome = last_stage.isin(load_domain_enums().outcome_stages)
     return entries.assign(
         deepest=depth,
         outcome=last_stage.where(is_outcome),

@@ -2,11 +2,13 @@ import { describe, expect, it } from 'vitest';
 
 import { buildDesignSankey, buildFoldedSankey } from '../../testing/index.js';
 import { issuePathsOf } from '../test/zod-issues.js';
-import { type SankeyGraph, sankeyQuerySchema, sankeyResponseSchema } from './analytics-sankey.js';
+import { type SankeyGraph, sankeyResponseSchema } from './analytics-sankey.js';
 
 const DESIGN_SANKEY = buildDesignSankey();
 
 const [FIRST_LINK, ...OTHER_LINKS] = DESIGN_SANKEY.detailed.links;
+
+const [FIRST_NODE, ...OTHER_NODES] = DESIGN_SANKEY.merged.nodes;
 
 function linkRowsOf(graph: SankeyGraph): string[] {
   return graph.links.map(
@@ -14,19 +16,21 @@ function linkRowsOf(graph: SankeyGraph): string[] {
   );
 }
 
-describe('sankeyQuerySchema', () => {
-  it('accepts a search with the reason split', () => {
-    const query = { searchId: '0b8f5c1e-7a52-4d0e-9f3a-2c6d8e1b4a90', split: 'reason' };
-    expect(sankeyQuerySchema.parse(query)).toEqual(query);
-  });
-
-  it('refuses a split by source at split', () => {
-    const query = { searchId: '0b8f5c1e-7a52-4d0e-9f3a-2c6d8e1b4a90', split: 'source' };
-    expect(issuePathsOf(sankeyQuerySchema.safeParse(query))).toEqual(['split']);
-  });
-});
-
 describe('sankeyResponseSchema', () => {
+  it('refuses a split by source at split', () => {
+    const body = { ...DESIGN_SANKEY, split: 'source' };
+    expect(issuePathsOf(sankeyResponseSchema.safeParse(body))).toEqual(['split']);
+  });
+
+  it('refuses a merged node of an unknown kind at merged.nodes.0.kind', () => {
+    const merged = {
+      ...DESIGN_SANKEY.merged,
+      nodes: [{ ...FIRST_NODE, kind: 'source' }, ...OTHER_NODES],
+    };
+    const body = { ...DESIGN_SANKEY, merged };
+    expect(issuePathsOf(sankeyResponseSchema.safeParse(body))).toEqual(['merged.nodes.0.kind']);
+  });
+
   it('accepts the 14 design flows with merged equal to detailed', () => {
     expect(linkRowsOf(DESIGN_SANKEY.detailed)).toEqual([
       'applied>screening 17',

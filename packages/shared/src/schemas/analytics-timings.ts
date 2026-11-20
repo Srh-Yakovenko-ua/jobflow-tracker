@@ -7,11 +7,9 @@ import {
   insufficientDataSchema,
   rateResultSchema,
 } from './analytics-funnel.js';
-import { responseTimeSchema, sourcesQuerySchema } from './analytics-sources.js';
+import { responseTimeSchema } from './analytics-sources.js';
 
 const durationSchema = z.number().nonnegative();
-
-export const timingsQuerySchema = sourcesQuerySchema;
 
 export const stageTimingSchema = z.discriminatedUnion('status', [
   z.object({
@@ -57,7 +55,6 @@ export const normsResponseSchema = z.object({
   medianDaysToOffer: countSchema.nullable(),
 });
 
-export type TimingsQuery = z.infer<typeof timingsQuerySchema>;
 export type StageTiming = z.infer<typeof stageTimingSchema>;
 export type ResponseHours = z.infer<typeof responseHoursSchema>;
 export type MarketBenchmark = z.infer<typeof marketBenchmarkSchema>;

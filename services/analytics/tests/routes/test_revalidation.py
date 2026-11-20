@@ -1,7 +1,7 @@
 import re
 from collections.abc import Iterator
 from contextlib import contextmanager
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from functools import cache
 from types import ModuleType
 from uuid import UUID
@@ -23,6 +23,7 @@ from app.api.routes import (
     timings,
 )
 from app.metrics.match_validation import match_validation as validated_scores
+from app.services import norms
 from tests.factories import (
     SEARCH_ID,
     SIGNER,
@@ -40,6 +41,7 @@ from tests.services.test_cache import FakeRedis
 OTHER_USER_ID = UUID("0196f0a1-7c2e-7b3d-8a41-5e6f7a8b9cff")
 QUERY = {"searchId": str(SEARCH_ID)}
 QUERY_HASH = "f5386c512eee2cc8"
+SUMMARY_QUERY = QUERY | {"stage": "screening"}
 NO_STORE = "private, max-age=0"
 STRONG_ETAG = re.compile(r'"[0-9a-f]{64}"')
 
@@ -49,9 +51,19 @@ class CachedRoute:
     module: ModuleType
     service: str
     metric: str
+    query: dict[str, str] = field(default_factory=lambda: QUERY)
+    params_hash: str = QUERY_HASH
 
 
 CACHED_ROUTES: dict[str, CachedRoute] = {
+    "/analytics/norms": CachedRoute(timings, "user_norms", "norms"),
+    "/analytics/reasons/summary": CachedRoute(
+        reasons,
+        "search_reasons_summary",
+        "reasons_summary",
+        query=SUMMARY_QUERY,
+        params_hash="a16c5be752ba5ffe",
+    ),
     "/analytics/funnel": CachedRoute(funnel, "search_funnel", "funnel"),
     "/analytics/sankey": CachedRoute(sankey, "search_sankey", "sankey"),
     "/analytics/reasons": CachedRoute(reasons, "search_reasons", "reasons"),
@@ -75,10 +87,10 @@ def answer_of(metric: str) -> BaseModel:
 
 @dataclass
 class Service:
-    answer: BaseModel
+    answer: object
     calls: int = 0
 
-    async def __call__(self, *_: object, **__: object) -> BaseModel:
+    async def __call__(self, *_: object, **__: object) -> object:
         self.calls += 1
         return self.answer
 
@@ -105,7 +117,8 @@ def fetched(
     served: Served, *, path: str, headers: dict[str, str] | None = None
 ) -> httpx2.Response:
     token = bearer(SIGNER.user_token())
-    return served.client.get(path, params=QUERY, headers=token | (headers or {}))
+    query = CACHED_ROUTES[path].query
+    return served.client.get(path, params=query, headers=token | (headers or {}))
 
 
 CACHED = pytest.mark.parametrize("path", list(CACHED_ROUTES))
@@ -173,9 +186,24 @@ def test_answers_a_second_load_without_computing_the_metric_again(
     assert (first.content, app.service.calls) == (second.content, 1)
 
 
+def test_answers_a_norms_hit_without_a_database_read(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    path = "/analytics/norms"
+    reads = Service(stage_events_frame([]))
+    monkeypatch.setattr(norms, "load_user_events", reads)
+    with served(monkeypatch, path=path) as app:
+        monkeypatch.setattr(timings, "user_norms", norms.user_norms)
+        etag = fetched(app, path=path).headers["etag"]
+        response = fetched(app, path=path, headers={"if-none-match": etag})
+
+    assert (response.status_code, response.content) == (304, b"")
+    assert (reads.calls, app.service.calls) == (1, 0)
+
+
 def entry(user_id: UUID, *, path: str) -> str:
     metric = path.removeprefix("/analytics/")
-    return f"analytics:{user_id}:v0:{metric}:{QUERY_HASH}"
+    return f"analytics:{user_id}:v0:{metric}:{CACHED_ROUTES[path].params_hash}"
 
 
 @CACHED
@@ -185,7 +213,7 @@ def test_keeps_the_answers_of_two_users_with_the_same_query_apart(
     other = bearer(SIGNER.user_token(sub=str(OTHER_USER_ID)))
     with served(monkeypatch, path=path) as app:
         fetched(app, path=path)
-        app.client.get(path, params=QUERY, headers=other)
+        app.client.get(path, params=CACHED_ROUTES[path].query, headers=other)
 
     assert sorted(app.redis.bodies) == sorted(
         [entry(USER_ID, path=path), entry(OTHER_USER_ID, path=path)]

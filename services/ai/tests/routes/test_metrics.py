@@ -105,6 +105,21 @@ async def test_counts_a_vendor_timeout_and_times_the_call_as_timed_out() -> None
     assert rise == [1.0, 1.0, 0.0]
 
 
+async def test_a_local_limiter_refusal_is_not_counted_as_a_vendor_error() -> None:
+    app = build_app(settings=settings_for(ai_rate_limit_per_minute=1))
+    refused = (
+        "jobflow_ai_vendor_call_seconds_count",
+        {"kind": "vacancy_parse", "model": "fake", "outcome": "rate_limited"},
+    )
+    await post_completion(app=app)
+
+    rise = await rise_of(
+        [vendor_error("rate_limited"), refused], post_completion(app=app)
+    )
+
+    assert rise == [0.0, 0.0]
+
+
 async def test_counts_a_failed_vendor_call_by_the_model_it_asked_for() -> None:
     vendor = ScriptedVendor([retry_soon(500)])
     provider = OpenAiProvider(vendor_settings(), http_client=vendor.client())

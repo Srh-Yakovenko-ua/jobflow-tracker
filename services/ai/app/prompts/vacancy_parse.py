@@ -13,6 +13,8 @@ from app.prompts.base import (
     BuiltPrompt,
     collapsed,
     delimiter_tag,
+    fenced,
+    sampling,
     without_delimiter_tags,
 )
 
@@ -110,12 +112,10 @@ def checked(
 
 
 def build(request: VacancyParseRequest) -> BuiltPrompt:
-    text = without_delimiter_tags(request.input.text, DELIMITER_TAG)
     return BuiltPrompt(
         system=SYSTEM,
-        user=f"{OPEN_TAG}\n{text}\n{CLOSE_TAG}",
-        temperature=DEFAULT_TEMPERATURE
-        if request.temperature is None
-        else request.temperature,
-        max_tokens=request.max_tokens or DEFAULT_MAX_TOKENS,
+        user=fenced(request.input.text, name="vacancy_text", strip=DELIMITER_TAG),
+        **sampling(
+            request, temperature=DEFAULT_TEMPERATURE, max_tokens=DEFAULT_MAX_TOKENS
+        ),
     )

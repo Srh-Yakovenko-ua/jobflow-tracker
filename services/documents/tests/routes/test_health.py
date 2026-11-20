@@ -19,7 +19,16 @@ def test_answers_ok_and_echoes_a_uuid_request_id(client: TestClient) -> None:
     )
 
 
-def test_replaces_a_request_id_that_is_not_a_uuid(client: TestClient) -> None:
+def test_a_non_uuid_request_id_is_kept(client: TestClient) -> None:
+    response = client.get("/nowhere", headers={"x-request-id": "req-doc-3"})
+
+    assert (response.headers["x-request-id"], response.json()["requestId"]) == (
+        "req-doc-3",
+        "req-doc-3",
+    )
+
+
+def test_replaces_a_request_id_with_unsafe_characters(client: TestClient) -> None:
     response = client.get("/nowhere", headers={"x-request-id": "req; drop"})
 
     body = response.json()
