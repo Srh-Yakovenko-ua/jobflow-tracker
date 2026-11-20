@@ -1,4 +1,11 @@
-export { ApiError, isIdempotencyConflict, isNotFound, isTransient } from './api-error';
+export {
+  ApiError,
+  apiStatusOf,
+  HTTP_STATUS,
+  isIdempotencyConflict,
+  isNotFound,
+  isTransient,
+} from './api-error';
 export { analyticsClient, apiClient } from './clients';
 export type { ApplyFieldErrorsOptions } from './field-errors';
 export { applyFieldErrors } from './field-errors';

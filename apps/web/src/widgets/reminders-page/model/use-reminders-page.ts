@@ -1,7 +1,7 @@
 'use client';
 
 import type { Plan } from '@jobflow/shared';
-import { useQuery, type UseQueryResult } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
 
 import {
@@ -19,10 +19,9 @@ import {
 } from '@/entities/scheduled-event';
 import { useSettledTimeZone, useSilenceDays } from '@/entities/user';
 import { type SilentRow, silentRowsOf } from '@/features/snooze-reminder';
+import { type SectionLoad, sectionLoadOf } from '@/shared/lib/section-load';
 
 import { useReplyMove } from './use-reply-move';
-
-export type SectionLoad = Readonly<{ failed: boolean; retrying: boolean; onRetry: () => void }>;
 
 export type SilenceSection = Readonly<{
   rows: SilentRow[] | undefined;
@@ -41,16 +40,6 @@ export type PlanView = Readonly<{ plan: Plan | null; timeZone: string }>;
 
 export type PlanSectionState = Readonly<{ view: PlanView | undefined; load: SectionLoad }>;
 
-function loadOf(queries: readonly UseQueryResult[]): SectionLoad {
-  return {
-    failed: queries.some((query) => query.isError),
-    retrying: queries.some((query) => query.isFetching),
-    onRetry: () => {
-      queries.filter((query) => query.isError).forEach((query) => void query.refetch());
-    },
-  };
-}
-
 function useSilenceSection(now: Date): SilenceSection {
   const board = useQuery(boardQueryOptions(SILENT_ONLY));
   const reminders = useQuery(remindersQueryOptions());
@@ -58,7 +47,7 @@ function useSilenceSection(now: Date): SilenceSection {
     board.data &&
     reminders.data &&
     silentRowsOf({ board: board.data, reminders: reminders.data.items, now });
-  return { rows, load: loadOf([board, reminders]), silenceDays: useSilenceDays() };
+  return { rows, load: sectionLoadOf(board, reminders), silenceDays: useSilenceDays() };
 }
 
 function useInterviewsSection(now: Date): InterviewsSection {
@@ -72,14 +61,14 @@ function useInterviewsSection(now: Date): InterviewsSection {
           context: { now, timeZone },
         }
       : undefined;
-  return { view, load: loadOf([calendar]) };
+  return { view, load: sectionLoadOf(calendar) };
 }
 
 function usePlanSection(): PlanSectionState {
   const latest = useQuery(latestPlanQueryOptions());
   const timeZone = useSettledTimeZone();
   const view = latest.data && timeZone !== null ? { plan: latest.data.plan, timeZone } : undefined;
-  return { view, load: loadOf([latest]) };
+  return { view, load: sectionLoadOf(latest) };
 }
 
 export function useRemindersPage() {

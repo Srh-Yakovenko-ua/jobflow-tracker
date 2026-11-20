@@ -1,5 +1,5 @@
 import {
-  type CaptureRetryResponse,
+  type AiJobAccepted,
   interviewPrepOutputSchema,
   type InterviewPrepResponse,
 } from '@jobflow/shared';
@@ -39,7 +39,7 @@ export class InterviewPrepService {
   async request(
     userId: string,
     { applicationId, requestId }: InterviewPrepGeneration,
-  ): Promise<CaptureRetryResponse> {
+  ): Promise<AiJobAccepted> {
     const prepared = await this.sources.prepared(userId, applicationId);
     if ('refusal' in prepared) {
       throw prepared.refusal;

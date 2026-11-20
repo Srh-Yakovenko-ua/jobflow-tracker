@@ -6,7 +6,7 @@ const YEAR_DIGITS = 'YYYY'.length;
 
 const MONTH_DIGITS_FROM = 'YYYY-'.length;
 
-const MONTHS_PER_YEAR = 12;
+export const MONTHS_PER_YEAR = 12;
 
 function monthIndexOf(month: YearMonth): number {
   return Number(month.slice(MONTH_DIGITS_FROM)) - 1;

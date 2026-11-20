@@ -3,7 +3,7 @@ import { type QueryKey, useQueryClient } from '@tanstack/react-query';
 import type { UseFormSetError } from 'react-hook-form';
 
 import { applicationKeys, timelineKeys } from '@/entities/application';
-import { ApiError, type GuardedSave, useGuardedSave } from '@/shared/api';
+import { apiStatusOf, type GuardedSave, HTTP_STATUS, useGuardedSave } from '@/shared/api';
 
 import { confirmDraft } from '../api/confirm-draft';
 import { updateApplication } from '../api/update-application';
@@ -38,7 +38,7 @@ export function useConfirmDraft({
         await confirmDraft(applicationId);
         return 'confirmed';
       } catch (error) {
-        if (error instanceof ApiError && error.status === 409) return 'stale';
+        if (apiStatusOf(error) === HTTP_STATUS.conflict) return 'stale';
         throw error;
       }
     },

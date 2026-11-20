@@ -5,11 +5,11 @@ import {
   CAPTURE_BOOKMARKLET_LIMITS,
   captureBookmarkletInputSchema,
   capturePasteInputSchema,
-  captureRetryResponseSchema,
   captureTokenCreatedSchema,
   captureTokenListResponseSchema,
   DRAFT_PLACEHOLDERS,
 } from './capture.js';
+import { aiJobAcceptedSchema } from './job.js';
 
 const text = 'Senior Frontend Engineer у Grammarly\nReact, TypeScript\n';
 
@@ -109,22 +109,22 @@ const issued = {
   createdAt: '2026-11-10T09:00:00.000Z',
 };
 
-describe('captureRetryResponseSchema', () => {
+describe('aiJobAcceptedSchema', () => {
   const retried = { jobId: issued.id };
 
   it('accepts the id of the job that parses the draft again', () => {
-    expect(captureRetryResponseSchema.parse(retried)).toEqual(retried);
+    expect(aiJobAcceptedSchema.parse(retried)).toEqual(retried);
   });
 
   it.each([
     { label: 'a missing job id', input: {} },
     { label: 'a job id that is not a uuid', input: { jobId: '76' } },
   ])('refuses $label at jobId', ({ input }) => {
-    expect(issuePathsOf(captureRetryResponseSchema.safeParse(input))).toEqual(['jobId']);
+    expect(issuePathsOf(aiJobAcceptedSchema.safeParse(input))).toEqual(['jobId']);
   });
 
   it('carries the job id alone', () => {
-    expect(Object.keys(captureRetryResponseSchema.shape)).toEqual(['jobId']);
+    expect(Object.keys(aiJobAcceptedSchema.shape)).toEqual(['jobId']);
   });
 });
 

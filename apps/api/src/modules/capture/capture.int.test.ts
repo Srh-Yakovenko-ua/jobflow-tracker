@@ -1,8 +1,8 @@
 import {
+  type AiJobAccepted,
+  aiJobAcceptedSchema,
   type AiJobStatus,
   capturePasteResponseSchema,
-  type CaptureRetryResponse,
-  captureRetryResponseSchema,
   errorResponseSchema,
   timelineRecordSchema,
 } from '@jobflow/shared';
@@ -298,7 +298,7 @@ describe('POST /api/v1/capture/paste', () => {
       .poll(async () => (await storedAiJob(testApp.prisma, jobId)).status, SETTLED)
       .toBe(status);
 
-  async function relayed({ jobId }: CaptureRetryResponse, status: AiJobStatus) {
+  async function relayed({ jobId }: AiJobAccepted, status: AiJobStatus) {
     const worker = await relayingWorker();
     await expectJobStatus(jobId, status);
     return worker;
@@ -317,7 +317,7 @@ describe('POST /api/v1/capture/paste', () => {
   async function retried(accessToken: string, id: string) {
     const response = await postRetry(testApp.app, { accessToken, id });
     expect(statusAndDetail(response)).toEqual([202, undefined]);
-    return acceptedBody(response, captureRetryResponseSchema);
+    return acceptedBody(response, aiJobAcceptedSchema);
   }
 
   async function kindsOf(applicationId: string) {

@@ -5,6 +5,7 @@ import { useQuery } from '@tanstack/react-query';
 
 import { resumeVersionsQueryOptions } from '@/entities/resume';
 import { uk } from '@/shared/i18n';
+import { sectionLoadOf } from '@/shared/lib/section-load';
 import { LoadFailedAlert } from '@/shared/ui/banner';
 import { LoadingRegion } from '@/shared/ui/loading-region';
 import type { ChoiceOption } from '@/shared/ui/radio-group';
@@ -43,20 +44,13 @@ function choicesOf({ picked, versions }: PillInput): ChoiceOption[] {
 function VersionChoices({ picked }: Readonly<{ picked: PickedVersions }>) {
   const query = useQuery(resumeVersionsQueryOptions());
   const { toggleResumeVersion } = useApplicationFilters((store) => store.actions);
-  if (query.isPending) {
+  const load = sectionLoadOf(query);
+  if (load.failed) return <LoadFailedAlert onRetry={load.onRetry} retrying={load.retrying} />;
+  if (query.data === undefined) {
     return (
       <LoadingRegion>
         <TextSkeleton />
       </LoadingRegion>
-    );
-  }
-  if (query.isError) {
-    return (
-      <LoadFailedAlert
-        onRetry={() => {
-          void query.refetch();
-        }}
-      />
     );
   }
   const options = choicesOf({ picked, versions: query.data.items });

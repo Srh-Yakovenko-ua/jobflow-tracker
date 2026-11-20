@@ -27,10 +27,22 @@ export class ApiError extends Error {
   }
 }
 
-export function isIdempotencyConflict(error: Error): boolean {
+export const HTTP_STATUS = {
+  unauthorized: 401,
+  notFound: 404,
+  conflict: 409,
+  unprocessable: 422,
+  tooManyRequests: 429,
+} as const;
+
+export function apiStatusOf(error: unknown): number | undefined {
+  return error instanceof ApiError ? error.status : undefined;
+}
+
+export function isIdempotencyConflict(error: unknown): boolean {
   return (
+    apiStatusOf(error) === HTTP_STATUS.conflict &&
     error instanceof ApiError &&
-    error.status === 409 &&
     error.body.type === IDEMPOTENCY_CONFLICT_TYPE
   );
 }
@@ -45,7 +57,7 @@ export function isTransient(error: Error): boolean {
 }
 
 export function isNotFound(error: unknown): boolean {
-  return error instanceof ApiError && error.status === 404;
+  return apiStatusOf(error) === HTTP_STATUS.notFound;
 }
 
 function fallbackBody(response: Response): ErrorResponse {

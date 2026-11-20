@@ -54,8 +54,6 @@ export function visibleSettingsItems(flags: FeatureFlags): SettingsItems {
   };
 }
 
-const LARGEST_PRESET = 21;
-
 export function recommendedPreset(silenceDays: number): number {
-  return SILENCE_PRESETS.find((preset) => preset >= silenceDays) ?? LARGEST_PRESET;
+  return SILENCE_PRESETS.find((preset) => preset >= silenceDays) ?? Math.max(...SILENCE_PRESETS);
 }

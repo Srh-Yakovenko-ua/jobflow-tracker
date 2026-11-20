@@ -11,7 +11,8 @@ import { applicationQueryOptions } from '@/entities/application';
 import { useUserTimeZone } from '@/entities/user';
 import type { EditField } from '@/features/edit-application';
 import type { SchedulePlan } from '@/features/schedule-event';
-import { ApiError } from '@/shared/api';
+import { ApiError, HTTP_STATUS } from '@/shared/api';
+import { sectionLoadOf } from '@/shared/lib/section-load';
 
 export type ApplicationPanel =
   { kind: 'edit'; field: EditField } | { kind: 'delete' } | SchedulePlan;
@@ -25,7 +26,10 @@ export type ApplicationPageActions = Readonly<{
   onClose: () => void;
 }>;
 
-const MISSING_STATUSES: ReadonlySet<number> = new Set([404, 422]);
+const MISSING_STATUSES: ReadonlySet<number> = new Set([
+  HTTP_STATUS.notFound,
+  HTTP_STATUS.unprocessable,
+]);
 
 function isMissing(error: Error | null): boolean {
   return error instanceof ApiError && MISSING_STATUSES.has(error.status);
@@ -59,12 +63,7 @@ export function useApplicationPage(id: Application['id']) {
     application: query.data,
     timeZone,
     missing: !valid || isMissing(query.error),
-    load: {
-      failed: query.isError && !query.isFetching,
-      onRetry: () => {
-        void query.refetch();
-      },
-    },
+    load: sectionLoadOf(query),
     panel,
     suggestion: suggested === query.data?.currentStage ? null : suggested,
     actions,

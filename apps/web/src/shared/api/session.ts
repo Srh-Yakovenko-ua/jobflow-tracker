@@ -4,7 +4,7 @@ import { config } from '@/shared/config';
 import { dropPushSubscription } from '@/shared/lib/push-subscription';
 import { clearSessionCookie, writeSessionCookie } from '@/shared/lib/session-cookie';
 
-import { ApiError } from './api-error';
+import { apiStatusOf, HTTP_STATUS } from './api-error';
 import { parseResponse } from './parse-response';
 import { send } from './transport';
 
@@ -61,7 +61,7 @@ async function requestFreshToken(): Promise<string> {
     setAccessToken(tokens.accessToken);
     return tokens.accessToken;
   } catch (error) {
-    if (error instanceof ApiError && error.status === 401) {
+    if (apiStatusOf(error) === HTTP_STATUS.unauthorized) {
       endSession();
     }
     throw error;

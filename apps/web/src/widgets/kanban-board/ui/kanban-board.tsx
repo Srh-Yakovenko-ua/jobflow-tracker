@@ -120,7 +120,7 @@ function BoardContent() {
     }
     return (
       <div className="max-w-120 animate-fade-in">
-        <LoadFailedPanel onRetry={outcomes.load.onRetry} />
+        <LoadFailedPanel onRetry={outcomes.load.onRetry} retrying={outcomes.load.retrying} />
       </div>
     );
   }

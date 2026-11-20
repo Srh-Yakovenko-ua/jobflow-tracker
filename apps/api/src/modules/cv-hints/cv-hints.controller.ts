@@ -1,8 +1,4 @@
-import {
-  applicationIdSchema,
-  type CaptureRetryResponse,
-  type CvHintsResponse,
-} from '@jobflow/shared';
+import { type AiJobAccepted, applicationIdSchema, type CvHintsResponse } from '@jobflow/shared';
 import { Controller, Get, Param, Post } from '@nestjs/common';
 
 import { RequestId } from '../../common/request-id.decorator.js';
@@ -28,7 +24,7 @@ export class CvHintsController {
     @CurrentUser() user: AccessUser,
     @Param('id', { schema: applicationIdSchema }) id: string,
     @RequestId() requestId: string,
-  ): Promise<CaptureRetryResponse> {
+  ): Promise<AiJobAccepted> {
     return this.cvHints.request(user.id, { applicationId: id, requestId });
   }
 }

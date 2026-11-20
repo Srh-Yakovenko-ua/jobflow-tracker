@@ -98,7 +98,7 @@ export function ApplicationSchedule({
 }: ApplicationScheduleProps) {
   const { agenda, context, load } = useApplicationSchedule(application);
   if (load.pending) return null;
-  if (load.failed) return <LoadFailedPanel onRetry={load.onRetry} />;
+  if (load.failed) return <LoadFailedPanel onRetry={load.onRetry} retrying={load.retrying} />;
   const { upcoming, awaitingOutcome } = agenda;
   return (
     <div className="flex flex-col gap-3 empty:hidden">

@@ -4,7 +4,7 @@ import type { FieldValues } from 'react-hook-form';
 import { uk } from '@/shared/i18n';
 import { type ErrorToastContent, showErrorToast } from '@/shared/ui/error-toast';
 
-import { ApiError, isIdempotencyConflict } from './api-error';
+import { ApiError, HTTP_STATUS, isIdempotencyConflict } from './api-error';
 import { applyFieldErrors, type ApplyFieldErrorsOptions } from './field-errors';
 
 type GuardedSaveOptions<Body, Values extends FieldValues, Result> = Readonly<{
@@ -36,7 +36,7 @@ export function useGuardedSave<Body, Values extends FieldValues, Result>({
     mutationFn: request,
     onSuccess,
     onError: (error) => {
-      if (error instanceof ApiError && error.status === 422) {
+      if (error instanceof ApiError && error.status === HTTP_STATUS.unprocessable) {
         applyFieldErrors({ error, ...form });
         return;
       }

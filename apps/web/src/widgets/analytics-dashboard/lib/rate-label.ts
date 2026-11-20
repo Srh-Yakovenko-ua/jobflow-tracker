@@ -1,8 +1,7 @@
 import type { RateResult } from '@jobflow/shared';
 
 import { uk } from '@/shared/i18n';
-
-import { percentOf } from './kpi-values';
+import { percentOf } from '@/shared/lib/percent';
 
 const COPY = uk.analytics;
 

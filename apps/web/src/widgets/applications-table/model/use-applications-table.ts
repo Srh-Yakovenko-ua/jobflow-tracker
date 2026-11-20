@@ -11,14 +11,15 @@ import { useState } from 'react';
 import { applicationKeys, applicationTableQueryOptions } from '@/entities/application';
 import { useUserTimeZone } from '@/entities/user';
 import { useSentFilters } from '@/features/filter-applications';
+import { type SectionLoad, sectionLoadOf } from '@/shared/lib/section-load';
 
 import { APPLICATION_COLUMNS, INITIAL_SORTING } from './columns';
 import { applicationTableFeatures } from './table-features';
 
-export type TableLoad = Readonly<{ failed: boolean; onRetry: () => void }>;
-
-export type StageCounts = TableLoad &
-  Readonly<{ rows: readonly ApplicationListItem[] | undefined }>;
+export type StageCounts = Readonly<{
+  rows: readonly ApplicationListItem[] | undefined;
+  load: SectionLoad;
+}>;
 
 export type ApplicationsTableInstance = ReturnType<typeof useApplicationsTable>['table'];
 
@@ -62,10 +63,10 @@ function useStageCounts({ sent, listFailed }: StageCountsInput): StageCounts {
     ...applicationTableQueryOptions({ ...sent, stage: undefined }),
     placeholderData: keepPreviousData,
   });
+  const load = sectionLoadOf(everyStage);
   return {
     rows: everyStage.data,
-    failed: everyStage.isError && !everyStage.isFetching && !listFailed,
-    onRetry: () => void everyStage.refetch(),
+    load: { ...load, failed: (load.failed || load.stale) && !listFailed },
   };
 }
 
@@ -76,7 +77,8 @@ export function useApplicationsTable() {
     ...applicationTableQueryOptions(sent),
     placeholderData: keepPreviousData,
   });
-  const stageCounts = useStageCounts({ sent, listFailed: query.isError });
+  const load = sectionLoadOf(query);
+  const stageCounts = useStageCounts({ sent, listFailed: load.failed || load.stale });
   const selection = useSelectionPerFilters({ sent, loaded: query.data });
   const table = useTable({
     features: applicationTableFeatures,
@@ -87,12 +89,6 @@ export function useApplicationsTable() {
     state: { rowSelection: selection.rows },
     onRowSelectionChange: selection.onChange,
   });
-  const load: TableLoad = {
-    failed: query.isError && !query.isFetching,
-    onRetry: () => {
-      void query.refetch();
-    },
-  };
   const filtered =
     query.isPlaceholderData || Object.values(sent).some((value) => value !== undefined);
   return {

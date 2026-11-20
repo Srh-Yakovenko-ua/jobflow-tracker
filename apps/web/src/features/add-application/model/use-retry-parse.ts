@@ -1,22 +1,16 @@
 'use client';
 
-import {
-  type ApplicationResponse,
-  type CaptureRetryResponse,
-  captureRetryResponseSchema,
-} from '@jobflow/shared';
+import { type AiJobAccepted, aiJobAcceptedSchema, type ApplicationResponse } from '@jobflow/shared';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 
-import { applicationKeys } from '@/entities/application';
-import { apiClient, ApiError } from '@/shared/api';
+import { applicationKeys, retryLimitToast } from '@/entities/application';
+import { apiClient, ApiError, HTTP_STATUS } from '@/shared/api';
 import { uk } from '@/shared/i18n';
 import { showErrorToast } from '@/shared/ui/error-toast';
 
-import { retryLimitToast } from './add-error-toast';
-
 export type RetryParseOptions = Readonly<{
   applicationId: ApplicationResponse['id'];
-  actions: { onRetried: (jobId: CaptureRetryResponse['jobId']) => void };
+  actions: { onRetried: (jobId: AiJobAccepted['jobId']) => void };
 }>;
 
 export type RetryParse = Readonly<{ isPending: boolean; retry: () => void }>;
@@ -28,14 +22,14 @@ export function useRetryParse({ applicationId, actions }: RetryParseOptions): Re
       apiClient.request({
         path: `/capture/drafts/${applicationId}/retry`,
         method: 'POST',
-        schema: captureRetryResponseSchema,
+        schema: aiJobAcceptedSchema,
       }),
     onSuccess: ({ jobId }) => {
       void queryClient.invalidateQueries({ queryKey: applicationKeys.all });
       actions.onRetried(jobId);
     },
     onError: (error) => {
-      if (error instanceof ApiError && error.status === 429) {
+      if (error instanceof ApiError && error.status === HTTP_STATUS.tooManyRequests) {
         showErrorToast(retryLimitToast(error.retryAfterSeconds));
         return;
       }

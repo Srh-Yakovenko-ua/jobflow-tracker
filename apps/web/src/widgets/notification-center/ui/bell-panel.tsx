@@ -2,12 +2,13 @@
 
 import { useQuery } from '@tanstack/react-query';
 import Link from 'next/link';
-import { useState } from 'react';
 
 import { notificationDaysOf, notificationListQueryOptions } from '@/entities/notification';
 import { useUserTimeZone } from '@/entities/user';
 import { uk } from '@/shared/i18n';
 import { cn } from '@/shared/lib/cn';
+import { sectionLoadOf } from '@/shared/lib/section-load';
+import { useQueryNow } from '@/shared/lib/use-query-now';
 import { LoadFailedPanel } from '@/shared/ui/error-panel';
 import { LoadingRegion } from '@/shared/ui/loading-region';
 import { TextSkeleton } from '@/shared/ui/skeleton';
@@ -27,12 +28,10 @@ export type BellPanelProps = Readonly<{ unread: number; onFollow: () => void }>;
 function BellRows({ onFollow }: Readonly<{ onFollow: () => void }>) {
   const query = useQuery(notificationListQueryOptions());
   const timeZone = useUserTimeZone();
-  const [now] = useState(() => new Date());
+  const now = useQueryNow(query);
+  const load = sectionLoadOf(query);
   if (query.data === undefined) {
-    if (query.isError) {
-      const onRetry = () => void query.refetch();
-      return <LoadFailedPanel onRetry={onRetry} retrying={query.isFetching} />;
-    }
+    if (load.failed) return <LoadFailedPanel onRetry={load.onRetry} retrying={load.retrying} />;
     return (
       <LoadingRegion className="px-2 py-3">
         <TextSkeleton />

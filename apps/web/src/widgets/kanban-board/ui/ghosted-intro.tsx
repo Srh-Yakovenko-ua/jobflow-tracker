@@ -8,6 +8,7 @@ import { timingsQueryOptions } from '@/entities/analytics';
 import { BulkFollowupSheet, freshGhostsOf, useBulkFollowups } from '@/features/generate-followup';
 import { type GhostMarket, uk } from '@/shared/i18n';
 import { cn } from '@/shared/lib/cn';
+import { percentOf } from '@/shared/lib/percent';
 import { Button } from '@/shared/ui/button';
 import { EmptyState } from '@/shared/ui/empty-state';
 import { TOUCH_HEIGHT } from '@/shared/ui/touch-height';
@@ -18,8 +19,6 @@ export type GhostedIntroProps = Readonly<{ column: OutcomeColumn }>;
 
 const COPY = uk.ghosted;
 
-const PERCENT = 100;
-
 const ACTION = cn('h-auto max-w-full min-h-control-md py-1.5 whitespace-normal', TOUCH_HEIGHT);
 
 function marketOf(timings: TimingsResponse | undefined): GhostMarket | null {
@@ -27,7 +26,7 @@ function marketOf(timings: TimingsResponse | undefined): GhostMarket | null {
   const { rate, gap } = timings.ghostRate;
   if (rate.status !== 'ok') return null;
   return {
-    percent: Math.round(rate.value * PERCENT),
+    percent: percentOf(rate.value),
     points: gap?.points ?? 0,
     position: gap?.position ?? 'within',
   };

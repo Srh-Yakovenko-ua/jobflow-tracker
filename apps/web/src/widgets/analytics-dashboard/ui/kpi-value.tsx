@@ -3,11 +3,10 @@
 import { motion } from 'motion/react';
 
 import { cn } from '@/shared/lib/cn';
+import { PERCENT } from '@/shared/lib/percent';
 import { useDataTransition } from '@/shared/lib/use-data-transition';
 
 import type { KpiBar, KpiBarTone, KpiChip, KpiContent } from '../lib/kpi-values';
-
-const PERCENT = 100;
 
 const BAR_FILLS: Record<KpiBarTone, string> = {
   screening: 'bg-stage-screening',

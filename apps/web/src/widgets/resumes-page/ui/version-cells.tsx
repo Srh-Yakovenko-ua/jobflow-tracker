@@ -9,12 +9,12 @@ import {
   AiProfileStatus,
   conversionLabelOf,
   missingForPercent,
-  percentOf,
   type VersionConversion,
 } from '@/entities/resume';
 import { VersionActions } from '@/features/edit-resume-version';
 import { uk } from '@/shared/i18n';
 import { cn } from '@/shared/lib/cn';
+import { PERCENT, percentOf } from '@/shared/lib/percent';
 import { formatFileSize } from '@/shared/lib/state-format';
 import { useDataTransition } from '@/shared/lib/use-data-transition';
 
@@ -30,10 +30,6 @@ export type VersionRowView = Readonly<{
 }>;
 
 export type VersionCellProps = Readonly<{ version: ResumeVersion; view: VersionRowView }>;
-
-const NO_VALUE = '—';
-
-const PERCENT = 100;
 
 type Rated = Extract<RateResult, { status: 'ok' }>;
 
@@ -78,7 +74,7 @@ function VersionName({ version, view }: VersionCellProps) {
 }
 
 function NoValue() {
-  return <span className="text-[13px] text-ink-3">{NO_VALUE}</span>;
+  return <span className="text-[13px] text-ink-3">{uk.analytics.noValue}</span>;
 }
 
 function NeedMore({ missing }: Readonly<{ missing: number }>) {
@@ -105,7 +101,7 @@ function ScreeningBar({ rate, active }: RatedCellProps) {
           data-conversion-bar
           className={cn('block h-full w-full rounded-pill', active ? 'bg-data-2' : 'bg-data-6')}
           initial={{ x: '-100%' }}
-          animate={{ x: `${String(percentOf(rate) - PERCENT)}%` }}
+          animate={{ x: `${String(percentOf(rate.value) - PERCENT)}%` }}
           transition={transition}
         />
       </span>

@@ -5,11 +5,13 @@ import { DESIGN_MATCH, NO_MATCH } from '@/test/match-fixtures';
 
 import { type InterviewPrepGateInput, interviewPrepGateOf } from './interview-prep-gate';
 
-const SETTLED = { pending: false, failed: false } as const;
+const SETTLED = { pending: false, failed: false, retrying: false } as const;
 
-const PENDING = { pending: true, failed: false } as const;
+const PENDING = { pending: true, failed: false, retrying: false } as const;
 
-const FAILED = { pending: false, failed: true } as const;
+const FAILED = { pending: false, failed: true, retrying: false } as const;
+
+const RETRYING = { pending: false, failed: true, retrying: true } as const;
 
 const PLANNED: InterviewPrepGateInput['schedule'] = { load: SETTLED, upcoming: true };
 
@@ -41,6 +43,13 @@ describe('interviewPrepGateOf', () => {
         schedule: { load: FAILED, upcoming: false },
       }),
     ).toEqual({ shown: true, settling: false, requestable: true });
+  });
+
+  it.each([
+    ['schedule', { schedule: { load: RETRYING, upcoming: false } }],
+    ['Match Score', { application: BARE_VACANCY, match: { load: RETRYING, response: undefined } }],
+  ])('a failed %s asked again still counts as settling', (_section, input) => {
+    expect(gateOf(input).settling).toBe(true);
   });
 
   it('a planned interview for a vacancy with no stack, requirements or Match Score gaps offers no request', () => {

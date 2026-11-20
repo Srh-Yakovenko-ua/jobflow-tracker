@@ -1,26 +1,24 @@
 'use client';
 
 import { useQuery } from '@tanstack/react-query';
-import { AnimatePresence } from 'motion/react';
-import { useState } from 'react';
 
-import { type SectionLoad, sectionLoadOf } from '@/entities/application';
 import { resumeAbQueryOptions, resumeVersionsQueryOptions } from '@/entities/resume';
 import { useSession, useUserTimeZone } from '@/entities/user';
 import { ResumeUpload } from '@/features/upload-resume';
 import { uk } from '@/shared/i18n';
-import { LoadFailedAlert } from '@/shared/ui/banner';
+import { sectionLoadOf } from '@/shared/lib/section-load';
+import { useQueryNow } from '@/shared/lib/use-query-now';
 import { Button } from '@/shared/ui/button';
 import { type FilePicker, useFilePicker } from '@/shared/ui/drop-zone';
 import { EmptyState } from '@/shared/ui/empty-state';
 import { LoadFailedPanel } from '@/shared/ui/error-panel';
-import { Fade } from '@/shared/ui/fade';
+import { FailedReadAlert } from '@/shared/ui/failed-read-alert';
 import { LoadingRegion } from '@/shared/ui/loading-region';
 import { PAGE_TITLE } from '@/shared/ui/page-title';
 import { TableSkeleton } from '@/shared/ui/skeleton';
 import { TOUCH_HEIGHT } from '@/shared/ui/touch-height';
 
-import { conversionsById, splitVersions } from '../model/split-versions';
+import { splitVersions } from '../model/split-versions';
 import { VersionsTable } from './versions-table';
 
 const COPY = uk.resumes;
@@ -29,22 +27,16 @@ function useResumeVersions() {
   const query = useQuery(resumeVersionsQueryOptions());
   const activeId = useSession().settings?.activeResumeVersionId ?? null;
   const timeZone = useUserTimeZone();
-  const [now] = useState(() => new Date());
+  const now = useQueryNow(query);
   const abQuery = useQuery(resumeAbQueryOptions());
   const abVersions = abQuery.data?.versions;
-  return { query, activeId, abLoad: sectionLoadOf(abQuery), view: { now, timeZone, abVersions } };
-}
-
-function AbFailedAlert({ load }: Readonly<{ load: SectionLoad }>) {
-  return (
-    <AnimatePresence initial={false}>
-      {load.failed && (
-        <Fade key="resume-ab-failed">
-          <LoadFailedAlert onRetry={load.onRetry} />
-        </Fade>
-      )}
-    </AnimatePresence>
-  );
+  return {
+    query,
+    load: sectionLoadOf(query),
+    activeId,
+    abLoad: sectionLoadOf(abQuery),
+    view: { now, timeZone, abVersions },
+  };
 }
 
 function PageHeading({ picker }: Readonly<{ picker: FilePicker | null }>) {
@@ -64,18 +56,9 @@ function PageHeading({ picker }: Readonly<{ picker: FilePicker | null }>) {
 }
 
 function VersionsBody({ picker }: Readonly<{ picker: FilePicker }>) {
-  const { query, activeId, abLoad, view } = useResumeVersions();
+  const { query, load, activeId, abLoad, view } = useResumeVersions();
   if (query.data === undefined) {
-    if (query.isError) {
-      return (
-        <LoadFailedPanel
-          onRetry={() => {
-            void query.refetch();
-          }}
-          retrying={query.isFetching}
-        />
-      );
-    }
+    if (load.failed) return <LoadFailedPanel onRetry={load.onRetry} retrying={load.retrying} />;
     return (
       <LoadingRegion className="bg-surface shadow-e1">
         <TableSkeleton />
@@ -92,12 +75,12 @@ function VersionsBody({ picker }: Readonly<{ picker: FilePicker }>) {
   }
   return (
     <div className="flex min-w-0 flex-col gap-6">
-      <AbFailedAlert load={abLoad} />
+      <FailedReadAlert load={abLoad} />
       <VersionsTable
         split={splitVersions({
           versions: query.data.items,
           activeId,
-          conversions: conversionsById(view.abVersions ?? []),
+          abVersions: view.abVersions,
         })}
         view={view}
       />

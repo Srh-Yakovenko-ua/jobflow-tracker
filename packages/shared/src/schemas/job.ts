@@ -21,5 +21,8 @@ export const aiResultJobSchema = jobStatusSchema
   .pick({ id: true, status: true, errorType: true })
   .nullable();
 
+export const aiJobAcceptedSchema = z.object({ jobId: jobStatusSchema.shape.id });
+
 export type JobStatus = z.infer<typeof jobStatusSchema>;
 export type JobUpdated = z.infer<typeof jobUpdatedSchema>;
+export type AiJobAccepted = z.infer<typeof aiJobAcceptedSchema>;

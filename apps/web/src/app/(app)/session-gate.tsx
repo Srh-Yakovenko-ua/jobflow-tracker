@@ -6,13 +6,13 @@ import { useRouter } from 'next/navigation';
 import { type ReactNode, useEffect } from 'react';
 
 import { sessionQueryOptions } from '@/entities/user';
-import { ApiError, onSessionEnd } from '@/shared/api';
+import { apiStatusOf, HTTP_STATUS, onSessionEnd } from '@/shared/api';
 import { LoadFailedPanel } from '@/shared/ui/error-panel';
 
 export type SessionGateProps = Readonly<{ fallback: ReactNode; children: ReactNode }>;
 
 function isRefusedSession(error: Error): boolean {
-  return error instanceof ApiError && error.status === 401;
+  return apiStatusOf(error) === HTTP_STATUS.unauthorized;
 }
 
 export function SessionGate({ fallback, children }: SessionGateProps) {

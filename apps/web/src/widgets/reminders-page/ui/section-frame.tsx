@@ -2,10 +2,9 @@
 
 import type { ReactNode, RefObject } from 'react';
 
+import type { SectionLoad } from '@/shared/lib/section-load';
 import { LoadFailedPanel } from '@/shared/ui/error-panel';
 import { PageSkeleton } from '@/shared/ui/skeleton';
-
-import type { SectionLoad } from '../model/use-reminders-page';
 
 const SECTION_TITLE = 'font-display text-[20px] leading-[1.2] text-ink';
 

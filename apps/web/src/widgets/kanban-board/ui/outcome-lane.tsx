@@ -72,7 +72,7 @@ function LaneBody({ column, context, load }: Omit<OutcomeLaneProps, 'disclosure'
     return null;
   }
   if (load.failed) {
-    return <LoadFailedPanel onRetry={load.onRetry} />;
+    return <LoadFailedPanel onRetry={load.onRetry} retrying={load.retrying} />;
   }
   return <CardSkeleton />;
 }

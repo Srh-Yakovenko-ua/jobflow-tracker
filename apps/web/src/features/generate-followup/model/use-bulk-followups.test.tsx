@@ -146,7 +146,7 @@ describe('useBulkFollowups', () => {
 
     await act(() =>
       view.result.current.client.cancelQueries({
-        queryKey: applicationKeys.followup(fixtureIdOf(201)),
+        queryKey: applicationKeys.ai(fixtureIdOf(201), 'followup'),
       }),
     );
     language.held.release();

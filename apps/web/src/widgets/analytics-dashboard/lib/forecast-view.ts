@@ -1,9 +1,10 @@
 import type { ForecastResponse, WeeksRange } from '@jobflow/shared';
 
 import { uk } from '@/shared/i18n';
+import { percentOf } from '@/shared/lib/percent';
 
 import { rateOnStep } from './forecast-rate';
-import { oneDecimal, percentOf } from './kpi-values';
+import { oneDecimal } from './kpi-values';
 
 const COPY = uk.analytics.blocks.forecast;
 

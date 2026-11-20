@@ -1,4 +1,4 @@
-import type { CaptureRetryResponse, JobStatus } from '@jobflow/shared';
+import type { AiJobAccepted, JobStatus } from '@jobflow/shared';
 import type { HttpResponseResolver, JsonBodyType } from 'msw';
 import { http, HttpResponse } from 'msw/http';
 
@@ -35,7 +35,7 @@ export function aiResultRoutes<Response extends JsonBodyType>({
     http.post<{ id: string }>(apiUrl(path), (info) => {
       requested.push(info.params.id);
       if (state.reply !== null) return state.reply(info);
-      return HttpResponse.json<CaptureRetryResponse>({ jobId }, { status: 202 });
+      return HttpResponse.json<AiJobAccepted>({ jobId }, { status: 202 });
     }),
   ];
   return {

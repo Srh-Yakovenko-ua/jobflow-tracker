@@ -16,7 +16,7 @@ export async function invalidateFollowup({
   applicationId,
 }: FollowupInvalidation): Promise<void> {
   await Promise.all([
-    queryClient.invalidateQueries({ queryKey: applicationKeys.followup(applicationId) }),
+    queryClient.invalidateQueries({ queryKey: applicationKeys.ai(applicationId, 'followup') }),
     queryClient.invalidateQueries({ queryKey: timelineKeys.detail(applicationId) }),
     queryClient.invalidateQueries({ queryKey: scheduledEventKeys.calendars() }),
     queryClient.invalidateQueries({ queryKey: userKeys.rhythm() }),

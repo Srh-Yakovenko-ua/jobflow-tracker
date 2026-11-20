@@ -1,6 +1,6 @@
 import {
+  type AiJobAccepted,
   applicationIdSchema,
-  type CaptureRetryResponse,
   type FollowupRequest,
   followupRequestSchema,
   type FollowupResponse,
@@ -36,7 +36,7 @@ export class FollowupsController {
     @Param('id', { schema: applicationIdSchema }) id: string,
     @Body({ schema: followupRequestSchema }) request: FollowupRequest,
     @RequestId() requestId: string,
-  ): Promise<CaptureRetryResponse> {
+  ): Promise<AiJobAccepted> {
     const generation = { applicationId: id, request, requestId };
     return this.followups.request(user.id, generation);
   }

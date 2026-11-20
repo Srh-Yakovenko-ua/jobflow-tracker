@@ -1,4 +1,4 @@
-import { captureRetryResponseSchema, followupResponseSchema } from '@jobflow/shared';
+import { aiJobAcceptedSchema, followupResponseSchema } from '@jobflow/shared';
 import { buildFollowupInput, buildFollowupOutput } from '@jobflow/shared/testing';
 import { describe, expect, it, vi } from 'vitest';
 
@@ -91,7 +91,7 @@ describe('the follow-up API', () => {
     const response = await generate(olena, { ...WARM, hint: '  ', variant: true });
 
     expect(response.status).toBe(202);
-    const { jobId } = captureRetryResponseSchema.parse(response.body);
+    const { jobId } = aiJobAcceptedSchema.parse(response.body);
     expect(
       await outboxRows(testApp.prisma, { eventType: 'application.followup_requested' }),
     ).toEqual([
@@ -133,7 +133,7 @@ describe('the follow-up API', () => {
     const response = await generate(olena);
 
     expect(response.status).toBe(202);
-    const { jobId } = captureRetryResponseSchema.parse(response.body);
+    const { jobId } = aiJobAcceptedSchema.parse(response.body);
     const requested = await outboxRows(testApp.prisma, {
       eventType: 'application.followup_requested',
     });

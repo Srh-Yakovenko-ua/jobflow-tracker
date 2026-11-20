@@ -5,7 +5,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
 
 import { SEARCH_HISTORY_PATH, searchKeys } from '@/entities/search';
-import { ApiError } from '@/shared/api';
+import { apiStatusOf, HTTP_STATUS } from '@/shared/api';
 import { uk } from '@/shared/i18n';
 import { showErrorToast } from '@/shared/ui/error-toast';
 import { showToast } from '@/shared/ui/toast';
@@ -15,7 +15,7 @@ import { finishSearch } from '../api/finish-search';
 const COPY = uk.searches.finish;
 
 function isConflict(error: Error): boolean {
-  return error instanceof ApiError && error.status === 409;
+  return apiStatusOf(error) === HTTP_STATUS.conflict;
 }
 
 export function useFinishSearchMutation() {

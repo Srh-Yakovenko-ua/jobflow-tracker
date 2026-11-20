@@ -4,13 +4,9 @@ import type { ApplicationMatchResponse, ApplicationResponse, ResumeVersion } fro
 import { useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
 
-import {
-  aiJobOf,
-  applicationMatchQueryOptions,
-  jobQueryOptions,
-  sectionLoadOf,
-} from '@/entities/application';
+import { aiJobOf, applicationAiQueryOptions, jobQueryOptions } from '@/entities/application';
 import { useLivePollMs } from '@/shared/api';
+import { sectionLoadOf } from '@/shared/lib/section-load';
 
 import { type MatchView, matchViewOf } from '../lib/match-view';
 import { useDayLabel } from './use-day-label';
@@ -29,7 +25,7 @@ export function useApplicationMatch(application: ApplicationResponse) {
       isDraft: application.isDraft,
     });
   const match = useQuery({
-    ...applicationMatchQueryOptions(application.id),
+    ...applicationAiQueryOptions({ id: application.id, segment: 'match' }),
     refetchInterval: ({ state }) =>
       state.data !== undefined && viewOf(state.data).kind === 'pending' ? pollMs : false,
   });
@@ -40,7 +36,7 @@ export function useApplicationMatch(application: ApplicationResponse) {
     load: sectionLoadOf(match),
     view,
     job: aiJobOf(job.data),
-    dayLabel: useDayLabel(),
+    dayLabel: useDayLabel(match),
     onRelinked: setRelinkedTo,
   };
 }

@@ -1,5 +1,4 @@
 import { Download } from 'lucide-react';
-import { AnimatePresence } from 'motion/react';
 
 import {
   FilterChipsRow,
@@ -10,9 +9,8 @@ import {
 } from '@/features/filter-applications';
 import { uk } from '@/shared/i18n';
 import { saveTextFile } from '@/shared/lib/save-text-file';
-import { LoadFailedAlert } from '@/shared/ui/banner';
 import { Button } from '@/shared/ui/button';
-import { Fade } from '@/shared/ui/fade';
+import { FailedReadAlert } from '@/shared/ui/failed-read-alert';
 import { TOOLBAR_BUTTON } from '@/shared/ui/toolbar-button';
 
 import { tableCsvFileOf } from '../lib/table-csv';
@@ -63,13 +61,7 @@ export function TableToolbar({ table, timeZone, view, stageCounts }: TableToolba
         {view.rows && <CsvButton table={table} timeZone={timeZone} />}
         <ViewSwitch current="table" />
       </div>
-      <AnimatePresence initial={false}>
-        {stageCounts.failed && (
-          <Fade key="stage-counts-failed">
-            <LoadFailedAlert className="pb-2" onRetry={stageCounts.onRetry} />
-          </Fade>
-        )}
-      </AnimatePresence>
+      <FailedReadAlert load={stageCounts.load} className="pb-2" />
       {view.rows && <FilterChipsRow />}
     </div>
   );

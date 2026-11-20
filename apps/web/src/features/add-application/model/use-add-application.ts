@@ -10,7 +10,7 @@ import { type MutationKey, useQueryClient } from '@tanstack/react-query';
 import type { FieldValues } from 'react-hook-form';
 import type { z } from 'zod';
 
-import { applicationKeys } from '@/entities/application';
+import { addErrorToastOf, type AddLimit, applicationKeys } from '@/entities/application';
 import {
   apiClient,
   type ApplyFieldErrorsOptions,
@@ -20,8 +20,6 @@ import {
 } from '@/shared/api';
 import { uk } from '@/shared/i18n';
 import { showToast } from '@/shared/ui/toast';
-
-import { addErrorToastOf, type AddLimit } from './add-error-toast';
 
 export type AddedApplication = Readonly<{ possibleDuplicates: readonly PossibleDuplicate[] }>;
 

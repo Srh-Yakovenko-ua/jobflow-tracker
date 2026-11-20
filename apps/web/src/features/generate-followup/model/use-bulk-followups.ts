@@ -4,8 +4,8 @@ import type { BoardCard } from '@jobflow/shared';
 import { type QueryClient, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useRef, useState } from 'react';
 
-import { fetchApplicationFollowup, jobWaiting } from '@/entities/application';
-import { ApiError } from '@/shared/api';
+import { fetchApplicationAi, jobWaiting } from '@/entities/application';
+import { apiStatusOf, HTTP_STATUS } from '@/shared/api';
 
 import { generateFollowup } from '../api/generate-followup';
 import { invalidateFollowup } from './invalidate-followup';
@@ -35,11 +35,14 @@ type DraftRequest = Pick<QueueRun, 'queryClient' | 'signal'> &
   Readonly<{ applicationId: BoardCard['id'] }>;
 
 function isRateLimited(error: unknown): boolean {
-  return error instanceof ApiError && error.status === 429;
+  return apiStatusOf(error) === HTTP_STATUS.tooManyRequests;
 }
 
 async function requestDraft({ queryClient, signal, applicationId }: DraftRequest) {
-  const { language, draft, job } = await fetchApplicationFollowup(applicationId, signal);
+  const { language, draft, job } = await fetchApplicationAi(
+    { id: applicationId, segment: 'followup' },
+    signal,
+  );
   signal.throwIfAborted();
   if (draft !== null || jobWaiting(job)) return;
   await generateFollowup({

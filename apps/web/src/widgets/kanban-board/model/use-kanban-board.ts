@@ -18,15 +18,13 @@ import { useUserTimeZone } from '@/entities/user';
 import { useSentFilters } from '@/features/filter-applications';
 import { isMovePending, useRerenderOnMoveChange } from '@/features/move-application';
 import { useLivePollMs } from '@/shared/api';
+import { type SectionLoad, sectionLoadOf } from '@/shared/lib/section-load';
+import { useQueryNow } from '@/shared/lib/use-query-now';
 
 import { parsingCardsOf } from './board-lookup';
 
-export type BoardLoad = Readonly<{
-  failed: boolean;
-  filtersFailed: boolean;
-  filtersPending: boolean;
-  onRetry: () => void;
-}>;
+export type BoardLoad = Pick<SectionLoad, 'failed' | 'retrying' | 'onRetry'> &
+  Readonly<{ filtersFailed: boolean; filtersPending: boolean }>;
 
 export type BoardSearchState = Readonly<{ filtered: boolean; q: string | undefined }>;
 
@@ -83,7 +81,6 @@ function useBoardPollMs() {
 export function useKanbanBoard() {
   const filters = useSentFilters();
   const [expanded, setExpanded] = useState<OutcomeStage[]>([]);
-  const [mountedAt] = useState(Date.now);
   const query = boardQueryOf({ expanded, filters });
   const pollMsOf = useBoardPollMs();
   const board = useQuery({
@@ -97,21 +94,22 @@ export function useKanbanBoard() {
   const timeZone = useUserTimeZone();
   const stageNorms = useNormsQuery().data?.stageNormDays;
   const data = board.data ?? fallback.data;
+  const now = useQueryNow(board);
   const context: ApplicationCardContext = {
-    now: new Date(Math.max(board.dataUpdatedAt, mountedAt)),
+    now,
     timeZone,
     parsingIds: parsingCardsOf(data).map((card) => card.id),
     ...(stageNorms && { stageNorms }),
   };
-  const failed = board.isError && !board.isFetching;
+  const section = sectionLoadOf(board);
+  const failed = (section.failed || section.stale) && !section.retrying;
   const filtersChanged = filtersHashOf(query) !== filtersHashOf(shown);
   const load: BoardLoad = {
     failed,
     filtersFailed: failed && filtersChanged,
     filtersPending: board.isFetching && filtersChanged,
-    onRetry: () => {
-      void board.refetch();
-    },
+    retrying: section.retrying,
+    onRetry: section.onRetry,
   };
   const onToggle = (stage: OutcomeStage) => {
     setExpanded(toggled(expanded, stage));

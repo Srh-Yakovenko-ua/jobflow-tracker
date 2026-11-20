@@ -1,5 +1,5 @@
 import {
-  type CaptureRetryResponse,
+  type AiJobAccepted,
   type Plan,
   type SummaryArchive,
   type SummaryResponse,
@@ -33,10 +33,7 @@ export class SummariesController {
 
   @Post()
   @AcceptsAiJob()
-  request(
-    @CurrentUser() user: AccessUser,
-    @RequestId() requestId: string,
-  ): Promise<CaptureRetryResponse> {
+  request(@CurrentUser() user: AccessUser, @RequestId() requestId: string): Promise<AiJobAccepted> {
     return this.requests.request(user.id, requestId);
   }
 

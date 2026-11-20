@@ -13,6 +13,7 @@ import { useState } from 'react';
 import { isNotFound } from '@/shared/api';
 import { uk } from '@/shared/i18n';
 import { cn } from '@/shared/lib/cn';
+import { sectionLoadOf } from '@/shared/lib/section-load';
 import { LoadFailedAlert } from '@/shared/ui/banner';
 import { Button, buttonLinkClasses } from '@/shared/ui/button';
 import { Fade } from '@/shared/ui/fade';
@@ -67,6 +68,7 @@ export type ExportStatusProps = Readonly<{ exportId: string; actions: { onRestar
 function ExportStatus({ exportId, actions }: ExportStatusProps) {
   const { link, stalled } = useExportLinkQuery(exportId);
   const state = exportStateOf({ error: link.error, data: link.data, stalled });
+  const load = sectionLoadOf(link);
   return (
     <AnimatePresence mode="popLayout" initial={false}>
       <Fade key={state}>
@@ -74,8 +76,9 @@ function ExportStatus({ exportId, actions }: ExportStatusProps) {
           <LoadFailedAlert
             onRetry={() => {
               if (stalled) actions.onRestart();
-              else void link.refetch();
+              else load.onRetry();
             }}
+            retrying={load.retrying}
           />
         )}
         {state === 'building' && (

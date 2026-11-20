@@ -1,9 +1,9 @@
-import { ApiError } from '@/shared/api';
+import { apiStatusOf, HTTP_STATUS } from '@/shared/api';
 import { uk } from '@/shared/i18n';
 import { showErrorToast } from '@/shared/ui/error-toast';
 
 export function isScheduleConflict(error: Error): boolean {
-  return error instanceof ApiError && error.status === 409;
+  return apiStatusOf(error) === HTTP_STATUS.conflict;
 }
 
 export function showScheduleError(error: Error): void {

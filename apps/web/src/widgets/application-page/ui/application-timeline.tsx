@@ -49,7 +49,7 @@ function entriesOf({ rows, waiting, now, timeZone }: ApplicationTimelineState): 
 function TimelineBody({ application, timeline, onAskedClosed }: TimelineBodyProps) {
   const { load } = timeline;
   if (load.pending) return <TextSkeleton />;
-  if (load.failed) return <LoadFailedPanel onRetry={load.onRetry} />;
+  if (load.failed) return <LoadFailedPanel onRetry={load.onRetry} retrying={load.retrying} />;
   const entries = entriesOf(timeline);
   if (entries.length === 0) {
     return <p className="animate-fade-in text-[13px] text-ink-3">{COPY.empty}</p>;

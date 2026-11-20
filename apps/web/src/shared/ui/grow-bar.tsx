@@ -4,10 +4,9 @@ import { motion } from 'motion/react';
 import type { ReactNode } from 'react';
 
 import { cn } from '@/shared/lib/cn';
+import { PERCENT } from '@/shared/lib/percent';
 import { usePrefersReducedMotion } from '@/shared/lib/reduced-motion';
 import { useDataTransition } from '@/shared/lib/use-data-transition';
-
-const PERCENT = 100;
 
 export type GrowBarProps = Readonly<{ share: number; className: string; children?: ReactNode }>;
 

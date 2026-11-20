@@ -1,4 +1,4 @@
-import { captureRetryResponseSchema } from '@jobflow/shared';
+import { aiJobAcceptedSchema } from '@jobflow/shared';
 import type { INestApplicationContext } from '@nestjs/common';
 import { expect } from 'vitest';
 import type { z } from 'zod';
@@ -23,7 +23,7 @@ export function applicationAiRoute<R>(testApp: TestApp, route: ApplicationAiRout
   async function requested(caller: AiRouteCaller): Promise<string> {
     const response = await call('post', caller);
     expect(response.status).toBe(202);
-    return captureRetryResponseSchema.parse(response.body).jobId;
+    return aiJobAcceptedSchema.parse(response.body).jobId;
   }
 
   async function read(caller: AiRouteCaller): Promise<R> {
@@ -50,7 +50,7 @@ export type CachedRun = { caller: AiRouteCaller; worker: INestApplicationContext
 export async function postedTwice({ call }: AiRouteCalls, caller: AiRouteCaller) {
   const first = await call('post', caller);
   const second = await call('post', caller);
-  const { jobId } = captureRetryResponseSchema.parse(first.body);
+  const { jobId } = aiJobAcceptedSchema.parse(first.body);
   return { first, second, jobId, requestId: first.get('x-request-id') };
 }
 

@@ -1,6 +1,6 @@
 import {
+  type AiJobAccepted,
   type ApplicationMatchResponse,
-  type CaptureRetryResponse,
   cvHintsInputSchema,
   cvHintsOutputSchema,
   type CvHintsResponse,
@@ -56,7 +56,7 @@ export class CvHintsService {
   async request(
     userId: string,
     { applicationId, requestId }: CvHintsGeneration,
-  ): Promise<CaptureRetryResponse> {
+  ): Promise<AiJobAccepted> {
     const { match } = await this.match.read(userId, applicationId);
     if (match === null) {
       throw conflict(NO_SCORE);

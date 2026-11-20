@@ -9,7 +9,6 @@ export {
   conversionLabelOf,
   conversionOf,
   type ConversionQuery,
-  percentOf,
   type VersionConversion,
 } from './lib/conversion';
 export { fileExtensionOf } from './lib/file-extension';

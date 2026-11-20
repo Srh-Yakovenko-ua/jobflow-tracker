@@ -2,7 +2,7 @@
 
 import type { ApplicationResponse } from '@jobflow/shared';
 
-import { applicationCvHintsQueryOptions, useAiSection } from '@/entities/application';
+import { applicationAiQueryOptions, useAiSection } from '@/entities/application';
 
 import type { MatchView } from '../lib/match-view';
 
@@ -19,7 +19,7 @@ function cvHintsShown(match: MatchView | null): boolean {
 
 export function useApplicationCvHints({ application, match }: ApplicationCvHintsInput) {
   return useAiSection({
-    query: applicationCvHintsQueryOptions(application.id),
+    query: applicationAiQueryOptions({ id: application.id, segment: 'cv-hints' }),
     shown: cvHintsShown(match),
   });
 }

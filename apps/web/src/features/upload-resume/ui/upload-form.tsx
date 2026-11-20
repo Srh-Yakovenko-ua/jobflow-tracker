@@ -7,6 +7,7 @@ import type { UseFormReturn } from 'react-hook-form';
 import { VersionTitleField, type VersionTitleForm } from '@/entities/resume';
 import { uk } from '@/shared/i18n';
 import { cn } from '@/shared/lib/cn';
+import { PERCENT } from '@/shared/lib/percent';
 import { formatFileSize } from '@/shared/lib/state-format';
 import { Banner, type BannerContent } from '@/shared/ui/banner';
 import { Button } from '@/shared/ui/button';
@@ -18,8 +19,6 @@ import type { UploadFailure } from '../lib/upload-failure';
 import type { UploadResume } from '../model/use-upload-resume';
 
 const COPY = uk.resumes.upload;
-
-const PERCENT = 100;
 
 export type UploadFormState = Pick<UploadResume, 'pending' | 'percent' | 'failure'>;
 
