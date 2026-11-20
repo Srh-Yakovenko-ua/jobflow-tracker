@@ -3,9 +3,10 @@ import { http } from 'msw/http';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { EXPORT_LINK, exportRoutes, type ExportRoutesOptions } from '@/test/account-fixtures';
+import { advanceBy } from '@/test/advance-timers';
 import { ANY_IDEMPOTENCY_KEY, apiUrl, errorReply } from '@/test/api-handlers';
 import { fixtureIdOf } from '@/test/board-fixtures';
-import { advanceBy, advancePastQueryRetries, fakeTimeoutsAndIntervals } from '@/test/fake-timeouts';
+import { advancePastQueryRetries, fakeTimeoutsAndIntervals } from '@/test/fake-timeouts';
 import { EXPORT_ID } from '@/test/notification-fixtures';
 import { renderInApp } from '@/test/render-in-app';
 import { server } from '@/test/server';

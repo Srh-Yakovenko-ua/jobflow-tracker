@@ -11,9 +11,9 @@ export type { ApplyFieldErrorsOptions } from './field-errors';
 export { applyFieldErrors } from './field-errors';
 export type { HttpClient, HttpMethod, HttpRequestOptions } from './http-client';
 export type { LiveStreamHandlers } from './live-stream';
-export { LIVE_CLIENT_LIMITS, openLiveStream, useLiveConnected, useLivePollMs } from './live-stream';
+export { LIVE_CLIENT_LIMITS, openLiveStream, useLivePollMs } from './live-stream';
 export type { FileUploadErrorReason, PutFileOptions, UploadProgress } from './put-file';
-export { FILE_UPLOAD_LIMITS, FileUploadError, putFile } from './put-file';
+export { FILE_UPLOAD_LIMITS, putFile } from './put-file';
 export {
   clearAccessToken,
   ensureAccessToken,

@@ -1,4 +1,3 @@
-export { FOLLOWUP_EVENTS, type FollowupRequestedPayload } from './followups.events.js';
 export { FollowupsModule, FollowupsWorkerModule } from './followups.module.js';
 export { FOLLOWUPS_OPENAPI_PATHS } from './followups.openapi.js';
 export type {

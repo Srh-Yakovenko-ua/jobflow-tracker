@@ -8,6 +8,7 @@ import { toast } from 'sonner';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { API_CLIENT_LIMITS } from '@/shared/api';
+import { advanceBy } from '@/test/advance-timers';
 import { errorReply, OUTAGES } from '@/test/api-handlers';
 import { axeViolations } from '@/test/axe';
 import {
@@ -16,7 +17,7 @@ import {
   UNUSED_TOKEN,
   USED_TOKEN,
 } from '@/test/capture-token-fixtures';
-import { advanceBy, advancePastQueryRetries, fakeTimeouts } from '@/test/fake-timeouts';
+import { advancePastQueryRetries, fakeTimeouts } from '@/test/fake-timeouts';
 import { QueryProbe, waitForQuery } from '@/test/query-status';
 import { renderInApp, renderViewInApp } from '@/test/render-in-app';
 import { server } from '@/test/server';

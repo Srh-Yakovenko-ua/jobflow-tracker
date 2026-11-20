@@ -36,12 +36,11 @@ export function SessionGate({ fallback, children }: SessionGateProps) {
     [queryClient],
   );
   if (session.isSuccess) return children;
-  const load = sectionLoadOf(session);
-  if (load.failed && !isRefusedSession(session.error)) {
+  if (session.isError && !isRefusedSession(session.error)) {
     return (
       <div className="flex min-h-dvh items-center justify-center p-4">
         <div className="w-full max-w-120">
-          <LoadFailedPanel load={load} />
+          <LoadFailedPanel load={sectionLoadOf(session)} />
         </div>
       </div>
     );

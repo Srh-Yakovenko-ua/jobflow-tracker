@@ -1,9 +1,10 @@
 import { LIVE_LIMITS } from '@jobflow/shared';
 import { buildJobStatus } from '@jobflow/shared/testing';
-import { act, screen } from '@testing-library/react';
+import { screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { LIVE_CLIENT_LIMITS } from '@/shared/api';
+import { advanceBy } from '@/test/advance-timers';
 import { errorReply, recordSentRequests } from '@/test/api-handlers';
 import { fakeTimeoutsAndIntervals } from '@/test/fake-timeouts';
 import { FULL_CARD } from '@/test/full-application';
@@ -105,7 +106,7 @@ describe('ParsingCard', () => {
     renderViewInApp(<ParsingCard parse={QUEUED} />);
     await screen.findByText('у черзі · ~2 хв');
 
-    await act(() => vi.advanceTimersByTimeAsync(everyMs));
+    await advanceBy(everyMs);
 
     expect(await screen.findByText('у черзі · ~45 с')).toBeDefined();
     expect(jobs.sent).toEqual([JOB_ID, JOB_ID]);

@@ -1,1 +1,1 @@
-export { AddApplicationPage, type AddApplicationPageProps } from './ui/add-application-page';
+export { AddApplicationPage } from './ui/add-application-page';

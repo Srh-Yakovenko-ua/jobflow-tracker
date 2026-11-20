@@ -1,8 +1,10 @@
 import { CHART_THEME } from '@jobflow/shared/chart-theme';
 import { buildNoSalary, salaryFloorInsightsBody } from '@jobflow/shared/testing';
 import { screen, waitFor, within } from '@testing-library/react';
+import { delay } from 'msw/utils/delay';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { uk } from '@/shared/i18n';
 import {
   ACTIVE_SEARCH,
   ARCHIVED_SEARCH,
@@ -13,7 +15,7 @@ import {
   lowDataFunnel,
   queriesOf,
 } from '@/test/analytics-fixtures';
-import { OUTAGES } from '@/test/api-handlers';
+import { errorReply, OUTAGES } from '@/test/api-handlers';
 import { frameOf, selectArchivedSearch, smallNoteOf } from '@/test/dashboard-frames';
 import { advancePastQueryRetries, fakeTimeouts } from '@/test/fake-timeouts';
 import { drawnChartIn } from '@/test/recorded-chart';
@@ -84,6 +86,8 @@ const SHARE = { name: 'Поділитися' } as const;
 
 const REPORT = { name: 'Звіт для друку' } as const;
 
+const RETRY = { name: 'Спробувати ще раз' } as const;
+
 const HISTORY = { name: 'Історія пошуків' } as const;
 
 const COMPARISON =
@@ -120,6 +124,10 @@ function renderDashboard(
   server.use(meRoute(), ...summaryRoutes({ latest }).handlers, ...routes.handlers);
   const user = renderInApp(<AnalyticsDashboard {...props} />);
   return { user, sent: routes.sent };
+}
+
+function searchSelect(): HTMLElement {
+  return screen.getByRole('combobox', { name: uk.analytics.search.label });
 }
 
 function isTile(block: Block): block is TileBlock {
@@ -405,7 +413,7 @@ describe('AnalyticsDashboard', () => {
       if (first === undefined) throw new Error('a route without blocks');
       down.on = false;
       sent.length = 0;
-      await user.click(within(blockOf(first)).getByRole('button', { name: 'Спробувати ще раз' }));
+      await user.click(within(blockOf(first)).getByRole('button', RETRY));
 
       await waitFor(() => {
         expect(statesOfBlocks()).toEqual(expectedStates([], 'ready'));
@@ -415,4 +423,25 @@ describe('AnalyticsDashboard', () => {
       );
     },
   );
+
+  it('a retry of the failed search list shows the search select busy', async () => {
+    fakeTimeouts();
+    const held = { on: false };
+    const { user } = renderDashboard({
+      searches: () =>
+        held.on ? delay('infinite') : errorReply({ status: 500, type: 'internal_error' }),
+    });
+    await advancePastQueryRetries();
+    await waitFor(() => {
+      expect(searchSelect()).toHaveProperty('disabled', true);
+    });
+
+    held.on = true;
+    await user.click(within(blockOf('sankey')).getByRole('button', RETRY));
+
+    await waitFor(() => {
+      expect(searchSelect().getAttribute('aria-busy')).toBe('true');
+    });
+    await advancePastQueryRetries();
+  });
 });

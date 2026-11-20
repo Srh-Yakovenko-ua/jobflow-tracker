@@ -33,8 +33,6 @@ export const comparisonSchema = z.object({
 
 export type OfferCriterion = (typeof OFFER_CRITERIA)[number];
 
-export type OfferBenefit = (typeof OFFER_BENEFITS)[number];
-
 export type OfferNotes = z.infer<typeof offerNotesSchema>;
 
 export type Comparison = z.infer<typeof comparisonSchema>;

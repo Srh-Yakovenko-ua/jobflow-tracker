@@ -10,6 +10,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { API_CLIENT_LIMITS } from '@/shared/api';
 import { POSITION_ERROR, TIMEOUT_REASON, TWO_MINUTES } from '@/test/add-fixtures';
+import { advanceBy } from '@/test/advance-timers';
 import { errorReply, rateLimitedReply } from '@/test/api-handlers';
 import {
   applicationRoute,
@@ -22,7 +23,7 @@ import {
 } from '@/test/application-fixtures';
 import { heldReply, type MoveRouteOptions } from '@/test/board-fixtures';
 import { liveTicketRoute, stubEventSource } from '@/test/fake-event-source';
-import { advanceBy, fakeTimeoutsAndIntervals } from '@/test/fake-timeouts';
+import { fakeTimeoutsAndIntervals } from '@/test/fake-timeouts';
 import { descriptionOf } from '@/test/field-description';
 import {
   DONE_JOB as DONE,

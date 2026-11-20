@@ -71,6 +71,7 @@ jobs:
       - uses: ./.github/actions/setup
       - run: pnpm format:check
       - run: pnpm dup
+      - run: pnpm deadcode
       - run: pnpm turbo run lint ${{ env.AFFECTED }}
 
   typecheck:

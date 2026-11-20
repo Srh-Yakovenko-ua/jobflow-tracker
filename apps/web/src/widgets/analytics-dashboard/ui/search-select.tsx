@@ -2,6 +2,7 @@
 
 import { useUserTimeZone } from '@/entities/user';
 import { uk } from '@/shared/i18n';
+import { sectionLoadOf } from '@/shared/lib/section-load';
 import { Field } from '@/shared/ui/field';
 import { Select, type SelectView } from '@/shared/ui/select';
 
@@ -9,8 +10,9 @@ import { searchGroupsOf } from '../lib/search-groups';
 import type { SearchScope } from '../model/use-search-scope';
 
 function viewOf(scope: SearchScope): SelectView {
-  if (scope.searches.isError) return { status: 'disabled' };
-  if (scope.searches.data === undefined) return { status: 'loading' };
+  const load = sectionLoadOf(scope.searches);
+  if (load.busy) return { status: 'loading' };
+  if (load.failed || load.stale) return { status: 'disabled' };
   return {};
 }
 

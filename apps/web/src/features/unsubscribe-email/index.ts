@@ -1,1 +1,1 @@
-export { UnsubscribeCard, type UnsubscribeCardProps } from './ui/unsubscribe-card';
+export { UnsubscribeCard } from './ui/unsubscribe-card';

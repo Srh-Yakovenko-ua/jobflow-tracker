@@ -5,9 +5,7 @@ import { parseResponse } from './parse-response';
 import { getAccessToken, refreshAfter } from './session';
 import { type ResponseMode, send } from './transport';
 
-export const HTTP_METHODS = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'] as const;
-
-export type HttpMethod = (typeof HTTP_METHODS)[number];
+export type HttpMethod = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
 
 export type HttpClientOptions = {
   baseUrl: string;

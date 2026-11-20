@@ -3,17 +3,12 @@ export { InsightSubscriber } from './insight.subscriber.js';
 export {
   FOLLOW_UP_HINT,
   NOTIFICATION_FALLBACK_PATH,
-  type NotificationCopy,
   silenceTitleOf,
   silentDaysOf,
   summaryReadyCopyOf,
   withoutReply,
 } from './notification-copy.js';
-export {
-  type DeliveryRule,
-  type DueNotification,
-  NotificationScheduleService,
-} from './notification-schedule.service.js';
+export { type DeliveryRule, NotificationScheduleService } from './notification-schedule.service.js';
 export {
   NOTIFICATION_EVENTS,
   type NotificationCreatedPayload,

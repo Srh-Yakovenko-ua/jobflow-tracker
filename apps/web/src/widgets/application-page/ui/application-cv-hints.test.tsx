@@ -3,8 +3,9 @@ import { buildJobStatus } from '@jobflow/shared/testing';
 import { screen, within } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
+import { advanceBy } from '@/test/advance-timers';
 import { cvHintsJob, READY_CV_HINTS } from '@/test/cv-hints-fixtures';
-import { advanceBy, fakeTimeoutsAndIntervals } from '@/test/fake-timeouts';
+import { fakeTimeoutsAndIntervals } from '@/test/fake-timeouts';
 import { jobRoute } from '@/test/job-fixtures';
 import {
   DESIGN_MATCH,

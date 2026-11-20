@@ -12,6 +12,10 @@ export type StubAdd = [name: string, data: unknown, opts?: StubBulkJob['opts']];
 
 export type StubRetryableJob = { retry: (state: string) => Promise<void> };
 
+const QUEUE_REFUSAL = 'Connection is closed.';
+
+const refusal = (): Promise<never> => Promise.reject(new Error(QUEUE_REFUSAL));
+
 export class StubQueue {
   readonly jobs: StubJob[] = [];
 
@@ -89,7 +93,7 @@ export class SilentQueue extends UnreachableQueue {
 
 export class RefusingQueue extends UnreachableQueue {
   protected unreachable(): Promise<never> {
-    return Promise.reject(new Error('Connection is closed.'));
+    return refusal();
   }
 }
 
@@ -101,12 +105,12 @@ export class RefusingOnceQueue extends StubQueue {
       return super.add(...job);
     }
     this.refused = true;
-    return Promise.reject(new Error('Connection is closed.'));
+    return refusal();
   }
 }
 
 export const unreachableQueues = (name: string) => [
-  { case: 'refuses it', queue: new RefusingQueue(name), error: 'Connection is closed.' },
+  { case: 'refuses it', queue: new RefusingQueue(name), error: QUEUE_REFUSAL },
   { case: 'never answers', queue: new SilentQueue(name), error: 'timed out after 2000 ms' },
 ];
 

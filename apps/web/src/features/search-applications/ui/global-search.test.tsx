@@ -199,6 +199,19 @@ describe('GlobalSearch', () => {
     expect(screen.queryByRole('alert')).toBeNull();
   });
 
+  it('a retried search shows the loading row in place of the error and its retry', async () => {
+    server.use(http.get(LIST_URL, () => delay('infinite')));
+    server.use(http.get(LIST_URL, () => validationReply(), { once: true }));
+    const { user } = await typeQuery('tri');
+    await screen.findByRole('alert');
+
+    await user.keyboard('{Enter}');
+
+    expect((await screen.findByText(SEARCH.loading)).closest('[role="status"]')).not.toBeNull();
+    expect(screen.queryByRole('alert')).toBeNull();
+    expect(screen.queryByRole('option', { name: SEARCH.retry })).toBeNull();
+  });
+
   it('shows the loading row while the search is slow', async () => {
     server.use(http.get(LIST_URL, () => delay('infinite')));
     await typeQuery('tri');

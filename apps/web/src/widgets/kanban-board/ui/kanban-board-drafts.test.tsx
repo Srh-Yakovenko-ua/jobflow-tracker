@@ -3,10 +3,11 @@ import { buildJobStatus } from '@jobflow/shared/testing';
 import { screen, waitFor } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
+import { advanceBy as wait } from '@/test/advance-timers';
 import { apiUrl, recordSentRequests } from '@/test/api-handlers';
 import { startDrag } from '@/test/board-drag';
 import { cardIn, fixtureIdOf } from '@/test/board-fixtures';
-import { advanceBy as wait, fakeTimeoutsAndIntervals } from '@/test/fake-timeouts';
+import { fakeTimeoutsAndIntervals } from '@/test/fake-timeouts';
 import { DONE_JOB, JOB_ID, jobRoute } from '@/test/job-fixtures';
 import { latch } from '@/test/latch';
 import { bringLiveStreamUp as openStream, closeLiveStreams } from '@/test/live-stream';

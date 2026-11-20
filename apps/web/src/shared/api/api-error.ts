@@ -41,8 +41,8 @@ export function apiStatusOf(error: unknown): number | undefined {
 
 export function isIdempotencyConflict(error: unknown): boolean {
   return (
-    apiStatusOf(error) === HTTP_STATUS.conflict &&
     error instanceof ApiError &&
+    error.status === HTTP_STATUS.conflict &&
     error.body.type === IDEMPOTENCY_CONFLICT_TYPE
   );
 }

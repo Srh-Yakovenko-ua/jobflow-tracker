@@ -355,7 +355,7 @@ describe('the contacts routes', () => {
     expect(suggestions).toEqual([oksanaSuggestedFrom(olena)]);
   });
 
-  it('a contact on ТОВ Ромашка shows on Ромашка', async () => {
+  it('a contact on Ромашка is suggested on ТОВ «Ромашка»', async () => {
     const olena = await olenaWithContact();
 
     const legalName = await companyApplication(olena.accessToken, 'ТОВ «Ромашка»');

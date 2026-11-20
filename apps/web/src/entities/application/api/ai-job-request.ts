@@ -2,7 +2,7 @@ import { type AiJobAccepted, aiJobAcceptedSchema, type ApplicationResponse } fro
 
 import { apiClient } from '@/shared/api';
 
-import type { ApplicationAiSegment } from './application-ai';
+import { applicationAiPath, type ApplicationAiSegment } from './application-ai';
 
 export type ApplicationAiJobSegment = Extract<ApplicationAiSegment, 'cv-hints' | 'interview-prep'>;
 
@@ -18,7 +18,7 @@ export function requestApplicationAiJob({
   idempotencyKey,
 }: ApplicationAiJobRequest): Promise<AiJobAccepted> {
   return apiClient.request({
-    path: `/applications/${applicationId}/${segment}`,
+    path: applicationAiPath({ id: applicationId, segment }),
     method: 'POST',
     schema: aiJobAcceptedSchema,
     idempotencyKey,

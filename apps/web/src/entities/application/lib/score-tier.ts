@@ -1,6 +1,6 @@
 import type { ApplicationCard } from '@jobflow/shared';
 
-export const SCORE_TIER_FLOORS = { strong: 80, mid: 60 } as const;
+const SCORE_TIER_FLOORS = { strong: 80, mid: 60 } as const;
 
 export type ScoreTier = 'strong' | 'mid' | 'weak';
 

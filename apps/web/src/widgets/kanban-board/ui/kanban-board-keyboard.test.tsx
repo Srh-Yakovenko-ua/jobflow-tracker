@@ -1,11 +1,12 @@
 import type { Stage } from '@jobflow/shared';
 import { QueryClient } from '@tanstack/react-query';
-import { act, fireEvent, screen, waitFor, within } from '@testing-library/react';
+import { fireEvent, screen, waitFor, within } from '@testing-library/react';
 import type { UserEvent } from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { API_CLIENT_LIMITS } from '@/shared/api';
 import { uk } from '@/shared/i18n';
+import { advanceBy } from '@/test/advance-timers';
 import { errorReply, OUTAGES } from '@/test/api-handlers';
 import type { BoardCardRouteOptions } from '@/test/application-fixtures';
 import { settleLanding, startDrag } from '@/test/board-drag';
@@ -392,7 +393,7 @@ describe.each(MOTION_MODES)(
         const { answer } = await keyboardDropRefused({ ...DESIGN_BOARD, cardRead: reply });
         await settleLanding();
         answer.release();
-        await act(() => vi.advanceTimersByTimeAsync(API_CLIENT_LIMITS.requestTimeoutMs));
+        await advanceBy(API_CLIENT_LIMITS.requestTimeoutMs);
 
         await expectFocusOn(() => appliedCardIn('відгук 2'));
       },

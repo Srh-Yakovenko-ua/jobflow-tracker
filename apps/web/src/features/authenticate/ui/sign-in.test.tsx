@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { act, screen } from '@testing-library/react';
+import { screen } from '@testing-library/react';
 import { HttpResponse } from 'msw/http';
 import { delay } from 'msw/utils/delay';
 import { toast } from 'sonner';
@@ -7,6 +7,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { meQueryOptions, userKeys } from '@/entities/user';
 import { API_CLIENT_LIMITS } from '@/shared/api';
+import { advanceBy } from '@/test/advance-timers';
 import {
   CREDENTIALS,
   expectSignedIn,
@@ -168,7 +169,7 @@ describe('sign in', () => {
     vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'], shouldAdvanceTime: true });
     await form.user.click(form.submit);
     expect(screen.queryByRole('alert')).toBeNull();
-    await act(() => vi.advanceTimersByTimeAsync(API_CLIENT_LIMITS.requestTimeoutMs));
+    await advanceBy(API_CLIENT_LIMITS.requestTimeoutMs);
 
     expect(await findAlertText()).toBe(UNAVAILABLE);
     expect(form.submit).toHaveProperty('disabled', false);

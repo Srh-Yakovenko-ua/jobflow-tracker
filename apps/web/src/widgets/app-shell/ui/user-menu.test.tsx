@@ -1,4 +1,4 @@
-import { act, screen, waitFor, within } from '@testing-library/react';
+import { screen, waitFor, within } from '@testing-library/react';
 import type { HttpResponseResolver } from 'msw';
 import { http, HttpResponse } from 'msw/http';
 import { afterEach, describe, expect, it, vi } from 'vitest';
@@ -7,6 +7,7 @@ import { userKeys } from '@/entities/user';
 import { API_CLIENT_LIMITS, setAccessToken } from '@/shared/api';
 import { uk } from '@/shared/i18n';
 import { TOUCH_HEIGHT } from '@/shared/ui/touch-height';
+import { advanceBy } from '@/test/advance-timers';
 import {
   apiUrl,
   errorReply,
@@ -153,7 +154,7 @@ describe('UserMenu Вийти', () => {
 
       const trigger = await chooseLogout(reply);
       if (settled === 'pending') {
-        await act(() => vi.advanceTimersByTimeAsync(API_CLIENT_LIMITS.requestTimeoutMs));
+        await advanceBy(API_CLIENT_LIMITS.requestTimeoutMs);
       }
 
       expect(await screen.findByText('Не вдалося вийти')).toBeDefined();

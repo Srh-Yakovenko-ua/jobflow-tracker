@@ -38,12 +38,7 @@ import { StageTransitionService } from './stage-transition.service.js';
     SearchApplicationsRepository,
     Clock,
   ],
-  exports: [
-    ApplicationsService,
-    ApplicationDraftsService,
-    SearchApplicationsService,
-    StageTransitionService,
-  ],
+  exports: [ApplicationDraftsService, SearchApplicationsService, StageTransitionService],
 })
 export class ApplicationsModule {}
 

@@ -23,7 +23,7 @@ import { useQueryNow } from '@/shared/lib/use-query-now';
 
 import { parsingCardsOf } from './board-lookup';
 
-export type BoardLoad = Pick<SectionLoad, 'failed' | 'retrying' | 'onRetry'> &
+export type BoardLoad = Pick<SectionLoad, 'failed' | 'onRetry'> &
   Readonly<{ filtersFailed: boolean; filtersPending: boolean }>;
 
 export type BoardSearchState = Readonly<{ filtered: boolean; q: string | undefined }>;
@@ -108,7 +108,6 @@ export function useKanbanBoard() {
     failed,
     filtersFailed: failed && filtersChanged,
     filtersPending: board.isFetching && filtersChanged,
-    retrying: section.retrying,
     onRetry: section.onRetry,
   };
   const onToggle = (stage: OutcomeStage) => {

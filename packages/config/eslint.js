@@ -83,6 +83,7 @@ export function base(rootDir) {
         'simple-import-sort/exports': 'error',
         'no-console': 'error',
         'no-eval': 'error',
+        '@typescript-eslint/no-unsafe-class-instance-assignment': 'off',
         'no-restricted-syntax': ['error', ...RESTRICTED_SYNTAX],
         ...SHAPE_RULES,
       },

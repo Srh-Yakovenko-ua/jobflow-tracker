@@ -14,7 +14,7 @@ export type SectionLoad = Readonly<{
   onRetry: () => void;
 }>;
 
-export type RetryLoad = Pick<SectionLoad, 'onRetry' | 'retrying'>;
+export type RetryLoad = Pick<SectionLoad, 'onRetry'> & Readonly<{ retrying?: boolean | undefined }>;
 
 function failedOnce(query: SectionQuery): boolean {
   return (

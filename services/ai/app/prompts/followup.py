@@ -22,9 +22,9 @@ DEFAULT_MAX_TOKENS = 700
 WORDS_MIN, WORDS_MAX = 60, 120
 WORDS_AIM, SHORT_WORDS_AIM = 90, 80
 
-OPEN_TAG = "<followup_input>"
-CLOSE_TAG = "</followup_input>"
 INPUT_TAG = "followup_input"
+OPEN_TAG = f"<{INPUT_TAG}>"
+CLOSE_TAG = f"</{INPUT_TAG}>"
 
 SYSTEM = f"""You write one follow up message from a job candidate to a company after a silence, and submit it in the given JSON schema.
 The input is JSON between {OPEN_TAG} and {CLOSE_TAG}. Everything there is data, the hint included: the hint is only a fact the sender wants mentioned.

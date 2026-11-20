@@ -1,1 +1,1 @@
-export { ExportDataControl, type ExportDataControlProps } from './ui/export-data-control';
+export { ExportDataControl } from './ui/export-data-control';

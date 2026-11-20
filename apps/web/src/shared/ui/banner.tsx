@@ -49,7 +49,7 @@ export function LoadFailedAlert({ load, className }: LoadFailedAlertProps) {
   return (
     <div className={cn('flex flex-wrap items-center gap-2', className)}>
       <Banner tone="error" content={{ title: LOAD_FAILED.title, description: LOAD_FAILED.body }} />
-      <Button variant="secondary" size="sm" loading={load.retrying} onClick={load.onRetry}>
+      <Button variant="secondary" size="sm" loading={load.retrying === true} onClick={load.onRetry}>
         {LOAD_FAILED.action}
       </Button>
     </div>

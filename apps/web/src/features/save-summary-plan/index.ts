@@ -1,4 +1,1 @@
-export {
-  SaveSummaryPlanButton,
-  type SaveSummaryPlanButtonProps,
-} from './ui/save-summary-plan-button';
+export { SaveSummaryPlanButton } from './ui/save-summary-plan-button';

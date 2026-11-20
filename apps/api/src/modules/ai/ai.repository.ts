@@ -152,9 +152,9 @@ export class AiRepository {
     return id;
   }
 
-  async saveFailure(userId: string, { tx = this.prisma, ...failure }: SaveAiFailure) {
-    const { kind, inputHash } = failure;
-    const failed: SaveAiResult = { ...failure, status: 'failed' };
+  async saveFailure(userId: string, { tx = this.prisma, ...row }: SaveAiFailure): Promise<void> {
+    const { kind, inputHash } = row;
+    const failed: SaveAiResult = { ...row, status: 'failed' };
     const { count } = await tx.aiResult.updateMany({
       where: { userId, kind, inputHash, status: 'failed' },
       data: resultChange(failed),
@@ -167,7 +167,7 @@ export class AiRepository {
     }
   }
 
-  async recordRequested(userId: string, { tx = this.prisma, ...row }: RecordAiRequested) {
+  async recordRequested(userId: string, { tx, ...row }: RecordAiRequested): Promise<void> {
     await tx.outboxEvent.create({ data: aiRequestedOutbox(userId, row), select: { id: true } });
   }
 

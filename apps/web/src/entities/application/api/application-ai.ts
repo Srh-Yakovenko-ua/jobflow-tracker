@@ -33,13 +33,20 @@ export type ApplicationAiRead<Segment extends ApplicationAiSegment> = Readonly<{
   segment: Segment;
 }>;
 
+export function applicationAiPath({
+  id,
+  segment,
+}: ApplicationAiRead<ApplicationAiSegment>): string {
+  return `/applications/${id}/${segment}`;
+}
+
 export function fetchApplicationAi<Segment extends ApplicationAiSegment>(
-  { id, segment }: ApplicationAiRead<Segment>,
+  read: ApplicationAiRead<Segment>,
   signal: AbortSignal,
 ): Promise<AiResponses[Segment]> {
   return apiClient.request({
-    path: `/applications/${id}/${segment}`,
-    schema: SCHEMA_OF[segment],
+    path: applicationAiPath(read),
+    schema: SCHEMA_OF[read.segment],
     signal,
   });
 }

@@ -3,8 +3,8 @@ import { vi } from 'vitest';
 
 import { LIVE_CLIENT_LIMITS, openLiveStream } from '@/shared/api';
 
+import { advanceBy } from './advance-timers';
 import { type FakeEventSource, liveTicketRoute, stubEventSource } from './fake-event-source';
-import { advanceBy } from './fake-timeouts';
 import { server } from './server';
 
 export { LiveUpdates } from '@/app/(app)/live-updates';

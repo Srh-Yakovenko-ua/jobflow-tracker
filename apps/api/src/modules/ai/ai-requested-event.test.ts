@@ -1,8 +1,13 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, expectTypeOf, it } from 'vitest';
 
+import type { InTransaction } from '../../prisma/in-transaction.js';
 import { AI_JOB_ID } from '../../test/ai.js';
 import { APPLICATION_ID, OLENA_ID, SEARCH_ID } from '../../test/service-fixtures.js';
-import { aiRequestedEvent, aiRequestedOutbox } from './ai-requested-event.js';
+import {
+  aiRequestedEvent,
+  aiRequestedOutbox,
+  type RecordAiRequested,
+} from './ai-requested-event.js';
 
 const EVENT = aiRequestedEvent('application.cv_hints_requested', {});
 
@@ -28,4 +33,10 @@ describe('aiRequestedOutbox', () => {
       });
     },
   );
+});
+
+describe('RecordAiRequested', () => {
+  it('cannot be recorded without the transaction of its ai job', () => {
+    expectTypeOf<Pick<RecordAiRequested, 'tx'>>().toEqualTypeOf<Required<InTransaction>>();
+  });
 });

@@ -3,8 +3,9 @@ import { buildJobUpdate } from '@jobflow/shared/testing';
 import { act, screen, waitFor, within } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
+import { advanceBy } from '@/test/advance-timers';
 import { applicationRoute } from '@/test/application-fixtures';
-import { advanceBy, fakeTimeoutsAndIntervals } from '@/test/fake-timeouts';
+import { fakeTimeoutsAndIntervals } from '@/test/fake-timeouts';
 import { latch } from '@/test/latch';
 import { bringLiveStreamUp } from '@/test/live-stream';
 import {

@@ -6,7 +6,8 @@ import { useId } from 'react';
 import { cn } from '@/shared/lib/cn';
 
 import { ActiveIndicator } from './active-indicator';
-import { choiceChangeOf, type ChoiceOption } from './radio-group';
+import { choiceChangeOf } from './choice-change';
+import type { ChoiceOption } from './radio-group';
 import { TOUCH_HEIGHT } from './touch-height';
 
 const ITEM = cn(

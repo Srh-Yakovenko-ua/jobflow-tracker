@@ -11,7 +11,7 @@ from tests.factories import USER_ID
 
 pytestmark = pytest.mark.anyio
 
-KEY = f"analytics:{USER_ID}:norms:1793610000123"
+KEY = f"analytics:{USER_ID}:v1:norms:5f0c2a9e41b7d3c8"
 COMPUTED = Norms(stage_norm_days={"final": 17}, median_days_to_offer=None)
 STORED = Norms(stage_norm_days={"final": 99}, median_days_to_offer=1)
 

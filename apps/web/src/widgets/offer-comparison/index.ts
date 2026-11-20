@@ -1,5 +1,1 @@
-export {
-  type ComparisonMode,
-  OfferComparison,
-  type OfferComparisonProps,
-} from './ui/offer-comparison';
+export { OfferComparison } from './ui/offer-comparison';

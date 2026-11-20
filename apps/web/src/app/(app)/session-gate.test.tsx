@@ -1,5 +1,5 @@
-import { useMutation } from '@tanstack/react-query';
-import { screen, waitFor, within } from '@testing-library/react';
+import { onlineManager, useMutation } from '@tanstack/react-query';
+import { act, screen, waitFor, within } from '@testing-library/react';
 import { http } from 'msw/http';
 import { useState } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
@@ -8,6 +8,7 @@ import { userKeys } from '@/entities/user';
 import { apiClient, clearAccessToken, setAccessToken } from '@/shared/api';
 import {
   freshSuggestionsRoute,
+  NEVER_ANSWERS,
   OUTAGES,
   recordSentRequests,
   REFRESH_URL,
@@ -91,6 +92,7 @@ afterEach(() => {
   history.replaceState(null, '', '/');
   vi.useRealTimers();
   vi.restoreAllMocks();
+  onlineManager.setOnline(true);
 });
 
 describe('SessionGate on app start', () => {
@@ -119,6 +121,30 @@ describe('SessionGate on app start', () => {
       expect(screen.queryByRole('alert')).toBeNull();
     },
   );
+
+  it('a refused session keeps its fallback while it refetches', async () => {
+    fakeTimeouts();
+    renderInApp(
+      <>
+        <SessionGate fallback={<ShellSkeleton initial={{ collapsed: false }} />}>
+          {PAGE}
+        </SessionGate>
+        <QueryProbe queryKey={userKeys.session()} />
+      </>,
+    );
+    await waitForQuery({ queryKey: userKeys.session(), status: 'error' });
+
+    server.use(http.post(REFRESH_URL, NEVER_ANSWERS.reply));
+    act(() => {
+      onlineManager.setOnline(false);
+      onlineManager.setOnline(true);
+    });
+    await waitForQuery({ queryKey: userKeys.session(), status: 'pending' });
+
+    expect(screen.queryByRole('alert')).toBeNull();
+    expect(screen.getByText('Завантаження…').closest('[role="status"]')).not.toBeNull();
+    await advancePastQueryRetries();
+  });
 
   it.each(OUTAGES)(
     'a refresh that $name shows the load failed panel, whose retry opens the page with no logout',
