@@ -3,11 +3,7 @@ import type { ApplicationMatchResponse, MatchBreakdown, MatchOutput } from '@job
 import { notFound } from '../common/app-error.js';
 import { APPLICATION_NOT_FOUND } from '../common/owned.js';
 import type { StoredAiResultJob } from '../modules/ai/index.js';
-import type {
-  CvHintsQuery,
-  CvHintsSourceRow,
-  RecordCvHintsRequested,
-} from '../modules/cv-hints/index.js';
+import type { CvHintsQuery, CvHintsSourceRow } from '../modules/cv-hints/index.js';
 import { scoreMatch } from '../modules/match/index.js';
 import type { PrismaService } from '../prisma/prisma.service.js';
 import { MATCH_OUTPUT, RESUME_PROFILE } from './ai.js';
@@ -69,8 +65,6 @@ export class FakeCvHintsRepository {
 
   readonly lockReads: CvHintsQuery[] = [];
 
-  readonly recorded: [string, RecordCvHintsRequested][] = [];
-
   findProfile(userId: string, applicationId: string): Promise<CvHintsSourceRow | null> {
     return Promise.resolve(reachesOlena(userId, applicationId) ? this.source : null);
   }
@@ -79,11 +73,6 @@ export class FakeCvHintsRepository {
     this.lockReads.push({ applicationId, resumeVersionId, since });
     const reached = reachesOlena(userId, applicationId);
     return Promise.resolve(reached ? { runningJobId: this.runningJobId } : null);
-  }
-
-  recordRequested(userId: string, recorded: RecordCvHintsRequested): Promise<void> {
-    this.recorded.push([userId, recorded]);
-    return Promise.resolve();
   }
 
   findLatest(userId: string, query: CvHintsQuery): Promise<StoredAiResultJob | null> {

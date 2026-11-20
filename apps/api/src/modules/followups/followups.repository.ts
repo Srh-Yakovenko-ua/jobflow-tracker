@@ -5,7 +5,6 @@ import type { InTransaction } from '../../prisma/in-transaction.js';
 import { LATEST_AI_JOB_SELECT } from '../../prisma/latest-ai-job.js';
 import { type LockedAiJob, lockWithRunningAiJob } from '../../prisma/lock-owned-application.js';
 import { PrismaService } from '../../prisma/prisma.service.js';
-import { type FollowupRequested, followupRequestedEvent } from './followups.events.js';
 
 const followupSourceSelect = (now: Date) =>
   ({
@@ -49,8 +48,6 @@ export type FollowupSourceQuery = { applicationId: string; now: Date };
 
 export type FollowupLock = InTransaction & { applicationId: string };
 
-export type RecordFollowupRequested = InTransaction & { requested: FollowupRequested };
-
 @Injectable()
 export class FollowupsRepository {
   constructor(private readonly prisma: PrismaService) {}
@@ -70,16 +67,6 @@ export class FollowupsRepository {
     { applicationId, tx = this.prisma }: FollowupLock,
   ): Promise<LockedAiJob | null> {
     return lockWithRunningAiJob(tx, { userId, applicationId, kind: 'followup' });
-  }
-
-  async recordRequested(
-    userId: string,
-    { requested, tx = this.prisma }: RecordFollowupRequested,
-  ): Promise<void> {
-    await tx.outboxEvent.create({
-      data: followupRequestedEvent(userId, requested),
-      select: { id: true },
-    });
   }
 
   findLatestDraft(userId: string, applicationId: string): Promise<LatestFollowupDraft | null> {

@@ -9,7 +9,7 @@ import { previousLocalMonthOf } from '../../common/year-month.js';
 import type { Prisma } from '../../generated/prisma/client.js';
 import { PrismaService } from '../../prisma/prisma.service.js';
 import { AiService } from '../ai/index.js';
-import type { SummaryRequested } from './summaries.events.js';
+import { type SummaryRequested, summaryRequested } from './summaries.events.js';
 import { SummariesRepository } from './summaries.repository.js';
 
 type SummaryJobStart = Omit<SummaryRequested, 'aiJobId'> & { tx: Prisma.TransactionClient };
@@ -72,7 +72,11 @@ export class SummaryRequestsService {
       periodMonth: requested.month,
       tx,
     });
-    await this.repository.recordRequested(userId, { requested: { aiJobId, ...requested }, tx });
+    await this.ai.recordRequested(userId, {
+      event: summaryRequested,
+      requested: { aiJobId, ...requested },
+      tx,
+    });
     return aiJobId;
   }
 }

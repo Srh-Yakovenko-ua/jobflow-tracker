@@ -14,7 +14,7 @@ import type { InTransaction } from '../../prisma/in-transaction.js';
 import { PrismaService } from '../../prisma/prisma.service.js';
 import { AI_PAYLOAD_BUILDERS, aiResultResponse, AiService } from '../ai/index.js';
 import { MatchService } from '../match/index.js';
-import type { CvHintsRequested } from './cv-hints.events.js';
+import { type CvHintsRequested, cvHintsRequested } from './cv-hints.events.js';
 import { type CvHintsQuery, CvHintsRepository } from './cv-hints.repository.js';
 
 export type CvHintsGeneration = { applicationId: string; requestId: string };
@@ -95,7 +95,11 @@ export class CvHintsService {
       resumeVersionId,
       tx,
     });
-    await this.repository.recordRequested(userId, { requested: { ...requested, aiJobId }, tx });
+    await this.ai.recordRequested(userId, {
+      event: cvHintsRequested,
+      requested: { ...requested, aiJobId },
+      tx,
+    });
     return aiJobId;
   }
 }

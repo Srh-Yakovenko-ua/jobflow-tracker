@@ -1,35 +1,40 @@
 import { AI_JOB_FAILURES } from '@jobflow/shared';
-import type { Logger } from '@nestjs/common';
-import type { Queue } from 'bullmq';
+import { InjectQueue } from '@nestjs/bullmq';
+import { Injectable, Logger } from '@nestjs/common';
+import { Queue } from 'bullmq';
 
+import { QUEUES } from '../../queues/queues.js';
 import { type AiCompleteJob, queueAiCompletion } from './ai.jobs.js';
-import type { AiService } from './ai.service.js';
-
-export type GuardedCompletion = {
-  queue: Queue;
-  ai: Pick<AiService, 'failJob'>;
-  logger: Logger;
-  finalAttempt: boolean;
-};
+import { AiService } from './ai.service.js';
 
 export type AiJobBuilder = Omit<AiCompleteJob, 'input'> & { buildInput: () => unknown };
 
-export async function queueOrFailAiJob(
-  { queue, ai, logger, finalAttempt }: GuardedCompletion,
-  { buildInput, ...head }: AiJobBuilder,
-): Promise<void> {
-  try {
-    await queueAiCompletion(queue, { ...head, input: await buildInput() });
-  } catch (error) {
-    if (!finalAttempt) {
+export type AiQueueAttempt = { finalAttempt: boolean; eventId?: string };
+
+@Injectable()
+export class AiJobQueue {
+  private readonly logger = new Logger(AiJobQueue.name);
+
+  constructor(
+    private readonly ai: AiService,
+    @InjectQueue(QUEUES.ai.name) private readonly queue: Queue,
+  ) {}
+
+  async queueOrFail(
+    { buildInput, ...head }: AiJobBuilder,
+    { finalAttempt, eventId }: AiQueueAttempt,
+  ): Promise<void> {
+    try {
+      await queueAiCompletion(this.queue, { ...head, input: await buildInput() });
+    } catch (error) {
+      if (!finalAttempt) {
+        throw error;
+      }
+      const { aiJobId, kind } = head;
+      const errorType = AI_JOB_FAILURES.notReady;
+      await this.ai.failJob(head.userId, { id: aiJobId, errorType });
+      this.logger.warn({ eventId, aiJobId, kind, errorType }, `${kind} job not queued`);
       throw error;
     }
-    const errorType = AI_JOB_FAILURES.notReady;
-    await ai.failJob(head.userId, { id: head.aiJobId, errorType });
-    logger.warn(
-      { aiJobId: head.aiJobId, kind: head.kind, errorType },
-      `${head.kind} job not queued`,
-    );
-    throw error;
   }
 }

@@ -13,6 +13,7 @@ import { PrismaService } from '../../prisma/prisma.service.js';
 import { AI_BUDGET, type BudgetWindow } from './ai-budget.js';
 import { type AiCallRecord, callRow } from './ai-call-row.js';
 import { AI_QUEUE_ESTIMATE } from './ai-queue-estimate.js';
+import { aiRequestedOutbox, type RecordAiRequested } from './ai-requested-event.js';
 import {
   type AiResultKey,
   resultChange,
@@ -151,10 +152,7 @@ export class AiRepository {
     return id;
   }
 
-  async saveFailure(
-    userId: string,
-    { tx = this.prisma, ...failure }: SaveAiFailure,
-  ): Promise<void> {
+  async saveFailure(userId: string, { tx = this.prisma, ...failure }: SaveAiFailure) {
     const { kind, inputHash } = failure;
     const failed: SaveAiResult = { ...failure, status: 'failed' };
     const { count } = await tx.aiResult.updateMany({
@@ -167,6 +165,10 @@ export class AiRepository {
         skipDuplicates: true,
       });
     }
+  }
+
+  async recordRequested(userId: string, { tx = this.prisma, ...row }: RecordAiRequested) {
+    await tx.outboxEvent.create({ data: aiRequestedOutbox(userId, row), select: { id: true } });
   }
 
   async recordCall(userId: string, call: AiCallRecord): Promise<void> {

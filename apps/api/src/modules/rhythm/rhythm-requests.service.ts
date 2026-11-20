@@ -4,6 +4,7 @@ import { subWeeks } from 'date-fns';
 
 import { Clock } from '../../common/clock.js';
 import { requestEach, type RequestTotals } from '../../common/request-each.js';
+import { SettingsService } from '../settings/index.js';
 import { RhythmRepository } from './rhythm.repository.js';
 
 @Injectable()
@@ -12,6 +13,7 @@ export class RhythmRequestsService {
 
   constructor(
     private readonly repository: RhythmRepository,
+    private readonly settings: SettingsService,
     private readonly clock: Clock,
   ) {}
 
@@ -25,7 +27,7 @@ export class RhythmRequestsService {
   }
 
   private async requestFor(userId: string, now: Date): Promise<boolean> {
-    const settings = await this.repository.findSettings(userId);
+    const settings = await this.settings.find(userId);
     if (settings === null) return false;
     const weekStart = weekStartOf(settings, subWeeks(now, 1));
     await this.repository.recordWeekClosed(userId, { closed: { weekStart } });

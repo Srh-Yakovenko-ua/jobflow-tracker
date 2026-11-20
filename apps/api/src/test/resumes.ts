@@ -14,8 +14,10 @@ import type {
   ProfileSource,
   RecordResumeEvent,
   ResumeProfile,
+  ResumeVersionUploadedPayload,
   SetActiveVersion,
 } from '../modules/resumes/index.js';
+import { AI_JOB_ID } from './ai.js';
 import { applicationPath } from './applications.js';
 import { callRoute } from './http.js';
 import { RecordedEvents } from './recorded-events.js';
@@ -116,6 +118,12 @@ export async function listedProfileStatuses(
   const { items } = resumeVersionListResponseSchema.parse(response.body);
   return items.map(({ aiProfileStatus }) => aiProfileStatus);
 }
+
+export const RESUME_UPLOADED: ResumeVersionUploadedPayload = {
+  userId: OLENA_ID,
+  resumeVersionId: RESUME_VERSION_ID,
+  aiJobId: AI_JOB_ID,
+};
 
 export const PROFILE_SOURCE: ProfileSource = {
   storageKey: RESUME_VERSION_ROW.storageKey,

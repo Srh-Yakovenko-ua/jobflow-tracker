@@ -1,17 +1,11 @@
-import { PUSH_LIMITS, pushMessageSchema } from '@jobflow/shared';
+import { PUSH_LIMITS } from '@jobflow/shared';
 import { Injectable, Logger } from '@nestjs/common';
-import { z } from 'zod';
 
 import { Clock } from '../../common/clock.js';
 import { SettingsService } from '../settings/index.js';
 import { PushRepository, type PushTargetRow } from './push.repository.js';
+import type { PushSendJob } from './push-jobs.js';
 import { type PushOutcome, PushSender } from './push-sender.js';
-
-export const PUSH_JOBS = { send: 'push.send' } as const;
-
-export const pushSendJobSchema = z.object({ userId: z.uuid(), message: pushMessageSchema });
-
-export type PushSendJob = z.infer<typeof pushSendJobSchema>;
 
 type SettledPush = { userId: string; subscription: PushTargetRow; outcome: PushOutcome };
 
@@ -47,8 +41,15 @@ export class PushSendService {
     const settled: Record<PushOutcome, () => Promise<unknown>> = {
       sent: () => this.repository.markDelivered(userId, { id, now: this.clock.now() }),
       gone: () => this.repository.remove(userId, id),
-      failed: () => this.repository.countFailure(userId, { id, limit: PUSH_LIMITS.failedSendsMax }),
+      failed: () => this.recordFailure(userId, id),
     };
     await settled[outcome]();
+  }
+
+  private async recordFailure(userId: string, id: string): Promise<void> {
+    const failedCount = await this.repository.recordFailure(userId, id);
+    if (failedCount !== null && failedCount >= PUSH_LIMITS.failedSendsMax) {
+      await this.repository.remove(userId, id);
+    }
   }
 }

@@ -63,6 +63,27 @@ async function readBody(response: Response): Promise<unknown> {
   throw new AiServiceError({ status: response.status, type: await refusalTypeOf(response) });
 }
 
+function isRefusedConnection(error: unknown): boolean {
+  if (!(error instanceof TypeError)) {
+    return false;
+  }
+  const { cause } = error;
+  return (
+    typeof cause === 'object' && cause !== null && 'code' in cause && cause.code === 'ECONNREFUSED'
+  );
+}
+
+function postFailureOf(error: unknown): unknown {
+  if (isRefusedConnection(error)) {
+    const type = AI_SERVICE_ERRORS.notReady;
+    return new AiServiceError({ status: 503, type, cause: error, reachedService: false });
+  }
+  return fetchFailureOf(error, {
+    timeoutType: AI_SERVICE_ERRORS.timeout,
+    ErrorClass: AiServiceError,
+  });
+}
+
 @Injectable()
 export class AiClient {
   private readonly baseUrl: string;
@@ -98,12 +119,17 @@ export class AiClient {
     });
   }
 
+  private async serviceToken(): Promise<string> {
+    try {
+      return await signServiceToken({ keys: this.keys, scope: 'ai:invoke', issuedAt: new Date() });
+    } catch (cause) {
+      const type = AI_SERVICE_ERRORS.internal;
+      throw new AiServiceError({ status: 500, type, cause, reachedService: false });
+    }
+  }
+
   private async post({ path, body, requestId }: AiServicePost): Promise<unknown> {
-    const token = await signServiceToken({
-      keys: this.keys,
-      scope: 'ai:invoke',
-      issuedAt: new Date(),
-    });
+    const token = await this.serviceToken();
     const headers = withoutUndefined({
       authorization: `Bearer ${token}`,
       'content-type': 'application/json',
@@ -118,10 +144,7 @@ export class AiClient {
       });
       return await readBody(response);
     } catch (error) {
-      throw fetchFailureOf(error, {
-        timeoutType: AI_SERVICE_ERRORS.timeout,
-        ErrorClass: AiServiceError,
-      });
+      throw postFailureOf(error);
     }
   }
 }

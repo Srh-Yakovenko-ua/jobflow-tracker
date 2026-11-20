@@ -1,6 +1,8 @@
+import type { UserSettings } from '@jobflow/shared';
 import { describe, expect, it } from 'vitest';
 
-import type { UserSettingsRow } from '../../prisma/user-settings-row.js';
+import { unauthorized } from '../../common/app-error.js';
+import { toUserSettings, type UserSettingsRow } from '../../prisma/user-settings-row.js';
 import { NEW_USER_SETTINGS_ROW } from '../../test/factories.js';
 import { fakeTransactionModule } from '../../test/fake-prisma.js';
 import { BOHDAN_ID, OLENA_ID } from '../../test/service-fixtures.js';
@@ -9,6 +11,7 @@ import {
   type TimelineOccurrence,
   TimelineService,
 } from '../events/index.js';
+import { SettingsService } from '../settings/index.js';
 import { type RhythmEventRow, RhythmRepository } from './rhythm.repository.js';
 import { RhythmService } from './rhythm.service.js';
 
@@ -41,10 +44,9 @@ class FakeRhythmRepository {
     private readonly rows: RhythmEventRow[],
   ) {}
 
-  findSettings(userId: string): Promise<UserSettingsRow | null> {
-    return Promise.resolve(
-      userId === OLENA_ID ? { ...NEW_USER_SETTINGS_ROW, ...this.settings } : null,
-    );
+  get(userId: string): Promise<UserSettings> {
+    if (userId !== OLENA_ID) return Promise.reject(unauthorized());
+    return Promise.resolve(toUserSettings({ ...NEW_USER_SETTINGS_ROW, ...this.settings }));
   }
 
   stageEventsSince(_userId: string, since: Date): Promise<RhythmEventRow[]> {
@@ -72,6 +74,7 @@ async function rhythmOf(settings: Partial<UserSettingsRow>, rows: RhythmEventRow
       RhythmService,
       { provide: RhythmRepository, useValue: repository },
       { provide: TimelineService, useValue: repository },
+      { provide: SettingsService, useValue: repository },
     ],
     now: WEDNESDAY_IN_KYIV,
   }).compile();

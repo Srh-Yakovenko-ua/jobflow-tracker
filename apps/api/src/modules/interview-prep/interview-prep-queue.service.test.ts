@@ -1,8 +1,7 @@
 import { buildDesignReasons, designInsightsBody } from '@jobflow/shared/testing';
-import { getQueueToken } from '@nestjs/bullmq';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { AI_JOB_ID, FakeAiRepository } from '../../test/ai.js';
+import { AI_JOB_ID, aiQueueProviders, FakeAiRepository } from '../../test/ai.js';
 import { ANALYTICS, analyticsClientProvider, jsonReply } from '../../test/analytics-client.js';
 import { recordFetch, refusedConnection, stalled, timeOutAtOnce } from '../../test/fetch.js';
 import { DESIGN_WEAK_SPOTS, INTERVIEW_PREP_VACANCY } from '../../test/interview-prep.js';
@@ -15,7 +14,6 @@ import {
   OLENA_ID,
 } from '../../test/service-fixtures.js';
 import { StubQueue, unreachableQueues } from '../../test/stub-queues.js';
-import { AiService } from '../ai/index.js';
 import type { InterviewPrepRequestedPayload } from './interview-prep.events.js';
 import { InterviewPrepQueueService } from './interview-prep-queue.service.js';
 
@@ -52,8 +50,7 @@ async function queueing(queue: StubQueue = new StubQueue('ai')) {
   const moduleRef = await compileProcessorModule(log.sink, [
     InterviewPrepQueueService,
     analyticsClientProvider(),
-    { provide: AiService, useValue: ai },
-    { provide: getQueueToken('ai'), useValue: queue },
+    ...aiQueueProviders(queue, ai),
   ]);
   const service = moduleRef.get(InterviewPrepQueueService);
   const enqueue = (delivery = FIRST_DELIVERY) => service.enqueue(REQUESTED, delivery);

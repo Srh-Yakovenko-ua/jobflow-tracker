@@ -9,7 +9,7 @@ import { owned } from '../../common/owned.js';
 import type { Prisma } from '../../generated/prisma/client.js';
 import { PrismaService } from '../../prisma/prisma.service.js';
 import { aiResultResponse, AiService } from '../ai/index.js';
-import type { InterviewPrepRequested } from './interview-prep.events.js';
+import { type InterviewPrepRequested, interviewPrepRequested } from './interview-prep.events.js';
 import { InterviewPrepRepository } from './interview-prep.repository.js';
 import { InterviewPrepSources } from './interview-prep-sources.service.js';
 
@@ -66,7 +66,11 @@ export class InterviewPrepService {
       return locked?.runningJobId ?? null;
     }
     const aiJobId = await this.ai.createJob(userId, { kind: 'interview_prep', applicationId, tx });
-    await this.repository.recordRequested(userId, { requested: { ...requested, aiJobId }, tx });
+    await this.ai.recordRequested(userId, {
+      event: interviewPrepRequested,
+      requested: { ...requested, aiJobId },
+      tx,
+    });
     return aiJobId;
   }
 }

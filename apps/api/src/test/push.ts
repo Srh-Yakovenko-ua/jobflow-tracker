@@ -1,5 +1,6 @@
 import type { PushMessage, PushSubscriptionInput } from '@jobflow/shared';
 
+import { FOLLOW_UP_HINT, silenceTitleOf } from '../modules/notifications/index.js';
 import type { PushOutcome, PushTarget } from '../modules/push/index.js';
 import { SILENCE_ITEM } from './notifications.js';
 
@@ -20,8 +21,8 @@ export const CHROME_SUBSCRIPTION: PushSubscriptionInput = {
 };
 
 export const SILENCE_PUSH: PushMessage = {
-  title: 'Ромашка: 7 днів без відповіді',
-  body: 'Час нагадати про себе: відкрий картку і напиши фоллоу-ап.',
+  title: silenceTitleOf(SILENCE_ITEM),
+  body: FOLLOW_UP_HINT,
   url: `/applications/${SILENCE_ITEM.applicationId}#follow-up`,
   tag: `application:${SILENCE_ITEM.applicationId}`,
 };

@@ -1,7 +1,12 @@
-import { getQueueToken } from '@nestjs/bullmq';
 import { beforeEach, describe, expect, it } from 'vitest';
 
-import { AI_JOB_ID, FakeAiRepository, MATCH_PROFILE, VACANCY_TEXT } from '../../test/ai.js';
+import {
+  AI_JOB_ID,
+  aiQueueProviders,
+  FakeAiRepository,
+  MATCH_PROFILE,
+  VACANCY_TEXT,
+} from '../../test/ai.js';
 import { FakeMatchRepository, MATCH_SOURCE } from '../../test/match.js';
 import { memoryLog } from '../../test/memory-log.js';
 import { compileProcessorModule } from '../../test/processor.js';
@@ -12,7 +17,6 @@ import {
   RESUME_VERSION_ID,
 } from '../../test/service-fixtures.js';
 import { RefusingQueue, SilentQueue, StubQueue } from '../../test/stub-queues.js';
-import { AiService } from '../ai/index.js';
 import { MatchRepository, type MatchSource } from './match.repository.js';
 import { MatchQueueService } from './match-queue.service.js';
 
@@ -26,8 +30,7 @@ async function serviceWith(queue: StubQueue = new StubQueue('ai')) {
   const moduleRef = await compileProcessorModule(log.sink, [
     MatchQueueService,
     { provide: MatchRepository, useValue: repository },
-    { provide: AiService, useValue: ai },
-    { provide: getQueueToken('ai'), useValue: queue },
+    ...aiQueueProviders(queue, ai),
   ]);
   const service = moduleRef.get(MatchQueueService);
   const request = (userId = OLENA_ID) => service.request(userId, { applicationId: APPLICATION_ID });

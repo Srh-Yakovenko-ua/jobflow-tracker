@@ -62,9 +62,9 @@ async function serviceWithFakes() {
 
 type Fakes = Awaited<ReturnType<typeof serviceWithFakes>>;
 
-const nothingStored = ({ ai, repository }: Fakes) => [ai.jobs.size, repository.recorded.length];
+const nothingStored = ({ ai }: Fakes) => [ai.jobs.size, ai.requested.length];
 
-const requestedInput = ({ repository }: Fakes) => repository.recorded[0]?.[1].requested.input;
+const requestedInput = ({ ai }: Fakes) => ai.requested[0]?.[1].requested.input;
 
 const withoutInterview = ({ repository }: Fakes) => {
   repository.source = { ...INTERVIEW_PREP_SOURCE_ROW, scheduledEvents: [] };
@@ -104,10 +104,11 @@ describe('InterviewPrepService.request', () => {
     expect(await fakes.generate()).toEqual({ jobId: AI_JOB_ID });
 
     expect(fakes.ai.jobs.get(AI_JOB_ID)).toMatchObject({ applicationId: APPLICATION_ID });
-    expect(fakes.repository.recorded).toEqual([
+    expect(fakes.ai.requested).toEqual([
       [
         OLENA_ID,
         {
+          eventType: 'application.interview_prep_requested',
           requested: {
             applicationId: APPLICATION_ID,
             aiJobId: AI_JOB_ID,
@@ -136,7 +137,7 @@ describe('InterviewPrepService.request', () => {
 
     await fakes.generate();
 
-    expect(requestedInput(fakes)?.requirements).toEqual(['React', 'GraphQL']);
+    expect(requestedInput(fakes)).toMatchObject({ requirements: ['React', 'GraphQL'] });
   });
 
   it('answers the running job to a request and true to a suggestion, creating no second job', async () => {
@@ -197,10 +198,11 @@ describe('InterviewPrepService.suggest', () => {
 
     await expect(fakes.suggest()).resolves.toBe(true);
 
-    expect(fakes.repository.recorded).toEqual([
+    expect(fakes.ai.requested).toEqual([
       [
         OLENA_ID,
         {
+          eventType: 'application.interview_prep_requested',
           requested: { applicationId: APPLICATION_ID, aiJobId: AI_JOB_ID, input: BUILT_VACANCY },
           tx: FAKE_TRANSACTION,
         },

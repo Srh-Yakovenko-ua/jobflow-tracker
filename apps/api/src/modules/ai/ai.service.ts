@@ -15,6 +15,7 @@ import { jobInputHash } from './ai-input-hash.js';
 import { jobUpdateOf } from './ai-job-update.js';
 import { AiPayloadError, privatePayloadPaths } from './ai-payload-guard.js';
 import { type AiQueuePosition, queueEstimate } from './ai-queue-estimate.js';
+import type { AiRequestedEvent, RecordAiRequested } from './ai-requested-event.js';
 import {
   type AiAnswer,
   type AiCompleteAttempt,
@@ -71,6 +72,10 @@ export class AiService {
 
   createJob(userId: string, job: CreateAiJob): Promise<string> {
     return this.repository.createJob(userId, job);
+  }
+
+  recordRequested<Event extends AiRequestedEvent>(userId: string, row: RecordAiRequested<Event>) {
+    return this.repository.recordRequested(userId, row);
   }
 
   failJob(userId: string, { id, errorType }: AiJobFailure): Promise<number> {

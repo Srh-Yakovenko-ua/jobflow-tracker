@@ -9,7 +9,6 @@ import { AiService } from '../ai/index.js';
 import { type PlanFromSummary, PlansService } from '../plans/index.js';
 import type {
   LatestSummaryJob,
-  RecordSummaryRequested,
   SummaryJobRow,
   SummaryJobsSince,
   SummaryStart,
@@ -96,11 +95,6 @@ class FakeSummariesRepository {
     return Promise.resolve(this.jobsCreatedAt.some((createdAt) => createdAt >= since));
   }
 
-  recordRequested(userId: string, { requested, tx }: RecordSummaryRequested): Promise<void> {
-    this.steps.push(['recordRequested', userId, requested, tx]);
-    return Promise.resolve();
-  }
-
   findLatestSummary(userId: string): Promise<SummaryJobRow | null> {
     return Promise.resolve(this.summaries.find((row) => row.userId === userId) ?? null);
   }
@@ -155,10 +149,12 @@ async function summariesWithFakes() {
 }
 
 const requestedRow = (month: string, extra: object = {}) => [
-  'recordRequested',
   OLENA_ID,
-  { aiJobId: AI_JOB_ID, searchId: SEARCH_ID, month, ...extra },
-  FAKE_TRANSACTION,
+  {
+    eventType: 'summary.requested',
+    requested: { aiJobId: AI_JOB_ID, searchId: SEARCH_ID, month, ...extra },
+    tx: FAKE_TRANSACTION,
+  },
 ];
 
 describe('SummaryRequestsService.request', () => {
@@ -168,20 +164,22 @@ describe('SummaryRequestsService.request', () => {
     await expect(requests.request(OLENA_ID, 'req-1')).resolves.toEqual({ jobId: AI_JOB_ID });
 
     expect(ai.jobs.get(AI_JOB_ID)).toMatchObject({ userId: OLENA_ID, status: 'queued' });
-    expect(repository.steps).toEqual([
-      ['lockUser', OLENA_ID, FAKE_TRANSACTION],
-      ['findStart', OLENA_ID, FAKE_TRANSACTION],
-      requestedRow('2026-09', { requestId: 'req-1', fresh: true }),
+    expect([repository.steps, ai.requested]).toEqual([
+      [
+        ['lockUser', OLENA_ID, FAKE_TRANSACTION],
+        ['findStart', OLENA_ID, FAKE_TRANSACTION],
+      ],
+      [requestedRow('2026-09', { requestId: 'req-1', fresh: true })],
     ]);
   });
 
   it('summarizes the month that ended in the user time zone, not in UTC', async () => {
-    const { repository, requests, clock } = await summariesWithFakes();
+    const { ai, requests, clock } = await summariesWithFakes();
     clock.at(new Date('2026-10-31T22:30:00.000Z'));
 
     await requests.request(OLENA_ID, 'req-1');
 
-    expect(repository.steps.at(-1)).toEqual(
+    expect(ai.requested.at(-1)).toEqual(
       requestedRow('2026-10', { requestId: 'req-1', fresh: true }),
     );
   });
@@ -210,7 +208,7 @@ describe('SummaryRequestsService.request', () => {
 
 describe('SummaryRequestsService.requestScheduledFor', () => {
   it('requests the summary of the previous month once per local month, without fresh', async () => {
-    const { repository, requests } = await summariesWithFakes();
+    const { repository, ai, requests } = await summariesWithFakes();
     repository.jobsCreatedAt = [new Date('2026-09-30T20:59:59.000Z')];
 
     await expect(requests.requestScheduledFor([OLENA_ID])).resolves.toEqual({
@@ -218,11 +216,13 @@ describe('SummaryRequestsService.requestScheduledFor', () => {
       requested: 1,
     });
 
-    expect(repository.steps).toEqual([
-      ['lockUser', OLENA_ID, FAKE_TRANSACTION],
-      ['findStart', OLENA_ID, FAKE_TRANSACTION],
-      ['hasJobSince', OLENA_ID, new Date('2026-09-30T21:00:00.000Z')],
-      requestedRow('2026-09'),
+    expect([repository.steps, ai.requested]).toEqual([
+      [
+        ['lockUser', OLENA_ID, FAKE_TRANSACTION],
+        ['findStart', OLENA_ID, FAKE_TRANSACTION],
+        ['hasJobSince', OLENA_ID, new Date('2026-09-30T21:00:00.000Z')],
+      ],
+      [requestedRow('2026-09')],
     ]);
   });
 
@@ -251,14 +251,13 @@ describe('SummaryRequestsService.requestScheduledFor', () => {
   });
 
   it('counts every picked user and each one whose summary it requested', async () => {
-    const { repository, requests } = await summariesWithFakes();
+    const { ai, requests } = await summariesWithFakes();
 
     await expect(requests.requestScheduledFor([OLENA_ID, BOHDAN_ID])).resolves.toEqual({
       picked: 2,
       requested: 2,
     });
-    const requested = repository.steps.filter(([step]) => step === 'recordRequested');
-    expect(requested.map(([, userId]) => userId)).toEqual([OLENA_ID, BOHDAN_ID]);
+    expect(ai.requested.map(([userId]) => userId)).toEqual([OLENA_ID, BOHDAN_ID]);
   });
 
   it('goes on to the next user when one user fails, and counts only the requested ones', async () => {

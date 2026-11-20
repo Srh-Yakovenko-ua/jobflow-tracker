@@ -3,8 +3,14 @@ import { UnrecoverableError } from 'bullmq';
 import { beforeEach, describe, expect, it } from 'vitest';
 
 import { AI_JOB_ID } from '../../test/ai.js';
-import { APPLICATION_ID, OLENA_ID, RESUME_VERSION_ID } from '../../test/service-fixtures.js';
-import { useSubscribedRouter } from '../../test/subscriber.js';
+import {
+  APPLICATION_ID,
+  FINAL_DELIVERY,
+  FIRST_DELIVERY,
+  OLENA_ID,
+  RESUME_VERSION_ID,
+} from '../../test/service-fixtures.js';
+import { RecordingEventQueue, useSubscribedRouter } from '../../test/subscriber.js';
 import type { CvHintsRequestedPayload } from './cv-hints.events.js';
 import { CvHintsSubscriber } from './cv-hints.subscriber.js';
 import { CvHintsQueueService } from './cv-hints-queue.service.js';
@@ -19,30 +25,27 @@ const REQUESTED: CvHintsRequestedPayload = {
   input: CV_HINTS_INPUT,
 };
 
-class RecordingCvHintsQueue {
-  readonly payloads: CvHintsRequestedPayload[] = [];
-
-  enqueue(payload: CvHintsRequestedPayload): Promise<void> {
-    this.payloads.push(payload);
-    return Promise.resolve();
-  }
-}
-
 describe('CvHintsSubscriber', () => {
-  const queue = new RecordingCvHintsQueue();
-  const { log, route } = useSubscribedRouter([
+  const queue = new RecordingEventQueue<CvHintsRequestedPayload>();
+  const { log, route, routeFinal } = useSubscribedRouter([
     CvHintsSubscriber,
     { provide: CvHintsQueueService, useValue: queue },
   ]);
 
   beforeEach(() => {
-    queue.payloads.length = 0;
+    queue.enqueued.length = 0;
   });
 
   it('queues the hints of a requested event', async () => {
     await route(EVENT, REQUESTED);
 
-    expect(queue.payloads).toEqual([REQUESTED]);
+    expect(queue.enqueued).toEqual([[REQUESTED, FIRST_DELIVERY]]);
+  });
+
+  it('hands the last delivery of a requested event to the queue as the final attempt', async () => {
+    await routeFinal(EVENT, REQUESTED);
+
+    expect(queue.enqueued).toEqual([[REQUESTED, FINAL_DELIVERY]]);
   });
 
   it.each([
@@ -60,7 +63,7 @@ describe('CvHintsSubscriber', () => {
   ])('fails an event with $case as unrecoverable and queues nothing', async ({ payload }) => {
     await expect(route(EVENT, payload)).rejects.toBeInstanceOf(UnrecoverableError);
 
-    expect(queue.payloads).toEqual([]);
+    expect(queue.enqueued).toEqual([]);
     expect(log.parsed()).toEqual([
       expect.objectContaining({ level: 50, msg: 'cv hints event invalid' }),
     ]);

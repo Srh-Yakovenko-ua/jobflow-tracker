@@ -26,7 +26,7 @@ import {
 import { MISSING_ID } from '../../test/service-fixtures.js';
 import { StubQueue } from '../../test/stub-queues.js';
 import { fixedClock, NOW } from '../../test/time.js';
-import { NotificationsService } from '../notifications/index.js';
+import { NotificationScheduleService, NotificationsService } from '../notifications/index.js';
 import { SettingsService } from '../settings/index.js';
 import { PushProcessor } from './push.processor.js';
 import { PushRepository } from './push.repository.js';
@@ -223,6 +223,7 @@ describe('push subscriptions', () => {
         DomainEventRouter,
         PushSubscriber,
         PushDeliveryService,
+        NotificationScheduleService,
         PushSendService,
         PushProcessor,
         PushRepository,

@@ -14,10 +14,9 @@ import {
 import { Injectable } from '@nestjs/common';
 import { addWeeks, startOfISOWeek, subWeeks } from 'date-fns';
 
-import { unauthorized } from '../../common/app-error.js';
 import { Clock } from '../../common/clock.js';
-import { toUserSettings } from '../../prisma/user-settings-row.js';
 import { TimelineService } from '../events/index.js';
+import { SettingsService } from '../settings/index.js';
 import { type RhythmEventRow, RhythmRepository } from './rhythm.repository.js';
 
 type WeekContext = { settings: UserSettings; goal: RhythmGoal; currentWeek: string };
@@ -64,6 +63,7 @@ export class RhythmService {
   constructor(
     private readonly repository: RhythmRepository,
     private readonly timeline: TimelineService,
+    private readonly settings: SettingsService,
     private readonly clock: Clock,
   ) {}
 
@@ -80,9 +80,7 @@ export class RhythmService {
 
   async get(userId: string, { weeks }: RhythmQuery): Promise<RhythmResponse> {
     const now = this.clock.now();
-    const row = await this.repository.findSettings(userId);
-    if (row === null) throw unauthorized();
-    const settings = toUserSettings(row);
+    const settings = await this.settings.get(userId);
     const oldest = startOfISOWeek(subWeeks(userNow(settings, now), weeks - 1));
     const counts = countsByWeek(await this.eventsSince(userId, oldest), settings);
     const goal = {

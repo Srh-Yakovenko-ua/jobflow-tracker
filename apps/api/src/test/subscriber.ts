@@ -1,7 +1,12 @@
 import type { Provider } from '@nestjs/common';
-import { beforeAll, beforeEach } from 'vitest';
+import { UnrecoverableError } from 'bullmq';
+import { beforeAll, beforeEach, expect } from 'vitest';
 
-import { type DomainEvent, DomainEventRouter } from '../outbox/domain-event-router.js';
+import {
+  type DomainEvent,
+  DomainEventRouter,
+  type EventDelivery,
+} from '../outbox/domain-event-router.js';
 import { memoryLog } from './memory-log.js';
 import { compileProcessorModule } from './processor.js';
 import { MOVE_EVENT_ID } from './service-fixtures.js';
@@ -11,6 +16,27 @@ export type SubscribedRouter = {
   route: (type: string, payload: unknown) => Promise<number>;
   routeFinal: (type: string, payload: unknown) => Promise<number>;
 };
+
+export class RecordingEventQueue<Payload> {
+  readonly enqueued: [Payload, EventDelivery][] = [];
+
+  enqueue(payload: Payload, delivery: EventDelivery): Promise<void> {
+    this.enqueued.push([payload, delivery]);
+    return Promise.resolve();
+  }
+}
+
+export type RefusedEvent = { type: string; payload: unknown; message: string };
+
+export async function expectRefusedEvent(
+  router: SubscribedRouter,
+  { type, payload, message }: RefusedEvent,
+): Promise<void> {
+  await expect(router.route(type, payload)).rejects.toBeInstanceOf(UnrecoverableError);
+  expect(router.log.parsed()).toEqual([
+    expect.objectContaining({ level: 50, msg: message, eventId: MOVE_EVENT_ID }),
+  ]);
+}
 
 export function useSubscribedRouter(providers: Provider[]): SubscribedRouter {
   const log = memoryLog();

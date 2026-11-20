@@ -3,8 +3,13 @@ import { UnrecoverableError } from 'bullmq';
 import { beforeEach, describe, expect, it } from 'vitest';
 
 import { AI_JOB_ID } from '../../test/ai.js';
-import { APPLICATION_ID, OLENA_ID } from '../../test/service-fixtures.js';
-import { useSubscribedRouter } from '../../test/subscriber.js';
+import {
+  APPLICATION_ID,
+  FINAL_DELIVERY,
+  FIRST_DELIVERY,
+  OLENA_ID,
+} from '../../test/service-fixtures.js';
+import { RecordingEventQueue, useSubscribedRouter } from '../../test/subscriber.js';
 import { FollowupQueueService } from './followup-queue.service.js';
 import type { FollowupRequestedPayload } from './followups.events.js';
 import { FollowupsSubscriber } from './followups.subscriber.js';
@@ -17,18 +22,9 @@ const REQUESTED = {
   fresh: true,
 };
 
-class RecordingQueue {
-  readonly enqueued: FollowupRequestedPayload[] = [];
-
-  enqueue(requested: FollowupRequestedPayload): Promise<void> {
-    this.enqueued.push(requested);
-    return Promise.resolve();
-  }
-}
-
 describe('FollowupsSubscriber', () => {
-  const queue = new RecordingQueue();
-  const { log, route } = useSubscribedRouter([
+  const queue = new RecordingEventQueue<FollowupRequestedPayload>();
+  const { log, route, routeFinal } = useSubscribedRouter([
     FollowupsSubscriber,
     { provide: FollowupQueueService, useValue: queue },
   ]);
@@ -40,7 +36,13 @@ describe('FollowupsSubscriber', () => {
   it('queues the followup of a requested event', async () => {
     await route('application.followup_requested', REQUESTED);
 
-    expect(queue.enqueued).toEqual([REQUESTED]);
+    expect(queue.enqueued).toEqual([[REQUESTED, FIRST_DELIVERY]]);
+  });
+
+  it('hands the last delivery of a requested event to the queue as the final attempt', async () => {
+    await routeFinal('application.followup_requested', REQUESTED);
+
+    expect(queue.enqueued).toEqual([[REQUESTED, FINAL_DELIVERY]]);
   });
 
   it('fails an event whose input carries an unknown tone as unrecoverable and queues nothing', async () => {

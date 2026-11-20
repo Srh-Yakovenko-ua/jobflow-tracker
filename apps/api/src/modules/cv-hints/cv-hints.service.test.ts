@@ -44,9 +44,9 @@ async function serviceWithFakes() {
   return { repository, match, ai, service, generate };
 }
 
-const nothingStored = ({ ai, repository }: Awaited<ReturnType<typeof serviceWithFakes>>) => [
+const nothingStored = ({ ai }: Awaited<ReturnType<typeof serviceWithFakes>>) => [
   ai.jobs.size,
-  repository.recorded.length,
+  ai.requested.length,
 ];
 
 describe('CvHintsService.read', () => {
@@ -110,7 +110,7 @@ describe('CvHintsService.read', () => {
 
 describe('CvHintsService.request', () => {
   it('creates a cv_hints job for the linked version and writes the request with the built input in one transaction', async () => {
-    const { repository, ai, generate } = await serviceWithFakes();
+    const { ai, generate } = await serviceWithFakes();
 
     await expect(generate()).resolves.toEqual({ jobId: AI_JOB_ID });
 
@@ -120,10 +120,11 @@ describe('CvHintsService.request', () => {
         resumeVersionId: RESUME_VERSION_ID,
       }),
     );
-    expect(repository.recorded).toEqual([
+    expect(ai.requested).toEqual([
       [
         OLENA_ID,
         {
+          eventType: 'application.cv_hints_requested',
           requested: {
             applicationId: APPLICATION_ID,
             resumeVersionId: RESUME_VERSION_ID,

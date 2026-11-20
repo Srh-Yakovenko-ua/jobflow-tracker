@@ -6,7 +6,6 @@ import { AI_RESULT_JOB_SELECT, LATEST_AI_JOB_SELECT } from '../../prisma/latest-
 import { lockWithRunningAiJob } from '../../prisma/lock-owned-application.js';
 import { PrismaService } from '../../prisma/prisma.service.js';
 import type { StoredAiResultJob } from '../ai/index.js';
-import { type CvHintsRequested, cvHintsRequestedEvent } from './cv-hints.events.js';
 
 const CV_HINTS_SOURCE_SELECT = {
   position: true,
@@ -22,8 +21,6 @@ export type CvHintsQuery = { applicationId: string; resumeVersionId: string; sin
 
 export type CvHintsLock = CvHintsQuery & InTransaction;
 
-export type RecordCvHintsRequested = InTransaction & { requested: CvHintsRequested };
-
 @Injectable()
 export class CvHintsRepository {
   constructor(private readonly prisma: PrismaService) {}
@@ -37,16 +34,6 @@ export class CvHintsRepository {
 
   lockApplication(userId: string, { applicationId, tx = this.prisma, ...within }: CvHintsLock) {
     return lockWithRunningAiJob(tx, { userId, applicationId, kind: 'cv_hints', within });
-  }
-
-  async recordRequested(
-    userId: string,
-    { requested, tx = this.prisma }: RecordCvHintsRequested,
-  ): Promise<void> {
-    await tx.outboxEvent.create({
-      data: cvHintsRequestedEvent(userId, requested),
-      select: { id: true },
-    });
   }
 
   findLatest(
