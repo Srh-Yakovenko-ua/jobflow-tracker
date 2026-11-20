@@ -2,8 +2,9 @@ import type { ApplicationCard as ApplicationCardData } from '@jobflow/shared';
 import { render, screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 
+import { FULL_CARD } from '@/test/full-application';
+
 import type { ApplicationCardContext } from '../model/card-context';
-import { FULL_CARD } from '../model/card-specimens';
 import { ApplicationCard } from './application-card';
 
 const OFFER_CARD: ApplicationCardData = {

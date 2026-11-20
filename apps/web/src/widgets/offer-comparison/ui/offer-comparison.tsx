@@ -46,7 +46,7 @@ function MissingOffers({ count }: Readonly<{ count: number }>) {
 
 function ComparisonBody({ mode }: Readonly<{ mode: ComparisonMode }>) {
   const offers = useOffers();
-  if (offers.kind === 'error') return <LoadFailedPanel onRetry={offers.refetch} />;
+  if (offers.kind === 'error') return <LoadFailedPanel load={offers.load} />;
   if (offers.kind === 'loading') return <ComparisonSkeleton />;
   if (offers.offers.length < OFFER_COMPARE.minOffers) {
     return <MissingOffers count={offers.offers.length} />;

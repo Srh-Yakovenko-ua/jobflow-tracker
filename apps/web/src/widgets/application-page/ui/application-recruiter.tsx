@@ -29,7 +29,7 @@ const COPY = uk.contact;
 function RecruiterBody({ application, recruiter, actions }: RecruiterBodyProps) {
   const { load, contact, editing } = recruiter;
   if (load.pending) return <TextSkeleton />;
-  if (load.failed) return <LoadFailedPanel onRetry={load.onRetry} retrying={load.retrying} />;
+  if (load.failed) return <LoadFailedPanel load={load} />;
   if (contact === null) {
     return (
       <AddContactForm
@@ -87,7 +87,7 @@ export function ApplicationRecruiter({ application }: ApplicationRecruiterProps)
       header={{ after: editButton, className: 'flex items-center justify-between gap-2' }}
       view={{
         className: 'flex flex-col gap-3.5 rounded-lg bg-surface p-4.5 shadow-e1',
-        busy: recruiter.load.pending,
+        busy: recruiter.load.busy,
       }}
     >
       <RecruiterBody application={application} recruiter={recruiter} actions={bodyActions} />

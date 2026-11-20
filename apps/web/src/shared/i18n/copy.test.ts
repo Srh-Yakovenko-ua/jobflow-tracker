@@ -3,6 +3,7 @@ import { join } from 'node:path';
 
 import { describe, expect, it } from 'vitest';
 
+import { devUk } from './dev-uk';
 import { uk } from './uk';
 
 const COPY_RULES = {
@@ -60,7 +61,7 @@ describe('Ukrainian UI copy', () => {
   });
 
   it('no uk string outside the showcase copy runs over 120 characters', () => {
-    expect(longCopyIn(uk)).toEqual([]);
+    expect(longCopyIn({ ...uk, ...devUk })).toEqual([]);
   });
 
   it.each([

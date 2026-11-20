@@ -4,12 +4,13 @@ import { type ApplicationListQuery, PAGINATION_LIMITS } from '@jobflow/shared';
 import { useQueries, useQuery } from '@tanstack/react-query';
 
 import { applicationListQueryOptions, applicationQueryOptions } from '@/entities/application';
+import { type RetryLoad, sectionLoadOf } from '@/shared/lib/section-load';
 
 import type { ComparedOffer } from '../lib/offer-score';
 
 export type OffersView =
   | Readonly<{ kind: 'loading' }>
-  | Readonly<{ kind: 'error'; refetch: () => void }>
+  | Readonly<{ kind: 'error'; load: RetryLoad }>
   | Readonly<{ kind: 'ready'; offers: readonly ComparedOffer[] }>;
 
 const ACTIVE_OFFERS: ApplicationListQuery = {
@@ -26,15 +27,8 @@ export function useOffers(): OffersView {
   });
   const listed = list.data ?? [];
   const reads = useQueries({ queries: listed.map(({ id }) => applicationQueryOptions(id)) });
-  const failed = [list, ...reads].filter((query) => query.isError);
-  if (failed.length > 0) {
-    return {
-      kind: 'error',
-      refetch: () => {
-        for (const query of failed) void query.refetch();
-      },
-    };
-  }
+  const load = sectionLoadOf(...[list, ...reads].filter((query) => query.errorUpdateCount > 0));
+  if (load.failed || load.stale) return { kind: 'error', load };
   const offers = reads.flatMap((read, index) => {
     const aiStatus = listed[index]?.aiStatus ?? null;
     return read.data === undefined ? [] : [{ ...read.data, aiStatus }];

@@ -2,6 +2,7 @@ import type { ReactNode } from 'react';
 
 import { uk } from '@/shared/i18n';
 import { cn } from '@/shared/lib/cn';
+import type { RetryLoad } from '@/shared/lib/section-load';
 
 import { Button } from './button';
 
@@ -40,16 +41,15 @@ export function Banner({ tone, content }: BannerProps) {
 }
 
 export type LoadFailedAlertProps = Readonly<{
-  onRetry: () => void;
-  retrying?: boolean | undefined;
+  load: RetryLoad;
   className?: string | undefined;
 }>;
 
-export function LoadFailedAlert({ onRetry, retrying, className }: LoadFailedAlertProps) {
+export function LoadFailedAlert({ load, className }: LoadFailedAlertProps) {
   return (
     <div className={cn('flex flex-wrap items-center gap-2', className)}>
       <Banner tone="error" content={{ title: LOAD_FAILED.title, description: LOAD_FAILED.body }} />
-      <Button variant="secondary" size="sm" loading={retrying === true} onClick={onRetry}>
+      <Button variant="secondary" size="sm" loading={load.retrying} onClick={load.onRetry}>
         {LOAD_FAILED.action}
       </Button>
     </div>

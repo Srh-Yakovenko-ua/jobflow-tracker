@@ -13,9 +13,10 @@ import {
 import { DraftReview, type DraftReviewProps } from '@/features/edit-application';
 import { uk } from '@/shared/i18n';
 import { cn } from '@/shared/lib/cn';
+import type { RetryLoad } from '@/shared/lib/section-load';
 import { type AiJob, AsyncState } from '@/shared/ui/async-state';
 import { buttonLinkClasses } from '@/shared/ui/button';
-import { LoadFailedPanel, type LoadFailedPanelProps } from '@/shared/ui/error-panel';
+import { LoadFailedPanel } from '@/shared/ui/error-panel';
 import { LoadingRegion } from '@/shared/ui/loading-region';
 import { CardSkeleton, TextSkeleton } from '@/shared/ui/skeleton';
 import { STATE_TEXT } from '@/shared/ui/state-text';
@@ -84,11 +85,11 @@ export function progressView({ job, parse }: ProgressViewInput): LiveView {
   };
 }
 
-export function readFailedView({ onRetry, retrying }: LoadFailedPanelProps): LiveView {
+export function readFailedView(load: RetryLoad): LiveView {
   return {
     id: 'read-failed',
     preview: null,
-    panel: <LoadFailedPanel onRetry={onRetry} retrying={retrying} />,
+    panel: <LoadFailedPanel load={load} />,
   };
 }
 

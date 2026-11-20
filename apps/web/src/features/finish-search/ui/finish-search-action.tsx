@@ -4,7 +4,6 @@ import {
   type ApplicationResponse,
   OPEN_APPLICATION_CHOICES,
   type OpenApplicationChoice,
-  openApplicationChoiceSchema,
   type SearchSummary,
 } from '@jobflow/shared';
 import { useQuery } from '@tanstack/react-query';
@@ -16,7 +15,7 @@ import { useLastPresent } from '@/shared/lib/use-last-present';
 import { Button } from '@/shared/ui/button';
 import { ConfirmFooter } from '@/shared/ui/confirm-footer';
 import { Dialog, DialogContent, DialogTrigger } from '@/shared/ui/dialog';
-import { RadioGroup } from '@/shared/ui/radio-group';
+import { type ChoiceOption, RadioGroup } from '@/shared/ui/radio-group';
 
 import { useFinishSearchMutation } from '../model/use-finish-search-mutation';
 
@@ -24,10 +23,12 @@ export type FinishSearchActionProps = Readonly<{ application: ApplicationRespons
 
 const COPY = uk.searches.finish;
 
-const CHOICES = OPEN_APPLICATION_CHOICES.map((value) => ({
-  value,
-  label: COPY.choice.options[value],
-}));
+const CHOICES: readonly ChoiceOption<OpenApplicationChoice>[] = OPEN_APPLICATION_CHOICES.map(
+  (value) => ({
+    value,
+    label: COPY.choice.options[value],
+  }),
+);
 
 type FinishSearchDialogProps = Readonly<{ search: SearchSummary; onFinished: () => void }>;
 
@@ -46,9 +47,7 @@ function FinishSearchDialog({ search, onFinished }: FinishSearchDialogProps) {
         aria-label={COPY.choice.label}
         options={CHOICES}
         value={openApplications}
-        onValueChange={(value) => {
-          setOpenApplications(openApplicationChoiceSchema.parse(value));
-        }}
+        onValueChange={setOpenApplications}
       />
       <ConfirmFooter
         copy={COPY}

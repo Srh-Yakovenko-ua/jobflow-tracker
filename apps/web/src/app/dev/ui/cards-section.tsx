@@ -1,7 +1,8 @@
 import { type ApplicationResponse, DRAFT_PLACEHOLDERS } from '@jobflow/shared';
 
-import { ApplicationCard, FULL_APPLICATION, PreviewCard } from '@/entities/application';
-import { uk } from '@/shared/i18n';
+import { ApplicationCard, PreviewCard } from '@/entities/application';
+import { devUk } from '@/shared/i18n/dev-uk';
+import { FULL_APPLICATION } from '@/test/full-application';
 
 import { CARD_SPECIMENS } from './card-specimens';
 import { GallerySection, Specimen } from './gallery';
@@ -16,14 +17,14 @@ const FAILED_PREVIEW: ApplicationResponse = {
 
 export function CardsSection() {
   return (
-    <GallerySection header={uk.devUi.cards}>
+    <GallerySection header={devUk.devUi.cards}>
       <div className="grid grid-cols-[repeat(auto-fill,minmax(min(250px,100%),1fr))] items-start gap-4.5 rounded-2xl bg-surface-3 p-3">
         {CARD_SPECIMENS.map(({ eyebrow, ...card }) => (
           <Specimen key={eyebrow} eyebrow={eyebrow}>
             <ApplicationCard {...card} />
           </Specimen>
         ))}
-        <Specimen eyebrow={uk.devUi.cards.preview}>
+        <Specimen eyebrow={devUk.devUi.cards.preview}>
           <PreviewCard application={FAILED_PREVIEW} view={{ mark: 'failed' }} />
         </Specimen>
       </div>

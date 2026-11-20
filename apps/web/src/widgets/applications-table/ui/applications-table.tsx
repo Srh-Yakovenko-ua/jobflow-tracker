@@ -28,7 +28,7 @@ function TableLoading({ load }: Readonly<{ load: SectionLoad }>) {
   if (load.failed) {
     return (
       <div className="max-w-120 animate-fade-in p-4">
-        <LoadFailedPanel onRetry={load.onRetry} retrying={load.retrying} />
+        <LoadFailedPanel load={load} />
       </div>
     );
   }
@@ -71,9 +71,7 @@ function TableContent() {
         view={{ rows: rows.length > 0 }}
         stageCounts={stageCounts}
       />
-      {load.stale && (
-        <LoadFailedAlert className="px-4 py-2" onRetry={load.onRetry} retrying={load.retrying} />
-      )}
+      {load.stale && <LoadFailedAlert className="px-4 py-2" load={load} />}
       {picked.length > 0 && (
         <BulkBar
           picked={picked}

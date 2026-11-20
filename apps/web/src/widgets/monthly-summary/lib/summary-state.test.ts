@@ -11,7 +11,7 @@ const NEWER_JOB_ID = buildJobStatus().id;
 const RUNNING_JOB = buildJobStatus({ status: 'processing', step: 2, queue: null });
 
 function answered(data: SummaryResponse): SummaryLatest {
-  return { data, isError: false };
+  return { data, failed: false };
 }
 
 function jobOf(status: JobStatus['status'], id = NEWER_JOB_ID): SummaryResponse['job'] {
@@ -22,12 +22,12 @@ describe('summaryStateOf', () => {
   it.each<{ name: string; latest: SummaryLatest; job?: JobStatus; state: SummaryState }>([
     {
       name: 'no answer yet is loading',
-      latest: { data: undefined, isError: false },
+      latest: { data: undefined, failed: false },
       state: { status: 'loading' },
     },
     {
       name: 'a failed first read is load-failed',
-      latest: { data: undefined, isError: true },
+      latest: { data: undefined, failed: true },
       state: { status: 'load-failed' },
     },
     {
@@ -63,7 +63,7 @@ describe('summaryStateOf', () => {
     },
     {
       name: 'a summary kept through a failed refetch stays ready',
-      latest: { data: { summary: SUMMARY, job: null }, isError: true },
+      latest: { data: { summary: SUMMARY, job: null }, failed: true },
       state: { status: 'ready', summary: SUMMARY },
     },
   ])('$name', ({ latest, job, state }) => {

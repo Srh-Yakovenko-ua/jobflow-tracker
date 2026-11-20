@@ -7,11 +7,12 @@ import { type ReactNode, useEffect } from 'react';
 
 import { sessionQueryOptions } from '@/entities/user';
 import { apiStatusOf, HTTP_STATUS, onSessionEnd } from '@/shared/api';
+import { sectionLoadOf } from '@/shared/lib/section-load';
 import { LoadFailedPanel } from '@/shared/ui/error-panel';
 
 export type SessionGateProps = Readonly<{ fallback: ReactNode; children: ReactNode }>;
 
-function isRefusedSession(error: Error): boolean {
+function isRefusedSession(error: Error | null): boolean {
   return apiStatusOf(error) === HTTP_STATUS.unauthorized;
 }
 
@@ -35,15 +36,12 @@ export function SessionGate({ fallback, children }: SessionGateProps) {
     [queryClient],
   );
   if (session.isSuccess) return children;
-  if (session.isError && !session.isFetching && !isRefusedSession(session.error)) {
+  const load = sectionLoadOf(session);
+  if (load.failed && !isRefusedSession(session.error)) {
     return (
       <div className="flex min-h-dvh items-center justify-center p-4">
         <div className="w-full max-w-120">
-          <LoadFailedPanel
-            onRetry={() => {
-              void session.refetch();
-            }}
-          />
+          <LoadFailedPanel load={load} />
         </div>
       </div>
     );

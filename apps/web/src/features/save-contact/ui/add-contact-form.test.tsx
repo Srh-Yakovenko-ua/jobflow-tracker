@@ -94,6 +94,29 @@ describe('AddContactForm', () => {
     ]);
   });
 
+  it('two identical successful contact adds carry different keys', async () => {
+    const { user, sent, onDone } = renderAddForm();
+    await user.type(screen.getByRole('textbox', { name: NAME }), 'Оксана Левченко');
+
+    await user.click(screen.getByRole('button', { name: ADD }));
+    await waitFor(() => {
+      expect(onDone).toHaveBeenCalledTimes(1);
+    });
+    await user.click(screen.getByRole('button', { name: ADD }));
+    await waitFor(() => {
+      expect(onDone).toHaveBeenCalledTimes(2);
+    });
+
+    const [first, second] = sent.created;
+    expect(sent.created.map((created) => created.body)).toEqual([
+      { name: 'Оксана Левченко' },
+      { name: 'Оксана Левченко' },
+    ]);
+    expect(first?.idempotencyKey).toMatch(/^[\da-f-]{36}$/);
+    expect(second?.idempotencyKey).toMatch(/^[\da-f-]{36}$/);
+    expect(first?.idempotencyKey).not.toBe(second?.idempotencyKey);
+  });
+
   it('a double click while the first add is on its way posts one recruiter', async () => {
     const held = latch();
     const { user, sent, onDone } = renderAddForm({ create: { latch: held } });

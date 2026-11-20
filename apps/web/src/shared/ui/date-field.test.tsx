@@ -4,6 +4,7 @@ import { type ReactNode, useState } from 'react';
 import { describe, expect, it } from 'vitest';
 
 import { uk } from '@/shared/i18n';
+import { devUk } from '@/shared/i18n/dev-uk';
 
 import { DateField } from './date-field';
 import { Dialog, DialogContent, DialogTrigger } from './dialog';
@@ -11,7 +12,7 @@ import { Field } from './field';
 
 const COPY = uk.calendar;
 
-const MODAL = uk.devUi.feedback;
+const MODAL = devUk.devUi.feedback;
 
 const TODAY = '2026-09-07';
 

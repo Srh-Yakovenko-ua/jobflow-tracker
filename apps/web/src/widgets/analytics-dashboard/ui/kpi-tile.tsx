@@ -33,7 +33,7 @@ function ValueSkeleton() {
 function KpiBody({ state, content }: Omit<KpiTileProps, 'label'>): ReactNode {
   if (content !== undefined) return <KpiValue content={content} />;
   if (state.status === 'failed') {
-    return <LoadFailedPanel onRetry={state.onRetry} retrying={state.retrying} />;
+    return <LoadFailedPanel load={state} />;
   }
   return <ValueSkeleton />;
 }

@@ -38,8 +38,7 @@ function FeedMore({ query }: Readonly<Pick<NotificationFeed, 'query'>>) {
   if (query.isFetchNextPageError) {
     return (
       <LoadFailedAlert
-        onRetry={onMore}
-        retrying={query.isFetchingNextPage}
+        load={{ onRetry: onMore, retrying: query.isFetchingNextPage }}
         className="animate-fade-in self-center"
       />
     );
@@ -67,7 +66,7 @@ export function FeedBody({ feed, context }: FeedBodyProps) {
   if (days === undefined) {
     const load = sectionLoadOf(query);
     if (!load.failed) return <PageSkeleton />;
-    return <LoadFailedPanel onRetry={load.onRetry} retrying={load.retrying} />;
+    return <LoadFailedPanel load={load} />;
   }
   if (days.length === 0) return <EverybodyAnswered />;
   return (

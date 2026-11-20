@@ -30,5 +30,5 @@ export function SectionFrame({ title, titleRef, children }: SectionFrameProps) {
 export function SectionBody({ load, ready, children }: SectionBodyProps) {
   if (ready) return children;
   if (!load.failed) return <PageSkeleton />;
-  return <LoadFailedPanel onRetry={load.onRetry} retrying={load.retrying} />;
+  return <LoadFailedPanel load={load} />;
 }

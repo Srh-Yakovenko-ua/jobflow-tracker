@@ -37,8 +37,6 @@ const MATCH_VALIDATION_ROUTE = {
   schema: matchValidationResponseSchema,
 };
 
-const SEARCH_KEY_LENGTH = 4;
-
 const ROUTES = {
   funnel: { path: '/analytics/funnel', schema: funnelResponseSchema, keyOf: analyticsKeys.funnel },
   reasons: {
@@ -103,10 +101,9 @@ export const sourcesQueryOptions = (searchId?: string) =>
 export const timingsQueryOptions = (searchId?: string) =>
   scopedQueryOptions({ route: ROUTES.timings, searchId });
 
-const searchPartOf = (queryKey: QueryKey) => hashKey(queryKey.slice(0, SEARCH_KEY_LENGTH));
-
 export function forecastQueryOptions({ searchId, applicationsPerWeek, improve }: ForecastScope) {
   const queryKey = analyticsKeys.forecast({ searchId, applicationsPerWeek, improve });
+  const searchKey = analyticsKeys.forecastSearch(searchId);
   return queryOptions({
     ...pathQueryOptions({
       route: FORECAST_ROUTE,
@@ -115,7 +112,8 @@ export function forecastQueryOptions({ searchId, applicationsPerWeek, improve }:
     }),
     queryKey,
     placeholderData: (previous, previousQuery) =>
-      previousQuery !== undefined && searchPartOf(previousQuery.queryKey) === searchPartOf(queryKey)
+      previousQuery !== undefined &&
+      hashKey(previousQuery.queryKey.slice(0, searchKey.length)) === hashKey(searchKey)
         ? previous
         : undefined,
   });

@@ -3,14 +3,15 @@ import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 
 import { uk } from '@/shared/i18n';
+import { devUk } from '@/shared/i18n/dev-uk';
 
 import { Field } from './field';
 import { Select, type SelectProps, type SelectView } from './select';
 import { SOURCE_OPTIONS } from './source-options';
 
-const COPY = uk.devUi.selects.source;
+const COPY = devUk.devUi.selects.source;
 
-const CV = uk.devUi.selects.cv;
+const CV = devUk.devUi.selects.cv;
 
 const SOURCE_GROUPS = [{ options: SOURCE_OPTIONS }];
 

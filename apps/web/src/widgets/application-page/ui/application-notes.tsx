@@ -19,7 +19,7 @@ const COPY = uk.applicationPage.notes;
 function NoteList({ notes }: NoteListProps) {
   const { load, entries } = notes;
   if (load.pending) return <TextSkeleton />;
-  if (load.failed) return <LoadFailedPanel onRetry={load.onRetry} retrying={load.retrying} />;
+  if (load.failed) return <LoadFailedPanel load={load} />;
   if (entries.length === 0) return null;
   return (
     <ul className="flex animate-fade-in flex-col gap-3">
@@ -43,7 +43,7 @@ export function ApplicationNotes({ application }: ApplicationNotesProps) {
       header={{ after: <NotesPrivacy />, className: 'flex items-center gap-1' }}
       view={{
         className: 'flex flex-col gap-4 pt-5 shadow-[inset_0_1px_0_var(--line-soft)]',
-        busy: notes.load.pending,
+        busy: notes.load.busy,
       }}
     >
       <div className="flex flex-col gap-3">

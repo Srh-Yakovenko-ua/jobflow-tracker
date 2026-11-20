@@ -1,13 +1,13 @@
 import { render, screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 
-import { uk } from '@/shared/i18n';
+import { devUk } from '@/shared/i18n/dev-uk';
 
 import { Field } from './field';
 import { Input } from './input';
 import { Textarea } from './textarea';
 
-const COPY = uk.devUi.fields;
+const COPY = devUk.devUi.fields;
 
 function messageRowOf(control: HTMLElement) {
   return document.getElementById(control.getAttribute('aria-describedby') ?? '');

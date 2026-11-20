@@ -67,7 +67,7 @@ export function UploadForm({ file, form, state }: UploadFormProps) {
       onSubmit={(event) => {
         void form.onSubmit(event);
       }}
-      className="flex min-w-0 flex-col gap-3.5 rounded-[12px] bg-surface p-4 shadow-e1"
+      className="flex min-w-0 flex-col gap-3.5 rounded-lg bg-surface p-4 shadow-e1"
     >
       <p className="flex min-w-0 items-baseline gap-2 text-[13px]">
         <span className="min-w-0 truncate font-semibold text-ink">{file.name}</span>

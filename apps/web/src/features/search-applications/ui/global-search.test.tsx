@@ -4,9 +4,9 @@ import { http, HttpResponse } from 'msw/http';
 import { delay } from 'msw/utils/delay';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { FULL_CARD } from '@/entities/application';
 import { uk } from '@/shared/i18n';
 import { apiUrl, validationReply } from '@/test/api-handlers';
+import { FULL_CARD } from '@/test/full-application';
 import { heldSearchRoute, reviewDraftItemOf } from '@/test/list-fixtures';
 import { push } from '@/test/navigation';
 import { renderInApp } from '@/test/render-in-app';

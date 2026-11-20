@@ -1,28 +1,18 @@
 'use client';
 
-import {
-  type Application,
-  type ApplicationResponse,
-  AUTH_ROUTES,
-  type Stage,
-} from '@jobflow/shared';
-import { useRouter } from 'next/navigation';
+import type { Application, ApplicationResponse, Stage } from '@jobflow/shared';
 import { useRef } from 'react';
 
-import { DeleteApplicationDialog } from '@/features/delete-application';
 import { ApplicationEditForm, type EditField } from '@/features/edit-application';
-import { ScheduleEventDialog, type SchedulePlan } from '@/features/schedule-event';
 import { LoadFailedPanel } from '@/shared/ui/error-panel';
 import { NotFoundState } from '@/shared/ui/not-found-state';
 import { Reveal } from '@/shared/ui/reveal';
-import { useSheetClose } from '@/shared/ui/sheet';
 import { PageSkeleton } from '@/shared/ui/skeleton';
 
 import { useApplicationMatch } from '../model/use-application-match';
 import {
   type ApplicationPageActions,
   type ApplicationPageState,
-  type ApplicationPanel,
   useApplicationPage,
 } from '../model/use-application-page';
 import { ApplicationActions, type ApplicationFocusTargets } from './application-actions';
@@ -33,6 +23,7 @@ import { ApplicationRecruiter } from './application-recruiter';
 import { ApplicationSchedule } from './application-schedule';
 import { AttachedResume } from './attached-resume';
 import { PageColumns } from './page-columns';
+import { PageDialogs } from './page-dialogs';
 import { PageMain } from './page-main';
 import { type ApplicationPageMode, PageTopBar } from './page-top-bar';
 
@@ -42,20 +33,6 @@ export type ApplicationPageProps = Readonly<{
   id: Application['id'];
   view: { mode: ApplicationPageMode };
 }>;
-
-function useLeaveAfterDelete(): () => void {
-  const router = useRouter();
-  const closeSheet = useSheetClose();
-  if (closeSheet !== null) return closeSheet;
-  return () => {
-    router.replace(AUTH_ROUTES.home);
-  };
-}
-
-function schedulePlanOf(panel: ApplicationPanel | null): SchedulePlan | null {
-  if (panel?.kind === 'schedule' || panel?.kind === 'reschedule') return panel;
-  return null;
-}
 
 type PageActionsProps = Readonly<{
   application: ApplicationResponse;
@@ -114,7 +91,7 @@ type LoadedPageProps = Readonly<{
 function LoadedPage({ application, page, view }: LoadedPageProps) {
   const titleRef = useRef<HTMLHeadingElement>(null);
   const moreRef = useRef<HTMLButtonElement>(null);
-  const onDeleted = useLeaveAfterDelete();
+  const focus = { title: titleRef, more: moreRef };
   const match = useApplicationMatch(application);
   const { panel } = page;
   const editing = panel?.kind === 'edit' ? panel.field : null;
@@ -124,10 +101,6 @@ function LoadedPage({ application, page, view }: LoadedPageProps) {
   const closeEditor = () => {
     page.actions.onClose();
     focusTitle();
-  };
-  const returnFocus = (event: Event, target: HTMLElement | null) => {
-    event.preventDefault();
-    target?.focus();
   };
   return (
     <div className="animate-fade-in">
@@ -145,7 +118,7 @@ function LoadedPage({ application, page, view }: LoadedPageProps) {
                 application={application}
                 page={page}
                 editor={{ editing, onDone: closeEditor }}
-                focus={{ title: titleRef, more: moreRef }}
+                focus={focus}
               />
             </ApplicationHeader>
           ),
@@ -163,25 +136,7 @@ function LoadedPage({ application, page, view }: LoadedPageProps) {
           ),
         }}
       />
-      <DeleteApplicationDialog
-        application={panel?.kind === 'delete' ? application : null}
-        actions={{ onCancel: page.actions.onClose, onDeleted }}
-        handlers={{
-          onCloseAutoFocus: (event) => {
-            returnFocus(event, moreRef.current);
-          },
-        }}
-      />
-      <ScheduleEventDialog
-        application={application}
-        plan={schedulePlanOf(panel)}
-        actions={{ onClose: page.actions.onClose }}
-        handlers={{
-          onCloseAutoFocus: (event) => {
-            returnFocus(event, titleRef.current);
-          },
-        }}
-      />
+      <PageDialogs application={application} page={page} focus={focus} />
     </div>
   );
 }
@@ -192,7 +147,7 @@ function PageContent({ id, view }: ApplicationPageProps) {
   if (page.missing) return <NotFoundState />;
   if (application === undefined) {
     return page.load.failed ? (
-      <LoadFailedPanel onRetry={page.load.onRetry} retrying={page.load.retrying} />
+      <LoadFailedPanel load={page.load} />
     ) : (
       <PageSkeleton className="pt-14" />
     );

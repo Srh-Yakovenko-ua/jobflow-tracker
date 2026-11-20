@@ -74,11 +74,13 @@ function ExportStatus({ exportId, actions }: ExportStatusProps) {
       <Fade key={state}>
         {state === 'failed' && (
           <LoadFailedAlert
-            onRetry={() => {
-              if (stalled) actions.onRestart();
-              else load.onRetry();
+            load={{
+              onRetry: () => {
+                if (stalled) actions.onRestart();
+                else load.onRetry();
+              },
+              retrying: load.retrying,
             }}
-            retrying={load.retrying}
           />
         )}
         {state === 'building' && (

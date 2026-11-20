@@ -22,8 +22,9 @@ export function useApplicationInterviewPrep(application: ApplicationResponse) {
     shown: gate.shown,
   });
   const pending = section.load.pending || gate.settling;
+  const busy = section.load.busy || gate.settling;
   return {
-    section: { ...section, load: { ...section.load, pending } },
+    section: { ...section, load: { ...section.load, pending, busy } },
     requestable: gate.requestable,
   };
 }

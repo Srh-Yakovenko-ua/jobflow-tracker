@@ -16,6 +16,8 @@ import {
 
 import { uk } from '@/shared/i18n';
 
+import { type Folded, foldedOf } from './timeline-fold';
+
 export type TimelineMarker =
   { kind: 'stage'; stage: Stage } | { kind: 'ring' } | { kind: 'silence' };
 
@@ -43,8 +45,6 @@ export type TimelineRowsInput = {
 type Meta = TimelineItem['meta'];
 
 type MetaValue = Meta[string] | undefined;
-
-type Folded = { parsed: TimelineItem | undefined; confirmed: TimelineItem | undefined };
 
 type MetaContext = Folded & {
   meta: Meta;
@@ -153,16 +153,6 @@ const LOOKS: Record<TimelineItemType, RowLook> = {
   draft_confirmed: { marker: ringed, tone: 'muted', meta: noMeta },
   match_scored: { marker: ringed, tone: 'muted', meta: noMeta },
 };
-
-function foldedOf(items: readonly TimelineItem[]): Folded {
-  if (!items.some((item) => item.type === 'captured')) {
-    return { parsed: undefined, confirmed: undefined };
-  }
-  return {
-    parsed: items.filter((item) => item.type === 'ai_parsed').at(-1),
-    confirmed: items.find((item) => item.type === 'draft_confirmed'),
-  };
-}
 
 function isApplied({ type, meta }: TimelineItem): boolean {
   return type === 'stage_changed' && meta.fromStage === null && meta.toStage === 'applied';

@@ -1,18 +1,14 @@
 import {
   type CapturePasteInput,
   type CapturePasteResponse,
-  capturePasteResponseSchema,
   type CreateApplicationInput,
-  createApplicationResponseSchema,
   type PossibleDuplicate,
 } from '@jobflow/shared';
 import { type MutationKey, useQueryClient } from '@tanstack/react-query';
 import type { FieldValues } from 'react-hook-form';
-import type { z } from 'zod';
 
 import { addErrorToastOf, type AddLimit, applicationKeys } from '@/entities/application';
 import {
-  apiClient,
   type ApplyFieldErrorsOptions,
   type GuardedSave,
   useGuardedSave,
@@ -20,6 +16,8 @@ import {
 } from '@/shared/api';
 import { uk } from '@/shared/i18n';
 import { showToast } from '@/shared/ui/toast';
+
+import { ADD_ENDPOINTS, type AddEndpoint, postAddition } from '../api/add-application';
 
 export type AddedApplication = Readonly<{ possibleDuplicates: readonly PossibleDuplicate[] }>;
 
@@ -35,8 +33,7 @@ export type AddSaveOptions<
 
 type AddRoute<Result extends AddedApplication> = Readonly<{
   mutationKey: MutationKey;
-  path: string;
-  schema: z.ZodType<Result>;
+  endpoint: AddEndpoint<Result>;
   toastDescription: string;
   limit: AddLimit;
 }>;
@@ -49,16 +46,14 @@ const MANUAL_KEY = ['add-application', 'manual'] as const;
 
 const PASTE = {
   mutationKey: PASTE_KEY,
-  path: '/capture/paste',
-  schema: capturePasteResponseSchema,
+  endpoint: ADD_ENDPOINTS.paste,
   toastDescription: uk.add.paste.added,
   limit: 'parseLimit',
 } as const;
 
 const MANUAL = {
   mutationKey: MANUAL_KEY,
-  path: '/applications',
-  schema: createApplicationResponseSchema,
+  endpoint: ADD_ENDPOINTS.manual,
   toastDescription: uk.add.manual.added,
   limit: 'requestLimit',
 } as const;
@@ -72,13 +67,7 @@ function useAddSave<Body, Values extends FieldValues, Result extends AddedApplic
   return useGuardedSave({
     mutationKey: route.mutationKey,
     request: (body: Body) =>
-      apiClient.request({
-        path: route.path,
-        method: 'POST',
-        body,
-        schema: route.schema,
-        idempotencyKey: submitKey.keyFor(body),
-      }),
+      postAddition({ endpoint: route.endpoint, body, idempotencyKey: submitKey.keyFor(body) }),
     form,
     errorToast: addErrorToastOf(route.limit),
     onSuccess: (added) => {

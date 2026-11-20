@@ -6,16 +6,36 @@ import { CHOICE_ROW } from './field-surface';
 
 export type ChoiceOption<Value extends string = string> = { value: Value; label: string };
 
-export type RadioGroupProps = Readonly<{
+export type RadioGroupProps<Value extends string> = Readonly<{
   'aria-label': string;
-  options: readonly ChoiceOption[];
-  value: string;
-  onValueChange: (value: string) => void;
+  options: readonly ChoiceOption<Value>[];
+  value: Value;
+  onValueChange: (value: Value) => void;
 }>;
 
-export function RadioGroup({ options, ...props }: RadioGroupProps) {
+type ChoiceChange<Value extends string> = Pick<RadioGroupProps<Value>, 'options' | 'onValueChange'>;
+
+export function choiceChangeOf<Value extends string>({
+  options,
+  onValueChange,
+}: ChoiceChange<Value>): (next: string) => void {
+  return (next) => {
+    const picked = options.find((option) => option.value === next);
+    if (picked) onValueChange(picked.value);
+  };
+}
+
+export function RadioGroup<Value extends string>({
+  options,
+  onValueChange,
+  ...props
+}: RadioGroupProps<Value>) {
   return (
-    <RadioGroupPrimitive.Root {...props} className="flex flex-col">
+    <RadioGroupPrimitive.Root
+      {...props}
+      onValueChange={choiceChangeOf({ options, onValueChange })}
+      className="flex flex-col"
+    >
       {options.map((option) => (
         <label key={option.value} className={CHOICE_ROW}>
           <RadioGroupPrimitive.Item

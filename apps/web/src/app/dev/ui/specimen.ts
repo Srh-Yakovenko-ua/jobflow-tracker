@@ -1,9 +1,9 @@
 import { ACTIVE_STAGES, STAGE_LABELS } from '@jobflow/shared';
 
-import { uk } from '@/shared/i18n';
+import { devUk } from '@/shared/i18n/dev-uk';
 import type { SelectOptionGroup } from '@/shared/ui/field-surface';
 
-const CV = uk.devUi.selects.cv;
+const CV = devUk.devUi.selects.cv;
 
 export const CV_GROUPS: readonly SelectOptionGroup[] = [
   {

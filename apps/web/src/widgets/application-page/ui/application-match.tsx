@@ -90,7 +90,7 @@ function MatchState({ view, job }: StateProps) {
 
 function MatchBody({ match }: ApplicationMatchProps) {
   const { load, view, job } = match;
-  if (load.failed) return <LoadFailedPanel onRetry={load.onRetry} retrying={load.retrying} />;
+  if (load.failed) return <LoadFailedPanel load={load} />;
   if (view === null) return <TextSkeleton />;
   return (
     <Reveal shown view={{ mode: 'wait', id: STATE_BODY[view.kind] }}>

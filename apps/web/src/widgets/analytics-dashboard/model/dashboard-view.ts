@@ -14,7 +14,7 @@ import {
 
 import type { FunnelStory } from '@/features/share-funnel';
 import { uk } from '@/shared/i18n';
-import type { FrameQuery } from '@/shared/lib/section-load';
+import type { SectionQuery } from '@/shared/lib/section-load';
 import type { ChartFrameHeader, ChartFrameState } from '@/shared/ui/chart-frame';
 import { chartFrameStateOf } from '@/shared/ui/chart-frame-state';
 
@@ -83,11 +83,11 @@ export type DashboardFrames = Record<DashboardFrameId, DashboardFrame> & {
   salary: SalaryFrame;
 };
 
-export type DashboardViewInput = Readonly<{ queries: DashboardQueries; searches: FrameQuery }>;
+export type DashboardViewInput = Readonly<{ queries: DashboardQueries; searches: SectionQuery }>;
 
-type SearchBoundQuery = Readonly<{ query: FrameQuery; searches: FrameQuery }>;
+type SearchBoundQuery = Readonly<{ query: SectionQuery; searches: SectionQuery }>;
 
-type DataQuery<Data> = FrameQuery & Readonly<{ data: Data | undefined }>;
+type DataQuery<Data> = SectionQuery & Readonly<{ data: Data | undefined }>;
 
 type LowDataQuery<Data> = Readonly<{
   query: DataQuery<Data>;

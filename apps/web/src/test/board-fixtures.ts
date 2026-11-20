@@ -18,9 +18,8 @@ import { buildDesignTimings } from '@jobflow/shared/testing';
 import type { HttpResponseResolver } from 'msw';
 import { http, HttpResponse } from 'msw/http';
 
-import { FULL_APPLICATION, FULL_CARD } from '@/entities/application';
-
 import { analyticsUrl, apiUrl, errorReply } from './api-handlers';
+import { FULL_APPLICATION, FULL_CARD } from './full-application';
 import type { Latch } from './latch';
 
 export type ColumnCounts = Partial<Record<Stage, number>>;

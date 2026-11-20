@@ -17,6 +17,8 @@ function searchScoped<Block extends string>(block: Block) {
   return (searchId?: string) => [...SUMMARY, block, { searchId }] as const;
 }
 
+const forecastSearch = searchScoped('forecast');
+
 export const analyticsKeys = {
   all: ANALYTICS,
   summary: () => SUMMARY,
@@ -27,8 +29,9 @@ export const analyticsKeys = {
   reasons: searchScoped('reasons'),
   sources: searchScoped('sources'),
   timings: searchScoped('timings'),
+  forecastSearch,
   forecast: ({ searchId, applicationsPerWeek, improve }: ForecastScope) =>
-    [...SUMMARY, 'forecast', { searchId }, { applicationsPerWeek, improve }] as const,
+    [...forecastSearch(searchId), { applicationsPerWeek, improve }] as const,
   insights: searchScoped('insights'),
   salary: searchScoped('salary'),
   matchValidation: () => [...SUMMARY, 'match-validation'] as const,

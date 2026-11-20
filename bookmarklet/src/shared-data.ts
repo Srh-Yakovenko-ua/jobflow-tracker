@@ -7,6 +7,7 @@ export type ToastLook = {
   dark: string;
   font: string;
   radius: string;
+  innerRadius: string;
   shadow: string;
   spring: string;
   hover: string;

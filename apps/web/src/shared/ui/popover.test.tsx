@@ -2,12 +2,12 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
 
-import { uk } from '@/shared/i18n';
+import { devUk } from '@/shared/i18n/dev-uk';
 
 import { Button } from './button';
 import { Popover, PopoverContent, PopoverTrigger } from './popover';
 
-const COPY = uk.devUi.feedback;
+const COPY = devUk.devUi.feedback;
 
 describe('Popover', () => {
   it('Escape closes the open popover and focus goes back to its trigger', async () => {

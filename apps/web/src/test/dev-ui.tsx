@@ -1,16 +1,18 @@
 import { screen, within } from '@testing-library/react';
 
 import DevUiPage from '@/app/dev/ui/page';
-import { uk } from '@/shared/i18n';
+import { devUk } from '@/shared/i18n/dev-uk';
 
 import { renderInApp } from './render-in-app';
+
+export { SIDE_OPTIONS, useStackSpecimen } from '@/app/dev/ui/specimen-options';
 
 export function renderGallery() {
   return renderInApp(<DevUiPage />);
 }
 
 export async function findLiveToaster() {
-  const description = await screen.findByText(uk.devUi.feedback.realToast.description);
+  const description = await screen.findByText(devUk.devUi.feedback.realToast.description);
   const toaster = description.closest<HTMLElement>('[data-sonner-toaster]');
   if (toaster === null) throw new Error('the live toast is outside the sonner toaster');
   return within(toaster);

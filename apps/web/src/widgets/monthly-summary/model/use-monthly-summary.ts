@@ -5,6 +5,7 @@ import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { jobQueryOptions } from '@/entities/application';
 import { latestSummaryQueryOptions } from '@/entities/summary';
 import { useLivePollMs } from '@/shared/api';
+import { sectionLoadOf } from '@/shared/lib/section-load';
 
 import { runningJobOf, summaryStateOf } from '../lib/summary-state';
 
@@ -21,12 +22,12 @@ export function useMonthlySummary() {
     refetchInterval: pollMs,
     placeholderData: keepPreviousData,
   });
+  const load = sectionLoadOf(latest);
   return {
     latest: latest.data,
-    state: summaryStateOf({ latest, job: job.data }),
-    retry: () => {
-      void latest.refetch();
-    },
+    latestQuery: latest,
+    state: summaryStateOf({ latest: { data: latest.data, failed: load.failed }, job: job.data }),
+    load,
   };
 }
 

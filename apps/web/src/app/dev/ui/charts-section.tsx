@@ -4,7 +4,7 @@ import { merge } from 'chart.js/helpers';
 import type { SankeyParsedData } from 'chartjs-chart-sankey';
 import { Bar, Chart } from 'react-chartjs-2';
 
-import { uk } from '@/shared/i18n';
+import { devUk } from '@/shared/i18n/dev-uk';
 import {
   type ChartThemeOptions,
   sankeyFlowLine,
@@ -24,7 +24,7 @@ import {
 import { GallerySection, Note, Specimen } from './gallery';
 import { specimenNoop } from './state-specimens';
 
-const COPY = uk.devUi.charts;
+const COPY = devUk.devUi.charts;
 
 const STATES = COPY.states;
 
@@ -130,7 +130,7 @@ function FrameStates() {
       <Specimen eyebrow={STATES.failed.eyebrow}>
         <ChartFrame
           header={STATES.failed.header}
-          state={{ status: 'failed', onRetry: specimenNoop }}
+          state={{ status: 'failed', onRetry: specimenNoop, retrying: false }}
         />
       </Specimen>
     </div>

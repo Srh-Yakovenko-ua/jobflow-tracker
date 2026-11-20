@@ -10,7 +10,7 @@ export const TOAST_STYLES =
   'p+p{font-weight:400;font-size:12.5px;line-height:1.5;color:var(--m)}' +
   'a{display:flex;align-items:center;min-height:44px;margin:0 -7px -14px;padding:0 7px;font-size:13px;color:var(--k);text-decoration:none}' +
   'button{all:unset;flex:none;display:grid;place-items:center;width:44px;height:44px;margin:-10px 0;color:var(--m);cursor:pointer}' +
-  'a,button{border-radius:8px}' +
+  `a,button{border-radius:${look.innerRadius}}` +
   ':is(a,button):hover{background:var(--t)}' +
   ':focus-visible{outline:2px solid var(--a);outline-offset:2px}' +
   'svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round}' +

@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
 
 import { uk } from '@/shared/i18n';
+import { devUk } from '@/shared/i18n/dev-uk';
 
 import { Button } from './button';
 import {
@@ -16,7 +17,7 @@ import {
   keepFocusOnDialog,
 } from './dialog';
 
-const COPY = uk.devUi.feedback;
+const COPY = devUk.devUi.feedback;
 
 type RenderOptions = Readonly<{
   handlers?: DialogContentHandlers;

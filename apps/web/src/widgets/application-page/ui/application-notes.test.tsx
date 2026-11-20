@@ -6,7 +6,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { errorReply } from '@/test/api-handlers';
 import { ACME_APPLICATION } from '@/test/application-fixtures';
 import { fixtureIdOf } from '@/test/board-fixtures';
-import { fakeTimeouts } from '@/test/fake-timeouts';
+import { advanceBy, fakeTimeouts } from '@/test/fake-timeouts';
 import { type Latch, latch } from '@/test/latch';
 import { NOTE_ID, noteOf, notesRoute, noteUpdateRoute } from '@/test/note-fixtures';
 import { renderApplicationPage } from '@/test/render-application-page';
@@ -137,7 +137,7 @@ async function whilePagehideSaveIsHeld() {
 
 function answerLate(held: Latch) {
   held.release();
-  return act(() => vi.advanceTimersByTimeAsync(1000));
+  return advanceBy(1000);
 }
 
 async function autosaveTwice({ user, editor, notes, between }: AutosaveSetup) {

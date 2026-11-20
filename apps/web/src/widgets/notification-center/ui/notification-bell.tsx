@@ -18,7 +18,7 @@ const COPY = uk.notifications;
 const BADGE_CAP = 99;
 
 const BELL =
-  'touch-target flex size-8 flex-none items-center justify-center rounded-[9px] bg-surface text-ink-2 inset-ring inset-ring-line-soft transition-colors duration-(--duration-instant) ease-standard hover:bg-surface-3 hover:text-ink active:bg-surface-3 data-[state=open]:bg-accent-tint data-[state=open]:text-accent-press data-[state=open]:inset-ring-accent/40';
+  'touch-target flex size-8 flex-none items-center justify-center rounded-md bg-surface text-ink-2 inset-ring inset-ring-line-soft transition-colors duration-(--duration-instant) ease-standard hover:bg-surface-3 hover:text-ink active:bg-surface-3 data-[state=open]:bg-accent-tint data-[state=open]:text-accent-press data-[state=open]:inset-ring-accent/40';
 
 function badgeOf(unread: number): string {
   return unread > BADGE_CAP ? `${String(BADGE_CAP)}+` : String(unread);
@@ -54,7 +54,7 @@ export function NotificationBell() {
       <PopoverContent
         aria-label={COPY.title}
         align="end"
-        className="flex w-73 max-w-[calc(100vw-16px)] origin-(--radix-popover-content-transform-origin) flex-col gap-0.5 rounded-[14px] p-1.5"
+        className="flex w-73 max-w-[calc(100vw-16px)] origin-(--radix-popover-content-transform-origin) flex-col gap-0.5 rounded-xl p-1.5"
       >
         <BellPanel
           unread={unread}

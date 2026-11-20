@@ -38,7 +38,7 @@ export function ApplicationFollowup({ application }: ApplicationFollowupProps) {
         id: FOLLOW_UP_ANCHOR,
         className:
           'flex scroll-mt-6 flex-col gap-3.5 rounded-lg bg-surface p-4.5 shadow-e1 inset-ring inset-ring-accent/25',
-        busy: followup.load.pending,
+        busy: followup.load.busy,
       }}
     >
       <AiSectionBody section={followup}>

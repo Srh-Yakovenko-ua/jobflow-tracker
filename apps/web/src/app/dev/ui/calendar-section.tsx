@@ -2,14 +2,14 @@
 
 import { useState } from 'react';
 
-import { uk } from '@/shared/i18n';
+import { devUk } from '@/shared/i18n/dev-uk';
 import { cn } from '@/shared/lib/cn';
 import { Calendar, type CalendarDays } from '@/shared/ui/calendar';
 import { DateField } from '@/shared/ui/date-field';
 
 import { GallerySection, Note, PANEL, Specimen } from './gallery';
 
-const COPY = uk.devUi.calendar;
+const COPY = devUk.devUi.calendar;
 
 const SPECIMEN_DAYS: CalendarDays = {
   today: '2026-09-07',

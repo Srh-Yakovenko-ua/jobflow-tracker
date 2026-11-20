@@ -4,12 +4,13 @@ import { toast, Toaster } from 'sonner';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { uk } from '@/shared/i18n';
+import { devUk } from '@/shared/i18n/dev-uk';
 
 import { showToast, ToastCard, type ToastContent } from './toast';
 
-const COPY = uk.devUi.feedback.realToast;
+const COPY = devUk.devUi.feedback.realToast;
 
-const UNDO = uk.devUi.feedback.toasts.undo;
+const UNDO = devUk.devUi.feedback.toasts.undo;
 
 function showActionToast(content: Partial<ToastContent> = {}) {
   const onAction = vi.fn();

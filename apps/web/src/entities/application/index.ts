@@ -37,7 +37,6 @@ export { type AiSection, type AiSectionReady, useAiSection } from './model/ai-po
 export type { ApplicationMove, MovingApplication } from './model/application-move';
 export type { ApplicationCardContext } from './model/card-context';
 export { CARD_DENSITIES, type CardDensity } from './model/card-density';
-export { FULL_APPLICATION, FULL_CARD } from './model/card-specimens';
 export { applicationKeys, jobKeys, timelineKeys } from './model/keys';
 export { OFFER_COMPARE } from './model/offer-compare';
 export { useApplicationAiRequest } from './model/use-application-ai-request';

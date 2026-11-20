@@ -2,13 +2,13 @@ import { screen, within } from '@testing-library/react';
 import { toast } from 'sonner';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { uk } from '@/shared/i18n';
+import { devUk } from '@/shared/i18n/dev-uk';
 import { TOUCH_HEIGHT } from '@/shared/ui/touch-height';
 import { axeViolations } from '@/test/axe';
 import { findLiveToaster, renderGallery, sectionTitled, specimenOf } from '@/test/dev-ui';
 import { quietLogs } from '@/test/quiet-logs';
 
-const DEMO = uk.devUi.errorPanels.crashDemo;
+const DEMO = devUk.devUi.errorPanels.crashDemo;
 
 const EMPTY_TITLES = [
   'Тут буде твоя воронка',
@@ -146,8 +146,8 @@ describe('/dev/ui states from the empty states screen', () => {
     expect(demo.queryByText(DEMO.widget)).toBeNull();
     expect(logged).toHaveBeenCalledTimes(1);
 
-    await user.click(screen.getByRole('button', { name: uk.devUi.feedback.fireToast }));
-    expect((await findLiveToaster()).getByText(uk.devUi.feedback.realToast.title)).toBeDefined();
+    await user.click(screen.getByRole('button', { name: devUk.devUi.feedback.fireToast }));
+    expect((await findLiveToaster()).getByText(devUk.devUi.feedback.realToast.title)).toBeDefined();
 
     await user.click(demo.getByRole('button', { name: 'Перезавантажити' }));
     expect(demo.getByText(DEMO.widget)).toBeDefined();

@@ -3,6 +3,7 @@ import type { ReactNode } from 'react';
 
 import { uk } from '@/shared/i18n';
 import { cn } from '@/shared/lib/cn';
+import type { RetryLoad } from '@/shared/lib/section-load';
 import { formatClock, formatMegabytes } from '@/shared/lib/state-format';
 
 import { Button } from './button';
@@ -121,12 +122,9 @@ export function FileTooBigPanel({ file, onPick }: FileTooBigPanelProps) {
   return <PickAnotherPanel content={content} onPick={onPick} />;
 }
 
-export type LoadFailedPanelProps = Readonly<{
-  onRetry: () => void;
-  retrying?: boolean | undefined;
-}>;
+export type LoadFailedPanelProps = Readonly<{ load: RetryLoad }>;
 
-export function LoadFailedPanel({ onRetry, retrying }: LoadFailedPanelProps) {
+export function LoadFailedPanel({ load }: LoadFailedPanelProps) {
   const { action, ...content } = COPY.loadFailed;
-  return <RetryPanel content={content} retry={{ label: action, onRetry, retrying }} />;
+  return <RetryPanel content={content} retry={{ label: action, ...load }} />;
 }

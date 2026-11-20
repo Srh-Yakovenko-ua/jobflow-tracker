@@ -2,11 +2,11 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
 
-import { uk } from '@/shared/i18n';
+import { devUk } from '@/shared/i18n/dev-uk';
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './tabs';
 
-const COPY = uk.devUi.navigation;
+const COPY = devUk.devUi.navigation;
 
 const { board, analytics, reminders } = COPY.tabs;
 

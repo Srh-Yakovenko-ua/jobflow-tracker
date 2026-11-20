@@ -1,5 +1,5 @@
 import { screen, waitFor, within } from '@testing-library/react';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, onTestFinished, vi } from 'vitest';
 
 import { ANY_IDEMPOTENCY_KEY, errorReply } from '@/test/api-handlers';
 import { ACME_APPLICATION } from '@/test/application-fixtures';
@@ -49,6 +49,17 @@ async function openRecruiterEditor() {
   await within(section).findByText('Оксана Левченко');
   await page.user.click(editButton());
   return { ...page, section };
+}
+
+async function renderFailedRecruiter() {
+  const { user } = renderRecruiter({ list: FAILED });
+  const section = await findRecruiter();
+  const retry = await within(section).findByRole(
+    'button',
+    { name: 'Спробувати ще раз' },
+    { timeout: TRANSIENT_RETRY_MS },
+  );
+  return { user, section, retry };
 }
 
 describe('ApplicationRecruiter', () => {
@@ -168,18 +179,28 @@ describe('ApplicationRecruiter', () => {
   });
 
   it('a failed load offers a retry that brings the recruiter', async () => {
-    const { user } = renderRecruiter({ list: FAILED });
-    const section = await findRecruiter();
-    const retry = await within(section).findByRole(
-      'button',
-      { name: 'Спробувати ще раз' },
-      { timeout: TRANSIENT_RETRY_MS },
-    );
+    const { user, section, retry } = await renderFailedRecruiter();
     server.use(...contactRoutes({ items: [DESIGN_CONTACT] }).handlers);
 
     await user.click(retry);
 
     expect(await within(section).findByText('Оксана Левченко')).toBeDefined();
+  });
+
+  it('a section stays aria-busy while its retry runs', async () => {
+    const { user, section, retry } = await renderFailedRecruiter();
+    const held = latch();
+    onTestFinished(() => {
+      held.release();
+    });
+    server.use(...contactRoutes({ items: [DESIGN_CONTACT], list: { latch: held } }).handlers);
+
+    await user.click(retry);
+
+    await waitFor(() => {
+      expect(retry.getAttribute('aria-busy')).toBe('true');
+    });
+    expect(section.getAttribute('aria-busy')).toBe('true');
   });
 
   it('while the recruiter loads the block is busy and offers nothing to edit', async () => {

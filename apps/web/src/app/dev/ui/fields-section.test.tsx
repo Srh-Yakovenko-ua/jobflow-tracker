@@ -3,12 +3,13 @@ import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
 
 import { uk } from '@/shared/i18n';
+import { devUk } from '@/shared/i18n/dev-uk';
 
 import { FieldsSection } from './fields-section';
 
-const SEARCH = uk.devUi.fields.search;
+const SEARCH = devUk.devUi.fields.search;
 
-const TAGS = uk.devUi.fields.tags;
+const TAGS = devUk.devUi.fields.tags;
 
 describe('FieldsSection', () => {
   it('the tags hint counts the chips and turns back into the Enter hint once Backspace empties them', async () => {

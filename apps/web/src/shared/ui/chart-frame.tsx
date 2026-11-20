@@ -7,6 +7,7 @@ import type { z } from 'zod';
 
 import { uk } from '@/shared/i18n';
 import { cn } from '@/shared/lib/cn';
+import type { RetryLoad } from '@/shared/lib/section-load';
 
 import { DashedBars, EmptyState } from './empty-state';
 import { LoadFailedPanel } from './error-panel';
@@ -23,7 +24,7 @@ const HERO_PLOT_HEIGHT = 'h-95';
 
 export type ChartFrameState =
   | { status: 'loading' }
-  | { status: 'failed'; onRetry: () => void; retrying?: boolean | undefined }
+  | ({ status: 'failed' } & RetryLoad)
   | z.infer<typeof insufficientDataSchema>
   | { status: 'ready' };
 
@@ -72,7 +73,7 @@ function FrameBody({ state, plot, children }: FrameBodyProps) {
     case 'loading':
       return <PlotSkeleton height={look.skeleton} />;
     case 'failed':
-      return <LoadFailedPanel onRetry={state.onRetry} retrying={state.retrying} />;
+      return <LoadFailedPanel load={state} />;
     case 'insufficient_data':
       return (
         <EmptyState

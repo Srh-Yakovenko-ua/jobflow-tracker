@@ -51,10 +51,10 @@ type ButtonLook = { variant?: ButtonVariant; size?: ButtonSize; loading?: boolea
 
 type LabelButtonProps = ComponentProps<'button'> & ButtonLook & { icon?: ReactNode };
 
-type IconButtonProps = Omit<ComponentProps<'button'>, 'children'> &
+type IconOnlyButtonProps = Omit<ComponentProps<'button'>, 'children'> &
   ButtonLook & { icon: ReactNode; children?: never; 'aria-label': string };
 
-export type ButtonProps = LabelButtonProps | IconButtonProps;
+export type ButtonProps = LabelButtonProps | IconOnlyButtonProps;
 
 export type ButtonShape = Required<Pick<ButtonLook, 'variant' | 'size'>> & {
   iconOnly: boolean;

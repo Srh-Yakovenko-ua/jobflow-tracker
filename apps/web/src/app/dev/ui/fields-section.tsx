@@ -5,6 +5,7 @@ import { useRef, useState } from 'react';
 
 import { ConfidenceChip, NO_REVIEW } from '@/features/edit-application';
 import { uk } from '@/shared/i18n';
+import { devUk } from '@/shared/i18n/dev-uk';
 import { cn } from '@/shared/lib/cn';
 import { ClearButton } from '@/shared/ui/clear-button';
 import { Field } from '@/shared/ui/field';
@@ -19,7 +20,7 @@ import { Textarea } from '@/shared/ui/textarea';
 
 import { GallerySection, PANEL, TILE_GRID } from './gallery';
 
-const COPY = uk.devUi.fields;
+const COPY = devUk.devUi.fields;
 
 const SALARY_MEDIAN = 4900;
 
@@ -91,7 +92,7 @@ function SalaryField() {
 function SourceField() {
   const [source, setSource] = useState('djinni');
   return (
-    <Field label={uk.devUi.selects.source.label} footer={{ hint: COPY.source.hint }}>
+    <Field label={devUk.devUi.selects.source.label} footer={{ hint: COPY.source.hint }}>
       <Select groups={[{ options: SOURCE_OPTIONS }]} value={source} onValueChange={setSource} />
     </Field>
   );
