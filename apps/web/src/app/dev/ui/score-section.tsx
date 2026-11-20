@@ -1,10 +1,10 @@
 import { ScoreBadge } from '@/entities/application';
-import { uk } from '@/shared/i18n';
+import { devUk } from '@/shared/i18n/dev-uk';
 
 import { SCORE_SPECIMENS } from './card-specimens';
 import { GallerySection, Note, PANEL, Specimen } from './gallery';
 
-const COPY = uk.devUi.matchScore;
+const COPY = devUk.devUi.matchScore;
 
 export function ScoreSection() {
   return (

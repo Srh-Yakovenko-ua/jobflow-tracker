@@ -1,7 +1,7 @@
 import type { ApplicationListItem } from '@jobflow/shared';
 import { describe, expect, it } from 'vitest';
 
-import { FULL_CARD } from '@/entities/application';
+import { FULL_CARD } from '@/test/full-application';
 
 import { DATA_COLUMN_IDS } from '../model/columns';
 import { tableCsvFileOf, tableCsvOf } from './table-csv';

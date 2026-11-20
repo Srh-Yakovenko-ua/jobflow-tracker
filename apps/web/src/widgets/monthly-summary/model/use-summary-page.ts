@@ -4,6 +4,7 @@ import type { SummaryArchive, SummaryArchiveItem, YearMonth } from '@jobflow/sha
 import { useQuery } from '@tanstack/react-query';
 
 import { summaryArchiveQueryOptions } from '@/entities/summary';
+import { sectionLoadOf } from '@/shared/lib/section-load';
 
 import type { SummaryState } from '../lib/summary-state';
 import { useMonthlySummary } from './use-monthly-summary';
@@ -15,7 +16,7 @@ export type SummaryMonthView =
   | Readonly<{ status: 'load-failed' }>
   | Readonly<{ status: 'not-found'; latestMonth: YearMonth | null }>;
 
-type ArchiveRead = Readonly<{ data: SummaryArchive | undefined; isError: boolean }>;
+type ArchiveRead = Readonly<{ data: SummaryArchive | undefined; failed: boolean }>;
 
 type MonthViewInput = Readonly<{
   month: YearMonth;
@@ -26,7 +27,7 @@ type MonthViewInput = Readonly<{
 function archivedViewOf({ month, archive }: MonthViewInput): SummaryMonthView | null {
   const summary = archive.data?.items.find((item) => item.month === month);
   if (summary !== undefined) return { status: 'archived', summary };
-  if (archive.data === undefined) return { status: archive.isError ? 'load-failed' : 'loading' };
+  if (archive.data === undefined) return { status: archive.failed ? 'load-failed' : 'loading' };
   return null;
 }
 
@@ -46,13 +47,10 @@ export function useSummaryPage(month: YearMonth) {
     view: monthViewOf({
       month,
       monthly: { state: monthly.state, latestMonth: monthly.latest?.summary?.month ?? null },
-      archive,
+      archive: { data: archive.data, failed: sectionLoadOf(archive).failed },
     }),
     others: archive.data?.items.filter((item) => item.month !== month) ?? [],
-    retry: () => {
-      monthly.retry();
-      void archive.refetch();
-    },
+    load: sectionLoadOf(monthly.latestQuery, archive),
   };
 }
 

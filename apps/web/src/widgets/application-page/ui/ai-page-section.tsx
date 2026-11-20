@@ -18,7 +18,7 @@ export function AiPageSection<Data>({ title, section, children }: AiPageSectionP
       view={{
         className:
           'flex animate-fade-in flex-col gap-4 pt-5 shadow-[inset_0_1px_0_var(--line-soft)]',
-        busy: section.load.pending,
+        busy: section.load.busy,
       }}
     >
       <AiSectionBody section={section}>{children}</AiSectionBody>

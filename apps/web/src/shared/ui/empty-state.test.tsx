@@ -1,16 +1,16 @@
 import { render, screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 
-import { uk } from '@/shared/i18n';
+import { devUk } from '@/shared/i18n/dev-uk';
 
 import { Button } from './button';
 import { EmptyState } from './empty-state';
 
-const ANALYTICS = uk.devUi.emptyScreens.analytics.content;
+const ANALYTICS = devUk.devUi.emptyScreens.analytics.content;
 
-const COMPACT = uk.devUi.banners.compactEmpty;
+const COMPACT = devUk.devUi.banners.compactEmpty;
 
-const GHOSTED = uk.devUi.emptyScreens.ghosted;
+const GHOSTED = devUk.devUi.emptyScreens.ghosted;
 
 describe('EmptyState', () => {
   it('a 4 of 10 meter fills four of ten segments and reads 4 / 10', () => {

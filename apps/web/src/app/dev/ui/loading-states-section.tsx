@@ -3,7 +3,7 @@
 import { AI_JOB_STATUSES } from '@jobflow/shared';
 import { type ReactNode, useState } from 'react';
 
-import { uk } from '@/shared/i18n';
+import { devUk } from '@/shared/i18n/dev-uk';
 import { AsyncState } from '@/shared/ui/async-state';
 import { CardSkeleton, ChartSkeleton, ColumnSkeleton, TextSkeleton } from '@/shared/ui/skeleton';
 import { SKELETON_LIMITS } from '@/shared/ui/skeleton-motion';
@@ -13,9 +13,9 @@ import { Switch } from '@/shared/ui/switch';
 import { GallerySection, Note, Specimen, STATE_GRID, StateRule, TILE_GRID } from './gallery';
 import { AI_JOBS, SPECIMEN_ACTIONS } from './state-specimens';
 
-const COPY = uk.devUi.skeletons;
+const COPY = devUk.devUi.skeletons;
 
-const ASYNC = uk.devUi.asyncStates;
+const ASYNC = devUk.devUi.asyncStates;
 
 const MANY_IDS = Array.from(
   { length: SKELETON_LIMITS.staticFrom },
@@ -89,7 +89,7 @@ export function LoadingStatesSection() {
       <SkeletonSpecimens />
       <AsyncStateSpecimens />
       <ManySkeletons />
-      <StateRule rule={uk.devUi.stateRules.skeleton} />
+      <StateRule rule={devUk.devUi.stateRules.skeleton} />
     </GallerySection>
   );
 }

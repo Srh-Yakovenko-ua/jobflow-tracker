@@ -3,14 +3,15 @@ import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 
 import { uk } from '@/shared/i18n';
+import { devUk } from '@/shared/i18n/dev-uk';
+import { useStackSpecimen } from '@/test/dev-ui';
 
 import { Combobox, type ComboboxView } from './combobox';
 import { Field } from './field';
 import { SOURCE_OPTIONS } from './source-options';
-import { useStackSpecimen } from './specimen-options';
 
-const SOURCE = uk.devUi.selects.source;
-const STACK = uk.devUi.selects.stack;
+const SOURCE = devUk.devUi.selects.source;
+const STACK = devUk.devUi.selects.stack;
 
 const SOURCE_VIEW = { label: SOURCE.label, search: SOURCE.search, placeholder: SOURCE.placeholder };
 

@@ -63,9 +63,7 @@ export function BoardToolbar({ board, load, view }: BoardToolbarProps) {
           <ViewSwitch current="board" />
         </div>
       </div>
-      {load.filtersFailed && (
-        <LoadFailedAlert className="px-1 pb-2" onRetry={load.onRetry} retrying={load.retrying} />
-      )}
+      {load.filtersFailed && <LoadFailedAlert className="px-1 pb-2" load={load} />}
       {view.cards && <FilterChipsRow />}
     </div>
   );

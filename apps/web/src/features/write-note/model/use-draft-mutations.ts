@@ -18,7 +18,7 @@ export type NoteDraftStatus = 'idle' | 'saving' | 'saved' | 'failed';
 
 export type DraftSaveCause = 'autosave' | 'finish' | 'hide' | 'leave';
 
-export const DRAFT_KEEPALIVE = { shareBytes: 32_768 } as const;
+const DRAFT_KEEPALIVE = { shareBytes: 32_768 } as const;
 
 export type DraftMutationOptions = Readonly<{
   applicationId: Note['applicationId'];

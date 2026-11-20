@@ -50,7 +50,7 @@ type PreviewTableProps = Readonly<{ rows: readonly PreviewRow[]; step: PreviewSt
 function PreviewTable({ rows, step }: PreviewTableProps) {
   const fields = IMPORT_FIELDS.filter((field) => step.draft.mapping[field] !== undefined);
   return (
-    <div className="max-w-full overflow-x-auto rounded-[12px] inset-ring inset-ring-line">
+    <div className="max-w-full overflow-x-auto rounded-lg inset-ring inset-ring-line">
       <table
         aria-label={COPY.caption}
         className="w-full min-w-max text-[13px] leading-[1.45] tabular-nums"

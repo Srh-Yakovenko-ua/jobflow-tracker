@@ -2,11 +2,11 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
 
-import { uk } from '@/shared/i18n';
+import { devUk } from '@/shared/i18n/dev-uk';
 
 import { Switch } from './switch';
 
-const LABELS = uk.devUi.choice.switches;
+const LABELS = devUk.devUi.choice.switches;
 
 describe('Switch', () => {
   it('Space and Enter flip it and the state is read from the switch role', async () => {

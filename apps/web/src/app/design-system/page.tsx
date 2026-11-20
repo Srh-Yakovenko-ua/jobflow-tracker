@@ -1,14 +1,14 @@
 import { SOURCE_LABELS } from '@jobflow/shared';
 import type { Metadata } from 'next';
 
+import { devUk } from '@/shared/i18n/dev-uk';
 import { cn } from '@/shared/lib/cn';
 
-import { uk } from '../../shared/i18n/uk';
 import { DarkThemeSection } from './dark-theme';
 import { SectionHeader } from './section-header';
 import { SOURCE_ROWS, TYPE_ROLES } from './specimen';
 
-const SPECIMEN_COPY = uk.designSystem;
+const SPECIMEN_COPY = devUk.designSystem;
 
 export const metadata: Metadata = { title: SPECIMEN_COPY.pageTitle };
 

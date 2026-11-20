@@ -3,11 +3,11 @@ import userEvent from '@testing-library/user-event';
 import { Plus } from 'lucide-react';
 import { describe, expect, it, vi } from 'vitest';
 
-import { uk } from '@/shared/i18n';
+import { devUk } from '@/shared/i18n/dev-uk';
 
 import { Button, buttonLinkClasses } from './button';
 
-const LABELS = uk.devUi.buttons;
+const LABELS = devUk.devUi.buttons;
 
 describe('Button', () => {
   it('Enter and Space press it from the keyboard', async () => {

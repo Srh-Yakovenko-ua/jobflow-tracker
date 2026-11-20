@@ -1,6 +1,6 @@
 import type { Notification, NotificationListResponse } from '@jobflow/shared';
 import { screen, waitFor } from '@testing-library/react';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, onTestFinished, vi } from 'vitest';
 
 import { uk } from '@/shared/i18n';
 import { errorReply, NEVER_ANSWERS, REFUSED_CONNECTION } from '@/test/api-handlers';
@@ -210,6 +210,9 @@ describe('NotificationsPage', () => {
   it('the next-page retry shows its loading state', async () => {
     const { user, retry } = await failNextPage();
     const held = latch();
+    onTestFinished(() => {
+      held.release();
+    });
     const heldReply = async () => {
       await held.reached;
       return SERVER_ERROR();
@@ -222,7 +225,6 @@ describe('NotificationsPage', () => {
       expect(retry.getAttribute('aria-busy')).toBe('true');
     });
     expect(screen.getByRole('alert')).toBeDefined();
-    held.release();
   });
 
   it('Прочитати все marks every notification read', async () => {

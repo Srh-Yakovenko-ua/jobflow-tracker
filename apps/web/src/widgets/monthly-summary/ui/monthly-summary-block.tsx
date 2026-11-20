@@ -9,7 +9,7 @@ export function MonthlySummaryBlock() {
     <SummaryStateView
       state={monthly.state}
       view={{ mode: 'block', regenerate: true }}
-      onRetry={monthly.retry}
+      load={monthly.load}
     />
   );
 }

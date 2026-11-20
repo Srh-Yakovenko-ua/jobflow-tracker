@@ -31,7 +31,7 @@ function BellRows({ onFollow }: Readonly<{ onFollow: () => void }>) {
   const now = useQueryNow(query);
   const load = sectionLoadOf(query);
   if (query.data === undefined) {
-    if (load.failed) return <LoadFailedPanel onRetry={load.onRetry} retrying={load.retrying} />;
+    if (load.failed) return <LoadFailedPanel load={load} />;
     return (
       <LoadingRegion className="px-2 py-3">
         <TextSkeleton />

@@ -6,6 +6,7 @@ import type { ReactNode } from 'react';
 
 import { RegenerateSummaryButton, useRegenerateSummary } from '@/features/regenerate-summary';
 import { uk } from '@/shared/i18n';
+import type { RetryLoad } from '@/shared/lib/section-load';
 import { AsyncState } from '@/shared/ui/async-state';
 import { EmptyState } from '@/shared/ui/empty-state';
 import { LoadFailedPanel } from '@/shared/ui/error-panel';
@@ -52,15 +53,15 @@ function FailedSummary({ summary, view }: FailedSummaryProps) {
 export type SummaryStateViewProps = Readonly<{
   state: SummaryState;
   view: SummaryBlockView;
-  onRetry: () => void;
+  load: RetryLoad;
 }>;
 
-function stateContent({ state, view, onRetry }: SummaryStateViewProps): ReactNode {
+function stateContent({ state, view, load }: SummaryStateViewProps): ReactNode {
   switch (state.status) {
     case 'loading':
       return <PageSkeleton />;
     case 'load-failed':
-      return <LoadFailedPanel onRetry={onRetry} />;
+      return <LoadFailedPanel load={load} />;
     case 'empty':
       return <EmptySummary />;
     case 'generating':

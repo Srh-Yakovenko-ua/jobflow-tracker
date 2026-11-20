@@ -6,6 +6,7 @@ import { AnimatePresence } from 'motion/react';
 import Link from 'next/link';
 
 import { uk } from '@/shared/i18n';
+import type { RetryLoad } from '@/shared/lib/section-load';
 import { monthNameOf, yearOf } from '@/shared/lib/year-month';
 import { EmptyState } from '@/shared/ui/empty-state';
 import { LoadFailedPanel } from '@/shared/ui/error-panel';
@@ -26,7 +27,7 @@ const TEXT_LINK =
 type MonthContentProps = Readonly<{
   month: YearMonth;
   view: SummaryMonthView;
-  onRetry: () => void;
+  load: RetryLoad;
 }>;
 
 function MissingMonth({
@@ -52,14 +53,14 @@ function MissingMonth({
   );
 }
 
-function MonthContent({ month, view, onRetry }: MonthContentProps) {
+function MonthContent({ month, view, load }: MonthContentProps) {
   switch (view.status) {
     case 'latest':
       return (
         <SummaryStateView
           state={view.state}
           view={{ mode: 'page', regenerate: true }}
-          onRetry={onRetry}
+          load={load}
         />
       );
     case 'archived':
@@ -67,7 +68,7 @@ function MonthContent({ month, view, onRetry }: MonthContentProps) {
     case 'loading':
       return <PageSkeleton />;
     case 'load-failed':
-      return <LoadFailedPanel onRetry={onRetry} />;
+      return <LoadFailedPanel load={load} />;
     case 'not-found':
       return <MissingMonth month={month} latestMonth={view.latestMonth} />;
     default: {
@@ -92,7 +93,7 @@ export function SummaryPage({ month }: SummaryPageProps) {
       </div>
       <AnimatePresence mode="popLayout" initial={false}>
         <Fade key={page.view.status} className="min-w-0">
-          <MonthContent month={month} view={page.view} onRetry={page.retry} />
+          <MonthContent month={month} view={page.view} load={page.load} />
         </Fade>
       </AnimatePresence>
       {page.others.length > 0 && <SummaryArchive items={page.others} />}

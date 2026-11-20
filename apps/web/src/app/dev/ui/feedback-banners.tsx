@@ -1,4 +1,4 @@
-import { uk } from '@/shared/i18n';
+import { devUk } from '@/shared/i18n/dev-uk';
 import { cn } from '@/shared/lib/cn';
 import { Banner } from '@/shared/ui/banner';
 import { Button } from '@/shared/ui/button';
@@ -6,7 +6,7 @@ import { DashedBars, EmptyState } from '@/shared/ui/empty-state';
 
 import { Specimen, TILE_GRID } from './gallery';
 
-const COPY = uk.devUi.banners;
+const COPY = devUk.devUi.banners;
 
 export function FeedbackBanners() {
   return (

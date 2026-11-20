@@ -3,7 +3,7 @@
 import { Bell, Info } from 'lucide-react';
 import { useState } from 'react';
 
-import { uk } from '@/shared/i18n';
+import { devUk } from '@/shared/i18n/dev-uk';
 import { cn } from '@/shared/lib/cn';
 import { Button } from '@/shared/ui/button';
 import { Dialog, DialogClose, DialogContent, DialogTrigger } from '@/shared/ui/dialog';
@@ -14,7 +14,7 @@ import { Tooltip } from '@/shared/ui/tooltip';
 import { FeedbackBanners } from './feedback-banners';
 import { Divider, GallerySection, Note, PANEL, Specimen, TILE_GRID } from './gallery';
 
-const COPY = uk.devUi.feedback;
+const COPY = devUk.devUi.feedback;
 
 const TOASTS = COPY.toasts;
 

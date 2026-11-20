@@ -9,6 +9,7 @@ import { dashboardHrefOf, searchDatesOf, searchesQueryOptions } from '@/entities
 import { useUserTimeZone } from '@/entities/user';
 import { uk } from '@/shared/i18n';
 import { cn } from '@/shared/lib/cn';
+import { sectionLoadOf } from '@/shared/lib/section-load';
 import { buttonLinkClasses } from '@/shared/ui/button';
 import { EmptyState } from '@/shared/ui/empty-state';
 import { LoadFailedPanel } from '@/shared/ui/error-panel';
@@ -66,10 +67,11 @@ function SearchRow({ search, timeZone }: SearchRowProps) {
 function HistoryBody() {
   const searches = useQuery(searchesQueryOptions());
   const timeZone = useUserTimeZone();
-  if (searches.isError) {
+  const load = sectionLoadOf(searches);
+  if (load.failed || load.stale) {
     return (
       <div className="animate-fade-in">
-        <LoadFailedPanel onRetry={() => void searches.refetch()} />
+        <LoadFailedPanel load={load} />
       </div>
     );
   }

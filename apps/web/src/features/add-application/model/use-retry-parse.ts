@@ -1,12 +1,14 @@
 'use client';
 
-import { type AiJobAccepted, aiJobAcceptedSchema, type ApplicationResponse } from '@jobflow/shared';
+import type { AiJobAccepted, ApplicationResponse } from '@jobflow/shared';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 
 import { applicationKeys, retryLimitToast } from '@/entities/application';
-import { apiClient, ApiError, HTTP_STATUS } from '@/shared/api';
+import { ApiError, HTTP_STATUS } from '@/shared/api';
 import { uk } from '@/shared/i18n';
 import { showErrorToast } from '@/shared/ui/error-toast';
+
+import { retryDraftParse } from '../api/retry-parse';
 
 export type RetryParseOptions = Readonly<{
   applicationId: ApplicationResponse['id'];
@@ -18,12 +20,7 @@ export type RetryParse = Readonly<{ isPending: boolean; retry: () => void }>;
 export function useRetryParse({ applicationId, actions }: RetryParseOptions): RetryParse {
   const queryClient = useQueryClient();
   const mutation = useMutation({
-    mutationFn: () =>
-      apiClient.request({
-        path: `/capture/drafts/${applicationId}/retry`,
-        method: 'POST',
-        schema: aiJobAcceptedSchema,
-      }),
+    mutationFn: () => retryDraftParse(applicationId),
     onSuccess: ({ jobId }) => {
       void queryClient.invalidateQueries({ queryKey: applicationKeys.all });
       actions.onRetried(jobId);

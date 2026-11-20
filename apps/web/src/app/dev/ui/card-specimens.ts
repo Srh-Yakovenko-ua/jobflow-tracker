@@ -3,14 +3,14 @@ import type { ApplicationCard } from '@jobflow/shared';
 import {
   type ApplicationCardContext,
   type ApplicationCardProps,
-  FULL_CARD,
   type ScoreBadgeProps,
 } from '@/entities/application';
-import { uk } from '@/shared/i18n';
+import { devUk } from '@/shared/i18n/dev-uk';
+import { FULL_CARD } from '@/test/full-application';
 
-const CARDS = uk.devUi.cards;
+const CARDS = devUk.devUi.cards;
 
-const SCORES = uk.devUi.matchScore.captions;
+const SCORES = devUk.devUi.matchScore.captions;
 
 export const SPECIMEN_CONTEXT: ApplicationCardContext = {
   now: new Date('2026-10-23T09:00:00Z'),

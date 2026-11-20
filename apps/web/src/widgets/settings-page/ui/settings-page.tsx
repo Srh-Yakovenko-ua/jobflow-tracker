@@ -6,6 +6,7 @@ import { useEffect } from 'react';
 
 import { meQueryOptions } from '@/entities/user';
 import { FEATURE_FLAGS } from '@/shared/config';
+import { sectionLoadOf } from '@/shared/lib/section-load';
 import { LoadFailedPanel } from '@/shared/ui/error-panel';
 import { PageSkeleton } from '@/shared/ui/skeleton';
 
@@ -42,14 +43,6 @@ function SettingsContent({ me }: Readonly<{ me: MeResponse }>) {
 export function SettingsPage() {
   const me = useQuery(meQueryOptions());
   if (me.data !== undefined) return <SettingsContent me={me.data} />;
-  if (me.isError) {
-    return (
-      <LoadFailedPanel
-        onRetry={() => {
-          void me.refetch();
-        }}
-      />
-    );
-  }
-  return <PageSkeleton />;
+  const load = sectionLoadOf(me);
+  return load.failed ? <LoadFailedPanel load={load} /> : <PageSkeleton />;
 }

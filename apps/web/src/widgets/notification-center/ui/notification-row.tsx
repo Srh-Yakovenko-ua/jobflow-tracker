@@ -127,7 +127,7 @@ export function NotificationRow({ notification, context }: NotificationRowProps)
       tabIndex={-1}
       data-notification-row
       className={cn(
-        'flex items-start gap-2.5 rounded-[9px] p-2.25 hover:bg-surface-3 active:bg-surface-3',
+        'flex items-start gap-2.5 rounded-md p-2.25 hover:bg-surface-3 active:bg-surface-3',
         FADE,
         unread && 'bg-accent-tint/50',
       )}
@@ -135,7 +135,7 @@ export function NotificationRow({ notification, context }: NotificationRowProps)
       <span
         aria-hidden
         className={cn(
-          'flex size-6.5 flex-none items-center justify-center rounded-[8px]',
+          'flex size-6.5 flex-none items-center justify-center rounded-sm',
           FADE,
           unread ? 'bg-accent-tint text-accent-press' : 'bg-surface-3 text-ink-3',
         )}

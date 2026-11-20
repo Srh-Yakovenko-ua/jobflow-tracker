@@ -3,14 +3,14 @@
 import { Plus, Star } from 'lucide-react';
 import { useState } from 'react';
 
-import { uk } from '@/shared/i18n';
+import { devUk } from '@/shared/i18n/dev-uk';
 import { cn } from '@/shared/lib/cn';
 import { Button, type ButtonSize, type ButtonVariant } from '@/shared/ui/button';
 import { SegmentedControl } from '@/shared/ui/segmented-control';
 
 import { Divider, GallerySection, PANEL, Specimen } from './gallery';
 
-const COPY = uk.devUi.buttons;
+const COPY = devUk.devUi.buttons;
 
 const SIZES: readonly ButtonSize[] = ['xs', 'sm', 'md', 'lg'];
 

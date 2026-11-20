@@ -36,7 +36,7 @@ describe('useOffers', () => {
     expect(failing.sent).toEqual([northwind.id]);
     server.use(applicationRoute({ application: northwind }).handler);
     act(() => {
-      if (result.current.kind === 'error') result.current.refetch();
+      if (result.current.kind === 'error') result.current.load.onRetry();
     });
 
     await waitFor(() => {

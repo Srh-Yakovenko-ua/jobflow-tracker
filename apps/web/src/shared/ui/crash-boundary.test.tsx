@@ -4,14 +4,14 @@ import userEvent from '@testing-library/user-event';
 import { useState } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { uk } from '@/shared/i18n';
+import { devUk } from '@/shared/i18n/dev-uk';
 import { shownCrashCode } from '@/test/crashed-page';
 import { recordErrorReports } from '@/test/error-reports';
 import { quietLogs } from '@/test/quiet-logs';
 
 import { CrashBoundary } from './crash-boundary';
 
-const DEMO = uk.devUi.errorPanels.crashDemo;
+const DEMO = devUk.devUi.errorPanels.crashDemo;
 
 const SECRET = 'token=abc123 leaked from the widget';
 

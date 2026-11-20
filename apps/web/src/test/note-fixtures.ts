@@ -7,10 +7,9 @@ import {
 } from '@jobflow/shared';
 import { http, HttpResponse } from 'msw/http';
 
-import { FULL_CARD } from '@/entities/application';
-
 import { apiUrl, idempotencyKeyOf, type SentCreate } from './api-handlers';
 import { heldReply, type MoveRouteOptions } from './board-fixtures';
+import { FULL_CARD } from './full-application';
 
 export type NoteSeed = Pick<Note, 'applicationId' | 'body'> & Partial<Note>;
 

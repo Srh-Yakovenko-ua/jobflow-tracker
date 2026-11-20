@@ -15,8 +15,6 @@ export type IconButtonProps = Readonly<
   }
 >;
 
-export type IconActionProps = IconButtonProps;
-
 export function IconButton({ label, icon: Icon, className, ...props }: IconButtonProps) {
   return (
     <button
@@ -30,7 +28,7 @@ export function IconButton({ label, icon: Icon, className, ...props }: IconButto
   );
 }
 
-export function IconAction(props: IconActionProps) {
+export function IconAction(props: IconButtonProps) {
   return (
     <Tooltip content={props.label} describes={false}>
       <IconButton {...props} />

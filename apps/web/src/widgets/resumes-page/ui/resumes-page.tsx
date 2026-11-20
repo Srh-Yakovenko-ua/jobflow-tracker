@@ -58,7 +58,7 @@ function PageHeading({ picker }: Readonly<{ picker: FilePicker | null }>) {
 function VersionsBody({ picker }: Readonly<{ picker: FilePicker }>) {
   const { query, load, activeId, abLoad, view } = useResumeVersions();
   if (query.data === undefined) {
-    if (load.failed) return <LoadFailedPanel onRetry={load.onRetry} retrying={load.retrying} />;
+    if (load.failed) return <LoadFailedPanel load={load} />;
     return (
       <LoadingRegion className="bg-surface shadow-e1">
         <TableSkeleton />

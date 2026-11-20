@@ -40,7 +40,7 @@ describe('error panels', () => {
     },
     {
       name: 'load failed',
-      panel: <LoadFailedPanel key="load" onRetry={noop} />,
+      panel: <LoadFailedPanel key="load" load={{ onRetry: noop, retrying: false }} />,
       safe: 'збережені дані на місці',
     },
   ])(
@@ -105,7 +105,7 @@ describe('error panels', () => {
   it('a failed load blames the system and retries on press', async () => {
     const user = userEvent.setup();
     const onRetry = vi.fn();
-    render(<LoadFailedPanel onRetry={onRetry} />);
+    render(<LoadFailedPanel load={{ onRetry, retrying: false }} />);
 
     expect(screen.getByText('Не вдалося завантажити')).toBeDefined();
     expect(screen.getByText('Це збій на нашому боці, збережені дані на місці.')).toBeDefined();
@@ -114,7 +114,7 @@ describe('error panels', () => {
   });
 
   it('a failed load whose retry is on its way shows the retry busy and shut', () => {
-    render(<LoadFailedPanel onRetry={noop} retrying />);
+    render(<LoadFailedPanel load={{ onRetry: noop, retrying: true }} />);
     const retry = screen.getByRole<HTMLButtonElement>('button', { name: 'Спробувати ще раз' });
 
     expect(retry.getAttribute('aria-busy')).toBe('true');

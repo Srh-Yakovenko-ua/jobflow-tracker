@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
-import { uk } from '@/shared/i18n';
+import { devUk } from '@/shared/i18n/dev-uk';
 import { Button } from '@/shared/ui/button';
 
 type CompilerRuntime = { c: (size: number) => unknown[] };
@@ -14,7 +14,7 @@ vi.mock('react/compiler-runtime', async (importOriginal) => {
   return { ...actual, c: memoCache };
 });
 
-const LABEL = uk.devUi.buttons.addVacancy;
+const LABEL = devUk.devUi.buttons.addVacancy;
 
 describe('React Compiler', () => {
   it('a button from src renders through the React Compiler cache, as next build ships it', () => {

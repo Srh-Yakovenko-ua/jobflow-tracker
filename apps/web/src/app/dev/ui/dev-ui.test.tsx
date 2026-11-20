@@ -3,12 +3,13 @@ import { toast } from 'sonner';
 import { afterEach, describe, expect, it } from 'vitest';
 
 import { uk } from '@/shared/i18n';
+import { devUk } from '@/shared/i18n/dev-uk';
 import { axeViolations } from '@/test/axe';
 import { findLiveToaster, renderGallery, specimenOf } from '@/test/dev-ui';
 
 import { LONG_TEXT_CARD } from './card-specimens';
 
-const COPY = uk.devUi;
+const COPY = devUk.devUi;
 
 const CARDS = COPY.cards;
 

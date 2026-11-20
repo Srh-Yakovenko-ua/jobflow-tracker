@@ -6,6 +6,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { LIVE_CLIENT_LIMITS } from '@/shared/api';
 import { errorReply, recordSentRequests } from '@/test/api-handlers';
 import { fakeTimeoutsAndIntervals } from '@/test/fake-timeouts';
+import { FULL_CARD } from '@/test/full-application';
 import { JOB_ID, jobRoute, PROCESSING_JOB } from '@/test/job-fixtures';
 import { bringLiveStreamUp, closeLiveStreams } from '@/test/live-stream';
 import { QueryProbe, waitForQuery } from '@/test/query-status';
@@ -13,7 +14,6 @@ import { renderViewInApp } from '@/test/render-in-app';
 import { server } from '@/test/server';
 
 import type { ApplicationCardContext } from '../model/card-context';
-import { FULL_CARD } from '../model/card-specimens';
 import { jobKeys } from '../model/keys';
 import { ApplicationCard } from './application-card';
 import { ParsingCard, type ParsingCardProps } from './parsing-card';

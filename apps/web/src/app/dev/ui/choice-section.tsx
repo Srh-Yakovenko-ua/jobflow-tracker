@@ -2,18 +2,18 @@
 
 import { useState } from 'react';
 
-import { uk } from '@/shared/i18n';
+import { devUk } from '@/shared/i18n/dev-uk';
 import { cn } from '@/shared/lib/cn';
 import { Checkbox } from '@/shared/ui/checkbox';
 import { RadioGroup } from '@/shared/ui/radio-group';
 import { SegmentedControl } from '@/shared/ui/segmented-control';
-import { SIDE_OPTIONS } from '@/shared/ui/specimen-options';
 import { Switch } from '@/shared/ui/switch';
 
 import { GallerySection, Note, PANEL, Specimen, TILE_GRID } from './gallery';
 import { THRESHOLD_DAYS, type ThresholdDays } from './specimen';
+import { SIDE_OPTIONS } from './specimen-options';
 
-const COPY = uk.devUi.choice;
+const COPY = devUk.devUi.choice;
 
 const THRESHOLD_OPTIONS = THRESHOLD_DAYS.map((days) => ({
   value: days,

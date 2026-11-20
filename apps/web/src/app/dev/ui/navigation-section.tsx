@@ -1,12 +1,12 @@
 'use client';
 
-import { uk } from '@/shared/i18n';
+import { devUk } from '@/shared/i18n/dev-uk';
 import { Kbd } from '@/shared/ui/kbd';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/shared/ui/tabs';
 
 import { GallerySection, Note, PANEL, Specimen } from './gallery';
 
-const COPY = uk.devUi.navigation;
+const COPY = devUk.devUi.navigation;
 
 type GalleryTab = { value: string; label: string; panel: string; count?: number };
 

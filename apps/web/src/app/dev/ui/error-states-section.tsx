@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 
-import { uk } from '@/shared/i18n';
+import { devUk } from '@/shared/i18n/dev-uk';
 import { cn } from '@/shared/lib/cn';
 import { Button } from '@/shared/ui/button';
 import { CrashBoundary } from '@/shared/ui/crash-boundary';
@@ -25,7 +25,7 @@ import {
   STATE_TIME_ZONE,
 } from './state-specimens';
 
-const COPY = uk.devUi.errorPanels;
+const COPY = devUk.devUi.errorPanels;
 
 const DEMO = COPY.crashDemo;
 
@@ -39,7 +39,7 @@ function ErrorPanels() {
       />
       <AiQueuePanel queue={AI_QUEUE_LOAD} />
       <FileTooBigPanel file={OVERSIZED_RESUME} onPick={specimenNoop} />
-      <LoadFailedPanel onRetry={specimenNoop} />
+      <LoadFailedPanel load={{ onRetry: specimenNoop, retrying: false }} />
       <div className="min-w-0 md:col-span-2">
         <CrashPanel
           incident={CRASH_INCIDENT}
@@ -85,7 +85,7 @@ export function ErrorStatesSection() {
     <GallerySection header={COPY}>
       <ErrorPanels />
       <CrashDemo />
-      <StateRule rule={uk.devUi.stateRules.error} />
+      <StateRule rule={devUk.devUi.stateRules.error} />
     </GallerySection>
   );
 }

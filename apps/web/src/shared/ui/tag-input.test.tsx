@@ -5,11 +5,12 @@ import { useState } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 
 import { uk } from '@/shared/i18n';
+import { devUk } from '@/shared/i18n/dev-uk';
 
 import { Field } from './field';
 import { TagInput } from './tag-input';
 
-const COPY = uk.devUi.fields.tags;
+const COPY = devUk.devUi.fields.tags;
 
 function Tags({ initial }: Readonly<{ initial: string[] }>) {
   const [tags, setTags] = useState(initial);

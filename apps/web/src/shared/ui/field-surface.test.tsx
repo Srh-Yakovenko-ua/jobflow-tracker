@@ -2,7 +2,7 @@ import { render } from '@testing-library/react';
 import type { ReactElement } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 
-import { uk } from '@/shared/i18n';
+import { devUk } from '@/shared/i18n/dev-uk';
 
 import { Combobox } from './combobox';
 import { ComboboxMenu } from './combobox-menu';
@@ -15,7 +15,7 @@ import { SOURCE_OPTIONS } from './source-options';
 import { TagInput } from './tag-input';
 import { TOUCH_HEIGHT } from './touch-height';
 
-const SOURCE = uk.devUi.selects.source;
+const SOURCE = devUk.devUi.selects.source;
 
 const GROUPS = [{ options: SOURCE_OPTIONS }];
 

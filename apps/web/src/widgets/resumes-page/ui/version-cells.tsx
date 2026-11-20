@@ -56,7 +56,7 @@ function VersionName({ version, view }: VersionCellProps) {
           {label}
         </span>
         {view.active && (
-          <span className="flex-none rounded-[9px] px-1.75 py-px text-[11px] font-semibold text-accent-ink inset-ring inset-ring-accent">
+          <span className="flex-none rounded-md px-1.75 py-px text-[11px] font-semibold text-accent-ink inset-ring inset-ring-accent">
             {COPY.active}
           </span>
         )}

@@ -4,11 +4,12 @@ import { useState } from 'react';
 import { describe, expect, it } from 'vitest';
 
 import { uk } from '@/shared/i18n';
+import { devUk } from '@/shared/i18n/dev-uk';
 
 import { Field } from './field';
 import { NumberInput } from './number-input';
 
-const COPY = uk.devUi.fields.threshold;
+const COPY = devUk.devUi.fields.threshold;
 
 function Threshold() {
   const [days, setDays] = useState(6);

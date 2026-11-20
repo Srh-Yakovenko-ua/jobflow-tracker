@@ -67,7 +67,7 @@ function LinkedResume({ application, actions, linked, resume }: LinkedResumeProp
 function ResumeBody({ application, actions, resume }: ResumeBodyProps) {
   const { load, linked, versions } = resume;
   if (load.pending) return <TextSkeleton />;
-  if (load.failed) return <LoadFailedPanel onRetry={load.onRetry} retrying={load.retrying} />;
+  if (load.failed) return <LoadFailedPanel load={load} />;
   if (linked !== null) {
     return (
       <LinkedResume application={application} actions={actions} linked={linked} resume={resume} />
@@ -94,7 +94,7 @@ export function AttachedResume({ application, actions }: AttachedResumeProps) {
       title={{ text: COPY.kicker, look: 'eyebrow' }}
       view={{
         className: 'flex flex-col items-start gap-3.5 rounded-lg bg-surface p-4.5 shadow-e1',
-        busy: resume.load.pending,
+        busy: resume.load.busy,
       }}
     >
       <ResumeBody application={application} actions={actions} resume={resume} />

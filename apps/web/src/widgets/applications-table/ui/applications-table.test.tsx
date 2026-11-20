@@ -4,7 +4,6 @@ import type { RequestHandler } from 'msw';
 import { http, HttpResponse } from 'msw/http';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { FULL_CARD } from '@/entities/application';
 import { userKeys } from '@/entities/user';
 import { applicationFiltersOf } from '@/features/filter-applications';
 import { withSearchParams } from '@/shared/api';
@@ -15,6 +14,7 @@ import { layOutColumns } from '@/test/board-drag';
 import { fixtureIdOf, moveRoute } from '@/test/board-fixtures';
 import { fakeTimeouts, refocusTabOnceStale } from '@/test/fake-timeouts';
 import { stubFileDownload } from '@/test/file-download';
+import { FULL_CARD } from '@/test/full-application';
 import { latch } from '@/test/latch';
 import {
   listItemsIn,

@@ -2,7 +2,7 @@ import type { ResumeAbResponse, ResumeVersion } from '@jobflow/shared';
 import { screen, within } from '@testing-library/react';
 import type { HttpResponseResolver } from 'msw';
 import { http } from 'msw/http';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, onTestFinished, vi } from 'vitest';
 
 import { apiUrl, errorReply } from '@/test/api-handlers';
 import { advancePastQueryRetries, fakeTimeoutsAndClock } from '@/test/fake-timeouts';
@@ -130,6 +130,9 @@ describe('ResumesPage', () => {
 
   it('the screening cell shows no count while the A/B read is pending', async () => {
     const held = latch();
+    onTestFinished(() => {
+      held.release();
+    });
     renderPage({
       ...onlyVersion({ applicationsCount: 4 }),
       resumeAb: async () => {
@@ -143,7 +146,6 @@ describe('ResumesPage', () => {
 
     expect(within(row).queryByText(/потрібно ще/)).toBeNull();
     expect(within(row).getAllByText('—')).toHaveLength(2);
-    held.release();
   });
 
   it('a long version name is cut on its line while the date and the size stay', async () => {

@@ -48,7 +48,7 @@ export function UploadStep({ step, onFile }: UploadStepProps) {
       <DropZone
         picker={{ label: COPY.pick, accept: ACCEPT, disabled: step.reading }}
         onFile={onFile}
-        className="flex flex-col items-start gap-3 rounded-[12px] p-5"
+        className="flex flex-col items-start gap-3 rounded-lg p-5"
       >
         <span className="flex flex-col gap-1.5">
           <span className="text-[14.5px] font-semibold text-ink">{COPY.title}</span>

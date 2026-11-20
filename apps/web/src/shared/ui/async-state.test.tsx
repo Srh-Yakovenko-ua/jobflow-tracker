@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 
 import { uk } from '@/shared/i18n';
+import { devUk } from '@/shared/i18n/dev-uk';
 
 import { type AiJob, AsyncState } from './async-state';
 import { STATE_TEXT } from './state-text';
@@ -167,7 +168,7 @@ describe('AsyncState', () => {
   it('shows the operation content the caller passes in', () => {
     render(
       <AsyncState job={{ status: 'done', tookSeconds: 6 }}>
-        <p>{uk.devUi.asyncStates.done}</p>
+        <p>{devUk.devUi.asyncStates.done}</p>
       </AsyncState>,
     );
 

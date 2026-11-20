@@ -49,7 +49,7 @@ function entriesOf({ rows, waiting, now, timeZone }: ApplicationTimelineState): 
 function TimelineBody({ application, timeline, onAskedClosed }: TimelineBodyProps) {
   const { load } = timeline;
   if (load.pending) return <TextSkeleton />;
-  if (load.failed) return <LoadFailedPanel onRetry={load.onRetry} retrying={load.retrying} />;
+  if (load.failed) return <LoadFailedPanel load={load} />;
   const entries = entriesOf(timeline);
   if (entries.length === 0) {
     return <p className="animate-fade-in text-[13px] text-ink-3">{COPY.empty}</p>;
@@ -94,7 +94,7 @@ export function ApplicationTimeline({ application }: ApplicationTimelineProps) {
       header={{ before: kicker, className: 'flex flex-col gap-1' }}
       view={{
         className: 'flex flex-col gap-5 pt-5 shadow-[inset_0_1px_0_var(--line-soft)]',
-        busy: pending,
+        busy: timeline.load.busy,
       }}
     >
       <TimelineBody

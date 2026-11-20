@@ -63,7 +63,7 @@ describe('ChartFrame', () => {
 
   it('a failed load explains the failure and retries on the button', async () => {
     const onRetry = vi.fn();
-    const frame = renderFrame({ status: 'failed', onRetry });
+    const frame = renderFrame({ status: 'failed', onRetry, retrying: false });
 
     expect(within(frame).getByRole('alert').textContent).toContain('Не вдалося завантажити');
     await userEvent.click(within(frame).getByRole('button', { name: 'Спробувати ще раз' }));
@@ -136,7 +136,7 @@ describe('ChartFrame', () => {
     rerender(heroFrame({ status: 'loading' }));
     expect(document.activeElement).toBe(action);
 
-    rerender(heroFrame({ status: 'failed', onRetry: vi.fn() }));
+    rerender(heroFrame({ status: 'failed', onRetry: vi.fn(), retrying: false }));
     expect(screen.getByRole('alert')).toBeDefined();
     expect(document.activeElement).toBe(action);
 

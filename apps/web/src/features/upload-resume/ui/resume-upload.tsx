@@ -36,7 +36,7 @@ export type ResumeUploadProps = Readonly<{
 type PickedFile = { file: File; input: ResumeUploadInput };
 
 const ZONES: Record<ResumeUploadSize, string> = {
-  full: 'flex flex-col items-center gap-3 rounded-[9px] p-4 text-center',
+  full: 'flex flex-col items-center gap-3 rounded-md p-4 text-center',
   panel: 'flex flex-col items-start gap-2.5 rounded-[6px] p-4.5',
 };
 

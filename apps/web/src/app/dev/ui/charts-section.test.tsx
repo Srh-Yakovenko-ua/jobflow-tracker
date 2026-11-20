@@ -1,10 +1,10 @@
 import { screen, within } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 
-import { uk } from '@/shared/i18n';
+import { devUk } from '@/shared/i18n/dev-uk';
 import { renderGallery, sectionTitled, specimenOf } from '@/test/dev-ui';
 
-const COPY = uk.devUi.charts;
+const COPY = devUk.devUi.charts;
 
 function chartIn(frame: string) {
   return within(screen.getByRole('region', { name: frame })).getByRole('img');

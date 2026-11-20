@@ -11,6 +11,7 @@ const RETRY = { name: uk.states.errors.loadFailed.action };
 
 const SETTLED: SectionLoad = {
   pending: false,
+  busy: false,
   failed: false,
   stale: false,
   retrying: false,

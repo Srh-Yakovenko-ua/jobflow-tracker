@@ -1,14 +1,15 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import type { FrameQuery } from '@/shared/lib/section-load';
+import type { SectionQuery } from '@/shared/lib/section-load';
 
 import { chartFrameStateOf } from './chart-frame-state';
 
-const SETTLED: FrameQuery = {
+const SETTLED: SectionQuery = {
   data: undefined,
   isError: false,
   isFetching: false,
   refetch: vi.fn(),
+  errorUpdateCount: 0,
 };
 
 const NEED_MORE = { status: 'insufficient_data', have: 4, need: 11, message: 'Ще 11 відгуків' };
@@ -31,6 +32,12 @@ describe('chartFrameStateOf', () => {
 
   it('a failed query asked again stays failed with its retry spinning', () => {
     const state = chartFrameStateOf({ ...SETTLED, isError: true, isFetching: true });
+
+    expect(state).toMatchObject({ status: 'failed', retrying: true });
+  });
+
+  it('a chart with no data shows its retry loading', () => {
+    const state = chartFrameStateOf({ ...SETTLED, isFetching: true, errorUpdateCount: 1 });
 
     expect(state).toMatchObject({ status: 'failed', retrying: true });
   });

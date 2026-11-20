@@ -1,14 +1,14 @@
 import type { InactiveStage } from '@jobflow/shared';
 
 import { ApplicationCard, OutcomeBadge } from '@/entities/application';
-import { uk } from '@/shared/i18n';
+import { devUk } from '@/shared/i18n/dev-uk';
 import { cn } from '@/shared/lib/cn';
 
 import { SPECIMEN_CONTEXT, WARN_CARD } from '../dev/ui/card-specimens';
 import { SectionHeader } from './section-header';
 import { SURFACE_SWATCHES } from './specimen';
 
-const COPY = uk.designSystem.darkTheme;
+const COPY = devUk.designSystem.darkTheme;
 
 const DARK_OUTCOMES: readonly InactiveStage[] = ['offer', 'rejected', 'ghosted'];
 

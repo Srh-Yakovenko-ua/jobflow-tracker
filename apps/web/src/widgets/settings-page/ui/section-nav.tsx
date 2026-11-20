@@ -10,7 +10,7 @@ import { sectionOfHash, SETTINGS_SECTIONS, type SettingsItems } from '../model/s
 export type SectionNavProps = Readonly<{ items: SettingsItems }>;
 
 const LINK =
-  'touch-target flex h-10.5 items-center rounded-[9px] px-3 text-[14.5px] whitespace-nowrap transition-colors duration-(--duration-fast) ease-standard';
+  'touch-target flex h-10.5 items-center rounded-md px-3 text-[14.5px] whitespace-nowrap transition-colors duration-(--duration-fast) ease-standard';
 
 const ACTIVE = 'bg-line-soft font-semibold text-ink';
 

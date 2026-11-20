@@ -2,11 +2,11 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 
-import { uk } from '@/shared/i18n';
+import { devUk } from '@/shared/i18n/dev-uk';
 
 import { Checkbox } from './checkbox';
 
-const LABELS = uk.devUi.choice.checkboxes;
+const LABELS = devUk.devUi.choice.checkboxes;
 
 describe('Checkbox', () => {
   it('Space toggles it from the keyboard and a click on its label toggles it back', async () => {

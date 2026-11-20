@@ -2,18 +2,18 @@
 
 import { useState } from 'react';
 
-import { uk } from '@/shared/i18n';
+import { devUk } from '@/shared/i18n/dev-uk';
 import { cn } from '@/shared/lib/cn';
 import { Combobox } from '@/shared/ui/combobox';
 import { Field } from '@/shared/ui/field';
 import { Select, type SelectView } from '@/shared/ui/select';
 import { SOURCE_OPTIONS } from '@/shared/ui/source-options';
-import { useStackSpecimen } from '@/shared/ui/specimen-options';
 
 import { GallerySection, Note, PANEL, Specimen, TILE_GRID } from './gallery';
 import { CV_GROUPS, STAGE_GROUPS } from './specimen';
+import { useStackSpecimen } from './specimen-options';
 
-const COPY = uk.devUi.selects;
+const COPY = devUk.devUi.selects;
 
 const STATES = COPY.states;
 

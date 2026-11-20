@@ -4,6 +4,7 @@ import { REJECTION_REASONS, STAGE_LABELS } from '@jobflow/shared';
 
 import type { MovingApplication } from '@/entities/application';
 import { uk } from '@/shared/i18n';
+import { cn } from '@/shared/lib/cn';
 import { useCountdown } from '@/shared/lib/use-countdown';
 import { Button } from '@/shared/ui/button';
 import { DialogFooter } from '@/shared/ui/dialog';
@@ -64,7 +65,7 @@ function SavedFooter({ step, actions }: Omit<RejectionSavedProps, 'application'>
       <div className="ml-auto flex flex-wrap gap-2.25">
         <Button
           variant="secondary"
-          className={`${FOOTER_BUTTON} bg-surface`}
+          className={cn(FOOTER_BUTTON, 'bg-surface')}
           onClick={actions.onNote}
         >
           {COPY.saved.addNote}

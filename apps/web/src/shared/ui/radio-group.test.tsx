@@ -2,12 +2,12 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 
-import { uk } from '@/shared/i18n';
+import { devUk } from '@/shared/i18n/dev-uk';
+import { SIDE_OPTIONS } from '@/test/dev-ui';
 
 import { RadioGroup } from './radio-group';
-import { SIDE_OPTIONS } from './specimen-options';
 
-const COPY = uk.devUi.choice;
+const COPY = devUk.devUi.choice;
 
 describe('RadioGroup', () => {
   it('Tab lands on the checked option and ArrowDown checks the next one', async () => {

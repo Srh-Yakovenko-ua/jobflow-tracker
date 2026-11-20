@@ -75,7 +75,7 @@ export function DeleteAccountDialog({ exportOffer }: DeleteAccountDialogProps) {
       <AlertDialogContent header={{ title: COPY.dialog.title, description: COPY.dialog.body }}>
         <section
           aria-label={COPY.dialog.exportOffer}
-          className="flex flex-col gap-3 rounded-[12px] bg-surface-2 p-4"
+          className="flex flex-col gap-3 rounded-lg bg-surface-2 p-4"
         >
           <p className="text-[13.5px] leading-[1.45] font-semibold text-ink">
             {COPY.dialog.exportOffer}

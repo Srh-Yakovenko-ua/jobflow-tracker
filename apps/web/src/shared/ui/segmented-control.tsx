@@ -6,7 +6,7 @@ import { useId } from 'react';
 import { cn } from '@/shared/lib/cn';
 
 import { ActiveIndicator } from './active-indicator';
-import type { ChoiceOption } from './radio-group';
+import { choiceChangeOf, type ChoiceOption } from './radio-group';
 import { TOUCH_HEIGHT } from './touch-height';
 
 const ITEM = cn(
@@ -31,10 +31,7 @@ export function SegmentedControl<Value extends string>({
     <RadioGroupPrimitive.Root
       {...props}
       orientation="horizontal"
-      onValueChange={(next) => {
-        const picked = options.find((option) => option.value === next);
-        if (picked) onValueChange(picked.value);
-      }}
+      onValueChange={choiceChangeOf({ options, onValueChange })}
       className="isolate inline-flex w-fit gap-0.5 rounded-md bg-surface-3 p-0.75 inset-ring inset-ring-line-soft"
     >
       {options.map((option) => (

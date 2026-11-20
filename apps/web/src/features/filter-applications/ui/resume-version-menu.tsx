@@ -45,7 +45,7 @@ function VersionChoices({ picked }: Readonly<{ picked: PickedVersions }>) {
   const query = useQuery(resumeVersionsQueryOptions());
   const { toggleResumeVersion } = useApplicationFilters((store) => store.actions);
   const load = sectionLoadOf(query);
-  if (load.failed) return <LoadFailedAlert onRetry={load.onRetry} retrying={load.retrying} />;
+  if (load.failed) return <LoadFailedAlert load={load} />;
   if (query.data === undefined) {
     return (
       <LoadingRegion>

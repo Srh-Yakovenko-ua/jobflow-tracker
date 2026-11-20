@@ -14,7 +14,7 @@ export function FailedReadAlert({ load, className }: FailedReadAlertProps) {
     <AnimatePresence initial={false}>
       {load.failed && (
         <Fade key="failed-read">
-          <LoadFailedAlert className={className} onRetry={load.onRetry} retrying={load.retrying} />
+          <LoadFailedAlert className={className} load={load} />
         </Fade>
       )}
     </AnimatePresence>

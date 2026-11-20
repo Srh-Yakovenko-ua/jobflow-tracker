@@ -5,6 +5,7 @@ import { useState } from 'react';
 
 import { FirstRunState } from '@/entities/application';
 import { uk } from '@/shared/i18n';
+import { devUk } from '@/shared/i18n/dev-uk';
 import { cn } from '@/shared/lib/cn';
 import { Button } from '@/shared/ui/button';
 import { ChipList } from '@/shared/ui/chip-list';
@@ -16,9 +17,9 @@ import { RemindersEmpty } from '@/widgets/reminders-page';
 import { GallerySection, STATE_GRID, StateRule } from './gallery';
 import { ANALYTICS_PROGRESS, specimenNoop } from './state-specimens';
 
-const FIRST_RUN = uk.devUi.firstRun;
+const FIRST_RUN = devUk.devUi.firstRun;
 
-const SCREENS = uk.devUi.emptyScreens;
+const SCREENS = devUk.devUi.emptyScreens;
 
 const RESUME_PICKER = { label: uk.resumes.upload.pick, accept: RESUME_MIMES.join(',') };
 
@@ -48,7 +49,7 @@ function ResumeDropZone() {
     <DropZone
       picker={RESUME_PICKER}
       onFile={specimenNoop}
-      className="flex flex-col items-center gap-3 rounded-[9px] p-4 text-center text-[13px] text-ink-3"
+      className="flex flex-col items-center gap-3 rounded-md p-4 text-center text-[13px] text-ink-3"
     >
       <p>{SCREENS.resumes.drop}</p>
     </DropZone>
@@ -90,7 +91,7 @@ export function EmptyStatesSection() {
       </GallerySection>
       <GallerySection header={SCREENS}>
         <ScreenEmptyStates />
-        <StateRule rule={uk.devUi.stateRules.empty} />
+        <StateRule rule={devUk.devUi.stateRules.empty} />
       </GallerySection>
     </>
   );

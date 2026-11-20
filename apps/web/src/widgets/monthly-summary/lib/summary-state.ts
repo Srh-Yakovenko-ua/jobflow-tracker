@@ -3,7 +3,7 @@ import type { JobStatus, Summary, SummaryResponse } from '@jobflow/shared';
 import { aiJobOf } from '@/entities/application';
 import type { AiJob } from '@/shared/ui/async-state';
 
-export type SummaryLatest = Readonly<{ data: SummaryResponse | undefined; isError: boolean }>;
+export type SummaryLatest = Readonly<{ data: SummaryResponse | undefined; failed: boolean }>;
 
 export type SummaryState =
   | Readonly<{ status: 'loading' }>
@@ -29,7 +29,7 @@ function answeredStateOf({ summary, job }: SummaryResponse): SummaryState {
 
 export function summaryStateOf({ latest, job }: SummaryStateInput): SummaryState {
   const { data } = latest;
-  if (data === undefined) return { status: latest.isError ? 'load-failed' : 'loading' };
+  if (data === undefined) return { status: latest.failed ? 'load-failed' : 'loading' };
   if (runningJobOf(data) !== null) return { status: 'generating', job: aiJobOf(job) };
   return answeredStateOf(data);
 }

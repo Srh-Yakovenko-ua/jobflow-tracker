@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
 
+import { FULL_CARD } from '@/test/full-application';
 import { JOB_ID } from '@/test/job-fixtures';
 
-import { FULL_CARD } from '../model/card-specimens';
 import { cardHrefOf, draftStateOf } from './draft-state';
 
 describe('draftStateOf', () => {

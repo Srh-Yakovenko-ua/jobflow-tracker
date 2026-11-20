@@ -33,7 +33,7 @@ type ButtonSlotProps = Readonly<{
 
 function ButtonSlot({ list, created, create, createButtonRef }: ButtonSlotProps) {
   const load = sectionLoadOf(list);
-  if (load.failed) return <LoadFailedAlert onRetry={load.onRetry} retrying={load.retrying} />;
+  if (load.failed) return <LoadFailedAlert load={load} />;
   if (list.data === undefined) {
     return (
       <LoadingRegion className="w-full max-w-60">

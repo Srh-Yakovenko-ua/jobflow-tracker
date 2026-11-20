@@ -1,11 +1,11 @@
 import { ACTIVE_STAGES, INACTIVE_STAGES } from '@jobflow/shared';
 
 import { OutcomeBadge, StageChip } from '@/entities/application';
-import { uk } from '@/shared/i18n';
+import { devUk } from '@/shared/i18n/dev-uk';
 
 import { GallerySection, Note, PANEL, Specimen } from './gallery';
 
-const COPY = uk.devUi.stages;
+const COPY = devUk.devUi.stages;
 
 export function StagesSection() {
   return (

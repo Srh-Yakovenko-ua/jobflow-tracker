@@ -50,6 +50,7 @@ const shared = {
     dark: cssVariablesOf(CHART_THEME.dark.colors),
     font: CHART_THEME.font.ui,
     radius: `${String(tokens.radius['2xl'])}px`,
+    innerRadius: `${String(tokens.radius.sm)}px`,
     shadow: compactCss(tokens.elevation.e3.web),
     spring: compactCss(`${String(motion.spring)}ms cubic-bezier(${motion.springEasing.join()})`),
     hover: `${String(motion.instant)}ms`,

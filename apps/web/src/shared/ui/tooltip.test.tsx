@@ -2,11 +2,11 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
 
-import { uk } from '@/shared/i18n';
+import { devUk } from '@/shared/i18n/dev-uk';
 
 import { Tooltip } from './tooltip';
 
-const COPY = uk.devUi.feedback;
+const COPY = devUk.devUi.feedback;
 
 describe('Tooltip', () => {
   it('shows its label when the trigger takes keyboard focus and Escape hides it', async () => {
