@@ -4,6 +4,8 @@
 
 ## Слайди
 
+Діаграми і таблиці для слайдів збирає `pnpm --filter @jobflow/docs render`: PNG лягають у `docs/thesis/build/figures`, таблиці в `docs/thesis/build/tables`. Поруч з кожним рисунком посилання на його джерело.
+
 ### 1. Проблема
 
 - Пошук роботи це десятки відгуків за кілька тижнів, і більшість із них закінчується відмовою без пояснень або тишею.
@@ -18,7 +20,7 @@
 - Загальні дошки: канбан є, а етапи, причини відмов і статистику треба налаштовувати самому.
 - Списки «мої відгуки» на сайтах вакансій: бачать лише свій сайт і не знають, що було після відгуку.
 - Міжнародні трекери на зразок Huntr чи Teal орієнтовані на англомовний ринок. Про їхні функції слайд нічого не стверджує.
-- Що додає JobFlow: збереження вакансії з DOU, Djinni, robota.ua і LinkedIn одним кліком, аналітика причин відмов, байєсівське A/B порівняння версій CV, AI, що працює і без мережі.
+- Що додає JobFlow: збереження вакансії з DOU, Djinni, robota.ua і LinkedIn одним кліком, аналітика причин відмов, байєсівське A/B порівняння версій CV, AI-розбір вакансії, Match Score і фоллоу-ап.
 - Рисунок: [add-light.png](screenshots/add-light.png).
 - Час: 0,5 хв.
 
@@ -37,7 +39,7 @@
 - Модульний моноліт: api і worker це один код NestJS у двох процесах, модулі спілкуються лише через `index.ts` і доменні події ([ADR-0001](adr/0001-modular-monolith.md)).
 - Три Python-сервіси поруч: analytics на 8000 читає базу через роль лише для читання, ai на 8001 і documents на 8002 нічого не зберігають.
 - Web на Next.js (3000), api на 4000, Postgres, Redis, MinIO і Mailpit у Docker Compose, усе на 127.0.0.1 ([ADR-0008](adr/0008-local-only-no-deployment.md)).
-- Рисунок: [c4-container.mmd](diagrams/c4-container.mmd).
+- Рисунок: `c4-container.png` з [c4-container.mmd](diagrams/c4-container.mmd).
 - Час: 1 хв.
 
 ### 5. Ключові патерни
@@ -48,7 +50,7 @@
 - Strategy для AI: інтерфейс `AiProvider` з провайдерами Anthropic, OpenAI-сумісним (NVIDIA) і `FakeAiProvider`, вибір через `AI_PROVIDER` ([ADR-0009](adr/0009-ai-provider-strategy.md)).
 - Інженерний фінал: шлях зміни етапу через outbox і шлях AI-задачі, потім Grafana на http://127.0.0.1:3001: p95 дошки (панель «Board p95») на дашборді `JobFlow System` і панелі вартості AI («AI cost, selected range», «AI cost per day by kind») на дашборді `JobFlow Product`.
 - Фінал у Jaeger на http://127.0.0.1:16686: сервіс `api`, трейс збереження вакансії Acme з кроку 3 демо. В одному трейсі спани api (`POST /api/v1/capture/bookmarklet`), worker (`outbox.relay`, `process ai`), ai (`ai.complete` з моделлю `fake` і токенами) і знову api (`live.push`, подія SSE). Потім рядок логу цього запиту в Grafana Explore: посилання TraceID відкриває той самий трейс.
-- Рисунки: [stage-change-outbox.mmd](diagrams/stage-change-outbox.mmd), [ai-job.mmd](diagrams/ai-job.mmd), [metrics.mmd](diagrams/metrics.mmd), [tracing.mmd](diagrams/tracing.mmd).
+- Рисунки: `stage-change-outbox.png`, `ai-job.png`, `metrics.png` і `tracing.png` з [stage-change-outbox.mmd](diagrams/stage-change-outbox.mmd), [ai-job.mmd](diagrams/ai-job.mmd), [metrics.mmd](diagrams/metrics.mmd) і [tracing.mmd](diagrams/tracing.mmd).
 - Час: 1 хв.
 
 ### 6. Методи аналітики
@@ -68,7 +70,7 @@
 - Резюме, 5 кейсів: повнота навичок 1,000, кожен кейс у межах 15 000 мс ([ai-eval-resume.tsv](thesis/data/ai-eval-resume.tsv)).
 - Фоллоу-ап, 10 кейсів: жодного вигаданого числа ([ai-eval-followup.tsv](thesis/data/ai-eval-followup.tsv)).
 - Вартість: розбір вакансії в середньому 735 токенів на вході і 525 на виході за 4408 мс. Ціна за мільйон токенів у звітах 0, тому вартість виклику 0 USD. Витрати обмежують `AI_DAILY_LIMIT` і `AI_MONTHLY_TOKEN_CAP` ([README](../README.md)).
-- Рисунок: [ai-eval-vacancy.tsv](thesis/data/ai-eval-vacancy.tsv).
+- Таблиця: `ai-eval-vacancy.md` з [ai-eval-vacancy.tsv](thesis/data/ai-eval-vacancy.tsv).
 - Час: 0,75 хв.
 
 ### 8. Безпека і тестування
@@ -79,7 +81,7 @@
 - 17 E2E-сценаріїв Playwright з axe ([e2e.json](thesis/data/e2e.json)).
 - `pnpm audit`: 0 high і 0 critical, 3 moderate і 2 low ([audit.json](thesis/data/audit.json)).
 - Сканування в CI: Trivy блокує HIGH і CRITICAL з виправленням у залежностях і п'яти образах, а канарка lodash 4.17.20 доводить це на кожному запуску ([security.md](security.md)).
-- Рисунок: [coverage.json](thesis/data/coverage.json).
+- Таблиця: `coverage.md` з [coverage.json](thesis/data/coverage.json).
 - Час: 0,5 хв.
 
 ### 9. Що далі
@@ -88,23 +90,23 @@
 - Офлайн-режим (FIN-08).
 - Розширення браузера замість букмарклета, на тому самому маршруті capture ([ADR-0007](adr/0007-no-server-scraping.md)).
 - API партнерів і шлях до деплою, описані в DOC-08.
-- Рисунок: [deployment.mmd](diagrams/deployment.mmd).
+- Рисунок: `deployment.png` з [deployment.mmd](diagrams/deployment.mmd).
 - Час: 0,25 хв.
 
 ## Таймінг
 
-| #   | Частина                  | Хвилини |
-| --- | ------------------------ | ------- |
-| 1   | Проблема                 | 0,75    |
-| 2   | Чого бракує наявним      | 0,5     |
-| 3   | Продукт на одному екрані | 0,5     |
-| 4   | Живе демо                | 4       |
-| 5   | Архітектура              | 1       |
-| 6   | Ключові патерни          | 1       |
-| 7   | Методи аналітики         | 0,75    |
-| 8   | Якість і вартість AI     | 0,75    |
-| 9   | Безпека і тестування     | 0,5     |
-| 10  | Що далі                  | 0,25    |
+| Слайд | Частина                  | Хвилини |
+| ----- | ------------------------ | ------- |
+| 1     | Проблема                 | 0,75    |
+| 2     | Чого бракує наявним      | 0,5     |
+| 3     | Продукт на одному екрані | 0,5     |
+| демо  | Живе демо                | 4       |
+| 4     | Архітектура              | 1       |
+| 5     | Ключові патерни          | 1       |
+| 6     | Методи аналітики         | 0,75    |
+| 7     | Якість і вартість AI     | 0,75    |
+| 8     | Безпека і тестування     | 0,5     |
+| 9     | Що далі                  | 0,25    |
 
 Разом 10 хвилин, з них демо 4. Запас до 12 хвилин лишається на перехід між слайдами і браузером.
 
@@ -125,7 +127,7 @@
    - блок «причини відмов за етапами»: на етапі відгуку стало на одну причину «не вистачає скілів» більше.
 9. Прокрутити до блоку «прогноз офера». Посунути повзунок «Відгуків на тиждень» і показати, як зсувається коридор тижнів. Увімкнути «Якщо конверсія техінтерв'ю дійде до 60%». Числа тижнів беруться лише з цього блоку і на слайді не повторюються.
 10. Відкрити «Резюме» (http://localhost:3000/resumes): таблиця версій CV з A/B порівнянням. У демо-історії версія 1 має 21 відгук, версія 2 має 27, версія 3 має 6 ([design_story.json](../services/analytics/tests/golden/design_story.json)). Вердикт читати з таблиці.
-11. Відкрити http://localhost:3000/analytics/summary/<місяць> для місяця зі збереженим підсумком: місячний підсумок і збережений план.
+11. Відкрити http://localhost:3000/analytics/summary/РРРР-ММ за попередній місяць: `pnpm demo:seed` пише підсумок за місяць перед днем засівання. Сторінка показує місячний підсумок і збережений план.
 
 Сценарій повторює автоматичний прогін `apps/web/e2e/defense/demo.walk.ts`. Він проходить ті самі кроки, лише картку в «відмова» переносить з клавіатури, і перериває кожен запит браузера не на localhost чи 127.0.0.1.
 
