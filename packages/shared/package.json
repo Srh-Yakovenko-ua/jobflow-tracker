@@ -65,7 +65,7 @@
   "devDependencies": {
     "@jobflow/config": "workspace:*",
     "@vitest/coverage-v8": "^4.1.12",
-    "eslint": "^10.13.0",
+    "eslint": "^10.15.0",
     "openapi-typescript": "7.13.0",
     "tsup": "^9.0.0",
     "typescript": "~6.0.3",
