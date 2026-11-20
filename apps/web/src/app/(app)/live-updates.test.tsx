@@ -16,6 +16,7 @@ import { notificationKeys } from '@/entities/notification';
 import { resumeKeys } from '@/entities/resume';
 import { userKeys } from '@/entities/user';
 import { useMoveApplicationMutation } from '@/features/move-application';
+import { advanceBy } from '@/test/advance-timers';
 import {
   boardOf,
   boardRoute,
@@ -318,7 +319,7 @@ describe('LiveUpdates', () => {
     act(() => {
       source.fail();
     });
-    await act(() => vi.advanceTimersByTimeAsync(2000));
+    await advanceBy(2000);
     const second = await stream.source(1);
 
     expect(

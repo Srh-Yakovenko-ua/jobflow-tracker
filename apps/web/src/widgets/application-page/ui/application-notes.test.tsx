@@ -3,10 +3,11 @@ import type { UserEvent } from '@testing-library/user-event';
 import { HttpResponse } from 'msw/http';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
+import { advanceBy } from '@/test/advance-timers';
 import { errorReply } from '@/test/api-handlers';
 import { ACME_APPLICATION } from '@/test/application-fixtures';
 import { fixtureIdOf } from '@/test/board-fixtures';
-import { advanceBy, fakeTimeouts } from '@/test/fake-timeouts';
+import { fakeTimeouts } from '@/test/fake-timeouts';
 import { type Latch, latch } from '@/test/latch';
 import { NOTE_ID, noteOf, notesRoute, noteUpdateRoute } from '@/test/note-fixtures';
 import { renderApplicationPage } from '@/test/render-application-page';

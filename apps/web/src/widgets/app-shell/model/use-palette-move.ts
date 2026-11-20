@@ -18,5 +18,3 @@ export function usePaletteMove(opener: HTMLElement | null) {
   const rejection = useRejectionPrompt({ send, undo });
   return { rejection, moveTo: rejection.sendOrAsk };
 }
-
-export type PaletteMove = ReturnType<typeof usePaletteMove>;

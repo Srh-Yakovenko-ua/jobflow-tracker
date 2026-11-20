@@ -2,7 +2,8 @@ import { LIVE_LIMITS } from '@jobflow/shared';
 import { screen, within } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
-import { advanceBy, fakeTimeoutsAndIntervals } from '@/test/fake-timeouts';
+import { advanceBy } from '@/test/advance-timers';
+import { fakeTimeoutsAndIntervals } from '@/test/fake-timeouts';
 import {
   DESIGN_EXPLANATION,
   DESIGN_MATCH,

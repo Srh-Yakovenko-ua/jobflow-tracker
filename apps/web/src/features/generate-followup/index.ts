@@ -1,4 +1,4 @@
-export { freshGhostsOf, GHOST_FOLLOWUP } from './lib/fresh-ghosts';
-export { type BulkFollowups, useBulkFollowups } from './model/use-bulk-followups';
-export { BulkFollowupSheet, type BulkFollowupSheetProps } from './ui/bulk-followup-sheet';
-export { FollowupPanel, type FollowupPanelProps } from './ui/followup-panel';
+export { freshGhostsOf } from './lib/fresh-ghosts';
+export { useBulkFollowups } from './model/use-bulk-followups';
+export { BulkFollowupSheet } from './ui/bulk-followup-sheet';
+export { FollowupPanel } from './ui/followup-panel';

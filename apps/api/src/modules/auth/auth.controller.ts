@@ -12,8 +12,8 @@ import {
   registerInputSchema,
   type SessionTokens,
 } from '@jobflow/shared';
-import { Body, Controller, Get, HttpCode, Post, Req, Res } from '@nestjs/common';
-import type { Request, Response } from 'express';
+import { Body, Controller, Get, HttpCode, Post, Res } from '@nestjs/common';
+import type { Response } from 'express';
 
 import { RateLimit } from '../../rate-limit/rate-limit.decorator.js';
 import type { AccessUser } from './access-tokens.js';
@@ -22,11 +22,13 @@ import { CurrentUser } from './current-user.decorator.js';
 import { Public } from './public.decorator.js';
 import {
   clearRefreshCookie,
-  type HttpExchange,
   readRefreshToken,
+  type RefreshClient,
   sendSession,
+  type SessionReply,
 } from './refresh-cookie.js';
 import { SessionService } from './session.service.js';
+import { SessionClient } from './session-client.decorator.js';
 
 @Controller('auth')
 export class AuthController {
@@ -40,10 +42,10 @@ export class AuthController {
   @RateLimit('register')
   async register(
     @Body({ schema: registerInputSchema }) input: RegisterInput,
-    @Req() req: Request,
+    @SessionClient() client: RefreshClient,
     @Res({ passthrough: true }) res: Response,
   ): Promise<AuthResponse> {
-    return this.signedIn(await this.authService.register(input), { req, res });
+    return this.signedIn(await this.authService.register(input), { client, res });
   }
 
   @Post('login')
@@ -52,10 +54,10 @@ export class AuthController {
   @RateLimit('login')
   async login(
     @Body({ schema: loginInputSchema }) input: LoginInput,
-    @Req() req: Request,
+    @SessionClient() client: RefreshClient,
     @Res({ passthrough: true }) res: Response,
   ): Promise<AuthResponse> {
-    return this.signedIn(await this.authService.login(input), { req, res });
+    return this.signedIn(await this.authService.login(input), { client, res });
   }
 
   @Post('refresh')
@@ -63,11 +65,11 @@ export class AuthController {
   @Public()
   async refresh(
     @Body({ schema: refreshTokenBodySchema }) body: RefreshTokenBody,
-    @Req() req: Request,
+    @SessionClient() client: RefreshClient,
     @Res({ passthrough: true }) res: Response,
   ): Promise<SessionTokens> {
-    const session = await this.sessions.refresh(readRefreshToken(req, body));
-    return sendSession({ req, res, session });
+    const session = await this.sessions.refresh(readRefreshToken(client, body));
+    return sendSession({ client, res, session });
   }
 
   @Post('logout')
@@ -75,10 +77,10 @@ export class AuthController {
   @Public()
   async logout(
     @Body({ schema: refreshTokenBodySchema }) body: RefreshTokenBody,
-    @Req() req: Request,
+    @SessionClient() client: RefreshClient,
     @Res({ passthrough: true }) res: Response,
   ): Promise<void> {
-    await this.sessions.logout(readRefreshToken(req, body));
+    await this.sessions.logout(readRefreshToken(client, body));
     clearRefreshCookie(res);
   }
 
@@ -97,9 +99,9 @@ export class AuthController {
   async changePassword(
     @CurrentUser() user: AccessUser,
     @Body({ schema: changePasswordInputSchema }) input: ChangePasswordInput,
-    @Req() req: Request,
+    @SessionClient() client: RefreshClient,
   ): Promise<void> {
-    const refreshToken = readRefreshToken(req);
+    const refreshToken = readRefreshToken(client);
     const keepFamilyId = await this.sessions.familyOf({ userId: user.id, refreshToken });
     await this.authService.changePassword({ userId: user.id, input, keepFamilyId });
   }
@@ -109,7 +111,10 @@ export class AuthController {
     return this.authService.me(user.id);
   }
 
-  private async signedIn(user: AuthUser, http: HttpExchange): Promise<AuthResponse> {
+  private async signedIn(
+    user: AuthUser,
+    http: Omit<SessionReply, 'session'>,
+  ): Promise<AuthResponse> {
     const session = await this.sessions.start(user.id);
     return { user, ...sendSession({ ...http, session }) };
   }

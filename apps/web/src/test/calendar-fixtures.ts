@@ -4,7 +4,6 @@ import {
   calendarQuerySchema,
   type CalendarResponse,
   SCHEDULED_EVENT_KIND_LABELS,
-  SCHEDULED_EVENT_KINDS,
   type ScheduledEventKind,
   type ScheduledEventStatus,
   type Stage,
@@ -82,10 +81,6 @@ export function autoGhostItemOf(seed: FollowupItemSeed): CalendarItem {
     extendedProps: { ...ACME, type: 'auto_ghost', stage: followup.extendedProps.stage },
   });
 }
-
-export const ITEM_PER_KIND: readonly CalendarItem[] = SCHEDULED_EVENT_KINDS.map((kind, day) =>
-  scheduledItemOf({ serial: 601 + day, kind, start: `2026-11-0${String(2 + day)}T09:00:00.000Z` }),
-);
 
 export const FOLLOWUP_ITEM = followupItemOf({ serial: 701, date: '2026-11-04' });
 

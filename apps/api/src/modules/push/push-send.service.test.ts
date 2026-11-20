@@ -31,6 +31,8 @@ class FakePushTargets {
 
   readonly unsaved = new Set<string>();
 
+  readonly deleted = new Set<string>();
+
   listForUser(userId: string): Promise<PushTargetRow[]> {
     this.calls.push('listForUser');
     return Promise.resolve(userId === OLENA_ID ? [CHROME_ROW, PHONE_ROW] : []);
@@ -45,6 +47,9 @@ class FakePushTargets {
 
   recordFailure(_userId: string, id: string): Promise<number | null> {
     this.calls.push(`recordFailure ${id}`);
+    if (this.deleted.has(id)) {
+      return Promise.resolve(null);
+    }
     const failedCount = (this.failedCounts.get(id) ?? 0) + 1;
     this.failedCounts.set(id, failedCount);
     return Promise.resolve(failedCount);
@@ -56,11 +61,16 @@ class FakePushTargets {
   }
 }
 
-async function failedSendWith(chromeFailedCount: number) {
+type FailedChrome = { failedCount: number; deleted?: boolean };
+
+async function failedSendWith({ failedCount, deleted = false }: FailedChrome) {
   const sender = new ScriptedPushSender();
   sender.answer = 'failed';
   const setup = await sendWith({ sender });
-  setup.repository.failedCounts.set(CHROME_ROW.id, chromeFailedCount);
+  setup.repository.failedCounts.set(CHROME_ROW.id, failedCount);
+  if (deleted) {
+    setup.repository.deleted.add(CHROME_ROW.id);
+  }
   await expect(setup.service.send(JOB)).resolves.toEqual(['failed', 'failed']);
   return setup.repository;
 }
@@ -116,7 +126,7 @@ describe('PushSendService.send', () => {
   });
 
   it('a subscription one failure short of the limit is kept', async () => {
-    const repository = await failedSendWith(PUSH_LIMITS.failedSendsMax - 2);
+    const repository = await failedSendWith({ failedCount: PUSH_LIMITS.failedSendsMax - 2 });
 
     expect(repository.calls).toEqual([
       'listForUser',
@@ -126,13 +136,26 @@ describe('PushSendService.send', () => {
   });
 
   it('a subscription reaching the limit is removed', async () => {
-    const repository = await failedSendWith(PUSH_LIMITS.failedSendsMax - 1);
+    const repository = await failedSendWith({ failedCount: PUSH_LIMITS.failedSendsMax - 1 });
 
     expect(repository.calls).toEqual([
       'listForUser',
       `recordFailure ${CHROME_ROW.id}`,
       `recordFailure ${PHONE_ROW.id}`,
       `remove ${CHROME_ROW.id}`,
+    ]);
+  });
+
+  it('a subscription deleted mid-send is not removed', async () => {
+    const repository = await failedSendWith({
+      failedCount: PUSH_LIMITS.failedSendsMax - 1,
+      deleted: true,
+    });
+
+    expect(repository.calls).toEqual([
+      'listForUser',
+      `recordFailure ${CHROME_ROW.id}`,
+      `recordFailure ${PHONE_ROW.id}`,
     ]);
   });
 });

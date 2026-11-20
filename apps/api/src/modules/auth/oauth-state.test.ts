@@ -18,7 +18,7 @@ const GITHUB_STATE: OAuthStateToken = {
 
 const states = new OAuthStates(testJwtKeys, new AuthClock());
 
-const statesIssuedLongAgo = new OAuthStates(testJwtKeys, fixedClock(ISSUED_AT));
+const statesAtIssue = new OAuthStates(testJwtKeys, fixedClock(ISSUED_AT));
 
 const refusedStates: [string, () => Promise<string | undefined>][] = [
   [
@@ -26,7 +26,7 @@ const refusedStates: [string, () => Promise<string | undefined>][] = [
     async () =>
       withPayload(await states.sign(GITHUB_STATE), { ...GITHUB_STATE, state: 'attacker-state' }),
   ],
-  ['that expired', () => statesIssuedLongAgo.sign(GITHUB_STATE)],
+  ['that expired', () => statesAtIssue.sign(GITHUB_STATE)],
   ['that is not a JWT', () => Promise.resolve('not-a-jwt')],
   ['that is missing', () => Promise.resolve(undefined)],
   [
@@ -42,7 +42,7 @@ const refusedStates: [string, () => Promise<string | undefined>][] = [
 
 describe('OAuthStates', () => {
   it('signs RS256 with the kid, the oauth-state typ, ten minutes of life and no user claims', async () => {
-    const token = await statesIssuedLongAgo.sign(GITHUB_STATE);
+    const token = await statesAtIssue.sign(GITHUB_STATE);
 
     const { payload, protectedHeader } = await jwtVerify(token, testJwtKeys.publicKey, {
       currentDate: ISSUED_AT,

@@ -104,7 +104,7 @@ export function ChartSkeleton() {
   );
 }
 
-export function HeadingSkeleton() {
+function HeadingSkeleton() {
   const motion = useSkeletonMotion();
   return (
     <div aria-hidden className="flex flex-col gap-4.5">

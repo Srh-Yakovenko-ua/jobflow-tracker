@@ -1,1 +1,1 @@
-export { ApplicationsTable, type ApplicationsTableProps } from './ui/applications-table';
+export { ApplicationsTable } from './ui/applications-table';

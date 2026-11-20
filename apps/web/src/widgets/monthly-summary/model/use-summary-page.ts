@@ -43,15 +43,20 @@ function monthViewOf(input: MonthViewInput): SummaryMonthView {
 export function useSummaryPage(month: YearMonth) {
   const monthly = useMonthlySummary();
   const archive = useQuery(summaryArchiveQueryOptions());
+  const archiveLoad = sectionLoadOf(archive);
   return {
     view: monthViewOf({
       month,
       monthly: { state: monthly.state, latestMonth: monthly.latest?.summary?.month ?? null },
-      archive: { data: archive.data, failed: sectionLoadOf(archive).failed },
+      archive: { data: archive.data, failed: archiveLoad.failed },
     }),
     others: archive.data?.items.filter((item) => item.month !== month) ?? [],
-    load: sectionLoadOf(monthly.latestQuery, archive),
+    load: {
+      retrying: monthly.load.retrying || archiveLoad.retrying,
+      onRetry: () => {
+        monthly.load.onRetry();
+        archiveLoad.onRetry();
+      },
+    },
   };
 }
-
-export type SummaryPageState = ReturnType<typeof useSummaryPage>;

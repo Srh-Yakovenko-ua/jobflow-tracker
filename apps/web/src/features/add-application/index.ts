@@ -3,4 +3,4 @@ export { addPrefillOf } from './lib/add-prefill';
 export type { CapturedDraft } from './model/use-add-application';
 export { type RetryParseOptions, useRetryParse } from './model/use-retry-parse';
 export { ManualForm } from './ui/manual-form';
-export { PasteForm, type PasteFormProps } from './ui/paste-form';
+export { PasteForm } from './ui/paste-form';

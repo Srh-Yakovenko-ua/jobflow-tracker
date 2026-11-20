@@ -122,7 +122,7 @@ def checked(
 def built_user(request: ResumeParseRequest) -> str:
     if request.input.pages:
         return SCAN_USER
-    return fenced(request.input.text, name="resume_text", strip=DELIMITER_TAG)
+    return fenced(request.input.text, name="resume_text")
 
 
 def build(request: ResumeParseRequest) -> BuiltPrompt:

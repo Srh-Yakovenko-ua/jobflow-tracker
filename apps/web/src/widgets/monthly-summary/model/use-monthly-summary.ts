@@ -25,10 +25,7 @@ export function useMonthlySummary() {
   const load = sectionLoadOf(latest);
   return {
     latest: latest.data,
-    latestQuery: latest,
     state: summaryStateOf({ latest: { data: latest.data, failed: load.failed }, job: job.data }),
     load,
   };
 }
-
-export type MonthlySummary = ReturnType<typeof useMonthlySummary>;

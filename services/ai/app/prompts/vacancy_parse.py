@@ -114,7 +114,7 @@ def checked(
 def build(request: VacancyParseRequest) -> BuiltPrompt:
     return BuiltPrompt(
         system=SYSTEM,
-        user=fenced(request.input.text, name="vacancy_text", strip=DELIMITER_TAG),
+        user=fenced(request.input.text, name="vacancy_text"),
         **sampling(
             request, temperature=DEFAULT_TEMPERATURE, max_tokens=DEFAULT_MAX_TOKENS
         ),

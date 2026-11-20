@@ -1,12 +1,13 @@
 'use client';
 
-import { type Theme, THEMES } from '@jobflow/shared';
+import type { Theme } from '@jobflow/shared';
 import { CHART_THEME } from '@jobflow/shared/chart-theme';
 import { RadioGroup as RadioGroupPrimitive } from 'radix-ui';
 import type { ReactNode } from 'react';
 
 import { uk } from '@/shared/i18n';
 import { THEME_OPTIONS, useTheme } from '@/shared/lib/theme';
+import { choiceChangeOf } from '@/shared/ui/choice-change';
 
 export type ThemeTilesProps = Readonly<{ onThemeChange: (theme: Theme) => void }>;
 
@@ -69,12 +70,13 @@ export function ThemeTiles({ onThemeChange }: ThemeTilesProps) {
       aria-label={uk.ui.theme}
       orientation="horizontal"
       value={theme}
-      onValueChange={(next) => {
-        const picked = THEMES.find((candidate) => candidate === next);
-        if (picked === undefined) return;
-        setTheme(picked);
-        onThemeChange(picked);
-      }}
+      onValueChange={choiceChangeOf({
+        options: THEME_OPTIONS,
+        onValueChange: (picked) => {
+          setTheme(picked);
+          onThemeChange(picked);
+        },
+      })}
       className="flex flex-wrap gap-3"
     >
       {THEME_OPTIONS.map((option) => (

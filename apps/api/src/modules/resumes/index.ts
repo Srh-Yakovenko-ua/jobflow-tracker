@@ -13,13 +13,10 @@ export type {
 export { ResumeVersionsRepository } from './resume-versions.repository.js';
 export {
   RESUME_EVENTS,
-  type ResumeAttachedPayload,
   resumeAttachedPayloadSchema,
-  type ResumeVersionProfiledPayload,
   resumeVersionProfiledPayloadSchema,
   resumeVersionUpdatedPayloadSchema,
   type ResumeVersionUploadedPayload,
-  resumeVersionUploadedPayloadSchema,
 } from './resumes.events.js';
 export { ResumesModule, ResumesWorkerModule } from './resumes.module.js';
 export { RESUMES_OPENAPI_PATHS } from './resumes.openapi.js';

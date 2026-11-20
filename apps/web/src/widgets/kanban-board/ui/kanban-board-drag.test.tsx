@@ -1,5 +1,5 @@
 import type { ApplicationCard } from '@jobflow/shared';
-import { act, fireEvent, screen, waitFor, within } from '@testing-library/react';
+import { fireEvent, screen, waitFor, within } from '@testing-library/react';
 import type { UserEvent } from '@testing-library/user-event';
 import type { HttpResponseResolver } from 'msw';
 import { http, HttpResponse } from 'msw/http';
@@ -11,6 +11,7 @@ import { rememberLastReason } from '@/features/reject-with-reason';
 import { API_CLIENT_LIMITS } from '@/shared/api';
 import { uk } from '@/shared/i18n';
 import type { ErrorToastContent } from '@/shared/ui/error-toast';
+import { advanceBy } from '@/test/advance-timers';
 import { apiUrl, errorReply } from '@/test/api-handlers';
 import { settleLanding, startDrag, waitOutDropClickGuard } from '@/test/board-drag';
 import {
@@ -228,7 +229,7 @@ describe('KanbanBoard drag and drop', () => {
         expect(moves).toHaveLength(1);
       });
       answer.release();
-      await act(() => vi.advanceTimersByTimeAsync(failure.waitMs));
+      await advanceBy(failure.waitMs);
 
       expect(await screen.findByText(failure.toast.title)).toBeDefined();
       expect(screen.getByText(failure.toast.description)).toBeDefined();

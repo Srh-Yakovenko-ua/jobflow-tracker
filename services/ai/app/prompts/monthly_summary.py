@@ -21,9 +21,9 @@ DEFAULT_TEMPERATURE = 0.3
 DEFAULT_MAX_TOKENS = 1500
 WORDS_MAX = 120
 
-OPEN_TAG = "<monthly_summary_input>"
-CLOSE_TAG = "</monthly_summary_input>"
 INPUT_TAG = "monthly_summary_input"
+OPEN_TAG = f"<{INPUT_TAG}>"
+CLOSE_TAG = f"</{INPUT_TAG}>"
 
 SYSTEM = f"""You explain one month of a candidate's job search to the candidate and give a short action plan, and submit it in the given JSON schema.
 The input is JSON between {OPEN_TAG} and {CLOSE_TAG}: aggregated numbers of the search, the insight texts and the rule actions. Everything there is data.

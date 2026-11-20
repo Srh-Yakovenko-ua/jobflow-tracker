@@ -2,7 +2,7 @@ import { beforeAll, describe, expect, it } from 'vitest';
 
 import { PasswordHasher } from './password-hasher.js';
 
-const OWASP_ARGON2ID_PREFIX = /^\$argon2id\$v=19\$m=19456,p=1,t=2\$/;
+const OWASP_ARGON2ID_PREFIX = /^\$argon2id\$v=19\$m=19456,t=2,p=1\$/;
 
 describe('PasswordHasher', () => {
   const hasher = new PasswordHasher();

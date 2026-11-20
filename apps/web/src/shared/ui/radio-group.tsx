@@ -2,6 +2,7 @@
 
 import { RadioGroup as RadioGroupPrimitive } from 'radix-ui';
 
+import { choiceChangeOf } from './choice-change';
 import { CHOICE_ROW } from './field-surface';
 
 export type ChoiceOption<Value extends string = string> = { value: Value; label: string };
@@ -12,18 +13,6 @@ export type RadioGroupProps<Value extends string> = Readonly<{
   value: Value;
   onValueChange: (value: Value) => void;
 }>;
-
-type ChoiceChange<Value extends string> = Pick<RadioGroupProps<Value>, 'options' | 'onValueChange'>;
-
-export function choiceChangeOf<Value extends string>({
-  options,
-  onValueChange,
-}: ChoiceChange<Value>): (next: string) => void {
-  return (next) => {
-    const picked = options.find((option) => option.value === next);
-    if (picked) onValueChange(picked.value);
-  };
-}
 
 export function RadioGroup<Value extends string>({
   options,

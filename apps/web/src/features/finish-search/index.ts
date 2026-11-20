@@ -1,1 +1,1 @@
-export { FinishSearchAction, type FinishSearchActionProps } from './ui/finish-search-action';
+export { FinishSearchAction } from './ui/finish-search-action';

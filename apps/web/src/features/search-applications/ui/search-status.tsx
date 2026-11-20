@@ -2,6 +2,7 @@
 
 import { uk } from '@/shared/i18n';
 import { cn } from '@/shared/lib/cn';
+import { sectionLoadOf } from '@/shared/lib/section-load';
 import { NoMatches } from '@/shared/ui/no-matches';
 import { Spinner } from '@/shared/ui/spinner';
 
@@ -14,7 +15,8 @@ export type SearchStatusProps = Readonly<{ search: ApplicationSearch }>;
 const STATUS_ROW = 'caption flex items-center gap-2 px-2.5 py-3';
 
 export function SearchStatus({ search }: SearchStatusProps) {
-  if (search.isPending) {
+  const load = sectionLoadOf(search);
+  if (load.busy) {
     return (
       <div role="status" className={cn(STATUS_ROW, 'text-ink-3')}>
         <Spinner />
@@ -22,12 +24,12 @@ export function SearchStatus({ search }: SearchStatusProps) {
       </div>
     );
   }
-  if (search.isError) {
+  if (load.failed || load.stale) {
     return (
       <p role="alert" className={cn(STATUS_ROW, 'text-danger')}>
         {SEARCH.error}
       </p>
     );
   }
-  return search.data.items.length === 0 ? <NoMatches /> : null;
+  return search.data?.items.length === 0 ? <NoMatches /> : null;
 }

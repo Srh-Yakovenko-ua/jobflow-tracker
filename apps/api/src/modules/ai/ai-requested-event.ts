@@ -22,10 +22,11 @@ type AiRequestedRow = Prisma.InputJsonObject & { applicationId?: string };
 
 export type AiRequestedOutbox = { event: AiRequestedEvent; requested: AiRequestedRow };
 
-export type RecordAiRequested<Event extends AiRequestedEvent = AiRequestedEvent> = InTransaction & {
-  event: Event;
-  requested: AiRequested<Event> & AiRequestedRow;
-};
+export type RecordAiRequested<Event extends AiRequestedEvent = AiRequestedEvent> =
+  Required<InTransaction> & {
+    event: Event;
+    requested: AiRequested<Event> & AiRequestedRow;
+  };
 
 export function aiRequestedOutbox(
   userId: string,

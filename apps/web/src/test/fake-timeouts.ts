@@ -4,6 +4,8 @@ import { vi } from 'vitest';
 import { QUERY_DEFAULTS } from '@/app/query-client';
 import { API_CLIENT_LIMITS } from '@/shared/api';
 
+import { advanceBy } from './advance-timers';
+
 const FIRST_RETRY_PAUSE_MS = 1_000;
 
 export function fakeTimeouts() {
@@ -15,10 +17,6 @@ export function fakeTimeoutsAndIntervals() {
     toFake: ['setTimeout', 'clearTimeout', 'setInterval', 'clearInterval'],
     shouldAdvanceTime: true,
   });
-}
-
-export function advanceBy(ms: number) {
-  return act(() => vi.advanceTimersByTimeAsync(ms));
 }
 
 export function advancePastQueryRetries() {

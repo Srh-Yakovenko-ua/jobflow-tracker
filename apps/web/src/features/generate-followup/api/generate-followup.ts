@@ -5,6 +5,7 @@ import {
   type FollowupRequest,
 } from '@jobflow/shared';
 
+import { applicationAiPath } from '@/entities/application';
 import { apiClient } from '@/shared/api';
 
 export type GenerateFollowupRequest = Readonly<{
@@ -19,7 +20,7 @@ export function generateFollowup({
   idempotencyKey,
 }: GenerateFollowupRequest): Promise<AiJobAccepted> {
   return apiClient.request({
-    path: `/applications/${applicationId}/followup`,
+    path: applicationAiPath({ id: applicationId, segment: 'followup' }),
     method: 'POST',
     body,
     schema: aiJobAcceptedSchema,

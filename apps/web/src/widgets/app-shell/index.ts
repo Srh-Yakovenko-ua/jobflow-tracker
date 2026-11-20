@@ -1,3 +1,3 @@
 export { SIDEBAR_COOKIE, sidebarFromCookie } from './model/sidebar-cookie';
-export { AppShell, type AppShellProps, type AppShellSlots } from './ui/app-shell';
-export { ShellSkeleton, type ShellSkeletonProps } from './ui/shell-skeleton';
+export { AppShell } from './ui/app-shell';
+export { ShellSkeleton } from './ui/shell-skeleton';

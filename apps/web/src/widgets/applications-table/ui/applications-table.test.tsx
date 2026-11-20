@@ -1,5 +1,5 @@
 import type { ApplicationFilters, ApplicationListItem } from '@jobflow/shared';
-import { act, fireEvent, screen, waitFor, within } from '@testing-library/react';
+import { fireEvent, screen, waitFor, within } from '@testing-library/react';
 import type { RequestHandler } from 'msw';
 import { http, HttpResponse } from 'msw/http';
 import { afterEach, describe, expect, it, vi } from 'vitest';
@@ -9,6 +9,7 @@ import { applicationFiltersOf } from '@/features/filter-applications';
 import { withSearchParams } from '@/shared/api';
 import { uk } from '@/shared/i18n';
 import { TOUCH_HEIGHT } from '@/shared/ui/touch-height';
+import { advanceBy } from '@/test/advance-timers';
 import { apiUrl, errorReply, NEVER_ANSWERS } from '@/test/api-handlers';
 import { layOutColumns } from '@/test/board-drag';
 import { fixtureIdOf, moveRoute } from '@/test/board-fixtures';
@@ -434,7 +435,7 @@ describe('ApplicationsTable bulk actions', () => {
     const search = screen.getByRole('textbox', { name: 'Пошук у таблиці' });
 
     await user.type(search, 'альфа');
-    await act(() => vi.advanceTimersByTimeAsync(250));
+    await advanceBy(250);
     await waitFor(() => {
       expect(screen.queryByRole('link', { name: 'Бета' })).toBeNull();
     });
@@ -454,12 +455,12 @@ describe('ApplicationsTable bulk actions', () => {
     await user.click(checkboxNamed('Обрати «Бета»'));
 
     await user.type(screen.getByRole('textbox', { name: 'Пошук у таблиці' }), 'ал');
-    await act(() => vi.advanceTimersByTimeAsync(150));
+    await advanceBy(150);
 
     expect(checkboxNamed('Обрати «Альфа»').getAttribute('aria-checked')).toBe('true');
     expect(checkboxNamed('Обрати «Бета»').getAttribute('aria-checked')).toBe('true');
     expect(screen.getByText('2 картки обрано')).toBeDefined();
-    await act(() => vi.advanceTimersByTimeAsync(100));
+    await advanceBy(100);
     await waitFor(() => {
       expect(checkboxNamed('Обрати «Альфа»').getAttribute('aria-checked')).toBe('false');
     });
@@ -506,7 +507,7 @@ describe('ApplicationsTable filters', () => {
     await screen.findByRole('link', { name: 'Альфа' });
 
     await user.type(screen.getByRole('textbox', { name: 'Пошук у таблиці' }), 'react');
-    await act(() => vi.advanceTimersByTimeAsync(250));
+    await advanceBy(250);
 
     expect(await screen.findByText('Немає карток за «react»')).toBeDefined();
     expect(route.sent.map(sentQueryOf)).toContainEqual({

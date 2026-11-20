@@ -5,7 +5,7 @@ import {
   type SettingsSuggestions,
   settingsSuggestionsSchema,
 } from '@jobflow/shared';
-import { act, waitFor } from '@testing-library/react';
+import { waitFor } from '@testing-library/react';
 import type { DelayMode, HttpResponseResolver, JsonBodyType } from 'msw';
 import { http, HttpResponse } from 'msw/http';
 import { delay } from 'msw/utils/delay';
@@ -13,6 +13,8 @@ import { expect, vi } from 'vitest';
 
 import { API_CLIENT_LIMITS, ApiError } from '@/shared/api';
 import { config } from '@/shared/config';
+
+import { advanceBy } from './advance-timers';
 
 export type ErrorBodyOptions = Pick<ErrorResponse, 'status' | 'type'> &
   Partial<Omit<ErrorResponse, 'status' | 'type'>>;
@@ -156,7 +158,7 @@ export function everyFetchSettled() {
 }
 
 export async function settleSentRequests() {
-  await act(() => vi.advanceTimersByTimeAsync(API_CLIENT_LIMITS.requestTimeoutMs));
+  await advanceBy(API_CLIENT_LIMITS.requestTimeoutMs);
   await everyFetchSettled();
 }
 

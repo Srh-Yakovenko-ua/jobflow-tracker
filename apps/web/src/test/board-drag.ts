@@ -1,7 +1,9 @@
-import { act, fireEvent } from '@testing-library/react';
+import { fireEvent } from '@testing-library/react';
 import { vi } from 'vitest';
 
 import { DROP_GLIDE } from '@/widgets/kanban-board/model/drop-glide';
+
+import { advanceBy } from './advance-timers';
 
 export type BoardDrag = {
   over: (section: HTMLElement) => void;
@@ -78,10 +80,10 @@ export function startDrag(card: HTMLElement): BoardDrag {
 }
 
 export async function settleLanding() {
-  await act(() => vi.advanceTimersByTimeAsync(DROP_GLIDE.settleMs));
+  await advanceBy(DROP_GLIDE.settleMs);
 }
 
 export async function waitOutDropClickGuard() {
-  await act(() => vi.advanceTimersByTimeAsync(DROP_CLICK_GUARD_MS));
+  await advanceBy(DROP_CLICK_GUARD_MS);
   vi.useRealTimers();
 }

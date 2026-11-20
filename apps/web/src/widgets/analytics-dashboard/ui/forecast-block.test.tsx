@@ -4,10 +4,11 @@ import type { HttpResponseResolver } from 'msw';
 import { HttpResponse } from 'msw/http';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { advanceBy } from '@/test/advance-timers';
 import { ARCHIVED_SEARCH, type SentRequest } from '@/test/analytics-fixtures';
 import { axeViolations } from '@/test/axe';
 import { frameOf, renderDashboardBlocks, selectArchivedSearch } from '@/test/dashboard-frames';
-import { advanceBy, fakeTimeouts } from '@/test/fake-timeouts';
+import { fakeTimeouts } from '@/test/fake-timeouts';
 import {
   DESIGN_FORECAST_TEXT,
   forecastBelowThreshold,

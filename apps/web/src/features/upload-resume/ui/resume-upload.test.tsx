@@ -9,6 +9,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { userKeys, useSession } from '@/entities/user';
 import { API_CLIENT_LIMITS, FILE_UPLOAD_LIMITS } from '@/shared/api';
 import { useFilePicker } from '@/shared/ui/drop-zone';
+import { advanceBy } from '@/test/advance-timers';
 import {
   ANY_IDEMPOTENCY_KEY,
   apiUrl,
@@ -19,7 +20,7 @@ import {
   validationReply,
 } from '@/test/api-handlers';
 import { fixtureIdOf } from '@/test/board-fixtures';
-import { advanceBy, fakeTimeouts } from '@/test/fake-timeouts';
+import { fakeTimeouts } from '@/test/fake-timeouts';
 import { latch } from '@/test/latch';
 import { QueryProbe, waitForQuery } from '@/test/query-status';
 import { renderInApp } from '@/test/render-in-app';

@@ -1,1 +1,1 @@
-export { AskedTopicsQuestion, type AskedTopicsQuestionProps } from './ui/asked-topics-question';
+export { AskedTopicsQuestion } from './ui/asked-topics-question';

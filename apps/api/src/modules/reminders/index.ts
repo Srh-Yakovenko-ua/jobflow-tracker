@@ -1,5 +1,4 @@
 export { InterviewAlertsService } from './interview-alerts.service.js';
-export { INTERVIEW_REMINDER_LEADS_MIN } from './interview-reminders.js';
 export { RemindersModule, RemindersWorkerModule } from './reminders.module.js';
 export { REMINDERS_OPENAPI_PATHS } from './reminders.openapi.js';
 export type {

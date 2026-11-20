@@ -1,9 +1,10 @@
-import { act, screen, waitFor, within } from '@testing-library/react';
+import { screen, waitFor, within } from '@testing-library/react';
 import type { UserEvent } from '@testing-library/user-event';
 import { toast } from 'sonner';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { API_CLIENT_LIMITS, clearAccessToken, setAccessToken } from '@/shared/api';
+import { advanceBy } from '@/test/advance-timers';
 import { ANY_IDEMPOTENCY_KEY, errorReply, OUTAGES, SESSION_TOKENS } from '@/test/api-handlers';
 import { ACME_APPLICATION } from '@/test/application-fixtures';
 import { type BoardRouteOptions, cardIn } from '@/test/board-fixtures';
@@ -152,7 +153,7 @@ describe('ApplicationSchedule', () => {
 
       await user.click(dialog.getByRole('button', { name: 'Запланувати' }));
       if (settled === 'pending') {
-        await act(() => vi.advanceTimersByTimeAsync(API_CLIENT_LIMITS.requestTimeoutMs));
+        await advanceBy(API_CLIENT_LIMITS.requestTimeoutMs);
       }
 
       expect(await screen.findByText('Не вдалося зберегти')).toBeDefined();

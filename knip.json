@@ -1,0 +1,30 @@
+{
+  "$schema": "https://unpkg.com/knip@6/schema.json",
+  "ignoreExportsUsedInFile": true,
+  "ignoreWorkspaces": ["services/*"],
+  "ignore": [
+    "docs/design/**",
+    "infra/docker/observability/uptime-kuma/**",
+    "packages/config/test/fixtures/**"
+  ],
+  "ignoreBinaries": ["uv"],
+  "workspaces": {
+    "apps/api": {
+      "entry": [
+        "src/{main,worker,openapi,seed,demo-seed,ai-usage,ai-eval,ai-rematch}.ts",
+        "scripts/*.js"
+      ]
+    },
+    "apps/web": {
+      "entry": ["public/sw.js", "e2e/**/*.{walk,shot}.ts"]
+    },
+    "bookmarklet": {
+      "vitest": false,
+      "entry": ["vitest.config.js", "src/index.ts", "src/**/*.test.ts"]
+    },
+    "packages/docs": {
+      "entry": ["src/{render,data}.js"],
+      "ignoreDependencies": ["mermaid", "@redocly/cli"]
+    }
+  }
+}

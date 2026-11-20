@@ -20,19 +20,27 @@ const refreshCookie = httpOnlyCookie({
 
 export type HttpExchange = { req: Request; res: Response };
 
-export type SessionReply = HttpExchange & { session: IssuedSession };
+export type RefreshClient = { mobile: boolean; refreshCookie: string | undefined };
 
-function isMobile(req: Request): boolean {
-  return req.get(CLIENT_HEADER) === MOBILE_CLIENT;
+export type SessionReply = { client: RefreshClient; res: Response; session: IssuedSession };
+
+export function sessionClientOf(req: Request): RefreshClient {
+  return {
+    mobile: req.get(CLIENT_HEADER) === MOBILE_CLIENT,
+    refreshCookie: refreshCookie.read(req),
+  };
 }
 
-export function readRefreshToken(req: Request, body?: RefreshTokenBody): string | undefined {
-  return isMobile(req) ? body?.refreshToken : refreshCookie.read(req);
+export function readRefreshToken(
+  client: RefreshClient,
+  body?: RefreshTokenBody,
+): string | undefined {
+  return client.mobile ? body?.refreshToken : client.refreshCookie;
 }
 
-export function sendSession({ req, res, session }: SessionReply): SessionTokens {
+export function sendSession({ client, res, session }: SessionReply): SessionTokens {
   res.set('Cache-Control', 'no-store');
-  if (isMobile(req)) {
+  if (client.mobile) {
     return session;
   }
   refreshCookie.set(res, session.refreshToken);

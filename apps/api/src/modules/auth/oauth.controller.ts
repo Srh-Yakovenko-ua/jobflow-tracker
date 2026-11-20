@@ -13,7 +13,7 @@ import type { Request, Response } from 'express';
 import { OAuthService } from './oauth.service.js';
 import { oauthStateCookie } from './oauth-state-cookie.js';
 import { Public } from './public.decorator.js';
-import { sendSession } from './refresh-cookie.js';
+import { sendSession, sessionClientOf } from './refresh-cookie.js';
 import { SessionService } from './session.service.js';
 
 export type RedirectTarget = { url: string };
@@ -61,7 +61,7 @@ export class OAuthController {
     }
     const { user, landingUrl } = await this.oauthService.finish({ provider, query, stateToken });
     const session = await this.sessions.start(user.id);
-    sendSession({ req, res, session });
+    sendSession({ client: sessionClientOf(req), res, session });
     return { url: landingUrl };
   }
 }

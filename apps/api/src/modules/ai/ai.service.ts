@@ -27,7 +27,7 @@ import {
 } from './ai-run.js';
 import { AI_SERVICE_ERRORS, AiServiceError, untypedAiError } from './ai-service-error.js';
 
-export type { AiCompleteAttempt, AiJobOfUser, AiOutcome } from './ai-run.js';
+export type { AiCompleteAttempt, AiOutcome } from './ai-run.js';
 
 @Injectable()
 export class AiService {
@@ -74,7 +74,10 @@ export class AiService {
     return this.repository.createJob(userId, job);
   }
 
-  recordRequested<Event extends AiRequestedEvent>(userId: string, row: RecordAiRequested<Event>) {
+  recordRequested<Event extends AiRequestedEvent>(
+    userId: string,
+    row: RecordAiRequested<Event>,
+  ): Promise<void> {
     return this.repository.recordRequested(userId, row);
   }
 
@@ -123,17 +126,9 @@ export class AiService {
     const { output, ...meta } = await this.ai
       .complete({ kind, input, options, requestId })
       .catch((error: unknown) => this.refuse(run, error));
-    const succeeded = {
-      kind,
-      inputHash,
-      status: 'succeeded',
-      error: null,
-      output,
-      now,
-      ...meta,
-    } as const;
-    await this.repository.recordCall(userId, { ...succeeded, errorType: null });
-    const aiResultId = await this.repository.saveResult(userId, succeeded);
+    const succeeded = { kind, inputHash, status: 'succeeded', error: null, output, now } as const;
+    await this.repository.recordCall(userId, { ...succeeded, ...meta, errorType: null });
+    const aiResultId = await this.repository.saveResult(userId, { ...succeeded, ...meta });
     await this.finish(run, { aiResultId, output });
     this.logger.log({ ...traceOf(run), ...meta }, 'ai completion done');
     return { aiResultId, output, cached: false };

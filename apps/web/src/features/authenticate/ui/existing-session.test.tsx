@@ -6,6 +6,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { userKeys } from '@/entities/user';
 import { API_CLIENT_LIMITS } from '@/shared/api';
 import { SESSION_COOKIE, writeSessionCookie } from '@/shared/lib/session-cookie';
+import { advanceBy } from '@/test/advance-timers';
 import {
   errorReply,
   type Outage,
@@ -86,7 +87,7 @@ function renderLoginPage(): LoginPage {
   return {
     reopen: async (mode) => {
       rerender(screenWith());
-      await act(() => vi.advanceTimersByTimeAsync(PAGE_GAP_MS));
+      await advanceBy(PAGE_GAP_MS);
       rerender(screenWith(mode));
     },
   };
@@ -133,7 +134,7 @@ describe('the sign-in form with a refresh cookie', () => {
       <QueryProbe queryKey={userKeys.cookieSession()} />,
     );
 
-    await act(() => vi.advanceTimersByTimeAsync(API_CLIENT_LIMITS.requestTimeoutMs));
+    await advanceBy(API_CLIENT_LIMITS.requestTimeoutMs);
 
     await waitForQuery({ queryKey: userKeys.cookieSession(), status: 'error' });
     expect(replace).not.toHaveBeenCalled();
@@ -164,7 +165,7 @@ describe('the sign-in form for a new visitor without the session marker', () => 
       const sentRequests = recordSentRequests();
       const form = renderAuthForm({ mode, returnTo: REQUESTED });
 
-      await act(() => vi.advanceTimersByTimeAsync(API_CLIENT_LIMITS.requestTimeoutMs));
+      await advanceBy(API_CLIENT_LIMITS.requestTimeoutMs);
 
       expect(refreshesSent(sentRequests)).toHaveLength(0);
       expect(replace).not.toHaveBeenCalled();
@@ -184,7 +185,7 @@ describe('the sign-in form for a signed-out visitor', () => {
     await waitForQuery({ queryKey: userKeys.cookieSession(), status: 'error' });
 
     await run(page);
-    await act(() => vi.advanceTimersByTimeAsync(0));
+    await advanceBy(0);
 
     expect(document.cookie).toContain(`${SESSION_COOKIE}=1`);
     expect(refreshesSent(sentRequests)).toHaveLength(1);
@@ -201,7 +202,7 @@ describe('the sign-in form for a signed-out visitor', () => {
 
     server.use(refusedRefreshRoute());
     await page.reopen('login');
-    await act(() => vi.advanceTimersByTimeAsync(0));
+    await advanceBy(0);
 
     expect(refreshesSent(sentRequests)).toHaveLength(2);
     await waitForQuery({ queryKey: userKeys.cookieSession(), status: 'error' });

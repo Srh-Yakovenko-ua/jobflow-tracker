@@ -5,6 +5,7 @@ import { toast } from 'sonner';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { API_CLIENT_LIMITS } from '@/shared/api';
+import { advanceBy } from '@/test/advance-timers';
 import {
   ANY_IDEMPOTENCY_KEY,
   errorReply,
@@ -158,7 +159,7 @@ describe('NoteEditor autosave', () => {
 
     for (const [index] of Array.from(TYPED).entries()) {
       fireEvent.change(field, { target: { value: TYPED.slice(0, index + 1) } });
-      await act(() => vi.advanceTimersByTimeAsync(200));
+      await advanceBy(200);
     }
 
     await waitFor(() => {
@@ -265,7 +266,7 @@ describe('NoteEditor autosave', () => {
     });
     expect(await screen.findByText(FAILED)).toBeDefined();
 
-    await act(() => vi.advanceTimersByTimeAsync(2 * NOTE_DRAFT_LIMITS.saveAfterMs));
+    await advanceBy(2 * NOTE_DRAFT_LIMITS.saveAfterMs);
 
     expect(updated).toEqual([patchOf(SECOND_SAVE)]);
     expect(statusText()).toBe(FAILED);
@@ -277,7 +278,7 @@ describe('NoteEditor autosave', () => {
     vi.spyOn(document, 'visibilityState', 'get').mockReturnValue('visible');
 
     document.dispatchEvent(new Event('visibilitychange'));
-    await act(() => vi.advanceTimersByTimeAsync(BEFORE_THE_TIMER.timeout));
+    await advanceBy(BEFORE_THE_TIMER.timeout);
 
     expect(sentKinds()).toEqual([]);
     pass(NOTE_DRAFT_LIMITS.saveAfterMs);
@@ -291,7 +292,7 @@ describe('NoteEditor autosave', () => {
       reactStrictMode: true,
     });
 
-    await act(() => vi.advanceTimersByTimeAsync(1000));
+    await advanceBy(1000);
 
     expect(statusText()).toBe('');
     expect(requests()).toEqual([]);
@@ -354,7 +355,7 @@ describe('NoteEditor autosave', () => {
       expect(added).toHaveLength(2);
     });
     await everyFetchSettled();
-    await act(() => vi.advanceTimersByTimeAsync(2 * NOTE_DRAFT_LIMITS.saveAfterMs));
+    await advanceBy(2 * NOTE_DRAFT_LIMITS.saveAfterMs);
 
     expect(added).toEqual([postOf('Друга задача'), added[0]]);
   });
@@ -488,7 +489,7 @@ describe('NoteEditor finish', () => {
       expect(field.value).toBe('');
     });
     besideHeld.release();
-    await act(() => vi.advanceTimersByTimeAsync(NOTE_DRAFT_LIMITS.saveAfterMs));
+    await advanceBy(NOTE_DRAFT_LIMITS.saveAfterMs);
     await user.type(field, 'Тимлід норм');
     await user.keyboard('{Control>}{Enter}{/Control}');
 

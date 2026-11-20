@@ -1,2 +1,2 @@
-export { AnalyticsDashboard, type AnalyticsDashboardProps } from './ui/analytics-dashboard';
-export { AnalyticsReport, type AnalyticsReportProps } from './ui/analytics-report';
+export { AnalyticsDashboard } from './ui/analytics-dashboard';
+export { AnalyticsReport } from './ui/analytics-report';
