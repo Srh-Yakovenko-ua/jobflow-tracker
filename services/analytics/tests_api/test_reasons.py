@@ -11,11 +11,13 @@ from tests.api_client import (
     analytics_body,
     analytics_client,
     api_call,
+    entry_pattern,
     fresh_keys,
     rejected_at_screening,
     timed_answer,
     warm_calls,
     with_redis_on,
+    worker_bumps_version,
 )
 from tests.factories import OUTAGES, Outage
 from tests.routes.test_funnel import SCREENING
@@ -78,8 +80,7 @@ def test_leaves_the_rejections_of_a_finished_search_out_like_the_api(
 
 
 def summary_key(settings: Settings, owned: OwnedSearch, *, cache: Redis) -> str:
-    scope = f"screening:{owned.search_id}"
-    pattern = f"analytics:{owned.user_id}:reasons-summary:{scope}:*"
+    pattern = entry_pattern(owned.user_id, metric="reasons/summary")
     [key] = fresh_keys(
         cache, pattern=pattern, answer=lambda: summary_over_http(settings, owned)
     )
@@ -112,16 +113,20 @@ def test_recomputes_a_stored_summary_it_cannot_read_and_stores_it_again(
     )
 
 
-def test_counts_a_rejection_just_recorded_and_drops_it_once_undone(
-    settings: Settings, owned: OwnedSearch
+def test_counts_a_rejection_once_the_worker_bumps_the_version_and_drops_it_once_undone(
+    settings: Settings, owned: OwnedSearch, *, cache: Redis
 ) -> None:
     before = summary_over_http(settings, owned)
     rejected = rejected_at_screening(settings, token=owned.token, reason="skills_gap")
+    still_cached = summary_over_http(settings, owned)
+    worker_bumps_version(cache, user_id=owned.user_id)
     counted = summary_over_http(settings, owned)
     undo = ("POST", f"/applications/{rejected}/events/undo-last", None)
     api_call(settings, token=owned.token, request=undo)
+    worker_bumps_version(cache, user_id=owned.user_id)
 
-    assert (before, summary_over_http(settings, owned)) == (
+    assert (before, still_cached, summary_over_http(settings, owned)) == (
+        UNSPECIFIED_AT_SCREENING,
         UNSPECIFIED_AT_SCREENING,
         UNSPECIFIED_AT_SCREENING,
     )

@@ -11,6 +11,7 @@ from fastapi import FastAPI
 from redis import Redis
 
 from app.core.config import Settings
+from app.core.enums import load_domain_enums
 from tests.factories import bearer, uvicorn_serving
 
 API_TIMEOUT_SECONDS = 10
@@ -113,6 +114,16 @@ def timed_answer(app: FastAPI, *, token: str, query: Query) -> tuple[int, Any, f
 
 def with_redis_on(settings: Settings, port: int) -> Settings:
     return settings.model_copy(update={"redis_url": f"redis://127.0.0.1:{port}"})
+
+
+def entry_pattern(user_id: str, *, metric: str) -> str:
+    return load_domain_enums().analytics_cache.entry_key.format(
+        userId=user_id, version="*", metric=metric, paramsHash="*"
+    )
+
+
+def worker_bumps_version(cache: Redis, *, user_id: str) -> None:
+    cache.incr(load_domain_enums().analytics_cache.version_key.format(userId=user_id))
 
 
 def fresh_keys(

@@ -2,7 +2,6 @@ import pytest
 from redis import Redis
 
 from app.core.config import Settings
-from app.core.enums import load_domain_enums
 from app.factory import create_app
 from tests.api_client import (
     WARM_CALLS,
@@ -10,6 +9,7 @@ from tests.api_client import (
     application_through,
     register,
     warm_calls,
+    worker_bumps_version,
 )
 from tests.routes.test_funnel import FUNNEL_PATH, SEARCH_PATHS
 from tests.routes.test_reasons import SUMMARY_PATH
@@ -53,8 +53,7 @@ def test_shows_a_moved_card_once_the_worker_bumps_the_users_version(
     before = reached_screening(settings, token=token, search_id=search_id)
     application_through(settings, token=token, path=["screening"])
     still_cached = reached_screening(settings, token=token, search_id=search_id)
-    version_key = load_domain_enums().analytics_cache.version_key
-    cache.incr(version_key.format(userId=registered["user"]["id"]))
+    worker_bumps_version(cache, user_id=registered["user"]["id"])
 
     after = reached_screening(settings, token=token, search_id=search_id)
 
