@@ -72,8 +72,17 @@ export class SettingsService {
     private readonly clock: Clock,
   ) {}
 
+  async find(userId: string): Promise<UserSettings | null> {
+    const row = await this.repository.find(userId);
+    return row === null ? null : toUserSettings(row);
+  }
+
   async get(userId: string): Promise<UserSettings> {
-    return toUserSettings(signedInSettings(await this.repository.find(userId)));
+    const settings = await this.find(userId);
+    if (settings === null) {
+      throw unauthorized();
+    }
+    return settings;
   }
 
   async update(userId: string, input: UpdateUserSettingsInput): Promise<UserSettings> {

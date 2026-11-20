@@ -106,15 +106,16 @@ describe('FollowupsService.read', () => {
 
 describe('FollowupsService.request', () => {
   it('creates a followup job and writes the request with the built input in one transaction', async () => {
-    const { repository, ai, generate } = await serviceWithFake();
+    const { ai, generate } = await serviceWithFake();
 
     await expect(generate()).resolves.toEqual({ jobId: AI_JOB_ID });
 
     expect([...ai.jobs.keys()]).toEqual([AI_JOB_ID]);
-    expect(repository.requested).toEqual([
+    expect(ai.requested).toEqual([
       [
         OLENA_ID,
         {
+          eventType: 'application.followup_requested',
           requested: {
             applicationId: APPLICATION_ID,
             aiJobId: AI_JOB_ID,
@@ -128,11 +129,11 @@ describe('FollowupsService.request', () => {
   });
 
   it('marks a variant as fresh and passes the hint and tone through', async () => {
-    const { repository, generate } = await serviceWithFake();
+    const { ai, generate } = await serviceWithFake();
 
     await generate({ variant: true, tone: 'short', language: 'en', hint: 'згадай задачу' });
 
-    expect(repository.requested[0]?.[1].requested).toEqual(
+    expect(ai.requested[0]?.[1].requested).toEqual(
       expect.objectContaining({
         fresh: true,
         input: { ...BUILT_INPUT, tone: 'short', language: 'en', hint: 'згадай задачу' },
@@ -146,7 +147,7 @@ describe('FollowupsService.request', () => {
 
     await expect(generate()).resolves.toEqual({ jobId: RUNNING_JOB_ID });
 
-    expect([ai.jobs.size, repository.requested.length]).toEqual([0, 0]);
+    expect([ai.jobs.size, ai.requested.length]).toEqual([0, 0]);
   });
 
   it('creates a followup job for a ghosted application with the ghosted stage in its input', async () => {
@@ -155,8 +156,8 @@ describe('FollowupsService.request', () => {
 
     await expect(generate()).resolves.toEqual({ jobId: AI_JOB_ID });
 
-    expect([ai.jobs.size, repository.requested.length]).toEqual([1, 1]);
-    expect(repository.requested[0]?.[1].requested.input).toEqual({
+    expect([ai.jobs.size, ai.requested.length]).toEqual([1, 1]);
+    expect(ai.requested[0]?.[1].requested.input).toEqual({
       ...BUILT_INPUT,
       stage: 'ghosted',
     });
@@ -172,16 +173,16 @@ describe('FollowupsService.request', () => {
     repository.source = { ...FOLLOWUP_SOURCE_ROW, ...source };
 
     await expect(generate()).rejects.toMatchObject({ body: { status: 409, type: 'conflict' } });
-    expect([ai.jobs.size, repository.requested.length]).toEqual([0, 0]);
+    expect([ai.jobs.size, ai.requested.length]).toEqual([0, 0]);
   });
 
   it.each(MISSING_TARGETS)('answers 404 for $case and creates no job', async ({ userId, id }) => {
-    const { repository, ai, service } = await serviceWithFake();
+    const { ai, service } = await serviceWithFake();
 
     await expect(
       service.request(userId, { applicationId: id, request: WARM, requestId: 'req-1' }),
     ).rejects.toMatchObject(APPLICATION_NOT_FOUND);
-    expect([ai.jobs.size, repository.requested.length]).toEqual([0, 0]);
+    expect([ai.jobs.size, ai.requested.length]).toEqual([0, 0]);
   });
 });
 

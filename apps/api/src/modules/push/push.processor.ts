@@ -8,7 +8,8 @@ import {
   warnWorkerError,
 } from '../../queues/processed-job.js';
 import { QUEUES } from '../../queues/queues.js';
-import { PUSH_JOBS, pushSendJobSchema, PushSendService } from './push-send.service.js';
+import { PUSH_JOBS, pushSendJobSchema } from './push-jobs.js';
+import { PushSendService } from './push-send.service.js';
 import type { PushOutcome } from './push-sender.js';
 
 @Processor(QUEUES.push.name, { concurrency: QUEUES.push.concurrency })

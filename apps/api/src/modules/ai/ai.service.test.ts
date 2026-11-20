@@ -1,7 +1,7 @@
 import type { JobUpdated } from '@jobflow/shared';
 import { ConfigService } from '@nestjs/config';
 import { UnrecoverableError } from 'bullmq';
-import { beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { Clock } from '../../common/clock.js';
 import { type Env, validateEnv } from '../../config/env.js';
@@ -23,6 +23,13 @@ import {
 } from '../../test/ai.js';
 import { testJwtKeys } from '../../test/auth.js';
 import { exampleEnv } from '../../test/example-env.js';
+import {
+  type FetchReply,
+  recordFetch,
+  refusedConnection,
+  stalled,
+  timeOutAtOnce,
+} from '../../test/fetch.js';
 import { memoryLog } from '../../test/memory-log.js';
 import { compileProcessorModule } from '../../test/processor.js';
 import { APPLICATION_ID, BOHDAN_ID, OLENA_ID } from '../../test/service-fixtures.js';
@@ -113,8 +120,20 @@ function progressOf(repository: FakeAiRepository) {
   return { seen, progressed };
 }
 
+const realClient = new AiClient(new ConfigService(validateEnv(exampleEnv)), testJwtKeys);
+
+function realClientAnswering(reply: FetchReply) {
+  recordFetch({ replies: reply, decodeBody: () => undefined });
+  return realClient.complete(VACANCY_CALL);
+}
+
 beforeEach(() => {
   log.lines.length = 0;
+});
+
+afterEach(() => {
+  vi.unstubAllGlobals();
+  vi.restoreAllMocks();
 });
 
 describe('AiService.complete', () => {
@@ -322,18 +341,21 @@ describe('AiService.complete', () => {
     },
   );
 
-  it('a refused payload ends the job at once', async () => {
-    const { repository, service } = await serviceWithFakes();
-    const { seen, progressed } = progressOf(repository);
+  it.each([false, true])(
+    'a refused payload ends the job at once (final attempt: %s)',
+    async (finalAttempt) => {
+      const { repository, service } = await serviceWithFakes();
+      const { seen, progressed } = progressOf(repository);
 
-    await expect(
-      service.complete(attemptOf({ job: NOTE_JOB, finalAttempt: false, progressed })),
-    ).rejects.toBeInstanceOf(AiPayloadError);
+      await expect(
+        service.complete(attemptOf({ job: NOTE_JOB, finalAttempt, progressed })),
+      ).rejects.toBeInstanceOf(AiPayloadError);
 
-    expect(repository.jobs.get(AI_JOB_ID)).toEqual(failedJob('internal_error'));
-    expect(seen.map(({ update }) => update.status)).toEqual(['processing', 'failed']);
-    expect(repository.results.size).toBe(0);
-  });
+      expect(repository.jobs.get(AI_JOB_ID)).toEqual(failedJob('internal_error'));
+      expect(seen.map(({ update }) => update.status)).toEqual(['processing', 'failed']);
+      expect(repository.results.size).toBe(0);
+    },
+  );
 
   it('logs a security warning under production config with the paths and no note text, and the call goes on', async () => {
     const { ai, service } = await serviceWithFakes('production');
@@ -443,13 +465,34 @@ describe('AiService.complete recording calls', () => {
 
   it('a local schema refusal writes no ai_calls row', async () => {
     const { repository, ai, service } = await serviceWithFakes();
-    const realClient = new AiClient(new ConfigService(validateEnv(exampleEnv)), testJwtKeys);
     ai.answer = () => realClient.complete({ kind: 'vacancy_parse', input: { text: ' ' } });
 
     await expect(service.complete(attemptOf())).rejects.toBeInstanceOf(UnrecoverableError);
 
     expect(repository.calls).toEqual([]);
     expect(repository.jobs.get(AI_JOB_ID)).toEqual(failedJob('validation_error'));
+  });
+
+  it('a refused connection writes no ai_calls row', async () => {
+    const { repository, ai, service } = await serviceWithFakes();
+    ai.answer = () => realClientAnswering(() => Promise.reject(refusedConnection));
+
+    await expect(service.complete(attemptOf({ finalAttempt: true }))).rejects.toMatchObject({
+      type: 'not_ready',
+    });
+
+    expect(repository.calls).toEqual([]);
+    expect(repository.jobs.get(AI_JOB_ID)).toEqual(failedJob('not_ready'));
+  });
+
+  it('a timeout still writes its ai_calls row, since the request may have reached services/ai', async () => {
+    const { repository, ai, service } = await serviceWithFakes();
+    timeOutAtOnce();
+    ai.answer = () => realClientAnswering(stalled);
+
+    await expect(service.complete(attemptOf({ finalAttempt: true }))).rejects.toBeInstanceOf(Error);
+
+    expect(repository.calls).toEqual([failedCallOf('ai_timeout')]);
   });
 
   it('records no call for the same vacancy served from the cache', async () => {

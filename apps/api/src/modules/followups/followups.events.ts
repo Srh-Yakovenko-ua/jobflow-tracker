@@ -1,33 +1,16 @@
 import { followupInputSchema } from '@jobflow/shared';
 import { z } from 'zod';
 
-import type { Prisma } from '../../generated/prisma/client.js';
-import { traceCarrier } from '../../tracing/trace-context.js';
+import { aiRequestedEvent } from '../ai/index.js';
 
 export const FOLLOWUP_EVENTS = { requested: 'application.followup_requested' } as const;
 
-export const followupRequestedPayloadSchema = z.object({
-  userId: z.uuid(),
+export const followupRequested = aiRequestedEvent(FOLLOWUP_EVENTS.requested, {
   applicationId: z.uuid(),
-  aiJobId: z.uuid(),
-  requestId: z.string().min(1).optional(),
   input: followupInputSchema,
   fresh: z.literal(true).optional(),
 });
 
+export const followupRequestedPayloadSchema = followupRequested.schema;
+
 export type FollowupRequestedPayload = z.infer<typeof followupRequestedPayloadSchema>;
-
-export type FollowupRequested = Omit<FollowupRequestedPayload, 'userId'>;
-
-export function followupRequestedEvent(
-  userId: string,
-  requested: FollowupRequested,
-): Prisma.OutboxEventCreateInput {
-  return {
-    aggregate: 'application',
-    aggregateId: requested.applicationId,
-    eventType: FOLLOWUP_EVENTS.requested,
-    payload: { userId, ...requested },
-    ...traceCarrier(),
-  };
-}

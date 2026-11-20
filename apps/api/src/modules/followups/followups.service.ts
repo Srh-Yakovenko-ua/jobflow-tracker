@@ -16,6 +16,7 @@ import { toValidationError } from '../../common/validation.js';
 import { PrismaService } from '../../prisma/prisma.service.js';
 import { timeZoneOf } from '../../prisma/user-time-zone.js';
 import { AI_PAYLOAD_BUILDERS, AiService, type FollowupSource } from '../ai/index.js';
+import { followupRequested } from './followups.events.js';
 import {
   type FollowupSourceRow,
   FollowupsRepository,
@@ -105,7 +106,7 @@ export class FollowupsService {
       }
       const aiJobId = await this.ai.createJob(userId, { kind: 'followup', applicationId, tx });
       const requested = { applicationId, aiJobId, requestId, input, ...fresh };
-      await this.repository.recordRequested(userId, { requested, tx });
+      await this.ai.recordRequested(userId, { event: followupRequested, requested, tx });
       return { jobId: aiJobId };
     });
   }

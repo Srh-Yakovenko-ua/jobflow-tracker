@@ -1,10 +1,8 @@
 import { DOCUMENT_FAILURES } from '@jobflow/shared';
-import { getQueueToken } from '@nestjs/bullmq';
-import { UnrecoverableError } from 'bullmq';
 import { beforeEach, describe, expect, it } from 'vitest';
 
 import { FileStorage } from '../../storage/file-storage.js';
-import { AI_JOB_ID, FakeAiRepository } from '../../test/ai.js';
+import { AI_JOB_ID, aiQueueProviders, FakeAiRepository } from '../../test/ai.js';
 import {
   FakeDocumentsClient,
   RESUME_TEXT,
@@ -15,15 +13,22 @@ import {
 import { FakeFileStorage } from '../../test/file-storage.js';
 import { memoryLog } from '../../test/memory-log.js';
 import { compileProcessorModule } from '../../test/processor.js';
-import { FakeProfileVersions, PDF, PDF_BYTES, PROFILE_SOURCE } from '../../test/resumes.js';
+import {
+  FakeProfileVersions,
+  PDF,
+  PDF_BYTES,
+  PROFILE_SOURCE,
+  RESUME_UPLOADED,
+} from '../../test/resumes.js';
 import {
   BOHDAN_ID,
-  CREATION_EVENT_ID,
+  FINAL_DELIVERY,
+  FIRST_DELIVERY,
+  MOVE_EVENT_ID,
   OLENA_ID,
   RESUME_VERSION_ID,
 } from '../../test/service-fixtures.js';
-import { SilentQueue, StubQueue } from '../../test/stub-queues.js';
-import { AiService } from '../ai/index.js';
+import { RefusingQueue, SilentQueue, StubQueue } from '../../test/stub-queues.js';
 import { DocumentsClient } from './documents-client.js';
 import { DocumentsError } from './documents-error.js';
 import { ResumeExtractionService } from './resume-extraction.service.js';
@@ -31,17 +36,6 @@ import { ResumeProfileQueueService } from './resume-profile-queue.service.js';
 import { ResumeVersionsRepository } from './resume-versions.repository.js';
 
 const log = memoryLog();
-
-const PAYLOAD = { userId: OLENA_ID, resumeVersionId: RESUME_VERSION_ID, aiJobId: AI_JOB_ID };
-
-type EventOptions = { payload?: unknown; finalAttempt?: boolean };
-
-const eventWith = ({ payload = PAYLOAD, finalAttempt = false }: EventOptions = {}) => ({
-  id: CREATION_EVENT_ID,
-  type: 'resume.version_uploaded',
-  payload,
-  finalAttempt,
-});
 
 async function serviceWith(queue: StubQueue = new StubQueue('ai')) {
   const versions = new FakeProfileVersions();
@@ -56,8 +50,7 @@ async function serviceWith(queue: StubQueue = new StubQueue('ai')) {
     { provide: ResumeVersionsRepository, useValue: versions },
     { provide: DocumentsClient, useValue: documents },
     { provide: FileStorage, useValue: storage },
-    { provide: AiService, useValue: ai },
-    { provide: getQueueToken('ai'), useValue: queue },
+    ...aiQueueProviders(queue, ai),
   ]);
   const service = moduleRef.get(ResumeProfileQueueService);
   return { queue, service, versions, documents, storage, ai };
@@ -75,7 +68,7 @@ describe('ResumeProfileQueueService.enqueue', () => {
   it('extracts the stored file, saves its text and queues the profile job with the text', async () => {
     const { queue, service, versions, documents } = await serviceWith();
 
-    await service.enqueue(eventWith());
+    await service.enqueue(RESUME_UPLOADED, FIRST_DELIVERY);
 
     expect(documents.calls).toEqual([
       { bytes: PDF_BYTES, filename: PROFILE_SOURCE.filename, mime: PROFILE_SOURCE.mime },
@@ -101,7 +94,7 @@ describe('ResumeProfileQueueService.enqueue', () => {
     const { queue, service, documents } = await serviceWith();
     documents.answer = () => Promise.resolve(SCAN_EXTRACTION);
 
-    await service.enqueue(eventWith());
+    await service.enqueue(RESUME_UPLOADED, FIRST_DELIVERY);
 
     expect(queue.jobs.map((job) => job.data)).toEqual([
       expect.objectContaining({ input: { text: '', pages: [SCAN_PAGE_JPEG] } }),
@@ -111,7 +104,7 @@ describe('ResumeProfileQueueService.enqueue', () => {
   it("does nothing for a version that is gone or another user's", async () => {
     const { queue, service, documents } = await serviceWith();
 
-    await service.enqueue(eventWith({ payload: { ...PAYLOAD, userId: BOHDAN_ID } }));
+    await service.enqueue({ ...RESUME_UPLOADED, userId: BOHDAN_ID }, FIRST_DELIVERY);
 
     expect(documents.calls).toEqual([]);
     expect(queue.jobs).toEqual([]);
@@ -121,7 +114,7 @@ describe('ResumeProfileQueueService.enqueue', () => {
     const { queue, service, versions, documents } = await serviceWith();
     versions.source = { ...PROFILE_SOURCE, aiProfile: { skills: [] } };
 
-    await service.enqueue(eventWith());
+    await service.enqueue(RESUME_UPLOADED, FIRST_DELIVERY);
 
     expect(documents.calls).toEqual([]);
     expect(queue.jobs).toEqual([]);
@@ -131,7 +124,7 @@ describe('ResumeProfileQueueService.enqueue', () => {
     const { queue, service, storage, documents, ai } = await serviceWith();
     storage.objects.delete(PROFILE_SOURCE.storageKey);
 
-    await service.enqueue(eventWith());
+    await service.enqueue(RESUME_UPLOADED, FIRST_DELIVERY);
 
     expect(documents.calls).toEqual([]);
     expect(queue.jobs).toEqual([]);
@@ -142,7 +135,7 @@ describe('ResumeProfileQueueService.enqueue', () => {
     const { queue, service, versions, documents, ai } = await serviceWith();
     documents.answer = () => Promise.resolve({ ...TEXT_EXTRACTION, text: ' \n ' });
 
-    await service.enqueue(eventWith());
+    await service.enqueue(RESUME_UPLOADED, FIRST_DELIVERY);
 
     expect(versions.texts).toEqual([{ id: RESUME_VERSION_ID, text: ' \n ' }]);
     expect(queue.jobs).toEqual([]);
@@ -153,7 +146,7 @@ describe('ResumeProfileQueueService.enqueue', () => {
     const { queue, service, documents, ai } = await serviceWith();
     documents.answer = () => Promise.resolve({ ...SCAN_EXTRACTION, pages: [], pageCount: 0 });
 
-    await service.enqueue(eventWith());
+    await service.enqueue(RESUME_UPLOADED, FIRST_DELIVERY);
 
     expect(queue.jobs).toEqual([]);
     expect([...ai.jobs]).toEqual(failedWith('needs_text'));
@@ -164,7 +157,7 @@ describe('ResumeProfileQueueService.enqueue', () => {
     const { queue, service, versions, documents } = await serviceWith();
     documents.answer = () => Promise.resolve({ ...TEXT_EXTRACTION, text: 'React\u0000 Jest' });
 
-    await service.enqueue(eventWith());
+    await service.enqueue(RESUME_UPLOADED, FIRST_DELIVERY);
 
     expect(versions.texts).toEqual([{ id: RESUME_VERSION_ID, text: 'React Jest' }]);
     expect(queue.jobs.map((job) => job.data)).toEqual([
@@ -178,7 +171,7 @@ describe('ResumeProfileQueueService.enqueue', () => {
       const { queue, service, documents, ai } = await serviceWith();
       documents.answer = () => Promise.reject(new DocumentsError({ status: 422, type }));
 
-      await service.enqueue(eventWith());
+      await service.enqueue(RESUME_UPLOADED, FIRST_DELIVERY);
 
       expect(queue.jobs).toEqual([]);
       expect([...ai.jobs]).toEqual(failedWith('needs_text'));
@@ -190,7 +183,7 @@ describe('ResumeProfileQueueService.enqueue', () => {
     const outage = new DocumentsError({ status: 504, type: 'documents_timeout' });
     documents.answer = () => Promise.reject(outage);
 
-    await expect(service.enqueue(eventWith())).rejects.toBe(outage);
+    await expect(service.enqueue(RESUME_UPLOADED, FIRST_DELIVERY)).rejects.toBe(outage);
 
     expect(ai.jobs.get(AI_JOB_ID)).toEqual({ userId: OLENA_ID, status: 'queued', step: 1 });
   });
@@ -210,37 +203,29 @@ describe('ResumeProfileQueueService.enqueue', () => {
     const { service, documents, ai } = await serviceWith();
     documents.answer = () => Promise.reject(error);
 
-    await expect(service.enqueue(eventWith({ finalAttempt: true }))).rejects.toBe(error);
+    await expect(service.enqueue(RESUME_UPLOADED, FINAL_DELIVERY)).rejects.toBe(error);
 
     expect([...ai.jobs]).toEqual(failedWith(errorType));
-  });
-
-  it.each([
-    {
-      payload: 'without an ai job id',
-      data: { userId: OLENA_ID, resumeVersionId: RESUME_VERSION_ID },
-    },
-    { payload: 'that is no object', data: undefined },
-  ])('fails an event $payload as unrecoverable and queues nothing', async ({ data }) => {
-    const { queue, service } = await serviceWith();
-
-    await expect(service.enqueue({ ...eventWith(), payload: data })).rejects.toBeInstanceOf(
-      UnrecoverableError,
-    );
-
-    expect(queue.jobs).toEqual([]);
-    expect(log.parsed()).toEqual([
-      expect.objectContaining({
-        level: 50,
-        msg: 'resume upload event invalid',
-        eventId: CREATION_EVENT_ID,
-      }),
-    ]);
   });
 
   it('gives up on a silent queue after the publish limit so the event is retried', async () => {
     const { service } = await serviceWith(new SilentQueue('ai'));
 
-    await expect(service.enqueue(eventWith())).rejects.toThrow('timed out after 2000 ms');
+    await expect(service.enqueue(RESUME_UPLOADED, FIRST_DELIVERY)).rejects.toThrow(
+      'timed out after 2000 ms',
+    );
+  });
+
+  it('fails the job once as not_ready when the last attempt cannot queue the profile', async () => {
+    const { service, ai } = await serviceWith(new RefusingQueue('ai'));
+
+    await expect(service.enqueue(RESUME_UPLOADED, FINAL_DELIVERY)).rejects.toThrow(
+      'Connection is closed.',
+    );
+
+    expect([...ai.jobs]).toEqual(failedWith('not_ready'));
+    expect(log.parsed().filter(({ level }) => level === 40)).toEqual([
+      expect.objectContaining({ msg: 'resume_parse job not queued', eventId: MOVE_EVENT_ID }),
+    ]);
   });
 });

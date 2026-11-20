@@ -18,7 +18,13 @@ import { memoryLog } from '../../test/memory-log.js';
 import { RecordingNotifications } from '../../test/notifications.js';
 import { compileProcessorModule } from '../../test/processor.js';
 import { designStoryForecastAt } from '../../test/rhythm.js';
-import { BOHDAN_ID, OLENA_ID, SEARCH_ID } from '../../test/service-fixtures.js';
+import {
+  BOHDAN_ID,
+  FINAL_DELIVERY,
+  FIRST_DELIVERY,
+  OLENA_ID,
+  SEARCH_ID,
+} from '../../test/service-fixtures.js';
 import { NotificationsService } from '../notifications/index.js';
 import type { RhythmWeekClosedPayload } from './rhythm.events.js';
 import { RhythmRepository, type UpdateSuggestion } from './rhythm.repository.js';
@@ -26,10 +32,6 @@ import { RhythmService } from './rhythm.service.js';
 import { RhythmWeekCloseService } from './rhythm-week-close.service.js';
 
 const log = memoryLog();
-
-const FIRST_DELIVERY = { eventId: 'event-1', finalAttempt: false };
-
-const FINAL_DELIVERY = { ...FIRST_DELIVERY, finalAttempt: true };
 
 const CLOSED: RhythmWeekClosedPayload = {
   userId: OLENA_ID,
@@ -69,8 +71,8 @@ class FakeRhythmRepository {
 
   searchId: string | null = SEARCH_ID;
 
-  findSettings(userId: string) {
-    return Promise.resolve(userId === OLENA_ID ? { timezone: 'Europe/Kyiv' } : null);
+  hasSettings(userId: string): Promise<boolean> {
+    return Promise.resolve(userId === OLENA_ID);
   }
 
   findActiveSearchId(): Promise<string | null> {

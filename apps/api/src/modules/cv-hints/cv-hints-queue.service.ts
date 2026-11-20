@@ -1,26 +1,19 @@
-import { InjectQueue } from '@nestjs/bullmq';
 import { Injectable, Logger } from '@nestjs/common';
-import { Queue } from 'bullmq';
 
 import type { EventDelivery } from '../../outbox/domain-event-router.js';
-import { QUEUES } from '../../queues/queues.js';
-import { AiService, queueOrFailAiJob } from '../ai/index.js';
+import { type AiJobBuilder, AiJobQueue } from '../ai/index.js';
 import type { CvHintsRequestedPayload } from './cv-hints.events.js';
 
 @Injectable()
 export class CvHintsQueueService {
   private readonly logger = new Logger(CvHintsQueueService.name);
 
-  constructor(
-    private readonly ai: AiService,
-    @InjectQueue(QUEUES.ai.name) private readonly queue: Queue,
-  ) {}
+  constructor(private readonly aiQueue: AiJobQueue) {}
 
   async enqueue(requested: CvHintsRequestedPayload, delivery: EventDelivery): Promise<void> {
-    const { finalAttempt } = delivery;
-    const guarded = { queue: this.queue, ai: this.ai, logger: this.logger, finalAttempt };
     const { input, ...head } = requested;
-    await queueOrFailAiJob(guarded, { kind: 'cv_hints', ...head, buildInput: () => input });
+    const job: AiJobBuilder = { kind: 'cv_hints', ...head, buildInput: () => input };
+    await this.aiQueue.queueOrFail(job, delivery);
     const { aiJobId, applicationId, resumeVersionId, requestId } = requested;
     this.logger.log({ requestId, aiJobId, applicationId, resumeVersionId }, 'cv hints queued');
   }

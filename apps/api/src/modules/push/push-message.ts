@@ -1,6 +1,4 @@
 import {
-  countedUk,
-  DAY_FORMS_UK,
   interviewPrepTitleOf,
   longestSilentItemOf,
   type Notification,
@@ -14,7 +12,13 @@ import {
 } from '@jobflow/shared';
 import { format } from 'date-fns';
 
-import { monthNameOf } from '../../common/year-month.js';
+import {
+  FOLLOW_UP_HINT,
+  NOTIFICATION_FALLBACK_PATH,
+  silenceTitleOf,
+  silentDaysOf,
+  summaryReadyCopyOf,
+} from '../notifications/index.js';
 
 export const PUSHED_TYPES = [
   'silence',
@@ -32,16 +36,12 @@ type PushText = Omit<PushMessage, 'url'>;
 
 const PUSHED: ReadonlySet<NotificationType> = new Set(PUSHED_TYPES);
 
-const FALLBACK_URL = '/notifications';
-
 export const isPushedType = (type: NotificationType): type is PushedType => PUSHED.has(type);
 
 export const isPushed = (notification: Notification): notification is PushedNotification =>
   isPushedType(notification.type);
 
 const applicationTag = (applicationId: string) => `application:${applicationId}`;
-
-const silentDays = (days: number) => `${countedUk(days, DAY_FORMS_UK)} без відповіді`;
 
 function longestOf(payload: SilenceNotificationPayload): SilenceItem {
   const longest = longestSilentItemOf(payload);
@@ -50,11 +50,11 @@ function longestOf(payload: SilenceNotificationPayload): SilenceItem {
 }
 
 function silenceText(payload: SilenceNotificationPayload): PushText {
-  const { company, days, applicationId } = longestOf(payload);
+  const longest = longestOf(payload);
   return {
-    title: `${company}: ${silentDays(days)}`,
-    body: 'Час нагадати про себе: відкрий картку і напиши фоллоу-ап.',
-    tag: applicationTag(applicationId),
+    title: silenceTitleOf(longest),
+    body: FOLLOW_UP_HINT,
+    tag: applicationTag(longest.applicationId),
   };
 }
 
@@ -72,16 +72,12 @@ function textOf(notification: PushedNotification, { settings, deliverAt }: PushD
     case 'auto_ghosted': {
       const { items, autoGhostDays } = notification.payload;
       const companies = items.map(({ company }) => company).join(', ');
-      const body = `${companies} · понад ${silentDays(autoGhostDays)}`;
+      const body = `${companies} · понад ${silentDaysOf(autoGhostDays)}`;
       return { title: 'Перенесено в ghosted', body, tag: 'auto-ghosted' };
     }
     case 'monthly_summary_ready': {
       const { month } = notification.payload;
-      return {
-        title: `Саммарі за ${monthNameOf(month)} готове`,
-        body: 'Що вийшло за місяць і які кроки зробити далі.',
-        tag: `summary:${month}`,
-      };
+      return { ...summaryReadyCopyOf(month), tag: `summary:${month}` };
     }
     case 'interview_prep_ready': {
       const { payload } = notification;
@@ -102,6 +98,6 @@ export function pushMessageOf(
 ): PushMessage {
   return {
     ...textOf(notification, delivery),
-    url: notificationTargetOf(notification) ?? FALLBACK_URL,
+    url: notificationTargetOf(notification) ?? NOTIFICATION_FALLBACK_PATH,
   };
 }

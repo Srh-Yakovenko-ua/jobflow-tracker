@@ -27,7 +27,7 @@ export class RhythmWeekCloseService {
 
   async close(closed: RhythmWeekClosedPayload, delivery: EventDelivery): Promise<void> {
     const { userId, weekStart, requestId } = closed;
-    if ((await this.repository.findSettings(userId)) === null) return;
+    if (!(await this.repository.hasSettings(userId))) return;
     const suggestion = await this.freshSuggestion(closed, delivery);
     if (suggestion !== null) {
       await this.repository.updateSuggestion(userId, { goal: suggestion.goal });

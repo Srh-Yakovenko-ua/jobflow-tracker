@@ -1,29 +1,27 @@
-import { AI_JOB_FAILURES, DOCUMENT_FAILURES } from '@jobflow/shared';
-import { InjectQueue } from '@nestjs/bullmq';
-import { Injectable, Logger } from '@nestjs/common';
-import { Queue, UnrecoverableError } from 'bullmq';
-
-import type { DomainEvent } from '../../outbox/domain-event-router.js';
-import { QUEUES } from '../../queues/queues.js';
 import {
-  AI_PAYLOAD_BUILDERS,
-  type AiCompleteJob,
-  AiService,
-  queueAiCompletion,
-} from '../ai/index.js';
+  AI_JOB_FAILURES,
+  type AiKindInput,
+  DOCUMENT_FAILURES,
+  type DocumentExtraction,
+} from '@jobflow/shared';
+import { Injectable, Logger } from '@nestjs/common';
+
+import type { EventDelivery } from '../../outbox/domain-event-router.js';
+import { AI_PAYLOAD_BUILDERS, AiJobQueue, AiService } from '../ai/index.js';
 import { DocumentsError } from './documents-error.js';
 import { ResumeExtractionService } from './resume-extraction.service.js';
 import { type ProfileSource, ResumeVersionsRepository } from './resume-versions.repository.js';
-import {
-  type ResumeVersionUploadedPayload,
-  resumeVersionUploadedPayloadSchema,
-} from './resumes.events.js';
+import type { ResumeVersionUploadedPayload } from './resumes.events.js';
 
 const DOCUMENT_REFUSALS = new Set<string>(DOCUMENT_FAILURES);
 
 const EMPTY_FILE = 'unreadable_file' satisfies (typeof DOCUMENT_FAILURES)[number];
 
-type ProfileRun = ResumeVersionUploadedPayload & { eventId: string; finalAttempt: boolean };
+type ProfileRun = ResumeVersionUploadedPayload & EventDelivery;
+
+type ExtractedProfile = Pick<DocumentExtraction, 'kind' | 'pageCount'> & {
+  input: AiKindInput<'resume_parse'>;
+};
 
 const transientTypeOf = (error: unknown) =>
   error instanceof DocumentsError ? error.type : AI_JOB_FAILURES.notReady;
@@ -36,51 +34,57 @@ export class ResumeProfileQueueService {
     private readonly versions: ResumeVersionsRepository,
     private readonly extraction: ResumeExtractionService,
     private readonly ai: AiService,
-    @InjectQueue(QUEUES.ai.name) private readonly queue: Queue,
+    private readonly aiQueue: AiJobQueue,
   ) {}
 
-  async enqueue(event: DomainEvent): Promise<void> {
-    const run = this.runOf(event);
+  async enqueue(uploaded: ResumeVersionUploadedPayload, delivery: EventDelivery): Promise<void> {
+    const run: ProfileRun = { ...uploaded, ...delivery };
     const source = await this.versions.findForProfile(run.userId, run.resumeVersionId);
     if (source === null || source.aiProfile !== null) {
       return;
     }
+    const extracted = await this.extractedOrSettled(run, source);
+    if (extracted === null) {
+      return;
+    }
+    const { aiJobId, userId, resumeVersionId } = uploaded;
+    const { input, kind, pageCount } = extracted;
+    const job = { aiJobId, userId, kind: 'resume_parse', resumeVersionId } as const;
+    await this.aiQueue.queueOrFail({ ...job, buildInput: () => input }, delivery);
+    this.logger.log({ eventId: run.eventId, aiJobId, kind, pageCount }, 'resume profile queued');
+  }
+
+  private async extractedOrSettled(
+    run: ProfileRun,
+    source: ProfileSource,
+  ): Promise<ExtractedProfile | null> {
     try {
-      await this.extractAndQueue(run, source);
+      return await this.extracted(run, source);
     } catch (error) {
       await this.settleFailure(run, error);
+      return null;
     }
   }
 
-  private runOf({ id, payload, finalAttempt = false }: DomainEvent): ProfileRun {
-    const parsed = resumeVersionUploadedPayloadSchema.safeParse(payload);
-    if (!parsed.success) {
-      this.logger.error(
-        { eventId: id, issues: parsed.error.issues },
-        'resume upload event invalid',
-      );
-      throw new UnrecoverableError('resume upload event invalid');
-    }
-    return { ...parsed.data, eventId: id, finalAttempt };
-  }
-
-  private async extractAndQueue(run: ProfileRun, source: ProfileSource): Promise<void> {
-    const { userId, resumeVersionId, aiJobId } = run;
+  private async extracted(
+    run: ProfileRun,
+    source: ProfileSource,
+  ): Promise<ExtractedProfile | null> {
     const extraction = await this.extraction.extract(source);
     if (extraction === null) {
       await this.fail(run, EMPTY_FILE);
-      return;
+      return null;
     }
     const input = AI_PAYLOAD_BUILDERS.resume_parse(extraction);
-    await this.versions.saveExtractedText(userId, { id: resumeVersionId, text: input.text });
+    await this.versions.saveExtractedText(run.userId, {
+      id: run.resumeVersionId,
+      text: input.text,
+    });
     if (input.text.trim() === '' && input.pages.length === 0) {
       await this.fail(run, AI_JOB_FAILURES.needsText);
-      return;
+      return null;
     }
-    const job: AiCompleteJob = { aiJobId, userId, kind: 'resume_parse', input, resumeVersionId };
-    await queueAiCompletion(this.queue, job);
-    const { kind, pageCount } = extraction;
-    this.logger.log({ eventId: run.eventId, aiJobId, kind, pageCount }, 'resume profile queued');
+    return { input, kind: extraction.kind, pageCount: extraction.pageCount };
   }
 
   private async settleFailure(run: ProfileRun, error: unknown): Promise<void> {

@@ -5,7 +5,6 @@ import type {
   FollowupSourceRow,
   LatestFollowupDraft,
   LatestFollowupJob,
-  RecordFollowupRequested,
 } from '../modules/followups/index.js';
 import type { ResolveFollowups } from '../modules/reminders/index.js';
 import type { PrismaService } from '../prisma/prisma.service.js';
@@ -42,8 +41,6 @@ export class FakeFollowupsRepository {
 
   runningJobId: string | null = null;
 
-  readonly requested: [string, RecordFollowupRequested][] = [];
-
   findSource(userId: string, { applicationId }: FollowupSourceQuery) {
     return ownedOrNull({ userId, applicationId }, this.source);
   }
@@ -51,11 +48,6 @@ export class FakeFollowupsRepository {
   lockApplication(userId: string, { applicationId }: { applicationId: string }) {
     const locked = { runningJobId: this.runningJobId };
     return ownedOrNull({ userId, applicationId }, locked);
-  }
-
-  recordRequested(userId: string, recorded: RecordFollowupRequested): Promise<void> {
-    this.requested.push([userId, recorded]);
-    return Promise.resolve();
   }
 
   findLatestDraft(userId: string, applicationId: string) {

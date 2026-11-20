@@ -1,8 +1,7 @@
 import { CV_HINTS_INPUT } from '@jobflow/shared/testing';
-import { getQueueToken } from '@nestjs/bullmq';
 import { describe, expect, it } from 'vitest';
 
-import { AI_JOB_ID, FakeAiRepository } from '../../test/ai.js';
+import { AI_JOB_ID, aiQueueProviders, FakeAiRepository } from '../../test/ai.js';
 import { memoryLog } from '../../test/memory-log.js';
 import { compileProcessorModule } from '../../test/processor.js';
 import {
@@ -13,7 +12,6 @@ import {
   RESUME_VERSION_ID,
 } from '../../test/service-fixtures.js';
 import { RefusingOnceQueue, StubQueue, unreachableQueues } from '../../test/stub-queues.js';
-import { AiService } from '../ai/index.js';
 import type { CvHintsRequestedPayload } from './cv-hints.events.js';
 import { CvHintsQueueService } from './cv-hints-queue.service.js';
 
@@ -29,11 +27,7 @@ const REQUESTED: CvHintsRequestedPayload = {
 async function queueing(queue: StubQueue) {
   const ai = new FakeAiRepository();
   ai.queueJob(OLENA_ID);
-  const providers = [
-    CvHintsQueueService,
-    { provide: getQueueToken('ai'), useValue: queue },
-    { provide: AiService, useValue: ai },
-  ];
+  const providers = [CvHintsQueueService, ...aiQueueProviders(queue, ai)];
   const moduleRef = await compileProcessorModule(memoryLog().sink, providers);
   const service = moduleRef.get(CvHintsQueueService);
   return { ai, enqueue: (delivery = FIRST_DELIVERY) => service.enqueue(REQUESTED, delivery) };

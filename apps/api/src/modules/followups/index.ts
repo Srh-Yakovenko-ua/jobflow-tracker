@@ -6,6 +6,5 @@ export type {
   FollowupSourceRow,
   LatestFollowupDraft,
   LatestFollowupJob,
-  RecordFollowupRequested,
 } from './followups.repository.js';
 export { FollowupsSubscriber } from './followups.subscriber.js';

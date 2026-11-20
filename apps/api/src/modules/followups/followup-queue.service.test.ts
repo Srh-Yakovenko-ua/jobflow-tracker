@@ -1,8 +1,7 @@
 import { buildFollowupInput } from '@jobflow/shared/testing';
-import { getQueueToken } from '@nestjs/bullmq';
 import { beforeEach, describe, expect, it } from 'vitest';
 
-import { AI_JOB_ID, FakeAiRepository } from '../../test/ai.js';
+import { AI_JOB_ID, aiQueueProviders, FakeAiRepository } from '../../test/ai.js';
 import { memoryLog } from '../../test/memory-log.js';
 import { compileProcessorModule } from '../../test/processor.js';
 import {
@@ -12,7 +11,6 @@ import {
   OLENA_ID,
 } from '../../test/service-fixtures.js';
 import { StubQueue, unreachableQueues } from '../../test/stub-queues.js';
-import { AiService } from '../ai/index.js';
 import { FollowupQueueService } from './followup-queue.service.js';
 import type { FollowupRequestedPayload } from './followups.events.js';
 
@@ -31,8 +29,7 @@ async function serviceWith(queue: StubQueue = new StubQueue('ai')) {
   ai.queueJob(OLENA_ID);
   const moduleRef = await compileProcessorModule(log.sink, [
     FollowupQueueService,
-    { provide: AiService, useValue: ai },
-    { provide: getQueueToken('ai'), useValue: queue },
+    ...aiQueueProviders(queue, ai),
   ]);
   const service = moduleRef.get(FollowupQueueService);
   return {

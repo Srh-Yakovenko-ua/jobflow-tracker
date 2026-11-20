@@ -6,10 +6,6 @@ import { AI_RESULT_JOB_SELECT, LATEST_AI_JOB_SELECT } from '../../prisma/latest-
 import { lockWithRunningAiJob } from '../../prisma/lock-owned-application.js';
 import { nextPlannedEventSelect } from '../../prisma/next-planned-event.js';
 import { PrismaService } from '../../prisma/prisma.service.js';
-import {
-  type InterviewPrepRequested,
-  interviewPrepRequestedEvent,
-} from './interview-prep.events.js';
 
 const interviewPrepSourceSelect = (now: Date) =>
   ({
@@ -41,8 +37,6 @@ export type InterviewPrepSourceQuery = { applicationId: string; now: Date };
 
 export type InterviewPrepLock = InTransaction & { applicationId: string };
 
-export type RecordInterviewPrepRequested = InTransaction & { requested: InterviewPrepRequested };
-
 @Injectable()
 export class InterviewPrepRepository {
   constructor(private readonly prisma: PrismaService) {}
@@ -66,15 +60,5 @@ export class InterviewPrepRepository {
 
   lockApplication(userId: string, { applicationId, tx = this.prisma }: InterviewPrepLock) {
     return lockWithRunningAiJob(tx, { userId, applicationId, kind: 'interview_prep' });
-  }
-
-  async recordRequested(
-    userId: string,
-    { requested, tx = this.prisma }: RecordInterviewPrepRequested,
-  ): Promise<void> {
-    await tx.outboxEvent.create({
-      data: interviewPrepRequestedEvent(userId, requested),
-      select: { id: true },
-    });
   }
 }

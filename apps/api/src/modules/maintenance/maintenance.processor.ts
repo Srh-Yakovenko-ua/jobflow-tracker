@@ -8,6 +8,7 @@ import { OutboxRelayService } from '../../outbox/outbox-relay.service.js';
 import {
   failedJobFields,
   jobFields,
+  parsedJob,
   type ProcessedJob,
   warnWorkerError,
 } from '../../queues/processed-job.js';
@@ -77,14 +78,11 @@ export class MaintenanceProcessor extends WorkerHost {
   }
 
   private async ping(job: ProcessedJob): Promise<void> {
-    const ping = pingJobSchema.safeParse(job.data);
-    if (!ping.success) {
-      this.logger.error({ ...jobFields(job), issues: ping.error.issues }, 'ping payload invalid');
-      throw new UnrecoverableError('ping payload invalid');
-    }
-    const fields = { requestId: ping.data.requestId, ...jobFields(job) };
+    const contract = { name: MAINTENANCE_JOBS.ping, schema: pingJobSchema, label: 'ping payload' };
+    const ping = parsedJob(job, { ...contract, logger: this.logger });
+    const fields = { requestId: ping.requestId, ...jobFields(job) };
     this.logger.log(fields, 'ping started');
-    await delay(ping.data.holdMs);
+    await delay(ping.holdMs);
     this.logger.log(fields, 'ping processed');
   }
 

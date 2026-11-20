@@ -9,6 +9,7 @@ import type { NestExpressApplication } from '@nestjs/platform-express';
 
 import type {
   AnnouncedCapture,
+  ApplicationCaptureRequestedPayload,
   ApplicationRow,
   DraftConfirm,
   DraftFill,
@@ -17,7 +18,7 @@ import type {
   OpenDraft,
   OpenedDraft,
 } from '../modules/applications/index.js';
-import { VACANCY_TEXT } from './ai.js';
+import { AI_JOB_ID, VACANCY_TEXT } from './ai.js';
 import type { TestApp } from './app.js';
 import {
   type ApplicationRequest,
@@ -30,6 +31,13 @@ import { APPLICATION_ID, MISSING_ID, OLENA_ID } from './service-fixtures.js';
 import { minutesBefore, NOW } from './time.js';
 
 export const CAPTURE_PASTE_PATH = '/api/v1/capture/paste';
+
+export const CAPTURE_REQUESTED: ApplicationCaptureRequestedPayload = {
+  userId: OLENA_ID,
+  applicationId: APPLICATION_ID,
+  aiJobId: AI_JOB_ID,
+  requestId: 'req-capture-1',
+};
 
 export const draftConfirmPath = (id: string) => `/api/v1/capture/drafts/${id}/confirm`;
 

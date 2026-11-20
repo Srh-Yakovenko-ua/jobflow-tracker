@@ -3,7 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import { jwtVerify } from 'jose';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { validateEnv } from '../../config/env.js';
+import { type Env, validateEnv } from '../../config/env.js';
 import { VACANCY_CALL, VACANCY_COMPLETION, VACANCY_TEXT } from '../../test/ai.js';
 import { testJwtKeys } from '../../test/auth.js';
 import { exampleEnv } from '../../test/example-env.js';
@@ -27,10 +27,13 @@ const DOC_04_UNAUTHORIZED = {
   requestId: 'req-ai-7',
 } satisfies ErrorResponse;
 
-const aiClient = new AiClient(
-  new ConfigService(validateEnv({ ...exampleEnv, AI_SERVICE_URL })),
-  testJwtKeys,
-);
+const config = new ConfigService<Env, true>(validateEnv({ ...exampleEnv, AI_SERVICE_URL }));
+
+const aiClient = new AiClient(config, testJwtKeys);
+
+const resetConnection = new TypeError('fetch failed', {
+  cause: Object.assign(new Error('read ECONNRESET'), { code: 'ECONNRESET' }),
+});
 
 const jsonBody = (body: RequestInit['body']): unknown =>
   typeof body === 'string' ? JSON.parse(body) : body;
@@ -131,7 +134,12 @@ describe('AiClient.complete', () => {
     {
       answer: 'a refused connection',
       reply: () => Promise.reject(refusedConnection),
-      error: aiServiceError(503, 'not_ready'),
+      error: { ...aiServiceError(503, 'not_ready'), reachedService: false },
+    },
+    {
+      answer: 'a connection reset after it was open',
+      reply: () => Promise.reject(resetConnection),
+      error: { ...aiServiceError(503, 'not_ready'), reachedService: true },
     },
     {
       answer: 'a 200 whose body is not JSON',
@@ -157,6 +165,18 @@ describe('AiClient.complete', () => {
       aiServiceError(504, 'ai_timeout'),
     );
     expect(timeout).toHaveBeenCalledWith(65_000);
+  });
+
+  it('marks a service token it cannot sign as an internal error that never reached services/ai, calling nothing', async () => {
+    const calls = replyWith(() => Response.json(VACANCY_COMPLETION));
+    const { publicKey, jwk } = testJwtKeys;
+    const unsignable = new AiClient(config, { privateKey: publicKey, publicKey, jwk });
+
+    await expect(unsignable.complete(VACANCY_CALL)).rejects.toMatchObject({
+      ...aiServiceError(500, 'internal_error'),
+      reachedService: false,
+    });
+    expect(calls).toEqual([]);
   });
 });
 

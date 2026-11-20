@@ -21,6 +21,8 @@ import {
   VACANCY_SAMPLE_TEXT,
   vacancyFieldOf,
 } from '@jobflow/shared/testing';
+import { getQueueToken } from '@nestjs/bullmq';
+import type { Provider } from '@nestjs/common';
 
 import type { VacancyEvalCaseFile, VacancyExpected } from '../ai-eval/vacancy-cases.js';
 import type { AiUsageRow } from '../ai-usage/ai-usage.repository.js';
@@ -40,12 +42,15 @@ import type {
   FailAiJobWithResult,
   FinishAiJob,
   QueueSample,
+  RecordAiRequested,
   SaveAiFailure,
   SaveAiResult,
   SettledAiJob,
 } from '../modules/ai/index.js';
+import { AiJobQueue, AiService } from '../modules/ai/index.js';
 import type { PrismaService } from '../prisma/prisma.service.js';
 import { APPLICATION_ID, OLENA_ID } from './service-fixtures.js';
+import type { StubQueue } from './stub-queues.js';
 
 export const VACANCY_TEXT = VACANCY_SAMPLE_TEXT;
 
@@ -288,6 +293,8 @@ type BudgetQuery = BudgetWindow & { userId: string };
 
 type RecordedAiCall = AiCallRecord & { userId: string };
 
+type RecordedAiRequest = Omit<RecordAiRequested, 'event'> & { eventType: string };
+
 const resultKey = (userId: string, { kind, inputHash }: AiResultKey) =>
   `${userId}/${kind}/${inputHash}`;
 
@@ -299,6 +306,8 @@ export class FakeAiRepository {
   readonly budgetQueries: BudgetQuery[] = [];
 
   readonly calls: RecordedAiCall[] = [];
+
+  readonly requested: [string, RecordedAiRequest][] = [];
 
   usage: BudgetUsage = { calls: 0, tokens: 0 };
 
@@ -387,6 +396,12 @@ export class FakeAiRepository {
     return this.failJob(userId, job);
   }
 
+  recordRequested(userId: string, { event, ...recorded }: RecordAiRequested): Promise<void> {
+    return this.reached(() => {
+      this.requested.push([userId, { eventType: event.type, ...recorded }]);
+    });
+  }
+
   recordCall(userId: string, call: AiCallRecord): Promise<void> {
     return this.reached(() => {
       this.calls.push({ userId, ...call });
@@ -436,4 +451,12 @@ export class FakeAiRepository {
   private reached<T>(work: () => T): Promise<T> {
     return this.refusal === undefined ? Promise.resolve(work()) : Promise.reject(this.refusal);
   }
+}
+
+export function aiQueueProviders(queue: StubQueue, ai: FakeAiRepository): Provider[] {
+  return [
+    AiJobQueue,
+    { provide: getQueueToken(queue.name), useValue: queue },
+    { provide: AiService, useValue: ai },
+  ];
 }

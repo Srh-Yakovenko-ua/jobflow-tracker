@@ -9,7 +9,6 @@ export type {
   InterviewPrepSourceQuery,
   InterviewPrepSourceRow,
   LatestInterviewPrepRow,
-  RecordInterviewPrepRequested,
 } from './interview-prep.repository.js';
 export { InterviewPrepService, type InterviewPrepSuggestion } from './interview-prep.service.js';
 export { InterviewPrepSubscriber } from './interview-prep.subscriber.js';

@@ -15,7 +15,6 @@ import type {
   InterviewPrepSourceRow,
   InterviewPrepSuggestion,
   LatestInterviewPrepRow,
-  RecordInterviewPrepRequested,
 } from '../modules/interview-prep/index.js';
 import { applicationPath } from './applications.js';
 import { APPLICATION_ID, OLENA_ID } from './service-fixtures.js';
@@ -65,8 +64,6 @@ export class FakeInterviewPrepRepository {
 
   readonly sourceReads: InterviewPrepSourceQuery[] = [];
 
-  readonly recorded: [string, RecordInterviewPrepRequested][] = [];
-
   findSource(userId: string, query: InterviewPrepSourceQuery) {
     this.sourceReads.push(query);
     return Promise.resolve(reachesOlena(userId, query.applicationId) ? this.source : null);
@@ -80,11 +77,6 @@ export class FakeInterviewPrepRepository {
   lockApplication(userId: string, { applicationId }: { applicationId: string }) {
     const lock = reachesOlena(userId, applicationId) ? { runningJobId: this.runningJobId } : null;
     return Promise.resolve(lock);
-  }
-
-  recordRequested(userId: string, recorded: RecordInterviewPrepRequested): Promise<void> {
-    this.recorded.push([userId, recorded]);
-    return Promise.resolve();
   }
 }
 

@@ -6,7 +6,6 @@ import { LATEST_AI_JOB_SELECT, UNSETTLED_AI_JOB_WHERE } from '../../prisma/lates
 import { lockUser } from '../../prisma/lock-user.js';
 import { PrismaService } from '../../prisma/prisma.service.js';
 import { timeZoneOf } from '../../prisma/user-time-zone.js';
-import { type SummaryRequested, summaryRequestedEvent } from './summaries.events.js';
 
 const SUMMARY_KIND = 'monthly_summary';
 
@@ -63,8 +62,6 @@ export type SummaryStart = {
 
 export type SummaryJobsSince = Required<InTransaction> & { since: Date };
 
-export type RecordSummaryRequested = Required<InTransaction> & { requested: SummaryRequested };
-
 @Injectable()
 export class SummariesRepository {
   constructor(private readonly prisma: PrismaService) {}
@@ -90,13 +87,6 @@ export class SummariesRepository {
       where: { userId, kind: SUMMARY_KIND, createdAt: { gte: since } },
     });
     return count > 0;
-  }
-
-  async recordRequested(userId: string, { requested, tx }: RecordSummaryRequested): Promise<void> {
-    await tx.outboxEvent.create({
-      data: summaryRequestedEvent(userId, requested),
-      select: { id: true },
-    });
   }
 
   findLatestSummary(userId: string): Promise<SummaryJobRow | null> {

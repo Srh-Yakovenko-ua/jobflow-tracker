@@ -1,3 +1,4 @@
+import { PUSH_LIMITS } from '@jobflow/shared';
 import { Test } from '@nestjs/testing';
 import { describe, expect, it } from 'vitest';
 
@@ -7,7 +8,7 @@ import { CHROME_SUBSCRIPTION, ScriptedPushSender, SILENCE_PUSH } from '../../tes
 import { OLENA_ID } from '../../test/service-fixtures.js';
 import { fixedClock, NOW } from '../../test/time.js';
 import { SettingsService } from '../settings/index.js';
-import { type FailedPush, PushRepository, type PushTargetRow } from './push.repository.js';
+import { PushRepository, type PushTargetRow } from './push.repository.js';
 import { PushSendService } from './push-send.service.js';
 import { PushSender } from './push-sender.js';
 
@@ -40,10 +41,28 @@ class FakePushTargets {
     return this.unsaved.has(id) ? Promise.reject(new Error('write lost')) : Promise.resolve();
   }
 
-  countFailure(_userId: string, { id }: FailedPush): Promise<void> {
-    this.calls.push(`countFailure ${id}`);
-    return Promise.resolve();
+  readonly failedCounts = new Map<string, number>();
+
+  recordFailure(_userId: string, id: string): Promise<number | null> {
+    this.calls.push(`recordFailure ${id}`);
+    const failedCount = (this.failedCounts.get(id) ?? 0) + 1;
+    this.failedCounts.set(id, failedCount);
+    return Promise.resolve(failedCount);
   }
+
+  remove(_userId: string, id: string): Promise<number> {
+    this.calls.push(`remove ${id}`);
+    return Promise.resolve(1);
+  }
+}
+
+async function failedSendWith(chromeFailedCount: number) {
+  const sender = new ScriptedPushSender();
+  sender.answer = 'failed';
+  const setup = await sendWith({ sender });
+  setup.repository.failedCounts.set(CHROME_ROW.id, chromeFailedCount);
+  await expect(setup.service.send(JOB)).resolves.toEqual(['failed', 'failed']);
+  return setup.repository;
 }
 
 type SendSetup = { notifyPush?: boolean; sender?: ScriptedPushSender };
@@ -94,5 +113,26 @@ describe('PushSendService.send', () => {
     await expect(service.send(JOB)).resolves.toEqual([]);
 
     expect([repository.calls, sender.sent]).toEqual([[], []]);
+  });
+
+  it('a subscription one failure short of the limit is kept', async () => {
+    const repository = await failedSendWith(PUSH_LIMITS.failedSendsMax - 2);
+
+    expect(repository.calls).toEqual([
+      'listForUser',
+      `recordFailure ${CHROME_ROW.id}`,
+      `recordFailure ${PHONE_ROW.id}`,
+    ]);
+  });
+
+  it('a subscription reaching the limit is removed', async () => {
+    const repository = await failedSendWith(PUSH_LIMITS.failedSendsMax - 1);
+
+    expect(repository.calls).toEqual([
+      'listForUser',
+      `recordFailure ${CHROME_ROW.id}`,
+      `recordFailure ${PHONE_ROW.id}`,
+      `remove ${CHROME_ROW.id}`,
+    ]);
   });
 });

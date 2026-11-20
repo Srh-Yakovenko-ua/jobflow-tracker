@@ -4,7 +4,7 @@ import { DomainEventRouter } from '../../outbox/domain-event-router.js';
 import { AiJobRouter } from '../ai/index.js';
 import { ResumeProfileService } from './resume-profile.service.js';
 import { ResumeProfileQueueService } from './resume-profile-queue.service.js';
-import { RESUME_EVENTS } from './resumes.events.js';
+import { RESUME_EVENTS, resumeVersionUploadedPayloadSchema } from './resumes.events.js';
 
 @Injectable()
 export class ResumeProfileSubscriber implements OnModuleInit {
@@ -16,7 +16,12 @@ export class ResumeProfileSubscriber implements OnModuleInit {
   ) {}
 
   onModuleInit(): void {
-    this.events.subscribe(RESUME_EVENTS.versionUploaded, (event) => this.queue.enqueue(event));
+    this.events.subscribeParsed({
+      type: RESUME_EVENTS.versionUploaded,
+      schema: resumeVersionUploadedPayloadSchema,
+      label: 'resume upload event',
+      handle: (uploaded, delivery) => this.queue.enqueue(uploaded, delivery),
+    });
     this.aiJobs.subscribe('resume_parse', (settled) => this.profile.settle(settled));
   }
 }

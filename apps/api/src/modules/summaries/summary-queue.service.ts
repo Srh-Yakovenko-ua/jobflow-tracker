@@ -5,18 +5,14 @@ import {
   isActiveStage,
   THRESHOLDS,
 } from '@jobflow/shared';
-import { InjectQueue } from '@nestjs/bullmq';
 import { Injectable, Logger } from '@nestjs/common';
-import { Queue } from 'bullmq';
 
 import { AnalyticsClient, type UserAnalytics } from '../../analytics-client/index.js';
 import type { EventDelivery } from '../../outbox/domain-event-router.js';
-import { QUEUES } from '../../queues/queues.js';
 import {
   AI_PAYLOAD_BUILDERS,
-  AiService,
+  AiJobQueue,
   type MonthlySummarySource,
-  queueOrFailAiJob,
   type WhatIfSource,
 } from '../ai/index.js';
 import { PlansService } from '../plans/index.js';
@@ -49,22 +45,17 @@ export class SummaryQueueService {
   constructor(
     private readonly analytics: AnalyticsClient,
     private readonly plans: PlansService,
-    private readonly ai: AiService,
-    @InjectQueue(QUEUES.ai.name) private readonly queue: Queue,
+    private readonly aiQueue: AiJobQueue,
   ) {}
 
   async enqueue(requested: SummaryRequestedPayload, delivery: EventDelivery): Promise<void> {
     const { userId, aiJobId, requestId, fresh } = requested;
-    const { finalAttempt } = delivery;
-    const guarded = { queue: this.queue, ai: this.ai, logger: this.logger, finalAttempt };
-    await queueOrFailAiJob(guarded, {
-      aiJobId,
-      userId,
-      kind: 'monthly_summary',
-      requestId,
-      fresh,
-      buildInput: async () => AI_PAYLOAD_BUILDERS.monthly_summary(await this.sourceOf(requested)),
-    });
+    const buildInput = async () =>
+      AI_PAYLOAD_BUILDERS.monthly_summary(await this.sourceOf(requested));
+    await this.aiQueue.queueOrFail(
+      { aiJobId, userId, kind: 'monthly_summary', requestId, fresh, buildInput },
+      delivery,
+    );
     this.logger.log({ requestId, aiJobId, month: requested.month }, 'monthly summary queued');
   }
 

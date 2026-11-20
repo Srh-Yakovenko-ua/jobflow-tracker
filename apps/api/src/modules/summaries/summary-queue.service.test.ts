@@ -10,10 +10,9 @@ import {
   buildMonthlySummaryInput,
   designInsightsBody,
 } from '@jobflow/shared/testing';
-import { getQueueToken } from '@nestjs/bullmq';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { AI_JOB_ID, FakeAiRepository } from '../../test/ai.js';
+import { AI_JOB_ID, aiQueueProviders, FakeAiRepository } from '../../test/ai.js';
 import {
   ANALYTICS,
   analyticsClientProvider,
@@ -31,11 +30,11 @@ import { compileProcessorModule } from '../../test/processor.js';
 import {
   FINAL_DELIVERY,
   FIRST_DELIVERY,
+  MOVE_EVENT_ID,
   OLENA_ID,
   SEARCH_ID,
 } from '../../test/service-fixtures.js';
 import { StubQueue } from '../../test/stub-queues.js';
-import { AiService } from '../ai/index.js';
 import { PlansService } from '../plans/index.js';
 import type { SummaryRequestedPayload } from './summaries.events.js';
 import { SummaryQueueService } from './summary-queue.service.js';
@@ -80,8 +79,7 @@ async function queueWithFakes() {
     SummaryQueueService,
     analyticsClientProvider(),
     { provide: PlansService, useValue: plans },
-    { provide: AiService, useValue: ai },
-    { provide: getQueueToken('ai'), useValue: queue },
+    ...aiQueueProviders(queue, ai),
   ]);
   const service = moduleRef.get(SummaryQueueService);
   const enqueue = (delivery = FIRST_DELIVERY) => service.enqueue(REQUESTED, delivery);
@@ -159,7 +157,11 @@ describe('SummaryQueueService.enqueue', () => {
 
     expect(ai.jobs.get(AI_JOB_ID)).toMatchObject({ status: 'failed', errorType: 'not_ready' });
     expect(log.parsed()).toEqual([
-      expect.objectContaining({ aiJobId: AI_JOB_ID, msg: 'monthly_summary job not queued' }),
+      expect.objectContaining({
+        eventId: MOVE_EVENT_ID,
+        aiJobId: AI_JOB_ID,
+        msg: 'monthly_summary job not queued',
+      }),
     ]);
   });
 });

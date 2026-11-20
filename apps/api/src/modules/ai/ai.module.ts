@@ -11,12 +11,21 @@ import { AiClient } from './ai-client.js';
 import { AiJobRouter } from './ai-job-router.js';
 import { AiJobStatusService } from './ai-job-status.service.js';
 import { AiMetricsSubscriber } from './ai-metrics.subscriber.js';
+import { AiJobQueue } from './ai-queue.js';
 
 @Module({
   imports: [JwtKeysModule],
   controllers: [AiController],
-  providers: [AiClient, AiService, AiJobStatusService, AiRepository, AiJobRouter, Clock],
-  exports: [AiClient, AiService, AiJobStatusService, AiJobRouter],
+  providers: [
+    AiClient,
+    AiService,
+    AiJobStatusService,
+    AiRepository,
+    AiJobRouter,
+    AiJobQueue,
+    Clock,
+  ],
+  exports: [AiClient, AiService, AiJobStatusService, AiJobRouter, AiJobQueue],
 })
 export class AiModule {}
 

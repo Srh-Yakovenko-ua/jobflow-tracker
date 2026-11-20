@@ -1,7 +1,6 @@
 import {
   APPLICATION_FORMS_UK,
   countedUk,
-  DAY_FORMS_UK,
   EMAIL_SETTING_OF,
   EMAILED_TYPES,
   type EmailedType,
@@ -15,7 +14,14 @@ import {
   type UserSettings,
 } from '@jobflow/shared';
 
-import { monthNameOf } from '../../common/year-month.js';
+import {
+  FOLLOW_UP_HINT,
+  NOTIFICATION_FALLBACK_PATH,
+  silenceTitleOf,
+  silentDaysOf,
+  summaryReadyCopyOf,
+  withoutReply,
+} from '../notifications/index.js';
 
 export type EmailItem = { title: string; detail: string | null; url: string | null };
 
@@ -45,10 +51,6 @@ type SilenceNotification = Extract<Notification, { type: 'silence' }>;
 
 const EMAILED: ReadonlySet<NotificationType> = new Set(EMAILED_TYPES);
 
-const FALLBACK_PATH = '/notifications';
-
-const FOLLOW_UP_HINT = 'Час нагадати про себе: відкрий картку і напиши фоллоу-ап.';
-
 export const isEmailedType = (type: NotificationType): type is EmailedType => EMAILED.has(type);
 
 export const isEmailed = (notification: Notification): notification is EmailedNotification =>
@@ -62,20 +64,18 @@ const linkOf = (webOrigin: string, path: string) => new URL(path, webOrigin).hre
 export const unsubscribeUrlOf = (webOrigin: string, token: string) =>
   linkOf(webOrigin, `/unsubscribe?token=${encodeURIComponent(token)}`);
 
-const silentDays = (days: number) => `${countedUk(days, DAY_FORMS_UK)} без відповіді`;
-
 function silenceCopy(notification: SilenceNotification, { webOrigin }: EmailContext): EmailCopy {
   const { items } = notification.payload;
   const itemOf = (item: SilenceItem): EmailItem => {
     const single = { ...notification, payload: { items: [item] } };
-    const path = notificationTargetOf(single) ?? FALLBACK_PATH;
-    return { title: item.company, detail: silentDays(item.days), url: linkOf(webOrigin, path) };
+    const path = notificationTargetOf(single) ?? NOTIFICATION_FALLBACK_PATH;
+    return { title: item.company, detail: silentDaysOf(item.days), url: linkOf(webOrigin, path) };
   };
   const [only] = items;
   const subject =
     items.length === 1 && only !== undefined
-      ? `${only.company}: ${silentDays(only.days)}`
-      : `${countedUk(items.length, APPLICATION_FORMS_UK)} без відповіді`;
+      ? silenceTitleOf(only)
+      : withoutReply(countedUk(items.length, APPLICATION_FORMS_UK));
   return {
     subject,
     preheader: FOLLOW_UP_HINT,
@@ -87,8 +87,7 @@ function silenceCopy(notification: SilenceNotification, { webOrigin }: EmailCont
 }
 
 function summaryCopy(month: Summary['month'], { summary }: EmailContext): EmailCopy {
-  const title = `Саммарі за ${monthNameOf(month)} готове`;
-  const preheader = 'Що вийшло за місяць і які кроки зробити далі.';
+  const { title, body: preheader } = summaryReadyCopyOf(month);
   return {
     subject: title,
     preheader,
@@ -135,6 +134,6 @@ export function emailContentOf(
   context: EmailContext,
 ): EmailContent {
   const { actionLabel, ...copy } = copyOf(notification, context);
-  const path = notificationTargetOf(notification) ?? FALLBACK_PATH;
+  const path = notificationTargetOf(notification) ?? NOTIFICATION_FALLBACK_PATH;
   return { ...copy, action: { label: actionLabel, url: linkOf(context.webOrigin, path) } };
 }

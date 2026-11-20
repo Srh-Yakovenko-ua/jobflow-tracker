@@ -2,36 +2,34 @@ import { InjectQueue } from '@nestjs/bullmq';
 import { Injectable } from '@nestjs/common';
 import { Queue } from 'bullmq';
 
-import { Clock } from '../../common/clock.js';
-import { withinLimit } from '../../common/probe.js';
-import { scheduledDelivery } from '../../common/quiet-hours.js';
-import { OUTBOX_LIMITS } from '../../outbox/outbox-relay.service.js';
 import { QUEUES } from '../../queues/queues.js';
-import { type NotificationCreatedPayload, NotificationsService } from '../notifications/index.js';
-import { SettingsService } from '../settings/index.js';
-import { isPushed, isPushedType, pushMessageOf } from './push-message.js';
-import { PUSH_JOBS, type PushSendJob } from './push-send.service.js';
+import {
+  type DeliveryRule,
+  type NotificationCreatedPayload,
+  NotificationScheduleService,
+} from '../notifications/index.js';
+import { queuePushSend } from './push-jobs.js';
+import { isPushed, isPushedType, type PushedNotification, pushMessageOf } from './push-message.js';
+
+const PUSH_RULE: DeliveryRule<PushedNotification> = {
+  delivers: isPushed,
+  allowed: (settings) => settings.notifyPush,
+};
 
 @Injectable()
 export class PushDeliveryService {
   constructor(
-    private readonly settings: SettingsService,
-    private readonly notifications: NotificationsService,
+    private readonly schedules: NotificationScheduleService,
     @InjectQueue(QUEUES.push.name) private readonly queue: Queue,
-    private readonly clock: Clock,
   ) {}
 
-  async schedule({ userId, notificationId, type }: NotificationCreatedPayload): Promise<void> {
-    if (!isPushedType(type)) return;
-    const notification = await this.notifications.find(userId, notificationId);
-    if (notification === undefined || !isPushed(notification)) return;
-    const settings = await this.settings.get(userId);
-    if (!settings.notifyPush) return;
-    const now = this.clock.now();
-    const { deliverAt, delayMs } = scheduledDelivery({ settings, notification, now });
+  async schedule(created: NotificationCreatedPayload): Promise<void> {
+    if (!isPushedType(created.type)) return;
+    const due = await this.schedules.due(created, PUSH_RULE);
+    if (due === null) return;
+    const { notification, settings, deliverAt, delayMs } = due;
     const message = pushMessageOf(notification, { settings, deliverAt });
-    const job: PushSendJob = { userId, message };
-    const options = { jobId: notificationId, delay: delayMs };
-    await withinLimit(this.queue.add(PUSH_JOBS.send, job, options), OUTBOX_LIMITS.publishTimeoutMs);
+    const { userId, notificationId } = created;
+    await queuePushSend(this.queue, { job: { userId, message }, notificationId, delayMs });
   }
 }

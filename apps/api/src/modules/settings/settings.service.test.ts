@@ -90,6 +90,17 @@ describe('SettingsService.get', () => {
   });
 });
 
+describe('SettingsService.find', () => {
+  it('answers the stored settings, and null for a user without a settings row', async () => {
+    const { service } = await serviceWithFakes();
+
+    expect([await service.find(OLENA_ID), await service.find(BOHDAN_ID)]).toEqual([
+      NEW_USER_SETTINGS,
+      null,
+    ]);
+  });
+});
+
 describe('SettingsService.update', () => {
   it('writes only the sent fields, quiet hours as a time of day, and records settings.changed in the same transaction', async () => {
     const { repository, service } = await serviceWithFakes();

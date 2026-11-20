@@ -5,6 +5,7 @@ import { Clock } from '../../common/clock.js';
 import { OutboxWorkerModule } from '../../outbox/outbox.module.js';
 import { EventsModule } from '../events/index.js';
 import { NotificationsModule } from '../notifications/index.js';
+import { SettingsModule } from '../settings/index.js';
 import { RhythmController } from './rhythm.controller.js';
 import { RhythmRepository } from './rhythm.repository.js';
 import { RhythmService } from './rhythm.service.js';
@@ -13,7 +14,7 @@ import { RhythmRequestsService } from './rhythm-requests.service.js';
 import { RhythmWeekCloseService } from './rhythm-week-close.service.js';
 
 @Module({
-  imports: [EventsModule],
+  imports: [EventsModule, SettingsModule],
   controllers: [RhythmController],
   providers: [Clock, RhythmRepository, RhythmService, RhythmRequestsService],
   exports: [RhythmRequestsService, RhythmService, RhythmRepository],

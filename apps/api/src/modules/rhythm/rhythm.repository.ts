@@ -4,7 +4,6 @@ import { Injectable } from '@nestjs/common';
 import { EFFECTIVE_STAGE_EVENT_AS_E_SQL } from '../../prisma/effective-stage-events.js';
 import type { InTransaction } from '../../prisma/in-transaction.js';
 import { PrismaService } from '../../prisma/prisma.service.js';
-import { USER_SETTINGS_SELECT, type UserSettingsRow } from '../../prisma/user-settings-row.js';
 import { type RhythmWeekClosed, rhythmWeekClosedEvent } from './rhythm.events.js';
 
 export type RhythmCountKind = keyof RhythmWeekCounts;
@@ -19,8 +18,12 @@ export type RecordWeekClosed = InTransaction & { closed: RhythmWeekClosed };
 export class RhythmRepository {
   constructor(private readonly prisma: PrismaService) {}
 
-  findSettings(userId: string): Promise<UserSettingsRow | null> {
-    return this.prisma.userSettings.findUnique({ where: { userId }, select: USER_SETTINGS_SELECT });
+  async hasSettings(userId: string): Promise<boolean> {
+    const settings = await this.prisma.userSettings.findUnique({
+      where: { userId },
+      select: { userId: true },
+    });
+    return settings !== null;
   }
 
   async findActiveSearchId(userId: string): Promise<string | null> {

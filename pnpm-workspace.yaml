@@ -18,6 +18,7 @@ allowBuilds:
 
 overrides:
   body-parser: ^2.4.0
+  '@prisma/config>effect': ^3.22.1
   handlebars: ^4.7.10
   multer: ^2.5.0
 

@@ -4,7 +4,10 @@ import type { Type } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
 
 import { Clock } from '../common/clock.js';
-import { NotificationsService } from '../modules/notifications/index.js';
+import {
+  NotificationScheduleService,
+  NotificationsService,
+} from '../modules/notifications/index.js';
 import { SettingsService } from '../modules/settings/index.js';
 import { NEW_USER_SETTINGS } from './factories.js';
 import { NOTIFICATION_ID, SILENCE_NOTIFICATION } from './notifications.js';
@@ -37,6 +40,7 @@ export async function deliveryOf<Delivery>(
   const moduleRef = await Test.createTestingModule({
     providers: [
       delivery,
+      NotificationScheduleService,
       { provide: SettingsService, useValue: settingsService },
       { provide: NotificationsService, useValue: notifications },
       { provide: getQueueToken(queue.name), useValue: queue },

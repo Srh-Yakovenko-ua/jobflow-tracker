@@ -1,16 +1,8 @@
-import { InjectQueue } from '@nestjs/bullmq';
 import { Injectable, Logger } from '@nestjs/common';
-import { Queue } from 'bullmq';
 
 import { AnalyticsClient, AnalyticsServiceError } from '../../analytics-client/index.js';
 import type { EventDelivery } from '../../outbox/domain-event-router.js';
-import { QUEUES } from '../../queues/queues.js';
-import {
-  AI_PAYLOAD_BUILDERS,
-  AiService,
-  queueOrFailAiJob,
-  type WeakSpotsSource,
-} from '../ai/index.js';
+import { AI_PAYLOAD_BUILDERS, AiJobQueue, type WeakSpotsSource } from '../ai/index.js';
 import type { InterviewPrepRequestedPayload } from './interview-prep.events.js';
 
 @Injectable()
@@ -19,17 +11,14 @@ export class InterviewPrepQueueService {
 
   constructor(
     private readonly analytics: AnalyticsClient,
-    private readonly ai: AiService,
-    @InjectQueue(QUEUES.ai.name) private readonly queue: Queue,
+    private readonly aiQueue: AiJobQueue,
   ) {}
 
   async enqueue(requested: InterviewPrepRequestedPayload, delivery: EventDelivery): Promise<void> {
     const { input: vacancy, ...job } = requested;
     const buildInput = async () =>
       AI_PAYLOAD_BUILDERS.interview_prep({ vacancy, weakSpots: await this.weakSpotsOf(requested) });
-    const { finalAttempt } = delivery;
-    const guarded = { queue: this.queue, ai: this.ai, logger: this.logger, finalAttempt };
-    await queueOrFailAiJob(guarded, { kind: 'interview_prep', ...job, buildInput });
+    await this.aiQueue.queueOrFail({ kind: 'interview_prep', ...job, buildInput }, delivery);
     const { aiJobId, applicationId, requestId } = requested;
     this.logger.log({ requestId, aiJobId, applicationId }, 'interview prep queued');
   }

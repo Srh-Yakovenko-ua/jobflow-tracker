@@ -3,8 +3,13 @@ import { beforeEach, describe, expect, it } from 'vitest';
 
 import { AI_JOB_ID } from '../../test/ai.js';
 import { INTERVIEW_PREP_VACANCY } from '../../test/interview-prep.js';
-import { APPLICATION_ID, OLENA_ID } from '../../test/service-fixtures.js';
-import { useSubscribedRouter } from '../../test/subscriber.js';
+import {
+  APPLICATION_ID,
+  FINAL_DELIVERY,
+  FIRST_DELIVERY,
+  OLENA_ID,
+} from '../../test/service-fixtures.js';
+import { RecordingEventQueue, useSubscribedRouter } from '../../test/subscriber.js';
 import {
   INTERVIEW_PREP_EVENTS,
   type InterviewPrepRequestedPayload,
@@ -20,23 +25,26 @@ const REQUESTED: InterviewPrepRequestedPayload = {
 };
 
 describe('InterviewPrepSubscriber', () => {
-  const enqueued: InterviewPrepRequestedPayload[] = [];
-  const { log, route } = useSubscribedRouter([
+  const queue = new RecordingEventQueue<InterviewPrepRequestedPayload>();
+  const { log, route, routeFinal } = useSubscribedRouter([
     InterviewPrepSubscriber,
-    {
-      provide: InterviewPrepQueueService,
-      useValue: { enqueue: (payload: InterviewPrepRequestedPayload) => enqueued.push(payload) },
-    },
+    { provide: InterviewPrepQueueService, useValue: queue },
   ]);
 
   beforeEach(() => {
-    enqueued.length = 0;
+    queue.enqueued.length = 0;
   });
 
   it('queues the pack of a requested event', async () => {
     await route(INTERVIEW_PREP_EVENTS.requested, REQUESTED);
 
-    expect(enqueued).toEqual([REQUESTED]);
+    expect(queue.enqueued).toEqual([[REQUESTED, FIRST_DELIVERY]]);
+  });
+
+  it('hands the last delivery of a requested event to the queue as the final attempt', async () => {
+    await routeFinal(INTERVIEW_PREP_EVENTS.requested, REQUESTED);
+
+    expect(queue.enqueued).toEqual([[REQUESTED, FINAL_DELIVERY]]);
   });
 
   it('fails an event with an unknown interview kind as unrecoverable and queues nothing', async () => {
@@ -46,7 +54,7 @@ describe('InterviewPrepSubscriber', () => {
       route(INTERVIEW_PREP_EVENTS.requested, { ...REQUESTED, input }),
     ).rejects.toBeInstanceOf(UnrecoverableError);
 
-    expect(enqueued).toEqual([]);
+    expect(queue.enqueued).toEqual([]);
     expect(log.parsed()).toEqual([
       expect.objectContaining({ level: 50, msg: 'interview prep event invalid' }),
     ]);

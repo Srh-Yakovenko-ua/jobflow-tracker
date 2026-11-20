@@ -1,17 +1,9 @@
-import { InjectQueue } from '@nestjs/bullmq';
 import { Injectable, Logger } from '@nestjs/common';
-import { Queue, UnrecoverableError } from 'bullmq';
 
-import type { DomainEvent } from '../../outbox/domain-event-router.js';
-import { QUEUES } from '../../queues/queues.js';
+import type { EventDelivery } from '../../outbox/domain-event-router.js';
+import { AI_PAYLOAD_BUILDERS, type AiJobBuilder, AiJobQueue } from '../ai/index.js';
 import {
-  AI_PAYLOAD_BUILDERS,
-  type AiJobBuilder,
-  AiService,
-  queueOrFailAiJob,
-} from '../ai/index.js';
-import {
-  applicationCaptureRequestedPayloadSchema,
+  type ApplicationCaptureRequestedPayload,
   ApplicationDraftsService,
 } from '../applications/index.js';
 
@@ -21,18 +13,14 @@ export class CaptureQueueService {
 
   constructor(
     private readonly drafts: ApplicationDraftsService,
-    private readonly ai: AiService,
-    @InjectQueue(QUEUES.ai.name) private readonly queue: Queue,
+    private readonly aiQueue: AiJobQueue,
   ) {}
 
-  async enqueue(event: DomainEvent): Promise<void> {
-    const { id, payload } = event;
-    const parsed = applicationCaptureRequestedPayloadSchema.safeParse(payload);
-    if (!parsed.success) {
-      this.logger.error({ eventId: id, issues: parsed.error.issues }, 'capture event invalid');
-      throw new UnrecoverableError('capture event invalid');
-    }
-    const { userId, applicationId, aiJobId, requestId } = parsed.data;
+  async enqueue(
+    requested: ApplicationCaptureRequestedPayload,
+    delivery: EventDelivery,
+  ): Promise<void> {
+    const { userId, applicationId, aiJobId, requestId } = requested;
     const rawText = await this.drafts.findRawText(userId, applicationId);
     if (rawText === null) {
       return;
@@ -45,11 +33,7 @@ export class CaptureQueueService {
       applicationId,
       requestId,
     };
-    const finalAttempt = event.finalAttempt === true;
-    await queueOrFailAiJob(
-      { queue: this.queue, ai: this.ai, logger: this.logger, finalAttempt },
-      job,
-    );
-    this.logger.log({ requestId, eventId: id, aiJobId }, 'capture parse queued');
+    await this.aiQueue.queueOrFail(job, delivery);
+    this.logger.log({ requestId, eventId: delivery.eventId, aiJobId }, 'capture parse queued');
   }
 }

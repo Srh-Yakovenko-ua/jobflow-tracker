@@ -1,33 +1,18 @@
 import { yearMonthSchema } from '@jobflow/shared';
 import { z } from 'zod';
 
-import type { Prisma } from '../../generated/prisma/client.js';
-import { traceCarrier } from '../../tracing/trace-context.js';
+import { type AiRequested, aiRequestedEvent } from '../ai/index.js';
 
 export const SUMMARY_EVENTS = { requested: 'summary.requested' } as const;
 
-export const summaryRequestedPayloadSchema = z.object({
-  userId: z.uuid(),
-  aiJobId: z.uuid(),
+export const summaryRequested = aiRequestedEvent(SUMMARY_EVENTS.requested, {
   searchId: z.uuid(),
   month: yearMonthSchema,
-  requestId: z.string().min(1).optional(),
   fresh: z.literal(true).optional(),
 });
 
+export const summaryRequestedPayloadSchema = summaryRequested.schema;
+
 export type SummaryRequestedPayload = z.infer<typeof summaryRequestedPayloadSchema>;
 
-export type SummaryRequested = Omit<SummaryRequestedPayload, 'userId'>;
-
-export function summaryRequestedEvent(
-  userId: string,
-  requested: SummaryRequested,
-): Prisma.OutboxEventCreateInput {
-  return {
-    aggregate: 'user',
-    aggregateId: userId,
-    eventType: SUMMARY_EVENTS.requested,
-    payload: { userId, ...requested },
-    ...traceCarrier(),
-  };
-}
+export type SummaryRequested = AiRequested<typeof summaryRequested>;
