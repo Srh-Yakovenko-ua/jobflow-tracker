@@ -3,6 +3,7 @@ import { mkdirSync, writeFileSync } from 'node:fs';
 import {
   AI_PROMPT_VERSIONS,
   aiContractJsonSchemas,
+  DOCUMENT_FAILURES,
   DOCUMENT_LIMITS,
   documentContractJsonSchemas,
   VACANCY_PARSE_LIMITS,
@@ -25,5 +26,8 @@ writeSchemas(schemasDir, aiContractJsonSchemas());
 writeSchemas(documentSchemasDir, documentContractJsonSchemas());
 
 writeJson(new URL('prompt-versions.json', contractsDir), AI_PROMPT_VERSIONS);
-writeJson(new URL('document-limits.json', contractsDir), DOCUMENT_LIMITS);
+writeJson(new URL('document-limits.json', contractsDir), {
+  ...DOCUMENT_LIMITS,
+  failures: DOCUMENT_FAILURES,
+});
 writeJson(new URL('vacancy-parse-limits.json', contractsDir), VACANCY_PARSE_LIMITS);

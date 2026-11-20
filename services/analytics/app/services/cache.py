@@ -1,6 +1,5 @@
 import asyncio
 from collections.abc import Awaitable, Callable
-from datetime import UTC, datetime, timedelta
 from typing import Final
 
 from loguru import logger
@@ -12,16 +11,7 @@ from app.core.config import DEPENDENCY_LIMITS
 from app.core.enums import load_domain_enums
 
 CACHE_TTL_SECONDS: Final = load_domain_enums().analytics_cache.ttl_seconds
-EPOCH: Final = datetime(1970, 1, 1, tzinfo=UTC)
 REDIS_FAILURES: Final = (TimeoutError, RedisError, OSError)
-
-
-def epoch_ms(moment: datetime) -> int:
-    return (moment - EPOCH) // timedelta(milliseconds=1)
-
-
-def stamp_part(stamp: datetime | None) -> str:
-    return "none" if stamp is None else str(epoch_ms(stamp))
 
 
 async def within_ping_limit[T](call: Awaitable[T]) -> T:

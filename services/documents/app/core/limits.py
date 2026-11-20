@@ -12,6 +12,7 @@ class DocumentLimits(BaseModel):
     max_pages: int = Field(alias="maxPages", gt=0)
     scan_pages: int = Field(alias="scanPages", gt=0)
     max_jpeg_bytes: int = Field(alias="maxJpegBytes", gt=0)
+    failures: tuple[str, ...]
 
 
 LIMITS_FILE = Path(contracts.__file__).with_name("document_limits.json")

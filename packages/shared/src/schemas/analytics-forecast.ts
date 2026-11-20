@@ -6,9 +6,17 @@ import { sourcesQuerySchema } from './analytics-sources.js';
 
 const weeksSchema = z.number().nonnegative();
 
+const isConversion = (improve: string) => {
+  const conversion = Number(improve.slice(improve.indexOf(':') + 1));
+  return conversion > 0 && conversion <= 1;
+};
+
 export const forecastQuerySchema = sourcesQuerySchema.extend({
   applicationsPerWeek: z.number().nonnegative().optional(),
-  improve: z.templateLiteral([activeStageSchema, ':', z.number()]).optional(),
+  improve: z
+    .templateLiteral([activeStageSchema, ':', z.number()])
+    .refine(isConversion, 'must be an active stage and a conversion in (0, 1]')
+    .optional(),
 });
 
 export const weeksRangeSchema = z.object({

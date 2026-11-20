@@ -8,8 +8,6 @@ from sqlalchemy.dialects import postgresql
 
 from app.repositories.applications import (
     application_sources_statement,
-    applications_statement,
-    latest_change_statement,
     match_scores_statement,
     salaries_statement,
 )
@@ -34,7 +32,6 @@ ACTIVE_SEARCH_PREDICATES = ("searches.user_id =", "CAST(searches.status AS TEXT)
 
 STATEMENTS = {
     "events": (events_statement, OWNERSHIP_PREDICATES),
-    "applications": (applications_statement, OWNERSHIP_PREDICATES),
     "application sources": (application_sources_statement, OWNERSHIP_PREDICATES),
     "salaries": (salaries_statement, OWNERSHIP_PREDICATES),
     "follow-ups": (followups_statement, OWNERSHIP_PREDICATES),
@@ -91,12 +88,19 @@ def test_the_active_search_reads_only_the_users_searches() -> None:
     assert [p for p in ACTIVE_SEARCH_PREDICATES if p not in sql] == []
 
 
-def test_the_latest_change_reads_only_the_users_applications() -> None:
-    bound, sql = user_wide(latest_change_statement(user_id=USER_ID))
+def test_the_statements_read_only_the_columns_a_metric_needs() -> None:
+    sources = application_sources_statement(user_id=USER_ID, search_id=SEARCH_ID)
+    scores = match_scores_statement(user_id=USER_ID)
+    links = version_links_statement(user_id=USER_ID)
 
-    assert bound == {USER_ID}
-    assert "max(applications.updated_at)" in sql
-    assert "applications.user_id =" in sql
+    assert sources.selected_columns.keys() == ["application_id", "source", "url"]
+    assert scores.selected_columns.keys() == ["application_id", "match_score"]
+    assert links.selected_columns.keys() == [
+        "application_id",
+        "resume_version_id",
+        "number",
+        "title",
+    ]
 
 
 @pytest.mark.parametrize(

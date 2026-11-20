@@ -28,6 +28,19 @@ describe('forecastQuerySchema', () => {
   ])('refuses $label at $path', ({ query, path }) => {
     expect(issuePathsOf(forecastQuerySchema.safeParse(query))).toEqual([path]);
   });
+
+  it.for(['tech_interview:0', 'tech_interview:1.5'])(
+    'improve 0 and 1.5 are refused by the shared schema: %s',
+    (improve) => {
+      expect(issuePathsOf(forecastQuerySchema.safeParse({ improve }))).toEqual(['improve']);
+    },
+  );
+
+  it('accepts a what-if conversion of exactly 1', () => {
+    expect(forecastQuerySchema.parse({ improve: 'tech_interview:1' })).toEqual({
+      improve: 'tech_interview:1',
+    });
+  });
 });
 
 describe('forecastResponseSchema', () => {

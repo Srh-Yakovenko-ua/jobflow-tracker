@@ -1,5 +1,4 @@
 from dataclasses import dataclass, field
-from datetime import UTC, datetime
 from typing import Any
 
 import pytest
@@ -8,13 +7,11 @@ from redis.exceptions import ConnectionError as RedisConnectionError
 
 from app.metrics.norms import Norms
 from app.services.cache import cache_aside
-from app.services.norms import norms_key
 from tests.factories import USER_ID
 
 pytestmark = pytest.mark.anyio
 
 KEY = f"analytics:{USER_ID}:norms:1793610000123"
-STAMP = datetime(2026, 11, 2, 9, 0, 0, 123456, tzinfo=UTC)
 COMPUTED = Norms(stage_norm_days={"final": 17}, median_days_to_offer=None)
 STORED = Norms(stage_norm_days={"final": 99}, median_days_to_offer=1)
 
@@ -84,19 +81,7 @@ async def test_computes_a_miss_and_stores_it_by_alias_for_an_hour(
 
 async def test_computes_the_answer_while_redis_is_down() -> None:
     compute = Computation()
+    redis = FakeRedis(down=True)
 
-    assert (await cached(FakeRedis(down=True), compute), compute.calls) == (
-        COMPUTED,
-        1,
-    )
-
-
-@pytest.mark.parametrize(
-    ("stamp", "key"),
-    [(STAMP, KEY), (None, f"analytics:{USER_ID}:norms:none")],
-    ids=["changed", "nothing recorded yet"],
-)
-def test_keys_the_norms_by_user_and_last_change_in_epoch_ms(
-    stamp: datetime | None, key: str
-) -> None:
-    assert norms_key(user_id=USER_ID, stamp=stamp) == key
+    assert (await cached(redis, compute), compute.calls) == (COMPUTED, 1)
+    assert redis.bodies == {}

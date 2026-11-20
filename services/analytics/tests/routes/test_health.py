@@ -33,7 +33,7 @@ def test_answers_liveness_and_echoes_the_request_id(client: TestClient) -> None:
 def test_answers_an_unknown_path_with_a_problem_and_a_fresh_request_id(
     client: TestClient,
 ) -> None:
-    response = client.get("/nowhere", headers={"x-request-id": "not-a-uuid"})
+    response = client.get("/nowhere", headers={"x-request-id": "bad id with spaces"})
 
     body = response.json()
     assert (response.status_code, body) == (
@@ -46,6 +46,15 @@ def test_answers_an_unknown_path_with_a_problem_and_a_fresh_request_id(
         ),
     )
     assert UUID(body["requestId"]).version == 4
+
+
+def test_a_non_uuid_request_id_is_kept(client: TestClient) -> None:
+    response = client.get("/nowhere", headers={"x-request-id": "req-an-5"})
+
+    assert (response.headers["x-request-id"], response.json()) == (
+        "req-an-5",
+        problem_body(404, type="not_found", title="Not found", request_id="req-an-5"),
+    )
 
 
 def test_serves_swagger_ui_on_docs(client: TestClient) -> None:

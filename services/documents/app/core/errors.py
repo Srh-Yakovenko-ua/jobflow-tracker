@@ -8,17 +8,23 @@ from starlette.exceptions import HTTPException
 
 from app.core.request_id import request_id_of
 
-type ErrorType = Literal[
-    "bad_request",
-    "not_found",
-    "method_not_allowed",
+type DocumentFailure = Literal[
     "file_too_large",
     "unsupported_type",
     "encrypted_pdf",
     "unreadable_file",
-    "validation_error",
-    "internal_error",
 ]
+
+type ErrorType = (
+    DocumentFailure
+    | Literal[
+        "bad_request",
+        "not_found",
+        "method_not_allowed",
+        "validation_error",
+        "internal_error",
+    ]
+)
 
 PROBLEMS: dict[ErrorType, tuple[int, str]] = {
     "bad_request": (400, "Bad request"),

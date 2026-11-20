@@ -57,7 +57,7 @@ def performance(
         applications=stage.reached,
         screenings=successes,
         easy_apply=int(group["is_easy_apply"].sum()),
-        conversion=stage.conversion or rate(successes, trials),
+        conversion=rate(successes, trials),
         ghost_rate=ghost_rate(own_events),
         median_response=median_response(group["reply_days"].dropna()),
         note=note(stage, pooled=pooled),

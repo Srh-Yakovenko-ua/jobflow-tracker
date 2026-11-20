@@ -1,7 +1,7 @@
 from app.contracts.match_output import MatchOutput
 from app.contracts.match_request import MatchRequest, Vacancy
 from app.contracts.match_response import MatchResponse
-from app.prompts.base import BuiltPrompt, delimiter_tag, without_delimiter_tags
+from app.prompts.base import BuiltPrompt, delimiter_tag, fenced, sampling
 
 PROMPT_VERSION = "v3"
 REQUEST_MODEL = MatchRequest
@@ -46,15 +46,13 @@ def vacancy_block(vacancy: Vacancy) -> str:
 
 
 def built_user(request: MatchRequest) -> str:
-    vacancy = without_delimiter_tags(
-        vacancy_block(request.input.vacancy), DELIMITER_TAG
-    )
-    profile = without_delimiter_tags(
-        request.input.profile.model_dump_json(by_alias=True), DELIMITER_TAG
-    )
-    return (
-        f"{VACANCY_OPEN}\n{vacancy}\n{VACANCY_CLOSE}\n"
-        f"{PROFILE_OPEN}\n{profile}\n{PROFILE_CLOSE}"
+    vacancy = vacancy_block(request.input.vacancy)
+    profile = request.input.profile.model_dump_json(by_alias=True)
+    return "\n".join(
+        [
+            fenced(vacancy, name="vacancy_text", strip=DELIMITER_TAG),
+            fenced(profile, name="cv_profile", strip=DELIMITER_TAG),
+        ]
     )
 
 
@@ -66,8 +64,7 @@ def build(request: MatchRequest) -> BuiltPrompt:
     return BuiltPrompt(
         system=SYSTEM,
         user=built_user(request),
-        temperature=DEFAULT_TEMPERATURE
-        if request.temperature is None
-        else request.temperature,
-        max_tokens=request.max_tokens or DEFAULT_MAX_TOKENS,
+        **sampling(
+            request, temperature=DEFAULT_TEMPERATURE, max_tokens=DEFAULT_MAX_TOKENS
+        ),
     )

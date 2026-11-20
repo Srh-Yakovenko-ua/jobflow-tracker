@@ -61,8 +61,8 @@ def elapsed_ms(started: float) -> int:
 async def vendor_call[T](
     call: Callable[[], Awaitable[T]], runtime: Runtime, *, kind: str, model: str
 ) -> T:
+    runtime.limiter.acquire()
     with timed_vendor_call(kind, model=model):
-        runtime.limiter.acquire()
         try:
             async with asyncio.timeout(runtime.timeout_seconds):
                 return await call()

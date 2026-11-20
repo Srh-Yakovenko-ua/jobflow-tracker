@@ -30,8 +30,3 @@ async def load_search(
     return await read_frame(
         engine, search_statement(user_id=user_id, search_id=search_id)
     )
-
-
-async def load_active_search_id(engine: AsyncEngine, *, user_id: UUID) -> UUID | None:
-    frame = await read_frame(engine, active_search_statement(user_id=user_id))
-    return None if frame.empty else UUID(str(frame.iat[0, 0]))

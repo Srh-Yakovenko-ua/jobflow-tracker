@@ -6,12 +6,13 @@ from app.api.routes.queries import SearchIdQuery
 from app.core.auth import CurrentUserId
 from app.metrics.norms import Norms
 from app.metrics.timings import Timings
-from app.services.norms import cached_norms
+from app.services.norms import user_norms
 from app.services.timings import search_timings
 
 router = APIRouter(prefix="/analytics")
 
 TIMINGS = TypeAdapter(Timings)
+NORMS = TypeAdapter(Norms)
 
 
 @router.get("/timings", response_model=Timings)
@@ -29,7 +30,10 @@ async def get_timings(
 
 
 @router.get("/norms", response_model=Norms)
-async def get_norms(request: Request, *, user_id: CurrentUserId) -> Norms:
-    return await cached_norms(
-        request.app.state.engine, request.app.state.redis, user_id=user_id
+async def get_norms(request: Request, *, user_id: CurrentUserId) -> Response:
+    return await cached_response(
+        request,
+        user_id=user_id,
+        adapter=NORMS,
+        compute=lambda: user_norms(request.app.state.engine, user_id=user_id),
     )

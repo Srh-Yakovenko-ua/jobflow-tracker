@@ -76,7 +76,7 @@ class Pair(NamedTuple):
 
 
 def stage_conversion(stage: FunnelStage) -> Rate | Insufficient:
-    return stage.conversion or rate(*conversion_counts(stage))
+    return rate(*conversion_counts(stage))
 
 
 def version_row(group: pd.DataFrame, *, stage: FunnelStage) -> ResumeAbVersion:
