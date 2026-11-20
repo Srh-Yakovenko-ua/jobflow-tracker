@@ -56,7 +56,7 @@
     "@playwright/test": "1.65.1",
     "@rolldown/plugin-babel": "0.3.1",
     "@sentry/cli": "3.8.2",
-    "@tailwind-merge/vite": "0.0.0-dev.ab12ab17b7fbc861f04300973065b9f1cff9863b",
+    "@tailwind-merge/vite": "0.0.0-dev.817c76503052d6d51a7a85b3acd1bbd0c5622b08",
     "@tailwindcss/postcss": "4.3.5",
     "@tailwindcss/vite": "4.3.5",
     "@tanstack/react-query-devtools": "5.108.0",
