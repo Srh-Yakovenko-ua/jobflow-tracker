@@ -187,7 +187,7 @@ The danger button on its tint, composited over the surface under it, light / dar
 
 The lowest pairs are the dark danger button on its 10% hover tint over
 `surface` (4.65), the dark confirm button on the `surface-2` footer (4.74) and
-`accent` on light `surface-3` (4.90). Outcome and data colours (stage, source and chart tokens)
+dark `accent-ink` and `link` on `accent-tint` (4.79). Outcome and data colours (stage, source and chart tokens)
 are markers, not text, and stay out of the check; their text alternatives are
 the labels and tables above.
 
