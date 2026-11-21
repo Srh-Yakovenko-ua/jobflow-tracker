@@ -331,6 +331,17 @@ describe('the demo story seed', () => {
     expect(users.map((user) => user.id)).toEqual([id]);
   });
 
+  it('turns the rejection reason prompt back on after a rehearsal switched it off', async () => {
+    await seedDemo();
+    const where = { user: { email: DEMO_USER.email } };
+    await testApp.prisma.userSettings.updateMany({ where, data: { askRejectionReason: false } });
+
+    await seedDemo();
+
+    const settings = await testApp.prisma.userSettings.findFirstOrThrow({ where });
+    expect(settings.askRejectionReason).toBe(true);
+  });
+
   it("leaves another user's search, applications, resumes, AI rows, notifications and plans untouched", async () => {
     const userId = await createForeignUser(testApp.prisma);
     const before = await foreignRowsOf(testApp.prisma, userId);

@@ -9,7 +9,7 @@ import { analyticsBlock, designSankey, resumeAbTable } from '../test/analytics-f
 import { boardCards } from '../test/board';
 import { type DemoTargets, demoTargets } from '../test/demo';
 import { expect, signedOutTest, signIn } from '../test/session';
-import { REPO_ROOT } from '../test/stack';
+import { HIDDEN_QUERY_DEVTOOLS, REPO_ROOT } from '../test/stack';
 
 const SCHEMES = ['light', 'dark'] as const;
 
@@ -35,7 +35,7 @@ type Shot = Readonly<{ page: Page; variant: Variant }>;
 const SHOTS = {
   dir: path.join(REPO_ROOT, 'docs/screenshots'),
   detailScheme: 'light',
-  capture: { animations: 'disabled', style: '.tsqd-open-btn-container { display: none; }' },
+  capture: { animations: 'disabled', style: HIDDEN_QUERY_DEVTOOLS },
   wait: { timeout: 30_000 },
 } as const;
 

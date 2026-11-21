@@ -10,6 +10,8 @@ export const API_ROUTES = `${API_ORIGIN}/**`;
 
 export const WORKER_WAIT = { timeout: 60_000 } as const;
 
+export const HIDDEN_QUERY_DEVTOOLS = '.tsqd-open-btn-container { display: none; }';
+
 export const REPO_ROOT = path.resolve(import.meta.dirname, '../../../..');
 
 export function apiUrl(route: string): string {
