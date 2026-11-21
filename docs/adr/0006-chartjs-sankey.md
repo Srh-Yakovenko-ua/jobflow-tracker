@@ -13,7 +13,7 @@ Charts use Chart.js 4 through react-chartjs-2, with the `chartjs-chart-sankey` p
 
 ## Alternatives
 
-- **Recharts**: React friendly, but it has no Sankey chart.
+- **Recharts**: React friendly and has a Sankey, but it renders SVG, while the share card and the print report need the canvas image export that Chart.js gives directly.
 - **D3**: can draw anything, but every chart becomes custom code to write, test and theme.
 - **ECharts**: has a Sankey, but the bundle is heavy for a handful of charts.
 

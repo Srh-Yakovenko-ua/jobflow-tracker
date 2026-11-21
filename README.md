@@ -92,7 +92,7 @@ flowchart LR
 - Git.
 - Docker Desktop або Docker Engine з Compose v2 і щонайменше 6 ГБ пам'яті для Docker.
 - Node.js 26, версія записана в `.nvmrc`. З nvm: `nvm install && nvm use` у корені репозиторію.
-- pnpm 12.14.0: `npm install -g pnpm@12.14.0`. Node 26 постачається без corepack, тому pnpm ставиться окремо.
+- pnpm 12.22.0: `npm install -g pnpm@12.22.0`. Node 26 постачається без corepack, тому pnpm ставиться окремо.
 - uv і Python 3.14 потрібні лише для `pnpm dev` і Python-тестів. У швидкому старті всі Python-сервіси працюють у контейнерах.
 
 Команди нижче написані для bash або zsh: macOS, Linux або WSL2 на Windows.
