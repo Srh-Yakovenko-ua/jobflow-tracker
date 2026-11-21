@@ -6,7 +6,7 @@ import { describe, it } from 'node:test';
 
 import { inRepo, REPO_ROOT } from '../src/paths.js';
 
-const DEFENSE = { file: 'docs/defense.md', budgetMinutes: 10, minQuestions: 10 };
+const DEFENSE = { file: 'docs/defense.md', budgetMinutes: 7, minQuestions: 10 };
 
 const SECTIONS = { timing: 'Таймінг', questions: 'Питання комісії' };
 
@@ -41,7 +41,7 @@ describe('the defense script', () => {
     assert.ok(questions.length >= DEFENSE.minQuestions, `${String(questions.length)} questions`);
   });
 
-  it('fits the talk into ten minutes', () => {
+  it('fits the talk into seven minutes', () => {
     const minutes = tableMinutes(sectionOf(SECTIONS.timing));
     assert.ok(minutes.length > 0, 'the timing table has no minutes');
     const total = minutes.reduce((sum, value) => sum + value, 0);
