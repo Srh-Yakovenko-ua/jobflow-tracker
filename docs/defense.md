@@ -8,10 +8,10 @@
 
 ### 1. Проблема
 
-- Пошук роботи це десятки відгуків за кілька тижнів, і більшість із них закінчується відмовою без пояснень або тишею.
+- Пошук роботи в IT триває місяці: медіана близько 11 тижнів (DOU, 2026). Конкуренція росте: 23 відгуки на IT-вакансію в січні 2026 року, 38 у вересні (jobs.dou.ua). Джерело: підрозділ 1.2 записки.
 - Демо-історія: 54 відгуки за 12 тижнів, 32 відмови, 17 компаній не відповіли, один офер. Джерело: [design_story.json](../services/analytics/tests/golden/design_story.json), який засіває [demo-story.ts](../apps/api/src/demo/demo-story.ts); той самий рядок стоїть на сторінці входу в [auth.ts](../apps/web/src/shared/i18n/auth.ts).
 - У таблиці чи нотатках не видно, на якому етапі губляться відгуки і чому.
-- Рисунок: [login-light.png](screenshots/login-light.png).
+- Рисунок: верх сторінки «Аналітика» з [dashboard-light.png](screenshots/dashboard-light.png), рис. 4.5 записки.
 - Час: 0,5 хв.
 
 ### 2. Чого бракує наявним рішенням
@@ -19,7 +19,7 @@
 - Таблиці: журнал є, аналітики і нагадувань немає, кожен рядок вводиться вручну.
 - Загальні дошки: канбан є, а етапи, причини відмов і статистику треба налаштовувати самому.
 - Списки «мої відгуки» на сайтах вакансій: бачать лише свій сайт і не знають, що було після відгуку.
-- Міжнародні трекери на зразок Huntr чи Teal орієнтовані на англомовний ринок. Про їхні функції слайд нічого не стверджує.
+- Huntr, Teal, Simplify: англомовні сторінки, ціни в доларах, обмежений безкоштовний обсяг. Слайд стверджує про них лише те, що є на їхніх сторінках цін (підрозділ 1.2 записки).
 - Що додає JobFlow: збереження вакансії з DOU, Djinni, robota.ua і LinkedIn одним кліком, аналітика причин відмов, байєсівське A/B порівняння версій CV, AI-розбір вакансії, Match Score і фоллоу-ап.
 - Рисунок: [add-light.png](screenshots/add-light.png).
 - Час: 0,25 хв.
@@ -39,18 +39,16 @@
 - Модульний моноліт: api і worker це один код NestJS у двох процесах, модулі спілкуються лише через `index.ts` і доменні події ([ADR-0001](adr/0001-modular-monolith.md)).
 - Три Python-сервіси поруч: analytics на 8000 читає базу через роль лише для читання, ai на 8001 і documents на 8002 нічого не зберігають.
 - Web на Next.js (3000), api на 4000, Postgres, Redis, MinIO і Mailpit у Docker Compose, усе на 127.0.0.1 ([ADR-0008](adr/0008-local-only-no-deployment.md)).
-- Рисунок: `c4-container.png` з [c4-container.mmd](diagrams/c4-container.mmd).
+- Рисунок: на слайді спрощена діаграма контейнерів, повна це `c4-container.png` з [c4-container.mmd](diagrams/c4-container.mmd), рис. 3.2 записки.
 - Час: 0,75 хв.
 
 ### 5. Ключові патерни
 
 - Transactional outbox: запис і його подія комітяться в одній транзакції, worker публікує подію в BullMQ ([ADR-0004](adr/0004-transactional-outbox-bullmq.md)).
-- Легкий event sourcing: `stage_events` лише доповнюється, undo пише компенсуючу подію ([ADR-0003](adr/0003-append-only-stage-events.md)).
+- Легкий event sourcing: `stage_events` лише доповнюється, undo пише компенсувальну подію ([ADR-0003](adr/0003-append-only-stage-events.md)).
 - Легкий CQRS: api володіє записом, analytics лише читає і рахує, api ніколи не викликає analytics ([ADR-0002](adr/0002-python-fastapi-analytics.md), [ADR-0011](adr/0011-api-never-calls-analytics.md)).
 - Strategy для AI: інтерфейс `AiProvider` з провайдерами Anthropic, OpenAI-сумісним (NVIDIA) і `FakeAiProvider`, вибір через `AI_PROVIDER` ([ADR-0009](adr/0009-ai-provider-strategy.md)).
-- Інженерний фінал: шлях зміни етапу через outbox і шлях AI-задачі, потім Grafana на http://127.0.0.1:3001: p95 дошки (панель «Board p95») на дашборді `JobFlow System` і панелі вартості AI («AI cost, selected range», «AI cost per day by kind») на дашборді `JobFlow Product`.
-- Фінал у Jaeger на http://127.0.0.1:16686: сервіс `api`, трейс збереження вакансії Acme з кроку 3 демо. В одному трейсі спани api (`POST /api/v1/capture/bookmarklet`), worker (`outbox.relay`, `process ai`), ai (`ai.complete` з моделлю `fake` і токенами) і знову api (`live.push`, подія SSE). Потім рядок логу цього запиту в Grafana Explore: посилання TraceID відкриває той самий трейс.
-- Рисунки: `stage-change-outbox.png`, `ai-job.png`, `metrics.png` і `tracing.png` з [stage-change-outbox.mmd](diagrams/stage-change-outbox.mmd), [ai-job.mmd](diagrams/ai-job.mmd), [metrics.mmd](diagrams/metrics.mmd) і [tracing.mmd](diagrams/tracing.mmd).
+- Рисунок: на слайді спрощена схема зміни етапу через outbox, повна це `stage-change-outbox.png` з [stage-change-outbox.mmd](diagrams/stage-change-outbox.mmd), рис. 3.4 записки.
 - Час: 0,5 хв.
 
 ### 6. Методи аналітики
@@ -91,7 +89,6 @@
 - Більше джерел вакансій і форматів імпорту.
 - Більше даних для прогнозу оферу і перевірка Match Score на знеособлених реальних історіях.
 - Доступ ментора лише для читання, з ізоляцією даних.
-- Рисунок: `deployment.png` з [deployment.mmd](diagrams/deployment.mmd).
 - Час: 0,25 хв.
 
 ## Таймінг
@@ -178,7 +175,7 @@ AI_ENV_FILE=.env.example AI_FAKE_DELAY_SECONDS=3 docker compose up -d --force-re
 
 ### Навіщо `stage_events`, що лише доповнюється?
 
-Історія відгуку і є продуктом: воронка, час на етапах і ghost rate рахуються з журналу переходів. `current_stage` змінюється лише в тій самій транзакції, що пише подію, після перевірки `canTransition`. Undo пише компенсуючу подію, тому журнал залишається чесним ([ADR-0003](adr/0003-append-only-stage-events.md)).
+Історія відгуку і є продуктом: воронка, час на етапах і ghost rate рахуються з журналу переходів. `current_stage` змінюється лише в тій самій транзакції, що пише подію, після перевірки `canTransition`. Undo пише компенсувальну подію, тому журнал залишається чесним ([ADR-0003](adr/0003-append-only-stage-events.md)).
 
 ### Що буде з подією, якщо Redis недоступний?
 
@@ -216,12 +213,16 @@ SSE оновлює картки і стани AI-задач. Аналітику 
 
 Це дипломний проєкт для одного ноутбука без платних сервісів: Docker Compose піднімає весь стек однією командою. Шлях до деплою описано окремо, і він не змінює архітектуру ([ADR-0008](adr/0008-local-only-no-deployment.md)).
 
+### Як видно, що система працює?
+
+Grafana на http://127.0.0.1:3001: p95 дошки (панель «Board p95») на дашборді `JobFlow System` і вартість AI («AI cost, selected range», «AI cost per day by kind») на дашборді `JobFlow Product`. Jaeger на http://127.0.0.1:16686, сервіс `api`, трейс збереження вакансії Acme з кроку 3 демо: в одному трейсі спани api (`POST /api/v1/capture/bookmarklet`), worker (`outbox.relay`, `process ai`), ai (`ai.complete` з моделлю `fake` і токенами) і знову api (`live.push`, подія SSE). Рядок логу цього запиту в Grafana Explore відкриває той самий трейс через посилання TraceID.
+
 ## Репетиції
 
 | Дата       | Що                              | Тривалість  | Джерело                         |
 | ---------- | ------------------------------- | ----------- | ------------------------------- |
-| 2026-11-14 | Автоматичний прогін демо 1      | 43,5 с      | `defense:record`, list reporter |
-| 2026-11-14 | Автоматичний прогін демо 2      | 43,3 с      | `defense:record`, list reporter |
+| 2026-11-21 | Автоматичний прогін демо 1      | 43,2 с      | `defense:record`, list reporter |
+| 2026-11-21 | Автоматичний прогін демо 2      | 43,1 с      | `defense:record`, list reporter |
 |            | Усна репетиція 1, слайди і демо | не виміряно | секундомір                      |
 |            | Усна репетиція 2, слайди і демо | не виміряно | секундомір                      |
 

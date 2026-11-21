@@ -13,7 +13,7 @@ import { bookmarkletCode } from '../test/bookmarklet';
 import { demoTargets } from '../test/demo';
 import { reloadUntilVisible } from '../test/reload';
 import { expect, signedOutTest, signIn } from '../test/session';
-import { REPO_ROOT, WORKER_WAIT } from '../test/stack';
+import { HIDDEN_QUERY_DEVTOOLS, REPO_ROOT, WORKER_WAIT } from '../test/stack';
 
 type Capture = Readonly<{ code: string; vacancy: string }>;
 
@@ -49,6 +49,14 @@ async function recordLeaks(context: BrowserContext): Promise<string[]> {
     await route.abort('internetdisconnected');
   });
   return leaks;
+}
+
+async function hideQueryDevtools(context: BrowserContext): Promise<void> {
+  await context.addInitScript((css) => {
+    const sheet = new CSSStyleSheet();
+    sheet.replaceSync(css);
+    document.adoptedStyleSheets = [...document.adoptedStyleSheets, sheet];
+  }, HIDDEN_QUERY_DEVTOOLS);
 }
 
 async function capture(page: Page, { code, vacancy }: Capture): Promise<void> {
@@ -115,6 +123,7 @@ signedOutTest(
   'the defense demo runs beat by beat on loopback only',
   async ({ context, page, request }) => {
     const leaks = await recordLeaks(context);
+    await hideQueryDevtools(context);
     const { month } = await demoTargets(request);
     await signIn(page, DEMO_USER);
     const code = await bookmarkletCode(page);
