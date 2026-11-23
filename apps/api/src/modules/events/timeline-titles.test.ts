@@ -35,7 +35,7 @@ const TITLE_CASES: TitleCase[] = [
   {
     type: 'stage_changed',
     rows: stageChange({ fromStage: null, toStage: 'applied' }),
-    title: 'відгук надіслано',
+    title: 'Додано на етап «відгук»',
     actor: 'user',
   },
   {
