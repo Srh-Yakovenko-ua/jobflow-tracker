@@ -1,7 +1,6 @@
 import type { ApplicationResponse } from '@jobflow/shared';
 
-import { NoteMarkdown } from '@/entities/note';
-import { NoteEditor } from '@/features/write-note';
+import { NoteEditor, SavedNote } from '@/features/write-note';
 import { uk } from '@/shared/i18n';
 import { LoadFailedPanel } from '@/shared/ui/error-panel';
 import { TextSkeleton } from '@/shared/ui/skeleton';
@@ -25,10 +24,14 @@ function NoteList({ notes }: NoteListProps) {
     <ul className="flex animate-fade-in flex-col gap-3">
       {entries.map(({ note, context }) => (
         <li key={note.id} className="flex flex-col gap-1.5 rounded-lg bg-surface p-3.5 shadow-e1">
-          <span className="text-[10px] leading-[1.3] font-semibold text-ink-3 tabular-nums">
-            {context}
-          </span>
-          <NoteMarkdown note={note} />
+          <SavedNote
+            note={note}
+            context={
+              <span className="text-[10px] leading-[1.3] font-semibold text-ink-3 tabular-nums">
+                {context}
+              </span>
+            }
+          />
         </li>
       ))}
     </ul>

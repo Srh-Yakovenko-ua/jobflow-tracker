@@ -14,6 +14,7 @@ export type StaggeredListProps = Readonly<{
   label: string | StaggeredListTitle;
   className: string;
   children: ReactNode;
+  empty?: ReactNode;
 }>;
 
 const MARKERS: Record<StaggeredListTitle['marker'], ReactNode> = {
@@ -23,22 +24,25 @@ const MARKERS: Record<StaggeredListTitle['marker'], ReactNode> = {
   ),
 };
 
-export function StaggeredList({ label, className, children }: StaggeredListProps) {
+export function StaggeredList({ label, className, children, empty }: StaggeredListProps) {
   const titleId = useId();
   const reduced = usePrefersReducedMotion();
   const titled = typeof label !== 'string';
-  const list = (
-    <motion.ul
-      aria-label={titled ? undefined : label}
-      aria-labelledby={titled ? titleId : undefined}
-      variants={reduced ? LIST_STILL : LIST}
-      initial="hidden"
-      animate="shown"
-      className={className}
-    >
-      {children}
-    </motion.ul>
-  );
+  const list =
+    empty !== undefined ? (
+      <p className={className}>{empty}</p>
+    ) : (
+      <motion.ul
+        aria-label={titled ? undefined : label}
+        aria-labelledby={titled ? titleId : undefined}
+        variants={reduced ? LIST_STILL : LIST}
+        initial="hidden"
+        animate="shown"
+        className={className}
+      >
+        {children}
+      </motion.ul>
+    );
   if (!titled) return list;
   return (
     <div className="flex flex-col gap-2.5">

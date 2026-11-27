@@ -74,7 +74,7 @@ describe('blockHeaderOf', () => {
   it.each<{ block: TitledBlock; title: string }>([
     { block: 'reasons', title: 'Де відмовляють найчастіше' },
     { block: 'sources', title: 'Яке джерело працює' },
-    { block: 'resume_ab', title: 'Яка версія CV працює краще' },
+    { block: 'resume_ab', title: 'Яка версія резюме працює краще' },
     { block: 'salary', title: 'На якій вилці приходить офер' },
   ])(
     'without an insight the $block block asks a neutral question with no evidence line',

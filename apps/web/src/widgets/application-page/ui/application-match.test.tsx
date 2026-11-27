@@ -31,7 +31,7 @@ function rowsOf(list: string): (string | null)[] {
 }
 
 async function matchSection(): Promise<HTMLElement> {
-  return screen.findByRole('region', { name: /^Збіг/ });
+  return screen.findByRole('region', { name: /^Match Score/ });
 }
 
 describe('ApplicationMatch', () => {
@@ -44,7 +44,7 @@ describe('ApplicationMatch', () => {
       resumes: { items: [...DESIGN_VERSIONS] },
     });
 
-    const section = await screen.findByRole('region', { name: 'Збіг 78%' });
+    const section = await screen.findByRole('region', { name: 'Match Score 78%' });
 
     expect(within(section).getByText('Розбір Match Score')).toBeDefined();
     expect(within(section).getByText('проти CV v2 · 14.08')).toBeDefined();
@@ -69,7 +69,7 @@ describe('ApplicationMatch', () => {
 
     const section = await matchSection();
 
-    expect(await within(section).findByRole('img', { name: 'без CV' })).toBeDefined();
+    expect(await within(section).findByRole('img', { name: 'без резюме' })).toBeDefined();
     expect(within(section).getByText(/Рахувати нема з чим/)).toBeDefined();
     const link = within(section).getByRole('link', { name: 'завантаж резюме' });
 
@@ -137,10 +137,39 @@ describe('ApplicationMatch', () => {
     );
     await advanceBy(LIVE_LIMITS.pollFallbackMs);
 
-    expect(await within(section).findByText(/Score не порахований/)).toBeDefined();
+    expect(await within(section).findByText(/Match Score не пораховано/)).toBeDefined();
     const asked = page.match.sent.length;
     await advanceBy(LIVE_LIMITS.pollFallbackMs * 3);
     expect(page.match.sent).toHaveLength(asked);
+  });
+
+  it('a card without vacancy text shows the dashed score and asks for the text', async () => {
+    renderApplicationPage({
+      application: { ...MATCHED_APPLICATION, rawText: null, stack: [] },
+      match: NO_MATCH,
+      resumes: { items: [...DESIGN_VERSIONS] },
+    });
+
+    const section = await screen.findByRole('region', { name: 'Match Score —' });
+
+    expect(
+      await within(section).findByText('Додай текст вакансії, щоб порахувати Match Score.'),
+    ).toBeDefined();
+    expect(within(section).queryByText(/Match Score не пораховано/)).toBeNull();
+  });
+
+  it('a breakdown with nothing missing says Прогалин немає under Чого не вистачає', async () => {
+    if (DESIGN_MATCH.match === null) throw new Error('the design match has a breakdown');
+    renderApplicationPage({
+      application: MATCHED_APPLICATION,
+      match: { ...DESIGN_MATCH, match: { ...DESIGN_MATCH.match, missing: [], ignored: [] } },
+      resumes: { items: [...DESIGN_VERSIONS] },
+    });
+
+    const section = await screen.findByRole('region', { name: 'Match Score 78%' });
+
+    expect(within(section).getByText('Прогалин немає')).toBeDefined();
+    expect(screen.queryByRole('list', { name: 'Чого не вистачає' })).toBeNull();
   });
 
   it('a read CV with no score explains why the score is missing', async () => {
@@ -152,6 +181,6 @@ describe('ApplicationMatch', () => {
 
     const section = await matchSection();
 
-    expect(await within(section).findByText(/Score не порахований/)).toBeDefined();
+    expect(await within(section).findByText(/Match Score не пораховано/)).toBeDefined();
   });
 });

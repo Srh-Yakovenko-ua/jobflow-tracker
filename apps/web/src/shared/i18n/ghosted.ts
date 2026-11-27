@@ -10,11 +10,13 @@ export type GhostMarket = Readonly<{
 
 const CARDS = { one: 'картка', few: 'картки', other: 'карток' } as const satisfies PluralForms;
 
-const FRESH = { one: 'свіжій', other: 'свіжих' } as const satisfies PluralForms;
+const FRESH_CARDS = { one: 'свіжої картки', other: 'свіжих карток' } as const satisfies PluralForms;
 
-const DRAFTS = { one: 'драфт', few: 'драфти', other: 'драфтів' } as const satisfies PluralForms;
+const LETTERS = { one: 'лист', few: 'листи', other: 'листів' } as const satisfies PluralForms;
 
-const SUPPORTIVE = 'Ці картки не впливають на конверсії й нічого не кажуть про тебе.';
+const LETTERS_OF = { one: 'листа', other: 'листів' } as const satisfies PluralForms;
+
+const SUPPORTIVE = 'Вони не входять у конверсії.';
 
 const SHARE = (percent: number) => `Це ${String(percent)}% твоїх відгуків`;
 
@@ -25,20 +27,21 @@ const MARKET: Record<GhostMarket['position'], (market: GhostMarket) => string> =
 };
 
 export const ghosted = {
-  eyebrow: (count: number) => `Ghosted · ${countedUk(count, CARDS)}`,
+  eyebrow: (count: number) => `ghosted · ${countedUk(count, CARDS)}`,
   title: (count: number) => `${countedUk(count, FORMS.company)} ${pluralUk(count, FORMS.silent)}`,
   supportive: SUPPORTIVE,
   hint: (market: GhostMarket | null) =>
     market === null ? SUPPORTIVE : `${MARKET[market.position](market)} ${SUPPORTIVE}`,
-  action: (fresh: number) => `Спробувати фоллоу-ап по ${String(fresh)} ${pluralUk(fresh, FRESH)}`,
+  action: (fresh: number) =>
+    `Написати фоллоу-ап для ${String(fresh)} ${pluralUk(fresh, FRESH_CARDS)}`,
   sheet: {
     title: 'Фоллоу-апи для ghosted',
     progress: (sent: number, total: number) =>
-      `${String(sent)} з ${countedUk(total, DRAFTS)} передано в AI`,
-    note: 'Нічого не надсилається само. Кожен драфт можна правити, скопіювати або пропустити.',
+      `AI пише ${String(sent)} з ${String(total)} ${pluralUk(total, LETTERS_OF)}`,
+    note: 'Нічого не надсилається само. Кожен лист можна правити, скопіювати або пропустити.',
     close: 'Закрити',
     skip: 'Пропустити',
     next: 'наступний у черзі',
-    ahead: (count: number) => `у черзі · ${countedUk(count, DRAFTS)} перед цим`,
+    ahead: (count: number) => `у черзі · ${countedUk(count, LETTERS)} перед цим`,
   },
 } as const;

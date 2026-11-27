@@ -47,7 +47,7 @@ export const shell = {
   search: {
     label: SEARCH_LABEL,
     results: 'Знайдені вакансії',
-    placeholder: 'компанія або посада',
+    placeholder: 'Перейти до картки…',
     loading: 'Шукаю…',
     error: 'Пошук не вдався',
     retry: 'Спробувати ще раз',

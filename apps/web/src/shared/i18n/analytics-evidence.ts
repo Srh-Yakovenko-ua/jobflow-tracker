@@ -20,8 +20,8 @@ export type VersionPair = Readonly<{ challenger: number; baseline: number; perce
 
 export const evidence = {
   resume_ab: {
-    eyebrow: 'A/B версій резюме',
-    fallback: 'Яка версія CV працює краще',
+    eyebrow: 'порівняння версій резюме',
+    fallback: 'Яка версія резюме працює краще',
     label: ({ number, title }: Pick<ResumeAbVersion, 'number' | 'title'>) =>
       `CV v${String(number)} · ${title}`,
     tip: ({ value, successes, trials }: RateCounts) =>
@@ -35,10 +35,10 @@ export const evidence = {
     empty: {
       none: {
         title: 'Версій резюме ще немає',
-        hint: "Познач, з яким CV ти відгукуєшся, і тут з'явиться порівняння версій.",
+        hint: "Познач, з яким резюме ти відгукуєшся, і тут з'явиться порівняння версій.",
       },
       single: {
-        title: 'Поки що лише одна версія CV',
+        title: 'Поки що лише одна версія резюме',
         hint: "Порівняння з'явиться, коли ти відгукнешся з другою версією.",
       },
     },
@@ -98,7 +98,7 @@ export const evidence = {
       hint: "Тут з'явиться, на якій вилці приходить офер, а на якій відмовляють через зарплату.",
     },
     table: {
-      caption: 'Зарплатні вилки, $ net',
+      caption: 'Зарплатні вилки, $ нетто',
       group: 'група',
       applications: 'відгуків',
       median: 'медіана',
@@ -115,7 +115,7 @@ export const evidence = {
     } satisfies Record<MatchScoreBucket, string>,
     step: "до інтерв'ю",
     series: "дійшли до інтерв'ю",
-    correlation: (r: string, count: number) => `r = ${r} на ${String(count)} відгуках`,
+    correlation: (r: string, count: number) => `кореляція ${r} на ${String(count)} відгуках`,
     unscored: (count: number) => `${applications(count)} без Match Score не входять у розрахунок.`,
     small: (bucket: string, count: number) => `${bucket}: ${applications(count)}.`,
     empty: {

@@ -15,8 +15,6 @@ export type NotificationCopy = Readonly<{ title: string; text: string; action: s
 
 const COPY = uk.notifications;
 
-const EXPORT_FORMATS = uk.settings.account.export.formats;
-
 function silenceTextOf({ items }: SilenceNotificationPayload): string {
   const companies = items.map((item) => item.company).join(', ');
   const longest = Math.max(...items.map((item) => item.days));
@@ -88,7 +86,7 @@ function zonelessCopyOf(notification: ZonelessNotification): NotificationCopy {
     }
     case 'export_ready': {
       const { title, text, action } = COPY.exportReady;
-      return { title, text: text(EXPORT_FORMATS[notification.payload.format]), action };
+      return { title, text: text(notification.payload.format.toUpperCase()), action };
     }
     default: {
       const unhandled: never = notification;

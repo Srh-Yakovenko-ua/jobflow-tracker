@@ -6,7 +6,7 @@ export const application = {
     queued: 'Match Score у черзі',
     processing: 'AI рахує Match Score',
     failed: 'Match Score не пораховано',
-    none: 'без CV',
+    none: 'без резюме',
     pending: '··',
     empty: '—',
   },
@@ -22,17 +22,17 @@ export const application = {
     WorkMode,
     string
   >,
-  stageNorm: (days: number) => `· норма ${String(days)}`,
+  stageNorm: (days: number) => `· зазвичай ${String(days)} дн`,
   inFunnel: (days: string) => `${days} у воронці`,
   stackMore: (count: number) => `+${String(count)}`,
   parsing: {
     processing: (step: number, total: number) =>
-      `AI обробляє · крок ${String(step)} з ${String(total)}`,
+      `AI обробляє · крок ${String(step)}/${String(total)}`,
     queued: 'у черзі',
     queuedEta: (eta: string) => `у черзі · ~${eta}`,
     ordinal: (ordinal: number) => `Чернетка ${String(ordinal)}.`,
     review: 'перевір поля',
-    failed: 'потрібні поля',
+    failed: 'заповни поля',
     textKept: 'текст збережено в нотатці',
   },
   nextEvent: {

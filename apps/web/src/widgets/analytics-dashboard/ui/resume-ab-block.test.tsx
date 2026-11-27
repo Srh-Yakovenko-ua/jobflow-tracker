@@ -16,7 +16,7 @@ vi.mock('react-chartjs-2', () => import('@/test/recorded-chart'));
 
 const ONLY = DESIGN_RESUME_AB.versions.slice(0, 1);
 
-const RESUME_AB = { eyebrow: 'A/B версій резюме', table: 'Конверсія за версіями резюме' };
+const RESUME_AB = { eyebrow: 'порівняння версій резюме', table: 'Конверсія за версіями резюме' };
 
 describe('ResumeAbBlock', () => {
   it('draws v2 and v1 at 41% and 24% with interval whiskers under the served verdict, then the probability and the switch', async () => {
@@ -50,13 +50,13 @@ describe('ResumeAbBlock', () => {
     expect(meterOf(frame)).toEqual(['4', '10']);
     expect(frame.querySelector('canvas')).toBeNull();
     expect(
-      within(frame).getByRole('heading', { name: 'Яка версія CV працює краще' }),
+      within(frame).getByRole('heading', { name: 'Яка версія резюме працює краще' }),
     ).toBeDefined();
   });
 
   it.each([
     { name: 'no versions', versions: [], shows: 'Версій резюме ще немає' },
-    { name: 'a single version', versions: ONLY, shows: 'Поки що лише одна версія CV' },
+    { name: 'a single version', versions: ONLY, shows: 'Поки що лише одна версія резюме' },
   ])('with $name the block shows its own empty copy and no chart', async ({ versions, shows }) => {
     const frame = await renderedFrame({
       eyebrow: RESUME_AB.eyebrow,

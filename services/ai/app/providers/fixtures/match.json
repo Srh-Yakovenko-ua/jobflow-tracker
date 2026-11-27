@@ -7,5 +7,5 @@
     { "name": "Досвід ліда команди 3+", "weight": "nice", "coverage": "missing" },
     { "name": "Домен fintech", "weight": "mentioned", "coverage": "missing" }
   ],
-  "explanation": "Стек збігається, бракує AWS і досвіду ліда."
+  "explanation": "Твій стек збігається з вакансією, бракує AWS і досвіду ліда."
 }

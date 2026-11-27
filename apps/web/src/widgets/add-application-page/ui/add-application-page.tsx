@@ -1,6 +1,7 @@
 'use client';
 
 import { AnimatePresence } from 'motion/react';
+import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { type ReactNode, startTransition, useRef, useState } from 'react';
 
@@ -33,11 +34,18 @@ type PanelHeading = Readonly<{
   badge?: string;
 }>;
 
-type PanelProps = Readonly<{ heading: PanelHeading; tone: PanelTone; children: ReactNode }>;
+type PanelProps = Readonly<{
+  heading: PanelHeading;
+  tone: PanelTone;
+  children: ReactNode;
+  className?: string;
+}>;
 
 type LocalCapture = Readonly<{ under: AddPrefill['reviewId']; capture: Capture | null }>;
 
 const COPY = uk.add;
+
+const IMPORT_HREF = '/import';
 
 const PANEL_TONE: Record<PanelTone, string> = {
   accent: 'bg-surface inset-ring inset-ring-accent/25',
@@ -45,11 +53,15 @@ const PANEL_TONE: Record<PanelTone, string> = {
   quiet: 'bg-surface-2 inset-ring inset-ring-line-soft',
 };
 
-function Panel({ heading, tone, children }: PanelProps) {
+function Panel({ heading, tone, children, className }: PanelProps) {
   return (
     <section
       aria-label={heading.title}
-      className={cn('flex min-w-0 flex-col gap-4 rounded-lg p-5.5 shadow-e1', PANEL_TONE[tone])}
+      className={cn(
+        'flex min-w-0 flex-col gap-4 rounded-lg p-5.5 shadow-e1',
+        PANEL_TONE[tone],
+        className,
+      )}
     >
       <div className="flex items-center justify-between gap-3">
         <p className={cn('text-ink-3', STATE_TEXT.eyebrow)}>{heading.eyebrow}</p>
@@ -75,6 +87,12 @@ function PageHeading() {
         <span className="block">{first}</span> <span className="block">{second}</span>
       </h1>
       <p className="max-w-[60ch] text-[16px] leading-[1.55] text-ink-2">{COPY.lead}</p>
+      <Link
+        href={IMPORT_HREF}
+        className="touch-target self-start rounded-xs text-[14px] font-semibold text-link underline-offset-2 hover:underline active:underline"
+      >
+        {COPY.importLink}
+      </Link>
     </header>
   );
 }
@@ -123,7 +141,7 @@ export function AddApplicationPage({ query }: AddApplicationPageProps) {
           <InstallBookmarklet />
           <p className={STATE_TEXT.meta}>{COPY.bookmarklet.footnote}</p>
         </Panel>
-        <Panel heading={COPY.paste} tone="plain">
+        <Panel heading={COPY.paste} tone="plain" className="max-md:order-first">
           <PasteForm query={query} actions={{ onCaptured }} />
         </Panel>
         <Panel heading={COPY.manual} tone="quiet">

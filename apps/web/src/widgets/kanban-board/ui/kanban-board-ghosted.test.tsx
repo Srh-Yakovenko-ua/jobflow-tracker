@@ -15,11 +15,11 @@ import { server } from '@/test/server';
 vi.mock('next/link', () => import('@/test/link'));
 vi.mock('next/navigation', () => import('@/test/navigation'));
 
-const SUPPORTIVE = 'Ці картки не впливають на конверсії й нічого не кажуть про тебе.';
+const SUPPORTIVE = 'Вони не входять у конверсії.';
 
 const SHARE = 'Це 31% твоїх відгуків';
 
-const DONE_LINE = '2 з 2 драфти передано в AI';
+const DONE_LINE = 'AI пише 2 з 2 листів';
 
 type GhostedSetup = Readonly<{
   cards?: readonly BoardCard[];
@@ -45,7 +45,7 @@ async function openGhosted({
   server.use(http.get(analyticsUrl('/analytics/timings'), timings), ...followup.handlers);
   const { user } = renderBoard({ counts: { ghosted: cards.length }, cards });
   await user.click(await screen.findByRole('button', { name: `ghosted ${String(cards.length)}` }));
-  await screen.findByText(/^Ghosted · /);
+  await screen.findByText(/^ghosted · /);
   return { user, sent: followup.sent };
 }
 
@@ -59,7 +59,7 @@ describe('KanbanBoard ghosted lane', () => {
     async ({ position, points, market }) => {
       await openGhosted({ timings: timingsReply(ghostTimingsOf({ position, points })) });
 
-      expect(screen.getByText('Ghosted · 5 карток')).toBeDefined();
+      expect(screen.getByText('ghosted · 5 карток')).toBeDefined();
       expect(screen.getByRole('heading', { name: '5 компаній не відповіли' })).toBeDefined();
       expect(await screen.findByText(`${market} ${SUPPORTIVE}`)).toBeDefined();
     },
@@ -90,7 +90,7 @@ describe('KanbanBoard ghosted lane', () => {
 
       expect(screen.getByText(SUPPORTIVE)).toBeDefined();
       expect(
-        screen.getByRole('button', { name: 'Спробувати фоллоу-ап по 2 свіжих' }),
+        screen.getByRole('button', { name: 'Написати фоллоу-ап для 2 свіжих карток' }),
       ).toBeDefined();
     },
   );
@@ -98,7 +98,9 @@ describe('KanbanBoard ghosted lane', () => {
   it('the button names the exact fresh count and creates exactly that many drafts', async () => {
     const { user, sent } = await openGhosted();
 
-    await user.click(screen.getByRole('button', { name: 'Спробувати фоллоу-ап по 2 свіжих' }));
+    await user.click(
+      screen.getByRole('button', { name: 'Написати фоллоу-ап для 2 свіжих карток' }),
+    );
 
     const sheet = await screen.findByRole('dialog', { name: 'Фоллоу-апи для ghosted' });
     await waitFor(() => {
@@ -111,7 +113,7 @@ describe('KanbanBoard ghosted lane', () => {
 
   it('once started, the same button reopens the list instead of queueing the drafts again', async () => {
     const { user, sent } = await openGhosted();
-    const action = { name: 'Спробувати фоллоу-ап по 2 свіжих' };
+    const action = { name: 'Написати фоллоу-ап для 2 свіжих карток' };
 
     await user.click(screen.getByRole('button', action));
     const sheet = await screen.findByRole('dialog', { name: 'Фоллоу-апи для ghosted' });
@@ -132,7 +134,7 @@ describe('KanbanBoard ghosted lane', () => {
       cards: [ghostIn({ serial: 203, days: 45 }), ghostIn({ serial: 204, days: 60 })],
     });
 
-    expect(screen.getByText('Ghosted · 2 картки')).toBeDefined();
-    expect(screen.queryByRole('button', { name: /Спробувати фоллоу-ап/ })).toBeNull();
+    expect(screen.getByText('ghosted · 2 картки')).toBeDefined();
+    expect(screen.queryByRole('button', { name: /Написати фоллоу-ап/ })).toBeNull();
   });
 });

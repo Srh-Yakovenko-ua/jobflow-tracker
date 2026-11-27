@@ -9,6 +9,11 @@ import { yearMonthSchema } from '../schemas/year-month.js';
 import { SOURCES } from '../sources.js';
 import { activeStageSchema, STAGES, stageSchema } from '../stages.js';
 
+export const MONTHLY_SUMMARY_REFUSALS = {
+  noActiveSearch: 'No active search',
+  noActivity: 'No activity in the month',
+} as const;
+
 export const MONTHLY_SUMMARY_LIMITS = {
   wordsMax: 120,
   actionsMax: 4,

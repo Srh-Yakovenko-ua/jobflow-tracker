@@ -287,12 +287,9 @@ describe('NotificationsPage', () => {
   it('with nothing to show says everyone answered, with the user threshold and the silent count', async () => {
     renderPage({ feed: { items: [], nextCursor: null } });
 
-    expect(await screen.findByRole('heading', { name: COPY.empty.title })).toBeDefined();
-    expect(
-      await screen.findByText(
-        'Жодної картки без подій довше 12 днів. Саме такий вигляд цього екрана найкращий.',
-      ),
-    ).toBeDefined();
+    expect(await screen.findByRole('heading', { name: 'Усі відповіли' })).toBeDefined();
+    expect(screen.getByText('Нічого нового')).toBeDefined();
+    expect(await screen.findByText('Жодна картка не мовчить довше 12 днів.')).toBeDefined();
     expect(await screen.findByText('0 карток у тиші')).toBeDefined();
   });
 });

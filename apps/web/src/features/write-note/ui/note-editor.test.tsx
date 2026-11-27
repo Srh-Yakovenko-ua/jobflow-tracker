@@ -533,7 +533,17 @@ describe('NoteEditor field', () => {
     expect(screen.getByText(`12 / ${String(NOTE_LIMITS.bodyMaxLength)}`)).toBeDefined();
     expect(field.maxLength).toBe(NOTE_LIMITS.bodyMaxLength);
     expect(field.placeholder).toBe('Додати нотатку…');
-    expect(screen.getByText('Ctrl+Enter, щоб завершити')).toBeDefined();
+    expect(screen.getByText('Ctrl+Enter зберігає')).toBeDefined();
+  });
+
+  it('on a Mac the finish key reads ⌘ Enter', () => {
+    vi.spyOn(navigator, 'userAgent', 'get').mockReturnValue(
+      'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15',
+    );
+    renderEditor();
+
+    expect(screen.getByText('⌘ Enter зберігає')).toBeDefined();
+    expect(screen.queryByText('Ctrl+Enter зберігає')).toBeNull();
   });
 
   it('Ctrl+B wraps the selection in ** and keeps it selected', async () => {

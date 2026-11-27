@@ -24,9 +24,11 @@ type RenderOptions = FinishSearchRoutesOptions & { application?: ApplicationResp
 
 const ACTION = { name: 'Офер прийнято' } as const;
 
-const CONFIRM = { name: 'Заархівувати пошук' } as const;
+const CONFIRM = { name: 'Завершити пошук' } as const;
 
 const WITHDRAW = { name: 'Відкликати всі відкриті відгуки, цього не можна скасувати' } as const;
+
+const MOVE = { name: 'Перенести в новий пошук' } as const;
 
 const HINT = '84 дні, 54 відгуки, 9 співбесід. Дошку можна заархівувати, аналітика залишиться.';
 
@@ -56,12 +58,13 @@ afterEach(() => {
 });
 
 describe('FinishSearchAction', () => {
-  it('opens the drawn finish screen with the active search stats and withdraw picked', async () => {
+  it('opens the drawn finish screen with the active search stats and the reversible move picked', async () => {
     const { dialog, sent } = await openDialog();
 
     expect(within(dialog).getByText('Пошук завершено').className).toContain('text-offer');
     expect(screen.getByRole('dialog', { ...ACTION, description: HINT })).toBe(dialog);
-    expect(within(dialog).getByRole('radio', WITHDRAW).getAttribute('aria-checked')).toBe('true');
+    expect(within(dialog).getByRole('radio', MOVE).getAttribute('aria-checked')).toBe('true');
+    expect(within(dialog).getByRole('radio', WITHDRAW).getAttribute('aria-checked')).toBe('false');
     expect(within(dialog).getByRole('button', CONFIRM).className).toContain('bg-accent');
     expect(sent).toEqual([]);
   });
@@ -75,7 +78,7 @@ describe('FinishSearchAction', () => {
       expect(push).toHaveBeenCalledWith('/board');
     });
     expect(sent).toEqual([
-      { searchId: ACTIVE_SEARCH.id, outcome: 'offer_accepted', openApplications: 'withdraw' },
+      { searchId: ACTIVE_SEARCH.id, outcome: 'offer_accepted', openApplications: 'move' },
     ]);
     expect(listed).toHaveLength(2);
     await waitFor(() => {
@@ -86,15 +89,15 @@ describe('FinishSearchAction', () => {
     expect(push).toHaveBeenLastCalledWith('/analytics/searches');
   });
 
-  it('a user who keeps looking moves the open applications to the new search', async () => {
+  it('a user who picks withdraw withdraws the open applications', async () => {
     const { user, dialog, sent } = await openDialog();
 
-    await user.click(within(dialog).getByRole('radio', { name: 'Перенести в новий пошук' }));
+    await user.click(within(dialog).getByRole('radio', WITHDRAW));
     await user.click(within(dialog).getByRole('button', CONFIRM));
 
     await waitFor(() => {
       expect(sent).toEqual([
-        { searchId: ACTIVE_SEARCH.id, outcome: 'offer_accepted', openApplications: 'move' },
+        { searchId: ACTIVE_SEARCH.id, outcome: 'offer_accepted', openApplications: 'withdraw' },
       ]);
     });
   });

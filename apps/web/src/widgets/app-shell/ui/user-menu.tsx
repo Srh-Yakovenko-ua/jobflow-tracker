@@ -33,7 +33,9 @@ function UserCard({ user }: Readonly<{ user: AuthUser }>) {
         <span className="truncate text-[13px] font-semibold text-ink">
           {user.displayName ?? user.email}
         </span>
-        <span className="caption truncate text-ink-3">{user.email}</span>
+        {user.displayName !== null && (
+          <span className="caption truncate text-ink-3">{user.email}</span>
+        )}
       </span>
     </div>
   );

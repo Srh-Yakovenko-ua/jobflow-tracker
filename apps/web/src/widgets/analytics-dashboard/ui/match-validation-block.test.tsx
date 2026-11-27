@@ -34,7 +34,7 @@ describe('match validation block', () => {
       [29, 54],
       [37, 65],
     ]);
-    expect(within(frame).getByText('r = 0,35 на 150 відгуках')).toBeDefined();
+    expect(within(frame).getByText('кореляція 0,35 на 150 відгуках')).toBeDefined();
     expect(
       within(frame).getByText('6 відгуків без Match Score не входять у розрахунок.'),
     ).toBeDefined();

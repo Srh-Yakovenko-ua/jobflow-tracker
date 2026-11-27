@@ -70,7 +70,7 @@ describe('AnalyticsReport', () => {
     for (const eyebrow of [
       'причини відмов за етапами',
       'конверсія за джерелами',
-      'A/B версій резюме',
+      'порівняння версій резюме',
       'прогноз офера',
     ]) {
       expect(frameOf(eyebrow)).toBeDefined();

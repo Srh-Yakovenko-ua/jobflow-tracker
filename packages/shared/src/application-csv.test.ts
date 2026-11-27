@@ -54,6 +54,27 @@ describe('autoMappingOf', () => {
     ).toEqual({ company: 0, position: 1, appliedAt: 2, stage: 4, salary: 5, stageHistory: 6 });
   });
 
+  it.each([
+    ['Дата', 'appliedAt'],
+    ['Date', 'appliedAt'],
+    ['Applied', 'appliedAt'],
+    ['Статус', 'stage'],
+    ['Status', 'stage'],
+    ['Stage', 'stage'],
+    ['Етап', 'stage'],
+    ['Посада', 'position'],
+    ['Роль', 'position'],
+    ['Вакансія', 'position'],
+    ['Title', 'position'],
+    ['Position', 'position'],
+    ['Компанія', 'company'],
+    ['Company', 'company'],
+  ] as const)('maps a column named %s, in any case and padded, to %s', (name, field) => {
+    expect(autoMappingOf(['Нотатки', `  ${name.toLocaleUpperCase('uk')} `])).toEqual({
+      [field]: 1,
+    });
+  });
+
   it('maps the exported header to every field', () => {
     expect(EXPORT_MAPPING).toEqual({
       company: 0,

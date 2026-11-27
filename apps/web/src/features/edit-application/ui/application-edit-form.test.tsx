@@ -15,7 +15,7 @@ type User = ReturnType<typeof renderApplicationPage>['user'];
 
 const SALARY = /^\$4\s500–6\s000$/;
 
-const SALARY_ERROR = 'Ціле число від 0, не більше за суму «до»';
+const SALARY_ERROR = 'Ціле число від 0, не більше за «Зарплата до»';
 
 const POSITION_ERROR = 'Вкажи посаду одним коротким рядком';
 

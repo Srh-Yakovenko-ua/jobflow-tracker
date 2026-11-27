@@ -65,6 +65,7 @@ async function announced({ notification, notifyInApp = true }: AnnounceCase, tim
 describe('announceNotification', () => {
   afterEach(() => {
     toast.dismiss();
+    window.history.replaceState(null, '', '/');
   });
 
   it('an interview soon toasts with an Відкрити action to the card', async () => {
@@ -131,5 +132,22 @@ describe('announceNotification', () => {
     await act(nextTask);
 
     expect(screen.queryByRole('listitem')).toBeNull();
+  });
+
+  it('a finished vacancy parse shows no toast while /add reviews that card', async () => {
+    window.history.replaceState(null, '', `/add?review=${fixtureIdOf(32)}&job=${fixtureIdOf(31)}`);
+
+    await announced({ notification: AI_DONE_NOTIFICATION });
+    await act(nextTask);
+
+    expect(screen.queryByRole('listitem')).toBeNull();
+  });
+
+  it('a finished vacancy parse still toasts while /add reviews another card', async () => {
+    window.history.replaceState(null, '', `/add?review=${fixtureIdOf(99)}`);
+
+    await announced({ notification: AI_DONE_NOTIFICATION });
+
+    expect(await screen.findByText('Вакансію розібрано')).toBeDefined();
   });
 });

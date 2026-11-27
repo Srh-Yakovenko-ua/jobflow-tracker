@@ -34,7 +34,7 @@ describe('matchBarsOf', () => {
 
   it('under the bars reads the correlation and the applications left without a Match Score', () => {
     expect(textsOf(plottedOf(matchBarsOf(buildDesignMatchValidation())).notes)).toEqual([
-      'r = 0,35 на 150 відгуках',
+      'кореляція 0,35 на 150 відгуках',
       '6 відгуків без Match Score не входять у розрахунок.',
     ]);
   });

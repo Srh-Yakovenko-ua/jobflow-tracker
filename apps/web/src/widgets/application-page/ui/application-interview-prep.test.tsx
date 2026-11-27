@@ -18,7 +18,7 @@ vi.mock('next/link', () => import('@/test/link'));
 
 const TITLE = 'Підготовка';
 
-const REQUEST = { name: 'Підготувати до інтервʼю' } as const;
+const REQUEST = { name: 'Підготувати до співбесіди' } as const;
 
 const NOTHING_TO_BUILD_FROM =
   'Для підготовки потрібна запланована співбесіда і вимоги або Match Score у вакансії.';
@@ -98,7 +98,7 @@ describe('ApplicationInterviewPrep', () => {
     const section = await screen.findByRole('region', { name: TITLE });
 
     expect(await within(section).findByRole('button', REQUEST)).toBeDefined();
-    expect(within(section).getByText(/лише слова-теми зі словника/)).toBeDefined();
+    expect(within(section).getByText(/Нотаток він не бачить/)).toBeDefined();
   });
 
   it('at screening with a schedule that fails to load offers the button, never says an interview is missing', async () => {

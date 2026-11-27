@@ -75,7 +75,7 @@ describe('timelineRowsOf', () => {
       },
       {
         title: 'Додано на етап «відгук»',
-        meta: 'Через Djinni.',
+        meta: 'Джерело: Djinni.',
         marker: { kind: 'stage', stage: 'applied' },
         tone: 'strong',
       },

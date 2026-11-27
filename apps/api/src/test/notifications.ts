@@ -2,6 +2,7 @@ import type { Notification, SilenceItem, SilenceNotificationPayload } from '@job
 import type { OnModuleInit, Provider, Type } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
 
+import type { Prisma } from '../generated/prisma/client.js';
 import { AiJobRouter, type SettledAiJob } from '../modules/ai/index.js';
 import {
   type NewNotification,
@@ -9,6 +10,7 @@ import {
   onceKeyOf,
   type OnceNotification,
   type RecordNotification,
+  type VacancyParseRead,
 } from '../modules/notifications/index.js';
 import type { PrismaService } from '../prisma/prisma.service.js';
 import { AI_JOB_ID } from './ai.js';
@@ -87,11 +89,31 @@ export async function createNotifications(
   return ids;
 }
 
+export async function createNotificationRows(
+  prisma: PrismaService,
+  rows: Prisma.NotificationCreateManyInput[],
+): Promise<string[]> {
+  const created = await prisma.notification.createManyAndReturn({
+    data: rows,
+    select: { id: true },
+  });
+  return created.map(({ id }) => id);
+}
+
+export const readAtOf = (prisma: PrismaService, ids: string[]) =>
+  prisma.notification.findMany({
+    where: { id: { in: ids } },
+    orderBy: { id: 'asc' },
+    select: { readAt: true },
+  });
+
 const sameAs = (notification: OnceNotification) => (recorded: RecordedNotification) =>
   recorded.type === notification.type && onceKeyOf(recorded)?.id === onceKeyOf(notification)?.id;
 
 export class RecordingNotifications {
   readonly notifications: RecordedNotification[] = [];
+
+  readonly vacancyParsesRead: ByUser<VacancyParseRead>[] = [];
 
   record(userId: string, notification: RecordNotification): Promise<void> {
     this.notifications.push({ userId, ...notification });
@@ -103,6 +125,11 @@ export class RecordingNotifications {
     if (!known.some(sameAs(notification))) {
       await this.record(userId, notification);
     }
+  }
+
+  markVacancyParseRead(userId: string, read: VacancyParseRead): Promise<void> {
+    this.vacancyParsesRead.push({ userId, ...read });
+    return Promise.resolve();
   }
 }
 

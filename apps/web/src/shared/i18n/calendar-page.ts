@@ -18,7 +18,7 @@ export const calendarPage = {
     interview: 'співбесіда',
     call: 'дзвінок',
     followup: 'фоллоу-ап',
-    autoGhost: 'авто-ghost',
+    autoGhost: 'авто-ghosted',
     offer: 'офер',
     archive: 'архів',
   },

@@ -9,6 +9,7 @@ import { AiService } from '../ai/index.js';
 import { type PlanFromSummary, PlansService } from '../plans/index.js';
 import type {
   LatestSummaryJob,
+  SearchActivityWindow,
   SummaryJobRow,
   SummaryJobsSince,
   SummaryStart,
@@ -67,9 +68,15 @@ type StoredSummary = SummaryJobRow & { userId: string };
 class FakeSummariesRepository {
   readonly steps: unknown[][] = [];
 
-  start: SummaryStart = { timezone: 'Europe/Kyiv', searchId: SEARCH_ID, runningJobId: null };
+  start: SummaryStart = {
+    timezone: 'Europe/Kyiv',
+    searchId: SEARCH_ID,
+    runningJobId: null,
+  };
 
   jobsCreatedAt: Date[] = [];
+
+  activityAt: Date[] = [new Date('2026-09-15T09:00:00.000Z'), new Date('2026-10-15T09:00:00.000Z')];
 
   failingUserIds: string[] = [];
 
@@ -93,6 +100,11 @@ class FakeSummariesRepository {
   hasJobSince(userId: string, { since }: SummaryJobsSince): Promise<boolean> {
     this.steps.push(['hasJobSince', userId, since]);
     return Promise.resolve(this.jobsCreatedAt.some((createdAt) => createdAt >= since));
+  }
+
+  hasActivityIn(userId: string, { searchId, from, to }: SearchActivityWindow): Promise<boolean> {
+    this.steps.push(['hasActivityIn', userId, { searchId, from, to }]);
+    return Promise.resolve(this.activityAt.some((at) => at >= from && at < to));
   }
 
   findLatestSummary(userId: string): Promise<SummaryJobRow | null> {
@@ -148,6 +160,24 @@ async function summariesWithFakes() {
   return { repository, ai, plans, clock, requests, service };
 }
 
+const SEPTEMBER_IN_KYIV = {
+  searchId: SEARCH_ID,
+  from: new Date('2026-08-31T21:00:00.000Z'),
+  to: new Date('2026-09-30T21:00:00.000Z'),
+};
+
+const NOTHING_TO_SUMMARIZE = [
+  {
+    case: 'nothing happened in the search during the month',
+    arrange: (repository: FakeSummariesRepository) => {
+      repository.activityAt = [
+        new Date('2026-08-31T20:59:59.000Z'),
+        new Date('2026-09-30T21:00:00.000Z'),
+      ];
+    },
+  },
+];
+
 const requestedRow = (month: string, extra: object = {}) => [
   OLENA_ID,
   {
@@ -168,6 +198,7 @@ describe('SummaryRequestsService.request', () => {
       [
         ['lockUser', OLENA_ID, FAKE_TRANSACTION],
         ['findStart', OLENA_ID, FAKE_TRANSACTION],
+        ['hasActivityIn', OLENA_ID, SEPTEMBER_IN_KYIV],
       ],
       [requestedRow('2026-09', { requestId: 'req-1', fresh: true })],
     ]);
@@ -204,6 +235,19 @@ describe('SummaryRequestsService.request', () => {
     expect(ai.jobs.size).toBe(0);
     expect(repository.steps.map(([step]) => step)).toEqual(['lockUser', 'findStart']);
   });
+
+  it.each(NOTHING_TO_SUMMARIZE)(
+    'refuses with 409 when $case and writes nothing',
+    async ({ arrange }) => {
+      const { repository, ai, requests } = await summariesWithFakes();
+      arrange(repository);
+
+      await expect(requests.request(OLENA_ID, 'req-1')).rejects.toMatchObject({
+        body: { status: 409, detail: 'No activity in the month' },
+      });
+      expect([ai.jobs.size, ai.requested]).toEqual([0, []]);
+    },
+  );
 });
 
 describe('SummaryRequestsService.requestScheduledFor', () => {
@@ -221,6 +265,7 @@ describe('SummaryRequestsService.requestScheduledFor', () => {
         ['lockUser', OLENA_ID, FAKE_TRANSACTION],
         ['findStart', OLENA_ID, FAKE_TRANSACTION],
         ['hasJobSince', OLENA_ID, new Date('2026-09-30T21:00:00.000Z')],
+        ['hasActivityIn', OLENA_ID, SEPTEMBER_IN_KYIV],
       ],
       [requestedRow('2026-09')],
     ]);
@@ -248,6 +293,18 @@ describe('SummaryRequestsService.requestScheduledFor', () => {
     });
 
     expect(ai.jobs.size).toBe(0);
+  });
+
+  it.each(NOTHING_TO_SUMMARIZE)('skips a user when $case', async ({ arrange }) => {
+    const { repository, ai, requests } = await summariesWithFakes();
+    arrange(repository);
+
+    await expect(requests.requestScheduledFor([OLENA_ID])).resolves.toEqual({
+      picked: 1,
+      requested: 0,
+    });
+
+    expect([ai.jobs.size, ai.requested]).toEqual([0, []]);
   });
 
   it('counts every picked user and each one whose summary it requested', async () => {

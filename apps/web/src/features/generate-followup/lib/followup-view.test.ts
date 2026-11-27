@@ -24,7 +24,7 @@ describe('followupViewOf', () => {
     expect(view).toMatchObject({ kind: 'ready', key: READY_KEY, failure: { reason: 'other' } });
   });
 
-  it('«Написати самому» after a failed variant opens the last good draft as an own text', () => {
+  it('«Написати вручну» after a failed variant opens the last good draft as an own text', () => {
     const view = followupViewOf({ response: FAILED_AFTER_DRAFT, manual: true, refused: false });
 
     expect(view).toMatchObject({ kind: 'ready', key: READY_KEY, own: true, failure: null });

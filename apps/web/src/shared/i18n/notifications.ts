@@ -44,12 +44,12 @@ export const notifications = {
   title: 'Сповіщення',
   bell: (unread: number) =>
     unread === 0 ? 'Сповіщення' : `Сповіщення, ${countedUk(unread, UNREAD)}`,
-  popoverTitle: (unread: number) => `нагадування · ${String(unread)}`,
+  popoverTitle: (unread: number) => `Сповіщення · ${String(unread)}`,
   readAll: 'Прочитати все',
   all: 'Усі сповіщення',
   unread: 'непрочитане',
   markRead: 'Позначити прочитаним',
-  popoverEmpty: 'Усі відповіли. Найкращий вигляд цього списку.',
+  popoverEmpty: 'Нових сповіщень немає.',
   filters: {
     label: 'Які сповіщення показати',
     options: { all: 'Усі', unread: 'Непрочитані' },
@@ -59,10 +59,10 @@ export const notifications = {
   open: 'Відкрити',
   silentCards: (count: number) => countedUk(count, SILENT_CARDS),
   empty: {
-    eyebrow: 'Нагадування · порожньо',
+    eyebrow: 'Нічого нового',
     title: 'Усі відповіли',
     hint: (silenceDays: number) =>
-      `Жодної картки без подій довше ${countedUk(silenceDays, DAY_FORMS_UK)}. Саме такий вигляд цього екрана найкращий.`,
+      `Жодна картка не мовчить довше ${countedUk(silenceDays, DAY_FORMS_UK)}.`,
   },
   silence: {
     text: (companies: string, days: number) =>
@@ -91,9 +91,9 @@ export const notifications = {
       action: 'Відкрити резюме',
     },
     followup: {
-      title: 'Драфт фоллоу-апу готовий',
+      title: 'Фоллоу-ап готовий',
       text: 'Його можна правити перед відправкою.',
-      action: 'Відкрити драфт',
+      action: 'Відкрити лист',
     },
   } satisfies Record<NotifiedAiKind, AiCopy>,
   aiFailed: {

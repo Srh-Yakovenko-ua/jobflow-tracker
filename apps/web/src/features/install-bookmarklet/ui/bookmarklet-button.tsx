@@ -8,9 +8,10 @@ import { type MouseEvent, useState } from 'react';
 import { config } from '@/shared/config';
 import { uk } from '@/shared/i18n';
 import { cn } from '@/shared/lib/cn';
-import { buttonLinkClasses } from '@/shared/ui/button';
-import { CopyButton } from '@/shared/ui/copy-button';
+import { Button, buttonLinkClasses } from '@/shared/ui/button';
+import { copyToClipboard } from '@/shared/ui/copy-button';
 import { showToast } from '@/shared/ui/toast';
+import { TOUCH_HEIGHT } from '@/shared/ui/touch-height';
 
 const COPY = uk.bookmarklet;
 
@@ -69,9 +70,18 @@ export function BookmarkletButton({ token }: BookmarkletButtonProps) {
           {COPY.hint.drop}
         </span>
       </p>
-      <div className="flex items-start gap-2 text-[12px] leading-[1.45] text-ink-2">
-        <CopyButton value={href} label={COPY.manual.copy} />
-        <p className="pt-0.75">{COPY.manual.hint}</p>
+      <div className="flex flex-col items-start gap-1.5 text-[12px] leading-[1.45] text-ink-2">
+        <Button
+          variant="outline"
+          size="sm"
+          className={TOUCH_HEIGHT}
+          onClick={() => {
+            copyToClipboard(href);
+          }}
+        >
+          {COPY.manual.copy}
+        </Button>
+        <p>{COPY.manual.hint}</p>
       </div>
     </div>
   );

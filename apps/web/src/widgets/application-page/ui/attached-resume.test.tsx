@@ -73,7 +73,7 @@ describe('AttachedResume', () => {
     expect(within(section).getByRole('button', { name: 'Переглянути PDF' })).toBeDefined();
   });
 
-  it('a version with a real conversion shows the percent on the application page', async () => {
+  it('a version with a real conversion says what share of its applications reached скринінг', async () => {
     server.use(resumeAbRoute(DESIGN_RESUME_AB));
     renderApplicationPage({
       application: MATCHED_APPLICATION,
@@ -83,7 +83,7 @@ describe('AttachedResume', () => {
 
     const section = await screen.findByRole('region', KICKER);
 
-    expect(await within(section).findByText('41%')).toBeDefined();
+    expect(await within(section).findByText('41% у скринінг')).toBeDefined();
     expect(within(section).queryByText('мало даних')).toBeNull();
   });
 
@@ -94,7 +94,7 @@ describe('AttachedResume', () => {
       match: DESIGN_MATCH,
       resumes: { items: [...DESIGN_VERSIONS], relink: { latch: held } },
     });
-    await screen.findByRole('region', { name: 'Збіг 78%' });
+    await screen.findByRole('region', { name: 'Match Score 78%' });
 
     await pickVersion(page, /CV v3/);
     await waitFor(() => {
@@ -128,7 +128,7 @@ describe('AttachedResume', () => {
       });
     });
 
-    const scored = await screen.findByRole('region', { name: 'Збіг 85%' });
+    const scored = await screen.findByRole('region', { name: 'Match Score 85%' });
     expect(within(scored).getByText(/проти CV v3/)).toBeDefined();
   });
 
@@ -138,7 +138,7 @@ describe('AttachedResume', () => {
       match: DESIGN_MATCH,
       resumes: { items: [...DESIGN_VERSIONS] },
     });
-    await screen.findByRole('region', { name: 'Збіг 78%' });
+    await screen.findByRole('region', { name: 'Match Score 78%' });
     server.use(applicationRoute({ application: RELINKED }).handler);
     page.match.answer(NO_MATCH);
 

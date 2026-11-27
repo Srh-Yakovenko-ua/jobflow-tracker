@@ -100,7 +100,7 @@ describe('useEnablePush', () => {
 
     answer('granted');
 
-    expect(await screen.findByText('Не вдалося увімкнути пуші')).toBeDefined();
+    expect(await screen.findByText('Не вдалося увімкнути сповіщення')).toBeDefined();
     expect(actions.onEnabled).not.toHaveBeenCalled();
   });
 });

@@ -59,7 +59,7 @@ const RESUME_AB = {
 const DEMO_SUMMARY_SENTENCES = [
   'До скринінгу дійшло 17 з 40 відгуків, це 43%.',
   RESUME_AB.storySentence,
-  "Найдорожчий етап техінтерв'ю: з 9 ти пройшов 4, і в 3 з 4 відмов там причина одна: «не вистачає скілів».",
+  "Найдорожчий етап техінтерв'ю: з 9 пройдено 4, і в 3 з 4 відмов там причина одна: «не вистачає скілів».",
   "Далі об'єм відгуків уже не допоможе: воронка звужується не на вході.",
 ] as const;
 
@@ -129,7 +129,7 @@ function sentSentenceOf({ month, sent }: DemoSummaryInput): string {
   const count = countedUk(sent.month, APPLICATION_FORMS_UK);
   const change = changeOf(sent.month - sent.previousMonth);
   const previousName = monthNameOf(shiftMonth(month, -1));
-  return `За ${monthNameOf(month)} ти надіслав ${count}, ${change} за ${previousName}.`;
+  return `За ${monthNameOf(month)}: ${count}, ${change} за ${previousName}.`;
 }
 
 export function demoSummaryOutput(input: DemoSummaryInput): MonthlySummaryOutput {

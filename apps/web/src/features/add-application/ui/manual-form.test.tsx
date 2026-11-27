@@ -25,7 +25,7 @@ import { ManualForm } from './manual-form';
 
 const COMPANY = 'Компанія';
 
-const POSITION = 'Позиція';
+const POSITION = 'Посада';
 
 const SOURCE = 'Джерело';
 

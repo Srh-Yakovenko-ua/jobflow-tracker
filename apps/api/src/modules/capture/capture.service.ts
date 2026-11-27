@@ -48,19 +48,6 @@ export class CaptureService {
     return this.capture(userId, { input: draftInputOf(input), method: 'bookmarklet', requestId });
   }
 
-  async confirm(userId: string, applicationId: string): Promise<void> {
-    await this.prisma.$transaction(async (tx) => {
-      const confirmedAt = await this.drafts.confirm(userId, { applicationId, tx });
-      await this.timeline.record(userId, {
-        applicationId,
-        kind: 'draft_confirmed',
-        payload: {},
-        occurredAt: confirmedAt,
-        tx,
-      });
-    });
-  }
-
   retry(userId: string, { applicationId, requestId }: DraftRetryRequest): Promise<AiJobAccepted> {
     return this.prisma.$transaction(async (tx) => {
       const runningJobId = await this.drafts.lockForRetry(userId, { applicationId, tx });

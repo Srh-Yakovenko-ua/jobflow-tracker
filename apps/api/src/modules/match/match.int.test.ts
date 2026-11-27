@@ -257,20 +257,29 @@ describe('the Match Score of an application', () => {
     },
   );
 
-  it('queues no job, clears a stale score and answers no match when no CV is linked', async () => {
-    const owner = await linkedApplication();
-    await testApp.prisma.application.update({
-      where: { id: owner.applicationId },
-      data: { resumeVersionId: null, matchScore: 70 },
-    });
-    const queue = (await workers.compile()).get(MatchQueueService, { strict: false });
+  it.each([
+    { case: 'no CV is linked', unmatchable: { resumeVersionId: null } },
+    {
+      case: 'the card has no vacancy text and no stack',
+      unmatchable: { rawText: null, stack: [] },
+    },
+  ])(
+    'queues no job, clears a stale score and answers no match when $case',
+    async ({ unmatchable }) => {
+      const owner = await linkedApplication();
+      await testApp.prisma.application.update({
+        where: { id: owner.applicationId },
+        data: { ...unmatchable, matchScore: 70 },
+      });
+      const queue = (await workers.compile()).get(MatchQueueService, { strict: false });
 
-    expect(await queue.request(owner.userId, { applicationId: owner.applicationId })).toBeNull();
+      expect(await queue.request(owner.userId, { applicationId: owner.applicationId })).toBeNull();
 
-    expect(await testApp.prisma.aiJob.count({ where: { userId: owner.userId } })).toBe(0);
-    expect(await scoreOf(owner.applicationId)).toBeNull();
-    expect(await readMatch(owner)).toBeNull();
-  });
+      expect(await testApp.prisma.aiJob.count({ where: { userId: owner.userId } })).toBe(0);
+      expect(await scoreOf(owner.applicationId)).toBeNull();
+      expect(await readMatch(owner)).toBeNull();
+    },
+  );
 
   it('answers no match once the AI results are deleted', async () => {
     const owner = await seededMatch(await linkedApplication());

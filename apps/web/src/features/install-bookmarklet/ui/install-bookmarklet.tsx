@@ -42,11 +42,7 @@ function ButtonSlot({ list, created, create, createButtonRef }: ButtonSlotProps)
     );
   }
   if (created !== null) return <BookmarkletButton token={created.token} />;
-  if (list.data.items.length > 0) {
-    return (
-      <p className="animate-fade-in text-[12.5px] leading-[1.5] text-ink-2">{COPY.shownOnce}</p>
-    );
-  }
+  if (list.data.items.length > 0) return null;
   return (
     <Button
       ref={createButtonRef}
@@ -79,7 +75,7 @@ export function InstallBookmarklet() {
   };
   return (
     <div className="flex flex-col gap-4">
-      <InstallSteps>
+      <InstallSteps installed={newest !== undefined && created === null}>
         <ButtonSlot
           list={list}
           created={created}

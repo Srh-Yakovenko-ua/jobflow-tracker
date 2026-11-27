@@ -1,6 +1,11 @@
-import { type AiJobAccepted, userNow } from '@jobflow/shared';
+import {
+  type AiJobAccepted,
+  MONTHLY_SUMMARY_REFUSALS,
+  userNow,
+  type YearMonth,
+} from '@jobflow/shared';
 import { Injectable, Logger } from '@nestjs/common';
-import { startOfMonth } from 'date-fns';
+import { startOfMonth, subMonths } from 'date-fns';
 
 import { conflict } from '../../common/app-error.js';
 import { Clock } from '../../common/clock.js';
@@ -14,7 +19,12 @@ import { SummariesRepository } from './summaries.repository.js';
 
 type SummaryJobStart = Omit<SummaryRequested, 'aiJobId'> & { tx: Prisma.TransactionClient };
 
-const NO_ACTIVE_SEARCH = 'No active search';
+type SummaryPeriod = { month: YearMonth; from: Date; to: Date };
+
+function endedMonthOf(timezone: string, now: Date): SummaryPeriod {
+  const to = startOfMonth(userNow({ timezone }, now));
+  return { month: previousLocalMonthOf(timezone, now), from: subMonths(to, 1), to };
+}
 
 @Injectable()
 export class SummaryRequestsService {
@@ -36,9 +46,12 @@ export class SummaryRequestsService {
         return { jobId: runningJobId };
       }
       if (searchId === null) {
-        throw conflict(NO_ACTIVE_SEARCH);
+        throw conflict(MONTHLY_SUMMARY_REFUSALS.noActiveSearch);
       }
-      const month = previousLocalMonthOf(timezone, now);
+      const { month, from, to } = endedMonthOf(timezone, now);
+      if (!(await this.repository.hasActivityIn(userId, { searchId, from, to, tx }))) {
+        throw conflict(MONTHLY_SUMMARY_REFUSALS.noActivity);
+      }
       const jobId = await this.start(userId, { searchId, month, requestId, fresh: true, tx });
       return { jobId };
     });
@@ -57,11 +70,15 @@ export class SummaryRequestsService {
     return this.prisma.$transaction(async (tx) => {
       await this.repository.lockUser(userId, { tx });
       const { timezone, searchId } = await this.repository.findStart(userId, { tx });
-      const since = startOfMonth(userNow({ timezone }, now));
-      if (searchId === null || (await this.repository.hasJobSince(userId, { since, tx }))) {
+      const { month, from, to } = endedMonthOf(timezone, now);
+      if (
+        searchId === null ||
+        (await this.repository.hasJobSince(userId, { since: to, tx })) ||
+        !(await this.repository.hasActivityIn(userId, { searchId, from, to, tx }))
+      ) {
         return false;
       }
-      await this.start(userId, { searchId, month: previousLocalMonthOf(timezone, now), tx });
+      await this.start(userId, { searchId, month, tx });
       return true;
     });
   }

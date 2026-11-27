@@ -1,4 +1,4 @@
-import type { NotificationListQuery, NotificationType } from '@jobflow/shared';
+import type { NotificationListQuery, NotificationType, NotifiedAiKind } from '@jobflow/shared';
 import { Injectable } from '@nestjs/common';
 
 import type { Prisma } from '../../generated/prisma/client.js';
@@ -22,6 +22,12 @@ export type ExistingNotification = Required<InTransaction> & {
 export type NotificationPage = Pick<NotificationListQuery, 'unread' | 'cursor' | 'limit'>;
 
 export type MarkRead = { ids?: string[]; now: Date };
+
+export type MarkAiNoticesRead = Required<InTransaction> & {
+  kind: NotifiedAiKind;
+  applicationId: string;
+  now: Date;
+};
 
 export const NOTIFICATION_SELECT = {
   id: true,
@@ -81,6 +87,25 @@ export class NotificationsRepository {
   async markRead(userId: string, { ids, now }: MarkRead): Promise<number> {
     const { count } = await this.prisma.notification.updateMany({
       where: { userId, readAt: null, ...(ids !== undefined && { id: { in: ids } }) },
+      data: { readAt: now },
+    });
+    return count;
+  }
+
+  async markAiNoticesRead(
+    userId: string,
+    { kind, applicationId, now, tx }: MarkAiNoticesRead,
+  ): Promise<number> {
+    const { count } = await tx.notification.updateMany({
+      where: {
+        userId,
+        readAt: null,
+        type: { in: ['ai_done', 'ai_failed'] },
+        AND: [
+          { payload: { path: ['kind'], equals: kind } },
+          { payload: { path: ['applicationId'], equals: applicationId } },
+        ],
+      },
       data: { readAt: now },
     });
     return count;

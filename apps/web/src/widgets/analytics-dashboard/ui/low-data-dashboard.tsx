@@ -49,11 +49,13 @@ function DashedCard({ label, children }: DashedCardProps) {
   );
 }
 
-function NextStep({ missing }: Readonly<{ missing: number }>) {
+function NextStep({ sent }: Readonly<{ sent: number }>) {
   return (
     <div className="flex min-w-0 flex-col gap-2.25 rounded-xl bg-surface p-3.5 shadow-e1">
       <span className="text-[13.5px] font-semibold text-ink">{COPY.action.title}</span>
-      <span className={CAPTION}>{COPY.action.body(missing)}</span>
+      <span className={CAPTION}>
+        {COPY.action.body({ goal: THRESHOLDS.MIN_N_INSIGHT, have: sent })}
+      </span>
       <Link
         href="/add"
         className={cn(buttonLinkClasses({ variant: 'primary', size: 'md' }), 'self-start')}
@@ -79,17 +81,18 @@ export function LowDataDashboard({ kpis, view }: LowDataDashboardProps) {
           <span className="font-display text-[26px] leading-none font-semibold text-ink-3">
             {uk.analytics.noValue}
           </span>
-          <span className={CAPTION}>{COPY.screening.when(THRESHOLDS.MIN_N_INSIGHT)}</span>
+          <span className={CAPTION}>
+            {COPY.screening.when({ goal: THRESHOLDS.MIN_N_INSIGHT, have: sent })}
+          </span>
         </div>
         <ProgressMeter progress={{ count: sent, goal: THRESHOLDS.MIN_N_INSIGHT }} />
       </DashedCard>
       <DashedCard label={COPY.forecast.label}>
         <span className="text-[14px] leading-[1.4] font-semibold text-ink">
-          {COPY.forecast.when(THRESHOLDS.MIN_N_FORECAST)}
+          {COPY.forecast.when({ goal: THRESHOLDS.MIN_N_FORECAST, have: sent })}
         </span>
-        <span className={CAPTION}>{COPY.forecast.why}</span>
       </DashedCard>
-      {view.active && <NextStep missing={THRESHOLDS.MIN_N_INSIGHT - sent} />}
+      {view.active && <NextStep sent={sent} />}
     </div>
   );
 }

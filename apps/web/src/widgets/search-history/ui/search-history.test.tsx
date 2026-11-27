@@ -39,7 +39,7 @@ describe('SearchHistory', () => {
     expect(row.getByRole('heading', { name: 'Пошук 2025' })).toBeDefined();
     expect(row.getByText('22.09.2025–01.12.2025 · офер прийнято')).toBeDefined();
     expect(row.getByText('31 відгук · 9 співбесід · 1 офер · без оферу · 70 днів')).toBeDefined();
-    const dashboard = row.getByRole('link', { name: 'Дашборд' });
+    const dashboard = row.getByRole('link', { name: 'Аналітика' });
     expect(dashboard.getAttribute('href')).toBe(`/analytics?period=${ARCHIVED_SEARCH.id}`);
     expect(dashboard.classList.contains(TOUCH_HEIGHT)).toBe(true);
     expect(within(first).getByRole('heading', { name: 'Перший пошук' })).toBeDefined();

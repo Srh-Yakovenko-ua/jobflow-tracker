@@ -1,5 +1,6 @@
 import type { EmailedType } from '@jobflow/shared';
 
+import { settings } from './settings';
 import { emailTypes } from './settings-email';
 
 export const unsubscribe = {
@@ -17,7 +18,7 @@ export const unsubscribe = {
   },
   invalid: {
     title: 'Посилання для відписки не працює',
-    hint: 'Воно пошкоджене або застаріло. Вимкнути листи можна в налаштуваннях, розділ «Повідомлення».',
+    hint: `Воно пошкоджене або застаріло. Вимкнути листи можна в налаштуваннях, розділ «${settings.sections.notifications}».`,
   },
   settingsLink: 'Відкрити налаштування',
   failed: {

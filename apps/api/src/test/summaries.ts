@@ -3,7 +3,12 @@ import type { NestExpressApplication } from '@nestjs/platform-express';
 
 import type { PrismaService } from '../prisma/prisma.service.js';
 import { type SignedInSearcher, signedInWithSearch } from './applications.js';
-import { createAiJob, createAiResult } from './factories.js';
+import {
+  createAiJob,
+  createAiResult,
+  createApplicationRows,
+  createStageEvents,
+} from './factories.js';
 import { callRoute } from './http.js';
 import { NOW } from './time.js';
 
@@ -22,6 +27,21 @@ export const archive = (
 ) => callRoute(app, { method: 'get', path: SUMMARIES_PATH, accessToken });
 
 export type SummaryOwner = SignedInSearcher & { aiJobId: string };
+
+export type SearcherEvent = { occurredAt?: Date };
+
+export async function searcherWithEvent(
+  prisma: PrismaService,
+  { occurredAt = new Date('2026-09-15T09:00:00.000Z') }: SearcherEvent = {},
+): Promise<SignedInSearcher> {
+  const searcher = await signedInWithSearch(prisma);
+  const [applicationId = ''] = await createApplicationRows(prisma, {
+    ...searcher,
+    rows: [{ lastEventAt: occurredAt }],
+  });
+  await createStageEvents(prisma, [{ applicationId, toStage: 'applied', occurredAt }]);
+  return searcher;
+}
 
 export async function summaryOwner(prisma: PrismaService): Promise<SummaryOwner> {
   const owner = await signedInWithSearch(prisma);

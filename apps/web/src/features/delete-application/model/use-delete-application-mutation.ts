@@ -7,9 +7,12 @@ import { scheduledEventKeys } from '@/entities/scheduled-event';
 import { userKeys } from '@/entities/user';
 import { uk } from '@/shared/i18n';
 import { showErrorToast } from '@/shared/ui/error-toast';
+import { showToast } from '@/shared/ui/toast';
 
 import { deleteApplication } from '../api/delete-application';
 import { DELETE_MUTATION_KEY } from './delete-sent';
+
+const DELETED_TOAST_ID = 'application-deleted';
 
 export function useDeleteApplicationMutation() {
   const queryClient = useQueryClient();
@@ -18,6 +21,10 @@ export function useDeleteApplicationMutation() {
     mutationFn: (applicationId: ApplicationResponse['id']) => deleteApplication(applicationId),
     onSuccess: (_deleted, applicationId) => {
       queryClient.removeQueries({ queryKey: applicationKeys.detail(applicationId) });
+      showToast(
+        { tone: 'success', title: uk.applicationPage.deletion.done },
+        { id: DELETED_TOAST_ID },
+      );
       return Promise.all([
         queryClient.invalidateQueries({ queryKey: applicationKeys.all }),
         queryClient.invalidateQueries({ queryKey: analyticsKeys.summary() }),

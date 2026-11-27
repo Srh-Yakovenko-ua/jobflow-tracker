@@ -6,6 +6,9 @@ import {
   DOCUMENT_FAILURES,
   DOCUMENT_LIMITS,
   documentContractJsonSchemas,
+  REJECTION_REASONS,
+  SOURCE_LABELS,
+  STAGE_LABELS,
   VACANCY_PARSE_LIMITS,
 } from '../dist/index.js';
 
@@ -31,3 +34,12 @@ writeJson(new URL('document-limits.json', contractsDir), {
   failures: DOCUMENT_FAILURES,
 });
 writeJson(new URL('vacancy-parse-limits.json', contractsDir), VACANCY_PARSE_LIMITS);
+
+const labelsUk = (labels) =>
+  Object.fromEntries(Object.entries(labels).map(([code, { labelUk }]) => [code, labelUk]));
+
+writeJson(new URL('labels.json', contractsDir), {
+  stages: labelsUk(STAGE_LABELS),
+  sources: labelsUk(SOURCE_LABELS),
+  reasons: labelsUk(REJECTION_REASONS),
+});

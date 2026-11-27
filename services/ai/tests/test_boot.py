@@ -14,9 +14,9 @@ def test_reads_the_prompt_versions_exported_from_the_shared_package() -> None:
     assert load_prompt_versions() == {
         "vacancy_parse": "v4",
         "resume_parse": "v1",
-        "match": "v3",
+        "match": "v4",
         "followup": "v3",
-        "monthly_summary": "v1",
+        "monthly_summary": "v2",
         "cv_hints": "v1",
         "interview_prep": "v1",
     }

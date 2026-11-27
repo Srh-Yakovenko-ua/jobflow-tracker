@@ -14,7 +14,7 @@ import { server } from '@/test/server';
 
 import { ContactEditForm } from './contact-edit-form';
 
-const LABELS = { name: "Ім'я", role: 'Роль', email: 'Email', telegram: 'Telegram' } as const;
+const LABELS = { name: "Ім'я", role: 'Посада', email: 'Email', telegram: 'Telegram' } as const;
 
 const TELEGRAM_ERROR = 'Нік із 5–32 латинських літер, цифр або _, без посилання';
 

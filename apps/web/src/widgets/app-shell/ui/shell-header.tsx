@@ -3,6 +3,7 @@ import type { ReactNode } from 'react';
 import { GlobalSearch } from '@/features/search-applications';
 import { FEATURE_FLAGS } from '@/shared/config';
 import { cn } from '@/shared/lib/cn';
+import { PAGE_HEADING_ID } from '@/shared/lib/page-heading';
 
 import { AddApplicationLink } from './add-application-link';
 import { SHELL_FRAME } from './shell-frame';
@@ -16,8 +17,12 @@ const TITLE =
   'min-w-0 flex-1 truncate font-display text-display text-ink md:flex-none md:text-[30px]/[1.05] md:font-medium md:tracking-[-0.042em]';
 
 function ShellTitleText({ title }: Readonly<{ title: ShellTitle }>) {
-  const Tag = title.heading ? 'h1' : 'p';
-  return <Tag className={TITLE}>{title.text}</Tag>;
+  if (!title.heading) return <p className={TITLE}>{title.text}</p>;
+  return (
+    <h1 id={PAGE_HEADING_ID} tabIndex={-1} className={TITLE}>
+      {title.text}
+    </h1>
+  );
 }
 
 export function ShellHeader({ title, actions }: ShellHeaderProps) {

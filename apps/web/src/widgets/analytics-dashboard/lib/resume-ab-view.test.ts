@@ -32,7 +32,7 @@ describe('resumeAbViewOf', () => {
   it('the tooltip of a bar reads its percent with the raw counts and its interval', () => {
     const [challenger] = plottedOf(viewOf(buildDesignResumeAb())).chart.rows;
 
-    expect(challenger?.tip).toEqual(['41% · 11 із 27', 'інтервал: 25–59%']);
+    expect(challenger?.tip).toEqual(['41% · 11 із 27', 'можливо 25–59%']);
   });
 
   it('under the bars reads the probability that the challenger is better and the conversion around the switch date', () => {
@@ -85,13 +85,13 @@ describe('resumeAbViewOf', () => {
       status: 'empty',
       content: {
         title: 'Версій резюме ще немає',
-        hint: "Познач, з яким CV ти відгукуєшся, і тут з'явиться порівняння версій.",
+        hint: "Познач, з яким резюме ти відгукуєшся, і тут з'явиться порівняння версій.",
       },
     });
     expect(viewOf({ versions: only === undefined ? [] : [only], comparison: null })).toEqual({
       status: 'empty',
       content: {
-        title: 'Поки що лише одна версія CV',
+        title: 'Поки що лише одна версія резюме',
         hint: "Порівняння з'явиться, коли ти відгукнешся з другою версією.",
       },
     });
@@ -109,8 +109,8 @@ describe('resumeAbLowOf and resumeAbHeaderOf', () => {
       message: 'Ще 6 відгуків до першого висновку',
     });
     expect(resumeAbHeaderOf(data)).toEqual({
-      eyebrow: 'A/B версій резюме',
-      title: 'Яка версія CV працює краще',
+      eyebrow: 'порівняння версій резюме',
+      title: 'Яка версія резюме працює краще',
     });
   });
 
@@ -120,6 +120,6 @@ describe('resumeAbLowOf and resumeAbHeaderOf', () => {
     expect(resumeAbLowOf(data)).toBeUndefined();
     expect(resumeAbLowOf({ versions: [], comparison: null })).toBeUndefined();
     expect(resumeAbHeaderOf(data).title).toBe('Схоже, CV v2 працює краще');
-    expect(resumeAbHeaderOf(undefined).title).toBe('Яка версія CV працює краще');
+    expect(resumeAbHeaderOf(undefined).title).toBe('Яка версія резюме працює краще');
   });
 });

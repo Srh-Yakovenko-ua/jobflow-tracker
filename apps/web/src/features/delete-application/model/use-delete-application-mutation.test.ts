@@ -1,6 +1,7 @@
 import { useQueryClient } from '@tanstack/react-query';
-import { act, waitFor } from '@testing-library/react';
-import { describe, expect, it } from 'vitest';
+import { act, screen, waitFor } from '@testing-library/react';
+import { toast } from 'sonner';
+import { afterEach, describe, expect, it } from 'vitest';
 
 import { scheduledEventKeys } from '@/entities/scheduled-event';
 import { userKeys } from '@/entities/user';
@@ -13,7 +14,23 @@ import { settleMutation } from '@/test/settle-mutation';
 
 import { useDeleteApplicationMutation } from './use-delete-application-mutation';
 
+afterEach(() => {
+  toast.dismiss();
+});
+
 describe('useDeleteApplicationMutation', () => {
+  it('a deleted card says «Картку видалено» once', async () => {
+    server.use(deleteRoute().handler);
+    const { result } = renderHookInApp(() => useDeleteApplicationMutation());
+
+    act(() => {
+      result.current.mutate(ACME_APPLICATION.id);
+    });
+
+    expect(await screen.findByText('Картку видалено')).toBeDefined();
+    expect(toast.getToasts()).toHaveLength(1);
+  });
+
   it('marks every calendar range stale once the card is deleted, so its events leave the grid', async () => {
     server.use(deleteRoute().handler);
     const { result } = renderHookInApp(() => ({

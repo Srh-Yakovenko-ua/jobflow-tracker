@@ -55,14 +55,14 @@ describe('ApplicationContext', () => {
     });
   });
 
-  it('reads the median to offer and the stage norm from the fetched norms: 13 днів · норма 17', async () => {
+  it('reads the median to offer and the stage norm from the fetched norms: 13 днів · зазвичай 17 дн', async () => {
     server.use(normsRoute(DESIGN_NORMS));
     renderApplicationPage({ application: FINAL_APPLICATION });
 
     await waitFor(async () => {
       expect((await contextRows()).slice(2)).toEqual([
         ['твоя медіана до офера', '37 днів'],
-        ['на етапі', '13 днів · норма 17'],
+        ['на етапі', '13 днів · зазвичай 17 дн'],
       ]);
     });
   });
@@ -86,7 +86,7 @@ describe('ApplicationContext', () => {
       await waitFor(async () => {
         expect((await contextRows()).slice(2)).toEqual([
           ['твоя медіана до офера', '37 днів'],
-          ['на етапі', '13 днів · норма 17'],
+          ['на етапі', '13 днів · зазвичай 17 дн'],
         ]);
       });
       expect(within(section).queryByRole('button', RETRY)).toBeNull();

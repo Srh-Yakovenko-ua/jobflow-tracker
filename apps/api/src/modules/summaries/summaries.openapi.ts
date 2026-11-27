@@ -18,11 +18,11 @@ const SUMMARY = {
   summary: {
     aiJobId: JOB_ID,
     month: '2026-08',
-    text: "У серпні ти надіслав 23 відгуки, на 5 більше, ніж у липні. Найдорожчий етап: техінтерв'ю, пройдено 4 з 9.",
+    text: "У серпні: 23 відгуки, на 5 більше, ніж у липні. Найдорожчий етап: техінтерв'ю, пройдено 4 з 9.",
     actions: [
       {
         title: "Два тижні алгоритмів перед техінтерв'ю",
-        why: "3 з 4 відмов на техінтерв'ю: «не вистачає скілів», а пройшов ти 4 з 9.",
+        why: "3 з 4 відмов на техінтерв'ю: «не вистачає скілів», а пройдено 4 з 9.",
         expectedEffect:
           "Якщо конверсія техінтерв'ю дійде до 60%, прогноз офера: від 4 до 12 тижнів.",
         metric: "Конверсія техінтерв'ю: зараз 44%, ціль 60%",
@@ -79,7 +79,7 @@ export const SUMMARIES_OPENAPI_PATHS: RouteConfig[] = [
     tags: ['summaries'],
     summary: 'Generate the monthly summary now',
     description:
-      'In one transaction under the user lock stores a queued monthly_summary AI job for the month that ended in the user time zone and the summary.requested event; the worker reads the analytics of the active search and calls the model later, skipping the AI result cache. While a monthly_summary job is queued or processing it answers that job and stores nothing. Answers 409 without an active search. Counts against the hourly AI limit.',
+      'In one transaction under the user lock stores a queued monthly_summary AI job for the month that ended in the user time zone and the summary.requested event; the worker reads the analytics of the active search and calls the model later, skipping the AI result cache. While a monthly_summary job is queued or processing it answers that job and stores nothing. Answers 409 without an active search, and 409 with the detail "No activity in the month" when that month holds no stage event of the active search. Counts against the hourly AI limit.',
     request: { headers: idempotencyHeaders },
     responses: {
       202: {

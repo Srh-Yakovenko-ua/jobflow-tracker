@@ -23,6 +23,7 @@ export function useApplicationMatch(application: ApplicationResponse) {
       relinkedTo,
       versionProfileStatus,
       isDraft: application.isDraft,
+      vacancy: application,
     });
   const match = useQuery({
     ...applicationAiQueryOptions({ id: application.id, segment: 'match' }),

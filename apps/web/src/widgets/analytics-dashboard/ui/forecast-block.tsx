@@ -34,7 +34,13 @@ export type ForecastBlockProps = Readonly<{ frame: ForecastFrame; controls: Fore
 function ForecastEmpty({ forecast }: Readonly<{ forecast: Insufficient }>) {
   return (
     <EmptyState
-      content={{ title: FORECAST.empty.title(forecast.need), hint: COPY.lowDataState.forecast.why }}
+      content={{
+        title: FORECAST.empty.title(forecast.need),
+        hint: COPY.lowDataState.forecast.when({
+          goal: THRESHOLDS.MIN_N_FORECAST,
+          have: forecast.have,
+        }),
+      }}
       progress={{
         count: forecast.have,
         goal: THRESHOLDS.MIN_N_FORECAST,

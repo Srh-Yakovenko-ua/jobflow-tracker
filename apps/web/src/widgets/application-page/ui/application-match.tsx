@@ -34,6 +34,7 @@ const WAITING_STATUS: Readonly<Record<MatchView['kind'], AiJobStatus | null>> = 
   failed: 'failed',
   scored: null,
   unscored: null,
+  no_vacancy: null,
 };
 
 const STATE_BODY: Readonly<Record<MatchView['kind'], string>> = {
@@ -42,6 +43,7 @@ const STATE_BODY: Readonly<Record<MatchView['kind'], string>> = {
   failed: 'job',
   scored: 'breakdown',
   unscored: 'no-score',
+  no_vacancy: 'no-score',
 };
 
 function MatchTitle({ view }: ViewProps) {
@@ -52,7 +54,7 @@ function MatchTitle({ view }: ViewProps) {
       </span>
     );
   }
-  if (view === null || view.kind === 'unscored') {
+  if (view === null || view.kind === 'unscored' || view.kind === 'no_vacancy') {
     return `${COPY.noScore} ${uk.application.score.empty}`;
   }
   const aiStatus = view.kind === 'pending' ? (view.job?.status ?? 'processing') : null;
@@ -67,6 +69,8 @@ function MatchTitle({ view }: ViewProps) {
 }
 
 function NoScore({ view }: ViewProps) {
+  if (view?.kind === 'no_vacancy')
+    return <p className="text-[13px] text-ink-2">{COPY.noVacancy}</p>;
   if (view?.kind !== 'no_cv') return <p className="text-[13px] text-ink-3">{COPY.unscored}</p>;
   return (
     <p className="flex flex-wrap items-center gap-x-1.5 text-[13px] text-ink-2">

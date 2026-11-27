@@ -95,13 +95,12 @@ function PreviewTable({ rows, step }: PreviewTableProps) {
 export function PreviewStep({ step, model }: PreviewStepProps) {
   const rows = previewOf({ ...step.draft, now: step.now });
   const total = step.draft.sheet.rows.length;
-  const invalid = rows.filter((row) => !row.valid).length;
   const valid = validCountOf({ ...step.draft, now: step.now });
   return (
     <div className="flex min-w-0 flex-col gap-5">
       <StepHeading
         title={COPY.title}
-        detail={COPY.summary({ shown: rows.length, total, invalid })}
+        detail={COPY.summary({ shown: rows.length, total, invalid: total - valid })}
       />
       <PreviewTable rows={rows} step={step} />
       <div className="flex flex-wrap items-center gap-3">

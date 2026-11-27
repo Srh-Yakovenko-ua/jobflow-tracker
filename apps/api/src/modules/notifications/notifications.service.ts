@@ -27,6 +27,8 @@ export type NewNotification = ContentOf<Notification>;
 
 export type RecordNotification = NewNotification & InTransaction;
 
+export type VacancyParseRead = Required<InTransaction> & { applicationId: string; now: Date };
+
 export type OnceNotification = Extract<
   NewNotification,
   {
@@ -92,6 +94,10 @@ export class NotificationsService {
     const ids = 'ids' in input ? { ids: input.ids } : {};
     await this.repository.markRead(userId, { ...ids, now: this.clock.now() });
     return { unread: await this.repository.countUnread(userId) };
+  }
+
+  async markVacancyParseRead(userId: string, read: VacancyParseRead): Promise<void> {
+    await this.repository.markAiNoticesRead(userId, { ...read, kind: 'vacancy_parse' });
   }
 
   async find(userId: string, notificationId: string): Promise<Notification | undefined> {

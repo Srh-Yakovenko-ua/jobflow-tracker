@@ -14,10 +14,14 @@ import { RequestId } from '../../common/request-id.decorator.js';
 import { AcceptsAiJob, RateLimit } from '../../rate-limit/rate-limit.decorator.js';
 import { type AccessUser, CurrentUser, RequireScope } from '../auth/index.js';
 import { CaptureService } from './capture.service.js';
+import { CaptureConfirmService } from './capture-confirm.service.js';
 
 @Controller('capture')
 export class CaptureController {
-  constructor(private readonly capture: CaptureService) {}
+  constructor(
+    private readonly capture: CaptureService,
+    private readonly draftConfirm: CaptureConfirmService,
+  ) {}
 
   @Post('paste')
   @AcceptsAiJob()
@@ -48,7 +52,7 @@ export class CaptureController {
     @CurrentUser() user: AccessUser,
     @Param('id', { schema: applicationIdSchema }) id: string,
   ): Promise<void> {
-    return this.capture.confirm(user.id, id);
+    return this.draftConfirm.confirm(user.id, id);
   }
 
   @Post('drafts/:id/retry')

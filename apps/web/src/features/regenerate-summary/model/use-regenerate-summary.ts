@@ -1,5 +1,6 @@
 'use client';
 
+import { MONTHLY_SUMMARY_REFUSALS } from '@jobflow/shared';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 
 import { summaryKeys } from '@/entities/summary';
@@ -25,7 +26,9 @@ export type RegenerateSummary = Readonly<{
 
 function refusalOf(error: Error | null): string | null {
   if (error === null) return null;
-  return (error instanceof ApiError ? REFUSALS[error.status] : undefined) ?? COPY.failed;
+  if (!(error instanceof ApiError)) return COPY.failed;
+  if (error.body.detail === MONTHLY_SUMMARY_REFUSALS.noActivity) return COPY.noActivity;
+  return REFUSALS[error.status] ?? COPY.failed;
 }
 
 export function useRegenerateSummary(): RegenerateSummary {

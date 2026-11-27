@@ -21,7 +21,7 @@ export const auth = {
     google: 'Продовжити з Google',
     github: 'Продовжити з GitHub',
   } satisfies Record<OAuthProvider, string>,
-  privacy: 'Твої дані бачиш лише ти. У модель ідуть тексти вакансій, нотатки туди не потрапляють.',
+  privacy: 'Твої дані бачиш лише ти. Нотатки в AI не потрапляють.',
   promise: {
     headline: ['Пошук роботи', 'є воронкою,', 'а не удачею'],
     lead: '54 відгуки, 32 відмови, 17 тиш і один офер. JobFlow показує, де зникають шанси і що робити.',
@@ -29,7 +29,7 @@ export const auth = {
   },
   alerts: {
     invalidCredentials: {
-      title: 'Невірна пошта або пароль',
+      title: 'Неправильна пошта або пароль',
       description: 'Перевір обидва поля й спробуй ще раз.',
     },
     rateLimited: {

@@ -28,6 +28,17 @@ const TOASTED: Partial<Record<Notification['type'], ToastTone>> = {
 
 type Announced = Readonly<{ notification: Notification; timeZone: string }>;
 
+const ADD_PAGE = '/add';
+
+function isReviewedHere(notification: Notification): boolean {
+  if (notification.type !== 'ai_done' || notification.payload.kind !== 'vacancy_parse') {
+    return false;
+  }
+  const { pathname, search } = window.location;
+  const reviewed = new URLSearchParams(search).get('review');
+  return pathname === ADD_PAGE && reviewed === notification.payload.applicationId;
+}
+
 async function announcedOf({ queryClient, notificationId }: AnnounceNotificationInput) {
   const [page, me] = await Promise.all([
     queryClient.query(notificationListQueryOptions()),
@@ -43,7 +54,7 @@ function toastOf(
   navigate: AnnounceNotificationInput['navigate'],
 ) {
   const tone = TOASTED[notification.type];
-  if (tone === undefined) return undefined;
+  if (tone === undefined || isReviewedHere(notification)) return undefined;
   const { title, text } = notificationCopyOf(notification, timeZone);
   const target = notificationTargetOf(notification);
   const content: ToastContent = { tone, title, description: text };

@@ -104,8 +104,9 @@ export class FakeMatchRepository {
   }
 
   clearScore(userId: string, applicationId: string): Promise<number> {
-    const unlinked = ownsApplication(userId, applicationId) && this.source.resumeVersionId === null;
-    return Promise.resolve(unlinked ? this.cleared.push(applicationId) : 0);
+    return Promise.resolve(
+      ownsApplication(userId, applicationId) ? this.cleared.push(applicationId) : 0,
+    );
   }
 
   findLatest(userId: string, linked: LinkedVersion): Promise<LatestMatchRow | null> {

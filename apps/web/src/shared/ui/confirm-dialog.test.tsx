@@ -1,6 +1,9 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { useState } from 'react';
 import { describe, expect, it, vi } from 'vitest';
+
+import { PAGE_HEADING_ID } from '@/shared/lib/page-heading';
 
 import { ConfirmDialog, type ConfirmDialogProps } from './confirm-dialog';
 
@@ -76,5 +79,33 @@ describe('ConfirmDialog', () => {
       expect(screen.queryByRole('alertdialog')).toBeNull();
     });
     expect(document.activeElement).toBe(trigger);
+  });
+
+  it('when the action removes the trigger, focus goes to the page heading', async () => {
+    function Removable() {
+      const [shown, setShown] = useState(true);
+      const onConfirm = () => {
+        setShown(false);
+      };
+      return (
+        <>
+          <h1 id={PAGE_HEADING_ID} tabIndex={-1}>
+            Картка
+          </h1>
+          {shown && (
+            <ConfirmDialog trigger={TRIGGER} copy={COPY} action={{ pending: false, onConfirm }} />
+          )}
+        </>
+      );
+    }
+    const user = userEvent.setup();
+    render(<Removable />);
+    await user.click(screen.getByRole('button', { name: TRIGGER.label }));
+
+    await user.click(await screen.findByRole('button', { name: COPY.confirm }));
+
+    await waitFor(() => {
+      expect(document.activeElement).toBe(screen.getByRole('heading', { name: 'Картка' }));
+    });
   });
 });

@@ -1,0 +1,36 @@
+{
+  "stages": {
+    "applied": "відгук",
+    "screening": "скринінг",
+    "tech_interview": "техінтерв'ю",
+    "final": "фінал",
+    "offer": "офер",
+    "rejected": "відмова",
+    "ghosted": "ghosted",
+    "withdrawn": "відкликав"
+  },
+  "sources": {
+    "djinni": "Djinni",
+    "dou": "DOU",
+    "robota": "robota.ua",
+    "workua": "Work.ua",
+    "linkedin": "LinkedIn",
+    "referral": "рефералка",
+    "company_site": "сайт компанії",
+    "other": "інше"
+  },
+  "reasons": {
+    "skills_gap": "не вистачає скілів",
+    "english_level": "рівень англійської",
+    "salary_expectations": "зарплатні очікування",
+    "chose_other": "обрали іншого",
+    "position_closed": "вакансію закрили",
+    "no_explanation": "без пояснення",
+    "low_salary": "низька вилка",
+    "office_schedule": "офіс/графік",
+    "red_flags": "ред флаги",
+    "accepted_other": "прийняв інший офер",
+    "silence_timeout": "тиша",
+    "unspecified": "не хочу зараз вказувати"
+  }
+}

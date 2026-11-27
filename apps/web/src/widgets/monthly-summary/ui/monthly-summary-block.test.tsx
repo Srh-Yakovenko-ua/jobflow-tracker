@@ -34,7 +34,7 @@ describe('MonthlySummaryBlock', () => {
     const { user, sent } = renderBlock(NO_SUMMARY);
 
     expect(
-      await screen.findByRole('heading', { name: 'Саммарі прийде першого числа' }),
+      await screen.findByRole('heading', { name: 'Перше саммарі прийде 1-го числа' }),
     ).toBeDefined();
     await user.click(screen.getByRole('button', { name: 'Згенерувати зараз' }));
 

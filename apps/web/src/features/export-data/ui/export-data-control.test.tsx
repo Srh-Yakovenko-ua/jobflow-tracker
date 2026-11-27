@@ -38,7 +38,7 @@ describe('ExportDataControl', () => {
   it('asks for a csv archive once, says it is building and offers the signed link once the archive exists', async () => {
     const { user, sent } = renderControl();
 
-    await user.click(screen.getByRole('radio', { name: 'CSV' }));
+    await user.click(screen.getByRole('radio', { name: 'CSV для Excel' }));
     await user.click(screen.getByRole('button', { name: 'Вивантажити' }));
 
     expect(await screen.findByText('Збираю архів…')).toBeDefined();
@@ -58,7 +58,9 @@ describe('ExportDataControl', () => {
   it('starts with json and keeps polling every 2 s while the export is pending', async () => {
     const { user, sent } = renderControl({ routes: { readyAfterLinks: 3 } });
 
-    expect(screen.getByRole('radio', { name: 'JSON' }).getAttribute('aria-checked')).toBe('true');
+    expect(
+      screen.getByRole('radio', { name: 'JSON для програм' }).getAttribute('aria-checked'),
+    ).toBe('true');
     await user.click(screen.getByRole('button', { name: 'Вивантажити' }));
     await screen.findByText('Збираю архів…');
     await advanceBy(POLL_MS);

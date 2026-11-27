@@ -35,7 +35,7 @@ type ReviewSetup = {
   onBack?: () => void;
 };
 
-const CONFIRM = 'Підтвердити і на дошку';
+const CONFIRM = 'Зберегти';
 
 const SAVE_FAILED_TOAST = 'Це збій на нашому боці, збережені дані на місці. Спробуй ще раз.';
 
@@ -97,7 +97,7 @@ function companyField(): HTMLInputElement {
 }
 
 function positionField(): HTMLInputElement {
-  return screen.getByRole('textbox', { name: 'Позиція' });
+  return screen.getByRole('textbox', { name: 'Посада' });
 }
 
 async function tooltipOf(name: string): Promise<string | null> {
@@ -116,7 +116,7 @@ describe('DraftReview', () => {
     renderReview();
 
     expect(chip('Компанія: точно').textContent).toBe('точно');
-    expect(chip('Позиція: точно').textContent).toBe('точно');
+    expect(chip('Посада: точно').textContent).toBe('точно');
     expect(chip('Вилка: перевір').textContent).toBe('перевір');
     expect(chip('Стек: точно').textContent).toBe('точно');
     expect(screen.queryByRole('button', { name: /^Джерело:/ })).toBeNull();
@@ -333,10 +333,10 @@ describe('DraftReview', () => {
   it('carries the form name and starts in the field the caller asks for', () => {
     renderReview({
       application: FAILED_DRAFT,
-      view: { name: 'Заповни компанію і позицію', focusField: 'company' },
+      view: { name: 'Заповни компанію і посаду', focusField: 'company' },
     });
 
-    expect(screen.getByRole('form', { name: 'Заповни компанію і позицію' })).toBeDefined();
+    expect(screen.getByRole('form', { name: 'Заповни компанію і посаду' })).toBeDefined();
     expect(screen.queryByRole('form', { name: 'Перевір поля і готово' })).toBeNull();
     expect(document.activeElement).toBe(companyField());
   });

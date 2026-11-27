@@ -45,7 +45,7 @@ const DESIGN_ROWS = [
     '7 днів тиші · індикатор увімкнено',
     'Автоматична подія. Картка приглушилась на дошці.',
   ],
-  ['13.08', 'Додано на етап «відгук»', 'Через Djinni.'],
+  ['13.08', 'Додано на етап «відгук»', 'Джерело: Djinni.'],
   ['12.08', 'Картку створено букмарклетом', 'AI розібрав опис за 6 секунд'],
 ] as const;
 
@@ -129,7 +129,7 @@ describe('ApplicationTimeline', () => {
 
     const list = await within(section).findByRole('list');
 
-    expect(within(section).getByText('Таймлайн · 9 подій')).toBeDefined();
+    expect(within(section).getByText('Історія · 9 подій')).toBeDefined();
     expect(within(section).getByRole('heading', { level: 2, name: HEADING })).toBeDefined();
     expect(
       within(list)
@@ -181,7 +181,7 @@ describe('ApplicationTimeline', () => {
 
     await user.click(retry);
 
-    expect(await within(section).findByText('Таймлайн · 9 подій')).toBeDefined();
+    expect(await within(section).findByText('Історія · 9 подій')).toBeDefined();
     expect(within(section).getAllByRole('listitem')).toHaveLength(9);
   });
 
@@ -192,7 +192,7 @@ describe('ApplicationTimeline', () => {
     });
 
     expect(await within(section).findByText('Подій ще немає')).toBeDefined();
-    expect(within(section).getByText('Таймлайн · 0 подій')).toBeDefined();
+    expect(within(section).getByText('Історія · 0 подій')).toBeDefined();
     expect(within(section).queryByRole('list')).toBeNull();
   });
 });

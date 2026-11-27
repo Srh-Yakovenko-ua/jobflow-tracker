@@ -23,9 +23,9 @@ function StepLine({ index, children }: StepLineProps) {
   );
 }
 
-export type InstallStepsProps = Readonly<{ children: ReactNode }>;
+export type InstallStepsProps = Readonly<{ children: ReactNode; installed: boolean }>;
 
-export function InstallSteps({ children }: InstallStepsProps) {
+export function InstallSteps({ children, installed }: InstallStepsProps) {
   return (
     <div className="flex flex-col gap-3 rounded-md border-[1.5px] border-dashed border-line bg-surface-2 p-3.5">
       <p className="text-[10px] leading-[1.3] font-semibold tracking-[0.1em] text-ink-3 uppercase">
@@ -39,7 +39,7 @@ export function InstallSteps({ children }: InstallStepsProps) {
           </StepLine>
         </li>
         <li className="flex flex-col items-start gap-3">
-          <StepLine index="2">{COPY.steps.drag}</StepLine>
+          <StepLine index="2">{installed ? COPY.steps.installed : COPY.steps.drag}</StepLine>
           {children}
         </li>
         <li>

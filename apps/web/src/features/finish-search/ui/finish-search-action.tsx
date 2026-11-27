@@ -34,7 +34,7 @@ type FinishSearchDialogProps = Readonly<{ search: SearchSummary; onFinished: () 
 
 function FinishSearchDialog({ search, onFinished }: FinishSearchDialogProps) {
   const mutation = useFinishSearchMutation();
-  const [openApplications, setOpenApplications] = useState<OpenApplicationChoice>('withdraw');
+  const [openApplications, setOpenApplications] = useState<OpenApplicationChoice>('move');
   return (
     <DialogContent
       header={{

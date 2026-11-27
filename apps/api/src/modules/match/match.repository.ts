@@ -60,7 +60,7 @@ export class MatchRepository {
 
   async clearScore(userId: string, applicationId: string): Promise<number> {
     const { count } = await this.prisma.application.updateMany({
-      where: { id: applicationId, userId, resumeVersionId: null, matchScore: { not: null } },
+      where: { id: applicationId, userId, matchScore: { not: null } },
       data: { matchScore: null },
     });
     return count;

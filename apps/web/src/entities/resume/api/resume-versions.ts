@@ -1,12 +1,21 @@
-import { type ResumeVersion, resumeVersionListResponseSchema } from '@jobflow/shared';
+import {
+  LIVE_LIMITS,
+  type ResumeVersion,
+  type ResumeVersionListResponse,
+  resumeVersionListResponseSchema,
+} from '@jobflow/shared';
 import { queryOptions } from '@tanstack/react-query';
 import { z } from 'zod';
 
 import { apiClient } from '@/shared/api';
 
+import { isProfileReading } from '../lib/profile-status';
 import { resumeKeys } from '../model/keys';
 
 export const RESUME_VERSIONS_PATH = '/resumes/versions';
+
+const isReading = (list: ResumeVersionListResponse | undefined) =>
+  list?.items.some(({ aiProfileStatus }) => isProfileReading(aiProfileStatus)) === true;
 
 export function resumeVersionPath(id: ResumeVersion['id']): string {
   return `${RESUME_VERSIONS_PATH}/${id}`;
@@ -22,6 +31,7 @@ export function resumeVersionsQueryOptions() {
         signal,
       }),
     refetchOnWindowFocus: true,
+    refetchInterval: ({ state }) => (isReading(state.data) ? LIVE_LIMITS.pollFallbackMs : false),
   });
 }
 

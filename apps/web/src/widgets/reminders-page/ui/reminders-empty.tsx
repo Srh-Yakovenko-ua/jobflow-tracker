@@ -3,6 +3,8 @@ import { EmptyState } from '@/shared/ui/empty-state';
 
 const COPY = uk.notifications;
 
+const SILENCE = uk.reminders.silence.empty;
+
 export type RemindersEmptyProps = Readonly<{ silenceDays: number }>;
 
 function NobodySilent() {
@@ -15,10 +17,13 @@ function NobodySilent() {
 }
 
 export function RemindersEmpty({ silenceDays }: RemindersEmptyProps) {
-  const { eyebrow, title, hint } = COPY.empty;
   return (
     <EmptyState
-      content={{ eyebrow, title, hint: hint(silenceDays) }}
+      content={{
+        eyebrow: COPY.empty.eyebrow,
+        title: SILENCE.title,
+        hint: SILENCE.hint(silenceDays),
+      }}
       view={{ size: 'panel' }}
       slots={{ figure: <NobodySilent /> }}
     />

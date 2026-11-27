@@ -162,7 +162,7 @@ afterEach(() => {
 });
 
 describe('KanbanBoard drag and drop', () => {
-  it('a card dropped on скринінг shows there before the server answers, and the board is asked again once it does', async () => {
+  it('a card dropped on скринінг shows there before the server answers, the board is asked again once it does, and one toast offers the undo', async () => {
     const answer = latch();
     const { moves, boardSent } = await boardReadyToDrag({ move: { latch: answer } });
 
@@ -186,7 +186,8 @@ describe('KanbanBoard drag and drop', () => {
     await waitFor(() => {
       expect(boardSent).toEqual(['', '']);
     });
-    expect(toast.getToasts()).toEqual([]);
+    expect(toast.getToasts()).toEqual([expect.objectContaining({ id: 'stage-move-done' })]);
+    expect(screen.getByText('Перенесено у «скринінг»')).toBeDefined();
   });
 
   it('a card dropped on скринінг whose glide never runs is shown once the glide time is over', async () => {
@@ -202,9 +203,10 @@ describe('KanbanBoard drag and drop', () => {
     expect(landed.closest('.invisible')).toBeNull();
   });
 
-  it('a card dropped on the open відмова lane is never hidden there, it fades in from its first frame', async () => {
+  it('a card dropped on the open відмова lane is never hidden there, it fades in from its first frame, and the move offers the undo', async () => {
+    const answer = latch();
     const { user } = await boardReadyToDrag({
-      move: { latch: latch() },
+      move: { latch: answer },
       settings: { askRejectionReason: false },
     });
     await openRejectedLane(user);
@@ -213,6 +215,8 @@ describe('KanbanBoard drag and drop', () => {
     await screen.findByRole('heading', { name: 'відмова 33' });
 
     expect(within(columnNamed('відмова 33')).getByText(DRAGGED).closest('.invisible')).toBeNull();
+    answer.release();
+    expect(await screen.findByText('Перенесено у «відмова»')).toBeDefined();
   });
 
   it.each(FAILED_MOVES)(

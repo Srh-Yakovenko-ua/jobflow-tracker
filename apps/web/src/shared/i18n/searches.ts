@@ -48,7 +48,7 @@ export const searches = {
         move: 'Перенести в новий пошук',
       } satisfies Record<OpenApplicationChoice, string>,
     },
-    confirm: 'Заархівувати пошук',
+    confirm: 'Завершити пошук',
     cancel: 'Скасувати',
     archived: { title: 'Пошук заархівовано', action: 'Історія пошуків' },
     conflict: { title: 'Цей пошук уже завершено', description: 'Онови сторінку.' },
@@ -65,10 +65,10 @@ export const searches = {
     interviews: (count: number) => countedUk(count, INTERVIEW_FORMS),
     offers: (count: number) => countedUk(count, FORMS.offer),
     daysToOffer,
-    dashboard: 'Дашборд',
+    dashboard: 'Аналітика',
     empty: {
       title: 'Завершених пошуків ще немає',
-      hint: 'Коли завершиш пошук, він залишиться тут разом зі своїм дашбордом.',
+      hint: 'Пошук завершується кнопкою «Офер прийнято» на картці з офером.',
     },
   },
   comparison: ({ previous, current }: SearchComparison) =>

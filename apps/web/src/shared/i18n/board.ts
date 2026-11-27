@@ -1,5 +1,7 @@
 import { countedUk, type PluralForms, type SilenceLevel, STAGE_LABELS } from '@jobflow/shared';
 
+import { FORMS } from './analytics-forms';
+
 const CARDS_IN_WORK = {
   one: 'картка в роботі',
   few: 'картки в роботі',
@@ -12,10 +14,10 @@ const CARDS_BELOW = {
   other: 'карток нижче',
 } as const satisfies PluralForms;
 
-const VACANCIES = {
-  one: 'вакансію',
-  few: 'вакансії',
-  other: 'вакансій',
+const CARDS_TAKEN = {
+  one: 'картку',
+  few: 'картки',
+  other: 'карток',
 } as const satisfies PluralForms;
 
 const DRAFTS = {
@@ -25,6 +27,8 @@ const DRAFTS = {
 } as const satisfies PluralForms;
 
 type StageNames = { from: string; to: string };
+
+type BoardCounts = Readonly<{ inWork: number; offers: number }>;
 
 type DropNames = { position: string; stage: string | undefined };
 
@@ -45,19 +49,19 @@ const move = {
   },
   conflict: {
     title: 'Картка вже на іншому етапі',
-    description:
-      'Її перенесли в іншій вкладці чи на іншому пристрої. Дошка оновилася й показує, де вона зараз.',
+    description: 'Її вже перенесли в іншій вкладці, дошка оновилася.',
   },
   illegal: ({ from, to }: StageNames) => ({
     title: 'Такий перехід неможливий',
     description: `З «${from}» картка не переходить у «${to}». Вона повернулася на місце.`,
   }),
+  done: { title: (stage: string) => `Перенесено у «${stage}»`, undo: 'Скасувати' },
   bulk: {
     moved: (count: number) =>
-      count === 0 ? 'Нічого не перенесено' : `Перенесено ${countedUk(count, VACANCIES)}`,
-    failed: (count: number) => `Не вдалося перенести ${countedUk(count, VACANCIES)}.`,
+      count === 0 ? 'Нічого не перенесено' : `Перенесено ${countedUk(count, CARDS_TAKEN)}`,
+    failed: (count: number) => `Не вдалося перенести ${countedUk(count, CARDS_TAKEN)}.`,
     skipped: (count: number) =>
-      `Пропущено ${countedUk(count, VACANCIES)}: для них такого переходу немає.`,
+      `Пропущено ${countedUk(count, CARDS_TAKEN)}: для них такого переходу немає.`,
   },
   a11y: {
     roleDescription: 'картка для перетягування',
@@ -84,11 +88,10 @@ const reject = {
   eyebrow: ({ company, from }: { company: string; from: string }) =>
     `${company} · ${from} → ${REJECTED}`,
   title: 'Що сталося?',
-  description:
-    'Один клік, і картка переїде. Причина потрібна, щоб аналітика знала, де саме ти застряг.',
-  sides: { company: 'Відмовила компанія', candidate: 'Відмовився я' },
+  description: 'Обери причину, так аналітика покаже, де губляться шанси.',
+  sides: { company: 'Відмовила компанія', candidate: 'Моє рішення' },
   skip: 'Не хочу зараз вказувати',
-  keysHint: 'ENTER: остання причина · ESC: скасувати',
+  keysHint: 'Enter: остання причина · Esc: скасувати',
   saved: {
     eyebrow: 'записано в аналітику',
     title: ({ company, reason }: SavedTitle) =>
@@ -120,15 +123,15 @@ const reject = {
 } as const;
 
 const filters = {
-  search: { label: 'Пошук по картках', placeholder: 'компанія, посада або стек' },
+  search: { label: 'Пошук карток', placeholder: 'Фільтр: компанія, посада, стек' },
   source: { menu: 'Джерело', pill: (picked: string) => `Джерело: ${picked}`, all: 'усі' },
   resumeVersion: {
-    menu: 'Версія CV',
-    pill: (picked: string) => `CV: ${picked}`,
+    menu: 'Версія резюме',
+    pill: (picked: string) => `Резюме: ${picked}`,
     all: 'усі',
     short: (number: number) => `CV v${String(number)}`,
     archived: (label: string) => `${label} · в архіві`,
-    none: 'Ще немає жодної версії CV',
+    none: 'Ще немає жодної версії резюме',
   },
   more: {
     menu: 'Фільтри',
@@ -142,7 +145,7 @@ const filters = {
     label: 'Активні фільтри',
     source: (name: string) => `джерело: ${name}`,
     stage: (name: string) => `етап: ${name}`,
-    unknownResumeVersion: 'невідома версія CV',
+    unknownResumeVersion: 'невідома версія резюме',
     hasScore: { with: 'з Match Score', without: 'без Match Score' },
     silence: {
       none: 'без тиші',
@@ -158,23 +161,27 @@ const emptySearch = {
   eyebrow: 'Пошук · нічого не знайдено',
   title: (query: string) => `Немає карток за «${query}»`,
   filteredTitle: 'Немає карток за цими фільтрами',
-  hint: 'Пошук іде по компанії, позиції, стеку і нотатках. Спробуй частину слова або скинь фільтри.',
+  hint: 'Спробуй частину слова або скинь фільтри.',
 } as const;
 
 export const board = {
   title: 'Дошка',
-  eyebrow: (inWork: number) => `активний пошук · ${countedUk(inWork, CARDS_IN_WORK)}`,
+  eyebrow: ({ inWork, offers }: BoardCounts) =>
+    offers === 0
+      ? `активний пошук · ${countedUk(inWork, CARDS_IN_WORK)}`
+      : `активний пошук · ${countedUk(inWork, CARDS_IN_WORK)} · ${countedUk(offers, FORMS.offer)}`,
   firstRun: {
     title: 'Тут буде твоя воронка',
-    hint: 'Почни з вакансії, на яку відгукнувся цього тижня. Далі букмарклет додає картку одним кліком.',
+    hint: 'Почни з вакансії цього тижня, далі букмарклет додаватиме їх одним кліком.',
     footnote: "колонки «відмова» і «ghosted» з'являться, коли будуть потрібні",
     bookmarklet: 'Встановити букмарклет',
     addFirst: 'Додати першу вакансію',
   },
   density: { label: 'Вигляд карток', full: 'Повні', compact: 'Щільні' },
   views: { label: 'Подання', board: 'Дошка', table: 'Таблиця' },
+  scrollRight: 'Прокрутити до колонок праворуч',
   moreBelow: (count: number) => `ще ${countedUk(count, CARDS_BELOW)}`,
-  finalNote: ['Тут буває тісно рідко.', 'Це нормально.'],
+  finalNote: ['До фіналу доходять одиниці, це нормально.'],
   columnEmpty: ['тут поки порожньо'],
   compareOffers: 'Порівняти офери',
   parsing: (count: number) => `AI розбирає ${countedUk(count, DRAFTS)}`,

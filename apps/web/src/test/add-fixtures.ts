@@ -53,7 +53,7 @@ export const NO_ACTIVE_SEARCH = {
 
 export const TWO_MINUTES = { 'Retry-After': '120' } as const;
 
-export const POSITION_ERROR = 'Вкажи позицію одним коротким рядком';
+export const POSITION_ERROR = 'Вкажи посаду одним коротким рядком';
 
 export const TIMEOUT_REASON =
   'AI не встиг відповісти. Це збій на нашому боці, з текстом усе гаразд.';

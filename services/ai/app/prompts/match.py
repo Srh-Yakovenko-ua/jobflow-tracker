@@ -3,7 +3,7 @@ from app.contracts.match_request import MatchRequest, Vacancy
 from app.contracts.match_response import MatchResponse
 from app.prompts.base import BuiltPrompt, delimiter_tag, fenced, sampling
 
-PROMPT_VERSION = "v3"
+PROMPT_VERSION = "v4"
 REQUEST_MODEL = MatchRequest
 OUTPUT_MODEL = MatchOutput
 RESPONSE_MODEL = MatchResponse
@@ -35,7 +35,8 @@ Coverage against the profile:
 Years in a discipline (3+ years as a Data Engineer, 2 years as a team lead) are missing when the profile's skills belong to another discipline or it has no such experience; total years count only for the profile's own discipline.
 Never invent a skill the profile does not list. Code computes the score from the weights and coverages; do not give one.
 names are short Ukrainian phrases, at most 80 characters, technology names as written.
-explanation: one Ukrainian sentence, at most 240 characters, on what matches and what is missing."""
+explanation: one Ukrainian sentence, at most 240 characters, on what matches and what is missing, addressed to the candidate as ти («Твій досвід покриває React і Node.js, бракує AWS»).
+It is gender-neutral and never in the third person: present tense and noun phrases, no word for the candidate such as кандидат, він or вона, and no past-tense verb or adjective that shows the candidate's gender."""
 
 
 def vacancy_block(vacancy: Vacancy) -> str:

@@ -1,6 +1,8 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent, { type UserEvent } from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
+
+import { PAGE_HEADING_ID } from '@/shared/lib/page-heading';
 
 import { OWNS_ESCAPE, Sheet, SheetClose, useSheetClose } from './sheet';
 
@@ -33,6 +35,24 @@ function SheetOverOpener({ open, onClose }: SheetHarnessProps) {
           <form {...OWNS_ESCAPE}>
             <input aria-label="inside" />
           </form>
+        </Sheet>
+      )}
+    </>
+  );
+}
+
+type GoneOpenerProps = Readonly<{ open: boolean; openerShown: boolean }>;
+
+function SheetOverGoneOpener({ open, openerShown }: GoneOpenerProps) {
+  return (
+    <>
+      <h1 id={PAGE_HEADING_ID} tabIndex={-1}>
+        Дошка
+      </h1>
+      {openerShown && <button type="button">{OPENER}</button>}
+      {open && (
+        <Sheet title={TITLE} onClose={vi.fn<() => void>()}>
+          <DoneButton />
         </Sheet>
       )}
     </>
@@ -111,5 +131,18 @@ describe('Sheet', () => {
 
     expect(onClose).not.toHaveBeenCalled();
     expect(screen.getByRole('dialog', { name: TITLE })).toBeDefined();
+  });
+
+  it('closing after the opener left the page, as a deleted card does, hands focus to the page heading', async () => {
+    const view = render(<SheetOverGoneOpener open={false} openerShown />);
+    screen.getByRole('button', { name: OPENER }).focus();
+    view.rerender(<SheetOverGoneOpener open openerShown />);
+    view.rerender(<SheetOverGoneOpener open openerShown={false} />);
+
+    await userEvent.setup().click(screen.getByRole('button', { name: 'done' }));
+
+    await waitFor(() => {
+      expect(document.activeElement).toBe(screen.getByRole('heading', { name: 'Дошка' }));
+    });
   });
 });

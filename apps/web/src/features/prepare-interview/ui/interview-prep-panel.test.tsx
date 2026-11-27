@@ -23,7 +23,7 @@ type PanelSetup = Readonly<{ response: InterviewPrepResponse; requestable?: bool
 
 const PROCESSING: AiJob = { status: 'processing', step: 2, steps: 3 };
 
-const REQUEST = { name: 'Підготувати до інтервʼю' } as const;
+const REQUEST = { name: 'Підготувати до співбесіди' } as const;
 
 const NOTHING_TO_BUILD_FROM =
   'Для підготовки потрібна запланована співбесіда і вимоги або Match Score у вакансії.';
@@ -69,7 +69,7 @@ describe('InterviewPrepPanel', () => {
   it('before any pack says what it holds and names the dictionary theme words, then asks for it once', async () => {
     const { user, routes } = renderPanel({ response: NO_INTERVIEW_PREP });
 
-    expect(screen.getByText(/лише слова-теми зі словника/)).toBeDefined();
+    expect(screen.getByText(/Нотаток він не бачить/)).toBeDefined();
     await user.click(screen.getByRole('button', REQUEST));
 
     await expect.poll(() => routes.requested).toEqual([ACME_APPLICATION.id]);
@@ -85,7 +85,7 @@ describe('InterviewPrepPanel', () => {
   it('while the pack is processing shows the running step and nothing to press', () => {
     renderPanel({ response: interviewPrepJob('processing') });
 
-    expect(screen.getByText('крок 2 з 3 · обробляється')).toBeDefined();
+    expect(screen.getByText('крок 2/3 · обробляється')).toBeDefined();
     expect(screen.getByText('Можеш закрити картку: підготовка зʼявиться тут.')).toBeDefined();
     expect(screen.queryByRole('button')).toBeNull();
   });
@@ -230,7 +230,7 @@ describe('InterviewPrepPanel', () => {
   it('a job failed on the time limit says so and «Спробувати ще раз» asks again', async () => {
     const { user, routes } = renderPanel({ response: interviewPrepJob('failed', 'ai_timeout') });
 
-    expect(screen.getByText('Модель не відповіла за 30 секунд.')).toBeDefined();
+    expect(screen.getByText('AI не відповів за 30 секунд.')).toBeDefined();
     await user.click(screen.getByRole('button', { name: 'Спробувати ще раз' }));
 
     await expect.poll(() => routes.requested).toEqual([ACME_APPLICATION.id]);

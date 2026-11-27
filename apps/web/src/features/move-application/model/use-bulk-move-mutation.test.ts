@@ -57,7 +57,7 @@ describe('useBulkMoveMutation', () => {
     expect(sent).toEqual([{ fromStage: 'applied', toStage: 'screening' }]);
     held.release();
 
-    expect(await screen.findByText('Перенесено 2 вакансії')).toBeDefined();
+    expect(await screen.findByText('Перенесено 2 картки')).toBeDefined();
     expect(sent).toEqual([
       { fromStage: 'applied', toStage: 'screening' },
       { fromStage: 'screening', toStage: 'tech_interview' },
@@ -72,8 +72,8 @@ describe('useBulkMoveMutation', () => {
 
     move({ applications: [OFFER, REJECTED, GHOSTED, WITHDRAWN, APPLIED], target: 'next' });
 
-    expect(await screen.findByText('Перенесено 1 вакансію')).toBeDefined();
-    expect(screen.getByText('Пропущено 4 вакансії: для них такого переходу немає.')).toBeDefined();
+    expect(await screen.findByText('Перенесено 1 картку')).toBeDefined();
+    expect(screen.getByText('Пропущено 4 картки: для них такого переходу немає.')).toBeDefined();
     expect(sent).toEqual([{ fromStage: 'applied', toStage: 'screening' }]);
   });
 
@@ -82,8 +82,8 @@ describe('useBulkMoveMutation', () => {
 
     move({ applications: [APPLIED, REJECTED, OFFER, GHOSTED, WITHDRAWN], target: 'withdrawn' });
 
-    expect(await screen.findByText('Перенесено 2 вакансії')).toBeDefined();
-    expect(screen.getByText('Пропущено 3 вакансії: для них такого переходу немає.')).toBeDefined();
+    expect(await screen.findByText('Перенесено 2 картки')).toBeDefined();
+    expect(screen.getByText('Пропущено 3 картки: для них такого переходу немає.')).toBeDefined();
     expect(sent).toEqual([
       { fromStage: 'applied', toStage: 'withdrawn' },
       { fromStage: 'offer', toStage: 'withdrawn' },
@@ -100,8 +100,8 @@ describe('useBulkMoveMutation', () => {
 
     move({ applications: [APPLIED, SCREENING, TECH], target: 'next' });
 
-    expect(await screen.findByText('Перенесено 2 вакансії')).toBeDefined();
-    expect(screen.getByText('Не вдалося перенести 1 вакансію.')).toBeDefined();
+    expect(await screen.findByText('Перенесено 2 картки')).toBeDefined();
+    expect(screen.getByText('Не вдалося перенести 1 картку.')).toBeDefined();
     expect(sent).toEqual([
       { fromStage: 'applied', toStage: 'screening' },
       { fromStage: 'tech_interview', toStage: 'final' },
@@ -119,7 +119,7 @@ describe('useBulkMoveMutation', () => {
     move({ applications: [SCREENING], target: 'next' });
     held.release();
 
-    expect(await screen.findByText('Перенесено 1 вакансію')).toBeDefined();
+    expect(await screen.findByText('Перенесено 1 картку')).toBeDefined();
     expect(sent).toEqual([{ fromStage: 'applied', toStage: 'screening' }]);
     expect(toast.getToasts()).toHaveLength(1);
   });

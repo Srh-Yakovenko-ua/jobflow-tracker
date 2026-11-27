@@ -44,14 +44,14 @@ describe('KanbanBoard filter by CV version', () => {
   it('picking a version writes the URL, names the pill and adds a chip, and removing the chip takes all three back', async () => {
     server.use(resumeVersionsRoute(VERSIONS));
     const { user, sent } = renderBoard(DESIGN_BOARD);
-    await user.click(await screen.findByRole('button', { name: 'CV: усі' }));
+    await user.click(await screen.findByRole('button', { name: 'Резюме: усі' }));
 
     expect(
       await screen.findByRole('checkbox', { name: 'CV v1 · хронологія · в архіві' }),
     ).toBeDefined();
     expect(screen.queryByRole('checkbox', { name: /CV v3/ })).toBeNull();
     await user.keyboard('{Escape}');
-    await pickInPill(user, { pill: 'CV: усі', option: V2_LABEL });
+    await pickInPill(user, { pill: 'Резюме: усі', option: V2_LABEL });
 
     expect(window.location.search).toBe(`?resumeVersion=${V2_ID}`);
     expect(screen.getByRole('button', { name: 'CV v2' })).toBeDefined();
@@ -65,7 +65,7 @@ describe('KanbanBoard filter by CV version', () => {
 
     expect(window.location.search).toBe('');
     expect(screen.queryByRole('list', { name: CHIPS_NAME })).toBeNull();
-    expect(screen.getByRole('button', { name: 'CV: усі' })).toBeDefined();
+    expect(screen.getByRole('button', { name: 'Резюме: усі' })).toBeDefined();
   });
 
   it('a reload with a version in the URL asks for it again and shows its pill and chip', async () => {
@@ -82,7 +82,7 @@ describe('KanbanBoard filter by CV version', () => {
   it('a version list that fails to load says so in the popover, keeps the board and retries', async () => {
     server.use(resumeVersionsRoute(() => errorReply({ status: 500, type: 'internal_error' })));
     const { user } = renderBoard(DESIGN_BOARD);
-    await user.click(await screen.findByRole('button', { name: 'CV: усі' }));
+    await user.click(await screen.findByRole('button', { name: 'Резюме: усі' }));
 
     const alert = await screen.findByRole('alert', {}, RETRY_WAIT);
 
@@ -96,9 +96,9 @@ describe('KanbanBoard filter by CV version', () => {
 
   it('a user with no CV version yet reads a note in the popover instead of an empty list', async () => {
     const { user } = renderBoard(DESIGN_BOARD);
-    await user.click(await screen.findByRole('button', { name: 'CV: усі' }));
+    await user.click(await screen.findByRole('button', { name: 'Резюме: усі' }));
 
-    expect(await screen.findByText('Ще немає жодної версії CV')).toBeDefined();
+    expect(await screen.findByText('Ще немає жодної версії резюме')).toBeDefined();
     expect(screen.queryByRole('checkbox')).toBeNull();
   });
 });

@@ -133,11 +133,7 @@ describe('KanbanBoard search and filters', () => {
     );
 
     expect(await screen.findByRole('heading', { name: 'Немає карток за «kafka»' })).toBeDefined();
-    expect(
-      screen.getByText(
-        'Пошук іде по компанії, позиції, стеку і нотатках. Спробуй частину слова або скинь фільтри.',
-      ),
-    ).toBeDefined();
+    expect(screen.getByText('Спробуй частину слова або скинь фільтри.')).toBeDefined();
     expect(screen.getByText('Пошук · нічого не знайдено')).toBeDefined();
     expect(chipNames()).toEqual(['джерело: Djinni']);
     expect(screen.queryByRole('radiogroup', { name: 'Вигляд карток' })).toBeNull();

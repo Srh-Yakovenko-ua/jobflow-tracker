@@ -57,7 +57,17 @@ describe('SearchSection', () => {
     await renderLoadedSettings();
     await waitForQuery({ queryKey: SUGGESTIONS_KEY, status: 'success' });
 
-    expect(hint()).toBe(`Твоя медіана відповіді 6 днів, тож раджу 14. ${FINAL_STAGE}`);
+    expect(hint()).toBe(`Тобі зазвичай відповідають за 6 днів, тож радимо 14. ${FINAL_STAGE}`);
+  });
+
+  it('a same-day median from five answers says so in words', async () => {
+    await renderLoadedSettings({
+      suggestions: () =>
+        HttpResponse.json({ silenceDays: 3, medianResponseDays: 0, answeredApplications: 5 }),
+    });
+    await waitForQuery({ queryKey: SUGGESTIONS_KEY, status: 'success' });
+
+    expect(hint()).toBe(`Тобі зазвичай відповідають того ж дня, тож радимо 3. ${FINAL_STAGE}`);
   });
 
   it('with too few answers the hint gives the starting value instead of a median', async () => {
@@ -84,6 +94,7 @@ describe('SearchSection', () => {
   it('turning auto ghost on saves the 30-day default', async () => {
     const { user, routes } = await renderLoadedSettings();
     const autoGhost = searchRegion().getByRole('switch', { name: /після 30 днів тиші/ });
+    expect(searchRegion().getByRole('heading', { name: 'Автоматичні дії' })).toBeDefined();
 
     await user.click(autoGhost);
 

@@ -1,1 +1,1 @@
-export { ApplicationSheetRoute as default } from '@/widgets/application-page';
+export { TableApplicationSheetRoute as default } from '@/widgets/application-page';

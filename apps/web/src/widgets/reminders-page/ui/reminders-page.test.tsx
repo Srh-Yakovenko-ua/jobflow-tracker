@@ -206,16 +206,12 @@ describe('RemindersPage', () => {
     expect(moves.map((move) => move.textContent)).toEqual(['скринінг']);
   });
 
-  it('with no silent card shows the drawn empty panel with the user threshold', async () => {
+  it('with no silent card says there is no silent card, with the user threshold', async () => {
     renderPage({ cards: [], items: [] });
 
-    expect(await screen.findByText('Нагадування · порожньо')).toBeDefined();
-    expect(screen.getByRole('heading', { name: 'Усі відповіли' })).toBeDefined();
-    expect(
-      await screen.findByText(
-        'Жодної картки без подій довше 12 днів. Саме такий вигляд цього екрана найкращий.',
-      ),
-    ).toBeDefined();
+    expect(await screen.findByText('Нічого нового')).toBeDefined();
+    expect(screen.getByRole('heading', { name: 'Тихих карток немає' })).toBeDefined();
+    expect(await screen.findByText('Жодна картка не чекає відповіді довше 12 днів.')).toBeDefined();
     expect(screen.getByText('0 карток у тиші')).toBeDefined();
   });
 
@@ -282,11 +278,16 @@ describe('RemindersPage', () => {
     });
   });
 
-  it('with no saved plan says how a plan appears', async () => {
+  it('with no saved plan says how a plan appears and links to Аналітика', async () => {
     renderPage({ plan: { plan: null } });
 
-    expect(await screen.findByText(COPY.plan.empty)).toBeDefined();
+    expect(
+      await screen.findByText('Плану ще немає. Збережи кроки з місячного саммарі в «Аналітиці».'),
+    ).toBeDefined();
     expect(screen.getByRole('heading', { name: COPY.plan.title })).toBeDefined();
+    expect(screen.getByRole('link', { name: 'Відкрити аналітику' }).getAttribute('href')).toBe(
+      '/analytics',
+    );
   });
 
   it('a failed plan request offers a retry in the plan section while the silence list still shows', async () => {

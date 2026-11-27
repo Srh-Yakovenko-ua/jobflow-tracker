@@ -113,6 +113,10 @@ def test_uses_temperature_0_and_1024_tokens_unless_the_request_sets_them() -> No
         ),
         "names are short Ukrainian phrases",
         "explanation: one Ukrainian sentence",
+        "addressed to the candidate as ти",
+        "gender-neutral",
+        "never in the third person",
+        "«Твій досвід покриває React і Node.js, бракує AWS»",
     ],
 )
 def test_system_prompt_states_the_weight_and_coverage_rules(rule: str) -> None:
@@ -132,4 +136,4 @@ def test_checked_returns_the_model_output_unchanged() -> None:
 
 
 def test_prompt_version_equals_the_shared_ai_prompt_version() -> None:
-    assert (match.PROMPT_VERSION, load_prompt_versions()["match"]) == ("v3", "v3")
+    assert (match.PROMPT_VERSION, load_prompt_versions()["match"]) == ("v4", "v4")
