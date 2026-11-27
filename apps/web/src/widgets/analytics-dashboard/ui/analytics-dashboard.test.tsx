@@ -70,7 +70,7 @@ const BLOCKS: readonly Block[] = [
   'ghost',
 ];
 
-const TOASTER = 'Сповіщення';
+const TOASTER = uk.app.notifications;
 
 const NBSP = '\u00a0';
 
