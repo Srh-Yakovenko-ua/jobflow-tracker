@@ -158,6 +158,14 @@ async function autosaveTwice({ user, editor, notes, between }: AutosaveSetup) {
   });
 }
 
+async function renderNewestNote() {
+  const rendered = renderApplicationPage({ notes: { items: DESIGN_NOTES } });
+  const section = await findNotesSection();
+  const [newest] = await within(section).findAllByRole('listitem');
+  if (newest === undefined) throw new Error('the design notes are listed');
+  return { ...rendered, section, newest };
+}
+
 afterEach(() => {
   vi.useRealTimers();
 });
@@ -181,10 +189,7 @@ describe('ApplicationNotes', () => {
   );
 
   it('Редагувати on a saved note opens its text, Зберегти sends one PATCH and the list shows the new text', async () => {
-    const { user, notes } = renderApplicationPage({ notes: { items: DESIGN_NOTES } });
-    const section = await findNotesSection();
-    const [newest] = await within(section).findAllByRole('listitem');
-    if (newest === undefined) throw new Error('the design notes are listed');
+    const { user, notes, section, newest } = await renderNewestNote();
 
     await user.click(within(newest).getByRole('button', { name: 'Редагувати' }));
     const field = within(section).getByRole('textbox', { name: 'Текст нотатки' });
@@ -199,10 +204,7 @@ describe('ApplicationNotes', () => {
   });
 
   it('Скасувати in the note editor keeps the old text and sends nothing', async () => {
-    const { user, notes } = renderApplicationPage({ notes: { items: DESIGN_NOTES } });
-    const section = await findNotesSection();
-    const [newest] = await within(section).findAllByRole('listitem');
-    if (newest === undefined) throw new Error('the design notes are listed');
+    const { user, notes, section, newest } = await renderNewestNote();
 
     await user.click(within(newest).getByRole('button', { name: 'Редагувати' }));
     await user.type(within(section).getByRole('textbox', { name: 'Текст нотатки' }), ' ще');
@@ -214,10 +216,7 @@ describe('ApplicationNotes', () => {
   });
 
   it('Видалити on a saved note asks «Видалити нотатку?» and the confirm sends one DELETE', async () => {
-    const { user, notes } = renderApplicationPage({ notes: { items: DESIGN_NOTES } });
-    const section = await findNotesSection();
-    const [newest] = await within(section).findAllByRole('listitem');
-    if (newest === undefined) throw new Error('the design notes are listed');
+    const { user, notes, section, newest } = await renderNewestNote();
 
     await user.click(within(newest).getByRole('button', { name: 'Видалити' }));
     const confirm = await screen.findByRole('alertdialog', { name: 'Видалити нотатку?' });

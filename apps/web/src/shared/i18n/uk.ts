@@ -36,7 +36,7 @@ export const uk = {
   app: {
     brand: 'JobFlow',
     title: 'JobFlow · трекер пошуку роботи',
-    notifications: 'Сповіщення',
+    notifications: 'Спливаючі повідомлення',
     close: 'Закрити',
   },
   ui: {
