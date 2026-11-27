@@ -12,6 +12,7 @@ export const FORMS = {
   sample: { one: 'замір', few: 'заміри', other: 'замірів' },
   leftOut: { one: 'не входить', other: 'не входять' },
   followup: { one: 'фоллоу-ап', few: 'фоллоу-апи', other: 'фоллоу-апів' },
+  ofApplication: { one: 'відгуку', other: 'відгуків' },
 } as const satisfies Record<string, PluralForms>;
 
 export type SourceCounts = Readonly<{ applied: number; screened: number }>;

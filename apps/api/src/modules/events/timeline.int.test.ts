@@ -111,7 +111,7 @@ const DESIGN_TIMELINE: Omit<TimelineItem, 'id'>[] = [
   {
     type: 'stage_changed',
     occurredAt: '2026-08-13T10:00:00.000Z',
-    title: 'відгук надіслано',
+    title: 'Додано на етап «відгук»',
     meta: {
       fromStage: null,
       toStage: 'applied',
@@ -203,7 +203,7 @@ describe('the application timeline', () => {
 
     expect(response.status).toBe(200);
     const { items } = applicationTimelineResponseSchema.parse(response.body);
-    expect(items.map(({ title }) => title)).toEqual(['відгук надіслано']);
+    expect(items.map(({ title }) => title)).toEqual(['Додано на етап «відгук»']);
     expect(await stageEventsOf(testApp.prisma, id)).toHaveLength(3);
   });
 

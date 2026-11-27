@@ -22,7 +22,7 @@ export const shareCard = {
   failed: {
     eyebrow: 'Картинка',
     title: 'Не вдалося намалювати картинку',
-    body: 'Браузер не дав полотно для малювання. Спробуй ще раз або відкрий сторінку в іншому браузері.',
+    body: 'Спробуй ще раз або відкрий сторінку в іншому браузері.',
   },
   story: ({ sent, interviews, offers }: ShareStoryCounts) =>
     `${applications(sent)}, ${countedUk(interviews, TECH_INTERVIEW_FORMS)}, ${countedUk(offers, FORMS.offer)}`,

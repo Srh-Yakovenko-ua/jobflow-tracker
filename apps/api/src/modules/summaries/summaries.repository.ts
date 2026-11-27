@@ -62,6 +62,8 @@ export type SummaryStart = {
 
 export type SummaryJobsSince = Required<InTransaction> & { since: Date };
 
+export type SearchActivityWindow = { searchId: string; from: Date; to: Date };
+
 @Injectable()
 export class SummariesRepository {
   constructor(private readonly prisma: PrismaService) {}
@@ -85,6 +87,19 @@ export class SummariesRepository {
   async hasJobSince(userId: string, { since, tx }: SummaryJobsSince): Promise<boolean> {
     const count = await tx.aiJob.count({
       where: { userId, kind: SUMMARY_KIND, createdAt: { gte: since } },
+    });
+    return count > 0;
+  }
+
+  async hasActivityIn(
+    userId: string,
+    { searchId, from, to, tx }: SearchActivityWindow & Required<InTransaction>,
+  ): Promise<boolean> {
+    const count = await tx.stageEvent.count({
+      where: {
+        occurredAt: { gte: from, lt: to },
+        application: { userId, searchId, deletedAt: null, isDraft: false },
+      },
     });
     return count > 0;
   }

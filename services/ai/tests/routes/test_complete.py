@@ -53,6 +53,7 @@ FIXTURE_REPLY = (FIXTURES / "vacancy_parse.json").read_text()
 FIXTURE_FOLLOWUP = (FIXTURES / "followup.json").read_text()
 FIXTURE_SUMMARY = (FIXTURES / "monthly_summary.json").read_text()
 INVENTED_SUMMARY = summary_of(ending=" 37 відгуків")
+OFFER_SUMMARY = summary_of(ending=" 1 offer")
 UNTRACED_PREP = json.dumps(interview_prep_reply(topics=with_basis(1, "Kubernetes")))
 FOUR_TOPICS = json.dumps(
     interview_prep_reply(topics=INTERVIEW_PREP_FIXTURE["topics"][:4])
@@ -81,6 +82,10 @@ RULES_REPAIR = (
 )
 NUMBER_REPAIR = (
     "Your answer broke these rules: the number 37 is not in the input. "
+    "Write the fields these rules name again from the start and change them as the rules say; a copy of your previous answer is rejected. Answer with JSON that matches the schema and keeps every rule."
+)
+RAW_NAME_REPAIR = (
+    "Your answer broke these rules: the word offer is a raw input name; write the Ukrainian name or words. "
     "Write the fields these rules name again from the start and change them as the rules say; a copy of your previous answer is rejected. Answer with JSON that matches the schema and keeps every rule."
 )
 
@@ -114,7 +119,7 @@ async def test_returns_the_match_requirements_without_a_score() -> None:
         {
             "output": MATCH_FIXTURE,
             "model": "fake",
-            "promptVersion": "v3",
+            "promptVersion": "v4",
             "tokensIn": 100,
             "tokensOut": 50,
         },
@@ -247,12 +252,28 @@ async def test_regenerates_a_monthly_summary_with_an_invented_number_once() -> N
     assert (response.status_code, body["output"], body["promptVersion"]) == (
         200,
         MONTHLY_SUMMARY_FIXTURE,
-        "v1",
+        "v2",
     )
     assert [
         (message.role, message.content) for message in fake.requests[1].messages[1:]
     ] == [("assistant", INVENTED_SUMMARY), ("user", NUMBER_REPAIR)]
     assert (len(fake.requests), fake.requests[0].temperature) == (2, 0.3)
+
+
+async def test_repairs_a_monthly_summary_naming_a_stage_in_english_once() -> None:
+    fake = FakeAiProvider(replies=[OFFER_SUMMARY, FIXTURE_SUMMARY])
+
+    response = await post_as_worker(
+        MONTHLY_SUMMARY_PATH, monthly_summary_request(), app=build_app(provider=fake)
+    )
+
+    assert (response.status_code, response.json()["output"]) == (
+        200,
+        MONTHLY_SUMMARY_FIXTURE,
+    )
+    assert [
+        (message.role, message.content) for message in fake.requests[1].messages[1:]
+    ] == [("assistant", OFFER_SUMMARY), ("user", RAW_NAME_REPAIR)]
 
 
 @pytest.mark.parametrize(
@@ -271,6 +292,13 @@ async def test_regenerates_a_monthly_summary_with_an_invented_number_once() -> N
             [INVENTED_SUMMARY, INVENTED_SUMMARY],
             "the number 37 is not in the input",
             id="monthly_summary_keeps_the_number",
+        ),
+        pytest.param(
+            MONTHLY_SUMMARY_PATH,
+            monthly_summary_request(),
+            [OFFER_SUMMARY, summary_of(ending=" final")],
+            "the word final is a raw input name; write the Ukrainian name or words",
+            id="monthly_summary_keeps_an_english_stage",
         ),
         pytest.param(
             INTERVIEW_PREP_PATH,

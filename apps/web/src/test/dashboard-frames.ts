@@ -53,7 +53,7 @@ export function meterOf(frame: HTMLElement): (string | null)[] {
 }
 
 export function smallNoteOf(frame: HTMLElement): (string | null)[] {
-  const note = within(frame).getByText('n<5').parentElement;
+  const note = within(frame).getByText('мало даних').parentElement;
   return within(note ?? frame)
     .getAllByRole('listitem')
     .map(({ textContent }) => textContent);

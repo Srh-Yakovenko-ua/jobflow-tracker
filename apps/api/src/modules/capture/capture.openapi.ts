@@ -86,7 +86,7 @@ export const CAPTURE_OPENAPI_PATHS: RouteConfig[] = [
     tags: ['capture'],
     summary: 'Confirm a draft',
     description:
-      'Clears the draft flag of a captured Application, so it reads as a normal card, and in the same transaction records the draft_confirmed timeline row and the application.updated event with fields ["isDraft"]. A draft whose vacancy parse failed can be confirmed. Answers 409 for an Application that is not a draft ("Application is not a draft"), a repeated confirm included, and while its vacancy parse is still queued or processing ("Vacancy parse is still running").',
+      'Clears the draft flag of a captured Application, so it reads as a normal card, and in the same transaction records the draft_confirmed timeline row and the application.updated event with fields ["isDraft"], and marks the unread ai_done and ai_failed vacancy_parse notifications of that Application read. A draft whose vacancy parse failed can be confirmed. Answers 409 for an Application that is not a draft ("Application is not a draft"), a repeated confirm included, and while its vacancy parse is still queued or processing ("Vacancy parse is still running").',
     request: { params: applicationIdParams },
     responses: {
       204: { description: 'The Application is no longer a draft' },

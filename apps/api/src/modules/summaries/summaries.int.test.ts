@@ -17,10 +17,12 @@ import {
   archive,
   planItemPath,
   planPath,
+  searcherWithEvent,
   SUMMARIES_PATH,
   summaryOwner,
 } from '../../test/summaries.js';
 import { NOW, settableClock } from '../../test/time.js';
+import { SummariesRepository } from './summaries.repository.js';
 
 vi.hoisted(() => {
   vi.stubEnv('RATE_LIMIT_AI_PER_HOUR', '2');
@@ -45,7 +47,7 @@ describe('the monthly summary API', () => {
     callRoute(testApp.app, { method: 'post', path: planPath(aiJobId), accessToken });
 
   it('answers 202 with a queued monthly_summary job and writes the request event of the month that ended', async () => {
-    const olena = await signedInWithSearch(testApp.prisma);
+    const olena = await searcherWithEvent(testApp.prisma);
 
     const response = await generate(olena);
 
@@ -74,7 +76,7 @@ describe('the monthly summary API', () => {
   });
 
   it('answers the running job to a second request and writes one event', async () => {
-    const olena = await signedInWithSearch(testApp.prisma);
+    const olena = await searcherWithEvent(testApp.prisma);
 
     const first = await generate(olena);
     const second = await generate(olena);
@@ -90,9 +92,45 @@ describe('the monthly summary API', () => {
     expect(await testApp.prisma.aiJob.count()).toBe(0);
   });
 
-  it('answers 429 to the third request of one user in an hour, and not to another user', async () => {
-    const olena = await signedInWithSearch(testApp.prisma);
+  it.each([
+    {
+      case: 'nothing happened in the active search during the month that ended',
+      event: { occurredAt: new Date('2026-10-01T09:00:00.000Z') },
+    },
+  ])('answers 409 and stores no job or event when $case', async ({ event }) => {
+    const olena = await searcherWithEvent(testApp.prisma, event);
+
+    const response = await generate(olena);
+
+    expect([response.status, response.body]).toEqual([
+      409,
+      expect.objectContaining({ type: 'conflict', detail: 'No activity in the month' }),
+    ]);
+    expect(await testApp.prisma.aiJob.count()).toBe(0);
+    expect(await outboxRows(testApp.prisma, { eventType: 'summary.requested' })).toEqual([]);
+  });
+
+  it("finds the month's stage events in OLENA's search for OLENA only", async () => {
+    const olena = await searcherWithEvent(testApp.prisma);
     const bohdan = await signedInWithSearch(testApp.prisma);
+    const repository = testApp.app.get(SummariesRepository);
+    const september = {
+      searchId: olena.searchId,
+      from: new Date('2026-08-31T21:00:00.000Z'),
+      to: new Date('2026-09-30T21:00:00.000Z'),
+    };
+    const activeFor = (userId: string) =>
+      testApp.prisma.$transaction((tx) => repository.hasActivityIn(userId, { ...september, tx }));
+
+    expect(await Promise.all([activeFor(olena.userId), activeFor(bohdan.userId)])).toEqual([
+      true,
+      false,
+    ]);
+  });
+
+  it('answers 429 to the third request of one user in an hour, and not to another user', async () => {
+    const olena = await searcherWithEvent(testApp.prisma);
+    const bohdan = await searcherWithEvent(testApp.prisma);
 
     await expectHourlyAiLimit({ caller: olena, send: generate });
     expect((await generate(bohdan)).status).toBe(202);

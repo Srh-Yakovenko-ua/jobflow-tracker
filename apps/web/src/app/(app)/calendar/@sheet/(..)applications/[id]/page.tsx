@@ -1,1 +1,1 @@
-export { ApplicationSheetRoute as default } from '@/widgets/application-page';
+export { CalendarApplicationSheetRoute as default } from '@/widgets/application-page';

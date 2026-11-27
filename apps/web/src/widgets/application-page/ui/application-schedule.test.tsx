@@ -267,14 +267,14 @@ describe('ApplicationSchedule', () => {
     });
   });
 
-  it('Завантажити .ics fetches the file with the session and saves it as jobflow-event.ics', async () => {
+  it('Завантажити для календаря fetches the file with the session and saves it as jobflow-event.ics', async () => {
     setAccessToken(SESSION_TOKENS.fresh);
     const download = stubFileDownload();
     const { user, scheduledEvents } = renderApplicationPage({
       scheduledEvents: { items: [UPCOMING_EVENT] },
     });
 
-    await user.click(await screen.findByRole('button', { name: 'Завантажити .ics' }));
+    await user.click(await screen.findByRole('button', { name: 'Завантажити для календаря' }));
 
     await vi.waitFor(() => {
       expect(download.revoked()).toHaveLength(1);

@@ -1,10 +1,8 @@
 import type { ApplicationResponse, ResumeVersionListResponse } from '@jobflow/shared';
 import { useQuery } from '@tanstack/react-query';
 
-import { resumeVersionsQueryOptions } from '@/entities/resume';
+import { isProfileReading, resumeVersionsQueryOptions } from '@/entities/resume';
 import { useLivePollMs } from '@/shared/api';
-
-import { isProfileRead } from '../lib/match-view';
 
 export function useLinkedVersion({ resumeVersionId }: ApplicationResponse) {
   const pollMs = useLivePollMs();
@@ -15,7 +13,7 @@ export function useLinkedVersion({ resumeVersionId }: ApplicationResponse) {
     enabled: resumeVersionId !== null,
     select: linkedOf,
     refetchInterval: ({ state }) =>
-      state.data !== undefined && isProfileRead(linkedOf(state.data)?.aiProfileStatus)
+      state.data !== undefined && isProfileReading(linkedOf(state.data)?.aiProfileStatus)
         ? pollMs
         : false,
   });

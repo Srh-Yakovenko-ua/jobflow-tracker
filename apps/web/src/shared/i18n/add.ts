@@ -15,7 +15,7 @@ const PARSE_LIMIT_TITLE = 'Забагато розборів за годину';
 export const add = {
   title: 'Додавання вакансії',
   eyebrow: 'Нова вакансія',
-  headline: ['Три способи', 'додати відгук'],
+  headline: ['Три способи', 'додати вакансію'],
   lead: 'Букмарклет на щодень, вставка тексту з месенджера, ручний ввід, коли вакансії ніде немає.',
   bookmarklet: {
     eyebrow: '01 · букмарклет',
@@ -24,11 +24,11 @@ export const add = {
     description: 'Працює на Djinni, DOU, robota.ua, LinkedIn і сайтах компаній. Розбір іде у фоні.',
     footnote: 'не читає нічого, крім відкритої вкладки',
   },
+  importLink: 'Є таблиця? Імпортуй CSV',
   paste: {
     eyebrow: '02 · вставка тексту',
     title: 'Вставити опис вакансії',
-    description:
-      'З телеграму, листа чи скріншота. AI витягне компанію, позицію, вилку, стек і Match Score.',
+    description: 'Текст із телеграму чи листа. AI знайде компанію, посаду, вилку і стек.',
     fields: { text: 'Текст вакансії', url: 'Посилання на вакансію' },
     placeholders: {
       text: 'Встав сюди весь текст вакансії разом із зайвим, розберемось…',
@@ -41,18 +41,17 @@ export const add = {
     },
     submit: 'Розібрати текст',
     shortcut: { mac: '⌘ Enter', other: 'Ctrl Enter', or: 'або' },
-    added: 'Текст розбирається у фоні, поля підтягнуться самі.',
+    added: 'Картку додано. Перевір поля нижче.',
   },
   manual: {
     eyebrow: '03 · вручну',
-    title: 'Заповнити самому',
-    description:
-      "Обов'язкові тільки компанія і позиція. Match Score у такої картки не буде, і це нормально.",
-    fields: { company: 'Компанія', position: 'Позиція', source: 'Джерело' },
+    title: 'Заповнити вручну',
+    description: "Обов'язкові лише компанія і посада. Без тексту вакансії Match Score не буде.",
+    fields: { company: 'Компанія', position: 'Посада', source: 'Джерело' },
     placeholders: { company: 'Назва компанії', position: 'Наприклад, Middle QA Engineer' },
     errors: {
       company: 'Вкажи назву компанії одним коротким рядком',
-      position: 'Вкажи позицію одним коротким рядком',
+      position: 'Вкажи посаду одним коротким рядком',
       source: 'Обери джерело зі списку',
     },
     submit: 'Створити картку',
@@ -76,7 +75,7 @@ export const add = {
     },
     stillRunning: {
       title: 'Запит ще обробляється',
-      description: `Перша спроба ще виконується. Спробуй ще раз за хвилину. ${FILLED_STAYS}`,
+      description: `Спробуй ще раз за хвилину. ${FILLED_STAYS}`,
     },
     parseLimit: { title: PARSE_LIMIT_TITLE, ...LIMIT_RETRY },
     requestLimit: { title: 'Забагато запитів', ...LIMIT_RETRY },
@@ -88,13 +87,12 @@ export const add = {
     panel: {
       title: 'Картка вже на дошці',
       body: (stage: string) =>
-        `Скелетон уже в колонці «${stage}», розбір іде у черзі. Сторінку можна закрити.`,
+        `Картка вже на етапі «${stage}», AI дочитує опис. Сторінку можна закрити.`,
     },
   },
   review: {
     title: 'Перевір поля і готово',
-    eyebrow: (step: number, total: number) =>
-      `крок ${String(step)} з ${String(total)} · розпізнано`,
+    eyebrow: (step: number, total: number) => `Крок ${String(step)}/${String(total)} · розпізнано`,
     confidence: { exact: 'точно', check: 'перевір' },
     chip: (label: string, mark: string) => `${label}: ${mark}`,
     salary: (currency: string | null) => (currency === null ? 'Вилка' : `Вилка, ${currency}`),
@@ -106,7 +104,7 @@ export const add = {
         ? `${label}: цитати в тексті вакансії не знайшлося.`
         : `${label}: у тексті написано «${quote}».`,
     evidenceMissing: 'Цитати в тексті вакансії не знайшлося',
-    confirm: 'Підтвердити і на дошку',
+    confirm: 'Зберегти',
     open: 'Відкрити повну картку',
     back: 'Назад',
   },
@@ -117,15 +115,14 @@ export const add = {
   failed: {
     title: 'Картка створена, але порожня',
     reasons: {
-      noFields:
-        'У тексті не було ні назви компанії, ні позиції, схоже, скопіювався тільки блок вимог.',
+      noFields: 'У тексті немає компанії й посади, схоже, скопіювалися лише вимоги.',
       timeout: 'AI не встиг відповісти. Це збій на нашому боці, з текстом усе гаразд.',
       budget: 'Ліміт AI-розборів вичерпано. Повторити розбір вийде, коли ліміт оновиться.',
       providerDown: 'Сервіс AI зараз недоступний. Це збій на нашому боці, з текстом усе гаразд.',
       generic: 'AI не зміг розібрати цей текст.',
     },
     kept: 'Текст цілим лежить у нотатці картки.',
-    next: "Заповни два поля, і картка стане повноцінною; Match Score порахується, коли з'явиться позиція.",
-    manualTitle: 'Заповни компанію і позицію',
+    next: 'Заповни компанію й посаду, тоді порахується Match Score.',
+    manualTitle: 'Заповни компанію і посаду',
   },
 } as const;

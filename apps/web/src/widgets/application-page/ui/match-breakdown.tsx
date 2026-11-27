@@ -18,6 +18,7 @@ type MatchListProps = Readonly<{
   title: StaggeredListTitle;
   rows: readonly MatchRow[];
   className?: string;
+  empty?: string | undefined;
 }>;
 
 const COPY = uk.applicationPage.match;
@@ -34,10 +35,11 @@ function MatchBar({ score }: Readonly<{ score: number }>) {
   );
 }
 
-function MatchList({ title, rows, className }: MatchListProps) {
+function MatchList({ title, rows, className, empty }: MatchListProps) {
   return (
     <StaggeredList
       label={title}
+      empty={empty}
       className={cn('flex flex-col gap-2 text-[14px] leading-[1.45]', className)}
     >
       {rows.map((row) => (
@@ -68,6 +70,7 @@ export function MatchBreakdown({ match }: MatchBreakdownProps) {
             title={{ text: COPY.missing, marker: 'dashed' }}
             rows={rows.missing}
             className="text-ink-2"
+            empty={rows.missing.length === 0 ? COPY.noGaps : undefined}
           />
           <p className="pl-3 text-[13px] leading-[1.55] text-ink-3 shadow-[inset_2px_0_0_var(--line-soft)]">
             {match.explanation}

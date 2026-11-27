@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { buildMatchOutput, buildResumeParseOutput } from '../../testing/index.js';
 import { issuePathsOf } from '../test/zod-issues.js';
 import {
+  hasMatchVacancy,
   MATCH_LIMITS,
   matchFailure,
   matchInputSchema,
@@ -121,6 +122,17 @@ describe('matchOutputSchema', () => {
   ])('refuses $label at $path', ({ patch, path }) => {
     const result = matchOutputSchema.safeParse({ ...buildMatchOutput(), ...patch });
     expect(issuePathsOf(result)).toEqual([path]);
+  });
+});
+
+describe('hasMatchVacancy', () => {
+  it.each([
+    { rawText: 'React developer', stack: [], expected: true },
+    { rawText: null, stack: ['React'], expected: true },
+    { rawText: '  \n', stack: [], expected: false },
+    { rawText: null, stack: [], expected: false },
+  ])('says $expected for text $rawText and stack $stack', ({ expected, ...vacancy }) => {
+    expect(hasMatchVacancy(vacancy)).toBe(expected);
   });
 });
 

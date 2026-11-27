@@ -10,21 +10,31 @@ import { SheetClose } from '@/shared/ui/sheet';
 
 export type ApplicationPageMode = 'page' | 'sheet';
 
+export type ApplicationOrigin = 'board' | 'table' | 'calendar';
+
 export type PageTopBarProps = Readonly<{
   application: ApplicationResponse;
-  view: { mode: ApplicationPageMode; timeZone: string | undefined };
+  view: { mode: ApplicationPageMode; origin: ApplicationOrigin; timeZone: string | undefined };
 }>;
 
+type BackLinkProps = Readonly<{ mode: ApplicationPageMode; origin: ApplicationOrigin }>;
+
 const COPY = uk.applicationPage;
+
+const BACK_HREF: Record<ApplicationOrigin, string> = {
+  board: AUTH_ROUTES.home,
+  table: '/applications',
+  calendar: '/calendar',
+};
 
 const BACK =
   'touch-target inline-flex min-h-10 items-center gap-2 rounded-sm text-[13.5px] text-ink-3 transition-colors duration-(--duration-fast) ease-standard hover:text-ink active:text-ink';
 
-function BackToBoard({ mode }: Readonly<{ mode: ApplicationPageMode }>) {
+function BackLink({ mode, origin }: BackLinkProps) {
   const label = (
     <>
       <ChevronLeft aria-hidden size={16} strokeWidth={1.9} />
-      {COPY.back}
+      {COPY.back[origin]}
     </>
   );
   if (mode === 'sheet') {
@@ -37,7 +47,7 @@ function BackToBoard({ mode }: Readonly<{ mode: ApplicationPageMode }>) {
     );
   }
   return (
-    <Link href={AUTH_ROUTES.home} className={BACK}>
+    <Link href={BACK_HREF[origin]} className={BACK}>
       {label}
     </Link>
   );
@@ -47,7 +57,7 @@ export function PageTopBar({ application, view }: PageTopBarProps) {
   const created = formatDayMonth({ at: new Date(application.createdAt), timeZone: view.timeZone });
   return (
     <div className="flex items-center justify-between gap-4 border-b border-line pb-2">
-      <BackToBoard mode={view.mode} />
+      <BackLink mode={view.mode} origin={view.origin} />
       <p className="eyebrow text-ink-3 tabular-nums">{COPY.created(created)}</p>
     </div>
   );

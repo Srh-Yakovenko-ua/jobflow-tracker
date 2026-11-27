@@ -9,7 +9,7 @@ type SilenceCopy = { days: number; threshold: number };
 type RemindCopy = SilenceCopy & { remindOn: string };
 
 export const timeline = {
-  kicker: (count: number) => `Таймлайн · ${countedUk(count, EVENT_FORMS)}`,
+  kicker: (count: number) => `Історія · ${countedUk(count, EVENT_FORMS)}`,
   heading: 'Історія відгуку',
   today: 'сьогодні',
   waiting: (stageGenitive: string) => `Чекаєш на відповідь після ${stageGenitive}`,
@@ -32,7 +32,7 @@ export const timeline = {
   daysInStage: (days: number, stageGenitive: string) =>
     `${daysOf(days)} на етапі ${stageGenitive}.`,
   reason: (label: string) => `Причина: ${label}.`,
-  via: (source: string) => `Через ${source}.`,
+  via: (source: string) => `Джерело: ${source}.`,
   silenceMeta: 'Автоматична подія. Картка приглушилась на дошці.',
   fieldsChecked: {
     alone: 'Поля перевірено вручну',

@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 
 import { DeleteApplicationDialog } from '@/features/delete-application';
 import { ScheduleEventDialog, type SchedulePlan } from '@/features/schedule-event';
+import { focusPageHeading } from '@/shared/lib/page-heading';
 import { useSheetClose } from '@/shared/ui/sheet';
 
 import type { ApplicationPageState, ApplicationPanel } from '../model/use-application-page';
@@ -22,6 +23,7 @@ function useLeaveAfterDelete(): () => void {
   if (closeSheet !== null) return closeSheet;
   return () => {
     router.replace(AUTH_ROUTES.home);
+    focusPageHeading();
   };
 }
 

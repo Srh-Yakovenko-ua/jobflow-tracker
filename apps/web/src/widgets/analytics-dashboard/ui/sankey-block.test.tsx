@@ -44,7 +44,7 @@ const BIGGEST_DROP = 'найбільша втрата';
 
 const NOTES = 'Висновки про воронку';
 
-const GHOST_LEAD = 'Сіра гілка не твоя провина.';
+const GHOST_LEAD = 'Сіра гілка: ghosted.';
 
 const REASONS_TITLE = "На техінтерв'ю тебе валять алгоритми";
 
@@ -201,7 +201,7 @@ describe('SankeyBlock', () => {
       expect(notesText()).toHaveLength(3);
     });
     expect(notesText().at(-1)).toBe(
-      'Сіра гілка не твоя провина. 17 компаній не відповіли. Вони не входять у розрахунок конверсій.',
+      'Сіра гілка: ghosted. 17 компаній не відповіли. Вони не входять у розрахунок конверсій.',
     );
   });
 

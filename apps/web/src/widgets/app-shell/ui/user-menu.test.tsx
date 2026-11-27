@@ -77,6 +77,17 @@ describe('UserMenu', () => {
     expect(within(menu).getByText(ME_RESPONSE.user.email)).toBeDefined();
   });
 
+  it('without a name the open menu shows the email once', async () => {
+    const nameless = { ...ME_RESPONSE, user: { ...ME_RESPONSE.user, displayName: null } };
+    server.use(meRoute(() => HttpResponse.json(nameless)));
+    const { user, trigger } = renderUserMenu();
+    await within(trigger).findByText('A');
+    await user.click(trigger);
+    const menu = await screen.findByRole('menu');
+
+    expect(within(menu).getAllByText(ME_RESPONSE.user.email)).toHaveLength(1);
+  });
+
   it('choosing Темна with the keyboard paints the page dark and remembers it in the cookie', async () => {
     server.use(meRoute());
     const { user, menu } = await openWithKeyboard();

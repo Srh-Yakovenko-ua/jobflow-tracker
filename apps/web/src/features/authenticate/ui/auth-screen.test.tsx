@@ -24,8 +24,7 @@ type ProvidersRow = {
 
 const MODES: readonly AuthMode[] = ['login', 'register'];
 
-const PRIVACY =
-  'Твої дані бачиш лише ти. У модель ідуть тексти вакансій, нотатки туди не потрапляють.';
+const PRIVACY = 'Твої дані бачиш лише ти. Нотатки в AI не потрапляють.';
 
 const PROVIDERS_KEY = authKeys.oauthProviders();
 

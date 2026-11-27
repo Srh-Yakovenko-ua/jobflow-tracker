@@ -207,7 +207,7 @@ describe('CommandPalette', () => {
     });
   });
 
-  it('with the shipped flags it offers the seven pages, then add, paste, the move, the follow-up, analytics, the theme and the cheat sheet for the focused card', async () => {
+  it('with the shipped flags it offers the seven pages, the CSV import, the notifications and the offer comparison, then add, paste, the move, the follow-up, analytics, the theme and the cheat sheet for the focused card', async () => {
     paletteRoutes();
     const { user } = await renderWithFocusedCard();
 
@@ -222,6 +222,9 @@ describe('CommandPalette', () => {
       'Нагадування',
       'Налаштування',
       'Таблиця',
+      'Імпорт з таблиці',
+      'Сповіщення',
+      'Порівняння оферів',
       'Додати вакансію',
       'Вставити текст вакансії',
       'Перемістити в…',

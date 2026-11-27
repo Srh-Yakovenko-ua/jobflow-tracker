@@ -17,7 +17,10 @@ const LINKED: MatchViewInput = {
   relinkedTo: null,
   versionProfileStatus: 'done',
   isDraft: false,
+  vacancy: { rawText: null, stack: ['React'] },
 };
+
+const NO_VACANCY = { rawText: null, stack: [] };
 
 const RELINKED: MatchViewInput = {
   ...LINKED,
@@ -100,6 +103,32 @@ describe('matchViewOf', () => {
 
   it('a relink on a draft to a read CV reads unscored, since a draft gets no match job', () => {
     expect(matchViewOf({ ...RELINKED, isDraft: true }).kind).toBe('unscored');
+  });
+
+  it.for<{ name: string; input: MatchViewInput }>([
+    { name: 'a card with no vacancy text and no stack', input: { ...LINKED, vacancy: NO_VACANCY } },
+    {
+      name: 'a relink on a card with no vacancy text, since no job will come',
+      input: { ...RELINKED, vacancy: NO_VACANCY },
+    },
+    {
+      name: 'a done job on a card whose text was blank',
+      input: { ...LINKED, vacancy: { rawText: '  ', stack: [] }, response: matchJob('done') },
+    },
+  ])('$name asks for the vacancy text', ({ input }) => {
+    expect(matchViewOf(input).kind).toBe('no_vacancy');
+  });
+
+  it('a card with no vacancy text keeps a breakdown already counted for the linked version', () => {
+    expect(matchViewOf({ ...LINKED, vacancy: NO_VACANCY, response: DESIGN_MATCH }).kind).toBe(
+      'scored',
+    );
+  });
+
+  it('a card with vacancy text but no stack is not asked for the text', () => {
+    const vacancy = { rawText: 'Senior React, remote', stack: [] };
+
+    expect(matchViewOf({ ...LINKED, vacancy }).kind).toBe('unscored');
   });
 
   it('the relink marker of another version does not hold the linked one pending', () => {

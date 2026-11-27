@@ -106,8 +106,8 @@ describe('chipsOf', () => {
     const unknown = resumeVersionIdOf(9);
 
     expect(chipsOf({ resumeVersion: [unknown, V2.id] })).toStrictEqual([
-      { id: unknown, label: 'невідома версія CV', removal: { resumeVersion: [V2.id] } },
-      { id: V2.id, label: 'невідома версія CV', removal: { resumeVersion: [unknown] } },
+      { id: unknown, label: 'невідома версія резюме', removal: { resumeVersion: [V2.id] } },
+      { id: V2.id, label: 'невідома версія резюме', removal: { resumeVersion: [unknown] } },
     ]);
   });
 

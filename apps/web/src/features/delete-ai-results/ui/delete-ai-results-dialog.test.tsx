@@ -9,9 +9,9 @@ import { server } from '@/test/server';
 
 import { DeleteAiResultsDialog } from './delete-ai-results-dialog';
 
-const TRIGGER = { name: 'Видалити всі AI-результати' } as const;
+const TRIGGER = { name: 'Видалити все, що зробив AI' } as const;
 
-const DIALOG = { name: 'Видалити всі AI-результати?' } as const;
+const DIALOG = { name: 'Видалити все, що зробив AI?' } as const;
 
 async function openDialog(reply?: HttpResponseResolver) {
   const route = deleteAiResultsRoute(reply);
@@ -29,7 +29,7 @@ describe('DeleteAiResultsDialog', () => {
 
     expect(screen.getByRole('alertdialog', { description: /^Розбори/ })).toBe(dialog);
     expect(dialog.textContent).toContain(
-      'Розбори, Match Score, саммарі, драфти й підготовки зникнуть назавжди. Вакансії, резюме й збережені плани лишаться.',
+      'Розбори, Match Score, саммарі, листи й підготовки зникнуть назавжди. Вакансії, резюме й плани лишаться.',
     );
   });
 
@@ -62,7 +62,7 @@ describe('DeleteAiResultsDialog', () => {
     });
     expect(deletes).toEqual(['DELETE']);
     expect(document.activeElement).toBe(trigger);
-    expect(await screen.findByText('AI-результати видалено')).toBeDefined();
+    expect(await screen.findByText('Усе, що зробив AI, видалено')).toBeDefined();
   });
 
   it('a failed delete says so and keeps the dialog open', async () => {
@@ -72,7 +72,7 @@ describe('DeleteAiResultsDialog', () => {
 
     await user.click(screen.getByRole('button', { name: 'Видалити' }));
 
-    expect(await screen.findByText('Не вдалося видалити AI-результати')).toBeDefined();
+    expect(await screen.findByText('Не вдалося видалити зроблене AI')).toBeDefined();
     expect(screen.getByRole('alertdialog', DIALOG)).toBeDefined();
     expect(deletes).toEqual(['DELETE']);
   });

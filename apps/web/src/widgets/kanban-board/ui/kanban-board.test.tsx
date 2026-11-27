@@ -98,18 +98,20 @@ function skeletonStripClasses(): string[][] {
 afterEach(() => {
   focusManager.setFocused(undefined);
   vi.useRealTimers();
+  vi.restoreAllMocks();
+  Reflect.deleteProperty(HTMLElement.prototype, 'scrollBy');
   push.mockClear();
 });
 
 describe('KanbanBoard', () => {
-  it('heads the five open columns in stage order with the full count, then the three outcome strips, under the count of cards in work', async () => {
+  it('heads the five open columns in stage order with the full count, then the three outcome strips, under the count of cards in work and offers', async () => {
     renderBoard({
       ...DESIGN_BOARD,
       counts: { applied: 8, screening: 5, tech_interview: 3, final: 1, offer: 1 },
     });
     await screen.findByText('Senior Frontend Engineer');
 
-    expect(screen.getByText('активний пошук · 17 карток у роботі')).toBeDefined();
+    expect(screen.getByText('активний пошук · 17 карток у роботі · 1 офер')).toBeDefined();
     expect(screen.getAllByRole('heading', { level: 2 })).toEqual(
       headingsNamed([
         'відгук 8',
@@ -124,11 +126,50 @@ describe('KanbanBoard', () => {
     );
   });
 
+  it('a row wider than the screen offers «Прокрутити до колонок праворуч», which scrolls right and leaves once the last column shows', async () => {
+    vi.spyOn(HTMLElement.prototype, 'scrollWidth', 'get').mockReturnValue(2000);
+    vi.spyOn(HTMLElement.prototype, 'clientWidth', 'get').mockReturnValue(1000);
+    const scrollBy = vi.fn<(options: ScrollToOptions) => void>();
+    Object.defineProperty(HTMLElement.prototype, 'scrollBy', {
+      value: scrollBy,
+      configurable: true,
+    });
+    const { user } = renderBoard(DESIGN_BOARD);
+    await screen.findByText('Senior Frontend Engineer');
+
+    await user.click(screen.getByRole('button', { name: 'Прокрутити до колонок праворуч' }));
+
+    expect(scrollBy).toHaveBeenCalledWith(expect.objectContaining({ left: 800 }));
+    vi.spyOn(HTMLElement.prototype, 'scrollLeft', 'get').mockReturnValue(1000);
+    const scroller = scrollBy.mock.contexts[0];
+    if (!(scroller instanceof HTMLElement)) throw new Error('scrollBy ran off an element');
+    fireEvent.scroll(scroller);
+    await waitFor(() => {
+      expect(screen.queryByRole('button', { name: 'Прокрутити до колонок праворуч' })).toBeNull();
+    });
+  });
+
+  it('a board that fits the screen shows no scroll button', async () => {
+    renderBoard(DESIGN_BOARD);
+    await screen.findByText('Senior Frontend Engineer');
+
+    expect(screen.queryByRole('button', { name: 'Прокрутити до колонок праворуч' })).toBeNull();
+  });
+
+  it('a board without an offer leaves the offer count out of the eyebrow', async () => {
+    renderBoard({
+      counts: { applied: 2 },
+      cards: cardsIn({ stage: 'applied', count: 2, from: 601 }),
+    });
+
+    expect(await screen.findByText('активний пошук · 2 картки в роботі')).toBeDefined();
+  });
+
   it('on the 54-card board keeps відмова, ghosted and відкликав folded into strips with their counts, 4 cards in work', async () => {
     renderBoard(DESIGN_BOARD);
     await screen.findByText('Senior Frontend Engineer');
 
-    expect(screen.getByText('активний пошук · 4 картки в роботі')).toBeDefined();
+    expect(screen.getByText('активний пошук · 4 картки в роботі · 1 офер')).toBeDefined();
     for (const name of ['відмова 32', 'ghosted 17', 'відкликав 0']) {
       expect(screen.getByRole('button', { name }).getAttribute('aria-expanded')).toBe('false');
     }
@@ -284,7 +325,7 @@ describe('KanbanBoard', () => {
     await screen.findByText('Senior Frontend Engineer');
 
     const final = within(columnNamed('фінал 0'));
-    expect(final.getByText(BOARD.finalNote[1])).toBeDefined();
+    expect(final.getByText(BOARD.finalNote[0])).toBeDefined();
     expect(final.queryByText(BOARD.columnEmpty[0])).toBeNull();
   });
 
@@ -312,13 +353,13 @@ describe('KanbanBoard', () => {
     expect(screen.getByText(state.text).closest('[role]')?.getAttribute('role')).toBe(state.role);
   });
 
-  it('a фінал card 13 days on the stage reads its norm from the fetched norms: 13 днів на етапі · норма 17', async () => {
+  it('a фінал card 13 days on the stage reads its norm from the fetched norms: 13 днів на етапі · зазвичай 17 дн', async () => {
     server.use(normsRoute(DESIGN_NORMS));
     renderBoard(FINAL_NORM_BOARD);
     await screen.findByText('Lead Frontend Engineer');
 
     const final = within(columnNamed('фінал 1'));
-    expect(await final.findByText('13 днів на етапі · норма 17')).toBeDefined();
+    expect(await final.findByText('13 днів на етапі · зазвичай 17 дн')).toBeDefined();
   });
 
   it('a stage the service has too few data points for shows no norm on its card', async () => {

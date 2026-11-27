@@ -13,7 +13,7 @@ const DEMO = devUk.devUi.errorPanels.crashDemo;
 const EMPTY_TITLES = [
   'Тут буде твоя воронка',
   'Завантаж перше резюме',
-  'Усі відповіли',
+  'Тихих карток немає',
   'Немає карток за «kafka»',
   '17 компаній не відповіли',
   'Офер прийнято',
@@ -33,15 +33,15 @@ const SPECIMEN_LINES = [
   'Резюме важить 8,4 МБ',
   'Не вдалося завантажити',
   'код 5f3a · 07.09, 16:04',
-  'Сторінка не завантажилась, але дані цілі: вони не залежать від цього екрана. Ми вже отримали звіт.',
+  'Сторінка не завантажилась, але дані цілі. Ми вже отримали звіт.',
   'CV v2 працює краще',
   "41% проти 24%. Нові відгуки прив'язуємо до v2.",
   'Перші висновки з 10 відгуків, прогноз з 15. Зараз 4.',
 ];
 
 const STATE_ACTIONS = [
-  'Спробувати фоллоу-ап по 4 свіжих',
-  'Заархівувати пошук',
+  'Написати фоллоу-ап для 4 свіжих карток',
+  'Завершити пошук',
   'Заповнити вручну',
   'Спробувати ще раз',
   'Видалити картку',
@@ -78,7 +78,7 @@ describe('/dev/ui states from the empty states screen', () => {
       expect(screen.getAllByText(line).length).toBeGreaterThan(0);
     }
     expect(screen.getAllByText('Працюєш офлайн')).toHaveLength(2);
-    expect(screen.getAllByText('крок 2 з 3 · обробляється')).toHaveLength(2);
+    expect(screen.getAllByText('крок 2/3 · обробляється')).toHaveLength(2);
     expect(screen.getAllByText('~20 с · можна закрити сторінку')).toHaveLength(2);
   });
 
@@ -118,7 +118,7 @@ describe('/dev/ui states from the empty states screen', () => {
     renderGallery();
 
     const classes = screen
-      .getByRole('button', { name: 'Спробувати фоллоу-ап по 4 свіжих' })
+      .getByRole('button', { name: 'Написати фоллоу-ап для 4 свіжих карток' })
       .className.split(' ');
     expect(classes).toEqual(
       expect.arrayContaining(['max-w-full', 'whitespace-normal', 'h-auto', 'min-h-control-md']),

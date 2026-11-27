@@ -25,13 +25,13 @@ import { AttachedResume } from './attached-resume';
 import { PageColumns } from './page-columns';
 import { PageDialogs } from './page-dialogs';
 import { PageMain } from './page-main';
-import { type ApplicationPageMode, PageTopBar } from './page-top-bar';
+import { type ApplicationOrigin, type ApplicationPageMode, PageTopBar } from './page-top-bar';
 
-export type { ApplicationPageMode } from './page-top-bar';
+export type { ApplicationOrigin, ApplicationPageMode } from './page-top-bar';
 
 export type ApplicationPageProps = Readonly<{
   id: Application['id'];
-  view: { mode: ApplicationPageMode };
+  view: { mode: ApplicationPageMode; origin?: ApplicationOrigin };
 }>;
 
 type PageActionsProps = Readonly<{
@@ -104,7 +104,10 @@ function LoadedPage({ application, page, view }: LoadedPageProps) {
   };
   return (
     <div className="animate-fade-in">
-      <PageTopBar application={application} view={{ mode: view.mode, timeZone: page.timeZone }} />
+      <PageTopBar
+        application={application}
+        view={{ mode: view.mode, origin: view.origin ?? 'board', timeZone: page.timeZone }}
+      />
       <PageColumns
         view={view}
         slots={{

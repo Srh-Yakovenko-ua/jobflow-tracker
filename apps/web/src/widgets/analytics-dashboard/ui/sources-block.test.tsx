@@ -46,7 +46,7 @@ describe('SourcesBlock', () => {
     const { frame, table, chart } = await drawnBlock(SOURCES);
 
     expect(chartLabels(chart).join(' ')).not.toMatch(/рефералка|сайт компанії|robota/);
-    const note = within(frame).getByText('n<5').parentElement;
+    const note = within(frame).getByText('мало даних').parentElement;
     expect(
       within(note ?? frame)
         .getAllByRole('listitem')

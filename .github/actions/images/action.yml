@@ -32,6 +32,7 @@ runs:
         push: false
         load: true
         tags: jobflow-analytics:ci
+        no-cache-filters: prod
         cache-from: type=gha,scope=analytics
         cache-to: type=gha,mode=max,scope=analytics
     - uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc
@@ -42,6 +43,7 @@ runs:
         push: false
         load: true
         tags: jobflow-ai:ci
+        no-cache-filters: prod
         cache-from: type=gha,scope=ai
         cache-to: type=gha,mode=max,scope=ai
     - uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc
@@ -52,5 +54,6 @@ runs:
         push: false
         load: true
         tags: jobflow-documents:ci
+        no-cache-filters: prod
         cache-from: type=gha,scope=documents
         cache-to: type=gha,mode=max,scope=documents

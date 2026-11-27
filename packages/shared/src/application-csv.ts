@@ -62,12 +62,19 @@ export const IMPORT_TEMPLATE: CsvTable = {
   ],
 };
 
+const IMPORT_FIELD_SYNONYMS: Partial<Record<ImportField, readonly string[]>> = {
+  position: ['Роль', 'Вакансія', 'Title'],
+  appliedAt: ['Дата', 'Date', 'Applied'],
+  stage: ['Статус', 'Status'],
+};
+
 const labelNamesOf = ({ labelUk, labelEn }: LocalizedLabel) => [labelUk, labelEn];
 
 const fieldNamesOf = (field: ImportField) => [
   field,
   IMPORT_FIELD_COLUMNS[field],
   ...labelNamesOf(IMPORT_FIELD_LABELS[field]),
+  ...(IMPORT_FIELD_SYNONYMS[field] ?? []),
 ];
 
 export function autoMappingOf(header: readonly string[]): ImportMapping {

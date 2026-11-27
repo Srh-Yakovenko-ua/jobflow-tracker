@@ -33,7 +33,7 @@ const FRAMES = {
   sankey: 'головне · воронка цілком',
   reasons: 'причини відмов за етапами',
   sources: 'конверсія за джерелами',
-  resumeAb: 'A/B версій резюме',
+  resumeAb: 'порівняння версій резюме',
   forecast: 'прогноз офера',
   timings: 'час на етапах · медіана',
   matchValidation: 'Match Score · перевірка на відгуках',
@@ -44,7 +44,7 @@ const TILES = {
   sent: 'Відгуків надіслано',
   screening: 'Дійшли до скринінгу',
   response: 'Медіана відповіді',
-  ghost: 'Ghost rate',
+  ghost: 'Частка ghosted',
 } as const;
 
 type FrameBlock = keyof typeof FRAMES;
@@ -70,7 +70,7 @@ const BLOCKS: readonly Block[] = [
   'ghost',
 ];
 
-const TOASTER = 'Сповіщення';
+const TOASTER = uk.app.notifications;
 
 const NBSP = '\u00a0';
 
@@ -233,7 +233,7 @@ describe('AnalyticsDashboard', () => {
       [4500, 6000],
     ]);
     expect(smallNoteOf(salary)).toHaveLength(3);
-    expect(within(salary).getByRole('table', { name: 'Зарплатні вилки, $ net' })).toBeDefined();
+    expect(within(salary).getByRole('table', { name: 'Зарплатні вилки, $ нетто' })).toBeDefined();
   });
 
   it('a search without a single salary shows the salary empty copy and no chart', async () => {
@@ -332,9 +332,11 @@ describe('AnalyticsDashboard', () => {
     expect(screen.getByText('4 / 10')).toBeDefined();
     expect(within(blockOf('sent')).getByText('4')).toBeDefined();
     expect(screen.getByText('перший тиждень')).toBeDefined();
-    expect(screen.getByText('буде на 10 відгуках')).toBeDefined();
-    expect(screen.getByText("З'явиться після 15 відгуків")).toBeDefined();
-    expect(screen.getByText(/^Додати ще 6 відгуків цього тижня\./)).toBeDefined();
+    expect(screen.getByText("З'явиться після 10 відгуків. Зараз 4.")).toBeDefined();
+    expect(screen.getByText("Прогноз з'явиться після 15 відгуків. Зараз 4.")).toBeDefined();
+    expect(
+      screen.getByText('Додай ще 6 відгуків, і після 10 відгуків аналітика ввімкнеться сама.'),
+    ).toBeDefined();
     expect(screen.getByRole('link', { name: 'Додати вакансію' }).getAttribute('href')).toBe('/add');
     expect(blockRegions()).toHaveLength(0);
     expect(screen.queryByText(WHAT_TO_DO)).toBeNull();

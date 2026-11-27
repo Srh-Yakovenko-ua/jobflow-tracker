@@ -42,7 +42,7 @@ describe('CvHintsPanel', () => {
   it('before any hints says what the AI does and asks for them once', async () => {
     const { user, routes } = renderPanel(NO_CV_HINTS);
 
-    expect(screen.getByText(/Нового досвіду не додає/)).toBeDefined();
+    expect(screen.getByText(/без вигаданого досвіду/)).toBeDefined();
     await user.click(screen.getByRole('button', { name: 'Підказати' }));
 
     await expect.poll(() => routes.requested).toEqual([ACME_APPLICATION.id]);
@@ -59,7 +59,7 @@ describe('CvHintsPanel', () => {
   it('while the hints are processing shows the running step', () => {
     renderPanel(cvHintsJob('processing'));
 
-    expect(screen.getByText('крок 2 з 3 · обробляється')).toBeDefined();
+    expect(screen.getByText('крок 2/3 · обробляється')).toBeDefined();
   });
 
   it('a done hint shows its requirement, the most it can add, the CV line it rests on and the suggestion', () => {
@@ -100,15 +100,13 @@ describe('CvHintsPanel', () => {
   it('done with no hints and no gaps says there is nothing to reword', () => {
     renderPanel(EMPTY_CV_HINTS);
 
-    expect(
-      screen.getByText('Переформулювати нічого: модель не знайшла рядків, які варто підняти.'),
-    ).toBeDefined();
+    expect(screen.getByText('AI не знайшов рядків, які варто підсилити.')).toBeDefined();
     expect(screen.queryByRole('list')).toBeNull();
     expect(screen.queryByRole('button')).toBeNull();
   });
 
   it.each([
-    { errorType: 'ai_timeout' as const, copy: 'Модель не відповіла за 30 секунд.' },
+    { errorType: 'ai_timeout' as const, copy: 'AI не відповів за 30 секунд.' },
     { errorType: 'ai_unavailable' as const, copy: 'Підказки не вийшли.' },
   ])(
     'a job failed with $errorType says why and «Спробувати ще раз» asks again',

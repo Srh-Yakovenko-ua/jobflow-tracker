@@ -27,11 +27,9 @@ const [FIRST, SECOND, THIRD] = [
 
 const GHOSTS: readonly BoardCard[] = [FIRST, SECOND, THIRD];
 
-const BUDGET_COPY =
-  'Ліміт AI на сьогодні вичерпано, тож цей лист пишеш сам. Твої дані нікуди не зникли.';
+const BUDGET_COPY = 'Ліміт AI на сьогодні вичерпано, напиши лист вручну.';
 
-const RATE_LIMITED_COPY =
-  'Забагато запитів до AI за короткий час. Спробуй трохи пізніше. Твої дані нікуди не зникли.';
+const RATE_LIMITED_COPY = 'Забагато запитів до AI, спробуй трохи пізніше.';
 
 const AFTER_ONE_POLL = { timeout: 3500 } as const;
 
@@ -90,17 +88,17 @@ describe('BulkFollowupSheet', () => {
     });
 
     expect(within(rowOf(FIRST)).getByText('наступний у черзі')).toBeDefined();
-    expect(within(rowOf(SECOND)).getByText('у черзі · 1 драфт перед цим')).toBeDefined();
+    expect(within(rowOf(SECOND)).getByText('у черзі · 1 лист перед цим')).toBeDefined();
     await user.click(within(rowOf(THIRD)).getByRole('button', { name: 'Пропустити' }));
     await waitFor(() => {
       expect(screen.getAllByRole('listitem')).toHaveLength(2);
     });
     held.release();
 
-    expect(await within(rowOf(FIRST)).findByText('крок 2 з 3 · обробляється')).toBeDefined();
+    expect(await within(rowOf(FIRST)).findByText('крок 2/3 · обробляється')).toBeDefined();
     answered.set(FIRST.id, READY_FOLLOWUP);
     const ready = await within(rowOf(FIRST)).findByText(
-      'драфт готовий · можна правити',
+      'лист готовий · можна правити',
       {},
       AFTER_ONE_POLL,
     );
@@ -120,7 +118,7 @@ describe('BulkFollowupSheet', () => {
         id === FIRST.id ? READY_FOLLOWUP : followupJob('failed', 'budget_exceeded'),
     });
 
-    expect(await within(rowOf(FIRST)).findByText('драфт готовий · можна правити')).toBeDefined();
+    expect(await within(rowOf(FIRST)).findByText('лист готовий · можна правити')).toBeDefined();
     for (const card of [SECOND, THIRD]) {
       const row = rowOf(card);
       expect((await within(row).findByRole('alert')).textContent).toContain(BUDGET_COPY);
@@ -137,7 +135,7 @@ describe('BulkFollowupSheet', () => {
       expect((await within(row).findByRole('alert')).textContent).toContain(RATE_LIMITED_COPY);
       expect(row.textContent).not.toContain(BUDGET_COPY);
       expect(within(row).getByRole('button', { name: 'Спробувати ще' })).toBeDefined();
-      expect(within(row).getByRole('button', { name: 'Написати самому' })).toBeDefined();
+      expect(within(row).getByRole('button', { name: 'Написати вручну' })).toBeDefined();
     }
   });
 });

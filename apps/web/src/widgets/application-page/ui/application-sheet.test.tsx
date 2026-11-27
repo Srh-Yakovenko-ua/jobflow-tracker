@@ -14,6 +14,7 @@ import { server } from '@/test/server';
 import { meRoute } from '@/test/session-fixtures';
 import { EMPTY_TIMELINE, timelineRoute } from '@/test/timeline-fixtures';
 
+import type { ApplicationOrigin } from './application-page';
 import { ApplicationSheet } from './application-sheet';
 
 vi.mock('next/navigation', () => import('@/test/navigation'));
@@ -32,9 +33,9 @@ function serveSheet() {
   );
 }
 
-function renderSheet() {
+function renderSheet(origin: ApplicationOrigin = 'board') {
   serveSheet();
-  return renderInApp(<ApplicationSheet id={ACME_APPLICATION.id} />);
+  return renderInApp(<ApplicationSheet id={ACME_APPLICATION.id} origin={origin} />);
 }
 
 function BoardUnderSheet({ open }: Readonly<{ open: boolean }>) {
@@ -93,6 +94,34 @@ describe('ApplicationSheet', () => {
     await user.click(await screen.findByRole('button', { name: 'Дошка' }));
 
     expect(back).toHaveBeenCalledTimes(1);
+  });
+
+  it('a sheet opened from the table goes back to Таблиця', async () => {
+    const user = renderSheet('table');
+
+    await user.click(await screen.findByRole('button', { name: 'Таблиця' }));
+
+    expect(back).toHaveBeenCalledTimes(1);
+    expect(screen.queryByRole('button', { name: 'Дошка' })).toBeNull();
+  });
+
+  it('a sheet opened from the calendar goes back to Календар', async () => {
+    const user = renderSheet('calendar');
+
+    await user.click(await screen.findByRole('button', { name: 'Календар' }));
+
+    expect(back).toHaveBeenCalledTimes(1);
+  });
+
+  it('an open sheet names the tab «Картка вакансії · JobFlow» and gives the old name back on close', async () => {
+    document.title = 'Дошка · JobFlow';
+    serveSheet();
+    const { view } = renderViewInApp(<BoardUnderSheet open />);
+    await screen.findByRole('dialog', { name: ACME_APPLICATION.position });
+
+    expect(document.title).toBe('Картка вакансії · JobFlow');
+    view.rerender(<BoardUnderSheet open={false} />);
+    expect(document.title).toBe('Дошка · JobFlow');
   });
 
   it('a delete plays the sheet exit with the application still shown, then goes back once', async () => {

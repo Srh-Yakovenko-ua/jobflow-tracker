@@ -89,7 +89,7 @@ describe('sign in', () => {
     await form.fillAndSubmit(CREDENTIALS);
 
     expect(await findAlertText()).toBe(
-      'Невірна пошта або парольПеревір обидва поля й спробуй ще раз.',
+      'Неправильна пошта або парольПеревір обидва поля й спробуй ще раз.',
     );
     expect(invalidFields()).toEqual([]);
     expect(toast.getToasts()).toEqual([]);

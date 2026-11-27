@@ -23,7 +23,7 @@ import {
 vi.mock('next/navigation', () => import('@/test/navigation'));
 vi.mock('next/link', () => import('@/test/link'));
 
-const PRIVACY = 'Нотатки ніколи не йдуть у модель';
+const PRIVACY = 'Нотатки не йдуть в AI';
 
 const PRIVACY_LABEL = 'Приватність нотаток';
 
@@ -76,7 +76,12 @@ function noteRows(section: HTMLElement): (string | null)[] {
   if (list === null) return [];
   return within(list)
     .getAllByRole('listitem')
-    .map((note) => note.textContent);
+    .map((note) => {
+      const shown = note.cloneNode(true);
+      if (!(shown instanceof HTMLElement)) return null;
+      for (const button of shown.querySelectorAll('button')) button.remove();
+      return shown.textContent;
+    });
 }
 
 function editorIn(section: HTMLElement): HTMLTextAreaElement {
@@ -153,6 +158,14 @@ async function autosaveTwice({ user, editor, notes, between }: AutosaveSetup) {
   });
 }
 
+async function renderNewestNote() {
+  const rendered = renderApplicationPage({ notes: { items: DESIGN_NOTES } });
+  const section = await findNotesSection();
+  const [newest] = await within(section).findAllByRole('listitem');
+  if (newest === undefined) throw new Error('the design notes are listed');
+  return { ...rendered, section, newest };
+}
+
 afterEach(() => {
   vi.useRealTimers();
 });
@@ -174,6 +187,47 @@ describe('ApplicationNotes', () => {
       expect(editorIn(section)).toBeDefined();
     },
   );
+
+  it('Редагувати on a saved note opens its text, Зберегти sends one PATCH and the list shows the new text', async () => {
+    const { user, notes, section, newest } = await renderNewestNote();
+
+    await user.click(within(newest).getByRole('button', { name: 'Редагувати' }));
+    const field = within(section).getByRole('textbox', { name: 'Текст нотатки' });
+    expect(document.activeElement).toBe(field);
+    await user.clear(field);
+    await user.type(field, 'Тимлід норм');
+    await user.click(within(section).getByRole('button', { name: 'Зберегти' }));
+
+    expect(await within(section).findByText('Тимлід норм')).toBeDefined();
+    expect(notes.updated).toEqual([{ noteId: fixtureIdOf(502), body: { body: 'Тимлід норм' } }]);
+    expect(within(section).queryByRole('textbox', { name: 'Текст нотатки' })).toBeNull();
+  });
+
+  it('Скасувати in the note editor keeps the old text and sends nothing', async () => {
+    const { user, notes, section, newest } = await renderNewestNote();
+
+    await user.click(within(newest).getByRole('button', { name: 'Редагувати' }));
+    await user.type(within(section).getByRole('textbox', { name: 'Текст нотатки' }), ' ще');
+    await user.click(within(section).getByRole('button', { name: 'Скасувати' }));
+
+    expect(within(section).getByText(DESIGN_NOTE)).toBeDefined();
+    expect(notes.updated).toEqual([]);
+    expect(document.activeElement).toBe(within(newest).getByRole('button', { name: 'Редагувати' }));
+  });
+
+  it('Видалити on a saved note asks «Видалити нотатку?» and the confirm sends one DELETE', async () => {
+    const { user, notes, section, newest } = await renderNewestNote();
+
+    await user.click(within(newest).getByRole('button', { name: 'Видалити' }));
+    const confirm = await screen.findByRole('alertdialog', { name: 'Видалити нотатку?' });
+    await user.click(within(confirm).getByRole('button', { name: 'Видалити' }));
+
+    await waitFor(() => {
+      expect(within(section).queryByText(DESIGN_NOTE)).toBeNull();
+    });
+    expect(notes.deleted).toEqual([fixtureIdOf(502)]);
+    expect(within(section).getByText('портфоліо')).toBeDefined();
+  });
 
   it('an XSS payload in a note is shown as its text and builds no image', async () => {
     const payload = noteOf({ applicationId: ACME_APPLICATION.id, body: XSS_BODY });

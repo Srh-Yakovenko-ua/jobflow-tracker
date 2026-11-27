@@ -19,7 +19,7 @@ vi.mock('next/navigation', () => import('@/test/navigation'));
 
 const BOARD_URL = apiUrl('/applications/board');
 
-const PROCESSING_LINE = 'AI обробляє · крок 2 з 3';
+const PROCESSING_LINE = 'AI обробляє · крок 2/3';
 
 type Parse = Pick<BoardCard, 'aiStatus' | 'aiJobId'>;
 
@@ -123,10 +123,10 @@ describe('KanbanBoard drafts', () => {
     });
   });
 
-  it('a draft whose parse failed shows потрібні поля with the kept text line and opens the failure flow with its job', async () => {
+  it('a draft whose parse failed shows заповни поля with the kept text line and opens the failure flow with its job', async () => {
     renderBoard(oneDraftBoard({ aiStatus: 'failed', aiJobId: JOB_ID }));
 
-    const link = (await screen.findByText('потрібні поля')).closest('a');
+    const link = (await screen.findByText('заповни поля')).closest('a');
 
     expect(screen.getByText('текст збережено в нотатці')).toBeDefined();
     expect(screen.getByText('Draft 301')).toBeDefined();
@@ -138,7 +138,7 @@ describe('KanbanBoard drafts', () => {
 
   it.each([
     { aiStatus: 'done', mark: 'перевір поля' },
-    { aiStatus: 'failed', mark: 'потрібні поля' },
+    { aiStatus: 'failed', mark: 'заповни поля' },
   ] as const)(
     'a board whose only draft is $aiStatus is asked once and never on a timer',
     async ({ aiStatus, mark }) => {

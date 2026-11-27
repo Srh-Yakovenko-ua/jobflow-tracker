@@ -4,6 +4,7 @@ import { type ApplicationResponse, type Note, NOTE_LIMITS } from '@jobflow/share
 import type { KeyboardEvent } from 'react';
 
 import { uk } from '@/shared/i18n';
+import { useAppleDevice } from '@/shared/lib/apple-device';
 import { cn } from '@/shared/lib/cn';
 import { Field } from '@/shared/ui/field';
 import { Textarea } from '@/shared/ui/textarea';
@@ -53,11 +54,12 @@ function keyHandlerOf(draft: NoteDraft) {
 export function NoteEditor({ application, actions }: NoteEditorProps) {
   const draft = useNoteDraft({ applicationId: application.id, ...actions });
   const counter = { value: draft.body.length, max: NOTE_LIMITS.bodyMaxLength };
+  const finishHint = useAppleDevice() ? COPY.finishHint.mac : COPY.finishHint.other;
   return (
     <div className="flex min-w-0 flex-col gap-1.5">
       <Field
         label={<span className="sr-only">{COPY.label}</span>}
-        footer={{ hint: COPY.finishHint, counter }}
+        footer={{ hint: <span className="pointer-coarse:hidden">{finishHint}</span>, counter }}
       >
         <Textarea
           value={draft.body}

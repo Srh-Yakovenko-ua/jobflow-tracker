@@ -13,9 +13,9 @@ import { server } from '@/test/server';
 vi.mock('next/navigation', () => import('@/test/navigation'));
 vi.mock('next/link', () => import('@/test/link'));
 
-const notifications = () => within(regionOf('Повідомлення'));
+const notifications = () => within(regionOf('Сповіщення'));
 
-const pushSwitch = () => notifications().getByRole('switch', { name: /Пуші в браузері/ });
+const pushSwitch = () => notifications().getByRole('switch', { name: /Сповіщення в браузері/ });
 
 const TEST_BUTTON = { name: 'Надіслати тестове сповіщення' } as const;
 
@@ -34,7 +34,7 @@ describe('NotificationsSection, browser push', () => {
 
     expect(pushSwitch().hasAttribute('disabled')).toBe(true);
     expect(
-      notifications().getByText('Цей браузер не вміє показувати пуші. Спробуй Chrome або Firefox.'),
+      notifications().getByText('Цей браузер не показує сповіщення. Спробуй Chrome або Firefox.'),
     ).toBeDefined();
     expect(notifications().queryByRole('button', TEST_BUTTON)).toBeNull();
   });

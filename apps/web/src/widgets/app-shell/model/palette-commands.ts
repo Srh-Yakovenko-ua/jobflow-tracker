@@ -1,5 +1,5 @@
 import { AUTH_ROUTES, isActiveStage } from '@jobflow/shared';
-import { type LucideIcon, Table2 } from 'lucide-react';
+import { Bell, FileUp, type LucideIcon, Scale, Table2 } from 'lucide-react';
 
 import {
   applicationHrefOf,
@@ -96,12 +96,12 @@ const ACTION_ROWS: readonly ActionRow[] = [
   { id: 'shortcuts', runFor: () => ({ kind: 'shortcuts' }) },
 ];
 
-const TABLE_PAGE: PalettePage = {
-  id: 'table',
-  label: uk.board.views.table,
-  href: '/applications',
-  icon: Table2,
-};
+const EXTRA_PAGES: readonly PalettePage[] = [
+  { id: 'table', label: uk.board.views.table, href: '/applications', icon: Table2 },
+  { id: 'import', label: uk.dataImport.title, href: '/import', icon: FileUp },
+  { id: 'notifications', label: uk.notifications.title, href: '/notifications', icon: Bell },
+  { id: 'offers', label: uk.offerCompare.title, href: '/offers/compare', icon: Scale },
+];
 
 export function shortcutsOf(flags: FeatureFlags): readonly Shortcut[] {
   return SHORTCUTS.filter((shortcut) => isFlagOn(flags, shortcut.flag));
@@ -114,7 +114,7 @@ export function palettePagesOf(flags: FeatureFlags): readonly PalettePage[] {
     href: item.href,
     icon: item.icon,
   }));
-  return [...pages, TABLE_PAGE];
+  return [...pages, ...EXTRA_PAGES];
 }
 
 export function paletteActionsOf(flags: FeatureFlags, target: PaletteTarget): PaletteAction[] {

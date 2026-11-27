@@ -10,7 +10,8 @@ import { DeleteAccountDialog } from '@/features/delete-account';
 import { ExportDataControl } from '@/features/export-data';
 import { uk } from '@/shared/i18n';
 import { cn } from '@/shared/lib/cn';
-import { Button, buttonLinkClasses } from '@/shared/ui/button';
+import { buttonLinkClasses } from '@/shared/ui/button';
+import { ConfirmDialog } from '@/shared/ui/confirm-dialog';
 import { TOUCH_HEIGHT } from '@/shared/ui/touch-height';
 
 import type { SettingsItems } from '../model/settings-items';
@@ -25,9 +26,12 @@ const EXPORT_PARAM = 'export';
 
 const IMPORT_HREF = '/import';
 
+const LOGOUT_EVERYWHERE = { label: COPY.logoutEverywhere.action, variant: 'secondary' } as const;
+
 function Identity({ me }: Readonly<{ me: MeResponse }>) {
+  const name = me.user.displayName?.trim() ?? '';
   const rows = [
-    { term: COPY.name, detail: me.user.displayName ?? me.user.email },
+    ...(name === '' ? [] : [{ term: COPY.name, detail: name }]),
     { term: COPY.email, detail: me.user.email },
   ];
   return (
@@ -82,13 +86,17 @@ export function AccountSection({ me, items }: AccountSectionProps) {
           <SettingNote
             copy={COPY.logoutEverywhere}
             action={
-              <Button
-                variant="secondary"
-                className={TOUCH_HEIGHT}
-                onClick={session.logoutEverywhere}
-              >
-                {COPY.logoutEverywhere.action}
-              </Button>
+              <ConfirmDialog
+                trigger={LOGOUT_EVERYWHERE}
+                copy={COPY.logoutEverywhere.dialog}
+                action={{
+                  pending: false,
+                  onConfirm: (close) => {
+                    close();
+                    session.logoutEverywhere();
+                  },
+                }}
+              />
             }
           />
           <DataRows items={items} />

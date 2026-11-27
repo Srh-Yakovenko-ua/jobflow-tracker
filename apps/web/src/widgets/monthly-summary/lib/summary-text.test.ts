@@ -33,7 +33,7 @@ describe('summaryParagraphsOf', () => {
     const [paragraph] = summaryParagraphsOf(DESIGN_TEXT);
     const plain = paragraph?.parts.filter((part) => part.block === null).map((part) => part.text);
 
-    expect(plain?.some((text) => text.includes('ти виконав 3 пункти з 4.'))).toBe(true);
+    expect(plain?.some((text) => text.includes('виконано 3 пункти з 4.'))).toBe(true);
     expect(plain?.some((text) => text.includes('CV v2'))).toBe(true);
     expect(textOf(paragraph)).toBe(DESIGN_TEXT);
   });
@@ -46,7 +46,7 @@ describe('summaryParagraphsOf', () => {
 
   it('серпень 2026 and the dates 01.09 and 15.09.2026 are not links, the counts beside them are', () => {
     const paragraphs = summaryParagraphsOf(
-      'За серпень 2026 ти надіслав 19 відгуків. Скринінги з 01.09 по 15.09.2026 дали 4 техінтерв’ю.',
+      'За серпень 2026: 19 відгуків. Скринінги з 01.09 по 15.09.2026 дали 4 техінтерв’ю.',
     );
 
     expect(linkedOf(paragraphs)).toEqual([

@@ -4,10 +4,10 @@ import { describe, expect, it } from 'vitest';
 import { ScoreBadge } from './score-badge';
 
 describe('ScoreBadge', () => {
-  it('no CV shows a dashed dash named "без CV", never a 0', () => {
+  it('no CV shows a dashed dash named "без резюме", never a 0', () => {
     render(<ScoreBadge application={{ matchScore: null, aiStatus: null }} />);
 
-    const badge = screen.getByRole('img', { name: 'без CV' });
+    const badge = screen.getByRole('img', { name: 'без резюме' });
     expect(badge.textContent).toBe('—');
     expect(badge.className).toContain('border-dashed');
     expect(screen.queryByText('0')).toBeNull();

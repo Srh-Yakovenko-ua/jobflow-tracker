@@ -42,9 +42,9 @@ describe('AI_PROMPT_VERSIONS', () => {
     expect(AI_PROMPT_VERSIONS).toEqual({
       vacancy_parse: 'v4',
       resume_parse: 'v1',
-      match: 'v3',
+      match: 'v4',
       followup: 'v3',
-      monthly_summary: 'v1',
+      monthly_summary: 'v2',
       cv_hints: 'v1',
       interview_prep: 'v1',
     });

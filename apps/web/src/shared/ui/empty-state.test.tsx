@@ -66,7 +66,7 @@ describe('EmptyState', () => {
     );
 
     const row = screen.getByRole('button', {
-      name: 'Спробувати фоллоу-ап по 4 свіжих',
+      name: 'Написати фоллоу-ап для 4 свіжих карток',
     }).parentElement;
     expect(row?.className.split(' ')).toEqual(
       expect.arrayContaining(['flex', 'flex-wrap', 'max-w-full', 'min-w-0']),

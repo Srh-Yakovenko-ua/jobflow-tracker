@@ -15,7 +15,7 @@ const CARDS_TAKEN = {
 const columns = {
   vacancy: { header: 'компанія', menu: 'Компанія' },
   stage: { header: 'етап', menu: 'Етап' },
-  score: { header: 'score', menu: 'Match Score' },
+  score: { header: 'Match Score', menu: 'Match Score' },
   salary: { header: 'вилка', menu: 'Вилка' },
   source: { header: 'джерело', menu: 'Джерело' },
   appliedAt: { header: 'відгук', menu: 'Дата відгуку' },
@@ -25,7 +25,7 @@ const columns = {
 
 const csv = {
   button: 'CSV',
-  label: 'Завантажити CSV з поточним поданням',
+  label: 'Завантажити ці рядки в CSV',
   header: {
     company: 'Компанія',
     position: 'Посада',
@@ -43,8 +43,7 @@ const bulk = {
   clear: 'Скинути вибір',
   confirm: {
     title: (count: number) => `Відкликати ${countedUk(count, CARDS_TAKEN)}?`,
-    description:
-      'Етап «відкликав» остаточний: повернути картку не вийде. Закриті картки лишаться як є.',
+    description: 'Це остаточно: повернути їх не вийде. Відмови й відкликані не зміняться.',
     cancel: 'Скасувати',
     confirm: 'Відкликати',
   },
@@ -53,7 +52,7 @@ const bulk = {
 export const applicationsTable = {
   title: 'Таблиця',
   label: 'Вакансії в таблиці',
-  search: { label: 'Пошук у таблиці', placeholder: 'компанія, роль, стек…' },
+  search: { label: 'Пошук у таблиці', placeholder: 'компанія, посада, стек…' },
   columns,
   columnsMenu: { trigger: 'Колонки', label: 'Видимі колонки' },
   select: {

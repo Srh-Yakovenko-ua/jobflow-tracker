@@ -37,14 +37,13 @@ const MARKUP = '<b>Senior QA</b> <img src=x onerror=alert(1)> Kvit шукає т
 const HEADINGS = [
   'Один клік зі сторінки вакансії',
   'Вставити опис вакансії',
-  'Заповнити самому',
+  'Заповнити вручну',
   'Обробка йде у фоні',
 ];
 
-const MANUAL_NOTE =
-  "Обов'язкові тільки компанія і позиція. Match Score у такої картки не буде, і це нормально.";
+const MANUAL_NOTE = "Обов'язкові лише компанія і посада. Без тексту вакансії Match Score не буде.";
 
-const CONFIRM = 'Підтвердити і на дошку';
+const CONFIRM = 'Зберегти';
 
 const REVIEW = 'Перевір поля і готово';
 
@@ -70,7 +69,7 @@ const DELETED_EVENT: LiveEvent = {
 
 const PASTED_ADDRESS = `/add?review=${FIRST_PASTE.applicationId}&job=${FIRST_PASTE.jobId}`;
 
-const PROCESSING_LINE = 'крок 2 з 3 · обробляється';
+const PROCESSING_LINE = 'крок 2/3 · обробляється';
 
 function addressNow(): string {
   return `${window.location.pathname}${window.location.search}${window.location.hash}`;
@@ -156,7 +155,9 @@ describe('AddApplicationPage', () => {
   it('offers the bookmarklet, the paste form and the manual form under one heading', async () => {
     await renderPage();
 
-    expect(screen.getByRole('heading', { level: 1 }).textContent).toBe('Три способи додати відгук');
+    expect(screen.getByRole('heading', { level: 1 }).textContent).toBe(
+      'Три способи додати вакансію',
+    );
     expect(
       screen.getAllByRole('heading', { level: 2 }).map((heading) => heading.textContent),
     ).toEqual(HEADINGS);
@@ -280,7 +281,7 @@ describe('AddApplicationPage', () => {
     ]);
 
     const review = within(await screen.findByRole('form', { name: REVIEW }));
-    expect(review.getByRole<HTMLInputElement>('textbox', { name: 'Позиція' }).value).toBe(
+    expect(review.getByRole<HTMLInputElement>('textbox', { name: 'Посада' }).value).toBe(
       'Senior React developer',
     );
     expect(document.activeElement).toBe(document.body);

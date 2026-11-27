@@ -26,13 +26,11 @@ const PROCESSING: AiJob = { status: 'processing', step: 2, steps: 3 };
 
 const QUEUED: AiJob = { status: 'queued', ahead: 2, etaSeconds: 30 };
 
-const TIMEOUT_COPY =
-  'Генерація не вдалася: модель не відповіла за 30 секунд. Твої дані нікуди не зникли.';
+const TIMEOUT_COPY = 'AI не відповів за 30 секунд.';
 
-const OTHER_COPY = 'Генерація не вдалася. Твої дані нікуди не зникли.';
+const OTHER_COPY = 'Лист не вийшов.';
 
-const BUDGET_COPY =
-  'Ліміт AI на сьогодні вичерпано, тож цей лист пишеш сам. Твої дані нікуди не зникли.';
+const BUDGET_COPY = 'Ліміт AI на сьогодні вичерпано, напиши лист вручну.';
 
 afterEach(() => {
   toast.dismiss();
@@ -68,7 +66,7 @@ function draftFields() {
 
 async function writeOwnTextAndReopen(response: FollowupResponse) {
   const { user, reopen } = renderPanel(response);
-  await user.click(screen.getByRole('button', { name: 'Написати самому' }));
+  await user.click(screen.getByRole('button', { name: 'Написати вручну' }));
   await user.clear(draftFields().body);
   await user.type(draftFields().body, 'Дякую');
   reopen();
@@ -78,13 +76,11 @@ describe('FollowupPanel', () => {
   it('before any draft offers tone, the vacancy language and a hint, and asks for a first draft', async () => {
     const { user, sent } = renderPanel({ ...NO_FOLLOWUP, language: 'en' });
 
-    expect(screen.getByText(/AI напише драфт від твого імені/)).toBeDefined();
+    expect(screen.getByText(/AI напише лист від твого імені/)).toBeDefined();
     expect(screen.getByRole('radio', { name: 'англійська' }).getAttribute('aria-checked')).toBe(
       'true',
     );
-    expect(
-      screen.getByText('Нотатки в модель не йдуть. Те, що варто згадати, напиши тут.'),
-    ).toBeDefined();
+    expect(screen.getByText('AI не бачить нотаток, тож важливе напиши тут.')).toBeDefined();
     await user.click(screen.getByRole('radio', { name: 'теплий' }));
     await user.type(screen.getByRole('textbox', { name: /Що згадати/ }), 'дорозвʼязав задачу');
     await user.click(screen.getByRole('button', { name: 'Згенерувати фоллоу-ап' }));
@@ -109,7 +105,7 @@ describe('FollowupPanel', () => {
 
     expect(screen.getByText(/у черзі · 2 задачі перед твоєю/)).toBeDefined();
     expect(
-      screen.getByText('Можеш закрити картку: повідомимо, коли драфт буде готовий.'),
+      screen.getByText('Можеш закрити картку: повідомимо, коли лист буде готовий.'),
     ).toBeDefined();
     expect(screen.queryByRole('button', { name: 'Згенерувати фоллоу-ап' })).toBeNull();
   });
@@ -118,7 +114,7 @@ describe('FollowupPanel', () => {
     const { user } = renderPanel(READY_FOLLOWUP);
     const { subject, body } = draftFields();
 
-    expect(screen.getByText('драфт готовий · можна правити')).toBeDefined();
+    expect(screen.getByText('лист готовий · можна правити')).toBeDefined();
     expect(subject.value).toBe(DESIGN_FOLLOWUP.subject);
     expect(body.value).toBe(DESIGN_FOLLOWUP.body);
     await user.clear(body);
@@ -160,7 +156,7 @@ describe('FollowupPanel', () => {
         followup={{ response: followupJob('processing'), job: PROCESSING, queueRefused: false }}
       />,
     );
-    expect(screen.getByText('крок 2 з 3 · обробляється')).toBeDefined();
+    expect(screen.getByText('крок 2/3 · обробляється')).toBeDefined();
     expect(view.container.querySelector('.motion-safe\\:animate-sweep')).toBeNull();
   });
 
@@ -197,12 +193,12 @@ describe('FollowupPanel', () => {
     expect(draftFields().body.value).toBe('Дякую');
   });
 
-  it('a timed out draft shows the designed error, and «Написати самому» opens an empty editor', async () => {
+  it('a timed out draft shows the designed error, and «Написати вручну» opens an empty editor', async () => {
     const { user } = renderPanel(followupJob('failed', 'ai_timeout'));
 
     expect(screen.getByText(TIMEOUT_COPY)).toBeDefined();
     expect(screen.getByRole('button', { name: 'Спробувати ще' })).toBeDefined();
-    await user.click(screen.getByRole('button', { name: 'Написати самому' }));
+    await user.click(screen.getByRole('button', { name: 'Написати вручну' }));
 
     const { subject, body } = draftFields();
     expect(subject.value).toBe('');
@@ -212,7 +208,7 @@ describe('FollowupPanel', () => {
 
   it('an empty own draft cannot be copied or marked sent until it has a body', async () => {
     const { user, sent } = renderPanel(followupJob('failed', 'ai_timeout'));
-    await user.click(screen.getByRole('button', { name: 'Написати самому' }));
+    await user.click(screen.getByRole('button', { name: 'Написати вручну' }));
     const copy = screen.getByRole<HTMLButtonElement>('button', { name: 'Скопіювати' });
     const markSent = screen.getByRole<HTMLButtonElement>('button', {
       name: 'Позначити як надіслано',
@@ -279,7 +275,7 @@ describe('FollowupPanel', () => {
     expect(draftFields().body.value).toBe(DESIGN_FOLLOWUP.body);
     expect(screen.getByRole('alert').textContent).toContain(TIMEOUT_COPY);
     expect(screen.getByRole('button', { name: 'Спробувати ще' })).toBeDefined();
-    expect(screen.getByRole('button', { name: 'Написати самому' })).toBeDefined();
+    expect(screen.getByRole('button', { name: 'Написати вручну' })).toBeDefined();
   });
 
   it('own text started from a draft is still own text after a reload', async () => {
@@ -321,6 +317,6 @@ describe('FollowupPanel', () => {
     await user.click(screen.getByRole('button', { name: 'Згенерувати фоллоу-ап' }));
 
     expect(await screen.findByText(OTHER_COPY)).toBeDefined();
-    expect(screen.getByRole('button', { name: 'Написати самому' })).toBeDefined();
+    expect(screen.getByRole('button', { name: 'Написати вручну' })).toBeDefined();
   });
 });

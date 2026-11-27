@@ -78,7 +78,7 @@ const TOOLBAR_CONTROLS = [
   { name: 'Джерело: усі', desktop: 'h-8.5' },
   { name: 'Фільтри', desktop: 'h-8.5' },
   { name: 'Колонки', desktop: 'h-control-sm' },
-  { name: 'Завантажити CSV з поточним поданням', desktop: 'h-control-sm' },
+  { name: 'Завантажити ці рядки в CSV', desktop: 'h-control-sm' },
 ] as const;
 
 const RETRY_WAIT = { timeout: 2500 } as const;
@@ -249,13 +249,13 @@ describe('ApplicationsTable rows', () => {
 describe('ApplicationsTable sorting and columns', () => {
   it('score sorts down then up with empty scores last both times, and Shift on вилка adds it as the second key', async () => {
     const { user } = await tableReady({ items: SCORED });
-    const score = screen.getByRole('button', { name: 'score' });
+    const score = screen.getByRole('button', { name: 'Match Score' });
 
     await user.click(score);
     expect(companiesShown()).toEqual(['Альфа', 'Дельта', 'Гамма', 'Епсилон', 'Бета']);
-    expect(screen.getByRole('columnheader', { name: 'score' }).getAttribute('aria-sort')).toBe(
-      'descending',
-    );
+    expect(
+      screen.getByRole('columnheader', { name: 'Match Score' }).getAttribute('aria-sort'),
+    ).toBe('descending');
 
     await user.click(score);
     expect(companiesShown()).toEqual(['Гамма', 'Епсилон', 'Дельта', 'Альфа', 'Бета']);
@@ -269,7 +269,7 @@ describe('ApplicationsTable sorting and columns', () => {
     expect(ranked.getAttribute('aria-sort')).toBeNull();
     expect(
       screen
-        .getByRole('columnheader', { name: 'score, ключ сортування 1' })
+        .getByRole('columnheader', { name: 'Match Score, ключ сортування 1' })
         .getAttribute('aria-sort'),
     ).toBe('ascending');
   });
@@ -328,17 +328,17 @@ describe('ApplicationsTable sorting and columns', () => {
 
     expect(
       screen.getByRole('textbox', { name: 'Пошук у таблиці' }).getAttribute('placeholder'),
-    ).toBe('компанія, роль, стек…');
+    ).toBe('компанія, посада, стек…');
   });
 
   it('CSV saves a UTF-8 file with a BOM, named by the day, with the shown columns in the shown order', async () => {
     const { user } = await tableReady({ items: SCORED.slice(0, 3) });
     await hideColumns(user, ['Етап', 'Джерело', 'Дата відгуку', 'Остання подія', 'Днів на етапі']);
-    await user.click(screen.getByRole('button', { name: 'score' }));
-    await user.click(screen.getByRole('button', { name: 'score' }));
+    await user.click(screen.getByRole('button', { name: 'Match Score' }));
+    await user.click(screen.getByRole('button', { name: 'Match Score' }));
     const download = stubFileDownload();
 
-    await user.click(screen.getByRole('button', { name: 'Завантажити CSV з поточним поданням' }));
+    await user.click(screen.getByRole('button', { name: 'Завантажити ці рядки в CSV' }));
 
     const [blob] = download.blobs();
     const bytes = new Uint8Array((await blob?.arrayBuffer()) ?? new ArrayBuffer(0));
@@ -389,8 +389,7 @@ describe('ApplicationsTable bulk actions', () => {
     await user.click(screen.getByRole('button', { name: 'Відкликати' }));
     const dialog = await screen.findByRole('alertdialog', {
       name: 'Відкликати 2 картки?',
-      description:
-        'Етап «відкликав» остаточний: повернути картку не вийде. Закриті картки лишаться як є.',
+      description: 'Це остаточно: повернути їх не вийде. Відмови й відкликані не зміняться.',
     });
     expect(moves).toEqual([]);
 
@@ -409,7 +408,7 @@ describe('ApplicationsTable bulk actions', () => {
 
   it('Перенести далі moves the picked cards in the order the table is sorted, not the order the server sent', async () => {
     const { user, moves } = await tableReady({ items: SCORED });
-    await user.click(screen.getByRole('button', { name: 'score' }));
+    await user.click(screen.getByRole('button', { name: 'Match Score' }));
     await user.click(checkboxNamed('Обрати всі картки'));
 
     await user.click(screen.getByRole('button', { name: 'Перенести далі' }));

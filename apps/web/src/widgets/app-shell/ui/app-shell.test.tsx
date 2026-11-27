@@ -165,6 +165,14 @@ describe('AppShell', () => {
     });
   });
 
+  it('the silent badge on Дошка names itself on hover: 1 тиха картка', async () => {
+    server.use(meRoute(), silentBoardRoute({ applied: 1 }));
+    renderInApp(<AppShell initial={{ collapsed: false }}>{null}</AppShell>);
+    const [link] = await screen.findAllByRole('link', { name: 'Дошка 1 тиха картка' });
+
+    expect(link?.querySelector('[title]')?.getAttribute('title')).toBe('1 тиха картка');
+  });
+
   it('passes axe with every landmark named', async () => {
     server.use(meRoute(), silentBoardRoute({ applied: 1 }));
     renderInApp(<AppShell initial={{ collapsed: false }}>{null}</AppShell>);

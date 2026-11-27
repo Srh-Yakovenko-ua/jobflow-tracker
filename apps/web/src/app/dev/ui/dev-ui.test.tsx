@@ -152,9 +152,9 @@ describe('/dev/ui application cards', () => {
     expect(full.getByText('$5 000–6 500').className).toContain('tabular-nums');
     expect(full.getByText('Djinni')).toBeDefined();
     expect(specimenOf(CARDS.call).getByText('дзвінок сьогодні, 16:00')).toBeDefined();
-    expect(specimenOf(CARDS.norm).getByText('13 днів на етапі · норма 17')).toBeDefined();
+    expect(specimenOf(CARDS.norm).getByText('13 днів на етапі · зазвичай 17 дн')).toBeDefined();
     expect(specimenOf(CARDS.long).getByText('вилка не вказана')).toBeDefined();
-    expect(specimenOf(CARDS.long).getByRole('img', { name: 'без CV' }).textContent).toBe('—');
+    expect(specimenOf(CARDS.long).getByRole('img', { name: 'без резюме' }).textContent).toBe('—');
   });
 
   it('the days line shows only next to the user norm', () => {
@@ -173,11 +173,11 @@ describe('/dev/ui application cards', () => {
     expect(specimenOf(CARDS.queued).getByText('до $6 200')).toBeDefined();
   });
 
-  it('the preview card of a failed draft carries потрібні поля and the kept text line, which no board card specimen shows', () => {
+  it('the preview card of a failed draft carries заповни поля and the kept text line, which no board card specimen shows', () => {
     renderGallery();
     const preview = specimenOf(CARDS.preview);
 
-    expect(preview.getByText('потрібні поля')).toBeDefined();
+    expect(preview.getByText('заповни поля')).toBeDefined();
     expect(preview.getByText('Без назви')).toBeDefined();
     expect(screen.getAllByText('текст збережено в нотатці')).toEqual([
       preview.getByText('текст збережено в нотатці'),

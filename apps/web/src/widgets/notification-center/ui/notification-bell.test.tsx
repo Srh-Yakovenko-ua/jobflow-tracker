@@ -73,7 +73,7 @@ describe('NotificationBell', () => {
 
     expect(await within(popover).findByRole('heading', { name: 'Сьогодні' })).toBeDefined();
     expect(within(popover).getByRole('heading', { name: 'Вчора' })).toBeDefined();
-    expect(within(popover).getByText('нагадування · 3')).toBeDefined();
+    expect(within(popover).getByText('Сповіщення · 3')).toBeDefined();
     expect(within(popover).getByText('2 картки в тиші')).toBeDefined();
     expect(within(popover).getByText('Acme, Kvit Software · 14 днів без відповіді')).toBeDefined();
     expect(within(popover).getByText('Співбесіда о 16:00')).toBeDefined();

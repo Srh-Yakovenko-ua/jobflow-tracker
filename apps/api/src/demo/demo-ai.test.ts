@@ -60,7 +60,7 @@ describe('the demo monthly summary', () => {
   it('names the month it is given and the one before', () => {
     const { summary } = demoSummaryOutput(DEMO_SUMMARY_INPUT);
 
-    expect(summary).toMatch(/^За жовтень ти надіслав 12 відгуків, на 3 менше, ніж за вересень\. /);
+    expect(summary).toMatch(/^За жовтень: 12 відгуків, на 3 менше, ніж за вересень\. /);
     expect(summary).not.toMatch(/серпень|липн/);
   });
 
@@ -70,7 +70,7 @@ describe('the demo monthly summary', () => {
       sent: { month: 1, previousMonth: 1 },
     });
 
-    expect(summary).toMatch(/^За жовтень ти надіслав 1 відгук, стільки ж, скільки за вересень\. /);
+    expect(summary).toMatch(/^За жовтень: 1 відгук, стільки ж, скільки за вересень\. /);
   });
 
   it('gives the screening conversion and the most expensive stage the dashboard shows', async () => {
@@ -85,7 +85,7 @@ describe('the demo monthly summary', () => {
       `До скринінгу дійшло ${String(screening.successes)} з ${String(screening.trials)} відгуків, це ${screening.percent}.`,
     );
     expect(summary).toContain(
-      `з ${String(mostExpensive.reached)} ти пройшов ${String(mostExpensive.passed)}, і в 3 з 4 відмов`,
+      `з ${String(mostExpensive.reached)} пройдено ${String(mostExpensive.passed)}, і в 3 з 4 відмов`,
     );
   });
 

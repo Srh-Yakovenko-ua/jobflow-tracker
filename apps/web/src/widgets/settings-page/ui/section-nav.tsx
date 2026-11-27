@@ -2,10 +2,10 @@
 
 import { uk } from '@/shared/i18n';
 import { cn } from '@/shared/lib/cn';
-import { usePageHash } from '@/shared/lib/use-page-hash';
 import { TOUCH_HEIGHT } from '@/shared/ui/touch-height';
 
-import { sectionOfHash, SETTINGS_SECTIONS, type SettingsItems } from '../model/settings-items';
+import { SETTINGS_SECTIONS, type SettingsItems } from '../model/settings-items';
+import { useActiveSection } from '../model/use-active-section';
 
 export type SectionNavProps = Readonly<{ items: SettingsItems }>;
 
@@ -17,10 +17,10 @@ const ACTIVE = 'bg-line-soft font-semibold text-ink';
 const IDLE = 'text-ink-3 hover:bg-surface-3 active:bg-surface-3 hover:text-ink active:text-ink';
 
 export function SectionNav({ items }: SectionNavProps) {
-  const active = sectionOfHash(usePageHash().slice(1));
   const sections = SETTINGS_SECTIONS.filter(
     (section) => section !== 'rhythm' || items.weeklyRhythm,
   );
+  const active = useActiveSection(sections);
   return (
     <nav aria-label={uk.settings.navLabel} className="md:sticky md:top-24">
       <ul className="flex flex-wrap gap-0.5 md:flex-col">

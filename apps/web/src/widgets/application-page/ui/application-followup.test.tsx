@@ -76,7 +76,7 @@ describe('ApplicationFollowup', () => {
     reopen();
 
     const reopened = await screen.findByRole('region', { name: 'Фоллоу-ап' });
-    expect(await within(reopened).findByText('драфт готовий · можна правити')).toBeDefined();
+    expect(await within(reopened).findByText('лист готовий · можна правити')).toBeDefined();
     expect(
       within(reopened).getByRole<HTMLTextAreaElement>('textbox', { name: 'Текст листа' }).value,
     ).toBe(DESIGN_FOLLOWUP.body);

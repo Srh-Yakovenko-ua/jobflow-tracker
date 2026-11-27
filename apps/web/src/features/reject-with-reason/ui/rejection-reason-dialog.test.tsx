@@ -52,7 +52,7 @@ describe('RejectionReasonDialog', () => {
       'вакансію закрили',
       'без пояснення',
     ]);
-    expect(reasonsIn('Відмовився я')).toEqual([
+    expect(reasonsIn('Моє рішення')).toEqual([
       'низька вилка',
       'офіс/графік',
       'ред флаги',
@@ -79,8 +79,8 @@ describe('RejectionReasonDialog', () => {
 
     expect(document.activeElement).toBe(screen.getByRole('dialog'));
     expect(shortcutsIn('Відмовила компанія')).toEqual(['1', '2', '3', '4', '5', '6']);
-    expect(shortcutsIn('Відмовився я')).toEqual(['7', '8', '9', '0']);
-    expect(screen.getByText('ENTER: остання причина · ESC: скасувати')).toBeDefined();
+    expect(shortcutsIn('Моє рішення')).toEqual(['7', '8', '9', '0']);
+    expect(screen.getByText('Enter: остання причина · Esc: скасувати')).toBeDefined();
   });
 
   it('a reason click picks its code and nothing is cancelled', async () => {

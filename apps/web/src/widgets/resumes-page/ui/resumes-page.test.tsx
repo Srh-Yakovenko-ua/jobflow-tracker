@@ -1,11 +1,16 @@
-import type { ResumeAbResponse, ResumeVersion } from '@jobflow/shared';
+import { LIVE_LIMITS, type ResumeAbResponse, type ResumeVersion } from '@jobflow/shared';
 import { screen, within } from '@testing-library/react';
 import type { HttpResponseResolver } from 'msw';
 import { http } from 'msw/http';
 import { afterEach, beforeEach, describe, expect, it, onTestFinished, vi } from 'vitest';
 
-import { apiUrl, errorReply } from '@/test/api-handlers';
-import { advancePastQueryRetries, fakeTimeoutsAndClock } from '@/test/fake-timeouts';
+import { advanceBy } from '@/test/advance-timers';
+import { apiUrl, errorReply, recordSentRequests } from '@/test/api-handlers';
+import {
+  advancePastQueryRetries,
+  fakeTimeoutsAndClock,
+  fakeTimeoutsAndIntervals,
+} from '@/test/fake-timeouts';
 import { latch } from '@/test/latch';
 import { renderInApp } from '@/test/render-in-app';
 import { DESIGN_RESUME_AB } from '@/test/resume-ab-fixtures';
@@ -123,7 +128,7 @@ describe('ResumesPage', () => {
     if (row === undefined) throw new Error('one row expected');
 
     expect(await within(row).findByText('мало даних')).toBeDefined();
-    expect(within(row).getByText('потрібно ще 1')).toBeDefined();
+    expect(within(row).getByText('ще 1 відгук до статистики')).toBeDefined();
     expect(within(row).getByText('4')).toBeDefined();
     expect(screen.getByRole('table', TABLE).textContent).not.toContain('%');
   });
@@ -144,7 +149,7 @@ describe('ResumesPage', () => {
     const [row] = await dataRowsOf(TABLE.name);
     if (row === undefined) throw new Error('one row expected');
 
-    expect(within(row).queryByText(/потрібно ще/)).toBeNull();
+    expect(within(row).queryByText(/до статистики/)).toBeNull();
     expect(within(row).getAllByText('—')).toHaveLength(2);
   });
 
@@ -164,7 +169,7 @@ describe('ResumesPage', () => {
   it.each<{ status: ResumeVersion['aiProfileStatus']; label: string }>([
     { status: 'queued', label: 'у черзі' },
     { status: 'needs_text', label: 'потрібен текстовий PDF' },
-    { status: 'failed', label: 'AI-профіль не вдався' },
+    { status: 'failed', label: 'Не вдалося прочитати резюме' },
   ])('an AI profile that is $status reads "$label" in the row', async ({ status, label }) => {
     renderPage(onlyVersion({ aiProfileStatus: status }));
 
@@ -172,6 +177,23 @@ describe('ResumesPage', () => {
     if (row === undefined) throw new Error('one row expected');
 
     expect(within(row).getByText(label)).toBeDefined();
+  });
+
+  it('a queued AI profile reads «Резюме прочитано» once it is done, with no reload, and the polling stops', async () => {
+    fakeTimeoutsAndIntervals();
+    const queued = buildResumeVersion({ aiProfileStatus: 'queued' });
+    const { routes } = renderPage({ items: [queued] });
+    const [row] = await dataRowsOf(TABLE.name);
+    if (row === undefined) throw new Error('one row expected');
+    expect(within(row).getByText('у черзі')).toBeDefined();
+
+    routes.store.splice(0, 1, { ...queued, aiProfileStatus: 'done' });
+    await advanceBy(LIVE_LIMITS.pollFallbackMs);
+
+    expect(await within(row).findByText('Резюме прочитано')).toBeDefined();
+    const sent = recordSentRequests();
+    await advanceBy(LIVE_LIMITS.pollFallbackMs * 3);
+    expect(sent().filter(({ url }) => url === apiUrl('/resumes/versions'))).toEqual([]);
   });
 
   it('a list that fails shows the load error, and the retry brings the table back', async () => {
@@ -209,7 +231,7 @@ describe('ResumesPage', () => {
     expect(barOf(v2)?.getAttribute('style')).toContain('translateX(-59%)');
     expect(barOf(v1)?.className).toContain('bg-data-6');
     expect(barOf(v1)?.getAttribute('style')).toContain('translateX(-76%)');
-    expect(within(v3).getByText('потрібно ще 2')).toBeDefined();
+    expect(within(v3).getByText('ще 2 відгуки до статистики')).toBeDefined();
     expect(within(v3).getByText('мало даних')).toBeDefined();
     expect(barOf(v3)).toBeNull();
   });
@@ -241,7 +263,9 @@ describe('ResumesPage', () => {
     const rows = await dataRowsOf(TABLE.name);
     const retry = await screen.findByRole('button', { name: 'Спробувати ще раз' });
 
-    expect(within(rowOf(rows, 'CV v3 · версія 3')).queryByText('потрібно ще 2')).toBeNull();
+    expect(
+      within(rowOf(rows, 'CV v3 · версія 3')).queryByText('ще 2 відгуки до статистики'),
+    ).toBeNull();
     expect(screen.queryAllByText('мало даних')).toHaveLength(0);
     expect(screen.getByRole('table', TABLE).textContent).not.toContain('%');
     outage.on = false;

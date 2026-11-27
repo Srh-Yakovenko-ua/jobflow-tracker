@@ -142,7 +142,7 @@ export const DESIGN_TIMELINE = applicationTimelineResponseSchema.parse({
       serial: 303,
       type: 'stage_changed',
       occurredAt: '2026-08-13T09:00:00Z',
-      title: 'відгук надіслано',
+      title: 'Додано на етап «відгук»',
       meta: stageMoveOf({ fromStage: null, toStage: 'applied', daysInPreviousStage: null }),
     }),
     timelineItemOf({

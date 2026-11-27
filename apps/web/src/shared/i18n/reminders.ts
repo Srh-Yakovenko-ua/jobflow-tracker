@@ -10,7 +10,14 @@ const PLAN_ITEM_FORMS = {
 
 export const reminders = {
   title: shell.nav.reminders,
-  silence: { title: 'Тиша' },
+  silence: {
+    title: 'Тиша',
+    empty: {
+      title: 'Тихих карток немає',
+      hint: (days: number) =>
+        `Жодна картка не чекає відповіді довше ${countedUk(days, DAY_FORMS_UK)}.`,
+    },
+  },
   interviews: {
     title: 'Найближчі співбесіди',
     empty: 'На найближчі два тижні співбесід немає.',
@@ -28,7 +35,8 @@ export const reminders = {
     progress: ({ items, done }: PlanProgress) =>
       `з ${countedUk(items, PLAN_ITEM_FORMS)} виконано ${String(done)}`,
     due: (day: string) => `до ${day}`,
-    empty: "Плану ще немає. Його можна зберегти з дій місячного саммарі, і пункти з'являться тут.",
+    empty: 'Плану ще немає. Збережи кроки з місячного саммарі в «Аналітиці».',
+    toAnalytics: shell.palette.actions.analytics,
     toggleFailed: {
       title: 'Не вдалося позначити пункт',
       description: 'Пункт лишився як був. Спробуй ще раз трохи згодом.',

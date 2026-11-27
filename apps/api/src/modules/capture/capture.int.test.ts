@@ -68,6 +68,7 @@ import { callRoute, errorPathsOf, statusAndDetail } from '../../test/http.js';
 import { expectReplayedCreate } from '../../test/idempotency.js';
 import { liveEventsOf, liveHubSubscribed, openLiveStream } from '../../test/live.js';
 import { memoryLog, withLogSink } from '../../test/memory-log.js';
+import { createNotificationRows, readAtOf } from '../../test/notifications.js';
 import { outboxRows } from '../../test/outbox.js';
 import { expectRateLimited } from '../../test/rate-limit.js';
 import type { SseStream } from '../../test/sse.js';
@@ -187,6 +188,8 @@ const SWEEP_TEST = { timeout: 60_000 };
 const BULL_RETRIES_SPENT = { timeout: 40_000 };
 
 const PAST_SWEEP_GRACE_MINUTES = 10;
+
+const OTHER_CARD_ID = '0199f0a0-0000-7000-8000-0000000000aa';
 
 const doneFrameOf = ({ frames }: SseStream) =>
   frames.find(({ data = '' }) => data.includes('"done"'));
@@ -796,6 +799,38 @@ describe('POST /api/v1/capture/paste', () => {
         expect((await postConfirm(testApp.app, { accessToken, id })).status).toBe(204);
       },
     );
+
+    it("marks the vacancy parse notices of the confirmed draft read, and leaves other notices and another user's unread", async () => {
+      const olena = await capturedAndFailed();
+      const bohdan = await signedInWithSearch(testApp.prisma);
+      const parse = {
+        aiJobId: olena.jobId,
+        kind: 'vacancy_parse',
+        applicationId: olena.applicationId,
+      };
+      const ids = await createNotificationRows(testApp.prisma, [
+        { userId: olena.userId, type: 'ai_done', payload: parse },
+        { userId: olena.userId, type: 'ai_failed', payload: { ...parse, errorType: 'ai_error' } },
+        {
+          userId: olena.userId,
+          type: 'ai_done',
+          payload: { ...parse, applicationId: OTHER_CARD_ID },
+        },
+        { userId: olena.userId, type: 'ai_done', payload: { ...parse, kind: 'followup' } },
+        { userId: bohdan.userId, type: 'ai_done', payload: parse },
+      ]);
+
+      const response = await postConfirm(testApp.app, {
+        accessToken: olena.accessToken,
+        id: olena.applicationId,
+      });
+
+      expect(statusAndDetail(response)).toEqual([204, undefined]);
+      const [done, failed, ...untouched] = await readAtOf(testApp.prisma, ids);
+      expect(done?.readAt).toBeInstanceOf(Date);
+      expect(failed?.readAt).toBeInstanceOf(Date);
+      expect(untouched).toEqual([{ readAt: null }, { readAt: null }, { readAt: null }]);
+    });
 
     it('answers 422 for an id that is not a uuid', async () => {
       const { accessToken } = await signedInWithSearch(testApp.prisma);

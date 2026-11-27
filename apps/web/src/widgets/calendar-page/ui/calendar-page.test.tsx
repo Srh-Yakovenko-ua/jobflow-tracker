@@ -209,14 +209,14 @@ describe('CalendarPage', () => {
     expect(pill?.querySelector('svg.lucide-alarm-clock')).not.toBeNull();
   });
 
-  it('shows an auto ghost date with the ghost icon under its авто-ghost legend line and opens its vacancy card on a click', async () => {
+  it('shows an auto ghost date with the ghost icon under its авто-ghosted legend line and opens its vacancy card on a click', async () => {
     const { user } = renderCalendar({ items: [AUTO_GHOST_ITEM], narrow: true });
 
     const title = await screen.findByText('Ghost за 30 днів · Acme Technologies');
 
     expect(title.parentElement?.querySelector('svg.lucide-ghost')).not.toBeNull();
     const legend = screen.getByRole('list', { name: 'Позначення подій' });
-    expect(within(legend).getByText('авто-ghost')).toBeDefined();
+    expect(within(legend).getByText('авто-ghosted')).toBeDefined();
     await user.click(title);
     expect(push).toHaveBeenCalledWith(`/applications/${ACME_APPLICATION.id}`);
   });

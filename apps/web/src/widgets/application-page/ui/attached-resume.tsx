@@ -4,7 +4,7 @@ import { type ApplicationResponse, type ResumeVersion, resumeVersionLabel } from
 import { Eye } from 'lucide-react';
 import Link from 'next/link';
 
-import { conversionLabelOf } from '@/entities/resume';
+import { conversionLabelOf, type VersionConversion } from '@/entities/resume';
 import { fileFormatOf, usePreviewVersion } from '@/features/edit-resume-version';
 import { type RelinkActions, VersionPicker } from '@/features/relink-resume-version';
 import { uk } from '@/shared/i18n';
@@ -29,9 +29,15 @@ const COPY = uk.applicationPage.resume;
 
 const RESUMES_HREF = '/resumes';
 
+function conversionTextOf(conversion: VersionConversion): string {
+  const label = conversionLabelOf(conversion);
+  const rated = typeof conversion === 'object' && conversion.status === 'ok';
+  return rated ? COPY.toScreening(label) : label;
+}
+
 function LinkedResume({ application, actions, linked, resume }: LinkedResumeProps) {
   const preview = usePreviewVersion();
-  const conversion = conversionLabelOf(resume.conversion);
+  const conversion = conversionTextOf(resume.conversion);
   return (
     <>
       <div className="flex flex-col gap-1">

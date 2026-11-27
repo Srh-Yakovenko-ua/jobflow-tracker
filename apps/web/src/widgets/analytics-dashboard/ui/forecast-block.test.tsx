@@ -104,11 +104,7 @@ describe('ForecastBlock', () => {
     renderDashboardBlocks({ forecast: { ...buildForecast(), applicationsPerWeek: 2.3 } });
     const frame = await shownForecast();
 
-    expect(
-      frame.getByText(
-        'Ймовірний коридор: половина симуляцій. Темп 2,5 на тиждень, поточні конверсії.',
-      ),
-    ).toBeDefined();
+    expect(frame.getByText('Темп 2,5 на тиждень, поточні конверсії.')).toBeDefined();
     expect(frame.getByRole('slider', { name: RATE })).toHaveProperty('value', '2.5');
     expect(frame.getByText('2,5')).toBeDefined();
   });
@@ -161,16 +157,12 @@ describe('ForecastBlock', () => {
     expect(screen.getByRole('switch', { name: TECH }).getAttribute('aria-checked')).toBe('false');
   });
 
-  it('under 15 applications the block counts what is missing and says why a forecast now would be noise', async () => {
+  it('under 15 applications the block counts what is missing against the same 15 the hint names', async () => {
     renderDashboardBlocks({ forecast: forecastBelowThreshold(12) });
 
     await screen.findByRole('heading', { name: 'Ще 3 відгуки до прогнозу' });
     const frame = within(frameOf(FRAME));
-    expect(
-      frame.getByText(
-        'Раніше він показував би «2–30 тижнів». Це не інформація, а тривога. Краще нічого.',
-      ),
-    ).toBeDefined();
+    expect(frame.getByText("Прогноз з'явиться після 15 відгуків. Зараз 12.")).toBeDefined();
     const meter = frame.getByRole('meter', { name: 'Прогрес до прогнозу' });
     expect(meter.getAttribute('aria-valuenow')).toBe('12');
     expect(meter.getAttribute('aria-valuemax')).toBe('15');

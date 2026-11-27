@@ -5,6 +5,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { userKeys } from '@/entities/user';
 import { exportRoutes } from '@/test/account-fixtures';
 import { apiUrl, errorReply, recordSentRequests } from '@/test/api-handlers';
+import { scrollIntoBand } from '@/test/intersection-observer';
 import { replace } from '@/test/navigation';
 import { EXPORT_ID } from '@/test/notification-fixtures';
 import { waitForQuery } from '@/test/query-status';
@@ -26,7 +27,7 @@ vi.mock('next/link', () => import('@/test/link'));
 const SECTIONS = [
   'Пошук і тиша',
   'Ритм пошуку',
-  'Повідомлення',
+  'Сповіщення',
   'AI та приватність',
   'Вигляд і тема',
   'Акаунт',
@@ -129,19 +130,19 @@ describe('SettingsPage', () => {
     expect(heading.closest('[id]')?.id).toBe('bookmarklet');
   });
 
-  it('shows the browser push switch in Повідомлення', async () => {
+  it('shows the browser push switch in Сповіщення', async () => {
     await renderLoadedSettings();
 
     expect(
-      within(regionOf('Повідомлення')).getByRole('switch', { name: /Пуші в браузері/ }),
+      within(regionOf('Сповіщення')).getByRole('switch', { name: /Сповіщення в браузері/ }),
     ).toBeDefined();
   });
 
-  it('shows the email switch in Повідомлення', async () => {
+  it('shows the email switch in Сповіщення', async () => {
     await renderLoadedSettings();
 
     expect(
-      within(regionOf('Повідомлення')).getByRole('switch', { name: /Листи на пошту/ }),
+      within(regionOf('Сповіщення')).getByRole('switch', { name: /Листи на пошту/ }),
     ).toBeDefined();
   });
 
@@ -152,11 +153,22 @@ describe('SettingsPage', () => {
     expect(within(regionOf('Акаунт')).getByText('andrii@example.com')).toBeDefined();
   });
 
+  it('an account with no name shows the email once and no name row', async () => {
+    await renderLoadedSettings({
+      me: () =>
+        HttpResponse.json({ ...ME_RESPONSE, user: { ...ME_RESPONSE.user, displayName: null } }),
+    });
+    const account = within(regionOf('Акаунт'));
+
+    expect(account.queryByText("Ім'я")).toBeNull();
+    expect(account.getAllByText(ME_RESPONSE.user.email)).toHaveLength(1);
+  });
+
   it('lists only what the code sends to the model and offers to delete every AI result', async () => {
     await renderLoadedSettings();
     const aiPrivacy = regionOf('AI та приватність');
 
-    const modelData = within(aiPrivacy).getByRole('list', { name: 'Що бачить модель' });
+    const modelData = within(aiPrivacy).getByRole('list', { name: 'Що бачить AI' });
 
     expect(
       within(modelData)
@@ -168,22 +180,20 @@ describe('SettingsPage', () => {
       'Match Score: текст вакансії, профіль резюме.',
       'Фоллоу-ап: імʼя рекрутера, компанія, посада, етап, дні тиші, остання співбесіда, твоє імʼя, мова, тон, твоя підказка.',
       'Місячне AI-саммарі: місяці, лише цифри статистики, висновки, поради, прогрес плану.',
-      'Підказки до CV: посада, Match Score, вимоги вакансії, профіль резюме.',
+      'Підказки до резюме: посада, Match Score, вимоги вакансії, профіль резюме.',
       'Підготовка до співбесіди: посада, тип співбесіди, вимоги вакансії, прогалини резюме, слабкі місця.',
-      'Текст нотаток у модель не йде, лише слова-теми зі словника.',
+      'Текст нотаток AI не бачить, лише позначені теми.',
     ]);
     expect(
-      within(aiPrivacy).getByRole('button', { name: 'Видалити всі AI-результати' }),
+      within(aiPrivacy).getByRole('button', { name: 'Видалити все, що зробив AI' }),
     ).toBeDefined();
   });
 
-  it('the delete note in AI та приватність says the vacancies, resumes and saved plans stay', async () => {
+  it('the delete note in AI та приватність says the vacancies, resumes and plans stay', async () => {
     await renderLoadedSettings();
 
     expect(
-      within(regionOf('AI та приватність')).getByText(
-        /Вакансії, резюме й збережені плани лишаться\.$/,
-      ),
+      within(regionOf('AI та приватність')).getByText(/Вакансії, резюме й плани лишаться\.$/),
     ).toBeDefined();
   });
 
@@ -194,7 +204,7 @@ describe('SettingsPage', () => {
     expect(aiPrivacy.getByRole('heading', { level: 2, name: 'Букмарклет' })).toBeDefined();
     expect(await aiPrivacy.findByText('10.11, 01:15')).toBeDefined();
     expect(aiPrivacy.getByRole('button', REVOKE_BOOKMARKLET)).toBeDefined();
-    expect(aiPrivacy.getByRole('button', { name: 'Нова кнопка' })).toBeDefined();
+    expect(aiPrivacy.getByRole('button', { name: 'Створити нову кнопку' })).toBeDefined();
   });
 
   it('asks only for the session, the suggestions and the capture tokens on open, and creates no token', async () => {
@@ -303,9 +313,52 @@ describe('SettingsPage', () => {
     );
 
     await user.click(screen.getByRole('button', { name: 'Вийти на всіх пристроях' }));
+    const dialog = within(await screen.findByRole('alertdialog'));
+    await user.click(dialog.getByRole('button', { name: 'Вийти всюди' }));
 
     await waitFor(() => {
       expect(replace).toHaveBeenCalledWith('/login');
+    });
+  });
+
+  it('«Вийти на всіх пристроях» asks first, and «Скасувати» ends no session', async () => {
+    const { user } = await renderLoadedSettings();
+    const sent = recordSentRequests();
+
+    await user.click(screen.getByRole('button', { name: 'Вийти на всіх пристроях' }));
+    const dialog = within(
+      await screen.findByRole('alertdialog', { name: 'Вийти на всіх пристроях?' }),
+    );
+    expect(dialog.getByText('Букмарклет теж перестане працювати.')).toBeDefined();
+    await user.click(dialog.getByRole('button', { name: 'Скасувати' }));
+
+    expect(screen.queryByRole('alertdialog')).toBeNull();
+    expect(sent().filter(({ url }) => url === apiUrl('/auth/logout-all'))).toEqual([]);
+  });
+
+  it('the nav follows the section that scrolls under it', async () => {
+    await renderLoadedSettings();
+    const nav = within(screen.getByRole('navigation', { name: 'Розділи налаштувань' }));
+
+    scrollIntoBand(regionOf('Сповіщення'));
+    expect(nav.getByRole('link', { current: 'location' }).textContent).toBe('Сповіщення');
+
+    scrollIntoBand(null);
+    expect(nav.getByRole('link', { current: 'location' }).textContent).toBe('Сповіщення');
+
+    scrollIntoBand(regionOf('Акаунт'));
+    expect(nav.getByRole('link', { current: 'location' }).textContent).toBe('Акаунт');
+  });
+
+  it('a nav link picked after scrolling is the one marked', async () => {
+    const { user } = await renderLoadedSettings();
+    const nav = within(screen.getByRole('navigation', { name: 'Розділи налаштувань' }));
+    scrollIntoBand(regionOf('Сповіщення'));
+
+    await user.click(nav.getByRole('link', { name: 'Вигляд і тема' }));
+
+    await waitFor(() => {
+      expect(nav.getByRole('link', { current: 'location' }).textContent).toBe('Вигляд і тема');
     });
   });
 });

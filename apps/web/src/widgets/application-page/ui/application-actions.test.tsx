@@ -43,7 +43,7 @@ const REVIVE = 'Компанія відповіла: повернути в ск�
 
 const ACCEPTED = { name: 'Офер прийнято' } as const;
 
-const ARCHIVE = { name: 'Заархівувати пошук' } as const;
+const ARCHIVE = { name: 'Завершити пошук' } as const;
 
 const CONFLICT = 'Цей пошук уже завершено';
 
@@ -262,7 +262,8 @@ describe('ApplicationActions', () => {
     const more = await screen.findByRole('button', { name: 'Ще дії' });
     await user.click(more);
     await user.click(await screen.findByRole('menuitem', { name: 'Видалити' }));
-    await user.click(await screen.findByRole('button', { name: 'Скасувати' }));
+    const confirm = await screen.findByRole('alertdialog', { name: 'Видалити картку?' });
+    await user.click(within(confirm).getByRole('button', { name: 'Скасувати' }));
 
     await waitFor(() => {
       expect(document.activeElement).toBe(more);
@@ -306,7 +307,7 @@ describe('ApplicationActions', () => {
       expect(push).toHaveBeenCalledWith('/board');
     });
     expect(finish.sent).toEqual([
-      { searchId: ACTIVE_SEARCH.id, outcome: 'offer_accepted', openApplications: 'withdraw' },
+      { searchId: ACTIVE_SEARCH.id, outcome: 'offer_accepted', openApplications: 'move' },
     ]);
     expect(board.length).toBeGreaterThan(boardReads);
     expect(calendar.sent.length).toBeGreaterThan(calendarReads);

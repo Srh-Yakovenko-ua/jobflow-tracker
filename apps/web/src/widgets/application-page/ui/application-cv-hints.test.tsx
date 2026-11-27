@@ -36,7 +36,7 @@ describe('ApplicationCvHints', () => {
     });
 
     const section = await screen.findByRole('region', { name: TITLE });
-    const match = screen.getByRole('region', { name: 'Збіг 78%' });
+    const match = screen.getByRole('region', { name: 'Match Score 78%' });
     const history = screen.getByRole('region', { name: 'Історія відгуку' });
 
     expect(await within(section).findByText('GraphQL')).toBeDefined();
@@ -55,7 +55,7 @@ describe('ApplicationCvHints', () => {
       resumes: RESUMES,
     });
 
-    await screen.findByRole('region', { name: 'Збіг 100%' });
+    await screen.findByRole('region', { name: 'Match Score 100%' });
 
     expect(screen.queryByRole('region', { name: TITLE })).toBeNull();
     expect(cvHints.requested).toEqual([]);
@@ -64,7 +64,7 @@ describe('ApplicationCvHints', () => {
   it('with no Match Score there is no hints section', async () => {
     renderApplicationPage({ application: MATCHED_APPLICATION, match: NO_MATCH, resumes: RESUMES });
 
-    await screen.findByText(/Score не порахований/);
+    await screen.findByText(/Match Score не пораховано/);
 
     expect(screen.queryByRole('region', { name: TITLE })).toBeNull();
   });

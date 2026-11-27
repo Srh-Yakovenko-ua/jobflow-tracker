@@ -1,4 +1,10 @@
-import { RESUME_VERSION_LIMITS, type ResumeMime, type ResumeProfileStatus } from '@jobflow/shared';
+import {
+  APPLICATION_FORMS_UK,
+  countedUk,
+  RESUME_VERSION_LIMITS,
+  type ResumeMime,
+  type ResumeProfileStatus,
+} from '@jobflow/shared';
 
 import { applicationPage } from './application-page';
 import { states } from './states';
@@ -19,12 +25,12 @@ export const resumes = {
     version: 'версія',
     applications: 'відгуків',
     screening: 'у скринінг',
-    conversion: 'конв.',
+    conversion: 'конверсія',
     actions: 'дії',
   },
   active: 'активна',
   lowData: 'мало даних',
-  needMore: (missing: number) => `потрібно ще ${String(missing)}`,
+  needMore: (missing: number) => `ще ${countedUk(missing, APPLICATION_FORMS_UK)} до статистики`,
   percent,
   upload: {
     eyebrow: 'Завантаження версії',
@@ -36,8 +42,7 @@ export const resumes = {
     percent,
     expired: {
       title: 'Файл треба надіслати знову',
-      description:
-        'Збережене завантаження вже не дійсне. Файл лишився обраним: натисни «Завантажити» ще раз.',
+      description: 'Файл лишився обраним, натисни «Завантажити» ще раз.',
     },
   },
   titleField: {
@@ -65,8 +70,8 @@ export const resumes = {
   aiProfile: {
     queued: status.queued,
     processing: status.processing,
-    done: 'AI-профіль готовий',
-    failed: 'AI-профіль не вдався',
+    done: 'Резюме прочитано',
+    failed: 'Не вдалося прочитати резюме',
     needs_text: 'потрібен текстовий PDF',
   } satisfies Record<ResumeProfileStatus, string>,
   errors: {

@@ -9,7 +9,7 @@ describe('the 404 page', () => {
 
     expect(screen.getByRole('heading', { level: 1, name: 'Сторінку не знайдено' })).toBeDefined();
     expect(screen.getByRole('heading', { level: 2, name: 'Такої сторінки немає' })).toBeDefined();
-    expect(screen.getByText('Помилка 404')).toBeDefined();
+    expect(screen.getByText('Не знайдено')).toBeDefined();
     expect(
       screen.getByText('Посилання могло застаріти або змінитися. Усі твої дані на місці.'),
     ).toBeDefined();

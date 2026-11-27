@@ -55,7 +55,7 @@ describe('ParsingCard', () => {
     const sentRequests = recordSentRequests();
     renderViewInApp(<ParsingCard parse={PROCESSING} />);
 
-    expect(cardLine()?.textContent).toBe('AI обробляє · крок 2 з 3');
+    expect(cardLine()?.textContent).toBe('AI обробляє · крок 2/3');
     expect(screen.queryByRole('status')).toBeNull();
     expect(sentRequests()).toEqual([]);
   });
@@ -63,7 +63,7 @@ describe('ParsingCard', () => {
   it('a draft given its place among the parsing drafts reads it to a screen reader before the line', () => {
     renderViewInApp(<ParsingCard parse={PROCESSING} view={{ ordinal: 2 }} />);
 
-    expect(cardLine()?.textContent).toBe('Чернетка 2. AI обробляє · крок 2 з 3');
+    expect(cardLine()?.textContent).toBe('Чернетка 2. AI обробляє · крок 2/3');
     expect(screen.getByText('Чернетка 2.').className).toBe('sr-only');
   });
 
@@ -82,7 +82,7 @@ describe('ParsingCard', () => {
     server.use(jobs.handler);
     renderViewInApp(<ParsingCard parse={QUEUED} />);
 
-    expect(await screen.findByText('AI обробляє · крок 2 з 3')).toBe(cardLine());
+    expect(await screen.findByText('AI обробляє · крок 2/3')).toBe(cardLine());
     expect(jobs.sent).toEqual([JOB_ID]);
   });
 
@@ -159,7 +159,7 @@ describe('ApplicationCard for a draft', () => {
       />,
     );
 
-    expect(cardLine()?.textContent).toBe('AI обробляє · крок 2 з 3');
+    expect(cardLine()?.textContent).toBe('AI обробляє · крок 2/3');
     expect(screen.queryByText('Senior Frontend Engineer')).toBeNull();
   });
 

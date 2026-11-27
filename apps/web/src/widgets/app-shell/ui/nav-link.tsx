@@ -55,6 +55,7 @@ export function NavLink({ item, status, variant }: NavLinkProps) {
   const look = VARIANTS[variant];
   const label = uk.shell.nav[item.id];
   const Icon = item.icon;
+  const badge = status.count > 0 ? uk.shell.silentBadge(status.count) : null;
   const link = (
     <Link
       href={item.href}
@@ -66,11 +67,11 @@ export function NavLink({ item, status, variant }: NavLinkProps) {
       )}
       <Icon aria-hidden className="flex-none" />
       <span className={look.label}>{label}</span>
-      {status.count > 0 && (
+      {badge !== null && (
         <>
           {' '}
-          <span className="sr-only">{uk.shell.silentBadge(status.count)}</span>
-          <span aria-hidden className={look.count}>
+          <span className="sr-only">{badge}</span>
+          <span aria-hidden title={badge} className={look.count}>
             {status.count}
           </span>
         </>
@@ -79,7 +80,7 @@ export function NavLink({ item, status, variant }: NavLinkProps) {
   );
   if (variant !== 'rail') return link;
   return (
-    <Tooltip content={label} side="right">
+    <Tooltip content={badge === null ? label : `${label} · ${badge}`} side="right">
       {link}
     </Tooltip>
   );

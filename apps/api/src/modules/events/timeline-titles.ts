@@ -52,5 +52,7 @@ export function recordTitle<Kind extends keyof PayloadOf>({
 
 export function stageChangeTitle({ fromStage, toStage }: StageChange): string {
   const to = STAGE_LABELS[toStage].labelUk;
-  return fromStage === null ? `${to} надіслано` : `${STAGE_LABELS[fromStage].labelUk} → ${to}`;
+  return fromStage === null
+    ? `Додано на етап «${to}»`
+    : `${STAGE_LABELS[fromStage].labelUk} → ${to}`;
 }

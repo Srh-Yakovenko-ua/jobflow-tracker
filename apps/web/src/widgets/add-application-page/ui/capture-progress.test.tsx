@@ -75,9 +75,9 @@ const FAILED = failedJob('ai_timeout');
 
 const QUEUED_LINE = 'у черзі · 2 задачі перед твоєю · ~30 с';
 
-const LOADING_LINE = 'крок 1 з 3 · обробляється';
+const LOADING_LINE = 'крок 1/3 · обробляється';
 
-const PROCESSING_LINE = 'крок 2 з 3 · обробляється';
+const PROCESSING_LINE = 'крок 2/3 · обробляється';
 
 const ON_BOARD = 'Картка вже на дошці';
 
@@ -87,8 +87,7 @@ const FAILED_LINE = 'AI не впорався';
 
 const READ_FAILED = 'Не вдалося завантажити';
 
-const NO_FIELDS =
-  'У тексті не було ні назви компанії, ні позиції, схоже, скопіювався тільки блок вимог.';
+const NO_FIELDS = 'У тексті немає компанії й посади, схоже, скопіювалися лише вимоги.';
 
 const BUDGET = 'Ліміт AI-розборів вичерпано. Повторити розбір вийде, коли ліміт оновиться.';
 
@@ -98,8 +97,7 @@ const GENERIC = 'AI не зміг розібрати цей текст.';
 
 const KEPT = 'Текст цілим лежить у нотатці картки.';
 
-const NEXT =
-  "Заповни два поля, і картка стане повноцінною; Match Score порахується, коли з'явиться позиція.";
+const NEXT = 'Заповни компанію й посаду, тоді порахується Match Score.';
 
 const FAILURES = [
   { errorType: 'no_company_no_position', reason: NO_FIELDS },
@@ -118,9 +116,9 @@ const RETRY = 'Спробувати ще раз';
 
 const DELETE = 'Видалити картку';
 
-const CONFIRM = 'Підтвердити і на дошку';
+const CONFIRM = 'Зберегти';
 
-const MANUAL_FORM = 'Заповни компанію і позицію';
+const MANUAL_FORM = 'Заповни компанію і посаду';
 
 const BACK = 'Назад';
 
@@ -228,7 +226,7 @@ async function openManualForm(user: ReturnType<typeof renderFailed>['user']) {
   const form = within(await screen.findByRole('form', { name: MANUAL_FORM }));
   return {
     company: form.getByRole<HTMLInputElement>('textbox', { name: 'Компанія' }),
-    position: form.getByRole<HTMLInputElement>('textbox', { name: 'Позиція' }),
+    position: form.getByRole<HTMLInputElement>('textbox', { name: 'Посада' }),
     confirm: form.getByRole('button', { name: CONFIRM }),
   };
 }
@@ -272,7 +270,7 @@ describe('CaptureProgress', () => {
     renderProgress({ job: () => PROCESSING });
 
     expect(await screen.findByText(PROCESSING_LINE)).toBeDefined();
-    expect(screen.getByText('AI обробляє · крок 2 з 3')).toBeDefined();
+    expect(screen.getByText('AI обробляє · крок 2/3')).toBeDefined();
   });
 
   it('with the stream down the job is asked again after 2 s', async () => {
@@ -316,7 +314,7 @@ describe('CaptureProgress', () => {
 
     expect(await screen.findByRole('form', { name: REVIEW })).toBeDefined();
     expect(panelHeading(REVIEW)).toBeDefined();
-    expect(screen.getByText('крок 3 з 3 · розпізнано')).toBeDefined();
+    expect(screen.getByText('Крок 3/3 · розпізнано')).toBeDefined();
     expect(screen.getByText('перевір поля')).toBeDefined();
     expect(screen.getByRole<HTMLInputElement>('textbox', { name: 'Компанія' }).value).toBe('Acme');
     expect(detailReads).toEqual([REVIEW_DRAFT.id]);
@@ -395,7 +393,7 @@ describe('CaptureProgress', () => {
     expect(screen.queryByRole('form')).toBeNull();
   });
 
-  it('a failed parse reads the card, says so over the quoted text, marks the card потрібні поля and offers manual fill, retry and delete', async () => {
+  it('a failed parse reads the card, says so over the quoted text, marks the card заповни поля and offers manual fill, retry and delete', async () => {
     const { detailReads } = renderFailed();
 
     expect(await screen.findByText(FAILED_LINE)).toBeDefined();
@@ -405,7 +403,7 @@ describe('CaptureProgress', () => {
       screen.getByText('5+ years of experience, design patterns, Upper-Intermediate English')
         .tagName,
     ).toBe('BLOCKQUOTE');
-    expect(screen.getByText('потрібні поля')).toBeDefined();
+    expect(screen.getByText('заповни поля')).toBeDefined();
     expect(screen.getByText('текст збережено в нотатці')).toBeDefined();
     expect(buttonLabels()).toEqual([MANUAL, RETRY, DELETE]);
     expect(detailReads).toEqual([FAILED_DRAFT.id]);
@@ -550,7 +548,7 @@ describe('CaptureProgress', () => {
     expect(company.value).toBe('');
     expect(position.value).toBe('');
     expect(document.activeElement).toBe(company);
-    expect(screen.getByText('потрібні поля')).toBeDefined();
+    expect(screen.getByText('заповни поля')).toBeDefined();
     expect(screen.queryByRole('form', { name: REVIEW })).toBeNull();
     await user.click(confirm);
     await waitFor(() => {

@@ -38,12 +38,12 @@ const LINK_BEHIND_DIALOG = { ...LINK, hidden: true } as const;
 
 const CANCEL = { name: 'Скасувати' } as const;
 
-const SHOWN_ONCE = /Кнопку видно лише зараз/;
+const SHOWN_ONCE = 'Букмарклет уже встановлено.';
 
 const HELD_MUTATION_DATA = 'mutation data held in the cache';
 
 const REGENERATE: ConfirmCopy = {
-  trigger: 'Нова кнопка',
+  trigger: 'Створити нову кнопку',
   dialog: 'Створити нову кнопку?',
   press: 'Створити нову',
 };
@@ -260,7 +260,7 @@ describe('InstallBookmarklet', () => {
   it('the copy button puts the same bookmarklet URL on the clipboard', async () => {
     const { user } = await renderWithButton();
 
-    await user.click(screen.getByRole('button', { name: 'Скопіювати код закладки' }));
+    await user.click(screen.getByRole('button', { name: 'Скопіювати код' }));
 
     expect(await screen.findByText('Скопійовано')).toBeDefined();
     expect(await navigator.clipboard.readText()).toBe(hrefOf('capture-token-one'));
@@ -270,6 +270,9 @@ describe('InstallBookmarklet', () => {
     renderSection({ items: [USED_TOKEN, UNUSED_TOKEN] });
 
     expect(await screen.findByText(USED_AT_IN_KYIV)).toBeDefined();
+    expect(screen.getByText(SHOWN_ONCE)).toBeDefined();
+    expect(screen.queryByText('Перетягни цю кнопку на панель')).toBeNull();
+    expect(screen.getByRole('button', { name: REGENERATE.trigger })).toBeDefined();
     expect(screen.getByText('09.11, 00:30')).toBeDefined();
     expect(screen.queryByText(NEVER_USED)).toBeNull();
     expect(screen.queryByRole('link', LINK)).toBeNull();
@@ -590,26 +593,30 @@ describe('InstallBookmarklet', () => {
     });
   });
 
-  it('explains what the bookmarklet sends, who can read its token, what to do on a leak and the local network prompt', async () => {
-    renderSection();
+  it('says in one line what the bookmarklet sees, and «Детальніше» opens who can read the button code, what to do on a leak and the local network prompt', async () => {
+    const { user } = renderSection();
     await waitForQuery({ queryKey: LIST_KEY, status: 'success' });
 
     expect(
+      screen.getByText('Букмарклет бачить лише відкриту вкладку і лише після кліку.'),
+    ).toBeDefined();
+    expect(screen.queryByText(/Код кнопки міг витекти/)).toBeNull();
+
+    await user.click(screen.getByRole('button', { name: 'Детальніше', expanded: false }));
+
+    expect(
       screen.getByText(
-        'Букмарклет надсилає лише ту сторінку, яку ти бачиш, і лише тоді, коли ти на нього тиснеш.',
+        'Скрипти сторінки можуть прочитати код кнопки: він створює чернетки й віддає компанію, посаду, етап і дату відгуку.',
       ),
     ).toBeDefined();
-    expect(screen.getByText(/Скрипти сторінки можуть прочитати токен/)).toBeDefined();
-    expect(screen.getByText(/Токен міг витекти\? Створи нову кнопку\./)).toBeDefined();
     expect(
-      screen.getByText(/він створює чернетки й віддає компанію, посаду, етап і дату відгуку\./),
+      screen.getByText('Код кнопки міг витекти? Створи нову кнопку, і стара перестане працювати.'),
     ).toBeDefined();
     expect(
-      screen.getByText(/Зміна пароля і «Вийти на всіх пристроях» теж вимикають букмарклет\./),
+      screen.getByText(
+        'Якщо браузер спитає про локальну мережу, дозволь, інакше кнопка не спрацює.',
+      ),
     ).toBeDefined();
-    expect(
-      screen.getByText(/Браузер може спитати про локальну мережу: дозволь, інакше букмарклет/),
-    ).toBeDefined();
-    expect(screen.getByText(/Дозвіл діє на весь сайт\./)).toBeDefined();
+    expect(screen.queryByText(/токен/i)).toBeNull();
   });
 });

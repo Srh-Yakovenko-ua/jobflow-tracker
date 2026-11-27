@@ -13,6 +13,12 @@ const ROW_OF_FORMS = {
   other: 'рядків',
 } as const satisfies PluralForms;
 
+const READY_ROW_FORMS = {
+  one: 'рядок готовий',
+  few: 'рядки готові',
+  other: 'рядків готові',
+} as const satisfies PluralForms;
+
 const rowsOf = (count: number) => countedUk(count, ROW_FORMS);
 
 type PreviewSummary = Readonly<{ shown: number; total: number; invalid: number }>;
@@ -20,7 +26,7 @@ type PreviewSummary = Readonly<{ shown: number; total: number; invalid: number }
 export const dataImport = {
   title: 'Імпорт з таблиці',
   lead: 'Перенеси відгуки з Google Sheets чи Excel: збережи таблицю як CSV і зістав стовпці.',
-  step: (current: number, total: number) => `Крок ${String(current)} з ${String(total)}`,
+  step: (current: number, total: number) => `Крок ${String(current)}/${String(total)}`,
   upload: {
     title: 'Файл CSV',
     hint: (rows: number, size: string) =>
@@ -51,7 +57,9 @@ export const dataImport = {
   preview: {
     title: 'Перевір перші рядки',
     summary: ({ shown, total, invalid }: PreviewSummary) =>
-      `Показано ${String(shown)} з ${countedUk(total, ROW_OF_FORMS)}, з помилками ${String(invalid)}. Рядки з помилками не імпортуються.`,
+      invalid === 0
+        ? `${countedUk(total, READY_ROW_FORMS)}, помилок немає.`
+        : `Показано ${String(shown)} з ${String(total)}, ${String(invalid)} з помилками буде пропущено.`,
     caption: 'Перші рядки файлу',
     line: 'Рядок',
     check: 'Перевірка',
@@ -71,7 +79,7 @@ export const dataImport = {
     stage: 'Етап не з тих, що знає JobFlow',
     salary: 'Зарплата: формат 1500-2500 USD',
     url: 'Посилання має починатися з http:// або https://',
-    stageHistory: 'Історія етапів не складається в дозволені переходи',
+    stageHistory: 'Етапи йдуть у неможливому порядку',
   } satisfies Record<ImportField, string>,
   invalidRow: 'Рядок не пройшов перевірку',
   result: {

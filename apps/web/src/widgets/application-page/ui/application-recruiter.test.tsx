@@ -94,7 +94,7 @@ describe('ApplicationRecruiter', () => {
     await within(section).findByText('Оксана Левченко');
 
     expect(within(section).getByText('Acme Technologies')).toBeDefined();
-    expect(within(section).queryByText('відповідає за')).toBeNull();
+    expect(within(section).queryByText('час відповіді')).toBeNull();
     expect(within(section).queryAllByRole('link')).toEqual([]);
   });
 
@@ -138,7 +138,7 @@ describe('ApplicationRecruiter', () => {
   it('a cleared role is saved as null and focus returns to the edit button', async () => {
     const { user, contacts, section } = await openRecruiterEditor();
 
-    await user.clear(within(section).getByRole('textbox', { name: 'Роль' }));
+    await user.clear(within(section).getByRole('textbox', { name: 'Посада' }));
     await user.click(within(section).getByRole('button', { name: 'Зберегти' }));
 
     await waitFor(() => {
@@ -156,7 +156,7 @@ describe('ApplicationRecruiter', () => {
     await waitFor(() => {
       expect(document.activeElement).toBe(editButton());
     });
-    expect(within(section).queryByRole('textbox', { name: 'Роль' })).toBeNull();
+    expect(within(section).queryByRole('textbox', { name: 'Посада' })).toBeNull();
     expect(contacts.updated).toEqual([]);
   });
 
@@ -171,7 +171,7 @@ describe('ApplicationRecruiter', () => {
     await user.click(editButton());
     await user.keyboard('{Escape}');
 
-    expect(within(section).queryByRole('textbox', { name: 'Роль' })).toBeNull();
+    expect(within(section).queryByRole('textbox', { name: 'Посада' })).toBeNull();
     expect(document.activeElement).toBe(editButton());
     expect(screen.getByRole('dialog')).toBeDefined();
     expect(back).not.toHaveBeenCalled();

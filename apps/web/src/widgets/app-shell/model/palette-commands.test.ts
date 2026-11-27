@@ -49,7 +49,7 @@ describe('shortcutsOf', () => {
 });
 
 describe('palettePagesOf', () => {
-  it('offers the shipped pages plus the table view', () => {
+  it('offers the shipped pages plus the table, the CSV import, the notifications and the offer comparison', () => {
     expect(palettePagesOf(FEATURE_FLAGS).map((page) => [page.label, page.href])).toEqual([
       ['Дошка', '/board'],
       ['Аналітика', '/analytics'],
@@ -58,6 +58,9 @@ describe('palettePagesOf', () => {
       ['Нагадування', '/reminders'],
       ['Налаштування', '/settings'],
       ['Таблиця', '/applications'],
+      ['Імпорт з таблиці', '/import'],
+      ['Сповіщення', '/notifications'],
+      ['Порівняння оферів', '/offers/compare'],
     ]);
   });
 });

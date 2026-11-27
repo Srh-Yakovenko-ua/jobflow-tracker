@@ -81,7 +81,7 @@ describe('SummaryPage', () => {
     ).toBeDefined();
     expect(screen.getByText('місячне AI-саммарі · серпень')).toBeDefined();
     expect(await screen.findByText('готово · 01.09, 07:00')).toBeDefined();
-    expect(screen.getByText(/^За серпень ти надіслав/)).toBeDefined();
+    expect(screen.getByText(/^За серпень:/)).toBeDefined();
     const actions = screen.getByRole('list', { name: 'що зробити у вересні' });
     const items = within(actions).getAllByRole('listitem');
     expect(items.map((item) => item.querySelector('p')?.textContent)).toEqual(
@@ -109,7 +109,7 @@ describe('SummaryPage', () => {
     await screen.findByRole('heading', { name: 'Як пройшов серпень' });
 
     expect(hrefOf('19, Дивитись на графіку: відгуки')).toBe('/analytics#kpis');
-    expect(hrefOf('24%, Дивитись на графіку: A/B резюме')).toBe('/analytics#resume-ab');
+    expect(hrefOf('24%, Дивитись на графіку: версії резюме')).toBe('/analytics#resume-ab');
     expect(screen.getAllByRole('link', { name: /Дивитись на графіку: воронка$/ })).toHaveLength(2);
     expect(screen.queryByRole('link', { name: /^v2/ })).toBeNull();
 
@@ -184,17 +184,25 @@ describe('SummaryPage', () => {
     {
       status: 409,
       type: 'conflict',
+      detail: 'No active search',
       line: 'Немає активного пошуку, тож саммарі нема з чого писати.',
+    },
+    {
+      status: 409,
+      type: 'conflict',
+      detail: 'No activity in the month',
+      line: 'За минулий місяць у пошуку не було подій, саммарі нема з чого писати.',
     },
     {
       status: 429,
       type: 'rate_limited',
+      detail: 'AI limit reached',
       line: 'Забагато запитів до AI за годину. Спробуй трохи пізніше.',
     },
   ])(
-    'a $status on Перегенерувати becomes one line under the buttons',
-    async ({ status, type, line }) => {
-      const { user } = renderPage({ requestReply: () => errorReply({ status, type }) });
+    'a $status $detail on Перегенерувати becomes one line under the buttons',
+    async ({ line, ...error }) => {
+      const { user } = renderPage({ requestReply: () => errorReply(error) });
 
       await user.click(await screen.findByRole('button', { name: REGENERATE }));
 
@@ -258,7 +266,7 @@ describe('SummaryPage', () => {
       await screen.findByRole('heading', { name: 'За травень 2026 саммарі немає' }),
     ).toBeDefined();
     expect(
-      screen.getByText('Саммарі пишеться за місяць, що минув, і приходить першого числа.'),
+      screen.getByText('Перше саммарі прийде 1-го числа, коли набереться місяць даних.'),
     ).toBeDefined();
     expect(screen.queryByText(/Останнє вже чекає/)).toBeNull();
     expect(screen.queryByRole('link', { name: 'До останнього саммарі' })).toBeNull();

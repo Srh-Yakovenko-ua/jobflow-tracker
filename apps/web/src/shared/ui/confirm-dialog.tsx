@@ -2,6 +2,8 @@
 
 import { useState } from 'react';
 
+import { useOpenerFocus } from '@/shared/lib/use-opener-focus';
+
 import { Button, type ButtonVariant } from './button';
 import { ConfirmFooter, type ConfirmFooterProps } from './confirm-footer';
 import { AlertDialogContent, Dialog, DialogTrigger } from './dialog';
@@ -20,6 +22,7 @@ export type ConfirmDialogProps = Readonly<{
 
 export function ConfirmDialog({ trigger, copy, action }: ConfirmDialogProps) {
   const [open, setOpen] = useState(false);
+  const openerFocus = useOpenerFocus();
   const close = () => {
     setOpen(false);
   };
@@ -30,7 +33,10 @@ export function ConfirmDialog({ trigger, copy, action }: ConfirmDialogProps) {
           {trigger.label}
         </Button>
       </DialogTrigger>
-      <AlertDialogContent header={{ title: copy.title, description: copy.body }}>
+      <AlertDialogContent
+        header={{ title: copy.title, description: copy.body }}
+        handlers={openerFocus}
+      >
         <ConfirmFooter
           copy={copy}
           action={{

@@ -1,5 +1,7 @@
 import { useRef } from 'react';
 
+import { focusPageHeading } from './page-heading';
+
 export function useOpenerFocus() {
   const openerRef = useRef<HTMLElement | null>(null);
   return {
@@ -9,7 +11,9 @@ export function useOpenerFocus() {
     },
     onCloseAutoFocus: (event: Event) => {
       event.preventDefault();
-      openerRef.current?.focus();
+      const opener = openerRef.current;
+      if (opener?.isConnected === true) opener.focus();
+      else focusPageHeading();
     },
   };
 }

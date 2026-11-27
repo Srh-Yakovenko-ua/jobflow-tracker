@@ -68,9 +68,13 @@ describe('MatchQueueService.request', () => {
     ]);
   });
 
-  it('queues no job and clears a stale score when no CV is linked', async () => {
+  it.each<{ case: string; source: Partial<MatchSource> }>([
+    { case: 'no CV is linked', source: { resumeVersionId: null, resumeVersion: null } },
+    { case: 'the card has no vacancy text or stack', source: { rawText: null, stack: [] } },
+    { case: 'the vacancy text is blank and no stack', source: { rawText: '  \n', stack: [] } },
+  ])('queues no job and clears a stale score when $case', async ({ source }) => {
     const { queue, repository, ai, request } = await serviceWith();
-    repository.source = { ...MATCH_SOURCE, resumeVersionId: null, resumeVersion: null };
+    repository.source = { ...MATCH_SOURCE, ...source };
 
     expect(await request()).toBeNull();
 

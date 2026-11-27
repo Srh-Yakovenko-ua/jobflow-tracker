@@ -22,5 +22,6 @@ export {
   onceKeyOf,
   type OnceNotification,
   type RecordNotification,
+  type VacancyParseRead,
 } from './notifications.service.js';
 export { NotificationsSubscriber } from './notifications.subscriber.js';

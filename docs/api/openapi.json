@@ -12360,11 +12360,11 @@
                     {
                       "aiJobId": "0199f1a2-7c3b-7d4e-8f50-6a7b8c9d0f02",
                       "month": "2026-08",
-                      "text": "У серпні ти надіслав 23 відгуки, на 5 більше, ніж у липні. Найдорожчий етап: техінтерв'ю, пройдено 4 з 9.",
+                      "text": "У серпні: 23 відгуки, на 5 більше, ніж у липні. Найдорожчий етап: техінтерв'ю, пройдено 4 з 9.",
                       "actions": [
                         {
                           "title": "Два тижні алгоритмів перед техінтерв'ю",
-                          "why": "3 з 4 відмов на техінтерв'ю: «не вистачає скілів», а пройшов ти 4 з 9.",
+                          "why": "3 з 4 відмов на техінтерв'ю: «не вистачає скілів», а пройдено 4 з 9.",
                           "expectedEffect": "Якщо конверсія техінтерв'ю дійде до 60%, прогноз офера: від 4 до 12 тижнів.",
                           "metric": "Конверсія техінтерв'ю: зараз 44%, ціль 60%"
                         }
@@ -12569,7 +12569,7 @@
           "summaries"
         ],
         "summary": "Generate the monthly summary now",
-        "description": "In one transaction under the user lock stores a queued monthly_summary AI job for the month that ended in the user time zone and the summary.requested event; the worker reads the analytics of the active search and calls the model later, skipping the AI result cache. While a monthly_summary job is queued or processing it answers that job and stores nothing. Answers 409 without an active search. Counts against the hourly AI limit.",
+        "description": "In one transaction under the user lock stores a queued monthly_summary AI job for the month that ended in the user time zone and the summary.requested event; the worker reads the analytics of the active search and calls the model later, skipping the AI result cache. While a monthly_summary job is queued or processing it answers that job and stores nothing. Answers 409 without an active search, and 409 with the detail \"No activity in the month\" when that month holds no stage event of the active search. Counts against the hourly AI limit.",
         "parameters": [
           {
             "schema": {
@@ -12718,11 +12718,11 @@
                   "summary": {
                     "aiJobId": "0199f1a2-7c3b-7d4e-8f50-6a7b8c9d0f02",
                     "month": "2026-08",
-                    "text": "У серпні ти надіслав 23 відгуки, на 5 більше, ніж у липні. Найдорожчий етап: техінтерв'ю, пройдено 4 з 9.",
+                    "text": "У серпні: 23 відгуки, на 5 більше, ніж у липні. Найдорожчий етап: техінтерв'ю, пройдено 4 з 9.",
                     "actions": [
                       {
                         "title": "Два тижні алгоритмів перед техінтерв'ю",
-                        "why": "3 з 4 відмов на техінтерв'ю: «не вистачає скілів», а пройшов ти 4 з 9.",
+                        "why": "3 з 4 відмов на техінтерв'ю: «не вистачає скілів», а пройдено 4 з 9.",
                         "expectedEffect": "Якщо конверсія техінтерв'ю дійде до 60%, прогноз офера: від 4 до 12 тижнів.",
                         "metric": "Конверсія техінтерв'ю: зараз 44%, ціль 60%"
                       }
@@ -12974,7 +12974,7 @@
                       "id": "0199f1a2-7c3b-7d4e-8f50-6a7b8c9d0f10",
                       "position": 0,
                       "title": "Два тижні алгоритмів перед техінтерв'ю",
-                      "why": "3 з 4 відмов на техінтерв'ю: «не вистачає скілів», а пройшов ти 4 з 9.",
+                      "why": "3 з 4 відмов на техінтерв'ю: «не вистачає скілів», а пройдено 4 з 9.",
                       "expectedEffect": "Якщо конверсія техінтерв'ю дійде до 60%, прогноз офера: від 4 до 12 тижнів.",
                       "metric": "Конверсія техінтерв'ю: зараз 50%, ціль 60%",
                       "dueAt": "2026-09-14T09:00:00.000Z",
@@ -13223,7 +13223,7 @@
                         "id": "0199f1a2-7c3b-7d4e-8f50-6a7b8c9d0f10",
                         "position": 0,
                         "title": "Два тижні алгоритмів перед техінтерв'ю",
-                        "why": "3 з 4 відмов на техінтерв'ю: «не вистачає скілів», а пройшов ти 4 з 9.",
+                        "why": "3 з 4 відмов на техінтерв'ю: «не вистачає скілів», а пройдено 4 з 9.",
                         "expectedEffect": "Якщо конверсія техінтерв'ю дійде до 60%, прогноз офера: від 4 до 12 тижнів.",
                         "metric": "Конверсія техінтерв'ю: зараз 50%, ціль 60%",
                         "dueAt": "2026-09-14T09:00:00.000Z",
@@ -13486,7 +13486,7 @@
                   "id": "0199f1a2-7c3b-7d4e-8f50-6a7b8c9d0f10",
                   "position": 0,
                   "title": "Два тижні алгоритмів перед техінтерв'ю",
-                  "why": "3 з 4 відмов на техінтерв'ю: «не вистачає скілів», а пройшов ти 4 з 9.",
+                  "why": "3 з 4 відмов на техінтерв'ю: «не вистачає скілів», а пройдено 4 з 9.",
                   "expectedEffect": "Якщо конверсія техінтерв'ю дійде до 60%, прогноз офера: від 4 до 12 тижнів.",
                   "metric": "Конверсія техінтерв'ю: зараз 50%, ціль 60%",
                   "dueAt": "2026-09-14T09:00:00.000Z",
@@ -22722,7 +22722,7 @@
           "capture"
         ],
         "summary": "Confirm a draft",
-        "description": "Clears the draft flag of a captured Application, so it reads as a normal card, and in the same transaction records the draft_confirmed timeline row and the application.updated event with fields [\"isDraft\"]. A draft whose vacancy parse failed can be confirmed. Answers 409 for an Application that is not a draft (\"Application is not a draft\"), a repeated confirm included, and while its vacancy parse is still queued or processing (\"Vacancy parse is still running\").",
+        "description": "Clears the draft flag of a captured Application, so it reads as a normal card, and in the same transaction records the draft_confirmed timeline row and the application.updated event with fields [\"isDraft\"], and marks the unread ai_done and ai_failed vacancy_parse notifications of that Application read. A draft whose vacancy parse failed can be confirmed. Answers 409 for an Application that is not a draft (\"Application is not a draft\"), a repeated confirm included, and while its vacancy parse is still queued or processing (\"Vacancy parse is still running\").",
         "parameters": [
           {
             "schema": {

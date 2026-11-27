@@ -311,7 +311,7 @@ describe('the demo story seed', () => {
 
     const [summaryJob] = (await demoDump(testApp.prisma)).aiJobs;
     const { summary } = monthlySummaryOutputSchema.parse(summaryJob?.aiResult?.output);
-    expect(summary).toMatch(/^За жовтень ти надіслав 5 відгуків, на 15 менше, ніж за вересень\. /);
+    expect(summary).toMatch(/^За жовтень: 5 відгуків, на 15 менше, ніж за вересень\. /);
   });
 
   it('gives the same story and CV files on a second run and keeps the demo user', async () => {

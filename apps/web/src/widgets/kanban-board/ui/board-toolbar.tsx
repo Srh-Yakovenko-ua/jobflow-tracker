@@ -53,7 +53,9 @@ export function BoardToolbar({ board, load, view }: BoardToolbarProps) {
     <div className={BOARD_FRAME.width}>
       <div className={BOARD_FRAME.toolbar}>
         <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
-          <p className="eyebrow text-ink-3 tabular-nums">{uk.board.eyebrow(inWork)}</p>
+          <p className="eyebrow text-ink-3 tabular-nums">
+            {uk.board.eyebrow({ inWork, offers: board.columns.offer.count })}
+          </p>
           {FEATURE_FLAGS.weeklyRhythm && <RhythmWidget />}
         </div>
         <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto">

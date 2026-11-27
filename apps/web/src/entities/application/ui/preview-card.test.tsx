@@ -15,13 +15,13 @@ describe('PreviewCard', () => {
     expect(screen.getByText('Acme')).toBeDefined();
     expect(screen.getByText('$4 700–5 900')).toBeDefined();
     expect(screen.getByText('інше')).toBeDefined();
-    expect(screen.getByRole('img', { name: 'без CV' })).toBeDefined();
+    expect(screen.getByRole('img', { name: 'без резюме' })).toBeDefined();
   });
 
-  it('shows a draft whose parse failed under потрібні поля, ringed in terracotta, with the kept text line instead of the footer', () => {
+  it('shows a draft whose parse failed under заповни поля, ringed in terracotta, with the kept text line instead of the footer', () => {
     render(<PreviewCard application={FAILED_DRAFT} view={{ mark: 'failed' }} />);
 
-    expect(screen.getByText('потрібні поля')).toBeDefined();
+    expect(screen.getByText('заповни поля')).toBeDefined();
     expect(screen.getByText('текст збережено в нотатці')).toBeDefined();
     expect(screen.getByRole('article').className).toContain('inset-ring-rejected');
     expect(screen.getByText('Без назви')).toBeDefined();

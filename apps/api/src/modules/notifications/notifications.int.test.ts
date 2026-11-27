@@ -18,6 +18,7 @@ import {
   createNotifications,
   NOTIFICATIONS_PATH,
   NOTIFICATIONS_READ_PATH,
+  readAtOf,
   SILENCE_PAYLOAD,
 } from '../../test/notifications.js';
 import { outboxRows } from '../../test/outbox.js';
@@ -56,13 +57,6 @@ describe('the notification feed', () => {
 
   const markRead = (accessToken: string, body: object) =>
     callRoute(testApp.app, { method: 'post', path: NOTIFICATIONS_READ_PATH, accessToken, body });
-
-  const readAtOf = (ids: string[]) =>
-    testApp.prisma.notification.findMany({
-      where: { id: { in: ids } },
-      orderBy: { id: 'asc' },
-      select: { readAt: true },
-    });
 
   async function olenaAndBohdan() {
     const [olena, bohdan] = [await signedIn(), await signedIn()];
@@ -155,8 +149,11 @@ describe('the notification feed', () => {
       200,
       { unread: 1 },
     ]);
-    expect((await readAtOf([third, foreign])).map(({ readAt }) => readAt)).toEqual([null, null]);
-    expect((await readAtOf([first]))[0]?.readAt).toBeInstanceOf(Date);
+    expect((await readAtOf(testApp.prisma, [third, foreign])).map(({ readAt }) => readAt)).toEqual([
+      null,
+      null,
+    ]);
+    expect((await readAtOf(testApp.prisma, [first]))[0]?.readAt).toBeInstanceOf(Date);
   });
 
   it("marks every unread notification of the user with all and leaves another user's", async () => {

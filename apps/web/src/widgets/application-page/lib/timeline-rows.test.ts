@@ -74,8 +74,8 @@ describe('timelineRowsOf', () => {
         tone: 'muted',
       },
       {
-        title: 'відгук надіслано',
-        meta: 'Через Djinni.',
+        title: 'Додано на етап «відгук»',
+        meta: 'Джерело: Djinni.',
         marker: { kind: 'stage', stage: 'applied' },
         tone: 'strong',
       },
@@ -95,7 +95,7 @@ describe('timelineRowsOf', () => {
       linkedVersion: { number: 2, uploadedAt: UPLOADED_BEFORE },
     });
 
-    expect(rows.map(({ title }) => title)).toContain('відгук надіслано · CV v2');
+    expect(rows.map(({ title }) => title)).toContain('Додано на етап «відгук» · CV v2');
     expect(rows.filter(({ title }) => title.includes('CV v'))).toHaveLength(1);
   });
 
@@ -111,7 +111,7 @@ describe('timelineRowsOf', () => {
       linkedVersion: { number: 3, uploadedAt: UPLOADED_BEFORE },
     });
 
-    expect(rows.map(({ title }) => title)).toContain('відгук надіслано');
+    expect(rows.map(({ title }) => title)).toContain('Додано на етап «відгук»');
   });
 
   it('the applied row names no CV when the linked version was uploaded after the application was made', () => {
@@ -121,7 +121,7 @@ describe('timelineRowsOf', () => {
       linkedVersion: { number: 3, uploadedAt: '2026-09-01T09:00:00.000Z' },
     });
 
-    expect(rows.map(({ title }) => title)).toContain('відгук надіслано');
+    expect(rows.map(({ title }) => title)).toContain('Додано на етап «відгук»');
     expect(rows.filter(({ title }) => title.includes('CV v'))).toEqual([]);
   });
 

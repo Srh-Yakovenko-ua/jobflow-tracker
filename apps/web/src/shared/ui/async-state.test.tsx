@@ -23,7 +23,7 @@ describe('AsyncState', () => {
     {
       name: 'the second of three steps',
       job: { status: 'processing', step: 2, steps: 3 },
-      line: 'крок 2 з 3 · обробляється',
+      line: 'крок 2/3 · обробляється',
     },
     { name: 'a job done in 6 s', job: { status: 'done', tookSeconds: 6 }, line: 'готово за 6 с' },
     { name: 'a failed job', job: { status: 'failed' }, line: 'AI не впорався' },

@@ -1,6 +1,7 @@
 'use client';
 
 import type { Plan } from '@jobflow/shared';
+import Link from 'next/link';
 
 import { PlanItemRow } from '@/features/toggle-plan-item';
 import { uk } from '@/shared/i18n';
@@ -9,6 +10,8 @@ import type { PlanSectionState, PlanView } from '../model/use-reminders-page';
 import { SectionBody, SectionFrame } from './section-frame';
 
 const COPY = uk.reminders.plan;
+
+const ANALYTICS_HREF = '/analytics';
 
 export type PlanSectionProps = Readonly<{ plan: PlanSectionState }>;
 
@@ -32,7 +35,17 @@ function PlanProgress({ plan }: Readonly<{ plan: Plan }>) {
 function PlanBody({ view }: Readonly<{ view: PlanView }>) {
   const { plan, timeZone } = view;
   if (plan === null) {
-    return <p className="animate-fade-in text-[14px] text-ink-2">{COPY.empty}</p>;
+    return (
+      <p className="flex animate-fade-in flex-wrap items-center gap-x-2 text-[14px] text-ink-2">
+        {COPY.empty}
+        <Link
+          href={ANALYTICS_HREF}
+          className="touch-target rounded-xs font-semibold text-link underline-offset-2 hover:underline active:underline"
+        >
+          {COPY.toAnalytics}
+        </Link>
+      </p>
+    );
   }
   return (
     <div className="flex animate-fade-in flex-col gap-2.5">

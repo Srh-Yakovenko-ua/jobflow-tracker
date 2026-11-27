@@ -9,7 +9,7 @@ type BoardUser = ReturnType<typeof renderBoard>['user'];
 export type PillPick = Readonly<{ pill: string; option: string }>;
 
 export function searchField(): HTMLInputElement {
-  return screen.getByRole<HTMLInputElement>('textbox', { name: 'Пошук по картках' });
+  return screen.getByRole<HTMLInputElement>('textbox', { name: 'Пошук карток' });
 }
 
 export function chipNames(): (string | null)[] {

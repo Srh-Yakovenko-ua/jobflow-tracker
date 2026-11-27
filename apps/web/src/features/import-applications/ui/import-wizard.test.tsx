@@ -24,6 +24,8 @@ const SHEET = [
   'Acme;Backend;2026-10-03;;',
 ].join('\r\n');
 
+const CLEAN_HEADER = 'Компанія;Посада;Дата відгуку';
+
 const IMPORTED: ImportApplicationsResponse = {
   imported: 2,
   errors: [
@@ -52,7 +54,7 @@ describe('ImportWizard', () => {
     const { user, sent } = await uploaded(csvFile(SHEET));
 
     expect(await screen.findByRole('heading', { name: 'Зістав стовпці' })).toBeDefined();
-    expect(screen.getByText('Крок 2 з 3')).toBeDefined();
+    expect(screen.getByText('Крок 2/3')).toBeDefined();
     expect(screen.getByRole('combobox', { name: 'Компанія' }).textContent).toBe('Компанія');
     expect(screen.getByRole('combobox', { name: 'Етап' }).textContent).toBe('Етап');
     expect(screen.getByRole('combobox', { name: 'Зарплата' }).textContent).toBe('Не імпортувати');
@@ -73,9 +75,7 @@ describe('ImportWizard', () => {
       'Компанія: вкажи назву одним коротким рядком',
     );
     expect(table.getByRole('row', { name: /^2 / }).textContent).toContain('Готовий');
-    expect(
-      screen.getByText('Показано 3 з 3 рядків, з помилками 1. Рядки з помилками не імпортуються.'),
-    ).toBeDefined();
+    expect(screen.getByText('Показано 3 з 3, 1 з помилками буде пропущено.')).toBeDefined();
 
     await user.click(screen.getByRole('button', { name: 'Імпортувати 2 з 3 рядків' }));
 
@@ -122,7 +122,30 @@ describe('ImportWizard', () => {
     expect(
       await screen.findByText('Це не CSV. Збережи таблицю як CSV і обери файл ще раз.'),
     ).toBeDefined();
-    expect(screen.getByText('Крок 1 з 3')).toBeDefined();
+    expect(screen.getByText('Крок 1/3')).toBeDefined();
+  });
+
+  it('a file with no errors says every row is ready', async () => {
+    const { user } = await uploaded(
+      csvFile([CLEAN_HEADER, 'Vela;Frontend;2026-10-01', 'Acme;Backend;2026-10-03'].join('\r\n')),
+    );
+
+    await user.click(await screen.findByRole('button', { name: 'Перевірити рядки' }));
+
+    expect(await screen.findByText('2 рядки готові, помилок немає.')).toBeDefined();
+  });
+
+  it('an error past the shown rows still counts as skipped', async () => {
+    const rows = Array.from({ length: 10 }, (_row, index) => `Vela ${String(index)};QA;2026-10-01`);
+    const { user } = await uploaded(
+      csvFile([CLEAN_HEADER, ...rows, ';QA;2026-10-02'].join('\r\n')),
+    );
+
+    await user.click(await screen.findByRole('button', { name: 'Перевірити рядки' }));
+
+    expect(
+      await screen.findByText('Показано 10 з 11, 1 з помилками буде пропущено.'),
+    ).toBeDefined();
   });
 
   it('no active search says so and keeps the preview for another try', async () => {

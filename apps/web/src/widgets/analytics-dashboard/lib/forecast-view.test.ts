@@ -22,9 +22,7 @@ describe('forecastViewOf', () => {
   it('the tech interview what-if names the 60% conversion in the caption instead of the current ones', () => {
     const view = forecastViewOf({ forecast: buildForecast(), improved: true });
 
-    expect(view.caption).toBe(
-      "Ймовірний коридор: половина симуляцій. Темп 2,0 на тиждень, техінтерв'ю 60%.",
-    );
+    expect(view.caption).toBe("Темп 2,0 на тиждень, техінтерв'ю 60%.");
   });
 
   it('places the corridor, the 80% interval and the median on a 16 week axis, pinning the interval end past 16+', () => {
@@ -63,7 +61,7 @@ describe('forecastViewOf', () => {
     expect(view.headline).toBe('понад 52 тижні');
     expect(view.legend).toEqual([
       'ймовірний коридор понад 52 тижні',
-      'увесь 80% інтервал: від 31 до понад 52 тижнів',
+      'увесь 80% діапазон: від 31 до понад 52 тижнів',
       'медіана: понад 52 тижні',
     ]);
     expect(view.band.median).toBe(100);
@@ -73,7 +71,7 @@ describe('forecastViewOf', () => {
   it('an 80% interval from week 0 with no upper bound starts at 1 week and names the horizon instead of "понад 0 тижнів"', () => {
     const view = viewOf({ interval: { low: 0, high: null } });
 
-    expect(view.legend[1]).toBe('увесь 80% інтервал: від 1 до понад 52 тижнів');
+    expect(view.legend[1]).toBe('увесь 80% діапазон: від 1 до понад 52 тижнів');
   });
 
   it('a median under one week reads "1 тиждень" like the headline, never "0,0 тижня"', () => {

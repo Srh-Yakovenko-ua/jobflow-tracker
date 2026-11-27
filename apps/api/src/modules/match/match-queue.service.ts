@@ -1,3 +1,4 @@
+import { hasMatchVacancy } from '@jobflow/shared';
 import { Injectable, Logger } from '@nestjs/common';
 
 import { AI_PAYLOAD_BUILDERS, type AiJobBuilder, AiJobQueue, AiService } from '../ai/index.js';
@@ -21,7 +22,7 @@ export class MatchQueueService {
       return null;
     }
     const { resumeVersionId } = source;
-    if (resumeVersionId === null) {
+    if (resumeVersionId === null || !hasMatchVacancy(source)) {
       await this.repository.clearScore(userId, applicationId);
       return null;
     }

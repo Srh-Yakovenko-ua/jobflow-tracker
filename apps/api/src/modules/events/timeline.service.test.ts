@@ -147,7 +147,7 @@ describe('TimelineService.list', () => {
           id: CREATION_EVENT_ID,
           type: 'stage_changed',
           occurredAt: '2026-10-17T09:00:00.000Z',
-          title: 'відгук надіслано',
+          title: 'Додано на етап «відгук»',
           meta: {
             fromStage: null,
             toStage: 'applied',

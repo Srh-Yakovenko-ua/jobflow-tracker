@@ -3,12 +3,15 @@ import { act, waitFor } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
 import { applicationKeys, timelineKeys } from '@/entities/application';
+import { notificationKeys } from '@/entities/notification';
+import { meQueryOptions } from '@/entities/user';
 import { errorReply } from '@/test/api-handlers';
 import { confirmRoute, REVIEW_DRAFT, updateRoute } from '@/test/application-fixtures';
 import type { MoveRouteOptions } from '@/test/board-fixtures';
 import { latch } from '@/test/latch';
 import { renderHookInApp } from '@/test/render-in-app';
 import { server } from '@/test/server';
+import { ME_RESPONSE } from '@/test/session-fixtures';
 
 import { useConfirmDraft } from './use-confirm-draft';
 
@@ -33,6 +36,10 @@ type StaleStep = {
 const TABLE_KEY = applicationKeys.table({});
 
 const TIMELINE_KEY = timelineKeys.detail(REVIEW_DRAFT.id);
+
+const NOTIFICATIONS_KEY = notificationKeys.latest();
+
+const ME_KEY = meQueryOptions().queryKey;
 
 const CONFLICT: MoveRouteOptions = {
   reply: () => errorReply({ status: 409, type: 'conflict' }),
@@ -68,6 +75,28 @@ describe('useConfirmDraft', () => {
       expect(onConfirmed).not.toHaveBeenCalled();
     },
   );
+
+  it('a confirmed draft refreshes the notifications and the unread count', async () => {
+    const confirms = confirmRoute({});
+    server.use(confirms.handler);
+    const onConfirmed = vi.fn<() => void>();
+    const { result } = renderConfirmDraft(onConfirmed);
+    const { queryClient } = result.current;
+    act(() => {
+      queryClient.setQueryData(NOTIFICATIONS_KEY, []);
+      queryClient.setQueryData(ME_KEY, { ...ME_RESPONSE, unreadNotifications: 1 });
+    });
+
+    act(() => {
+      result.current.draft.save(null);
+    });
+
+    await waitFor(() => {
+      expect(onConfirmed).toHaveBeenCalledOnce();
+    });
+    expect(queryClient.getQueryState(NOTIFICATIONS_KEY)?.isInvalidated).toBe(true);
+    expect(queryClient.getQueryState(ME_KEY)?.isInvalidated).toBe(true);
+  });
 
   it('a late draft confirm leaves the newer page open', async () => {
     const held = latch();

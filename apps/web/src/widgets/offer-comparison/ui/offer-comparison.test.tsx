@@ -98,18 +98,18 @@ describe('OfferComparison', () => {
       '/applications/0b6f3c1e-5d2a-4c8e-9f10-000000000502',
     );
     expect(companyLink.classList.contains('touch-target')).toBe(true);
-    expect(columnOf(LUMEN).getByRole('img', { name: 'без CV' })).toBeDefined();
+    expect(columnOf(LUMEN).getByRole('img', { name: 'без резюме' })).toBeDefined();
     expect(columnOf(TRIDENT).getByText('56')).toBeDefined();
     expect(screen.getByText('Перше місце: Trident Systems')).toBeDefined();
   });
 
-  it('a queued match reads its status, not без CV', async () => {
+  it('a queued match reads its status, not без резюме', async () => {
     renderComparison({ offers: buildDesignOffers(3), queuedId: idOf(2) });
     await rankedCompanies();
 
     const lumen = columnOf(LUMEN);
     expect(lumen.getByRole('img', { name: 'Match Score у черзі' })).toBeDefined();
-    expect(lumen.queryByRole('img', { name: 'без CV' })).toBeNull();
+    expect(lumen.queryByRole('img', { name: 'без резюме' })).toBeNull();
   });
 
   it('changing the weights reorders the offers at once: no money, all stack and no format puts Northwind first', async () => {

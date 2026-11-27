@@ -3,6 +3,8 @@ import { type QueryKey, useQueryClient } from '@tanstack/react-query';
 import type { UseFormSetError } from 'react-hook-form';
 
 import { applicationKeys, timelineKeys } from '@/entities/application';
+import { notificationKeys } from '@/entities/notification';
+import { meQueryOptions } from '@/entities/user';
 import { apiStatusOf, type GuardedSave, HTTP_STATUS, useGuardedSave } from '@/shared/api';
 
 import { confirmDraft } from '../api/confirm-draft';
@@ -50,7 +52,10 @@ export function useConfirmDraft({
       refresh(timelineKeys.detail(applicationId));
     },
     onSaved: (outcome) => {
-      if (outcome === 'confirmed') actions.onConfirmed();
+      if (outcome !== 'confirmed') return;
+      refresh(notificationKeys.all);
+      refresh(meQueryOptions().queryKey);
+      actions.onConfirmed();
     },
   });
 }

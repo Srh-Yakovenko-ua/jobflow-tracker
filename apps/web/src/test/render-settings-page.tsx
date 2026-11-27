@@ -3,6 +3,7 @@ import { screen } from '@testing-library/react';
 import { userKeys } from '@/entities/user';
 import { SettingsPage } from '@/widgets/settings-page';
 
+import { installFakeIntersectionObserver } from './intersection-observer';
 import { QueryProbe, waitForQuery } from './query-status';
 import { renderInApp } from './render-in-app';
 import { server } from './server';
@@ -11,6 +12,7 @@ import { settingsRoutes, type SettingsRoutesOptions } from './settings-fixtures'
 export const SUGGESTIONS_KEY = userKeys.settingsSuggestions();
 
 export function renderSettingsPage(options: SettingsRoutesOptions = {}) {
+  installFakeIntersectionObserver();
   const routes = settingsRoutes(options);
   server.use(...routes.handlers);
   const user = renderInApp(

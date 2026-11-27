@@ -2,8 +2,6 @@ import { APPLICATION_FORMS_UK, countedUk, type PluralForms, pluralUk } from '@jo
 
 import { FORMS } from './analytics-forms';
 
-const OF_APPLICATIONS = { one: 'відгуку', other: 'відгуків' } as const satisfies PluralForms;
-
 const OF_FOLLOWUPS = { one: 'фоллоу-апу', other: 'фоллоу-апів' } as const satisfies PluralForms;
 
 const OF_RECENT_WEEKS = {
@@ -19,7 +17,7 @@ export type RhythmSentence = Readonly<{ status: string; inRhythm: number; weeks:
 
 export const rhythm = {
   applications: ({ done, goal }: RhythmProgress) =>
-    `${String(done)} із ${String(goal)} ${pluralUk(goal, OF_APPLICATIONS)}`,
+    `${String(done)} із ${String(goal)} ${pluralUk(goal, FORMS.ofApplication)}`,
   followups: (done: number) => countedUk(done, FORMS.followup),
   followupsOfGoal: ({ done, goal }: RhythmProgress) =>
     `${String(done)} із ${String(goal)} ${pluralUk(goal, OF_FOLLOWUPS)}`,

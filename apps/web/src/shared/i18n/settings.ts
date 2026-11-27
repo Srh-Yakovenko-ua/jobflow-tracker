@@ -22,6 +22,8 @@ const dayWordOf = (count: number) => pluralUk(count, DAY_FORMS_UK);
 
 type MedianCopy = { median: number; preset: number };
 
+const answeredIn = (median: number) => (median === 0 ? 'того ж дня' : `за ${daysOf(median)}`);
+
 const STATS_ONLY = 'лише цифри статистики';
 
 export type ModelDataCopy = { [Kind in AiKind]: Record<AiPayloadField<Kind>, string> };
@@ -32,7 +34,7 @@ export const settings = {
   sections: {
     search: 'Пошук і тиша',
     rhythm: 'Ритм пошуку',
-    notifications: 'Повідомлення',
+    notifications: 'Сповіщення',
     aiPrivacy: 'AI та приватність',
     appearance: 'Вигляд і тема',
     account: 'Акаунт',
@@ -45,47 +47,47 @@ export const settings = {
   },
   silence: {
     title: 'Поріг тиші',
-    description: 'Скільки днів без подій до індикатора тиші й нагадування про фоллоу-ап.',
+    description: 'Через скільки днів без відповіді нагадати про фоллоу-ап.',
     presets: 'Поріг тиші в днях',
     unit: (days: number) => `${dayWordOf(days)} після останньої події`,
     median: ({ median, preset }: MedianCopy) =>
-      `Твоя медіана відповіді ${daysOf(median)}, тож раджу ${String(preset)}.`,
+      `Тобі зазвичай відповідають ${answeredIn(median)}, тож радимо ${String(preset)}.`,
     noMedian: (days: number) => `Поки замало відповідей: стартово ${daysOf(days)}.`,
     finalStage: (days: number) => `На етапі «фінал» поріг подвоюється: ${daysOf(days)}.`,
   },
   rules: {
-    title: 'Автоматичний ghost',
+    title: 'Автоматичні дії',
     autoGhost: (days: number) => ({
       title: `Переводити в ghosted після ${countedUk(days, DAY_GENITIVE_FORMS)} тиші`,
-      description: 'Картка йде з дошки в приглушену колонку. Це можна відкотити будь-коли.',
+      description: `Поріг тиші лише нагадує. Через ${daysOf(days)} картка переходить у ghosted, повернути можна будь-коли.`,
     }),
     askReason: {
       title: 'Питати причину при переносі у «відмову»',
-      description: 'Без причин аналітика відмов не працює, але вимикати можна.',
+      description: 'Без причин аналітика відмов буде порожня.',
     },
     monthlySummary: {
       title: 'Місячне AI-саммарі',
-      description: 'Першого числа, о 7:00. Приходить пушем і листом.',
+      description: 'Першого числа о 7:00, сповіщенням і листом.',
     },
   },
   notifications: {
-    title: 'Повідомлення',
+    title: 'Сповіщення',
     inApp: {
       title: 'Сповіщення в застосунку',
       description: "Нагадування й зміни етапів з'являються в центрі сповіщень JobFlow.",
     },
     push: {
-      title: 'Пуші в браузері',
+      title: 'Сповіщення в браузері',
       description: 'Нагадування приходять, навіть коли вкладку закрито.',
     },
     email: {
       title: 'Листи на пошту',
-      description: 'Нагадування й підсумки приходять ще й листом.',
+      description: 'Нагадування й саммарі приходять ще й листом.',
       types: emailTypes,
     },
     quietHours: {
       title: 'Тихі години',
-      description: 'У цей час пуші й листи не приходять.',
+      description: 'У цей час сповіщення й листи не приходять.',
       start: 'Від',
       end: 'До',
     },
@@ -97,20 +99,20 @@ export const settings = {
   },
   aiPrivacy: {
     title: 'AI та приватність',
-    description: 'Що саме йде в модель.',
+    description: 'AI бачить лише те, що потрібно для кожної функції.',
     modelData: {
-      title: 'Що бачить модель',
+      title: 'Що бачить AI',
       features: {
         vacancy_parse: 'Розбір вакансії',
         resume_parse: 'Розбір резюме',
         match: 'Match Score',
         followup: 'Фоллоу-ап',
         monthly_summary: 'Місячне AI-саммарі',
-        cv_hints: 'Підказки до CV',
+        cv_hints: 'Підказки до резюме',
         interview_prep: 'Підготовка до співбесіди',
       } satisfies Record<AiKind, string>,
       line: (feature: string, labels: readonly string[]) => `${feature}: ${labels.join(', ')}.`,
-      notes: 'Текст нотаток у модель не йде, лише слова-теми зі словника.',
+      notes: 'Текст нотаток AI не бачить, лише позначені теми.',
       fields: {
         vacancy_parse: { text: 'текст вакансії' },
         resume_parse: { text: 'текст резюме без контактів', pages: 'скан, якщо немає тексту' },
@@ -156,19 +158,19 @@ export const settings = {
       } satisfies ModelDataCopy,
     },
     dataDeletion: {
-      title: 'Видалити всі AI-результати',
+      title: 'Видалити все, що зробив AI',
       description:
-        'Розбори, Match Score, саммарі, драфти й підготовки зникнуть. Вакансії, резюме й збережені плани лишаться.',
-      action: 'Видалити всі AI-результати',
+        'Зникнуть розбори, Match Score, саммарі, листи й підготовки. Вакансії, резюме й плани лишаться.',
+      action: 'Видалити все, що зробив AI',
       dialog: {
-        title: 'Видалити всі AI-результати?',
-        body: 'Розбори, Match Score, саммарі, драфти й підготовки зникнуть назавжди. Вакансії, резюме й збережені плани лишаться.',
+        title: 'Видалити все, що зробив AI?',
+        body: 'Розбори, Match Score, саммарі, листи й підготовки зникнуть назавжди. Вакансії, резюме й плани лишаться.',
         cancel: 'Скасувати',
         confirm: 'Видалити',
       },
-      deleted: 'AI-результати видалено',
+      deleted: 'Усе, що зробив AI, видалено',
       failed: {
-        title: 'Не вдалося видалити AI-результати',
+        title: 'Не вдалося видалити зроблене AI',
         description: "Усе лишилось як було. Перевір з'єднання і спробуй ще раз.",
       },
     },
