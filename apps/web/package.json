@@ -20,7 +20,7 @@
     "@date-fns/tz": "1.5.0",
     "@dnd-kit/core": "6.3.1",
     "@fullcalendar/react": "7.1.5",
-    "@hookform/resolvers": "6.0.2",
+    "@hookform/resolvers": "7.0.7",
     "@jobflow/bookmarklet": "workspace:*",
     "@jobflow/shared": "workspace:*",
     "@sentry/nextjs": "11.12.0",
