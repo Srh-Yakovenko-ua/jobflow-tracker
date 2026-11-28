@@ -3,7 +3,7 @@ name = "jobflow-documents"
 version = "0.0.0"
 requires-python = ">=3.14"
 dependencies = [
-    "fastapi>=0.162.0",
+    "fastapi>=0.165.0",
     "loguru>=0.7.3",
     "pillow>=13.0.0",
     "pydantic>=2.14.2",
@@ -54,12 +54,12 @@ formatters = ["builtin"]
 
 [dependency-groups]
 dev = [
-    "datamodel-code-generator==0.87.0",
-    "httpx2==2.16.0",
+    "datamodel-code-generator==0.102.0",
+    "httpx2==2.16.2",
     "mypy==2.4.1",
-    "pypdf==7.0.1",
+    "pypdf==7.1.1",
     "pytest==9.2.0",
     "pytest-cov==7.1.0",
     "pytest-socket==0.8.1",
-    "ruff==0.17.3",
+    "ruff==0.17.6",
 ]
