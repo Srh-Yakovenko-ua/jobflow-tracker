@@ -10,7 +10,7 @@
     "test": "node --test test/*.test.js"
   },
   "dependencies": {
-    "@redocly/cli": "2.79.0",
+    "@redocly/cli": "2.83.0",
     "mermaid": "12.3.0",
     "playwright": "1.65.1"
   },
